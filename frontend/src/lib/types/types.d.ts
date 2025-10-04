@@ -1,7 +1,7 @@
 export interface ServerConfig {
   id: string;
   active: boolean;
-  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT";
+  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT" | "BUKKIT";
 
   // General configuration
   serverName: string;
@@ -115,4 +115,7 @@ export interface ServerConfig {
   cfBaseDir?: string;
   useModpackStartScript?: boolean;
   ftbLegacyJavaFixer?: boolean;
+
+  // Plugin specific (for SPIGOT, PAPER, BUKKIT)
+  spigetResources?: string;
 }

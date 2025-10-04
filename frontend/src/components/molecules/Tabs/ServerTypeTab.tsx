@@ -29,7 +29,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
       </CardHeader>
 
       <CardContent>
-        <RadioGroup value={config.serverType} onValueChange={(value: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE") => updateConfig("serverType", value)} className="space-y-4">
+        <RadioGroup value={config.serverType} onValueChange={(value) => updateConfig("serverType", value)} className="space-y-4">
           <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "VANILLA" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
             <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
               <Image src="/images/grass.webp" alt="Vanilla" width={24} height={24} />
@@ -88,6 +88,51 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
                 </Label>
               </div>
               <p className="text-sm text-gray-300 mt-1">{t("serverCurseForgeManual")}</p>
+            </div>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "SPIGOT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
+              <Image src="/images/redstone.webp" alt="Spigot" width={24} height={24} />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="SPIGOT" id="spigot" className="border-emerald-600/50" />
+                <Label htmlFor="spigot" className="text-base font-medium text-gray-100 font-minecraft">
+                  Spigot
+                </Label>
+              </div>
+              <p className="text-sm text-gray-300 mt-1">Servidor optimizado compatible con plugins de Bukkit</p>
+            </div>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "PAPER" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
+              <Image src="/images/paper.webp" alt="Paper" width={24} height={24} />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="PAPER" id="paper" className="border-emerald-600/50" />
+                <Label htmlFor="paper" className="text-base font-medium text-gray-100 font-minecraft">
+                  Paper
+                </Label>
+              </div>
+              <p className="text-sm text-gray-300 mt-1">Servidor de alto rendimiento basado en Spigot con optimizaciones adicionales</p>
+            </div>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "BUKKIT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
+              <Image src="/images/emerald.webp" alt="Bukkit" width={24} height={24} />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="BUKKIT" id="bukkit" className="border-emerald-600/50" />
+                <Label htmlFor="bukkit" className="text-base font-medium text-gray-100 font-minecraft">
+                  Bukkit
+                </Label>
+              </div>
+              <p className="text-sm text-gray-300 mt-1">Servidor clásico con soporte de plugins API estándar</p>
             </div>
           </motion.div>
         </RadioGroup>

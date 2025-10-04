@@ -395,6 +395,11 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   ftbLegacyJavaFixer?: boolean;
+
+  // Plugin specific (for SPIGOT, PAPER, BUKKIT)
+  @IsString()
+  @IsOptional()
+  spigetResources?: string;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

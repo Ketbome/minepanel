@@ -121,6 +121,9 @@ const defaultConfig: ServerConfig = {
   cfBaseDir: "/data/FeedTheBeast",
   useModpackStartScript: true,
   ftbLegacyJavaFixer: false,
+
+  // Plugin specific
+  spigetResources: "",
 };
 
 export function useServerConfig(serverId: string) {
