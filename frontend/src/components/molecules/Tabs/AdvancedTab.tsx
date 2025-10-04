@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, HelpCircle, Network, Plus, Trash2 } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
 
@@ -19,7 +20,11 @@ interface AdvancedTabProps {
 }
 
 export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave }) => {
+  const { t } = useLanguage();
   const [newPort, setNewPort] = useState("");
+
+  // CurseForge obtiene la versión automáticamente del modpack
+  const isCurseForge = config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
 
   const addExtraPort = () => {
     if (newPort.trim() && !config.extraPorts?.includes(newPort.trim())) {
@@ -51,9 +56,9 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
       <CardHeader className="pb-3">
         <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
           <Image src="/images/command-block.webp" alt="Avanzado" width={24} height={24} className="opacity-90" />
-          Configuración Avanzada
+          {t("advancedConfig")}
         </CardTitle>
-        <CardDescription className="text-gray-300">Opciones avanzadas para la configuración de tu servidor</CardDescription>
+        <CardDescription className="text-gray-300">{t("advancedConfigDesc")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -61,7 +66,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
           <div className="flex items-center justify-between">
             <Label htmlFor="dockerImage" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
               <Image src="/images/barrier.webp" alt="Docker" width={16} height={16} />
-              Imagen Docker
+              {t("dockerImage")}
             </Label>
             <TooltipProvider>
               <Tooltip>
@@ -71,14 +76,14 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Imagen Docker oficial a utilizar para el servidor</p>
+                  <p>{t("dockerImageDesc")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <Input id="dockerImage" value={config.dockerImage} onChange={(e) => updateConfig("dockerImage", e.target.value)} placeholder="java17" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
           <div className="space-y-1">
-            <p className="text-xs text-gray-400">Imagen Docker a utilizar (latest, java21, java17)</p>
+            <p className="text-xs text-gray-400">{t("dockerImageHelp")}</p>
             <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
               <div className="flex-shrink-0">
                 <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -98,7 +103,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-emerald-400" />
-            <h3 className="text-emerald-400 font-minecraft text-md">Puertos Adicionales</h3>
+            <h3 className="text-emerald-400 font-minecraft text-md">{t("extraPorts")}</h3>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -107,7 +112,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Configura puertos adicionales para exponer servicios extra del servidor</p>
+                  <p>{t("extraPortsDesc")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -117,7 +122,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
           <div className="flex gap-2">
             <div className="flex-1">
               <Input placeholder="8080:8080 o 9000:9000/tcp" value={newPort} onChange={(e) => setNewPort(e.target.value)} onKeyPress={(e) => e.key === "Enter" && addExtraPort()} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400 mt-1">Formato: puerto_host:puerto_contenedor[/protocolo]</p>
+              <p className="text-xs text-gray-400 mt-1">{t("portFormat")}</p>
             </div>
             <Button type="button" onClick={addExtraPort} className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={!newPort.trim()}>
               <Plus className="h-4 w-4" />
@@ -127,7 +132,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
           {/* List of extra ports */}
           {config.extraPorts && config.extraPorts.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-gray-200 font-minecraft text-sm">Puertos Configurados</Label>
+              <Label className="text-gray-200 font-minecraft text-sm">{t("configuredPorts")}</Label>
               {config.extraPorts.map((port, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <div className="flex-1">
@@ -143,60 +148,74 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
 
           {(!config.extraPorts || config.extraPorts.length === 0) && (
             <div className="text-center py-4">
-              <p className="text-gray-400 text-sm">No hay puertos adicionales configurados</p>
-              <p className="text-gray-500 text-xs mt-1">Los puertos adicionales son útiles para plugins que requieren conexiones específicas</p>
+              <p className="text-gray-400 text-sm">{t("noExtraPorts")}</p>
+              <p className="text-gray-500 text-xs mt-1">{t("extraPortsUseful")}</p>
             </div>
           )}
 
           {/* Examples */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-600/50">
-            <Label className="text-gray-300 font-minecraft text-xs">Ejemplos de configuración:</Label>
+            <Label className="text-gray-300 font-minecraft text-xs">{t("configExamples")}</Label>
             <div className="text-xs text-gray-400 mt-2 space-y-1">
               <div>
-                <code className="bg-gray-800 px-1 rounded">24454:24454/udp</code> - Puerto mod de Chat voice
+                <code className="bg-gray-800 px-1 rounded">24454:24454/udp</code> - {t("portVoiceChat")}
               </div>
               <div>
-                <code className="bg-gray-800 px-1 rounded">9000:9000/tcp</code> - Puerto TCP específico
+                <code className="bg-gray-800 px-1 rounded">9000:9000/tcp</code> - {t("portTcpSpecific")}
               </div>
               <div>
-                <code className="bg-gray-800 px-1 rounded">25566:25566/udp</code> - Puerto UDP para plugins
+                <code className="bg-gray-800 px-1 rounded">25566:25566/udp</code> - {t("portUdpPlugins")}
               </div>
               <div>
-                <code className="bg-gray-800 px-1 rounded">8123:8123</code> - Dynmap u otros plugins web
+                <code className="bg-gray-800 px-1 rounded">8123:8123</code> - {t("portDynmap")}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="minecraftVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/grass.webp" alt="Versión" width={16} height={16} />
-              Versión de Minecraft
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Versión específica de Minecraft a instalar</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        {!isCurseForge && (
+          <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="minecraftVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/grass.webp" alt="Versión" width={16} height={16} />
+                {t("minecraftVersion")}
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                      <HelpCircle className="h-4 w-4 text-gray-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <p>{t("minecraftVersionDesc")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Input id="minecraftVersion" value={config.minecraftVersion} onChange={(e) => updateConfig("minecraftVersion", e.target.value)} placeholder="1.19.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+            <p className="text-xs text-gray-400">{t("minecraftVersionHelp")}</p>
           </div>
-          <Input id="minecraftVersion" value={config.minecraftVersion} onChange={(e) => updateConfig("minecraftVersion", e.target.value)} placeholder="1.19.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">Versión específica de Minecraft a utilizar</p>
-        </div>
+        )}
+
+        {isCurseForge && (
+          <div className="space-y-2 p-4 rounded-md bg-blue-900/30 border border-blue-700/30">
+            <div className="flex items-center gap-2">
+              <Image src="/images/enchanted-book.webp" alt="Info" width={20} height={20} className="opacity-90" />
+              <div>
+                <p className="text-sm font-medium text-blue-300 font-minecraft">{t("minecraftVersion")}</p>
+                <p className="text-xs text-blue-200/80 mt-1">{t("curseforgeVersionAuto")}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center justify-between">
               <Label htmlFor="idleTimeout" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                 <Image src="/images/clock.webp" alt="Tiempo" width={16} height={16} />
-                Tiempo Inactivo (min)
+                {t("idleTimeout")}
               </Label>
               <TooltipProvider>
                 <Tooltip>
@@ -206,20 +225,20 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                    <p>Tiempo antes de expulsar jugadores inactivos</p>
+                    <p>{t("idleTimeoutDesc")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             <Input id="playerIdleTimeout" type="number" value={config.playerIdleTimeout} onChange={(e) => updateConfig("playerIdleTimeout", String(e.target.value))} placeholder="60" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-            <p className="text-xs text-gray-400">Tiempo en minutos antes de expulsar a jugadores inactivos (0 para desactivar)</p>
+            <p className="text-xs text-gray-400">{t("idleTimeoutHelp")}</p>
           </div>
 
           <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center justify-between">
               <Label htmlFor="stopDelay" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                 <Image src="/images/emerald.webp" alt="Retardo" width={16} height={16} />
-                Retardo de Detención (seg)
+                {t("stopDelay")}
               </Label>
               <TooltipProvider>
                 <Tooltip>
@@ -229,13 +248,13 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                    <p>Tiempo de espera antes de detener forzosamente el servidor</p>
+                    <p>{t("stopDelayDesc")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             <Input id="stopDelay" type="number" value={config.stopDelay} onChange={(e) => updateConfig("stopDelay", e.target.value)} placeholder="60" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-            <p className="text-xs text-gray-400">Tiempo en segundos a esperar antes de detener forzosamente el servidor</p>
+            <p className="text-xs text-gray-400">{t("stopDelayHelp")}</p>
           </div>
         </div>
 
@@ -243,7 +262,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
           <div className="flex items-center justify-between">
             <Label htmlFor="restartPolicy" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
               <Image src="/images/hopper.webp" alt="Reinicio" width={16} height={16} />
-              Política de Reinicio
+              {t("restartPolicy")}
             </Label>
             <TooltipProvider>
               <Tooltip>
@@ -306,7 +325,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave
           <div className="flex items-center justify-between">
             <Label htmlFor="envVars" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
               <Image src="/images/enchanted-book.webp" alt="Variables" width={16} height={16} />
-              Variables de Entorno
+              {t("environmentVars")}
             </Label>
             <TooltipProvider>
               <Tooltip>
@@ -600,7 +619,7 @@ MAX_TICK_TIME=60000"
       <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
         <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
           <Save className="h-4 w-4" />
-          Guardar Configuración
+          {t("saveConfiguration")}
         </Button>
       </CardFooter>
     </Card>

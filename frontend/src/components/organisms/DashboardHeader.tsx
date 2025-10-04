@@ -8,8 +8,10 @@ import { LogOut, ChevronDown } from "lucide-react";
 import { logout } from "@/services/auth/auth.service";
 import { motion, AnimatePresence } from "framer-motion";
 import { LanguageSwitcher } from "../ui/language-switcher";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function DashboardHeader() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,7 @@ export function DashboardHeader() {
           {/* Status indicator */}
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-sm text-gray-300 font-minecraft">Sistema Activo</span>
+            <span className="text-sm text-gray-300 font-minecraft">{t("systemActive")}</span>
           </div>
 
           {/* User Menu */}
@@ -48,8 +50,8 @@ export function DashboardHeader() {
                 <Image src="/images/player-head.png" alt="User" width={32} height={32} className="rounded-full object-cover" />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-white font-minecraft">Admin</p>
-                <p className="text-xs text-gray-400">Administrador</p>
+                <p className="text-sm font-medium text-white font-minecraft">{t("admin")}</p>
+                <p className="text-xs text-gray-400">{t("administrator")}</p>
               </div>
               <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showUserMenu ? "rotate-180" : ""}`} />
             </Button>
@@ -63,16 +65,16 @@ export function DashboardHeader() {
                       <Image src="/images/player-head.png" alt="User" width={40} height={40} className="rounded-full object-cover" />
                     </div>
                     <div>
-                      <p className="font-medium font-minecraft text-white">Admin</p>
+                      <p className="font-medium font-minecraft text-white">{t("admin")}</p>
                     </div>
                   </div>
                   <div className="flex flex-row items-center py-1 text-white px-2">
-                    <LanguageSwitcher /> <p className="px-2">Change languaje</p>
+                    <LanguageSwitcher /> <p className="px-2">{t("changeLanguage")}</p>
                   </div>
                   <div className="py-2">
                     <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-600/20 transition-colors">
                       <LogOut className="h-4 w-4" />
-                      Cerrar Sesión
+                      {t("logout")}
                     </button>
                   </div>
                 </motion.div>
