@@ -202,9 +202,53 @@ export class DockerComposeService {
         serverConfig.cfApiKey = env.CF_API_KEY ?? '';
       }
 
-      // Add Plugin specific config (for SPIGOT, PAPER, BUKKIT)
-      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT') {
+      // Add Plugin specific config (for plugin-based servers)
+      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'PUFFERFISH' || serverConfig.serverType === 'PURPUR' || serverConfig.serverType === 'LEAF' || serverConfig.serverType === 'FOLIA') {
         serverConfig.spigetResources = env.SPIGET_RESOURCES ?? '';
+      }
+
+      // Paper specific config
+      if (serverConfig.serverType === 'PAPER') {
+        serverConfig.paperBuild = env.PAPER_BUILD ?? '';
+        serverConfig.paperChannel = env.PAPER_CHANNEL ?? '';
+        serverConfig.paperDownloadUrl = env.PAPER_DOWNLOAD_URL ?? '';
+      }
+
+      // Bukkit/Spigot specific config
+      if (serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'SPIGOT') {
+        serverConfig.bukkitDownloadUrl = env.BUKKIT_DOWNLOAD_URL ?? '';
+        serverConfig.spigotDownloadUrl = env.SPIGOT_DOWNLOAD_URL ?? '';
+        serverConfig.buildFromSource = env.BUILD_FROM_SOURCE === 'true';
+      }
+
+      // Pufferfish specific config
+      if (serverConfig.serverType === 'PUFFERFISH') {
+        serverConfig.pufferfishBuild = env.PUFFERFISH_BUILD ?? '';
+        serverConfig.useFlareFlags = env.USE_FLARE_FLAGS === 'true';
+      }
+
+      // Purpur specific config
+      if (serverConfig.serverType === 'PURPUR') {
+        serverConfig.purpurBuild = env.PURPUR_BUILD ?? '';
+        serverConfig.purpurDownloadUrl = env.PURPUR_DOWNLOAD_URL ?? '';
+        serverConfig.useFlareFlags = env.USE_FLARE_FLAGS === 'true';
+      }
+
+      // Leaf specific config
+      if (serverConfig.serverType === 'LEAF') {
+        serverConfig.leafBuild = env.LEAF_BUILD ?? '';
+      }
+
+      // Folia specific config
+      if (serverConfig.serverType === 'FOLIA') {
+        serverConfig.foliaBuild = env.FOLIA_BUILD ?? '';
+        serverConfig.foliaChannel = env.FOLIA_CHANNEL ?? '';
+        serverConfig.foliaDownloadUrl = env.FOLIA_DOWNLOAD_URL ?? '';
+      }
+
+      // General Paper/Bukkit/Spigot config
+      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'PUFFERFISH' || serverConfig.serverType === 'PURPUR' || serverConfig.serverType === 'LEAF' || serverConfig.serverType === 'FOLIA') {
+        serverConfig.skipDownloadDefaults = env.SKIP_DOWNLOAD_DEFAULTS === 'true';
       }
 
       return serverConfig;
@@ -336,6 +380,35 @@ export class DockerComposeService {
 
       // Plugin specific
       spigetResources: '',
+
+      // Paper specific
+      paperBuild: '',
+      paperChannel: '',
+      paperDownloadUrl: '',
+
+      // Bukkit/Spigot specific
+      bukkitDownloadUrl: '',
+      spigotDownloadUrl: '',
+      buildFromSource: false,
+
+      // Pufferfish specific
+      pufferfishBuild: '',
+      useFlareFlags: false,
+
+      // Purpur specific
+      purpurBuild: '',
+      purpurDownloadUrl: '',
+
+      // Leaf specific
+      leafBuild: '',
+
+      // Folia specific
+      foliaBuild: '',
+      foliaChannel: '',
+      foliaDownloadUrl: '',
+
+      // General config
+      skipDownloadDefaults: false,
     };
   }
 
@@ -620,12 +693,56 @@ export class DockerComposeService {
       } else {
         environment['CF_API_KEY'] = process.env.CF_API_KEY;
       }
-    } else if (config.serverType === 'SPIGOT' || config.serverType === 'PAPER' || config.serverType === 'BUKKIT') {
+    } else if (config.serverType === 'SPIGOT' || config.serverType === 'PAPER' || config.serverType === 'BUKKIT' || config.serverType === 'PUFFERFISH' || config.serverType === 'PURPUR' || config.serverType === 'LEAF' || config.serverType === 'FOLIA') {
       // Plugin-based servers configuration
       environment['VERSION'] = config.minecraftVersion;
 
       if (config.spigetResources) {
         environment['SPIGET_RESOURCES'] = config.spigetResources;
+      }
+
+      // Paper specific
+      if (config.serverType === 'PAPER') {
+        if (config.paperBuild) environment['PAPER_BUILD'] = config.paperBuild;
+        if (config.paperChannel) environment['PAPER_CHANNEL'] = config.paperChannel;
+        if (config.paperDownloadUrl) environment['PAPER_DOWNLOAD_URL'] = config.paperDownloadUrl;
+      }
+
+      // Bukkit/Spigot specific
+      if (config.serverType === 'BUKKIT' || config.serverType === 'SPIGOT') {
+        if (config.bukkitDownloadUrl) environment['BUKKIT_DOWNLOAD_URL'] = config.bukkitDownloadUrl;
+        if (config.spigotDownloadUrl) environment['SPIGOT_DOWNLOAD_URL'] = config.spigotDownloadUrl;
+        if (config.buildFromSource) environment['BUILD_FROM_SOURCE'] = 'true';
+      }
+
+      // Pufferfish specific
+      if (config.serverType === 'PUFFERFISH') {
+        if (config.pufferfishBuild) environment['PUFFERFISH_BUILD'] = config.pufferfishBuild;
+        if (config.useFlareFlags) environment['USE_FLARE_FLAGS'] = 'true';
+      }
+
+      // Purpur specific
+      if (config.serverType === 'PURPUR') {
+        if (config.purpurBuild) environment['PURPUR_BUILD'] = config.purpurBuild;
+        if (config.purpurDownloadUrl) environment['PURPUR_DOWNLOAD_URL'] = config.purpurDownloadUrl;
+        if (config.useFlareFlags) environment['USE_FLARE_FLAGS'] = 'true';
+      }
+
+      // Leaf specific
+      if (config.serverType === 'LEAF') {
+        if (config.leafBuild) environment['LEAF_BUILD'] = config.leafBuild;
+      }
+
+      // Folia specific
+      if (config.serverType === 'FOLIA') {
+        if (config.foliaBuild) environment['FOLIA_BUILD'] = config.foliaBuild;
+        if (config.foliaChannel) environment['FOLIA_CHANNEL'] = config.foliaChannel;
+        if (config.foliaDownloadUrl) environment['FOLIA_DOWNLOAD_URL'] = config.foliaDownloadUrl;
+      }
+
+      // General config
+      if (config.skipDownloadDefaults) {
+        environment['SKIP_DOWNLOAD_DEFAULTS'] = 'true';
       }
     } else {
       environment['VERSION'] = config.minecraftVersion;

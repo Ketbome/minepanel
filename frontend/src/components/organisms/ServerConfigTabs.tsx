@@ -28,7 +28,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   // Determinar qué tabs mostrar según el tipo de servidor
   const showModsTab = config.serverType === "FORGE" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
-  const showPluginsTab = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT";
+  const showPluginsTab = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

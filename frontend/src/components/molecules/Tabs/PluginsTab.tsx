@@ -18,7 +18,7 @@ interface PluginsTabProps {
 
 export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }) => {
   const { t } = useLanguage();
-  const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT";
+  const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
   if (!isPluginServer) {
     return (

@@ -10,9 +10,9 @@ export class ServerConfigDto {
   @IsOptional()
   active?: boolean;
 
-  @IsEnum(['VANILLA', 'FORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT'])
+  @IsEnum(['VANILLA', 'FORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT';
+  serverType?: 'VANILLA' | 'FORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
 
   // General configuration
   @IsString()
@@ -396,10 +396,77 @@ export class ServerConfigDto {
   @IsOptional()
   ftbLegacyJavaFixer?: boolean;
 
-  // Plugin specific (for SPIGOT, PAPER, BUKKIT)
+  // Plugin specific (for SPIGOT, PAPER, BUKKIT, PUFFERFISH, PURPUR, LEAF, FOLIA)
   @IsString()
   @IsOptional()
   spigetResources?: string;
+
+  // Paper specific
+  @IsString()
+  @IsOptional()
+  paperBuild?: string;
+
+  @IsString()
+  @IsOptional()
+  paperChannel?: string;
+
+  @IsString()
+  @IsOptional()
+  paperDownloadUrl?: string;
+
+  // Bukkit/Spigot specific
+  @IsString()
+  @IsOptional()
+  bukkitDownloadUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  spigotDownloadUrl?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  buildFromSource?: boolean;
+
+  // Pufferfish specific
+  @IsString()
+  @IsOptional()
+  pufferfishBuild?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  useFlareFlags?: boolean;
+
+  // Purpur specific
+  @IsString()
+  @IsOptional()
+  purpurBuild?: string;
+
+  @IsString()
+  @IsOptional()
+  purpurDownloadUrl?: string;
+
+  // Leaf specific
+  @IsString()
+  @IsOptional()
+  leafBuild?: string;
+
+  // Folia specific
+  @IsString()
+  @IsOptional()
+  foliaBuild?: string;
+
+  @IsString()
+  @IsOptional()
+  foliaChannel?: string;
+
+  @IsString()
+  @IsOptional()
+  foliaDownloadUrl?: string;
+
+  // General Paper/Bukkit/Spigot config
+  @IsBoolean()
+  @IsOptional()
+  skipDownloadDefaults?: boolean;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}
