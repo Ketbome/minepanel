@@ -22,9 +22,11 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
 
   // Function to open File Browser
   const openFileBrowser = () => {
-    const baseUrl = window.location.origin;
+    // Usar el hostname actual pero con el puerto 25580 para File Browser
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
     const fileBrowserPath = `/filebrowser/files/${serverId}`;
-    const url = `${baseUrl}${fileBrowserPath}`;
+    const url = `${protocol}//${hostname}:25580${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 
