@@ -102,7 +102,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
                   Spigot
                 </Label>
               </div>
-              <p className="text-sm text-gray-300 mt-1">Servidor optimizado compatible con plugins de Bukkit</p>
+              <p className="text-sm text-gray-300 mt-1">{t("serverSpigot")}</p>
             </div>
           </motion.div>
 
@@ -117,7 +117,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
                   Paper
                 </Label>
               </div>
-              <p className="text-sm text-gray-300 mt-1">Servidor de alto rendimiento basado en Spigot con optimizaciones adicionales</p>
+              <p className="text-sm text-gray-300 mt-1">{t("serverPaper")}</p>
             </div>
           </motion.div>
 
@@ -132,7 +132,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
                   Bukkit
                 </Label>
               </div>
-              <p className="text-sm text-gray-300 mt-1">Servidor clásico con soporte de plugins API estándar</p>
+              <p className="text-sm text-gray-300 mt-1">{t("serverBukkit")}</p>
             </div>
           </motion.div>
         </RadioGroup>
@@ -141,7 +141,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
       <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
         <Button type="button" onClick={onSave} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
           <Save className="mr-2 h-4 w-4" />
-          Guardar
+          {t("save")}
         </Button>
       </CardFooter>
     </Card>

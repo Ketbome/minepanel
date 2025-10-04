@@ -202,6 +202,11 @@ export class DockerComposeService {
         serverConfig.cfApiKey = env.CF_API_KEY ?? '';
       }
 
+      // Add Plugin specific config (for SPIGOT, PAPER, BUKKIT)
+      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT') {
+        serverConfig.spigetResources = env.SPIGET_RESOURCES ?? '';
+      }
+
       return serverConfig;
     } catch (error) {
       console.error(`Error loading config for server ${serverId}:`, error);
@@ -328,6 +333,9 @@ export class DockerComposeService {
       cfBaseDir: '/data',
       useModpackStartScript: true,
       ftbLegacyJavaFixer: false,
+
+      // Plugin specific
+      spigetResources: '',
     };
   }
 
@@ -611,6 +619,13 @@ export class DockerComposeService {
         environment['CF_API_KEY'] = config.cfApiKey;
       } else {
         environment['CF_API_KEY'] = process.env.CF_API_KEY;
+      }
+    } else if (config.serverType === 'SPIGOT' || config.serverType === 'PAPER' || config.serverType === 'BUKKIT') {
+      // Plugin-based servers configuration
+      environment['VERSION'] = config.minecraftVersion;
+
+      if (config.spigetResources) {
+        environment['SPIGET_RESOURCES'] = config.spigetResources;
       }
     } else {
       environment['VERSION'] = config.minecraftVersion;

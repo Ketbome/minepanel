@@ -10,9 +10,9 @@ export class ServerConfigDto {
   @IsOptional()
   active?: boolean;
 
-  @IsEnum(['VANILLA', 'FORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT'])
+  @IsEnum(['VANILLA', 'FORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT';
+  serverType?: 'VANILLA' | 'FORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT';
 
   // General configuration
   @IsString()

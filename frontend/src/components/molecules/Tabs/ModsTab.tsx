@@ -11,6 +11,7 @@ import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 
 interface ModsTabProps {
@@ -20,6 +21,7 @@ interface ModsTabProps {
 }
 
 export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
+  const { t } = useLanguage();
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isForge = config.serverType === "FORGE";
@@ -30,14 +32,14 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
         <CardHeader className="pb-3">
           <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
             <Image src="/images/gold.webp" alt="Mods" width={24} height={24} className="opacity-90" />
-            Configuración de Mods
+            {t("modsConfig")}
           </CardTitle>
-          <CardDescription className="text-gray-300">Esta sección solo está disponible para servidores Forge o CurseForge</CardDescription>
+          <CardDescription className="text-gray-300">{t("modsNotAvailable")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center h-40 border border-gray-700/50 rounded-md bg-gray-800/50 gap-3 p-6">
             <Image src="/images/crafting-table.webp" alt="Mods" width={48} height={48} className="opacity-80" />
-            <p className="text-gray-400 text-center font-minecraft text-sm">Selecciona el tipo de servidor Forge o CurseForge en la pestaña &quot;Tipo de Servidor&quot; para configurar los mods.</p>
+            <p className="text-gray-400 text-center font-minecraft text-sm">{t("modsSelectServerType")}</p>
           </div>
         </CardContent>
       </Card>
@@ -49,9 +51,9 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
       <CardHeader className="pb-3">
         <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
           <Image src="/images/gold.webp" alt="Mods" width={24} height={24} className="opacity-90" />
-          Configuración de Mods
+          {t("modsConfig")}
         </CardTitle>
-        <CardDescription className="text-gray-300">{isCurseForge ? "Configura un modpack de CurseForge para tu servidor" : isManualCurseForge ? "Configura modpacks de CurseForge manuales (modo obsoleto)" : "Configura los detalles de Forge para tu servidor"}</CardDescription>
+        <CardDescription className="text-gray-300">{t("modsConfigDesc")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -496,7 +498,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
       <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
         <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
           <Save className="h-4 w-4" />
-          Guardar Configuración
+          {t("saveConfiguration")}
         </Button>
       </CardFooter>
     </Card>

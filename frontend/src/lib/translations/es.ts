@@ -21,6 +21,9 @@ export const es = {
   serverForge: "Servidor con soporte para mods usando Forge. Requiere configurar la versión de Forge específica a utilizar.",
   serverCurseForge: "Instala automáticamente modpacks de CurseForge. Se puede configurar mediante URL, o Slug.",
   serverCurseForgeManual: "Modo manual para modpacks de CurseForge. Utiliza archivos ZIP precargados. Función obsoleta, recomendamos usar CurseForge Modpack.",
+  serverSpigot: "Servidor optimizado compatible con plugins de Bukkit",
+  serverPaper: "Servidor de alto rendimiento basado en Spigot con optimizaciones adicionales",
+  serverBukkit: "Servidor clásico con soporte de plugins API estándar",
   version: "Versión",
   memory: "Memoria",
   port: "Puerto",
@@ -104,6 +107,40 @@ export const es = {
   serverCreationDesc: "Crea un nuevo servidor de Minecraft",
   serverIdPlaceholder: "mi-servidor",
   serverIdDesc: "Identificador único para tu servidor",
+
+  // Plugins
+  pluginsConfig: "Configuración de Plugins",
+  pluginsConfigDesc: "Configura plugins para tu servidor",
+  pluginsNotAvailable: "Esta sección solo está disponible para servidores Spigot, Paper o Bukkit",
+  pluginsSelectServerType: 'Selecciona el tipo de servidor Spigot, Paper o Bukkit en la pestaña "Tipo de Servidor" para configurar plugins.',
+  pluginsAutoDownload: "Descarga Automática desde Spiget",
+  pluginsAutoDownloadDesc: "Descarga automática de plugins desde SpigotMC usando la API de Spiget. Los archivos ZIP se expandirán automáticamente en la carpeta de plugins.",
+  pluginsManualInfo: "Para agregar plugins manualmente (archivos JAR), usa el File Browser para subirlos a la carpeta /plugins del servidor.",
+  pluginsSpigetResources: "Recursos de Spiget (SPIGET_RESOURCES)",
+  pluginsSpigetResourcesDesc: "IDs de recursos de SpigotMC (ej: LuckPerms=28140, Vault=34315)",
+  pluginsSpigetNote: "Nota importante: La variable es SPIGET con E, no SPIGOT.",
+  pluginsSpigetWarning: "⚠️ Algunos plugins como EssentialsX no permiten descargas automatizadas.",
+  pluginsManualTitle: "Agregar plugins manualmente",
+  pluginsManualStep1: "Accede al File Browser del servidor",
+  pluginsManualStep2: "Navega a la carpeta /plugins",
+  pluginsManualStep3: "Sube tus archivos JAR directamente",
+  pluginsManualStep4: "Reinicia el servidor para que se carguen los plugins",
+  pluginsTipsTitle: "Consejos útiles",
+  pluginsTip1: "Los plugins se descargarán automáticamente al iniciar el servidor",
+  pluginsTip2: "Los archivos ZIP se expandirán automáticamente en la carpeta de plugins",
+  pluginsTip3: "Puedes combinar Spiget con plugins manuales desde File Browser",
+  pluginsTip4: "Los plugins de Spigot también funcionan en Paper y Bukkit",
+  pluginsSave: "Guardar Configuración",
+
+  // Mods
+  modsConfig: "Configuración de Mods",
+  modsConfigDesc: "Configura los detalles de mods para tu servidor",
+  modsNotAvailable: "Esta sección solo está disponible para servidores Forge o CurseForge",
+  modsSelectServerType: 'Selecciona el tipo de servidor Forge o CurseForge en la pestaña "Tipo de Servidor" para configurar los mods.',
+
+  // Common buttons and labels
+  saveConfiguration: "Guardar Configuración",
+  saveChanges: "Guardar Cambios",
 };
 
 export type TranslationKey = keyof typeof es;
