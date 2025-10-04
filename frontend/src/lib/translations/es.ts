@@ -329,6 +329,10 @@ export const es = {
 
   skipDownloadDefaults: "Saltar descarga de configuraciones por defecto",
   skipDownloadDefaultsDesc: "Omitir la verificación de archivos de configuración por defecto de Paper/Bukkit/Spigot",
+
+  pluginsOpenPluginsFolder: "Abrir carpeta de plugins",
+  pluginsOpenServerFolder: "Abrir carpeta del servidor",
+  openFileBrowser: "Gestor de archivos",
 };
 
 export type TranslationKey = keyof typeof es;

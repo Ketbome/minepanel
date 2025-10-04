@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, PowerIcon, RefreshCw, Server } from "lucide-react";
+import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
 
@@ -19,6 +19,14 @@ interface ServerPageHeaderProps {
 export function ServerPageHeader({ serverId, serverName, serverStatus, isProcessing, onStartServer, onStopServer, onRestartServer }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
+
+  // Function to open File Browser
+  const openFileBrowser = () => {
+    const baseUrl = window.location.origin;
+    const fileBrowserPath = `/filebrowser/files/${serverId}`;
+    const url = `${baseUrl}${fileBrowserPath}`;
+    window.open(url, "_blank");
+  };
 
   // Function to get icon based on status
   const getStatusIcon = (status: string) => {
@@ -124,6 +132,11 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
           <Button type="button" variant="outline" onClick={onRestartServer} disabled={isProcessing || serverStatus !== "running"} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-orange-600/20 hover:text-orange-400 hover:border-orange-600/50">
             <RefreshCw className={`h-4 w-4 ${isProcessing ? "animate-spin" : ""}`} />
             {isProcessing ? t("restarting") : t("restart2")}
+          </Button>
+
+          <Button type="button" variant="outline" onClick={openFileBrowser} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
+            <FolderOpen className="h-4 w-4" />
+            {t("openFileBrowser")}
           </Button>
         </div>
       </div>

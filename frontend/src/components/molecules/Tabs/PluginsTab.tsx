@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save, HelpCircle } from "lucide-react";
+import { Save, HelpCircle, ExternalLink, Folder, FolderOpen } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -19,6 +19,15 @@ interface PluginsTabProps {
 export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }) => {
   const { t } = useLanguage();
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
+
+  const openFileBrowser = (preferPlugins: boolean = true) => {
+    // Usar la URL base actual del navegador
+    const baseUrl = window.location.origin;
+    const fileBrowserPath = preferPlugins ? `/filebrowser/files/${config.id}/mc-data/plugins/` : `/filebrowser/files/${config.id}`;
+
+    const url = `${baseUrl}${fileBrowserPath}`;
+    window.open(url, "_blank");
+  };
 
   if (!isPluginServer) {
     return (
@@ -285,10 +294,26 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
         <div className="bg-gray-800/30 border border-gray-700/30 rounded-md p-4">
           <div className="flex items-start gap-3">
             <Image src="/images/chest.webp" alt="File Browser" width={20} height={20} className="flex-shrink-0 mt-0.5 opacity-90" />
-            <div>
-              <p className="text-sm font-medium text-gray-200 font-minecraft">{t("pluginsManualTitle")}</p>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-200 font-minecraft">{t("pluginsManualTitle")}</p>
+              </div>
               <p className="text-xs text-gray-400 mt-1">{t("pluginsManualInfo")}</p>
-              <ol className="text-xs text-gray-400 mt-2 space-y-1 list-decimal list-inside">
+
+              <div className="mt-3 flex gap-2">
+                <Button type="button" onClick={() => openFileBrowser(true)} variant="outline" className="gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 border-gray-600 font-minecraft text-xs">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  {t("pluginsOpenPluginsFolder")}
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+                <Button type="button" onClick={() => openFileBrowser(false)} variant="outline" className="gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 border-gray-600 font-minecraft text-xs">
+                  <Folder className="h-3.5 w-3.5" />
+                  {t("pluginsOpenServerFolder")}
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+              </div>
+
+              <ol className="text-xs text-gray-400 mt-3 space-y-1 list-decimal list-inside">
                 <li>{t("pluginsManualStep1")}</li>
                 <li>{t("pluginsManualStep2")}</li>
                 <li>{t("pluginsManualStep3")}</li>

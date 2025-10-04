@@ -329,4 +329,8 @@ export const en = {
 
   skipDownloadDefaults: "Skip download default configs",
   skipDownloadDefaultsDesc: "Skip checking for default Paper/Bukkit/Spigot config files to download",
+
+  pluginsOpenPluginsFolder: "Open plugins folder",
+  pluginsOpenServerFolder: "Open server folder",
+  openFileBrowser: "File Manager",
 };
