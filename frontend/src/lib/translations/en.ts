@@ -288,4 +288,45 @@ export const en = {
   cmdBanPlayer: "Ban player",
   cmdViewTPS: "View TPS",
   cmdSpigotTimings: "Spigot timings mode",
+
+  // Plugin configuration options
+  paperConfiguration: "Paper Configuration",
+  paperBuild: "Paper Build",
+  paperBuildDesc: "Specific Paper build number (leave empty for latest)",
+  paperChannel: "Paper Channel",
+  paperChannelDesc: "Channel: default or experimental",
+  customDownloadUrl: "Custom Download URL",
+  paperDownloadUrlDesc: "Override Paper download URL (optional)",
+
+  bukkitSpigotConfiguration: "Bukkit/Spigot Configuration",
+  bukkitDownloadUrl: "Bukkit Download URL",
+  bukkitDownloadUrlDesc: "Custom Bukkit download URL",
+  spigotDownloadUrl: "Spigot Download URL",
+  spigotDownloadUrlDesc: "Custom Spigot download URL",
+  buildFromSource: "Build Spigot from source",
+
+  pufferfishConfiguration: "Pufferfish Configuration",
+  pufferfishBuild: "Pufferfish Build",
+  pufferfishBuildDesc: "Specific build number or lastSuccessfulBuild",
+  useFlareFlags: "Use Flare profiler flags",
+
+  purpurConfiguration: "Purpur Configuration",
+  purpurBuild: "Purpur Build",
+  purpurBuildDesc: "LATEST or specific build number",
+  purpurDownloadUrlDesc: "Override Purpur download URL (optional)",
+
+  leafConfiguration: "Leaf Configuration",
+  leafBuild: "Leaf Build",
+  leafBuildDesc: "Specific Leaf build number (leave empty for latest)",
+
+  foliaConfiguration: "Folia Configuration",
+  foliaWarning: "Folia is experimental and many plugins may not work correctly due to multi-threading changes.",
+  foliaBuild: "Folia Build",
+  foliaBuildDesc: "Specific Folia build number",
+  foliaChannel: "Folia Channel",
+  foliaChannelDesc: "Release channel (experimental recommended)",
+  foliaDownloadUrlDesc: "Override Folia download URL (optional)",
+
+  skipDownloadDefaults: "Skip download default configs",
+  skipDownloadDefaultsDesc: "Skip checking for default Paper/Bukkit/Spigot config files to download",
 };

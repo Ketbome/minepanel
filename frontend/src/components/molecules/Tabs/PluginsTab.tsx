@@ -53,6 +53,193 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Paper specific options */}
+        {config.serverType === "PAPER" && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/diamond.webp" alt="Paper" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("paperConfiguration")}</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="paperBuild" className="text-gray-200 font-minecraft text-sm">
+                  {t("paperBuild")}
+                </Label>
+                <Input id="paperBuild" value={config.paperBuild || ""} onChange={(e) => updateConfig("paperBuild", e.target.value)} placeholder="140" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+                <p className="text-xs text-gray-400">{t("paperBuildDesc")}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="paperChannel" className="text-gray-200 font-minecraft text-sm">
+                  {t("paperChannel")}
+                </Label>
+                <Input id="paperChannel" value={config.paperChannel || ""} onChange={(e) => updateConfig("paperChannel", e.target.value)} placeholder="experimental" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+                <p className="text-xs text-gray-400">{t("paperChannelDesc")}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paperDownloadUrl" className="text-gray-200 font-minecraft text-sm">
+                {t("customDownloadUrl")}
+              </Label>
+              <Input id="paperDownloadUrl" value={config.paperDownloadUrl || ""} onChange={(e) => updateConfig("paperDownloadUrl", e.target.value)} placeholder="https://..." className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("paperDownloadUrlDesc")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Bukkit/Spigot specific options */}
+        {(config.serverType === "BUKKIT" || config.serverType === "SPIGOT") && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/gold.webp" alt="Bukkit/Spigot" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("bukkitSpigotConfiguration")}</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bukkitDownloadUrl" className="text-gray-200 font-minecraft text-sm">
+                {t("bukkitDownloadUrl")}
+              </Label>
+              <Input id="bukkitDownloadUrl" value={config.bukkitDownloadUrl || ""} onChange={(e) => updateConfig("bukkitDownloadUrl", e.target.value)} placeholder="https://..." className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("bukkitDownloadUrlDesc")}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="spigotDownloadUrl" className="text-gray-200 font-minecraft text-sm">
+                {t("spigotDownloadUrl")}
+              </Label>
+              <Input id="spigotDownloadUrl" value={config.spigotDownloadUrl || ""} onChange={(e) => updateConfig("spigotDownloadUrl", e.target.value)} placeholder="https://..." className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("spigotDownloadUrlDesc")}</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" id="buildFromSource" checked={config.buildFromSource || false} onChange={(e) => updateConfig("buildFromSource", e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+              <Label htmlFor="buildFromSource" className="text-gray-200 font-minecraft text-sm cursor-pointer">
+                {t("buildFromSource")}
+              </Label>
+            </div>
+          </div>
+        )}
+
+        {/* Pufferfish specific options */}
+        {config.serverType === "PUFFERFISH" && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/compass.webp" alt="Pufferfish" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("pufferfishConfiguration")}</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pufferfishBuild" className="text-gray-200 font-minecraft text-sm">
+                {t("pufferfishBuild")}
+              </Label>
+              <Input id="pufferfishBuild" value={config.pufferfishBuild || ""} onChange={(e) => updateConfig("pufferfishBuild", e.target.value)} placeholder="lastSuccessfulBuild or 47" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("pufferfishBuildDesc")}</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" id="useFlareFlags" checked={config.useFlareFlags || false} onChange={(e) => updateConfig("useFlareFlags", e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+              <Label htmlFor="useFlareFlags" className="text-gray-200 font-minecraft text-sm cursor-pointer">
+                {t("useFlareFlags")}
+              </Label>
+            </div>
+          </div>
+        )}
+
+        {/* Purpur specific options */}
+        {config.serverType === "PURPUR" && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/enchanted-book.webp" alt="Purpur" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("purpurConfiguration")}</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="purpurBuild" className="text-gray-200 font-minecraft text-sm">
+                {t("purpurBuild")}
+              </Label>
+              <Input id="purpurBuild" value={config.purpurBuild || ""} onChange={(e) => updateConfig("purpurBuild", e.target.value)} placeholder="LATEST or specific build" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("purpurBuildDesc")}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="purpurDownloadUrl" className="text-gray-200 font-minecraft text-sm">
+                {t("customDownloadUrl")}
+              </Label>
+              <Input id="purpurDownloadUrl" value={config.purpurDownloadUrl || ""} onChange={(e) => updateConfig("purpurDownloadUrl", e.target.value)} placeholder="https://..." className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("purpurDownloadUrlDesc")}</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" id="useFlareFlags" checked={config.useFlareFlags || false} onChange={(e) => updateConfig("useFlareFlags", e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+              <Label htmlFor="useFlareFlags" className="text-gray-200 font-minecraft text-sm cursor-pointer">
+                {t("useFlareFlags")}
+              </Label>
+            </div>
+          </div>
+        )}
+
+        {/* Leaf specific options */}
+        {config.serverType === "LEAF" && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/grass.webp" alt="Leaf" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("leafConfiguration")}</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="leafBuild" className="text-gray-200 font-minecraft text-sm">
+                {t("leafBuild")}
+              </Label>
+              <Input id="leafBuild" value={config.leafBuild || ""} onChange={(e) => updateConfig("leafBuild", e.target.value)} placeholder="441" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("leafBuildDesc")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Folia specific options */}
+        {config.serverType === "FOLIA" && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <Image src="/images/nether.webp" alt="Folia" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("foliaConfiguration")}</h3>
+            </div>
+
+            <div className="bg-amber-900/20 border border-amber-700/30 rounded p-3 mb-4">
+              <p className="text-xs text-amber-300">
+                <strong>⚠️ Warning:</strong> {t("foliaWarning")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="foliaBuild" className="text-gray-200 font-minecraft text-sm">
+                  {t("foliaBuild")}
+                </Label>
+                <Input id="foliaBuild" value={config.foliaBuild || ""} onChange={(e) => updateConfig("foliaBuild", e.target.value)} placeholder="26" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+                <p className="text-xs text-gray-400">{t("foliaBuildDesc")}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="foliaChannel" className="text-gray-200 font-minecraft text-sm">
+                  {t("foliaChannel")}
+                </Label>
+                <Input id="foliaChannel" value={config.foliaChannel || ""} onChange={(e) => updateConfig("foliaChannel", e.target.value)} placeholder="experimental" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+                <p className="text-xs text-gray-400">{t("foliaChannelDesc")}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="foliaDownloadUrl" className="text-gray-200 font-minecraft text-sm">
+                {t("customDownloadUrl")}
+              </Label>
+              <Input id="foliaDownloadUrl" value={config.foliaDownloadUrl || ""} onChange={(e) => updateConfig("foliaDownloadUrl", e.target.value)} placeholder="https://..." className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50" />
+              <p className="text-xs text-gray-400">{t("foliaDownloadUrlDesc")}</p>
+            </div>
+          </div>
+        )}
+
         <div className="bg-blue-900/30 border border-blue-700/30 rounded-md p-4">
           <div className="flex items-start gap-3">
             <Image src="/images/enchanted-book.webp" alt="Info" width={20} height={20} className="flex-shrink-0 mt-0.5 opacity-90" />
@@ -124,6 +311,17 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
               </ul>
             </div>
           </div>
+        </div>
+
+        {/* General options for all plugin servers */}
+        <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" id="skipDownloadDefaults" checked={config.skipDownloadDefaults || false} onChange={(e) => updateConfig("skipDownloadDefaults", e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+            <Label htmlFor="skipDownloadDefaults" className="text-gray-200 font-minecraft text-sm cursor-pointer">
+              {t("skipDownloadDefaults")}
+            </Label>
+          </div>
+          <p className="text-xs text-gray-400">{t("skipDownloadDefaultsDesc")}</p>
         </div>
       </CardContent>
 

@@ -288,6 +288,47 @@ export const es = {
   cmdBanPlayer: "Banear a jugador",
   cmdViewTPS: "Ver TPS",
   cmdSpigotTimings: "Modo spigot timings",
+
+  // Plugin configuration options
+  paperConfiguration: "Configuración de Paper",
+  paperBuild: "Build de Paper",
+  paperBuildDesc: "Número de build específico (dejar vacío para el último)",
+  paperChannel: "Canal de Paper",
+  paperChannelDesc: "Canal: default o experimental",
+  customDownloadUrl: "URL de Descarga Personalizada",
+  paperDownloadUrlDesc: "Reemplazar URL de descarga de Paper (opcional)",
+
+  bukkitSpigotConfiguration: "Configuración de Bukkit/Spigot",
+  bukkitDownloadUrl: "URL de Descarga de Bukkit",
+  bukkitDownloadUrlDesc: "URL personalizada de descarga de Bukkit",
+  spigotDownloadUrl: "URL de Descarga de Spigot",
+  spigotDownloadUrlDesc: "URL personalizada de descarga de Spigot",
+  buildFromSource: "Compilar Spigot desde código fuente",
+
+  pufferfishConfiguration: "Configuración de Pufferfish",
+  pufferfishBuild: "Build de Pufferfish",
+  pufferfishBuildDesc: "Número de build específico o lastSuccessfulBuild",
+  useFlareFlags: "Usar flags del perfilador Flare",
+
+  purpurConfiguration: "Configuración de Purpur",
+  purpurBuild: "Build de Purpur",
+  purpurBuildDesc: "LATEST o número de build específico",
+  purpurDownloadUrlDesc: "Reemplazar URL de descarga de Purpur (opcional)",
+
+  leafConfiguration: "Configuración de Leaf",
+  leafBuild: "Build de Leaf",
+  leafBuildDesc: "Número de build específico (dejar vacío para el último)",
+
+  foliaConfiguration: "Configuración de Folia",
+  foliaWarning: "Folia es experimental y muchos plugins pueden no funcionar correctamente debido a los cambios de multi-threading.",
+  foliaBuild: "Build de Folia",
+  foliaBuildDesc: "Número de build específico de Folia",
+  foliaChannel: "Canal de Folia",
+  foliaChannelDesc: "Canal de lanzamiento (experimental recomendado)",
+  foliaDownloadUrlDesc: "Reemplazar URL de descarga de Folia (opcional)",
+
+  skipDownloadDefaults: "Saltar descarga de configuraciones por defecto",
+  skipDownloadDefaultsDesc: "Omitir la verificación de archivos de configuración por defecto de Paper/Bukkit/Spigot",
 };
 
 export type TranslationKey = keyof typeof es;
