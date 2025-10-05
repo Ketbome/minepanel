@@ -1,5 +1,5 @@
 # Use Node.js 18 with full Debian base (more stable than Alpine for Next.js builds)
-FROM node:18-bullseye-slim as builder
+FROM node:22-bullseye-slim as builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-bullseye-slim as runner
+FROM node:22-bullseye-slim as runner
 
 WORKDIR /app
 

@@ -8,7 +8,7 @@ const execAsync = promisify(exec);
 
 @Injectable()
 export class ServerManagementService {
-  private readonly BASE_DIR = path.join(process.cwd(), '..', 'servers');
+  private readonly BASE_DIR = path.join(process.cwd(), 'servers');
 
   private getDockerComposePath(serverId: string): string {
     return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');
@@ -641,7 +641,7 @@ export class ServerManagementService {
       }
 
       // Execute docker compose commands from the directory containing the docker-compose.yml
-      const composeDir = this.getMcDataPath(serverId);
+      const composeDir = path.dirname(dockerComposePath);
 
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
         await execAsync('docker compose down', { cwd: composeDir });
