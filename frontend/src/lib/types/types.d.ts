@@ -1,7 +1,7 @@
 export interface ServerConfig {
   id: string;
   active: boolean;
-  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT";
+  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT" | "BUKKIT" | "PUFFERFISH" | "PURPUR" | "LEAF" | "FOLIA";
 
   // General configuration
   serverName: string;
@@ -115,4 +115,36 @@ export interface ServerConfig {
   cfBaseDir?: string;
   useModpackStartScript?: boolean;
   ftbLegacyJavaFixer?: boolean;
+
+  // Plugin specific (for SPIGOT, PAPER, BUKKIT, PUFFERFISH, PURPUR, LEAF, FOLIA)
+  spigetResources?: string;
+
+  // Paper specific
+  paperBuild?: string;
+  paperChannel?: string;
+  paperDownloadUrl?: string;
+
+  // Bukkit/Spigot specific
+  bukkitDownloadUrl?: string;
+  spigotDownloadUrl?: string;
+  buildFromSource?: boolean;
+
+  // Pufferfish specific
+  pufferfishBuild?: string;
+  useFlareFlags?: boolean;
+
+  // Purpur specific
+  purpurBuild?: string;
+  purpurDownloadUrl?: string;
+
+  // Leaf specific
+  leafBuild?: string;
+
+  // Folia specific
+  foliaBuild?: string;
+  foliaChannel?: string;
+  foliaDownloadUrl?: string;
+
+  // General Paper/Bukkit/Spigot config
+  skipDownloadDefaults?: boolean;
 }

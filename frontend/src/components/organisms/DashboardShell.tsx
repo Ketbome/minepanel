@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/services/auth/auth.service";
 import { Sidebar } from "@/components/organisms/Sidebar";
 import { DashboardHeader } from "@/components/organisms/DashboardHeader";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
 
 interface DashboardShellProps {
@@ -12,6 +13,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
+  const { t } = useLanguage();
   const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -47,7 +49,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex min-h-screen bg-gray-900 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">{!isHydrated ? "Inicializando..." : "Verificando autenticación..."}</p>
+          <p className="text-gray-400">{!isHydrated ? t("initializing") : t("verifyingAuth")}</p>
         </div>
       </div>
     );

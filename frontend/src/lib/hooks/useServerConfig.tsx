@@ -121,6 +121,38 @@ const defaultConfig: ServerConfig = {
   cfBaseDir: "/data/FeedTheBeast",
   useModpackStartScript: true,
   ftbLegacyJavaFixer: false,
+
+  // Plugin specific
+  spigetResources: "",
+
+  // Paper specific
+  paperBuild: "",
+  paperChannel: "",
+  paperDownloadUrl: "",
+
+  // Bukkit/Spigot specific
+  bukkitDownloadUrl: "",
+  spigotDownloadUrl: "",
+  buildFromSource: false,
+
+  // Pufferfish specific
+  pufferfishBuild: "",
+  useFlareFlags: false,
+
+  // Purpur specific
+  purpurBuild: "",
+  purpurDownloadUrl: "",
+
+  // Leaf specific
+  leafBuild: "",
+
+  // Folia specific
+  foliaBuild: "",
+  foliaChannel: "",
+  foliaDownloadUrl: "",
+
+  // General config
+  skipDownloadDefaults: false,
 };
 
 export function useServerConfig(serverId: string) {

@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, PowerIcon, RefreshCw, Server } from "lucide-react";
+import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen } from "lucide-react";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
 
 interface ServerPageHeaderProps {
@@ -16,7 +17,18 @@ interface ServerPageHeaderProps {
 }
 
 export function ServerPageHeader({ serverId, serverName, serverStatus, isProcessing, onStartServer, onStopServer, onRestartServer }: ServerPageHeaderProps) {
+  const { t } = useLanguage();
   const containerName = serverId;
+
+  // Function to open File Browser
+  const openFileBrowser = () => {
+    // Usar el hostname actual pero con el puerto 25580 para File Browser
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const fileBrowserPath = `/filebrowser/files/${serverId}`;
+    const url = `${protocol}//${hostname}:25580${fileBrowserPath}`;
+    window.open(url, "_blank");
+  };
 
   // Function to get icon based on status
   const getStatusIcon = (status: string) => {
@@ -54,15 +66,15 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
   const getStatusText = (status: string) => {
     switch (status) {
       case "running":
-        return "Activo";
+        return t("active");
       case "starting":
-        return "Iniciando...";
+        return t("starting2");
       case "stopped":
-        return "Detenido";
+        return t("stopped2");
       case "not_found":
-        return "No encontrado";
+        return t("notFound");
       default:
-        return "Desconocido";
+        return t("unknown");
     }
   };
 
@@ -110,26 +122,31 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
           {serverStatus === "running" || serverStatus === "starting" ? (
             <Button type="button" variant="destructive" onClick={onStopServer} className="gap-2 bg-red-600 hover:bg-red-700 font-minecraft text-white">
               <PowerIcon className="h-4 w-4" />
-              Detener Servidor
+              {t("stopServer")}
             </Button>
-          ) :  (
+          ) : (
             <Button type="button" variant="default" onClick={onStartServer} className="gap-2 bg-emerald-600 hover:bg-emerald-700 font-minecraft text-white">
               <PowerIcon className="h-4 w-4" />
-              Iniciar Servidor
+              {t("startServer")}
             </Button>
           )}
 
           <Button type="button" variant="outline" onClick={onRestartServer} disabled={isProcessing || serverStatus !== "running"} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-orange-600/20 hover:text-orange-400 hover:border-orange-600/50">
             <RefreshCw className={`h-4 w-4 ${isProcessing ? "animate-spin" : ""}`} />
-            {isProcessing ? "Reiniciando..." : "Reiniciar"}
+            {isProcessing ? t("restarting") : t("restart2")}
+          </Button>
+
+          <Button type="button" variant="outline" onClick={openFileBrowser} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
+            <FolderOpen className="h-4 w-4" />
+            {t("openFileBrowser")}
           </Button>
         </div>
       </div>
 
       {/* Mensaje informativo */}
       <div className="text-xs text-gray-300 px-2">
-        <span className="font-medium">Tip:</span> Configura este servidor ajustando los parámetros en las pestañas de abajo.
-        {serverStatus === "running" && " Los cambios requerirán reiniciar el servidor para aplicarse."}
+        <span className="font-medium">{t("tip")}</span> {t("configureServerTip")}
+        {serverStatus === "running" && ` ${t("changesRequireRestart")}`}
       </div>
     </div>
   );

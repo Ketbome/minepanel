@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ type ServerInfo = {
 };
 
 export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,13 +95,15 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
   const getStatusText = (status: string) => {
     switch (status) {
       case "running":
-        return "Activo";
+        return t("online");
       case "stopped":
-        return "Detenido";
+        return t("stopped");
+      case "loading":
+        return t("loading");
       case "starting":
-        return "Iniciando";
+        return t("starting");
       default:
-        return "Error";
+        return t("error");
     }
   };
 
@@ -138,7 +142,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   const navigationItems = [
     {
-      label: "Dashboard",
+      label: t("dashboard"),
       icon: Home,
       href: "/dashboard",
       isActive: pathname === "/dashboard",
@@ -176,7 +180,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             {!isCollapsed && (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="flex items-center gap-3">
                 <Image src="/images/minecraft-logo.webp" alt="Logo" width={32} height={32} className="object-contain" />
-                <h2 className="font-minecraft text-lg text-white">MineCraft Panel</h2>
+                <h2 className="font-minecraft text-lg text-white">{t("minecraftPanel")}</h2>
               </motion.div>
             )}
           </AnimatePresence>
@@ -192,7 +196,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3">
-              Navegación
+              {t("navigation")}
             </motion.p>
           )}
         </AnimatePresence>
@@ -219,7 +223,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
           <AnimatePresence mode="wait">
             {!isCollapsed && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-gray-400 uppercase tracking-wider font-minecraft">
-                Servidores
+                {t("servers")}
               </motion.p>
             )}
           </AnimatePresence>

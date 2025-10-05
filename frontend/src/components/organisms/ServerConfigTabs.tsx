@@ -6,10 +6,11 @@ import { LogsTab } from "../molecules/Tabs/LogsTab";
 import { CommandsTab } from "../molecules/Tabs/CommandsTab";
 import { AdvancedTab } from "../molecules/Tabs/AdvancedTab";
 import { ModsTab } from "../molecules/Tabs/ModsTab";
+import { PluginsTab } from "../molecules/Tabs/PluginsTab";
 import { ResourcesTab } from "../molecules/Tabs/ResourcesTab";
 import { GeneralSettingsTab } from "../molecules/Tabs/GeneralSettingsTab";
 import { ServerTypeTab } from "../molecules/Tabs/ServerTypeTab";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -24,6 +25,11 @@ interface ServerConfigTabsProps {
 
 export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, onClearData }) => {
   const { t } = useLanguage();
+
+  // Determinar qué tabs mostrar según el tipo de servidor
+  const showModsTab = config.serverType === "FORGE" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
+  const showPluginsTab = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     await saveConfig();
@@ -54,11 +60,21 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 <span className="sm:hidden">Recursos</span>
               </TabsTrigger>
 
-              <TabsTrigger value="mods" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
-                <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Mods</span>
-                <span className="sm:hidden">Mods</span>
-              </TabsTrigger>
+              {showModsTab && (
+                <TabsTrigger value="mods" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
+                  <Package className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mods</span>
+                  <span className="sm:hidden">Mods</span>
+                </TabsTrigger>
+              )}
+
+              {showPluginsTab && (
+                <TabsTrigger value="plugins" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
+                  <Layers className="h-4 w-4" />
+                  <span className="hidden sm:inline">Plugins</span>
+                  <span className="sm:hidden">Plugins</span>
+                </TabsTrigger>
+              )}
 
               <TabsTrigger value="advanced" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Code className="h-4 w-4" />
@@ -93,9 +109,17 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               <ResourcesTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
             </TabsContent>
 
-            <TabsContent value="mods" className="space-y-4 mt-0">
-              <ModsTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
-            </TabsContent>
+            {showModsTab && (
+              <TabsContent value="mods" className="space-y-4 mt-0">
+                <ModsTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+              </TabsContent>
+            )}
+
+            {showPluginsTab && (
+              <TabsContent value="plugins" className="space-y-4 mt-0">
+                <PluginsTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+              </TabsContent>
+            )}
 
             <TabsContent value="advanced" className="space-y-4 mt-0">
               <AdvancedTab config={config} updateConfig={updateConfig} onSave={saveConfig} />

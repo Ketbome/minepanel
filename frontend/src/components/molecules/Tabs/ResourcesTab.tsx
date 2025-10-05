@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { MemoryCpuTab } from "./ResourcesTabs/MemoryCpuTab";
 import { JvmOptionsTab } from "./ResourcesTabs/JvmOptionsTab";
@@ -17,14 +18,16 @@ interface ResourcesTabProps {
 }
 
 export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, onSave }) => {
+  const { t } = useLanguage();
+
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
           <Image src="/images/diamond-pickaxe.webp" alt="Recursos" width={24} height={24} className="opacity-90" />
-          Recursos del Servidor
+          {t("serverResources")}
         </CardTitle>
-        <CardDescription className="text-gray-300">Configura memoria, CPU y otras limitaciones de recursos para tu servidor</CardDescription>
+        <CardDescription className="text-gray-300">{t("serverResourcesDesc")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -33,15 +36,15 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, onSa
             <TabsList className="grid grid-cols-3 mb-6 w-full bg-gray-800/70 border border-gray-700/50 rounded-md p-1 text-gray-200">
               <TabsTrigger value="memory" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
                 <Image src="/images/emerald.webp" alt="Memoria" width={16} height={16} className="mr-2" />
-                Memoria y CPU
+                {t("memoryCpu")}
               </TabsTrigger>
               <TabsTrigger value="jvm" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
                 <Image src="/images/diamond.webp" alt="JVM" width={16} height={16} className="mr-2" />
-                Opciones de JVM
+                {t("jvmOptions")}
               </TabsTrigger>
               <TabsTrigger value="advanced" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
                 <Image src="/images/observer.webp" alt="Avanzado" width={16} height={16} className="mr-2" />
-                Opciones Avanzadas
+                {t("advancedResources")}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -63,7 +66,7 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, onSa
       <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
         <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
           <Save className="h-4 w-4" />
-          Guardar Configuración
+          {t("saveConfiguration")}
         </Button>
       </CardFooter>
     </Card>

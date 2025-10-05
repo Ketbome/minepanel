@@ -6,7 +6,7 @@ services:
       - 25580:8080
     volumes:
       - ../servers:/data
-      - /CONFIG_DIR:/config
+      - ./config:/config
     environment:
       - FB_BASEURL=/filebrowser
     restart: always
