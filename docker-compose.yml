@@ -1,41 +1,69 @@
+version: "3.8"
+
 services:
+  # Backend - NestJS API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: minepanel-backend
+    container_name: minecraft-manager-backend
     ports:
       - "8091:8091"
+    env_file:
+      - ./backend/.env
     environment:
       - NODE_ENV=production
-    env_file:
-      - .env
+      - PORT=8091
+      - FRONTEND_URL=http://frontend:8090
+      # Override with values from .env if present
+      - JWT_SECRET=${JWT_SECRET:-mineminenomi-secret-key-change-this}
+      - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$/ImficEXuymsxlZap5.92euInslhhQB4Yg/gZS5zusrQ0aanIU2sO}
     volumes:
-      - ./servers:/app/servers
+      # Mount the servers directory so backend can manage docker-compose files
+      - ./servers:/app/servers:rw
+      # Mount docker socket to allow backend to run docker commands
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - minepanel
+      - minecraft-manager-network
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:8091', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Frontend - Next.js App
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: minepanel-frontend
+    container_name: minecraft-manager-frontend
     ports:
       - "8090:8090"
     env_file:
-      - .env
-    networks:
-      - minepanel
-    restart: unless-stopped
+      - ./frontend/.env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8091
+      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     depends_on:
       - backend
+    networks:
+      - minecraft-manager-network
+    restart: unless-stopped
 
 networks:
-  minepanel:
+  minecraft-manager-network:
     driver: bridge
+    name: minecraft-manager-network
 
 volumes:
-  servers_data:
+  servers-data:
     driver: local

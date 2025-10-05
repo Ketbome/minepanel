@@ -42,9 +42,53 @@ minecraft-server-manager/
 └── filebrowser/      # For manual file handling
 ```
 
-## Important: Configure your environment variables first
+## Requirements
 
-Before running the project, you **must create your `.env` files** for both the backend and frontend:
+You need to have installed:
+
+- Docker and Docker Compose (required)
+- Node.js (version 18 or higher) - only for manual installation
+- Git (obviously)
+- The desire to manage servers like a pro
+
+## Installation
+
+There are two ways to install and run the project:
+
+### 🐳 Option 1: Docker Compose (Recommended)
+
+The easiest and fastest way to get started. Perfect for production environments.
+
+**Quick start:**
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Ketbome/minecraft-docker-manager.git
+cd minecraft-docker-manager
+
+# 2. Create environment file
+cp .env.example .env
+# Edit .env and change JWT_SECRET to a secure value
+
+# 3. Build and start services
+docker-compose up -d
+
+# 4. Access the application
+# Frontend: http://localhost:8090
+# Backend API: http://localhost:8091
+```
+
+**📖 For detailed instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
+
+**⚙️ For environment variables setup, see [ENV_SETUP.md](ENV_SETUP.md)**
+
+### 🔧 Option 2: Manual Installation (Development)
+
+For developers who want to run the services separately or make modifications.
+
+#### Important: Configure your environment variables first
+
+Before running the project manually, you **must create your `.env` files** for both the backend and frontend:
 
 - Copy `.env.example` to `.env` in the `backend` folder:
   ```bash
@@ -75,23 +119,9 @@ Then edit the values according to your environment. **It is not necessary to ent
 >
 > Paste your new hash in the `.env` file.
 
-You need to have installed:
+## Manual Installation Steps
 
-- Docker and Docker Compose
-- Node.js (version 18 or higher)
-- Git (obviously)
-- The desire to manage servers like a pro
-
-## Installation
-
-### Step 1: Download the project
-
-```bash
-git clone https://github.com/Ketbome/minecraft-docker-manager.git
-cd minecraft-server-manager
-```
-
-### Step 2: Set up the backend
+### Step 1: Set up the backend
 
 ```bash
 cd backend
@@ -102,7 +132,7 @@ npm run build
 pm2 start npm --name "minecraft-backend" -- run start:prod
 ```
 
-### Step 3: Set up the frontend
+### Step 2: Set up the frontend
 
 ```bash
 cd ../frontend
@@ -111,7 +141,7 @@ npm run build
 pm2 start npm --name "minecraft-frontend" -- run start
 ```
 
-### Step 4: Save PM2 configuration
+### Step 3: Save PM2 configuration
 
 ```bash
 pm2 save
