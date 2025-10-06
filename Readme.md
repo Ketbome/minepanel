@@ -188,7 +188,7 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en
 - ✅ User authentication
 - ✅ Resource usage dashboard
 - ✅ Dynamic server addition/removal
-- ✖️ Multi-language interface
+- ✅ Multi-language interface
 
 **In the oven:**
 
