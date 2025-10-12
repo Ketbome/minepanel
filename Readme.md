@@ -1,9 +1,9 @@
 # Minepanel
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Docker Ready](https://img.shields.io/badge/Docker-Ready-blue)
 ![Made with NestJS](https://img.shields.io/badge/Backend-NestJS-red)
 ![Made with Next.js](https://img.shields.io/badge/Frontend-Next.js-black)
+![PM2](https://img.shields.io/badge/Process_Manager-PM2-2B037A)
 
 A web-based tool for managing multiple Minecraft servers using Docker. Because managing servers from the terminal can be a real headache.
 
@@ -36,11 +36,39 @@ After trying several solutions, I wanted something that was:
 
 ```
 minecraft-server-manager/
-├── frontend/         # The pretty face (Next.js)
-├── backend/          # The brain (NestJS)
-├── servers/          # Where your servers live
-└── filebrowser/      # For manual file handling
+├── frontend/         # The pretty face (Next.js) - Runs with PM2
+├── backend/          # The brain (NestJS) - Runs with PM2
+├── servers/          # Where your Minecraft servers live (each with docker-compose)
+└── filebrowser/      # For manual file handling (Docker)
 ```
+
+## Architecture & Why No Docker for Frontend/Backend?
+
+This project uses a hybrid architecture:
+
+- **Frontend & Backend**: Run **WITHOUT Docker** using PM2 or Node.js directly
+- **Minecraft Servers**: Each server **DOES use Docker** (itzg/minecraft-server)
+
+### Why this approach?
+
+The backend needs to create and manage Docker containers for each Minecraft server (using `docker compose up`, reading logs, etc.). Running these operations from inside a Docker container would require Docker-in-Docker (DinD), which:
+
+- Is significantly more complex to set up
+- Has security implications
+- Requires privileged mode
+- Makes the project harder to maintain
+
+For simplicity and reliability, the management panel (frontend + backend) runs directly on the host machine using PM2, while each Minecraft server runs in its own isolated Docker container.
+
+### Future Implementation
+
+Docker-in-Docker could be implemented in the future by:
+
+- Mounting the Docker socket (`/var/run/docker.sock`) in the backend container
+- Configuring proper permissions and security
+- Handling networking between the management containers and Minecraft server containers
+
+However, the current approach with PM2 is more straightforward and works reliably for most use cases.
 
 ## Important: Configure your environment variables first
 
@@ -77,10 +105,17 @@ Then edit the values according to your environment. **It is not necessary to ent
 
 You need to have installed:
 
-- Docker and Docker Compose
-- Node.js (version 18 or higher)
+- **Docker and Docker Compose** (for Minecraft servers)
+- **Node.js** (version 18 or higher - for frontend & backend)
+- **PM2** (recommended for process management)
 - Git (obviously)
 - The desire to manage servers like a pro
+
+Install PM2 globally:
+
+```bash
+npm install -g pm2
+```
 
 ## Installation
 
@@ -120,7 +155,7 @@ pm2 startup  # Follow the instructions that appear
 
 ## File browser
 
-Includes Filebrowser for when you need to edit files manually (which always happens).
+Includes Filebrowser (running in Docker) for when you need to edit files manually (which always happens).
 
 To start it:
 
@@ -136,7 +171,7 @@ Then go to: `http://localhost:25580`
 - Username: `admin`
 - Password: `admin`
 
-> ⚠️ **Important**: Change these credentials in .env
+> ⚠️ **Important**: Change these credentials immediately after first login
 
 With Filebrowser you can:
 
@@ -144,6 +179,8 @@ With Filebrowser you can:
 - Edit `server.properties`, `ops.json`, etc.
 - Upload mods, plugins, or worlds
 - Make quick changes without complications
+
+> **Note**: Filebrowser runs in Docker without issues because it only needs to read/write files, not manage other Docker containers.
 
 ## Environment variables
 
