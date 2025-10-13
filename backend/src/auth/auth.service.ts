@@ -29,7 +29,7 @@ export class AuthService {
   // Helper method to generate password hash
   // Only used in development to generate the initial hash
   async generateHash(password: string): Promise<string> {
-    const saltRounds = 10;
+    const saltRounds = 12;
     return bcrypt.hash(password, saltRounds);
   }
 }
