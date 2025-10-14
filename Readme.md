@@ -189,7 +189,7 @@ With Filebrowser you can:
 ```env
 # Frontend
 # URL of the backend API
-NEXT_PUBLIC_API_URL=localhost:8091
+NEXT_PUBLIC_API_URL=http://localhost:8091
 
 # Backend
 # URL of the frontend application
