@@ -352,7 +352,6 @@ All configuration is done directly in `docker-compose.yml`. Key environment vari
 - [ ] API documentation (Swagger)
 - [ ] Mobile UI improvements
 - [ ] Server templates
-- [ ] Plugin/mod marketplace integration
 - [ ] Metrics and analytics dashboard
 - [ ] Discord webhooks for notifications
 
