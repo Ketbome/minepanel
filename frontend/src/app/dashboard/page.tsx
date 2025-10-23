@@ -13,11 +13,8 @@ import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useLanguage } from "@/lib/hooks/useLanguage";
 import Link from "next/link";
 
 type ServerInfo = {
@@ -31,27 +28,13 @@ type ServerInfo = {
 };
 
 export default function Dashboard() {
-  const { t } = useLanguage();
-  
-  // Schema with dynamic translations
-  const createServerSchema = z.object({
-    id: z
-      .string()
-      .min(3, { message: t('idMinLength') })
-      .max(20, { message: t('idMaxLength') })
-      .regex(/^[a-zA-Z0-9_-]+$/, {
-        message: t('idInvalidChars'),
-      }),
-  });
-
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingServer, setIsCreatingServer] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeletingServer, setIsDeletingServer] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof createServerSchema>>({
-    resolver: zodResolver(createServerSchema),
+  const form = useForm<{ id: string }>({
     defaultValues: {
       id: "",
     },
@@ -154,7 +137,7 @@ export default function Dashboard() {
     }
   }, [servers]);
 
-  const handleCreateServer = async (values: z.infer<typeof createServerSchema>) => {
+  const handleCreateServer = async (values: { id: string }) => {
     setIsCreatingServer(true);
     try {
       const response = await createServer({ id: values.id });

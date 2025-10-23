@@ -7,7 +7,7 @@ import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/serv
 
 @Injectable()
 export class DockerComposeService {
-  private readonly BASE_DIR = path.join(process.cwd(), '..', 'servers');
+  private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
 
   constructor(private readonly configService: ConfigService) {
     fs.ensureDirSync(this.BASE_DIR);

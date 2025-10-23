@@ -35,374 +35,330 @@ After trying several solutions, I wanted something that was:
 ## Project structure
 
 ```
-minecraft-server-manager/
-├── frontend/         # The pretty face (Next.js) - Runs with PM2
-├── backend/          # The brain (NestJS) - Runs with PM2
-├── servers/          # Where your Minecraft servers live (each with docker-compose)
-└── filebrowser/      # For manual file handling (Docker)
+minepanel/
+├── frontend/         # Web interface (Next.js) - Dockerized
+├── backend/          # REST API (NestJS) - Dockerized, controls Docker via socket
+├── servers/          # Minecraft servers directory (each server has its own docker-compose)
+├── filebrowser/      # File management UI - Dockerized
+└── docker-compose.yml  # Main orchestration file
 ```
 
 ## Architecture
 
-This project uses a hybrid architecture:
+Minepanel is **fully containerized** using a smart Docker-in-Docker approach:
 
-- **Backend**: Runs **WITHOUT Docker** using PM2 or Node.js directly
-- **Frontend**: Can run with **Docker** or **PM2** (your choice)
-- **Minecraft Servers**: Each server **DOES use Docker** (itzg/minecraft-server)
+### 🏗️ Components
 
-### Why the backend doesn't use Docker?
+- **Backend (NestJS)**: Runs in Docker, manages everything via REST API
+- **Frontend (Next.js)**: Runs in Docker, provides the beautiful web interface  
+- **Filebrowser**: Runs in Docker, allows direct file editing
+- **Minecraft Servers**: Each server runs in its own isolated Docker container
 
-The backend needs to create and manage Docker containers for each Minecraft server (using `docker compose up`, reading logs, etc.). Running these operations from inside a Docker container would require Docker-in-Docker (DinD), which:
+### 🔌 How does Docker control Docker?
 
-- Is significantly more complex to set up
-- Has security implications
-- Requires privileged mode
-- Makes the project harder to maintain
+The backend container can create and manage Minecraft server containers through the **Docker socket**:
 
-For simplicity and reliability, the backend runs directly on the host machine using PM2.
-
-### Frontend options
-
-You have **two options** for running the frontend:
-
-1. **With Docker** (recommended for quick setup) - Just run `docker compose up`
-2. **With PM2** (more traditional) - Better for development or custom setups
-
-## Important: Configure your environment variables first
-
-Before running the project, you **must create your `.env` files** for both the backend and frontend:
-
-- Copy `.env.example` to `.env` in the `backend` folder:
-  ```bash
-  cp backend/.env.example backend/.env
-  ```
-- Copy `.env.example` to `.env` in the `frontend` folder:
-  ```bash
-  cp frontend/.env.example frontend/.env
-  ```
-
-Then edit the values according to your environment. **It is not necessary to enter the `CF_API_KEY`.** (You can leave it blank or add a comment.).
-
-> ⚠️ **Security warning:**
->
-> The default admin password hash is:
->
-> `$2a$12$/ImficEXuymsxlZap5.92euInslhhQB4Yg/gZS5zusrQ0aanIU2sO`
->
-> This is for the user `admin`. **You should change this to your own password hash!**
->
-> - Never use the default hash in production.
-> - To generate a new hash, use a tool like [bcrypt-generator.com](https://bcrypt-generator.com/) or the `bcrypt` library in Node.js.
-> - Example Node.js command:
->
->   ```js
->   require("bcrypt").hashSync("your-new-password", 12);
->   ```
->
-> Paste your new hash in the `.env` file.
-
-You need to have installed:
-
-- **Docker and Docker Compose** (for Minecraft servers)
-- **Node.js** (version 18 or higher - for frontend & backend)
-- **PM2** (recommended for process management)
-- Git (obviously)
-- The desire to manage servers like a pro
-
-Install PM2 globally:
-
-```bash
-npm install -g pm2
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock  # Direct access to host Docker daemon
+  - ${PWD}/servers:${PWD}/servers              # Same path in container and host
 ```
 
-## Installation
+**The flow:**
+1. Backend (inside container) executes `docker compose up` for a Minecraft server
+2. Command travels through the mounted socket to the **host's Docker daemon**
+3. Minecraft server container is created on the host (as a "sibling", not nested)
+4. Backend monitors/controls servers using standard Docker commands
 
-You have two options for running the frontend: Docker or PM2. Choose the one that suits you best.
+**Why this works:**
+- ✅ No Docker-in-Docker (DinD) complexity - simpler and faster
+- ✅ Minecraft servers run directly on host with full performance
+- ✅ Paths are synchronized between container and host
+- ✅ Production-ready and battle-tested approach
+- ✅ Backend stays isolated but has infrastructure control
 
-### Option 1: Using Docker (Recommended - Easier Setup)
+### 🚀 Deployment Modes
 
-#### Step 1: Download the project
+This repo includes configuration for two deployment scenarios:
+
+1. **Production with nginx-proxy** (`docker-compose.yml`) - SSL + custom domains
+2. **Local development** - Simple setup without reverse proxy (instructions below)
+
+## ⚠️ Security First!
+
+> **Default admin credentials:**
+> - Username: `admin`  
+> - Password: `admin`
+>
+> **🔒 CHANGE THE PASSWORD BEFORE PRODUCTION!**
+>
+> The password is stored as a bcrypt hash in the `docker-compose.yml`. Generate a new one:
+> - Use [bcrypt-generator.com](https://bcrypt-generator.com/)
+> - Or Node.js: `require('bcrypt').hashSync('your-password', 12)`
+> - Update `CLIENT_PASSWORD` in `docker-compose.yml`
+
+## 📋 Requirements
+
+- **Docker** and **Docker Compose** (that's it!)
+- Git
+- (Optional) nginx-proxy if using custom domains
+
+## 🚀 Installation
+
+Choose your deployment method:
+
+---
+
+### Option A: Production with nginx-proxy (Recommended for VPS/Server)
+
+Perfect for: Production deployments with custom domains and automatic SSL.
+
+**Prerequisites:**
+- [nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) already configured
+- Domain names pointing to your server
+
+#### Step 1: Clone and configure
 
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minecraft-docker-manager
 ```
 
-#### Step 2: Configure environment variables
+#### Step 2: Edit docker-compose.yml
 
-**For Docker Compose:**
-
-```bash
-cp docker.env.example .env
-# Edit the .env file with your preferred settings (ports, UIDs, etc.)
-```
-
-**For Backend:**
+Replace placeholder values with your own:
 
 ```bash
-cp backend/.env.example backend/.env
-# Edit backend/.env - IMPORTANT: Change the CLIENT_PASSWORD hash!
+nano docker-compose.yml
 ```
 
-#### Step 3: Set up the backend (runs with PM2)
+Change these values:
+- `app.ketbome.lat` → your backend API domain
+- `minecraft.ketbome.lat` → your frontend domain  
+- `filebrowser.ketbome.lat` → your filebrowser domain
+- `pims.2711@gmail.com` → your email (for Let's Encrypt)
+- `CLIENT_PASSWORD` → your bcrypt hash (see security section above)
+- `CF_API_KEY` → your CurseForge API key (optional)
+
+#### Step 3: Create required directories
 
 ```bash
-cd backend
-npm install
-npm run build
-pm2 start npm --name "minecraft-backend" -- run start:prod
-cd ..
+mkdir -p servers filebrowser/config
 ```
 
-#### Step 4: Start frontend and filebrowser with Docker
+#### Step 4: Start all services
 
 ```bash
 docker compose up -d
 ```
 
-#### Step 5: Save PM2 configuration
+#### Step 5: Check logs
 
 ```bash
-pm2 save
-pm2 startup  # Follow the instructions that appear
+docker compose logs -f
 ```
 
-That's it! Access the panel at `http://localhost:3000`
+**Access your panel:**
+- Frontend: `https://your-frontend-domain.com`
+- Backend API: `https://your-backend-domain.com`
+- Filebrowser: `https://your-filebrowser-domain.com`
+
+**Useful commands:**
+```bash
+# View logs
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Restart a service
+docker compose restart backend
+
+# Stop everything
+docker compose down
+
+# Update
+git pull
+docker compose build
+docker compose up -d
+```
 
 ---
 
-### Option 2: Using PM2 (Traditional Setup)
+### Option B: Local Development (Without nginx-proxy)
 
-#### Step 1: Download the project
+Perfect for: Local testing, development, or simple home server.
+
+#### Step 1: Clone the project
 
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minecraft-docker-manager
 ```
 
-#### Step 2: Configure environment variables
+#### Step 2: Modify docker-compose.yml for local use
 
 ```bash
-# Backend
-cp backend/.env.example backend/.env
-# Edit backend/.env - IMPORTANT: Change the CLIENT_PASSWORD hash!
+# Backup the production config
+cp docker-compose.yml docker-compose.prod.yml
 
-# Frontend
-cp frontend/.env.example frontend/.env
-# Edit frontend/.env with your configuration
+# Edit for local use
+nano docker-compose.yml
 ```
 
-#### Step 3: Set up the backend
+Remove nginx-proxy configuration and use direct ports. Change:
 
-```bash
-cd backend
-npm install
-npm run build
-pm2 start npm --name "minecraft-backend" -- run start:prod
-cd ..
+```yaml
+# BEFORE (nginx-proxy mode):
+expose:
+  - 8091
+environment:
+  - VIRTUAL_HOST=app.ketbome.lat
+  # ...
+networks:
+  - nginx-proxy
+
+# AFTER (local mode):
+ports:
+  - "8091:8091"
+environment:
+  - FRONTEND_URL=http://localhost:3000
+  # ... (remove VIRTUAL_HOST, LETSENCRYPT_* vars)
+# Remove networks section
 ```
 
-#### Step 4: Set up the frontend
-
-```bash
-cd frontend
-npm install
-npm run build
-pm2 start npm --name "minecraft-frontend" -- run start
-cd ..
-```
-
-#### Step 5: Save PM2 configuration
-
-```bash
-pm2 save
-pm2 startup  # Follow the instructions that appear
-```
-
-Access the panel at `http://localhost:3000`
-
-## File browser
-
-Includes Filebrowser for when you need to edit files manually (which always happens).
-
-### If you installed with Docker (Option 1):
-
-Filebrowser is **already running**! It starts automatically with `docker compose up`.
-
-Access it at: `http://localhost:8080` (or the port you configured in `.env`)
-
-### If you installed with PM2 (Option 2):
-
-You need to start Filebrowser separately:
-
-```bash
-cd filebrowser
-docker-compose up -d
-```
-
-Then go to: `http://localhost:8080`
-
-### Default credentials
-
-- Username: `admin`
-- Password: `admin`
-
-> ⚠️ **Important**: Change these credentials immediately after first login
-
-### What you can do with Filebrowser
-
-- Browse through your server files
-- Edit `server.properties`, `ops.json`, etc.
-- Upload mods, plugins, or worlds
-- Make quick changes without complications
-
-> **Note**: Filebrowser runs in Docker without issues because it only needs to read/write files, not manage other Docker containers.
-
-## Environment variables
-
-### For Docker installation (Option 1)
-
-You need **two** `.env` files:
-
-**1. Root `.env` file** (for docker-compose):
-
-```env
-# Port Configuration
-FRONTEND_PORT=3000
-FILEBROWSER_PORT=8080
-
-# User/Group IDs (run: id -u and id -g to get yours)
-UID=1000
-GID=1000
-
-# Frontend URLs
-NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-```
-
-**2. Backend `.env` file** (in `backend/` folder):
-
-```env
-# URL of the frontend application
-FRONTEND_URL=localhost:3000
-
-# CurseForge API key (optional - leave empty if not using)
-CF_API_KEY=
-
-# Admin credentials
-CLIENT_USERNAME=admin
-CLIENT_PASSWORD=$2a$12$/ImficEXuymsxlZap5.92euInslhhQB4Yg/gZS5zusrQ0aanIU2sO
-
-# Default language: 'en' or 'es'
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en
-```
-
-> ⚠️ **Security**: The default `CLIENT_PASSWORD` hash is for the password "admin". **Change it in production!**
-> Generate a new hash at [bcrypt-generator.com](https://bcrypt-generator.com/) or use Node.js:
-> ```js
-> require('bcrypt').hashSync('your-password', 12)
-> ```
-
-### For PM2 installation (Option 2)
-
-**Backend `.env` file** (in `backend/` folder):
-
-```env
-# URL of the frontend application
-FRONTEND_URL=localhost:3000
-
-# CurseForge API key (optional)
-CF_API_KEY=
-
-# Admin credentials
-CLIENT_USERNAME=admin
-CLIENT_PASSWORD=$2a$12$/ImficEXuymsxlZap5.92euInslhhQB4Yg/gZS5zusrQ0aanIU2sO
-
-# Default language: 'en' or 'es'
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en
-```
-
-**Frontend `.env` file** (in `frontend/` folder):
-
-```env
-# URL of the backend API
-NEXT_PUBLIC_API_URL=http://localhost:8091
-```
-
-## What's still missing
-
-- [x] Translate everything to English (Done thanks to [ang3lo-azevedo](https://github.com/ang3lo-azevedo))
-- [ ] Support for more modpack platforms
-- [x] Backup system (already done!)
-- [ ] User roles and permissions
-- [ ] API documentation
-- [ ] More detailed deployment guides
-- [ ] Improved responsive design
-
-## Roadmap (what's coming)
-
-**Already working:**
-
-- ✅ Basic support for multiple servers
-- ✅ Real-time logs
-- ✅ User authentication
-- ✅ Resource usage dashboard
-- ✅ Dynamic server addition/removal
-- ✅ Multi-language interface
-
-**In the oven:**
-
-- 🔄 Mobile design improvements
-
-## Advanced: Using with Nginx Proxy (Optional)
-
-If you want to use this project with a reverse proxy like [nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) for SSL/HTTPS and custom domains, you can modify the `docker-compose.yml`:
+Or use this quick config:
 
 ```yaml
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8091"
+    environment:
+      - SERVERS_DIR=${PWD}/servers
+      - PORT=8091
+      - FRONTEND_URL=http://localhost:3000
+      - CLIENT_USERNAME=admin
+      - CLIENT_PASSWORD=$2a$12$soXdCUDdjo4PVV3iYNl9/OpbaSWy2cTUJ3tU5WtWxZHxXqrMYtla2
+      - CF_API_KEY=
+    volumes:
+      - ${PWD}/servers:${PWD}/servers
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    expose:
-      - 3000
+    ports:
+      - "3000:3000"
     environment:
-      - VIRTUAL_HOST=your-domain.com
-      - VIRTUAL_PORT=3000
-      - LETSENCRYPT_HOST=your-domain.com
-      - LETSENCRYPT_EMAIL=your-email@example.com
-      - NEXT_PUBLIC_FILEBROWSER_URL=https://files.your-domain.com
-      - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
-    networks:
-      - nginx-proxy
+      - NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
     restart: always
+    depends_on:
+      - backend
 
   filebrowser:
     image: hurlenko/filebrowser
-    user: "${UID:-1000}:${GID:-1000}"
-    expose:
-      - 8080
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
     volumes:
-      - ./servers:/data
-      - ./filebrowser/config:/config
+      - ${PWD}/servers:/data
+      - ${PWD}/filebrowser/config:/config
     environment:
       - FB_BASEURL=/
-      - VIRTUAL_HOST=files.your-domain.com
-      - VIRTUAL_PORT=8080
-      - LETSENCRYPT_HOST=files.your-domain.com
-      - LETSENCRYPT_EMAIL=your-email@example.com
-    networks:
-      - nginx-proxy
     restart: always
-
-networks:
-  nginx-proxy:
-    external: true
 ```
 
-Replace `your-domain.com` and `your-email@example.com` with your actual values.
+#### Step 3: Start services
 
-## Contributing
+```bash
+docker compose up -d
+```
+
+**Access your panel:**
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8091`
+- Filebrowser: `http://localhost:8080`
+
+---
+
+## 📁 File Browser
+
+Filebrowser is **automatically included** and starts with `docker compose up`. It allows you to edit server files directly from your browser.
+
+**Access:** 
+- Production: `https://your-filebrowser-domain.com`
+- Local: `http://localhost:8080`
+
+**Default credentials:**
+- Username: `admin`
+- Password: `admin`
+
+> ⚠️ **Change these credentials** immediately after first login in Filebrowser settings!
+
+**What you can do:**
+- Browse all your Minecraft server files
+- Edit configurations (`server.properties`, `ops.json`, etc.)
+- Upload mods, plugins, datapacks, or worlds
+- Download backups
+- Manage files without SSH/FTP
+
+---
+
+## ⚙️ Configuration Reference
+
+All configuration is done directly in `docker-compose.yml`. Key environment variables:
+
+### Backend
+- `SERVERS_DIR` - Path where Minecraft servers are stored
+- `FRONTEND_URL` - Frontend URL for CORS  
+- `CLIENT_USERNAME` - Admin username
+- `CLIENT_PASSWORD` - Admin password (bcrypt hash)
+- `CF_API_KEY` - CurseForge API key (optional, for modpack downloads)
+
+### Frontend
+- `NEXT_PUBLIC_BACKEND_URL` - Backend API URL (accessible from browser)
+- `NEXT_PUBLIC_FILEBROWSER_URL` - Filebrowser URL (accessible from browser)
+
+### Filebrowser
+- `FB_BASEURL` - Base URL path (use `/` for root or `/filebrowser` for subpath)
+
+**Note:** When using nginx-proxy, frontend/backend URLs should be `https://`. For local dev, use `http://localhost`.
+
+## ✅ Features
+
+**Currently available:**
+
+- ✅ Fully Dockerized (Backend + Frontend + Filebrowser)
+- ✅ Multiple Minecraft servers management
+- ✅ Real-time logs with error detection
+- ✅ User authentication
+- ✅ Resource usage monitoring (CPU, RAM)
+- ✅ Dynamic server creation/deletion
+- ✅ Automatic backups (using mc-backup)
+- ✅ File browser integration
+- ✅ Multi-language support (English/Spanish)
+- ✅ Support for multiple server types (Vanilla, Paper, Forge, Fabric, Spigot, etc.)
+- ✅ CurseForge modpack support
+- ✅ nginx-proxy ready (SSL + custom domains)
+
+**Roadmap:**
+
+- [ ] User roles and permissions system
+- [ ] API documentation (Swagger)
+- [ ] Mobile UI improvements
+- [ ] Server templates
+- [ ] Plugin/mod marketplace integration
+- [ ] Metrics and analytics dashboard
+- [ ] Discord webhooks for notifications
+
+---
+
+## 🤝 Contributing
 
 Found a bug? Have a great idea? Pull requests are welcome!
 

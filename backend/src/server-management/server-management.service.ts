@@ -8,7 +8,7 @@ const execAsync = promisify(exec);
 
 @Injectable()
 export class ServerManagementService {
-  private readonly BASE_DIR = path.join(process.cwd(), '..', 'servers');
+  private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
 
   private getDockerComposePath(serverId: string): string {
     return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');

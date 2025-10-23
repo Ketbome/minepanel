@@ -1,4 +1,23 @@
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-8091}:8091"
+    environment:
+      - SERVERS_DIR=${PWD}/servers
+      - FRONTEND_URL=${FRONTEND_URL:-localhost:3000}
+      - CF_API_KEY=${CF_API_KEY}
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$2a$12$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
+    volumes:
+      - ${PWD}/servers:${PWD}/servers
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    working_dir: /app
+
   frontend:
     build:
       context: ./frontend
@@ -9,6 +28,8 @@ services:
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
     restart: always
+    depends_on:
+      - backend
 
   filebrowser:
     image: hurlenko/filebrowser
@@ -16,8 +37,9 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ./servers:/data
-      - ./filebrowser/config:/config
+      - ${PWD}/servers:/data
+      - ${PWD}/filebrowser/config:/config
     environment:
       - FB_BASEURL=/
     restart: always
+
