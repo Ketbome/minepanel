@@ -1,47 +1,45 @@
 import { ServerConfig } from "@/lib/types/types";
 import api from "../axios.service";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export const fetchServerConfig = async (serverId: string): Promise<ServerConfig> => {
-  const response = await api.get(`${API_URL}/servers/${serverId}`);
+  const response = await api.get(`/servers/${serverId}`);
   return response.data;
 };
 
 export const fetchServerList = async (): Promise<ServerConfig[]> => {
-  const response = await api.get(`${API_URL}/servers`);
+  const response = await api.get(`/servers`);
   return response.data;
 };
 
 export const createServer = async (data: { id: string }): Promise<{ success: boolean; message: string; server: ServerConfig }> => {
-  const response = await api.post(`${API_URL}/servers`, data);
+  const response = await api.post(`/servers`, data);
   return response.data;
 };
 
 export const updateServerConfig = async (serverId: string, config: Partial<ServerConfig>): Promise<ServerConfig> => {
-  const response = await api.put(`${API_URL}/servers/${serverId}`, config);
+  const response = await api.put(`/servers/${serverId}`, config);
   return response.data;
 };
 
 export const apiRestartServer = async (serverId: string): Promise<{ success: boolean; message: string }> => {
   // Fixed: was passing withCredentials as request body
-  const response = await api.post(`${API_URL}/servers/${serverId}/restart`, {});
+  const response = await api.post(`/servers/${serverId}/restart`, {});
   return response.data;
 };
 
 export const apiClearServerData = async (serverId: string): Promise<{ success: boolean; message: string }> => {
   // Fixed: was passing withCredentials as request body
-  const response = await api.post(`${API_URL}/servers/${serverId}/clear-data`, {});
+  const response = await api.post(`/servers/${serverId}/clear-data`, {});
   return response.data;
 };
 
 export const getServerStatus = async (serverId: string): Promise<{ status: "running" | "stopped" | "not_found" }> => {
-  const response = await api.get(`${API_URL}/servers/${serverId}/status`);
+  const response = await api.get(`/servers/${serverId}/status`);
   return response.data;
 };
 
 export const getAllServersStatus = async (): Promise<{ [serverId: string]: "running" | "stopped" | "starting" | "not_found" }> => {
-  const response = await api.get(`${API_URL}/servers/all-status`);
+  const response = await api.get(`/servers/all-status`);
   return response.data;
 };
 
@@ -71,7 +69,7 @@ export const getServerLogs = async (
     params.stream = "true";
   }
 
-  const response = await api.get(`${API_URL}/servers/${serverId}/logs`, {
+  const response = await api.get(`/servers/${serverId}/logs`, {
     params,
   });
 
@@ -105,7 +103,7 @@ export const getServerLogsStream = async (
     params.since = since;
   }
 
-  const response = await api.get(`${API_URL}/servers/${serverId}/logs/stream`, {
+  const response = await api.get(`/servers/${serverId}/logs/stream`, {
     params,
   });
 
@@ -131,7 +129,7 @@ export const getServerLogsSince = async (
 }> => {
   const params: Record<string, string | number> = { lines };
 
-  const response = await api.get(`${API_URL}/servers/${serverId}/logs/since/${timestamp}`, {
+  const response = await api.get(`/servers/${serverId}/logs/since/${timestamp}`, {
     params,
   });
 
@@ -145,12 +143,12 @@ export const getServerLogsSince = async (
 };
 
 export const deleteServer = async (serverId: string): Promise<{ success: boolean; message: string }> => {
-  const response = await api.delete(`${API_URL}/servers/${serverId}`);
+  const response = await api.delete(`/servers/${serverId}`);
   return response.data;
 };
 
 export const getResources = async (serverId: string): Promise<{ cpuUsage: string; memoryUsage: string; memoryLimit: string }> => {
-  const response = await api.get(`${API_URL}/servers/${serverId}/resources`);
+  const response = await api.get(`/servers/${serverId}/resources`);
   return response.data;
 };
 

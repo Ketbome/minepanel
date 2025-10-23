@@ -22,11 +22,8 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
 
   // Function to open File Browser
   const openFileBrowser = () => {
-    // Usar el hostname actual pero con el puerto 25580 para File Browser
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
     const fileBrowserPath = `/filebrowser/files/${serverId}`;
-    const url = `${protocol}//${hostname}:25580${fileBrowserPath}`;
+    const url = `${process.env.NEXT_PUBLIC_FILEBROWSER_URL}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 

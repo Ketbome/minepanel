@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "../axios.service";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export const login = async (username: string, password: string) => {
   try {
     const response = await api.post(
-      `${API_URL}/auth/login`,
+      `/auth/login`,
       {
         username,
         password,

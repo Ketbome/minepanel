@@ -21,12 +21,9 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
   const openFileBrowser = (preferPlugins: boolean = true) => {
-    // Usar el hostname actual pero con el puerto 25580 para File Browser
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
     const fileBrowserPath = preferPlugins ? `/filebrowser/files/${config.id}/mc-data/plugins/` : `/filebrowser/files/${config.id}`;
 
-    const url = `${protocol}//${hostname}:25580${fileBrowserPath}`;
+    const url = `${process.env.NEXT_PUBLIC_FILEBROWSER_URL}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 
