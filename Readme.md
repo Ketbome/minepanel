@@ -100,6 +100,70 @@ mkdir -p servers filebrowser-data
 docker compose up -d
 ```
 
+### Option 3: Split services (for nginx-proxy / Traefik)
+
+If you want to use **nginx-proxy** (jwilder) or **Traefik** with automatic SSL certificates, use the split version that separates frontend and backend. This makes it easy to add environment variables like `VIRTUAL_HOST`, `VIRTUAL_PORT`, `LETSENCRYPT_HOST`, AND `LETSENCRYPT_EMAIL`:
+
+```bash
+git clone https://github.com/Ketbome/minepanel.git
+cd minepanel
+mkdir -p servers filebrowser-data
+docker compose -f docker-compose.split.yml up -d
+```
+
+This configuration exposes:
+
+- Backend on port `9090` (configurable)
+- Frontend on port `3000` (configurable)
+- Filebrowser on port `8080` (configurable)
+
+#### Example with nginx-proxy + Let's Encrypt
+
+Add these environment variables to each service in `docker-compose.split.yml`:
+
+```yaml
+networks:
+  default:
+    name: ngnix
+    external: true
+
+services:
+  frontend:
+    image: ketbom/minepanel-frontend:latest
+    expose:
+      - 3000
+    environment:
+      - VIRTUAL_HOST=minepanel.yourdomain.com
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=minepanel.yourdomain.com
+      - LETSENCRYPT_EMAIL=your-email@example.com
+    # ... rest of config
+
+  backend:
+    image: ketbom/minepanel-backend:latest
+    expose:
+      - 8091
+    environment:
+      - VIRTUAL_HOST=api.yourdomain.com
+      - VIRTUAL_PORT=8091
+      - LETSENCRYPT_HOST=api.yourdomain.com
+      - LETSENCRYPT_EMAIL=your-email@example.com
+    # ... rest of config
+
+  filebrowser:
+    image: hurlenko/filebrowser
+    expose:
+      - 8080
+    environment:
+      - VIRTUAL_HOST=files.yourdomain.com
+      - VIRTUAL_PORT=8080
+      - LETSENCRYPT_HOST=files.yourdomain.com
+      - LETSENCRYPT_EMAIL=your-email@example.com
+    # ... rest of config
+```
+
+Don't forget to add all services to the same network as nginx-proxy.
+
 **That's it!** 🎉
 
 ### Access
@@ -108,6 +172,35 @@ docker compose up -d
 - **Filebrowser**: http://localhost:8080
 
 **Default credentials:** `admin` / `admin` (change after first login!)
+
+### ⚠️ Important: Filebrowser First Time Setup
+
+**The first time you run Filebrowser**, you need to check the logs to get the auto-generated password:
+
+```bash
+docker compose logs filebrowser
+```
+
+Look for a line like:
+
+```
+filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / <generated-password>
+```
+
+**Steps:**
+
+1. Copy the generated password from the logs
+2. Login to http://localhost:8080 with `admin` and the generated password
+3. Change the password immediately to something secure
+
+**If you lost the logs:** Delete the database and restart the container to generate new credentials:
+
+```bash
+docker compose down
+rm -rf filebrowser-data/filebrowser.db
+docker compose up -d
+docker compose logs filebrowser  # Check the new password
+```
 
 ## 🏗️ Architecture
 

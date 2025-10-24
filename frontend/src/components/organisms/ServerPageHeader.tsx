@@ -23,7 +23,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
 
   // Function to open File Browser
   const openFileBrowser = () => {
-    const fileBrowserPath = `/filebrowser/files/${serverId}`;
+    const fileBrowserPath = `/files/${serverId}`;
     const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
   };

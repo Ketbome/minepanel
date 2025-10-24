@@ -22,7 +22,7 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
   const openFileBrowser = (preferPlugins: boolean = true) => {
-    const fileBrowserPath = preferPlugins ? `/filebrowser/files/${config.id}/mc-data/plugins/` : `/filebrowser/files/${config.id}`;
+    const fileBrowserPath = preferPlugins ? `/files/${config.id}/mc-data/plugins/` : `/files/${config.id}`;
 
     const url = `${env('NEXT_PUBLIC_FILEBROWSER_URL')}${fileBrowserPath}`;
     window.open(url, "_blank");
