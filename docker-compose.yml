@@ -8,7 +8,7 @@ services:
     environment:
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$2a$12$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
     volumes:

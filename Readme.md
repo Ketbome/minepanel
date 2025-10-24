@@ -50,7 +50,7 @@ Minepanel is **fully containerized** using a smart Docker-in-Docker approach:
 ### 🏗️ Components
 
 - **Backend (NestJS)**: Runs in Docker, manages everything via REST API
-- **Frontend (Next.js)**: Runs in Docker, provides the beautiful web interface  
+- **Frontend (Next.js)**: Runs in Docker, provides the beautiful web interface
 - **Filebrowser**: Runs in Docker, allows direct file editing
 - **Minecraft Servers**: Each server runs in its own isolated Docker container
 
@@ -60,17 +60,19 @@ The backend container can create and manage Minecraft server containers through 
 
 ```yaml
 volumes:
-  - /var/run/docker.sock:/var/run/docker.sock  # Direct access to host Docker daemon
-  - ${PWD}/servers:${PWD}/servers              # Same path in container and host
+  - /var/run/docker.sock:/var/run/docker.sock # Direct access to host Docker daemon
+  - ${PWD}/servers:${PWD}/servers # Same path in container and host
 ```
 
 **The flow:**
+
 1. Backend (inside container) executes `docker compose up` for a Minecraft server
 2. Command travels through the mounted socket to the **host's Docker daemon**
 3. Minecraft server container is created on the host (as a "sibling", not nested)
 4. Backend monitors/controls servers using standard Docker commands
 
 **Why this works:**
+
 - ✅ No Docker-in-Docker (DinD) complexity - simpler and faster
 - ✅ Minecraft servers run directly on host with full performance
 - ✅ Paths are synchronized between container and host
@@ -87,15 +89,44 @@ This repo includes configuration for two deployment scenarios:
 ## ⚠️ Security First!
 
 > **Default admin credentials:**
-> - Username: `admin`  
+>
+> - Username: `admin`
 > - Password: `admin`
 >
 > **🔒 CHANGE THE PASSWORD BEFORE PRODUCTION!**
 >
 > The password is stored as a bcrypt hash in the `docker-compose.yml`. Generate a new one:
+>
 > - Use [bcrypt-generator.com](https://bcrypt-generator.com/)
 > - Or Node.js: `require('bcrypt').hashSync('your-password', 12)`
 > - Update `CLIENT_PASSWORD` in `docker-compose.yml`
+>
+> **⚠️ IMPORTANT: Docker Compose and bcrypt hashes**
+>
+> Bcrypt hashes contain `$` symbols. In Docker Compose, you **MUST escape them with `$$`** (double dollar sign):
+>
+> ```yaml
+> # ❌ WRONG - This will NOT work:
+> - CLIENT_PASSWORD=$2a$12$FHmK3u3yTAE1q7is4JpkAu...
+>
+> # ✅ CORRECT - Escape each $ with $$:
+> - CLIENT_PASSWORD=$$2a$$12$$FHmK3u3yTAE1q7is4JpkAu...
+> ```
+>
+> **Why?** Docker Compose interprets `$` as variable substitution. If you don't escape them, your password hash will be corrupted and login will fail.
+>
+> **Alternative:** Use a `.env` file where you don't need to escape:
+>
+> ```bash
+> # .env file - no escaping needed here
+> CLIENT_PASSWORD=$2a$12$FHmK3u3yTAE1q7is4JpkAu...
+> ```
+>
+> Then reference it in docker-compose.yml:
+>
+> ```yaml
+> - CLIENT_PASSWORD=${CLIENT_PASSWORD}
+> ```
 
 ## 📋 Requirements
 
@@ -114,6 +145,7 @@ Choose your deployment method:
 Perfect for: Production deployments with custom domains and automatic SSL.
 
 **Prerequisites:**
+
 - [nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) already configured
 - Domain names pointing to your server
 
@@ -133,8 +165,9 @@ nano docker-compose.yml
 ```
 
 Change these values:
+
 - `app.ketbome.lat` → your backend API domain
-- `minecraft.ketbome.lat` → your frontend domain  
+- `minecraft.ketbome.lat` → your frontend domain
 - `filebrowser.ketbome.lat` → your filebrowser domain
 - `pims.2711@gmail.com` → your email (for Let's Encrypt)
 - `CLIENT_PASSWORD` → your bcrypt hash (see security section above)
@@ -159,11 +192,13 @@ docker compose logs -f
 ```
 
 **Access your panel:**
+
 - Frontend: `https://your-frontend-domain.com`
 - Backend API: `https://your-backend-domain.com`
 - Filebrowser: `https://your-filebrowser-domain.com`
 
 **Useful commands:**
+
 ```bash
 # View logs
 docker compose logs -f backend
@@ -280,6 +315,7 @@ docker compose up -d
 ```
 
 **Access your panel:**
+
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:8091`
 - Filebrowser: `http://localhost:8080`
@@ -290,17 +326,20 @@ docker compose up -d
 
 Filebrowser is **automatically included** and starts with `docker compose up`. It allows you to edit server files directly from your browser.
 
-**Access:** 
+**Access:**
+
 - Production: `https://your-filebrowser-domain.com`
 - Local: `http://localhost:8080`
 
 **Default credentials:**
+
 - Username: `admin`
 - Password: `admin`
 
 > ⚠️ **Change these credentials** immediately after first login in Filebrowser settings!
 
 **What you can do:**
+
 - Browse all your Minecraft server files
 - Edit configurations (`server.properties`, `ops.json`, etc.)
 - Upload mods, plugins, datapacks, or worlds
@@ -314,17 +353,20 @@ Filebrowser is **automatically included** and starts with `docker compose up`. I
 All configuration is done directly in `docker-compose.yml`. Key environment variables:
 
 ### Backend
+
 - `SERVERS_DIR` - Path where Minecraft servers are stored
-- `FRONTEND_URL` - Frontend URL for CORS  
+- `FRONTEND_URL` - Frontend URL for CORS
 - `CLIENT_USERNAME` - Admin username
 - `CLIENT_PASSWORD` - Admin password (bcrypt hash)
 - `CF_API_KEY` - CurseForge API key (optional, for modpack downloads)
 
 ### Frontend
+
 - `NEXT_PUBLIC_BACKEND_URL` - Backend API URL (accessible from browser)
 - `NEXT_PUBLIC_FILEBROWSER_URL` - Filebrowser URL (accessible from browser)
 
 ### Filebrowser
+
 - `FB_BASEURL` - Base URL path (use `/` for root or `/filebrowser` for subpath)
 
 **Note:** When using nginx-proxy, frontend/backend URLs should be `https://`. For local dev, use `http://localhost`.
