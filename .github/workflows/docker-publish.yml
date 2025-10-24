@@ -44,6 +44,9 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Version detected: $VERSION"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -79,11 +82,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
       - name: Image digest
         run: |
           echo "✅ Image ${{ matrix.image }} built successfully"
           echo "📦 Version: ${{ steps.version.outputs.version }}"
-          echo "🏗️  Platform: linux/amd64"
+          echo "🏗️  Platforms: linux/amd64, linux/arm64"
           echo "🏷️  Tags: ${{ steps.meta.outputs.tags }}"
