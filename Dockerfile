@@ -12,7 +12,7 @@ FROM base AS backend-builder
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 COPY backend/ ./
 RUN npm run build
@@ -44,8 +44,12 @@ WORKDIR /app
 
 # Copy backend build
 COPY --from=backend-builder /app/backend/dist ./backend/dist
-COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
-COPY --from=backend-builder /app/backend/package.json ./backend/
+COPY --from=backend-builder /app/backend/package*.json ./backend/
+
+# Install only production dependencies for backend
+WORKDIR /app/backend
+RUN npm ci --only=production
+WORKDIR /app
 
 # Copy frontend build
 RUN addgroup --system --gid 1001 nodejs && \
