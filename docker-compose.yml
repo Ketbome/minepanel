@@ -29,5 +29,5 @@ services:
       - ${PWD}/servers:/data
       - ./filebrowser-data:/config
     environment:
-      - FB_BASEURL=/
+      - FB_BASEURL=/files/filebrowser
     restart: always
