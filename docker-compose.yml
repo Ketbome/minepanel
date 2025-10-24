@@ -7,10 +7,10 @@ services:
       - "${BACKEND_PORT:-8091}:8091"
     environment:
       - SERVERS_DIR=${PWD}/servers
-      - FRONTEND_URL=${FRONTEND_URL:-localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$2a$12$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
     volumes:
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -21,11 +21,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
+        - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
+      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     restart: always
     depends_on:
       - backend
@@ -41,4 +46,3 @@ services:
     environment:
       - FB_BASEURL=/
     restart: always
-
