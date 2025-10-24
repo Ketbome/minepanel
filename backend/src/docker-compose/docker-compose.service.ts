@@ -363,7 +363,7 @@ export class DockerComposeService {
       cfUrl: '',
       cfSlug: '',
       cfFile: '',
-      cfApiKey: process.env.CF_API_KEY || '',
+      cfApiKey: '',
       cfSync: false,
       cfForceInclude: '',
       cfExclude: '',
@@ -646,8 +646,6 @@ export class DockerComposeService {
 
       if (config.cfApiKey) {
         environment['CF_API_KEY'] = config.cfApiKey;
-      } else {
-        environment['CF_API_KEY'] = process.env.CF_API_KEY;
       }
 
       if (config.cfSync) {
@@ -690,8 +688,6 @@ export class DockerComposeService {
       }
       if (config.cfApiKey) {
         environment['CF_API_KEY'] = config.cfApiKey;
-      } else {
-        environment['CF_API_KEY'] = process.env.CF_API_KEY;
       }
     } else if (config.serverType === 'SPIGOT' || config.serverType === 'PAPER' || config.serverType === 'BUKKIT' || config.serverType === 'PUFFERFISH' || config.serverType === 'PURPUR' || config.serverType === 'LEAF' || config.serverType === 'FOLIA') {
       // Plugin-based servers configuration
