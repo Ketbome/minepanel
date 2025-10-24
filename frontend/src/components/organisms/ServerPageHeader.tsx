@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
+import { env } from "next-runtime-env";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
@@ -23,7 +24,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
   // Function to open File Browser
   const openFileBrowser = () => {
     const fileBrowserPath = `/filebrowser/files/${serverId}`;
-    const url = `${process.env.NEXT_PUBLIC_FILEBROWSER_URL}${fileBrowserPath}`;
+    const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 

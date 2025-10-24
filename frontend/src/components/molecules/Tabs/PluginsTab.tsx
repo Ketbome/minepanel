@@ -9,6 +9,7 @@ import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
+import { env } from "next-runtime-env";
 
 interface PluginsTabProps {
   config: ServerConfig;
@@ -23,7 +24,7 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
   const openFileBrowser = (preferPlugins: boolean = true) => {
     const fileBrowserPath = preferPlugins ? `/filebrowser/files/${config.id}/mc-data/plugins/` : `/filebrowser/files/${config.id}`;
 
-    const url = `${process.env.NEXT_PUBLIC_FILEBROWSER_URL}${fileBrowserPath}`;
+    const url = `${env('NEXT_PUBLIC_FILEBROWSER_URL')}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 

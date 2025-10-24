@@ -30,15 +30,6 @@ RUN npm ci
 # Copy frontend source
 COPY frontend/ ./
 
-# Build arguments for Next.js environment variables
-ARG NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
-ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-ARG NEXT_PUBLIC_DEFAULT_LANGUAGE=en
-
-ENV NEXT_PUBLIC_FILEBROWSER_URL=$NEXT_PUBLIC_FILEBROWSER_URL
-ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_DEFAULT_LANGUAGE=$NEXT_PUBLIC_DEFAULT_LANGUAGE
-
 RUN npm run build
 
 # ================================
