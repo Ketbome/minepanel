@@ -21,11 +21,6 @@ ARG NEXT_PUBLIC_FILEBROWSER_URL
 ARG NEXT_PUBLIC_BACKEND_URL
 ARG NEXT_PUBLIC_DEFAULT_LANGUAGE
 
-# Set as environment variables for the build process
-ENV NEXT_PUBLIC_FILEBROWSER_URL=$NEXT_PUBLIC_FILEBROWSER_URL
-ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_DEFAULT_LANGUAGE=$NEXT_PUBLIC_DEFAULT_LANGUAGE
-
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
