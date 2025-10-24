@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Info, Save, HelpCircle } from "lucide-react";
+import { Info, Save, HelpCircle, Eye, EyeOff } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,6 +22,8 @@ interface ModsTabProps {
 
 export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
   const { t } = useLanguage();
+  const [showApiKeyManual, setShowApiKeyManual] = useState(false);
+  const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isForge = config.serverType === "FORGE";
@@ -61,10 +63,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
           <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <Label htmlFor="forgeBuild" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
               <Image src="/images/anvil.webp" alt="Forge" width={16} height={16} />
-              Versión de Forge
+              {t("forgeVersion")}
             </Label>
             <Input id="forgeBuild" value={config.forgeBuild} onChange={(e) => updateConfig("forgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-            <p className="text-xs text-gray-400">Número de build de Forge para la versión de Minecraft seleccionada</p>
+            <p className="text-xs text-gray-400">{t("forgeBuildDesc")}</p>
           </div>
         )}
 
@@ -74,8 +76,8 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-300 font-minecraft">Función obsoleta (Deprecated)</p>
-                  <p className="text-xs text-amber-200/80 mt-1">Este método manual para CurseForge está obsoleto. Se recomienda usar &quot;CurseForge Modpack&quot; (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.</p>
+                  <p className="text-sm font-medium text-amber-300 font-minecraft">{t("deprecatedFeature")}</p>
+                  <p className="text-xs text-amber-200/80 mt-1">{t("manualCurseForgeDeprecated")}</p>
                 </div>
               </div>
             </div>
@@ -84,7 +86,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfServerMod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/chest.webp" alt="Modpack" width={16} height={16} />
-                  Archivo del Modpack (CF_SERVER_MOD)
+                  {t("modpackFile")}
                 </Label>
                 <TooltipProvider>
                   <Tooltip>
@@ -94,21 +96,21 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-md bg-gray-800 border-gray-700 text-gray-200">
-                      <p>Ruta completa al archivo .zip del modpack en el contenedor.</p>
-                      <p className="mt-1 text-xs">Ejemplo: /modpacks/SkyFactory_4_Server_4.1.0.zip</p>
+                      <p>{t("modpackFileHelp")}</p>
+                      <p className="mt-1 text-xs">{t("modpackFileExample")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <Input id="cfServerMod" value={config.cfServerMod || ""} onChange={(e) => updateConfig("cfServerMod", e.target.value)} placeholder="/modpacks/SkyFactory_4_Server_4.1.0.zip" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">Ruta al archivo ZIP del modpack de CurseForge dentro del contenedor</p>
+              <p className="text-xs text-gray-400">{t("modpackFilePath")}</p>
             </div>
 
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfBaseDir" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/ender_chest.webp" alt="Directorio" width={16} height={16} />
-                  Directorio Base (CF_BASE_DIR)
+                  {t("baseDirectory")}
                 </Label>
                 <TooltipProvider>
                   <Tooltip>
@@ -118,49 +120,52 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <p>Directorio donde se expandirá el modpack. Por defecto: /data</p>
+                      <p>{t("baseDirectoryHelp")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <Input id="cfBaseDir" value={config.cfBaseDir || "/data/FeedTheBeast"} onChange={(e) => updateConfig("cfBaseDir", e.target.value)} placeholder="/data/FeedTheBeast" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">Directorio donde se extraerá y ejecutará el modpack</p>
+              <p className="text-xs text-gray-400">{t("baseDirectoryPath")}</p>
             </div>
 
             <div className="space-y-3 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <Label htmlFor="useModpackStartScript" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/command-block.webp" alt="Script" width={16} height={16} />
-                  Usar Script de Inicio del Modpack
+                  {t("useModpackStartScript")}
                 </Label>
                 <Switch id="useModpackStartScript" checked={config.useModpackStartScript ?? true} onCheckedChange={(checked) => updateConfig("useModpackStartScript", checked)} />
               </div>
-              <p className="text-xs text-gray-400">Si se desactiva, evita usar el script de inicio incluido en el modpack y usa la lógica estándar del servidor</p>
+              <p className="text-xs text-gray-400">{t("useModpackStartScriptDesc")}</p>
             </div>
 
             <div className="space-y-3 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <Label htmlFor="ftbLegacyJavaFixer" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/redstone.webp" alt="Java Fixer" width={16} height={16} />
-                  FTB Legacy Java Fixer
+                  {t("ftbLegacyJavaFixer")}
                 </Label>
                 <Switch id="ftbLegacyJavaFixer" checked={config.ftbLegacyJavaFixer ?? false} onCheckedChange={(checked) => updateConfig("ftbLegacyJavaFixer", checked)} />
               </div>
-              <p className="text-xs text-gray-400">Activa la corrección para modpacks que fallan con &quot;unable to launch forgemodloader&quot;</p>
+              <p className="text-xs text-gray-400">{t("ftbLegacyJavaFixerDesc")}</p>
             </div>
 
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfApiKeyManual" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
-                  API Key de CurseForge (CF_API_KEY)
+                  {t("cfApiKey")}
                 </Label>
               </div>
-              <Input id="cfApiKeyManual" value={config.cfApiKey || ""} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type="password" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">API Key opcional para compatibilidad con algunos modpacks</p>
-              <p className="text-xs text-amber-300 mt-1 font-minecraft">
-                Si tu API Key contiene <b>$</b>, debes escribirla con doble <b>$</b> (ejemplo: <code>$$2a$$10$$...</code>) en el archivo <b>.env</b>.
-              </p>
+              <div className="relative">
+                <Input id="cfApiKeyManual" value={config.cfApiKey || ""} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyManual ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowApiKeyManual(!showApiKeyManual)}>
+                  {showApiKeyManual ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
+              <p className="text-xs text-amber-300 mt-1 font-minecraft" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
             </div>
           </>
         )}
@@ -171,8 +176,8 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-300 font-minecraft">Información importante</p>
-                  <p className="text-xs text-amber-200/80 mt-1">Para utilizar correctamente la funcionalidad de CurseForge, se requiere una API Key. La API key es necesaria para descargar modpacks privados o con restricciones.</p>
+                  <p className="text-sm font-medium text-amber-300 font-minecraft">{t("importantInfo")}</p>
+                  <p className="text-xs text-amber-200/80 mt-1">{t("cfApiKeyRequired")}</p>
                 </div>
               </div>
             </div>
@@ -181,7 +186,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/compass.webp" alt="Método" width={16} height={16} />
-                  Método de Instalación
+                  {t("installationMethod")}
                 </Label>
                 <TooltipProvider>
                   <Tooltip>
@@ -191,16 +196,16 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-md bg-gray-800 border-gray-700 text-gray-200">
-                      <p>Selecciona cómo quieres obtener el modpack:</p>
+                      <p>{t("installationMethodHelp")}</p>
                       <ul className="list-disc pl-4 mt-1 text-xs">
                         <li>
-                          <strong>URL:</strong> Dirección web directa al modpack en CurseForge
+                          <strong>{t("methodUrl")}:</strong> {t("methodUrlDesc")}
                         </li>
                         <li>
-                          <strong>Slug:</strong> Identificador único del modpack (ej: &quot;all-the-mods-7&quot;)
+                          <strong>{t("methodSlug")}:</strong> {t("methodSlugDesc")}
                         </li>
                         <li>
-                          <strong>Archivo:</strong> Instalar desde un archivo .zip ya subido al servidor
+                          <strong>{t("methodFile")}:</strong> {t("methodFileDesc")}
                         </li>
                       </ul>
                     </TooltipContent>
@@ -209,16 +214,16 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
                 <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "url" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "url")}>
-                  <p className="font-minecraft text-sm text-gray-200">URL</p>
-                  <p className="text-xs text-gray-400 mt-1">Instalar desde URL directa</p>
+                  <p className="font-minecraft text-sm text-gray-200">{t("methodUrl")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("installFromUrl")}</p>
                 </div>
                 <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "slug" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "slug")}>
-                  <p className="font-minecraft text-sm text-gray-200">Slug</p>
-                  <p className="text-xs text-gray-400 mt-1">Usar ID/slug del modpack</p>
+                  <p className="font-minecraft text-sm text-gray-200">{t("methodSlug")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("useIdSlug")}</p>
                 </div>
                 <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "file" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "file")}>
-                  <p className="font-minecraft text-sm text-gray-200">Archivo</p>
-                  <p className="text-xs text-gray-400 mt-1">Usar archivo local en el servidor</p>
+                  <p className="font-minecraft text-sm text-gray-200">{t("methodFile")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("useLocalFile")}</p>
                 </div>
               </div>
             </div>
@@ -228,7 +233,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="cfUrl" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                     <Image src="/images/ender-pearl.webp" alt="URL" width={16} height={16} />
-                    URL del Modpack (CF_PAGE_URL)
+                    {t("modpackUrl")}
                   </Label>
                   <TooltipProvider>
                     <Tooltip>
@@ -238,13 +243,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>URL completa a la página del modpack o a un archivo específico.</p>
+                        <p>{t("modpackUrlHelp")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
                 <Input id="cfUrl" value={config.cfUrl} onChange={(e) => updateConfig("cfUrl", e.target.value)} placeholder="https://www.curseforge.com/minecraft/modpacks/all-the-mods-7/download/3855588" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                <p className="text-xs text-gray-400">URL directa de descarga del modpack de CurseForge</p>
+                <p className="text-xs text-gray-400">{t("modpackUrlDesc")}</p>
               </div>
             )}
 
@@ -254,7 +259,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="cfSlug" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/nether.webp" alt="Slug" width={16} height={16} />
-                      Proyecto de CurseForge (CF_SLUG)
+                      {t("curseForgeProject")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -264,20 +269,20 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>El identificador (slug) del modpack en CurseForge.</p>
+                          <p>{t("curseForgeProjectHelp")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
                   <Input id="cfSlug" value={config.cfSlug} onChange={(e) => updateConfig("cfSlug", e.target.value)} placeholder="all-the-mods-7" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">Nombre del proyecto o slug en CurseForge</p>
+                  <p className="text-xs text-gray-400">{t("projectNameOrSlug")}</p>
                 </div>
 
                 <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="cfFile" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/paper.webp" alt="ID" width={16} height={16} />
-                      ID del Archivo (CF_FILE_ID)
+                      {t("fileId")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -287,13 +292,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>ID numérico del archivo específico a descargar. Si se omite, se usará la versión más reciente.</p>
+                          <p>{t("fileIdHelp")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
                   <Input id="cfFile" value={config.cfFile} onChange={(e) => updateConfig("cfFile", e.target.value)} placeholder="3855588" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">ID específico del archivo a descargar. Si se deja en blanco, se usará la última versión.</p>
+                  <p className="text-xs text-gray-400">{t("fileIdDesc")}</p>
                 </div>
               </>
             )}
@@ -303,7 +308,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="cfFilenameMatcher" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                     <Image src="/images/book.webp" alt="Archivo" width={16} height={16} />
-                    Patrón de Archivo (CF_FILENAME_MATCHER)
+                    {t("filePattern")}
                   </Label>
                   <TooltipProvider>
                     <Tooltip>
@@ -313,13 +318,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>Especifica un substring para encontrar el archivo deseado en la carpeta /modpacks.</p>
+                        <p>{t("filePatternHelp")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
                 <Input id="cfFilenameMatcher" value={config.cfFilenameMatcher} onChange={(e) => updateConfig("cfFilenameMatcher", e.target.value)} placeholder="*.zip" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                <p className="text-xs text-gray-400">Patrón para encontrar el archivo del modpack en la carpeta /modpacks</p>
+                <p className="text-xs text-gray-400">{t("filePatternDesc")}</p>
               </div>
             )}
 
@@ -327,7 +332,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfApiKey" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
-                  API Key de CurseForge (CF_API_KEY)
+                  {t("cfApiKey")}
                 </Label>
                 <TooltipProvider>
                   <Tooltip>
@@ -337,13 +342,19 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <p>API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.</p>
+                      <p>{t("cfApiKeyHelp")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Input id="cfApiKey" value={config.cfApiKey} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type="password" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)</p>
+              <div className="relative">
+                <Input id="cfApiKey" value={config.cfApiKey} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyAuto ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowApiKeyAuto(!showApiKeyAuto)}>
+                  {showApiKeyAuto ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400">{t("cfApiKeyDesc")}</p>
+              <p className="text-xs text-amber-300 mt-1 font-minecraft" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
             </div>
 
             <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">
@@ -351,7 +362,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                 <AccordionTrigger className="px-4 py-3 text-gray-200 font-minecraft text-sm hover:bg-gray-700/30 rounded-t-md">
                   <div className="flex items-center gap-2">
                     <Image src="/images/compass.webp" alt="Avanzado" width={16} height={16} />
-                    Opciones Avanzadas
+                    {t("advancedOptions")}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-6 pt-4 px-4 pb-4">
@@ -359,18 +370,18 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfSync" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/observer.webp" alt="Sincronizar" width={16} height={16} />
-                        Sincronizar CurseForge (CF_FORCE_SYNCHRONIZE)
+                        {t("synchronizeCurseForge")}
                       </Label>
                       <Switch id="cfSync" checked={config.cfSync} onCheckedChange={(checked) => updateConfig("cfSync", checked)} />
                     </div>
-                    <p className="text-xs text-gray-400">Sincroniza automáticamente actualizaciones del modpack cuando el servidor se reinicia</p>
+                    <p className="text-xs text-gray-400">{t("synchronizeCurseForgeDesc")}</p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfParallelDownloads" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/hopper.webp" alt="Descargas" width={16} height={16} />
-                        Descargas Paralelas (CF_PARALLEL_DOWNLOADS)
+                        {t("parallelDownloads")}
                       </Label>
                       <TooltipProvider>
                         <Tooltip>
@@ -380,7 +391,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                            <p>Número de descargas de mods que se realizarán en paralelo. Valor por defecto: 4</p>
+                            <p>{t("parallelDownloadsHelp")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -390,32 +401,32 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                         <SelectValue placeholder="4" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700 text-gray-200 ">
-                        <SelectItem value="1">1 descarga</SelectItem>
-                        <SelectItem value="2">2 descargas</SelectItem>
-                        <SelectItem value="4">4 descargas (recomendado)</SelectItem>
-                        <SelectItem value="6">6 descargas</SelectItem>
-                        <SelectItem value="8">8 descargas</SelectItem>
+                        <SelectItem value="1">{t("download1")}</SelectItem>
+                        <SelectItem value="2">{t("download2")}</SelectItem>
+                        <SelectItem value="4">{t("download4")}</SelectItem>
+                        <SelectItem value="6">{t("download6")}</SelectItem>
+                        <SelectItem value="8">{t("download8")}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-400">Especifica cuántas descargas paralelas de mods realizar</p>
+                    <p className="text-xs text-gray-400">{t("parallelDownloadsDesc")}</p>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfOverridesSkipExisting" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/redstone.webp" alt="Omitir" width={16} height={16} />
-                        Omitir Archivos Existentes (CF_OVERRIDES_SKIP_EXISTING)
+                        {t("skipExistingFiles")}
                       </Label>
                       <Switch id="cfOverridesSkipExisting" checked={config.cfOverridesSkipExisting} onCheckedChange={(checked) => updateConfig("cfOverridesSkipExisting", checked)} />
                     </div>
-                    <p className="text-xs text-gray-400">Si se activa, los archivos que ya existen en el directorio de datos no son reemplazados</p>
+                    <p className="text-xs text-gray-400">{t("skipExistingFilesDesc")}</p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfSetLevelFrom" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/elytra.webp" alt="Nivel" width={16} height={16} />
-                        Configurar Nivel Desde (CF_SET_LEVEL_FROM)
+                        {t("setLevelFrom")}
                       </Label>
                       <TooltipProvider>
                         <Tooltip>
@@ -425,29 +436,29 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                            <p>Determina cómo establecer los datos del mundo desde el modpack.</p>
+                            <p>{t("setLevelFromHelp")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <Select value={config.cfSetLevelFrom || "none"} onValueChange={(value) => updateConfig("cfSetLevelFrom", value === "none" ? "" : value)}>
                       <SelectTrigger className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
-                        <SelectValue placeholder="Selecciona una opción" />
+                        <SelectValue placeholder={t("doNotSet")} />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 text-gray-200 border-gray-700">
-                        <SelectItem value="none">No configurar</SelectItem>
-                        <SelectItem value="WORLD_FILE">Archivo de Mundo</SelectItem>
-                        <SelectItem value="OVERRIDES">Overrides del Modpack</SelectItem>
+                        <SelectItem value="none">{t("doNotSet")}</SelectItem>
+                        <SelectItem value="WORLD_FILE">{t("worldFile")}</SelectItem>
+                        <SelectItem value="OVERRIDES">{t("modpackOverrides")}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-400">Configura cómo obtener los datos del mundo desde el modpack</p>
+                    <p className="text-xs text-gray-400">{t("setLevelFromDesc")}</p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfForceInclude" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/chest.webp" alt="Incluir" width={16} height={16} />
-                        Forzar Inclusión de Mods (CF_FORCE_INCLUDE_MODS)
+                        {t("forceIncludeMods")}
                       </Label>
                       <TooltipProvider>
                         <Tooltip>
@@ -457,20 +468,20 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                            <p>Lista de mods (separados por espacios o líneas) para incluir forzosamente, independientemente del modpack IDs o Slugs.</p>
+                            <p>{t("forceIncludeModsHelp")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <Textarea id="cfForceInclude" value={config.cfForceInclude} onChange={(e) => updateConfig("cfForceInclude", e.target.value)} placeholder="699872,228404" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                    <p className="text-xs text-gray-400">Lista de mods que siempre se incluirán incluso si no están en el modpack IDs o Slugs (uno por línea)</p>
+                    <p className="text-xs text-gray-400">{t("forceIncludeModsDesc")}</p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="cfExclude" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/barrier.webp" alt="Excluir" width={16} height={16} />
-                        Excluir Mods (CF_EXCLUDE_MODS)
+                        {t("excludeMods")}
                       </Label>
                       <TooltipProvider>
                         <Tooltip>
@@ -480,13 +491,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, onSave }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                            <p>Lista de mods (separados por espacios o líneas) que serán excluidos del modpack IDs o Slugs.</p>
+                            <p>{t("excludeModsHelp")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <Textarea id="cfExclude" value={config.cfExclude} onChange={(e) => updateConfig("cfExclude", e.target.value)} placeholder="699872,228404" className="min-h-20 text-gray-200 bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                    <p className="text-xs text-gray-400">Lista de mods que se excluirán del modpack IDs o Slugs (uno por línea, admite patrones glob)</p>
+                    <p className="text-xs text-gray-400">{t("excludeModsDesc")}</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
