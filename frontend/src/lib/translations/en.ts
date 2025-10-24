@@ -44,6 +44,7 @@ export const en = {
   edit: "Edit",
   console: "Console",
   files: "Files",
+  consoleStatus: "Console",
 
   // Status
   online: "Online",
@@ -176,28 +177,28 @@ export const en = {
   installFromUrl: "Install from direct URL",
   useIdSlug: "Use modpack ID/slug",
   useLocalFile: "Use local file on server",
-  
+
   modpackUrl: "Modpack URL (CF_PAGE_URL)",
   modpackUrlHelp: "Complete URL to the modpack page or specific file.",
   modpackUrlDesc: "Direct download URL of the CurseForge modpack",
-  
+
   curseForgeProject: "CurseForge Project (CF_SLUG)",
   curseForgeProjectHelp: "The identifier (slug) of the modpack on CurseForge.",
   projectNameOrSlug: "Project name or slug on CurseForge",
-  
+
   fileId: "File ID (CF_FILE_ID)",
   fileIdHelp: "Numeric ID of the specific file to download. If omitted, the latest version will be used.",
   fileIdDesc: "Specific file ID to download. If left blank, the latest version will be used.",
-  
+
   filePattern: "File Pattern (CF_FILENAME_MATCHER)",
   filePatternHelp: "Specify a substring to find the desired file in the /modpacks folder.",
   filePatternDesc: "Pattern to find the modpack file in the /modpacks folder",
-  
+
   cfApiKey: "CurseForge API Key (CF_API_KEY)",
   cfApiKeyHelp: "CurseForge API Key (Eternal) required to download some modpacks.",
   cfApiKeyDesc: "API Key to download restricted modpacks (required for most modpacks)",
   cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$2a$10$$T6sGlu...</code>. This is especially important for the third <b>$</b> onwards.",
-  
+
   // CurseForge Advanced Options
   advancedOptions: "Advanced Options",
   synchronizeCurseForge: "Synchronize CurseForge (CF_FORCE_SYNCHRONIZE)",
@@ -287,14 +288,42 @@ export const en = {
   serverLogs: "Server Logs",
   serverLogsDesc: "View and monitor your server logs in real-time",
   search: "Search...",
+  searchInLogs: "Search in logs...",
   filterByLevel: "Filter by level",
   allLevels: "All levels",
+  onlyErrors: "Only errors",
+  onlyWarnings: "Only warnings",
+  onlyInfo: "Only info",
+  onlyDebug: "Only debug",
   autoScroll: "Auto-scroll",
   realTime: "Real Time",
   refresh: "Refresh",
   lines: "lines",
+  pause: "Pause",
+  resume: "Resume",
   noLogsAvailable: "No logs available",
   serverNotRunning: "Server is not running",
+  logsError: "Error in logs",
+  resourcesError: "Error in resources",
+  errorsDetected: "Errors detected in logs",
+  errorsDetectedDesc: "Errors or exceptions were found in the server logs",
+  lastUpdate: "Last update:",
+  cpu: "CPU",
+  serverInactive: "Server inactive",
+  errorLoadingLogs: "Error loading logs",
+  retry: "Retry",
+  disconnected: "Disconnected",
+  withErrors: "With errors",
+  realTimeActive: "Real time active",
+  realTimePaused: "Real time paused",
+  showing: "Showing",
+  of: "of",
+  entries: "entries",
+  resources: "Resources",
+  liveLabel: "LIVE",
+  viewLogsRealtime: "View server logs in real time",
+  loadingLogs: "Loading logs...",
+  errorFetchingResources: "Error fetching server resources",
 
   // Dashboard Header
   systemActive: "System Active",

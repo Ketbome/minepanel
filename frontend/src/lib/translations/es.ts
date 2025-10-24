@@ -44,6 +44,7 @@ export const es = {
   edit: "Editar",
   console: "Consola",
   files: "Archivos",
+  consoleStatus: "Consola",
 
   // Status
   online: "En Línea",
@@ -176,28 +177,28 @@ export const es = {
   installFromUrl: "Instalar desde URL directa",
   useIdSlug: "Usar ID/slug del modpack",
   useLocalFile: "Usar archivo local en el servidor",
-  
+
   modpackUrl: "URL del Modpack (CF_PAGE_URL)",
   modpackUrlHelp: "URL completa a la página del modpack o a un archivo específico.",
   modpackUrlDesc: "URL directa de descarga del modpack de CurseForge",
-  
+
   curseForgeProject: "Proyecto de CurseForge (CF_SLUG)",
   curseForgeProjectHelp: "El identificador (slug) del modpack en CurseForge.",
   projectNameOrSlug: "Nombre del proyecto o slug en CurseForge",
-  
+
   fileId: "ID del Archivo (CF_FILE_ID)",
   fileIdHelp: "ID numérico del archivo específico a descargar. Si se omite, se usará la versión más reciente.",
   fileIdDesc: "ID específico del archivo a descargar. Si se deja en blanco, se usará la última versión.",
-  
+
   filePattern: "Patrón de Archivo (CF_FILENAME_MATCHER)",
   filePatternHelp: "Especifica un substring para encontrar el archivo deseado en la carpeta /modpacks.",
   filePatternDesc: "Patrón para encontrar el archivo del modpack en la carpeta /modpacks",
-  
+
   cfApiKey: "API Key de CurseForge (CF_API_KEY)",
   cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
   cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
   cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debe duplicar de ser necesario. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$2a$10$$T6sGlu...</code>. Esto es especialmente importante para el tercer <b>$</b> en adelante.",
-  
+
   // CurseForge Advanced Options
   advancedOptions: "Opciones Avanzadas",
   synchronizeCurseForge: "Sincronizar CurseForge (CF_FORCE_SYNCHRONIZE)",
@@ -287,14 +288,42 @@ export const es = {
   serverLogs: "Registros del Servidor",
   serverLogsDesc: "Visualiza y monitorea los logs de tu servidor en tiempo real",
   search: "Buscar...",
+  searchInLogs: "Buscar en logs...",
   filterByLevel: "Filtrar por nivel",
   allLevels: "Todos los niveles",
+  onlyErrors: "Solo errores",
+  onlyWarnings: "Solo advertencias",
+  onlyInfo: "Solo información",
+  onlyDebug: "Solo debug",
   autoScroll: "Auto-scroll",
   realTime: "Tiempo Real",
   refresh: "Actualizar",
   lines: "líneas",
+  pause: "Pausar",
+  resume: "Reanudar",
   noLogsAvailable: "No hay logs disponibles",
   serverNotRunning: "El servidor no está ejecutándose",
+  logsError: "Error en los logs",
+  resourcesError: "Error en los recursos",
+  errorsDetected: "Errores detectados en los logs",
+  errorsDetectedDesc: "Se encontraron errores o excepciones en los logs del servidor",
+  lastUpdate: "Última actualización:",
+  cpu: "CPU",
+  serverInactive: "Servidor inactivo",
+  errorLoadingLogs: "Error al cargar logs",
+  retry: "Reintentar",
+  disconnected: "Desconectado",
+  withErrors: "Con errores",
+  realTimeActive: "Tiempo real activo",
+  realTimePaused: "Tiempo real pausado",
+  showing: "Mostrando",
+  of: "de",
+  entries: "entradas",
+  resources: "Recursos",
+  liveLabel: "EN VIVO",
+  viewLogsRealtime: "Visualiza los logs en tiempo real del servidor",
+  loadingLogs: "Cargando logs...",
+  errorFetchingResources: "Error al obtener recursos del servidor",
 
   // Dashboard Header
   systemActive: "Sistema Activo",
