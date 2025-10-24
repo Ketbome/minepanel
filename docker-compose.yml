@@ -2,7 +2,7 @@ services:
   minepanel:
     image: ketbom/minepanel:latest
     ports:
-      - "${BACKEND_PORT:-9090}:8091"
+      - "${BACKEND_PORT:-8091}:8091"
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       # Backend environment variables
@@ -13,7 +13,7 @@ services:
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
       # Frontend environment variables (loaded at runtime via @next/env)
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:9090}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
       - ${PWD}/servers:${PWD}/servers
