@@ -3,422 +3,211 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Made with NestJS](https://img.shields.io/badge/Backend-NestJS-red)
 ![Made with Next.js](https://img.shields.io/badge/Frontend-Next.js-black)
-![PM2](https://img.shields.io/badge/Process_Manager-PM2-2B037A)
+![Docker Hub](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker)
+![Docker Image Size](https://img.shields.io/docker/image-size/ketbom/minepanel/latest)
 
-A web-based tool for managing multiple Minecraft servers using Docker. Because managing servers from the terminal can be a real headache.
+A modern web-based panel for managing multiple Minecraft servers using Docker.
 
-This project is built on top of the amazing work by [itzg](https://github.com/itzg):
+**🐳 Docker Hub:** [ketbom/minepanel](https://hub.docker.com/r/ketbom/minepanel)
 
-- `docker-minecraft-server` – The most popular Minecraft server container
-- `docker-mc-backup` – Automated backup system
+Built on top of [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) and [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup).
 
 ![Dashboard View](./assets/Animation.gif)
 
-## Why another server manager?
+## Why Minepanel?
 
-After trying several solutions, I wanted something that was:
+After trying several server management solutions, I wanted something that was:
 
-- Easy to set up and use
-- Modern (no 2000s-era interfaces)
-- Flexible for handling multiple servers
-- That wouldn't give me headaches
+- ✨ **Easy to use** - No complex configurations
+- 🎨 **Modern interface** - Built with Next.js
+- 🚀 **Quick to deploy** - One command installation
+- 💪 **Powerful** - Manage multiple servers effortlessly
 
-## What you can do
+## ✨ Features
 
-- **Intuitive web panel** - Built with Next.js, no ugly interfaces
-- **Robust API** - NestJS backend that handles everything
-- **Multiple servers** - Manage as many as your server can handle
-- **Real-time logs** - See what's happening without SSH
-- **File management** - Edit configurations from your browser
-- **Automatic backups** - Because nobody wants to lose their world
-
-## Project structure
-
-```
-minepanel/
-├── frontend/         # Web interface (Next.js) - Dockerized
-├── backend/          # REST API (NestJS) - Dockerized, controls Docker via socket
-├── servers/          # Minecraft servers directory (each server has its own docker-compose)
-├── filebrowser/      # File management UI - Dockerized
-└── docker-compose.yml  # Main orchestration file
-```
-
-## Architecture
-
-Minepanel is **fully containerized** using a smart Docker-in-Docker approach:
-
-### 🏗️ Components
-
-- **Backend (NestJS)**: Runs in Docker, manages everything via REST API
-- **Frontend (Next.js)**: Runs in Docker, provides the beautiful web interface
-- **Filebrowser**: Runs in Docker, allows direct file editing
-- **Minecraft Servers**: Each server runs in its own isolated Docker container
-
-### 🔌 How does Docker control Docker?
-
-The backend container can create and manage Minecraft server containers through the **Docker socket**:
-
-```yaml
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock # Direct access to host Docker daemon
-  - ${PWD}/servers:${PWD}/servers # Same path in container and host
-```
-
-**The flow:**
-
-1. Backend (inside container) executes `docker compose up` for a Minecraft server
-2. Command travels through the mounted socket to the **host's Docker daemon**
-3. Minecraft server container is created on the host (as a "sibling", not nested)
-4. Backend monitors/controls servers using standard Docker commands
-
-**Why this works:**
-
-- ✅ No Docker-in-Docker (DinD) complexity - simpler and faster
-- ✅ Minecraft servers run directly on host with full performance
-- ✅ Paths are synchronized between container and host
-- ✅ Production-ready and battle-tested approach
-- ✅ Backend stays isolated but has infrastructure control
-
-### 🚀 Deployment Modes
-
-This repo includes configuration for two deployment scenarios:
-
-1. **Production with nginx-proxy** (`docker-compose.yml`) - SSL + custom domains
-2. **Local development** - Simple setup without reverse proxy (instructions below)
-
-## ⚠️ Security First!
-
-> **Default admin credentials:**
->
-> - Username: `admin`
-> - Password: `admin`
->
-> **🔒 CHANGE THE PASSWORD BEFORE PRODUCTION!**
->
-> The password is stored as a bcrypt hash in the `docker-compose.yml`. Generate a new one:
->
-> - Use [bcrypt-generator.com](https://bcrypt-generator.com/)
-> - Or Node.js: `require('bcrypt').hashSync('your-password', 12)`
-> - Update `CLIENT_PASSWORD` in `docker-compose.yml`
->
-> **⚠️ IMPORTANT: Docker Compose and bcrypt hashes**
->
-> Bcrypt hashes contain `$` symbols. In Docker Compose, you **MUST escape them with `$$`** (double dollar sign):
->
-> ```yaml
-> # ❌ WRONG - This will NOT work:
-> - CLIENT_PASSWORD=$2a$12$FHmK3u3yTAE1q7is4JpkAu...
->
-> # ✅ CORRECT - Escape each $ with $$:
-> - CLIENT_PASSWORD=$$2a$$12$$FHmK3u3yTAE1q7is4JpkAu...
-> ```
->
-> **Why?** Docker Compose interprets `$` as variable substitution. If you don't escape them, your password hash will be corrupted and login will fail.
->
-> **Alternative:** Use a `.env` file where you don't need to escape:
->
-> ```bash
-> # .env file - no escaping needed here
-> CLIENT_PASSWORD=$2a$12$FHmK3u3yTAE1q7is4JpkAu...
-> ```
->
-> Then reference it in docker-compose.yml:
->
-> ```yaml
-> - CLIENT_PASSWORD=${CLIENT_PASSWORD}
-> ```
+- ✅ **One-command deployment** from Docker Hub
+- ✅ **Multi-architecture** (Intel/AMD + ARM/Raspberry Pi/Apple Silicon)
+- ✅ **Multiple Minecraft servers** with isolated containers
+- ✅ **Real-time logs** with error detection
+- ✅ **Resource monitoring** (CPU, RAM)
+- ✅ **Integrated file browser** for editing configs
+- ✅ **Automatic backups**
+- ✅ **All server types**: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
+- ✅ **CurseForge modpacks** support
+- ✅ **Multi-language** (English/Spanish)
 
 ## 📋 Requirements
 
-- **Docker** and **Docker Compose** (that's it!)
-- Git
-- (Optional) nginx-proxy if using custom domains
+- Docker & Docker Compose (v2.0+)
+- 2GB+ RAM
+- Linux, macOS, or Windows with WSL2
 
-## 🚀 Installation
+## 🚀 Quick Start
 
-Choose your deployment method:
+### Option 1: Direct installation (Recommended)
 
----
-
-### Option A: Production with nginx-proxy (Recommended for VPS/Server)
-
-Perfect for: Production deployments with custom domains and automatic SSL.
-
-**Prerequisites:**
-
-- [nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) already configured
-- Domain names pointing to your server
-
-#### Step 1: Clone and configure
-
-```bash
-git clone https://github.com/Ketbome/minepanel.git
-cd minecraft-docker-manager
-```
-
-#### Step 2: Edit docker-compose.yml
-
-Replace placeholder values with your own:
-
-```bash
-nano docker-compose.yml
-```
-
-Change these values:
-
-- `app.ketbome.lat` → your backend API domain
-- `minecraft.ketbome.lat` → your frontend domain
-- `filebrowser.ketbome.lat` → your filebrowser domain
-- `pims.2711@gmail.com` → your email (for Let's Encrypt)
-- `CLIENT_PASSWORD` → your bcrypt hash (see security section above)
-- `CF_API_KEY` → your CurseForge API key (optional)
-
-#### Step 3: Create required directories
-
-```bash
-mkdir -p servers filebrowser/config
-```
-
-#### Step 4: Start all services
-
-```bash
-docker compose up -d
-```
-
-#### Step 5: Check logs
-
-```bash
-docker compose logs -f
-```
-
-**Access your panel:**
-
-- Frontend: `https://your-frontend-domain.com`
-- Backend API: `https://your-backend-domain.com`
-- Filebrowser: `https://your-filebrowser-domain.com`
-
-**Useful commands:**
-
-```bash
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Restart a service
-docker compose restart backend
-
-# Stop everything
-docker compose down
-
-# Update
-git pull
-docker compose build
-docker compose up -d
-```
-
----
-
-### Option B: Local Development (Without nginx-proxy)
-
-Perfect for: Local testing, development, or simple home server.
-
-#### Step 1: Clone the project
-
-```bash
-git clone https://github.com/Ketbome/minepanel.git
-cd minecraft-docker-manager
-```
-
-#### Step 2: Modify docker-compose.yml for local use
-
-```bash
-# Backup the production config
-cp docker-compose.yml docker-compose.prod.yml
-
-# Edit for local use
-nano docker-compose.yml
-```
-
-Remove nginx-proxy configuration and use direct ports. Change:
-
-```yaml
-# BEFORE (nginx-proxy mode):
-expose:
-  - 8091
-environment:
-  - VIRTUAL_HOST=app.ketbome.lat
-  # ...
-networks:
-  - nginx-proxy
-
-# AFTER (local mode):
-ports:
-  - "8091:8091"
-environment:
-  - FRONTEND_URL=http://localhost:3000
-  # ... (remove VIRTUAL_HOST, LETSENCRYPT_* vars)
-# Remove networks section
-```
-
-Or use this quick config:
+Create a `docker-compose.yml` file:
 
 ```yaml
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  minepanel:
+    image: ketbom/minepanel:latest
     ports:
-      - "8091:8091"
+      - "${BACKEND_PORT:-8091}:8091"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
+      # Backend environment variables
       - SERVERS_DIR=${PWD}/servers
-      - PORT=8091
-      - FRONTEND_URL=http://localhost:3000
-      - CLIENT_USERNAME=admin
-      - CLIENT_PASSWORD=$2a$12$soXdCUDdjo4PVV3iYNl9/OpbaSWy2cTUJ3tU5WtWxZHxXqrMYtla2
-      - CF_API_KEY=
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
+      # Frontend environment variables (informative, already baked in build)
+      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
+      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-    restart: always
-    depends_on:
-      - backend
-
   filebrowser:
     image: hurlenko/filebrowser
-    user: "1000:1000"
+    # user: "${UID:-1000}:${GID:-1000}"
     ports:
-      - "8080:8080"
+      - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
       - ${PWD}/servers:/data
-      - ${PWD}/filebrowser/config:/config
+      - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
 ```
 
-#### Step 3: Start services
+Then run:
 
 ```bash
+mkdir -p servers filebrowser-data
 docker compose up -d
 ```
 
-**Access your panel:**
+### Option 2: Clone from repository
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8091`
-- Filebrowser: `http://localhost:8080`
+```bash
+git clone https://github.com/Ketbome/minepanel.git
+cd minepanel
+mkdir -p servers filebrowser-data
+docker compose up -d
+```
 
----
+**That's it!** 🎉
 
-## 📁 File Browser
+### Access
 
-Filebrowser is **automatically included** and starts with `docker compose up`. It allows you to edit server files directly from your browser.
+- **Web Panel**: http://localhost:3000
+- **Filebrowser**: http://localhost:8080
 
-**Access:**
+**Default credentials:** `admin` / `admin` (change after first login!)
 
-- Production: `https://your-filebrowser-domain.com`
-- Local: `http://localhost:8080`
+## 🏗️ Architecture
 
-**Default credentials:**
+Minepanel runs as a unified container with:
 
-- Username: `admin`
-- Password: `admin`
+- **Backend (NestJS)** on port 8091
+- **Frontend (Next.js)** on port 3000
+- **Filebrowser** for file management
 
-> ⚠️ **Change these credentials** immediately after first login in Filebrowser settings!
+The backend uses the Docker socket to create and manage Minecraft server containers on the host, keeping them isolated and performant.
 
-**What you can do:**
+## 🔧 Configuration
 
-- Browse all your Minecraft server files
-- Edit configurations (`server.properties`, `ops.json`, etc.)
-- Upload mods, plugins, datapacks, or worlds
-- Download backups
-- Manage files without SSH/FTP
+### Change Admin Password
 
----
+1. Generate a bcrypt hash: https://bcrypt-generator.com/
+2. Edit `docker-compose.yml` and update `CLIENT_PASSWORD`
+3. **Important**: Escape `$` symbols with `$$` in docker-compose.yml
 
-## ⚙️ Configuration Reference
+```yaml
+# Example
+CLIENT_PASSWORD=$$2a$$12$$YourHashHere...
+```
 
-All configuration is done directly in `docker-compose.yml`. Key environment variables:
+### Customize Ports
 
-### Backend
+Create a `.env` file:
 
-- `SERVERS_DIR` - Path where Minecraft servers are stored
-- `FRONTEND_URL` - Frontend URL for CORS
-- `CLIENT_USERNAME` - Admin username
-- `CLIENT_PASSWORD` - Admin password (bcrypt hash)
-- `CF_API_KEY` - CurseForge API key (optional, for modpack downloads)
+```bash
+BACKEND_PORT=8091
+FRONTEND_PORT=3000
+FILEBROWSER_PORT=8080
+```
 
-### Frontend
+### Update to Latest Version
 
-- `NEXT_PUBLIC_BACKEND_URL` - Backend API URL (accessible from browser)
-- `NEXT_PUBLIC_FILEBROWSER_URL` - Filebrowser URL (accessible from browser)
+```bash
+docker pull ketbom/minepanel:latest
+docker compose up -d
+```
 
-### Filebrowser
+## 📦 Useful Commands
 
-- `FB_BASEURL` - Base URL path (use `/` for root or `/filebrowser` for subpath)
+```bash
+# View logs
+docker compose logs -f minepanel
 
-**Note:** When using nginx-proxy, frontend/backend URLs should be `https://`. For local dev, use `http://localhost`.
+# Restart
+docker compose restart minepanel
 
-## ✅ Features
+# Stop all
+docker compose down
 
-**Currently available:**
+# Container shell access
+docker compose exec minepanel sh
+```
 
-- ✅ Fully Dockerized (Backend + Frontend + Filebrowser)
-- ✅ Multiple Minecraft servers management
-- ✅ Real-time logs with error detection
-- ✅ User authentication
-- ✅ Resource usage monitoring (CPU, RAM)
-- ✅ Dynamic server creation/deletion
-- ✅ Automatic backups (using mc-backup)
-- ✅ File browser integration
-- ✅ Multi-language support (English/Spanish)
-- ✅ Support for multiple server types (Vanilla, Paper, Forge, Fabric, Spigot, etc.)
-- ✅ CurseForge modpack support
-- ✅ nginx-proxy ready (SSL + custom domains)
+## 🛠️ Development
 
-**Roadmap:**
+Want to modify the code or build from source?
 
-- [ ] User roles and permissions system
+```bash
+# Run locally without Docker
+cd backend && npm install && npm run start:dev
+cd frontend && npm install && npm run dev
+
+# Build custom Docker image
+docker build -t minepanel:custom .
+
+# Build multi-architecture (for publishing)
+docker buildx create --name multiplatform --use --bootstrap
+docker buildx build --platform linux/amd64,linux/arm64 -t username/minepanel:latest --push .
+```
+
+## 🗺️ Roadmap
+
+- [ ] User roles and permissions
 - [ ] API documentation (Swagger)
-- [ ] Mobile UI improvements
 - [ ] Server templates
-- [ ] Metrics and analytics dashboard
-- [ ] Discord webhooks for notifications
-
----
+- [ ] Metrics dashboard
+- [ ] Discord webhooks
 
 ## 🤝 Contributing
 
-Found a bug? Have a great idea? Pull requests are welcome!
+Found a bug or have an idea? Pull requests are welcome!
 
-You can also:
+- Report issues on [GitHub Issues](https://github.com/Ketbome/minepanel/issues)
+- ⭐ Star the project if you like it
+- Share with other server admins
 
-- Report issues in Issues
-- Give a star if you like the project
-- Share it with other server administrators
+## 📄 License
 
-## License
+MIT License - feel free to use this project however you'd like.
 
-MIT License - basically you can do whatever you want with the code.
-
-## Contact
+## 💬 Contact
 
 Created by [@Ketbome](https://github.com/Ketbome)
 
-Questions? Suggestions? Just want to chat about Minecraft? Open an issue or send a message.
+Questions or suggestions? Open an issue!
 
 ---
 
-_This project was born out of the frustration of managing Minecraft servers for friends and the community. If it helps you, I'm glad!_
+_This project was born from the frustration of managing Minecraft servers via terminal. If it helps you, I'm happy!_ ❤️
