@@ -61,6 +61,269 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
 
       <CardContent className="space-y-6">
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Image src="/images/ender_chest.webp" alt="Backup" width={20} height={20} />
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("backupConfig")}</h3>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-gray-300 text-sm">{t("enableBackup")}</span>
+              <Switch checked={config.enableBackup || false} onCheckedChange={(checked: boolean) => updateConfig("enableBackup", checked)} className="data-[state=checked]:bg-emerald-500" />
+            </div>
+          </div>
+
+          {config.enableBackup && (
+            <div className="space-y-5 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/chest.webp" alt="Método" width={16} height={16} />
+                      {t("backupMethod")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupMethodDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Select value={config.backupMethod || "tar"} onValueChange={(value) => updateConfig("backupMethod", value as "tar" | "rsync" | "restic" | "rclone")}>
+                    <SelectTrigger id="backupMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
+                      <SelectValue placeholder={t("selectBackupMethod")} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                      <SelectItem value="tar">{t("tarCompression")}</SelectItem>
+                      <SelectItem value="rsync">{t("rsyncIncremental")}</SelectItem>
+                      <SelectItem value="restic">{t("resticIncrementalEncrypted")}</SelectItem>
+                      <SelectItem value="rclone">{t("rcloneRemote")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupName" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/name_tag.webp" alt="Nombre" width={16} height={16} />
+                      {t("backupName")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupNameDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupName" value={config.backupName || "world"} onChange={(e) => updateConfig("backupName", e.target.value)} placeholder="world" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupInterval" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/clock.webp" alt="Intervalo" width={16} height={16} />
+                      {t("backupInterval")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupIntervalDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupInterval" value={config.backupInterval || "24h"} onChange={(e) => updateConfig("backupInterval", e.target.value)} placeholder="24h" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupInitialDelay" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/compass.webp" alt="Retardo" width={16} height={16} />
+                      {t("backupInitialDelay")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupInitialDelayDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupInitialDelay" value={config.backupInitialDelay || "2m"} onChange={(e) => updateConfig("backupInitialDelay", e.target.value)} placeholder="2m" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupPruneDays" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/shears.webp" alt="Poda" width={16} height={16} />
+                      {t("backupPruneDays")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupPruneDaysDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupPruneDays" type="number" value={config.backupPruneDays || "7"} onChange={(e) => updateConfig("backupPruneDays", e.target.value)} placeholder="7" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupDestDir" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/ender_chest.webp" alt="Destino" width={16} height={16} />
+                      {t("backupDestDir")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupDestDirDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupDestDir" value={config.backupDestDir || "/backups"} onChange={(e) => updateConfig("backupDestDir", e.target.value)} placeholder="/backups" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="backupExcludes" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/barrier.webp" alt="Excluir" width={16} height={16} />
+                      {t("backupExcludes")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("backupExcludesDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input id="backupExcludes" value={config.backupExcludes || "*.jar,cache,logs,*.tmp"} onChange={(e) => updateConfig("backupExcludes", e.target.value)} placeholder="*.jar,cache,logs,*.tmp" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                  <p className="text-xs text-gray-400">{t("backupExcludesHelp")}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center gap-3">
+                  <Switch id="backupOnStartup" checked={config.backupOnStartup !== false} onCheckedChange={(checked) => updateConfig("backupOnStartup", checked)} className="data-[state=checked]:bg-emerald-500" />
+                  <Label htmlFor="backupOnStartup" className="text-gray-200 font-minecraft text-sm">
+                    {t("backupOnStartup")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("backupOnStartupDesc")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Switch id="pauseIfNoPlayers" checked={config.pauseIfNoPlayers || false} onCheckedChange={(checked) => updateConfig("pauseIfNoPlayers", checked)} className="data-[state=checked]:bg-emerald-500" />
+                  <Label htmlFor="pauseIfNoPlayers" className="text-gray-200 font-minecraft text-sm">
+                    {t("pauseIfNoPlayers")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("pauseIfNoPlayersDesc")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              {config.backupMethod === "tar" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="tarCompressMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                      <Image src="/images/anvil.webp" alt="Compresión" width={16} height={16} />
+                      {t("tarCompressMethod")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t("tarCompressMethodDesc")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Select value={config.tarCompressMethod || "gzip"} onValueChange={(value) => updateConfig("tarCompressMethod", value as "gzip" | "bzip2" | "zstd")}>
+                    <SelectTrigger id="tarCompressMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
+                      <SelectValue placeholder={t("selectTarCompressMethod") as string} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                      <SelectItem value="gzip">{t("gzip")}</SelectItem>
+                      <SelectItem value="bzip2">{t("bzip2")}</SelectItem>
+                      <SelectItem value="zstd">{t("zstd")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-emerald-400" />
             <h3 className="text-emerald-400 font-minecraft text-md">{t("extraPorts")}</h3>
@@ -284,270 +547,6 @@ MAX_TICK_TIME=60000"
             className="min-h-20 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
           />
           <p className="text-xs text-gray-400">{t("environmentVarsHelp")}</p>
-        </div>
-
-        <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Image src="/images/ender_chest.webp" alt="Backup" width={20} height={20} />
-              <h3 className="text-emerald-400 font-minecraft text-md">{t("backupConfig")}</h3>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-gray-300 text-sm">{t("enableBackup")}</span>
-              <Switch checked={config.enableBackup || false} onCheckedChange={(checked: boolean) => updateConfig("enableBackup", checked)} className="data-[state=checked]:bg-emerald-500" />
-            </div>
-          </div>
-
-          {config.enableBackup && (
-            <div className="space-y-5 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/chest.webp" alt="Método" width={16} height={16} />
-                      {t("backupMethod")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupMethodDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Select value={config.backupMethod || "tar"} onValueChange={(value) => updateConfig("backupMethod", value as "tar" | "rsync" | "restic" | "rclone")}>
-                    <SelectTrigger id="backupMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
-                      <SelectValue placeholder={t("selectBackupMethod")} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <SelectItem value="tar">{t("tarCompression")}</SelectItem>
-                      <SelectItem value="rsync">{t("rsyncIncremental")}</SelectItem>
-                      <SelectItem value="restic">{t("resticIncrementalEncrypted")}</SelectItem>
-                      <SelectItem value="rclone">{t("rcloneRemote")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupName" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/name_tag.webp" alt="Nombre" width={16} height={16} />
-                      {t("backupName")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupNameDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupName" value={config.backupName || "world"} onChange={(e) => updateConfig("backupName", e.target.value)} placeholder="world" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupInterval" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/clock.webp" alt="Intervalo" width={16} height={16} />
-                      {t("backupInterval")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupIntervalDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupInterval" value={config.backupInterval || "24h"} onChange={(e) => updateConfig("backupInterval", e.target.value)} placeholder="24h" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupInitialDelay" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/compass.webp" alt="Retardo" width={16} height={16} />
-                      {t("backupInitialDelay")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupInitialDelayDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupInitialDelay" value={config.backupInitialDelay || "2m"} onChange={(e) => updateConfig("backupInitialDelay", e.target.value)} placeholder="2m" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupPruneDays" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/shears.webp" alt="Poda" width={16} height={16} />
-                      {t("backupPruneDays")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupPruneDaysDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupPruneDays" type="number" value={config.backupPruneDays || "7"} onChange={(e) => updateConfig("backupPruneDays", e.target.value)} placeholder="7" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupDestDir" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/ender_chest.webp" alt="Destino" width={16} height={16} />
-                      {t("backupDestDir")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupDestDirDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupDestDir" value={config.backupDestDir || "/backups"} onChange={(e) => updateConfig("backupDestDir", e.target.value)} placeholder="/backups" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="backupExcludes" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/barrier.webp" alt="Excluir" width={16} height={16} />
-                      {t("backupExcludes")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("backupExcludesDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="backupExcludes" value={config.backupExcludes || "*.jar,cache,logs,*.tmp"} onChange={(e) => updateConfig("backupExcludes", e.target.value)} placeholder="*.jar,cache,logs,*.tmp" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">{t("backupExcludesHelp")}</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center gap-3">
-                  <Switch id="backupOnStartup" checked={config.backupOnStartup !== false} onCheckedChange={(checked) => updateConfig("backupOnStartup", checked)} className="data-[state=checked]:bg-emerald-500" />
-                  <Label htmlFor="backupOnStartup" className="text-gray-200 font-minecraft text-sm">
-                      {t("backupOnStartup")}
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                          <HelpCircle className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>{t("backupOnStartupDesc")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Switch id="pauseIfNoPlayers" checked={config.pauseIfNoPlayers || false} onCheckedChange={(checked) => updateConfig("pauseIfNoPlayers", checked)} className="data-[state=checked]:bg-emerald-500" />
-                  <Label htmlFor="pauseIfNoPlayers" className="text-gray-200 font-minecraft text-sm">
-                    {t("pauseIfNoPlayers")}
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                          <HelpCircle className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>{t("pauseIfNoPlayersDesc")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-
-              {config.backupMethod === "tar" && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="tarCompressMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/anvil.webp" alt="Compresión" width={16} height={16} />
-                      {t("tarCompressMethod")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("tarCompressMethodDesc")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Select value={config.tarCompressMethod || "gzip"} onValueChange={(value) => updateConfig("tarCompressMethod", value as "gzip" | "bzip2" | "zstd")}>
-                    <SelectTrigger id="tarCompressMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
-                      <SelectValue placeholder={t("selectTarCompressMethod") as string} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <SelectItem value="gzip">{t("gzip")}</SelectItem>
-                      <SelectItem value="bzip2">{t("bzip2")}</SelectItem>
-                      <SelectItem value="zstd">{t("zstd")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

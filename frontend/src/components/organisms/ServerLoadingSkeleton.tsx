@@ -3,15 +3,14 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
-/**
- * Componente de esqueleto de carga para la página de servidor
- * Muestra una animación mientras se cargan los datos
- */
+
 export function ServerLoadingSkeleton() {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-8">
-      {/* Header skeleton */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-gray-900/80 backdrop-blur-md p-6 rounded-lg border border-gray-700/60 space-y-4">
         <div className="flex items-center gap-3">
           <Skeleton className="h-12 w-12 rounded-md bg-gray-700/50" />
@@ -53,8 +52,8 @@ export function ServerLoadingSkeleton() {
           </div>
 
           <div className="text-center space-y-3">
-            <h3 className="text-xl font-medium text-white font-minecraft">Cargando configuración del servidor</h3>
-            <p className="text-gray-400">Preparando los bloques... Esto puede tomar unos segundos</p>
+            <h3 className="text-xl font-medium text-white font-minecraft">{t("loadingServerConfig")}</h3>
+            <p className="text-gray-400">{t("preparingBlocks")}</p>
           </div>
 
           <div className="w-80 h-3 bg-gray-800/60 rounded-full overflow-hidden border border-gray-700/40">
