@@ -1,0 +1,67 @@
+name: Deploy Documentation to GitHub Pages
+
+# Se ejecuta cuando se hace push a main o manualmente
+on:
+    push:
+        branches:
+            - main
+            - documentation
+        paths:
+            - "doc/**"
+            - ".github/workflows/deploy-docs.yml"
+    workflow_dispatch: # Permite ejecutar manualmente desde GitHub
+
+# Permisos necesarios para desplegar a GitHub Pages
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+# Permite solo un despliegue concurrente
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Necesario para el lastUpdated de VitePress
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+                  cache-dependency-path: doc/package-lock.json
+
+            - name: Setup Pages
+              uses: actions/configure-pages@v4
+
+            - name: Install dependencies
+              run: npm ci
+              working-directory: doc
+
+            - name: Build with VitePress
+              run: npm run docs:build
+              working-directory: doc
+
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: doc/.vitepress/dist
+
+    deploy:
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        needs: build
+        runs-on: ubuntu-latest
+        name: Deploy
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4

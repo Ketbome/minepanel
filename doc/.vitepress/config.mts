@@ -2,6 +2,8 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: "/minepanel/",
+
   title: "Minepanel Documentation",
   description:
     "Modern Minecraft Server Management Panel - Complete documentation and guides",
