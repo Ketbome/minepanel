@@ -1,3 +1,20 @@
+/**
+ * Simplified server list item returned by GET /servers
+ * Contains only essential information for display in lists
+ */
+export interface ServerListItem {
+  id: string;
+  serverName: string;
+  motd: string;
+  port: string;
+  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT" | "BUKKIT" | "PUFFERFISH" | "PURPUR" | "LEAF" | "FOLIA";
+  active: boolean;
+}
+
+/**
+ * Complete server configuration
+ * Used for detailed server settings and configuration
+ */
 export interface ServerConfig {
   id: string;
   active: boolean;

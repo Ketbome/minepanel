@@ -63,7 +63,7 @@ export default function Home() {
         <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
           <Link href="/" className="flex items-center gap-3 font-bold">
             <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" />
-            <span className="text-xl bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft">MinecraftManager</span>
+            <span className="text-xl bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft">Minepanel</span>
           </Link>
           <LanguageSwitcher />
         </div>
@@ -141,7 +141,7 @@ export default function Home() {
       <footer className="relative z-10 py-4 border-t border-gray-800/60 bg-black/30 backdrop-blur-md">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 text-center md:flex-row md:text-left max-w-7xl mx-auto">
           <p className="text-sm text-gray-300">
-            &copy; {new Date().getFullYear()} MinecraftManager. {t("allRightsReserved")}
+            &copy; {new Date().getFullYear()} Minepanel. {t("allRightsReserved")}
           </p>
           <div className="flex space-x-4 text-gray-300">
             <Link href="#" className="hover:text-emerald-400 transition-colors">

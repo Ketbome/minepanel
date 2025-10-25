@@ -12,7 +12,7 @@ A modern web-based panel for managing multiple Minecraft servers using Docker.
 
 Built on top of [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) and [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup).
 
-![Dashboard View](./assets/Animation.gif)
+![Dashboard View](./doc/img/Animation.gif)
 
 ## Why Minepanel?
 
@@ -257,6 +257,29 @@ docker compose down
 # Container shell access
 docker compose exec minepanel sh
 ```
+
+## 📚 Documentation
+
+Full documentation is available at [Minepanel Docs](https://github.com/Ketbome/minepanel/tree/main/doc):
+
+- **[Getting Started](./doc/getting-started.md)** - Quick start guide
+- **[Installation](./doc/installation.md)** - All installation methods
+- **[Configuration](./doc/configuration.md)** - Customize your setup
+- **[Features](./doc/features.md)** - Explore all features
+- **[Architecture](./doc/architecture.md)** - How it works
+- **[API Reference](./doc/api.md)** - Complete API documentation
+- **[Development](./doc/development.md)** - Contributing guide
+- **[FAQ](./doc/faq.md)** - Common questions
+
+To run the documentation locally:
+
+```bash
+cd doc
+npm install
+npm run docs:dev
+```
+
+Visit http://localhost:5173
 
 ## 🛠️ Development
 
