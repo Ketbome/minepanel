@@ -7,7 +7,7 @@ services:
       - NODE_ENV=production
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32}
+      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
     volumes:
