@@ -75,7 +75,6 @@ services:
 
   filebrowser:
     image: hurlenko/filebrowser
-    # user: "${UID:-1000}:${GID:-1000}"
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
