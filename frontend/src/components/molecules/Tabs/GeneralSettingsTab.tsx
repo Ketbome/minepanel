@@ -1,8 +1,5 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ServerConfig } from "@/lib/types/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -15,21 +12,10 @@ import { ConnectivitySettingsTab } from "./SettingsTabs/ConnectivitySettingsTab"
 interface GeneralSettingsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
-  onClearData: () => Promise<boolean>;
 }
 
-export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig, onClearData }) => {
+export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
-  const [isClearing, setIsClearing] = useState(false);
-
-  const handleClearData = async () => {
-    setIsClearing(true);
-    try {
-      await onClearData();
-    } finally {
-      setIsClearing(false);
-    }
-  };
 
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
@@ -80,29 +66,6 @@ export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, update
             <ConnectivitySettingsTab config={config} updateConfig={updateConfig} />
           </TabsContent>
         </Tabs>
-
-        <div className="pt-4">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" className="w-full font-minecraft bg-red-700 hover:bg-red-800 border border-red-900/50">
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t("deleteServerData")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-gray-900 border-gray-700">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-red-400 font-minecraft">{t("deleteConfirmTitle")}</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-300">{t("deleteConfirmDesc")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600">{t("cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearData} disabled={isClearing} className="bg-red-700 hover:bg-red-800 text-white border-red-900/50 font-minecraft">
-                  {isClearing ? t("deleting") : t("yesDeleteAll")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
       </CardContent>
     </Card>
   );

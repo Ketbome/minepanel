@@ -19,10 +19,9 @@ interface ServerConfigTabsProps {
   readonly updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
   readonly saveConfig: () => Promise<boolean>;
   readonly serverStatus: string;
-  readonly onClearData: () => Promise<boolean>;
 }
 
-export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, onClearData }) => {
+export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus }) => {
   const { t } = useLanguage();
 
   // Determinar qué tabs mostrar según el tipo de servidor
@@ -101,7 +100,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
             </TabsContent>
 
             <TabsContent value="general" className="space-y-4 mt-0">
-              <GeneralSettingsTab config={config} updateConfig={updateConfig} onClearData={onClearData} />
+              <GeneralSettingsTab config={config} updateConfig={updateConfig} />
             </TabsContent>
 
             <TabsContent value="resources" className="space-y-4 mt-0">
