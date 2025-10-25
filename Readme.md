@@ -8,6 +8,7 @@
 
 A modern web-based panel for managing multiple Minecraft servers using Docker.
 
+**📖 Documentation:** [minepanel.ketbome.lat](https://minepanel.ketbome.lat)  
 **🐳 Docker Hub:** [ketbom/minepanel](https://hub.docker.com/r/ketbom/minepanel)
 
 Built on top of [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) and [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup).
@@ -59,6 +60,7 @@ services:
       # Backend environment variables
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
@@ -260,18 +262,20 @@ docker compose exec minepanel sh
 
 ## 📚 Documentation
 
-Full documentation is available at [Minepanel Docs](https://github.com/Ketbome/minepanel/tree/main/doc):
+**🌐 Full documentation is available at: [https://minepanel.ketbome.lat](https://minepanel.ketbome.lat)**
 
-- **[Getting Started](./doc/getting-started.md)** - Quick start guide
-- **[Installation](./doc/installation.md)** - All installation methods
-- **[Configuration](./doc/configuration.md)** - Customize your setup
-- **[Features](./doc/features.md)** - Explore all features
-- **[Architecture](./doc/architecture.md)** - How it works
-- **[API Reference](./doc/api.md)** - Complete API documentation
-- **[Development](./doc/development.md)** - Contributing guide
-- **[FAQ](./doc/faq.md)** - Common questions
+Quick access to key sections:
 
-To run the documentation locally:
+- 🚀 **[Getting Started](https://minepanel.ketbome.lat/getting-started)** - Quick start guide
+- 📦 **[Installation](https://minepanel.ketbome.lat/installation)** - All installation methods
+- ⚙️ **[Configuration](https://minepanel.ketbome.lat/configuration)** - Customize your setup
+- ✨ **[Features](https://minepanel.ketbome.lat/features)** - Explore all features
+- 🏗️ **[Architecture](https://minepanel.ketbome.lat/architecture)** - How it works
+- 🔌 **[API Reference](https://minepanel.ketbome.lat/api)** - Complete API documentation
+- 💻 **[Development](https://minepanel.ketbome.lat/development)** - Contributing guide
+- ❓ **[FAQ](https://minepanel.ketbome.lat/faq)** - Common questions
+
+### Running Documentation Locally
 
 ```bash
 cd doc
@@ -300,19 +304,53 @@ docker buildx build --platform linux/amd64,linux/arm64 -t username/minepanel:lat
 
 ## 🗺️ Roadmap
 
-- [ ] User roles and permissions
-- [ ] API documentation (Swagger)
-- [ ] Server templates
-- [ ] Metrics dashboard
-- [ ] Discord webhooks
+### 🎯 High Priority
+
+- [ ] **Enhanced Log Viewer** - Improved log interface with filtering, search, and better visualization
+- [ ] **Server.properties Editor** - Edit server.properties directly from the web interface with validation
+- [ ] **Reverse Proxy Integration** - Built-in proxy configuration for accessing servers without exposing URLs
+- [ ] **CurseForge Modpack Browser** - Browse, search and install modpacks directly from CurseForge
+  - Modpack search and filtering
+  - One-click installation
+  - Automatic dependency resolution
+  - Update notifications
+
+### 🚀 Planned Features
+
+- [ ] **User Roles & Permissions** - Multi-user support with role-based access control
+- [ ] **Server Templates** - Pre-configured templates for quick server deployment
+- [ ] **Advanced Metrics Dashboard** - Detailed performance analytics and graphs
+- [ ] **Discord Integration** - Webhooks for server events and notifications
+- [ ] **API Documentation** - Complete Swagger/OpenAPI documentation
+- [ ] **Scheduled Tasks** - Automated server restarts, backups, and maintenance
+- [ ] **Plugin Manager** - Browse and install plugins for supported server types
+- [ ] **World Manager** - Upload, download, and switch between different worlds
+- [ ] **Whitelist/Banlist Editor** - Manage player access from the interface
+
+### 💡 Under Consideration
+
+- [ ] Multi-server command execution
+- [ ] Server resource limits configuration
+- [ ] Integrated RCON console
+- [ ] Server comparison view
+- [ ] Export/Import server configurations
 
 ## 🤝 Contributing
 
-Found a bug or have an idea? Pull requests are welcome!
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**! 🎉
 
-- Report issues on [GitHub Issues](https://github.com/Ketbome/minepanel/issues)
+Whether you're fixing bugs, adding features, improving documentation, or translating to new languages, all contributions are welcome!
+
+Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
+
+Quick links:
+
+- 🐛 [Report a bug](https://github.com/Ketbome/minepanel/issues/new?labels=bug)
+- 💡 [Request a feature](https://github.com/Ketbome/minepanel/issues/new?labels=enhancement)
+- 📖 [View documentation](https://minepanel.ketbome.lat)
 - ⭐ Star the project if you like it
-- Share with other server admins
+- 🔀 Fork and submit a Pull Request
+- 📢 Share with other server admins
 
 ## 📄 License
 

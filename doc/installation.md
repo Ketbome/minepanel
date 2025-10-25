@@ -30,6 +30,7 @@ services:
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=http://localhost:3000
       - CLIENT_PASSWORD=$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu
+      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_USERNAME=admin
       - DEFAULT_LANGUAGE=en
       - NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
@@ -204,6 +205,7 @@ services:
       - CLIENT_PASSWORD=$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu
       - CLIENT_USERNAME=admin
       - DEFAULT_LANGUAGE=en
+      - JWT_SECRET=
     volumes:
       - ./servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock

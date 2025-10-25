@@ -90,6 +90,26 @@ Username: `admin` | Password: `admin` (change after first login!)
 - **Backups**: [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup)
 - **File Browser**: [Filebrowser](https://filebrowser.org/)
 
+## 🗺️ Roadmap
+
+### 🎯 High Priority Features
+
+- **Enhanced Log Viewer** - Improved log interface with filtering, search, and better visualization
+- **Server.properties Editor** - Edit server.properties directly from the web interface with validation
+- **Reverse Proxy Integration** - Built-in proxy configuration for accessing servers without exposing URLs
+- **CurseForge Modpack Browser** - Browse, search and install modpacks directly from CurseForge with one-click installation
+
+### 🚀 Planned Features
+
+- **User Roles & Permissions** - Multi-user support with role-based access control
+- **Server Templates** - Pre-configured templates for quick server deployment
+- **Advanced Metrics Dashboard** - Detailed performance analytics and graphs
+- **Discord Integration** - Webhooks for server events and notifications
+- **Plugin Manager** - Browse and install plugins for supported server types
+- **World Manager** - Upload, download, and switch between different worlds
+
+Want to contribute? Check out our [Contributing Guide](/development#contributing) and help us build these features!
+
 ## Community
 
 <p>

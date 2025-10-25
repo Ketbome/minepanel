@@ -41,6 +41,7 @@ export default defineConfig({
         text: "Resources",
         items: [
           { text: "Features", link: "/features" },
+          { text: "Roadmap", link: "/roadmap" },
           { text: "Architecture", link: "/architecture" },
           { text: "API Reference", link: "/api" },
           { text: "Development", link: "/development" },
@@ -78,6 +79,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { text: "Features Overview", link: "/features" },
+          { text: "Roadmap", link: "/roadmap" },
           { text: "Architecture", link: "/architecture" },
           { text: "Development", link: "/development" },
           { text: "API Reference", link: "/api" },
