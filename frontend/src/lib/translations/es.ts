@@ -233,6 +233,16 @@ export const es: Record<TranslationKey, string> = {
   serverNamePlaceholder: "Nombre de tu servidor",
   maxPlayersPlaceholder: "20",
   players: "Jugadores",
+  versionsAvailable: "versiones disponibles",
+  recommended: "Recomendadas",
+  popular: "Populares",
+  allVersions: "Todas las versiones",
+  selectVersion: "Seleccionar versión",
+  loadingVersions: "Cargando versiones...",
+  updateVersions: "Actualizar versiones",
+  list: "Lista",
+  manual: "Manual",
+  latest: "Última",
 
   // Dificultad
   selectDifficulty: "Seleccionar la dificultad",

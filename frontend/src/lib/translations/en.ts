@@ -231,6 +231,16 @@ export const en = {
   serverNamePlaceholder: "Your server name",
   maxPlayersPlaceholder: "20",
   players: "Players",
+  versionsAvailable: "versions available",
+  recommended: "Recommended",
+  popular: "Popular",
+  allVersions: "All Versions",
+  selectVersion: "Select Version",
+  loadingVersions: "Loading Versions",
+  updateVersions: "Update Versions",
+  list: "List",
+  manual: "Manual",
+  latest: "Latest",
 
   // Difficulty
   selectDifficulty: "Select difficulty",
