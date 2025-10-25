@@ -6,7 +6,7 @@ Understanding how Minepanel works under the hood.
 
 Minepanel is a web-based Minecraft server management panel built with modern technologies. It uses a **microservices architecture** where each component is containerized and communicates through well-defined interfaces.
 
-![Minepanel](./public/img/server.png)
+![Minepanel](/img/server.png)
 
 ## Components
 

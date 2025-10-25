@@ -2,14 +2,12 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: "/minepanel/",
-
   title: "Minepanel Documentation",
   description:
     "Modern Minecraft Server Management Panel - Complete documentation and guides",
 
   head: [
-    ["link", { rel: "icon", href: "/minepanel/favicon.ico" }],
+    ["link", { rel: "icon", href: "/favicon.ico" }],
     ["meta", { name: "theme-color", content: "#3eaf7c" }],
     ["meta", { name: "og:type", content: "website" }],
     ["meta", { name: "og:locale", content: "en" }],
