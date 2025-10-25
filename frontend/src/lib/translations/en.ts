@@ -1,22 +1,102 @@
 export const en = {
-  // Auth
+  // ===========================
+  // AUTHENTICATION
+  // ===========================
   login: "Login",
   logout: "Logout",
   username: "Username",
   password: "Password",
   invalidCredentials: "Invalid credentials",
+  loginSuccess: "Login successful",
 
-  // Navigation
+  // ===========================
+  // NAVIGATION
+  // ===========================
   dashboard: "Dashboard",
   servers: "Servers",
   settings: "Settings",
   home: "Home",
+  navigation: "Navigation",
 
-  // Server Management
+  // ===========================
+  // COMMON ACTIONS
+  // ===========================
+  save: "Save",
+  cancel: "Cancel",
+  confirm: "Confirm",
+  loading: "Loading...",
+  error: "Error",
+  success: "Success",
+  welcome: "Welcome",
+  start: "Start",
+  stop: "Stop",
+  restart: "Restart",
+  delete: "Delete",
+  edit: "Edit",
+  console: "Console",
+  files: "Files",
+  configure: "Configure",
+  creating: "Creating...",
+  eliminating: "Deleting...",
+  deleting: "Deleting...",
+  sending: "Sending...",
+  send: "Send",
+  refresh: "Refresh",
+  retry: "Retry",
+  pause: "Pause",
+  resume: "Resume",
+  search: "Search...",
+  saveConfiguration: "Save Configuration",
+  saveChanges: "Save Changes",
+  addPort: "Add Port",
+  addVariable: "Add Variable",
+
+  // ===========================
+  // STATUS
+  // ===========================
+  online: "Online",
+  offline: "Offline",
+  starting: "Starting",
+  stopping: "Stopping",
+  running: "Running",
+  stopped: "Stopped",
+  not_found: "Not Found",
+  active: "Active",
+  starting2: "Starting...",
+  stopped2: "Stopped",
+  notFound: "Not found",
+  unknown: "Unknown",
+  restarting: "Restarting...",
+  initializing: "Initializing...",
+  verifyingAuth: "Verifying authentication...",
+  disconnected: "Disconnected",
+  withErrors: "With errors",
+
+  // ===========================
+  // SERVER MANAGEMENT
+  // ===========================
   createServer: "Create Server",
   serverName: "Server Name",
   serverType: "Server Type",
   serverTypeDescription: "Select the type of Minecraft server you want to configure.",
+  version: "Version",
+  memory: "Memory",
+  port: "Port",
+  difficulty: "Difficulty",
+  gameMode: "Game Mode",
+  maxPlayers: "Max Players",
+  serverId: "Server ID",
+  serverIdLabel: "Server ID",
+  serverIdDescription: "Unique identifier for the server (letters, numbers, hyphens and underscores only)",
+  serverIdPlaceholder: "my-server",
+  serverIdDesc: "Unique identifier for your server",
+  serverDefaultName: "Server",
+  minecraftServer: "Minecraft Server",
+  currentStatus: "Current Status",
+  serverInformation: "Server Information",
+  container: "Container",
+
+  // Server Types
   serverVanilla: "Basic Minecraft server without mods or plugins. Ideal for playing in classic survival mode.",
   serverForge: "Server with support for mods using Forge. Requires configuration of the specific version of Forge to be used.",
   serverCurseForge: "Automatically installs modpacks from CurseForge. Can be configured using the modpack's URL, or slug.",
@@ -28,50 +108,68 @@ export const en = {
   serverPurpur: "Server with fun and configurable features based on Paper",
   serverLeaf: "Paper fork focused on performance and low-level optimizations",
   serverFolia: "Experimental Paper server with multi-threading support (regions)",
-  version: "Version",
-  memory: "Memory",
-  port: "Port",
-  difficulty: "Difficulty",
-  gameMode: "Game Mode",
-  maxPlayers: "Max Players",
-  serverId: "Server ID",
+  selectType: "Select server type",
 
   // Server Actions
-  start: "Start",
-  stop: "Stop",
-  restart: "Restart",
-  delete: "Delete",
-  edit: "Edit",
-  console: "Console",
-  files: "Files",
+  startServer: "Start Server",
+  stopServer: "Stop Server",
+  restart2: "Restart",
   consoleStatus: "Console",
+  manageServer: "Manage Server",
 
-  // Status
-  online: "Online",
-  offline: "Offline",
-  starting: "Starting",
-  stopping: "Stopping",
-  running: "Running",
-  stopped: "Stopped",
-  not_found: "Not Found",
+  // ===========================
+  // DASHBOARD
+  // ===========================
+  dashboardTitle: "Server Dashboard",
+  dashboardDescription: "Manage and configure your Minecraft servers",
+  myServers: "My Servers",
+  noServers: "You don't have any servers created",
+  noServersDesc: "Create your first server to get started",
+  noServersAvailable: "No servers available",
+  noServersAvailableDesc: "Create your first server to begin the adventure",
+  createFirstServer: "Create My First Server",
+  createNewServer: "Create New Server",
+  systemActive: "System Active",
+  admin: "Admin",
+  administrator: "Administrator",
+  minecraftPanel: "Minepanel",
 
-  // Common
-  save: "Save",
-  cancel: "Cancel",
-  confirm: "Confirm",
-  loading: "Loading...",
-  error: "Error",
-  success: "Success",
-  welcome: "Welcome",
+  // Server Creation
+  serverCreationDesc: "Create a new Minecraft server",
+  enterServerName: "Enter the name for your new Minecraft server.",
 
-  // Messages
+  // Server Deletion
+  deleteServer: "Delete Server",
+  deleteServerTitle: "Delete Server",
+  deleteServerConfirm: "Are you sure you want to delete this server?",
+  deleteServerDesc: "This action cannot be undone. This will permanently delete the server and all its data.",
+  deleteServerWarning: "Are you sure you want to delete the server",
+  cannotBeUndone: "This action cannot be undone and will delete all server data.",
+  deleteServerData: "Delete Server Data",
+  deleteConfirmTitle: "Are you absolutely sure?",
+  deleteConfirmDesc: "This action cannot be undone. All worlds, configurations and saved server data will be deleted.",
+  yesDeleteAll: "Yes, delete everything",
+
+  // ===========================
+  // FORM VALIDATION
+  // ===========================
+  idMinLength: "ID must be at least 3 characters",
+  idMaxLength: "ID must be maximum 20 characters",
+  idInvalidChars: "ID can only contain letters, numbers, hyphens and underscores",
+
+  // ===========================
+  // MESSAGES & NOTIFICATIONS
+  // ===========================
   serverCreated: "Server created successfully",
   serverDeleted: "Server deleted successfully",
   serverStarted: "Server started successfully",
   serverStopped: "Server stopped successfully",
-  loginSuccess: "Login successful",
+  serverCreatedSuccess: "Server created successfully",
+  serverDeletedSuccess: "Server deleted successfully",
 
-  // Errors
+  // ===========================
+  // ERRORS
+  // ===========================
   serverNotFound: "Server not found",
   connectionError: "Connection error",
   unexpectedError: "Unexpected error",
@@ -79,13 +177,34 @@ export const en = {
   LOGIN_ERROR: "Login error",
   SERVER_START_ERROR: "Error starting server",
   SERVER_STOP_ERROR: "Error stopping server",
+  errorLoadingServerList: "Error loading server list",
+  errorProcessingStatuses: "Error processing server statuses",
+  errorDeletingServer: "Error deleting server",
+  errorCreatingServer: "Error creating server",
+  errorLoadingServerInfo: "Error loading server information",
+  errorLoadingLogs: "Error loading logs",
+  errorFetchingResources: "Error fetching server resources",
+  errorGettingLogsServer: "Error getting logs from server",
+  containerNotFound: "Container not found",
+  serverNotFoundSpecified: "Server not found specified",
+  connectionErrorDocker: "Connection error with Docker",
+  unknownError: "Unknown error",
+  logsError: "Error in logs",
+  resourcesError: "Error in resources",
+  errorsDetected: "Errors detected in logs",
+  errorsDetectedDesc: "Errors or exceptions were found in the server logs",
 
-  // Language
+  // ===========================
+  // LANGUAGE
+  // ===========================
   language: "Language",
   spanish: "Spanish",
   english: "English",
+  changeLanguage: "Change language",
 
-  // Welcome page
+  // ===========================
+  // WELCOME PAGE
+  // ===========================
   welcomeDescription: "Manage your Minecraft servers with ease",
   enterCredentials: "Enter your credentials to continue",
   enterServer: "ENTER SERVER",
@@ -94,50 +213,385 @@ export const en = {
   privacy: "Privacy",
   terms: "Terms",
 
-  // Dashboard
-  myServers: "My Servers",
-  noServers: "You don't have any servers created",
-  noServersDesc: "Create your first server to get started",
-  createFirstServer: "Create My First Server",
-  manageServer: "Manage Server",
-  deleteServerConfirm: "Are you sure you want to delete this server?",
-  deleteServerDesc: "This action cannot be undone. This will permanently delete the server and all its data.",
-  dashboardTitle: "Server Dashboard",
-  dashboardDescription: "Manage and configure your Minecraft servers",
-  noServersAvailable: "No servers available",
-  noServersAvailableDesc: "Create your first server to begin the adventure",
-  createNewServer: "Create New Server",
-  enterServerName: "Enter the name for your new Minecraft server.",
-  serverIdLabel: "Server ID",
-  serverIdDescription: "Unique identifier for the server (letters, numbers, hyphens and underscores only)",
-  creating: "Creating...",
-  configure: "Configure",
-  deleteServerTitle: "Delete Server",
-  deleteServerWarning: "Are you sure you want to delete the server",
-  cannotBeUndone: "This action cannot be undone and will delete all server data.",
-  eliminating: "Deleting...",
-  container: "Container",
-  errorLoadingServerList: "Error loading server list",
-  errorProcessingStatuses: "Error processing server statuses",
-  serverDeletedSuccess: "Server deleted successfully",
-  errorDeletingServer: "Error deleting server",
-  serverCreatedSuccess: "Server created successfully",
-  errorCreatingServer: "Error creating server",
-  errorLoadingServerInfo: "Error loading server information",
-  serverDefaultName: "Server",
-  minecraftServer: "Minecraft Server",
+  // ===========================
+  // GENERAL SETTINGS TAB
+  // ===========================
+  generalSettings: "General Settings",
+  generalSettingsDesc: "General settings for your Minecraft server",
+  basicSettings: "Basic Settings",
+  performanceSettings: "Performance",
+  connectivitySettings: "Connectivity",
 
-  // Form validation
-  idMinLength: "ID must be at least 3 characters",
-  idMaxLength: "ID must be maximum 20 characters",
-  idInvalidChars: "ID can only contain letters, numbers, hyphens and underscores",
+  // ===========================
+  // BASIC SETTINGS TAB
+  // ===========================
+  motd: "Message of the Day (MOTD)",
+  motdPlaceholder: "An incredible Minecraft server",
+  motdDescription: "The message that appears in the server list",
+  serverNamePlaceholder: "Your server name",
+  maxPlayersPlaceholder: "20",
+  players: "Players",
+  versionsAvailable: "versions available",
+  recommended: "Recommended",
+  popular: "Popular",
+  allVersions: "All Versions",
+  selectVersion: "Select Version",
+  loadingVersions: "Loading Versions",
+  updateVersions: "Update Versions",
+  list: "List",
+  manual: "Manual",
+  latest: "Latest",
 
-  // Server creation
-  serverCreationDesc: "Create a new Minecraft server",
-  serverIdPlaceholder: "my-server",
-  serverIdDesc: "Unique identifier for your server",
+  // Difficulty
+  selectDifficulty: "Select difficulty",
+  peaceful: "Peaceful",
+  easy: "Easy",
+  normal: "Normal",
+  hard: "Hard",
 
-  // Plugins
+  // Game Mode
+  selectGameMode: "Select game mode",
+  survival: "Survival",
+  creative: "Creative",
+  adventure: "Adventure",
+  spectator: "Spectator",
+
+  // World Settings
+  worldSettings: "World",
+  seed: "World Seed",
+  seedPlaceholder: "Leave blank for random seed",
+  seedDescription: "World seed for world generation. If you use a negative number, make sure to put it in quotes.",
+  levelType: "World Type",
+  selectLevelType: "Select world type",
+  flat: "Flat",
+  largeBiomes: "Large Biomes",
+  amplified: "Amplified",
+  singleBiomeSurface: "Single Biome Surface",
+
+  // World Options
+  hardcore: "Hardcore",
+  hardcoreDescription: "If enabled, players will become spectator when they die",
+  pvp: "PvP",
+  pvpDescription: "Allow player vs player combat",
+  spawningOptions: "Spawning Options",
+  spawnAnimals: "Spawn Animals",
+  spawnMonsters: "Spawn Monsters",
+  spawnNpcs: "Spawn NPCs",
+  generateStructures: "Generate Structures",
+  generateStructuresDescription: "Define if structures like villages, temples, etc. will be generated",
+  allowNether: "Allow Nether",
+  allowNetherDescription: "Enable or disable access to the Nether dimension",
+
+  // ===========================
+  // PERFORMANCE SETTINGS TAB
+  // ===========================
+  performanceConfig: "Performance Configuration",
+  viewDistance: "View Distance",
+  viewDistanceDesc: "Determines how many chunks are loaded around each player. Lower values improve performance.",
+  chunks: "chunks",
+  simulationDistance: "Simulation Distance",
+  simulationDistanceDesc: "Determines how far the server updates (mobs, crops, etc.). Can be lower than view distance.",
+  enableCommandBlocks: "Enable Command Blocks",
+  enableCommandBlocksDesc: "Allows the use of command blocks, which can affect performance if used excessively.",
+
+  // ===========================
+  // CONNECTIVITY SETTINGS TAB
+  // ===========================
+  serverPort: "Server Port",
+  serverPortDesc: "Port on which the server will listen. The default port is 25565.",
+  serverPortWarning: "This port must be different from other running servers to avoid conflicts.",
+  playerIdleTimeout: "Player Idle Timeout (minutes)",
+  playerIdleTimeoutDesc: "Time before kicking inactive players (0 to disable)",
+  onlineMode: "Online Mode",
+  onlineModeDesc: "If enabled, the server will check that players are authenticated with Mojang. It is recommended to leave it enabled to prevent users with fake names.",
+  preventProxyConnections: "Prevent Proxy Connections",
+  preventProxyConnectionsDesc: "If enabled, the server will try to detect and block connections through proxies/VPNs.",
+
+  // Access Control
+  accessControl: "Access Control",
+  serverOperators: "Server Operators",
+  serverOperatorsDesc: "Players with admin permissions, separated by commas",
+  opPermissionLevel: "OP Permission Level",
+  selectOpPermissionLevel: "Select OP permission level",
+  opPermissionLevel1: "Level 1 (Minimum)",
+  opPermissionLevel2: "Level 2",
+  opPermissionLevel3: "Level 3",
+  opPermissionLevel4: "Level 4 (Maximum)",
+  opPermissionLevelDesc: "Permission level for operators (4 = full access)",
+
+  // RCON
+  rcon: "RCON (Remote Control)",
+  rconDesc: "Configure remote access to the server console",
+  enableRcon: "Enable RCON",
+  enableRconDesc: "Allow remote control of the server through the RCON protocol",
+  backupRequiresRcon: "Backups require RCON to work properly.",
+  broadcastRconToOps: "Broadcast RCON to OPs",
+  broadcastRconToOpsDesc: "Broadcast RCON commands executed to connected operators",
+  rconPort: "RCON Port",
+  rconPassword: "RCON Password",
+  rconPasswordImportant: "Important! You must change the default password",
+  backupRconDesc: "The RCON backup service for performing backups.",
+
+  // Additional Permissions
+  additionalPermissions: "Additional Permissions",
+  commandBlock: "Command Block",
+  commandBlockDesc: "Enable the use of command blocks",
+  allowFlight: "Allow Flight",
+  allowFlightDesc: "Allow players to fly (if they have creative mode or flight mods enabled)",
+
+  // ===========================
+  // ADVANCED TAB
+  // ===========================
+  advancedConfig: "Advanced Configuration",
+  advancedConfigDesc: "Advanced options for your server configuration",
+  advanced: "Advanced",
+
+  // Docker Configuration
+  dockerImage: "Docker Image",
+  dockerImageDesc: "Official Docker image to use for the server",
+  dockerImageHelp: "Docker image to use (latest, java21, java17)",
+  dockerImageHelpTags: "Here are the available tags",
+  dockerImageHelpDocumentation: "Java version documentation",
+  dockerVolumes: "Docker Volumes",
+  dockerVolumesDesc: "Additional volume mappings for the Docker container",
+  dockerVolumesHelp: "Docker volume mappings (one per line, format: local-path:container-path)",
+
+  // Ports Configuration
+  extraPorts: "Extra Ports",
+  extraPortsDesc: "Configure additional ports to expose extra server services",
+  portFormat: "Format: host_port:container_port[/protocol]",
+  configuredPorts: "Configured Ports",
+  noExtraPorts: "No additional ports configured",
+  extraPortsUseful: "Additional ports are useful for plugins that require specific connections",
+  configExamples: "Configuration examples:",
+  portVoiceChat: "Voice Chat mod port",
+  portTcpSpecific: "Specific TCP port",
+  portUdpPlugins: "UDP port for plugins",
+  portDynmap: "Dynmap or other web plugins",
+
+  // Server Configuration
+  minecraftVersion: "Minecraft Version",
+  minecraftVersionDesc: "Specific Minecraft version to install",
+  minecraftVersionHelp: "Specific Minecraft version to use",
+  curseforgeVersionAuto: "Minecraft version is automatically obtained from the CurseForge modpack",
+  idleTimeout: "Idle Timeout (min)",
+  idleTimeoutDesc: "Time before kicking inactive players",
+  idleTimeoutHelp: "Time in minutes before kicking inactive players (0 to disable)",
+  stopDelay: "Stop Delay (sec)",
+  stopDelayDesc: "Wait time before forcefully stopping the server",
+  stopDelayHelp: "Time in seconds to wait before forcefully stopping the server",
+  restartPolicy: "Restart Policy",
+  restartPolicyDesc: "Determines how the container will behave when it finishes execution",
+  noRestart: "No restart",
+  alwaysRestart: "Always restart",
+  restartOnFailure: "Restart on failure",
+  restartUnlessStopped: "Restart unless stopped",
+  no: "No",
+  always: "Always",
+  onFailure: "On failure",
+  unlessStopped: "Unless stopped",
+
+  // Environment Variables
+  environmentVars: "Environment Variables",
+  environmentVarsDesc: "Custom environment variables for the container",
+  environmentVarsHelp: "Additional environment variables for the container (one per line, format: KEY=VALUE)",
+  variableName: "Variable name",
+  variableValue: "Value",
+
+  // Backup Configuration
+  backupConfig: "Backup Configuration",
+  enableBackup: "Enable Backups",
+  backupMethod: "Backup Method",
+  backupMethodDesc: "Method used to perform backups",
+  selectBackupMethod: "Select backup method",
+  tarCompression: "tar (compression)",
+  rsyncIncremental: "rsync (incremental)",
+  resticIncrementalEncrypted: "restic (incremental encrypted)",
+  rcloneRemote: "rclone (remote)",
+  backupName: "Backup Name",
+  backupNameDesc: "Name used to identify backup files",
+  backupInterval: "Backup Interval",
+  backupIntervalDesc: "Time between each backup (e.g: 24h, 2h 30m)",
+  backupInitialDelay: "Initial Delay",
+  backupInitialDelayDesc: "Time to wait before the first backup",
+  backupPruneDays: "Prune Days",
+  backupPruneDaysDesc: "Delete backups older than this number of days",
+  backupDestDir: "Backup Destination Directory",
+  backupDestDirDesc: "Path where backups will be saved",
+  backupExcludes: "Backup Excludes",
+  backupExcludesDesc: "Patterns of files to exclude from backup (separated by commas)",
+  backupExcludesHelp: "Files and directories that will not be included in the backup",
+  tarCompressMethod: "Tar Compression Method",
+  tarCompressMethodDesc: "Compression algorithm for tar files",
+  selectTarCompressMethod: "Select compression method",
+  gzip: "gzip (standard)",
+  bzip2: "bzip2 (better compression)",
+  zstd: "zstd (fast)",
+  backupOnStartup: "Backup on Startup",
+  backupOnStartupDesc: "Perform a backup immediately after starting the server",
+  pauseIfNoPlayers: "Pause backups when no players",
+  pauseIfNoPlayersDesc: "Do not perform automatic backups when no players are connected",
+
+  // ===========================
+  // RESOURCES TAB
+  // ===========================
+  serverResources: "Server Resources",
+  serverResourcesDesc: "Configure memory, CPU and other resource limitations for your server",
+  memoryCpu: "Memory & CPU",
+  jvmOptions: "JVM Options",
+  advancedResources: "Advanced Resources",
+  resources: "Resources",
+  cpu: "CPU",
+  serverInactive: "Server inactive",
+
+  // Memory & CPU Tab
+  initialMemoryJvm: "Initial Memory (JVM)",
+  initialMemoryTooltip: "Initial memory assigned to the JVM (-Xms)",
+  initialMemoryDesc: "Initial memory assigned to Java (Xms) - e.g: 2G, 1024M",
+  maxMemoryJvm: "Maximum Memory (JVM)",
+  maxMemoryTooltip: "Maximum memory assigned to the JVM (-Xmx)",
+  maxMemoryDesc: "Maximum memory assigned to Java (Xmx) - e.g: 4G, 4096M",
+  cpuLimit: "CPU Limit",
+  cpuLimitTooltip: "Maximum CPU limit for the Docker container",
+  cpuLimitDesc: "Maximum number of CPU cores the server can use",
+  cpuReservation: "CPU Reservation",
+  cpuReservationTooltip: "Minimum amount of CPU guaranteed for the container",
+  cpuReservationDesc: "Minimum amount of CPU guaranteed for the container",
+  memoryReservationDocker: "Memory Reservation (Docker)",
+  memoryReservationTooltip: "Amount of memory reserved for the Docker container",
+  memoryReservationDesc: "Amount of memory reserved for the Docker container",
+  linuxUserUid: "Linux User (UID)",
+  linuxUserDesc: "Linux user ID under which the server will run",
+  linuxGroupGid: "Linux Group (GID)",
+  linuxGroupDesc: "Linux group ID under which the server will run",
+
+  // JVM Options Tab
+  useAikarFlags: "Use Aikar's Flags",
+  aikarFlagsTooltip: "Aikar has performed research to find the optimal JVM flags for GC tuning, which is most important the more users connect simultaneously.",
+  aikarFlagsRecommended: "Recommended for servers with many players",
+  aikarFlagsDesc: "Use optimized JVM settings for servers with many players",
+  enableJmx: "Enable JMX",
+  enableJmxTooltip: "Enables remote JMX monitoring, such as profiling with VisualVM or JMC",
+  enableJmxDesc: "Enables remote JMX monitoring for diagnostic tools",
+  jmxHost: "JMX Host",
+  jmxHostDesc: "IP/Host running the Docker container (required for remote JMX)",
+  jvmOptionsField: "JVM Options",
+  jvmOptionsDesc: "General JVM options separated by spaces (arguments starting with -X)",
+  jvmXxOptions: "JVM XX Options",
+  jvmXxOptionsDesc: "Specific JVM XX options (must precede -X options)",
+  systemPropertiesDd: "System Properties (DD)",
+  systemPropertiesDdDesc: "List of system properties separated by commas (name=value or name:value)",
+  additionalArguments: "Additional Arguments",
+  additionalArgumentsDesc: "Additional arguments to pass to the server JAR file",
+
+  // Advanced Resources Tab
+  timezone: "Timezone",
+  selectTimezone: "Select timezone",
+  timezoneDesc: "Server timezone (default: UTC)",
+  enableAutoStop: "Enable Auto-Stop",
+  autoStopTooltip: "Automatically stops the server when there are no players for the specified time",
+  cannotUseWithAutoPause: "Cannot be used together with Auto-Pause",
+  initialTimeout: "Initial timeout (seconds)",
+  autoStopTimeoutInitDesc: "Initial wait time to stop the server if there are no players",
+  establishedTimeout: "Established timeout (seconds)",
+  autoStopTimeoutEstDesc: "Wait time to stop the server once it's running",
+  enableAutoPause: "Enable Auto-Pause",
+  autoPauseTooltip: "Automatically pauses the server when there are no players for the specified time",
+  cannotUseWithAutoStop: "Cannot be used together with Auto-Stop",
+  modCompatibilityWarning: "⚠️ Warning about mod compatibility:",
+  modCompatibilityDesc: "If the server has mods installed, the Auto-Pause feature may cause issues when trying to wake up the server. Some mods are not compatible with this feature and may cause the server to hang or crash during the wake-up process. It is recommended to use this feature only on Vanilla servers or thoroughly test compatibility before enabling it in production.",
+  autoPauseTimeoutInitDesc: "Initial wait time to pause the server if there are no players",
+  autoPauseTimeoutEstDesc: "Wait time to pause the server once it's running",
+  reconnectInterface: "Reconnect interface",
+  reconnectInterfaceDesc: "IP address to listen for connections that wake up the server (0.0.0.0 for all)",
+  enableRollingLogs: "Enable Rolling Logs",
+  rollingLogsTooltip: "By default, the vanilla log file will grow without limit. The logger can be reconfigured to use a rolling log file strategy.",
+  rollingLogsDesc: "Limits log file size through rotation",
+  showTimeInLogs: "Show Time in Logs",
+  logTimestampTooltip: "Include timestamp with each log entry",
+  logTimestampDesc: "Adds timestamps to log entries",
+
+  // ===========================
+  // LOGS TAB
+  // ===========================
+  serverLogs: "Server Logs",
+  serverLogsDesc: "View and monitor your server logs in real-time",
+  searchInLogs: "Search in logs...",
+  filterByLevel: "Filter by level",
+  allLevels: "All levels",
+  onlyErrors: "Only errors",
+  onlyWarnings: "Only warnings",
+  onlyInfo: "Only info",
+  onlyDebug: "Only debug",
+  autoScroll: "Auto-scroll",
+  realTime: "Real Time",
+  lines: "lines",
+  noLogsAvailable: "No logs available",
+  serverNotRunning: "Server is not running",
+  serverNotRunning2: "Server is not running",
+  lastUpdate: "Last update:",
+  realTimeActive: "Real time active",
+  realTimePaused: "Real time paused",
+  showing: "Showing",
+  of: "of",
+  entries: "entries",
+  liveLabel: "LIVE",
+  viewLogsRealtime: "View server logs in real time",
+  loadingLogs: "Loading logs...",
+  loadingServerConfig: "Loading server configuration...",
+  preparingBlocks: "Preparing blocks and settings...",
+
+  // ===========================
+  // COMMANDS TAB
+  // ===========================
+  serverCommands: "Server Commands",
+  serverCommandsDesc: "Execute commands on your server via RCON",
+  commandConsole: "Command Console",
+  commandConsoleDesc: "Execute commands directly on the Minecraft server",
+  startServerToExecute: "Start the server to execute commands.",
+  quickCommands: "Quick Commands",
+  sendCommand: "Send Command",
+  enterMinecraftCommand: "Enter a Minecraft command... (without /)",
+  serverResponse: "Server Response",
+  pressTabToAutocomplete: "Press Tab to autocomplete, or Enter to send",
+  commandsInfo: 'Commands are sent without the initial "/" symbol. Use Tab to autocomplete suggested commands.',
+  clearConsole: "Clear Console",
+  serverMustBeRunning: "Server must be running to execute commands",
+  rconNotConfigured: "RCON is not configured properly",
+  commands: "Commands",
+
+  // Command Labels
+  cmdListPlayers: "List players",
+  cmdTeleportPlayer: "Teleport player",
+  cmdGiveXP: "Give experience",
+  cmdGiveEffect: "Give effect",
+  cmdCreativeMode: "Creative mode",
+  cmdSurvivalMode: "Survival mode",
+  cmdAdventureMode: "Adventure mode",
+  cmdSpectatorMode: "Spectator mode",
+  cmdDayTime: "Set day",
+  cmdNightTime: "Set night",
+  cmdClearWeather: "Clear weather",
+  cmdRainWeather: "Rainy weather",
+  cmdThunderWeather: "Thunder weather",
+  cmdPeacefulDifficulty: "Peaceful difficulty",
+  cmdEasyDifficulty: "Easy difficulty",
+  cmdNormalDifficulty: "Normal difficulty",
+  cmdHardDifficulty: "Hard difficulty",
+  cmdGiveDiamonds: "Give diamonds",
+  cmdGiveDiamondSword: "Give diamond sword",
+  cmdGiveGoldenApples: "Give golden apples",
+  cmdGiveCommandBlock: "Give command block",
+  cmdSeedWorld: "View world seed",
+  cmdSaveWorld: "Save world",
+  cmdKickPlayer: "Kick player",
+  cmdBanPlayer: "Ban player",
+  cmdViewTPS: "View TPS",
+  cmdSpigotTimings: "Spigot timings mode",
+
+  // ===========================
+  // PLUGINS CONFIGURATION
+  // ===========================
   pluginsConfig: "Plugins Configuration",
   pluginsConfigDesc: "Configure plugins for your server",
   pluginsNotAvailable: "This section is only available for Spigot, Paper or Bukkit servers",
@@ -160,8 +614,54 @@ export const en = {
   pluginsTip3: "You can combine Spiget with manual plugins from File Browser",
   pluginsTip4: "Spigot plugins also work on Paper and Bukkit",
   pluginsSave: "Save Configuration",
+  pluginsOpenPluginsFolder: "Open plugins folder",
+  pluginsOpenServerFolder: "Open server folder",
+  openFileBrowser: "File Manager",
 
-  // Mods
+  // Plugin Server Configurations
+  paperConfiguration: "Paper Configuration",
+  paperBuild: "Paper Build",
+  paperBuildDesc: "Specific Paper build number (leave empty for latest)",
+  paperChannel: "Paper Channel",
+  paperChannelDesc: "Channel: default or experimental",
+  customDownloadUrl: "Custom Download URL",
+  paperDownloadUrlDesc: "Override Paper download URL (optional)",
+
+  bukkitSpigotConfiguration: "Bukkit/Spigot Configuration",
+  bukkitDownloadUrl: "Bukkit Download URL",
+  bukkitDownloadUrlDesc: "Custom Bukkit download URL",
+  spigotDownloadUrl: "Spigot Download URL",
+  spigotDownloadUrlDesc: "Custom Spigot download URL",
+  buildFromSource: "Build Spigot from source",
+
+  pufferfishConfiguration: "Pufferfish Configuration",
+  pufferfishBuild: "Pufferfish Build",
+  pufferfishBuildDesc: "Specific build number or lastSuccessfulBuild",
+  useFlareFlags: "Use Flare profiler flags",
+
+  purpurConfiguration: "Purpur Configuration",
+  purpurBuild: "Purpur Build",
+  purpurBuildDesc: "LATEST or specific build number",
+  purpurDownloadUrlDesc: "Override Purpur download URL (optional)",
+
+  leafConfiguration: "Leaf Configuration",
+  leafBuild: "Leaf Build",
+  leafBuildDesc: "Specific Leaf build number (leave empty for latest)",
+
+  foliaConfiguration: "Folia Configuration",
+  foliaWarning: "Folia is experimental and many plugins may not work correctly due to multi-threading changes.",
+  foliaBuild: "Folia Build",
+  foliaBuildDesc: "Specific Folia build number",
+  foliaChannel: "Folia Channel",
+  foliaChannelDesc: "Release channel (experimental recommended)",
+  foliaDownloadUrlDesc: "Override Folia download URL (optional)",
+
+  skipDownloadDefaults: "Skip download default configs",
+  skipDownloadDefaultsDesc: "Skip checking for default Paper/Bukkit/Spigot config files to download",
+
+  // ===========================
+  // MODS CONFIGURATION
+  // ===========================
   modsConfig: "Mods Configuration",
   modsConfigDesc: "Configure mod details for your server",
   modsNotAvailable: "This section is only available for Forge or CurseForge servers",
@@ -250,231 +750,12 @@ export const en = {
   excludeModsHelp: "List of mods (separated by spaces or lines) that will be excluded from the modpack IDs or Slugs.",
   excludeModsDesc: "List of mods that will be excluded from the modpack IDs or Slugs (one per line, supports glob patterns)",
 
-  // Common buttons and labels
-  saveConfiguration: "Save Configuration",
-  saveChanges: "Save Changes",
-
-  // General Settings Tab
-  generalSettings: "General Settings",
-  generalSettingsDesc: "General settings for your Minecraft server",
-  basicSettings: "Basic Settings",
-  performanceSettings: "Performance",
-  connectivitySettings: "Connectivity",
-  deleteServerData: "Delete Server Data",
-  deleteConfirmTitle: "Are you absolutely sure?",
-  deleteConfirmDesc: "This action cannot be undone. All worlds, configurations and saved server data will be deleted.",
-  deleting: "Deleting...",
-  yesDeleteAll: "Yes, delete everything",
-
-  // Advanced Tab
-  advancedConfig: "Advanced Configuration",
-  advancedConfigDesc: "Advanced options for your server configuration",
-  dockerImage: "Docker Image",
-  dockerImageDesc: "Official Docker image to use for the server",
-  dockerImageHelp: "Docker image to use (latest, java21, java17)",
-  extraPorts: "Extra Ports",
-  extraPortsDesc: "Configure additional ports to expose extra server services",
-  portFormat: "Format: host_port:container_port[/protocol]",
-  configuredPorts: "Configured Ports",
-  noExtraPorts: "No additional ports configured",
-  extraPortsUseful: "Additional ports are useful for plugins that require specific connections",
-  configExamples: "Configuration examples:",
-  portVoiceChat: "Voice Chat mod port",
-  portTcpSpecific: "Specific TCP port",
-  portUdpPlugins: "UDP port for plugins",
-  portDynmap: "Dynmap or other web plugins",
-  minecraftVersion: "Minecraft Version",
-  minecraftVersionDesc: "Specific Minecraft version to install",
-  minecraftVersionHelp: "Specific Minecraft version to use",
-  curseforgeVersionAuto: "Minecraft version is automatically obtained from the CurseForge modpack",
-  idleTimeout: "Idle Timeout (min)",
-  idleTimeoutDesc: "Time before kicking inactive players",
-  idleTimeoutHelp: "Time in minutes before kicking inactive players (0 to disable)",
-  stopDelay: "Stop Delay (sec)",
-  stopDelayDesc: "Wait time before forcefully stopping the server",
-  stopDelayHelp: "Time in seconds to wait before forcefully stopping the server",
-  restartPolicy: "Restart Policy",
-  addPort: "Add Port",
-  environmentVars: "Environment Variables",
-  environmentVarsDesc: "Custom environment variables for the container",
-  addVariable: "Add Variable",
-  variableName: "Variable name",
-  variableValue: "Value",
-
-  // Resources Tab
-  serverResources: "Server Resources",
-  serverResourcesDesc: "Configure memory, CPU and other resource limitations for your server",
-  memoryCpu: "Memory & CPU",
-  jvmOptions: "JVM Options",
-  advancedResources: "Advanced Resources",
-
-  // Logs Tab
-  serverLogs: "Server Logs",
-  serverLogsDesc: "View and monitor your server logs in real-time",
-  search: "Search...",
-  searchInLogs: "Search in logs...",
-  filterByLevel: "Filter by level",
-  allLevels: "All levels",
-  onlyErrors: "Only errors",
-  onlyWarnings: "Only warnings",
-  onlyInfo: "Only info",
-  onlyDebug: "Only debug",
-  autoScroll: "Auto-scroll",
-  realTime: "Real Time",
-  refresh: "Refresh",
-  lines: "lines",
-  pause: "Pause",
-  resume: "Resume",
-  noLogsAvailable: "No logs available",
-  serverNotRunning: "Server is not running",
-  logsError: "Error in logs",
-  resourcesError: "Error in resources",
-  errorsDetected: "Errors detected in logs",
-  errorsDetectedDesc: "Errors or exceptions were found in the server logs",
-  lastUpdate: "Last update:",
-  cpu: "CPU",
-  serverInactive: "Server inactive",
-  errorLoadingLogs: "Error loading logs",
-  retry: "Retry",
-  disconnected: "Disconnected",
-  withErrors: "With errors",
-  realTimeActive: "Real time active",
-  realTimePaused: "Real time paused",
-  showing: "Showing",
-  of: "of",
-  entries: "entries",
-  resources: "Resources",
-  liveLabel: "LIVE",
-  viewLogsRealtime: "View server logs in real time",
-  loadingLogs: "Loading logs...",
-  errorFetchingResources: "Error fetching server resources",
-
-  // Dashboard Header
-  systemActive: "System Active",
-  admin: "Admin",
-  administrator: "Administrator",
-  changeLanguage: "Change language",
-
-  // Dashboard Shell
-  initializing: "Initializing...",
-  verifyingAuth: "Verifying authentication...",
-
-  // Sidebar
-  minecraftPanel: "Minepanel",
-  navigation: "Navigation",
-
-  // Server Page Header
-  active: "Active",
-  starting2: "Starting...",
-  stopped2: "Stopped",
-  notFound: "Not found",
-  unknown: "Unknown",
-  stopServer: "Stop Server",
-  startServer: "Start Server",
-  restart2: "Restart",
-  restarting: "Restarting...",
+  // ===========================
+  // UI COMPONENTS
+  // ===========================
   tip: "Tip:",
   configureServerTip: "Configure this server by adjusting the parameters in the tabs below.",
   changesRequireRestart: "Changes will require restarting the server to apply.",
-
-  // Commands Tab
-  serverCommands: "Server Commands",
-  serverCommandsDesc: "Execute commands on your server via RCON",
-  commandConsole: "Command Console",
-  commandConsoleDesc: "Execute commands directly on the Minecraft server",
-  serverNotRunning2: "Server is not running",
-  startServerToExecute: "Start the server to execute commands.",
-  quickCommands: "Quick Commands",
-  sendCommand: "Send Command",
-  enterMinecraftCommand: "Enter a Minecraft command... (without /)",
-  sending: "Sending...",
-  send: "Send",
-  serverResponse: "Server Response",
-  pressTabToAutocomplete: "Press Tab to autocomplete, or Enter to send",
-  commandsInfo: 'Commands are sent without the initial "/" symbol. Use Tab to autocomplete suggested commands.',
-  clearConsole: "Clear Console",
-  serverMustBeRunning: "Server must be running to execute commands",
-  rconNotConfigured: "RCON is not configured properly",
-
-  // Command labels
-  cmdListPlayers: "List players",
-  cmdTeleportPlayer: "Teleport player",
-  cmdGiveXP: "Give experience",
-  cmdGiveEffect: "Give effect",
-  cmdCreativeMode: "Creative mode",
-  cmdSurvivalMode: "Survival mode",
-  cmdAdventureMode: "Adventure mode",
-  cmdSpectatorMode: "Spectator mode",
-  cmdDayTime: "Set day",
-  cmdNightTime: "Set night",
-  cmdClearWeather: "Clear weather",
-  cmdRainWeather: "Rainy weather",
-  cmdThunderWeather: "Thunder weather",
-  cmdPeacefulDifficulty: "Peaceful difficulty",
-  cmdEasyDifficulty: "Easy difficulty",
-  cmdNormalDifficulty: "Normal difficulty",
-  cmdHardDifficulty: "Hard difficulty",
-  cmdGiveDiamonds: "Give diamonds",
-  cmdGiveDiamondSword: "Give diamond sword",
-  cmdGiveGoldenApples: "Give golden apples",
-  cmdGiveCommandBlock: "Give command block",
-  cmdSeedWorld: "View world seed",
-  cmdSaveWorld: "Save world",
-  cmdKickPlayer: "Kick player",
-  cmdBanPlayer: "Ban player",
-  cmdViewTPS: "View TPS",
-  cmdSpigotTimings: "Spigot timings mode",
-
-  // Plugin configuration options
-  paperConfiguration: "Paper Configuration",
-  paperBuild: "Paper Build",
-  paperBuildDesc: "Specific Paper build number (leave empty for latest)",
-  paperChannel: "Paper Channel",
-  paperChannelDesc: "Channel: default or experimental",
-  customDownloadUrl: "Custom Download URL",
-  paperDownloadUrlDesc: "Override Paper download URL (optional)",
-
-  bukkitSpigotConfiguration: "Bukkit/Spigot Configuration",
-  bukkitDownloadUrl: "Bukkit Download URL",
-  bukkitDownloadUrlDesc: "Custom Bukkit download URL",
-  spigotDownloadUrl: "Spigot Download URL",
-  spigotDownloadUrlDesc: "Custom Spigot download URL",
-  buildFromSource: "Build Spigot from source",
-
-  pufferfishConfiguration: "Pufferfish Configuration",
-  pufferfishBuild: "Pufferfish Build",
-  pufferfishBuildDesc: "Specific build number or lastSuccessfulBuild",
-  useFlareFlags: "Use Flare profiler flags",
-
-  purpurConfiguration: "Purpur Configuration",
-  purpurBuild: "Purpur Build",
-  purpurBuildDesc: "LATEST or specific build number",
-  purpurDownloadUrlDesc: "Override Purpur download URL (optional)",
-
-  leafConfiguration: "Leaf Configuration",
-  leafBuild: "Leaf Build",
-  leafBuildDesc: "Specific Leaf build number (leave empty for latest)",
-
-  foliaConfiguration: "Folia Configuration",
-  foliaWarning: "Folia is experimental and many plugins may not work correctly due to multi-threading changes.",
-  foliaBuild: "Folia Build",
-  foliaBuildDesc: "Specific Folia build number",
-  foliaChannel: "Folia Channel",
-  foliaChannelDesc: "Release channel (experimental recommended)",
-  foliaDownloadUrlDesc: "Override Folia download URL (optional)",
-
-  skipDownloadDefaults: "Skip download default configs",
-  skipDownloadDefaultsDesc: "Skip checking for default Paper/Bukkit/Spigot config files to download",
-
-  pluginsOpenPluginsFolder: "Open plugins folder",
-  pluginsOpenServerFolder: "Open server folder",
-  openFileBrowser: "File Manager",
-
-  // Page component
-  serverInformation: "Server Information",
-  currentStatus: "Current Status",
-
-  // ServerConfigTab Component
-  advanced: "Advanced",
-  commands: "Commands"
 };
+
+export type TranslationKey = keyof typeof en;

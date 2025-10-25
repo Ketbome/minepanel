@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FormEvent, FC } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
@@ -17,13 +16,12 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 interface ServerConfigTabsProps {
   readonly serverId: string;
   readonly config: ServerConfig;
-  readonly updateConfig: (field: keyof ServerConfig, value: any) => void;
+  readonly updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
   readonly saveConfig: () => Promise<boolean>;
   readonly serverStatus: string;
-  readonly onClearData: () => Promise<boolean>;
 }
 
-export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, onClearData }) => {
+export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus }) => {
   const { t } = useLanguage();
 
   // Determinar qué tabs mostrar según el tipo de servidor
@@ -44,7 +42,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
             <TabsList className="flex w-max min-w-full h-auto p-1 bg-gray-800/70 border-b border-gray-700/60">
               <TabsTrigger value="type" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Server className="h-4 w-4" />
-                <span className="hidden sm:inline">{ t("serverType") }</span>
+                <span className="hidden sm:inline">{t("serverType")}</span>
                 <span className="sm:hidden">Tipo</span>
               </TabsTrigger>
 
@@ -56,7 +54,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsTrigger value="resources" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Cpu className="h-4 w-4" />
-                <span className="hidden sm:inline"> { t("resources") }</span>
+                <span className="hidden sm:inline"> {t("resources")}</span>
                 <span className="sm:hidden">Recursos</span>
               </TabsTrigger>
 
@@ -78,8 +76,8 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsTrigger value="advanced" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Code className="h-4 w-4" />
-                <span className="hidden sm:inline">{ t("advanced") }</span>
-                <span className="sm:hidden">{ t("advanced") }</span>
+                <span className="hidden sm:inline">{t("advanced")}</span>
+                <span className="sm:hidden">{t("advanced")}</span>
               </TabsTrigger>
 
               <TabsTrigger value="logs" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
@@ -90,7 +88,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsTrigger value="commands" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Terminal className="h-4 w-4" />
-                <span className="hidden sm:inline">{ t("commands") }</span>
+                <span className="hidden sm:inline">{t("commands")}</span>
                 <span className="sm:hidden">CMD</span>
               </TabsTrigger>
             </TabsList>
@@ -98,31 +96,31 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
           <div className="p-4 bg-gray-900/60 min-h-[400px]">
             <TabsContent value="type" className="space-y-4 mt-0">
-              <ServerTypeTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+              <ServerTypeTab config={config} updateConfig={updateConfig} />
             </TabsContent>
 
             <TabsContent value="general" className="space-y-4 mt-0">
-              <GeneralSettingsTab config={config} updateConfig={updateConfig} onSave={saveConfig} onClearData={onClearData} />
+              <GeneralSettingsTab config={config} updateConfig={updateConfig} />
             </TabsContent>
 
             <TabsContent value="resources" className="space-y-4 mt-0">
-              <ResourcesTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+              <ResourcesTab config={config} updateConfig={updateConfig} />
             </TabsContent>
 
             {showModsTab && (
               <TabsContent value="mods" className="space-y-4 mt-0">
-                <ModsTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+                <ModsTab config={config} updateConfig={updateConfig} />
               </TabsContent>
             )}
 
             {showPluginsTab && (
               <TabsContent value="plugins" className="space-y-4 mt-0">
-                <PluginsTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+                <PluginsTab config={config} updateConfig={updateConfig} />
               </TabsContent>
             )}
 
             <TabsContent value="advanced" className="space-y-4 mt-0">
-              <AdvancedTab config={config} updateConfig={updateConfig} onSave={saveConfig} />
+              <AdvancedTab config={config} updateConfig={updateConfig} />
             </TabsContent>
 
             <TabsContent value="logs" className="space-y-4 mt-0">

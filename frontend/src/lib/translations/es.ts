@@ -1,22 +1,104 @@
-export const es = {
-  // Auth
+import { TranslationKey } from "./en";
+
+export const es: Record<TranslationKey, string> = {
+  // ===========================
+  // AUTENTICACIÓN
+  // ===========================
   login: "Iniciar Sesión",
   logout: "Cerrar Sesión",
   username: "Nombre de Usuario",
   password: "Contraseña",
   invalidCredentials: "Credenciales inválidas",
+  loginSuccess: "Inicio de sesión exitoso",
 
-  // Navigation
+  // ===========================
+  // NAVEGACIÓN
+  // ===========================
   dashboard: "Panel de Control",
   servers: "Servidores",
   settings: "Configuración",
   home: "Inicio",
+  navigation: "Navegación",
 
-  // Server Management
+  // ===========================
+  // ACCIONES COMUNES
+  // ===========================
+  save: "Guardar",
+  cancel: "Cancelar",
+  confirm: "Confirmar",
+  loading: "Cargando...",
+  error: "Error",
+  success: "Éxito",
+  welcome: "Bienvenido",
+  start: "Iniciar",
+  stop: "Detener",
+  restart: "Reiniciar",
+  delete: "Eliminar",
+  edit: "Editar",
+  console: "Consola",
+  files: "Archivos",
+  configure: "Configurar",
+  creating: "Creando...",
+  eliminating: "Eliminando...",
+  deleting: "Borrando...",
+  sending: "Enviando...",
+  send: "Enviar",
+  refresh: "Actualizar",
+  retry: "Reintentar",
+  pause: "Pausar",
+  resume: "Reanudar",
+  search: "Buscar...",
+  saveConfiguration: "Guardar Configuración",
+  saveChanges: "Guardar Cambios",
+  addPort: "Agregar Puerto",
+  addVariable: "Agregar Variable",
+
+  // ===========================
+  // ESTADOS
+  // ===========================
+  online: "En Línea",
+  offline: "Desconectado",
+  starting: "Iniciando",
+  stopping: "Deteniendo",
+  running: "Ejecutándose",
+  stopped: "Detenido",
+  not_found: "No Encontrado",
+  active: "Activo",
+  starting2: "Iniciando...",
+  stopped2: "Detenido",
+  notFound: "No encontrado",
+  unknown: "Desconocido",
+  restarting: "Reiniciando...",
+  initializing: "Inicializando...",
+  verifyingAuth: "Verificando autenticación...",
+  disconnected: "Desconectado",
+  withErrors: "Con errores",
+
+  // ===========================
+  // GESTIÓN DE SERVIDORES
+  // ===========================
   createServer: "Crear Servidor",
   serverName: "Nombre del Servidor",
   serverType: "Tipo de Servidor",
   serverTypeDescription: "Selecciona el tipo de servidor de Minecraft que deseas configurar",
+  version: "Versión",
+  memory: "Memoria",
+  port: "Puerto",
+  difficulty: "Dificultad",
+  gameMode: "Modo de Juego",
+  maxPlayers: "Jugadores Máximos",
+  serverId: "ID del Servidor",
+  serverIdLabel: "ID del Servidor",
+  serverIdDescription: "Identificador único para el servidor (solo letras, números, guiones y guiones bajos)",
+  serverIdPlaceholder: "mi-servidor",
+  serverIdDesc: "Identificador único para tu servidor",
+  serverDefaultName: "Servidor",
+  minecraftServer: "Servidor de Minecraft",
+  currentStatus: "Estado Actual",
+  serverInformation: "Información del Servidor",
+  container: "Container",
+
+  // Tipos de Servidor
   serverVanilla: "Servidor básico de Minecraft sin mods ni plugins. Ideal para jugar en modo supervivencia clásico.",
   serverForge: "Servidor con soporte para mods usando Forge. Requiere configurar la versión de Forge específica a utilizar.",
   serverCurseForge: "Instala automáticamente modpacks de CurseForge. Se puede configurar mediante URL, o Slug.",
@@ -28,49 +110,68 @@ export const es = {
   serverPurpur: "Servidor con características divertidas y configurables basado en Paper",
   serverLeaf: "Fork de Paper enfocado en rendimiento y optimizaciones de bajo nivel",
   serverFolia: "Servidor experimental de Paper con soporte para multi-threading (regiones)",
-  version: "Versión",
-  memory: "Memoria",
-  port: "Puerto",
-  difficulty: "Dificultad",
-  gameMode: "Modo de Juego",
-  maxPlayers: "Jugadores Máximos",
-  serverId: "ID del Servidor",
+  selectType: "Seleccionar tipo de servidor",
 
-  // Server Actions
-  start: "Iniciar",
-  stop: "Detener",
-  restart: "Reiniciar",
-  delete: "Eliminar",
-  edit: "Editar",
-  console: "Consola",
-  files: "Archivos",
+  // Acciones de Servidor
+  startServer: "Iniciar Servidor",
+  stopServer: "Detener Servidor",
+  restart2: "Reiniciar",
   consoleStatus: "Consola",
+  manageServer: "Gestionar Servidor",
 
-  // Status
-  online: "En Línea",
-  offline: "Desconectado",
-  starting: "Iniciando",
-  stopping: "Deteniendo",
-  running: "Ejecutándose",
-  stopped: "Detenido",
-  not_found: "No Encontrado",
+  // ===========================
+  // PANEL DE CONTROL
+  // ===========================
+  dashboardTitle: "Dashboard de Servidores",
+  dashboardDescription: "Gestiona y configura tus servidores de Minecraft",
+  myServers: "Mis Servidores",
+  noServers: "No tienes servidores creados",
+  noServersDesc: "Crea tu primer servidor para comenzar",
+  noServersAvailable: "No hay servidores disponibles",
+  noServersAvailableDesc: "Crea tu primer servidor para comenzar la aventura",
+  createFirstServer: "Crear Mi Primer Servidor",
+  createNewServer: "Crear Nuevo Servidor",
+  systemActive: "Sistema Activo",
+  admin: "Admin",
+  administrator: "Administrador",
+  minecraftPanel: "Minepanel",
 
-  // Common
-  save: "Guardar",
-  cancel: "Cancelar",
-  confirm: "Confirmar",
-  loading: "Cargando...",
-  error: "Error",
-  success: "Éxito",
+  // Creación de Servidor
+  serverCreationDesc: "Crea un nuevo servidor de Minecraft",
+  enterServerName: "Ingresa el nombre para tu nuevo servidor de Minecraft.",
 
-  // Messages
+  // Eliminación de Servidor
+  deleteServer: "Eliminar Servidor",
+  deleteServerTitle: "Eliminar Servidor",
+  deleteServerConfirm: "¿Estás seguro de que quieres eliminar este servidor?",
+  deleteServerDesc: "Esta acción no se puede deshacer. Se eliminará permanentemente el servidor y todos sus datos.",
+  deleteServerWarning: "¿Estás seguro que deseas eliminar el servidor",
+  cannotBeUndone: "Esta acción no se puede deshacer y eliminará todos los datos del servidor.",
+  deleteServerData: "Borrar Datos del Servidor",
+  deleteConfirmTitle: "¿Estás absolutamente seguro?",
+  deleteConfirmDesc: "Esta acción no se puede deshacer. Se borrarán todos los mundos, configuraciones y datos guardados del servidor.",
+  yesDeleteAll: "Sí, borrar todo",
+
+  // ===========================
+  // VALIDACIÓN DE FORMULARIOS
+  // ===========================
+  idMinLength: "El ID debe tener al menos 3 caracteres",
+  idMaxLength: "El ID debe tener máximo 20 caracteres",
+  idInvalidChars: "El ID solo puede contener letras, números, guiones y guiones bajos",
+
+  // ===========================
+  // MENSAJES Y NOTIFICACIONES
+  // ===========================
   serverCreated: "Servidor creado exitosamente",
   serverDeleted: "Servidor eliminado exitosamente",
   serverStarted: "Servidor iniciado exitosamente",
   serverStopped: "Servidor detenido exitosamente",
-  loginSuccess: "Inicio de sesión exitoso",
+  serverCreatedSuccess: "Servidor creado correctamente",
+  serverDeletedSuccess: "Servidor eliminado correctamente",
 
-  // Errors
+  // ===========================
+  // ERRORES
+  // ===========================
   serverNotFound: "Servidor no encontrado",
   connectionError: "Error de conexión",
   unexpectedError: "Error inesperado",
@@ -78,14 +179,34 @@ export const es = {
   LOGIN_ERROR: "Error al iniciar sesión",
   SERVER_START_ERROR: "Error al iniciar el servidor",
   SERVER_STOP_ERROR: "Error al detener el servidor",
+  errorLoadingServerList: "Error al cargar la lista de servidores",
+  errorProcessingStatuses: "Error al procesar los estados de los servidores",
+  errorDeletingServer: "Error al eliminar el servidor",
+  errorCreatingServer: "Error al crear el servidor",
+  errorLoadingServerInfo: "Error al cargar información de los servidores",
+  errorLoadingLogs: "Error al cargar logs",
+  errorFetchingResources: "Error al obtener recursos del servidor",
+  errorGettingLogsServer: "Error al obtener los logs del servidor",
+  containerNotFound: "El contenedor no está ejecutándose o no existe",
+  serverNotFoundSpecified: "No se encontró el servidor especificado.",
+  connectionErrorDocker: "Error al conectar con Docker",
+  unknownError: "Error desconocido",
+  logsError: "Error en los logs",
+  resourcesError: "Error en los recursos",
+  errorsDetected: "Errores detectados en los logs",
+  errorsDetectedDesc: "Se encontraron errores o excepciones en los logs del servidor",
 
-  // Language
+  // ===========================
+  // IDIOMA
+  // ===========================
   language: "Idioma",
   spanish: "Español",
   english: "Inglés",
+  changeLanguage: "Cambiar idioma",
 
-  // Welcome page
-  welcome: "Bienvenido",
+  // ===========================
+  // PÁGINA DE BIENVENIDA
+  // ===========================
   welcomeDescription: "Gestiona tus servidores de Minecraft con facilidad",
   enterCredentials: "Ingresa tus credenciales para continuar",
   enterServer: "ENTRAR AL SERVIDOR",
@@ -94,184 +215,150 @@ export const es = {
   privacy: "Privacidad",
   terms: "Términos",
 
-  // Dashboard
-  myServers: "Mis Servidores",
-  noServers: "No tienes servidores creados",
-  noServersDesc: "Crea tu primer servidor para comenzar",
-  createFirstServer: "Crear Mi Primer Servidor",
-  manageServer: "Gestionar Servidor",
-  deleteServerConfirm: "¿Estás seguro de que quieres eliminar este servidor?",
-  deleteServerDesc: "Esta acción no se puede deshacer. Se eliminará permanentemente el servidor y todos sus datos.",
-  dashboardTitle: "Dashboard de Servidores",
-  dashboardDescription: "Gestiona y configura tus servidores de Minecraft",
-  noServersAvailable: "No hay servidores disponibles",
-  noServersAvailableDesc: "Crea tu primer servidor para comenzar la aventura",
-  createNewServer: "Crear Nuevo Servidor",
-  enterServerName: "Ingresa el nombre para tu nuevo servidor de Minecraft.",
-  serverIdLabel: "ID del Servidor",
-  serverIdDescription: "Identificador único para el servidor (solo letras, números, guiones y guiones bajos)",
-  creating: "Creando...",
-  configure: "Configurar",
-  deleteServerTitle: "Eliminar Servidor",
-  deleteServerWarning: "¿Estás seguro que deseas eliminar el servidor",
-  cannotBeUndone: "Esta acción no se puede deshacer y eliminará todos los datos del servidor.",
-  eliminating: "Eliminando...",
-  container: "Container",
-  errorLoadingServerList: "Error al cargar la lista de servidores",
-  errorProcessingStatuses: "Error al procesar los estados de los servidores",
-  serverDeletedSuccess: "Servidor eliminado correctamente",
-  errorDeletingServer: "Error al eliminar el servidor",
-  serverCreatedSuccess: "Servidor creado correctamente",
-  errorCreatingServer: "Error al crear el servidor",
-  errorLoadingServerInfo: "Error al cargar información de los servidores",
-  serverDefaultName: "Servidor",
-  minecraftServer: "Servidor de Minecraft",
-
-  // Form validation
-  idMinLength: "El ID debe tener al menos 3 caracteres",
-  idMaxLength: "El ID debe tener máximo 20 caracteres",
-  idInvalidChars: "El ID solo puede contener letras, números, guiones y guiones bajos",
-
-  // Server creation
-  serverCreationDesc: "Crea un nuevo servidor de Minecraft",
-  serverIdPlaceholder: "mi-servidor",
-  serverIdDesc: "Identificador único para tu servidor",
-
-  // Plugins
-  pluginsConfig: "Configuración de Plugins",
-  pluginsConfigDesc: "Configura plugins para tu servidor",
-  pluginsNotAvailable: "Esta sección solo está disponible para servidores Spigot, Paper o Bukkit",
-  pluginsSelectServerType: 'Selecciona el tipo de servidor Spigot, Paper o Bukkit en la pestaña "Tipo de Servidor" para configurar plugins.',
-  pluginsAutoDownload: "Descarga Automática desde Spiget",
-  pluginsAutoDownloadDesc: "Descarga automática de plugins desde SpigotMC usando la API de Spiget. Los archivos ZIP se expandirán automáticamente en la carpeta de plugins.",
-  pluginsManualInfo: "Para agregar plugins manualmente (archivos JAR), usa el File Browser para subirlos a la carpeta /plugins del servidor.",
-  pluginsSpigetResources: "Recursos de Spiget (SPIGET_RESOURCES)",
-  pluginsSpigetResourcesDesc: "IDs de recursos de SpigotMC (ej: LuckPerms=28140, Vault=34315)",
-  pluginsSpigetNote: "Nota importante: La variable es SPIGET con E, no SPIGOT.",
-  pluginsSpigetWarning: "⚠️ Algunos plugins como EssentialsX no permiten descargas automatizadas.",
-  pluginsManualTitle: "Agregar plugins manualmente",
-  pluginsManualStep1: "Accede al File Browser del servidor",
-  pluginsManualStep2: "Navega a la carpeta /plugins",
-  pluginsManualStep3: "Sube tus archivos JAR directamente",
-  pluginsManualStep4: "Reinicia el servidor para que se carguen los plugins",
-  pluginsTipsTitle: "Consejos útiles",
-  pluginsTip1: "Los plugins se descargarán automáticamente al iniciar el servidor",
-  pluginsTip2: "Los archivos ZIP se expandirán automáticamente en la carpeta de plugins",
-  pluginsTip3: "Puedes combinar Spiget con plugins manuales desde File Browser",
-  pluginsTip4: "Los plugins de Spigot también funcionan en Paper y Bukkit",
-  pluginsSave: "Guardar Configuración",
-
-  // Mods
-  modsConfig: "Configuración de Mods",
-  modsConfigDesc: "Configura los detalles de mods para tu servidor",
-  modsNotAvailable: "Esta sección solo está disponible para servidores Forge o CurseForge",
-  modsSelectServerType: 'Selecciona el tipo de servidor Forge o CurseForge en la pestaña "Tipo de Servidor" para configurar los mods.',
-
-  // Forge Configuration
-  forgeVersion: "Versión de Forge",
-  forgeBuildDesc: "Número de build de Forge para la versión de Minecraft seleccionada",
-
-  // Manual CurseForge (Deprecated)
-  deprecatedFeature: "Función obsoleta (Deprecated)",
-  manualCurseForgeDeprecated: "Este método manual para CurseForge está obsoleto. Se recomienda usar \"CurseForge Modpack\" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.",
-  modpackFile: "Archivo del Modpack (CF_SERVER_MOD)",
-  modpackFileHelp: "Ruta completa al archivo .zip del modpack en el contenedor.",
-  modpackFileExample: "Ejemplo: /modpacks/SkyFactory_4_Server_4.1.0.zip",
-  modpackFilePath: "Ruta al archivo ZIP del modpack de CurseForge dentro del contenedor",
-  baseDirectory: "Directorio Base (CF_BASE_DIR)",
-  baseDirectoryHelp: "Directorio donde se expandirá el modpack. Por defecto: /data",
-  baseDirectoryPath: "Directorio donde se extraerá y ejecutará el modpack",
-  useModpackStartScript: "Usar Script de Inicio del Modpack",
-  useModpackStartScriptDesc: "Si se desactiva, evita usar el script de inicio incluido en el modpack y usa la lógica estándar del servidor",
-  ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
-  ftbLegacyJavaFixerDesc: "Activa la corrección para modpacks que fallan con \"unable to launch forgemodloader\"",
-  cfApiKeyOptional: "API Key opcional para compatibilidad con algunos modpacks",
-
-  // CurseForge Auto Configuration
-  importantInfo: "Información importante",
-  cfApiKeyRequired: "Para utilizar correctamente la funcionalidad de CurseForge, se requiere una API Key. La API key es necesaria para descargar modpacks privados o con restricciones.",
-  installationMethod: "Método de Instalación",
-  installationMethodHelp: "Selecciona cómo quieres obtener el modpack:",
-  methodUrl: "URL",
-  methodUrlDesc: "Dirección web directa al modpack en CurseForge",
-  methodSlug: "Slug",
-  methodSlugDesc: "Identificador único del modpack (ej: \"all-the-mods-7\")",
-  methodFile: "Archivo",
-  methodFileDesc: "Instalar desde un archivo .zip ya subido al servidor",
-  installFromUrl: "Instalar desde URL directa",
-  useIdSlug: "Usar ID/slug del modpack",
-  useLocalFile: "Usar archivo local en el servidor",
-
-  modpackUrl: "URL del Modpack (CF_PAGE_URL)",
-  modpackUrlHelp: "URL completa a la página del modpack o a un archivo específico.",
-  modpackUrlDesc: "URL directa de descarga del modpack de CurseForge",
-
-  curseForgeProject: "Proyecto de CurseForge (CF_SLUG)",
-  curseForgeProjectHelp: "El identificador (slug) del modpack en CurseForge.",
-  projectNameOrSlug: "Nombre del proyecto o slug en CurseForge",
-
-  fileId: "ID del Archivo (CF_FILE_ID)",
-  fileIdHelp: "ID numérico del archivo específico a descargar. Si se omite, se usará la versión más reciente.",
-  fileIdDesc: "ID específico del archivo a descargar. Si se deja en blanco, se usará la última versión.",
-
-  filePattern: "Patrón de Archivo (CF_FILENAME_MATCHER)",
-  filePatternHelp: "Especifica un substring para encontrar el archivo deseado en la carpeta /modpacks.",
-  filePatternDesc: "Patrón para encontrar el archivo del modpack en la carpeta /modpacks",
-
-  cfApiKey: "API Key de CurseForge (CF_API_KEY)",
-  cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
-  cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
-  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debe duplicar de ser necesario. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$2a$10$$T6sGlu...</code>. Esto es especialmente importante para el tercer <b>$</b> en adelante.",
-
-  // CurseForge Advanced Options
-  advancedOptions: "Opciones Avanzadas",
-  synchronizeCurseForge: "Sincronizar CurseForge (CF_FORCE_SYNCHRONIZE)",
-  synchronizeCurseForgeDesc: "Sincroniza automáticamente actualizaciones del modpack cuando el servidor se reinicia",
-  parallelDownloads: "Descargas Paralelas (CF_PARALLEL_DOWNLOADS)",
-  parallelDownloadsHelp: "Número de descargas de mods que se realizarán en paralelo. Valor por defecto: 4",
-  parallelDownloadsDesc: "Especifica cuántas descargas paralelas de mods realizar",
-  download1: "1 descarga",
-  download2: "2 descargas",
-  download4: "4 descargas (recomendado)",
-  download6: "6 descargas",
-  download8: "8 descargas",
-  skipExistingFiles: "Omitir Archivos Existentes (CF_OVERRIDES_SKIP_EXISTING)",
-  skipExistingFilesDesc: "Si se activa, los archivos que ya existen en el directorio de datos no son reemplazados",
-  setLevelFrom: "Configurar Nivel Desde (CF_SET_LEVEL_FROM)",
-  setLevelFromHelp: "Determina cómo establecer los datos del mundo desde el modpack.",
-  setLevelFromDesc: "Configura cómo obtener los datos del mundo desde el modpack",
-  doNotSet: "No configurar",
-  worldFile: "Archivo de Mundo",
-  modpackOverrides: "Overrides del Modpack",
-  forceIncludeMods: "Forzar Inclusión de Mods (CF_FORCE_INCLUDE_MODS)",
-  forceIncludeModsHelp: "Lista de mods (separados por espacios o líneas) para incluir forzosamente, independientemente del modpack IDs o Slugs.",
-  forceIncludeModsDesc: "Lista de mods que siempre se incluirán incluso si no están en el modpack IDs o Slugs (uno por línea)",
-  excludeMods: "Excluir Mods (CF_EXCLUDE_MODS)",
-  excludeModsHelp: "Lista de mods (separados por espacios o líneas) que serán excluidos del modpack IDs o Slugs.",
-  excludeModsDesc: "Lista de mods que se excluirán del modpack IDs o Slugs (uno por línea, admite patrones glob)",
-
-  // Common buttons and labels
-  saveConfiguration: "Guardar Configuración",
-  saveChanges: "Guardar Cambios",
-
-  // General Settings Tab
+  // ===========================
+  // PESTAÑA DE CONFIGURACIÓN GENERAL
+  // ===========================
   generalSettings: "Configuración General",
   generalSettingsDesc: "Ajustes generales de tu servidor de Minecraft",
   basicSettings: "Ajustes Básicos",
   performanceSettings: "Rendimiento",
   connectivitySettings: "Conectividad",
-  deleteServerData: "Borrar Datos del Servidor",
-  deleteConfirmTitle: "¿Estás absolutamente seguro?",
-  deleteConfirmDesc: "Esta acción no se puede deshacer. Se borrarán todos los mundos, configuraciones y datos guardados del servidor.",
-  deleting: "Borrando...",
-  yesDeleteAll: "Sí, borrar todo",
 
-  // Advanced Tab
+  // ===========================
+  // PESTAÑA DE AJUSTES BÁSICOS
+  // ===========================
+  motd: "Mensaje del Día (MOTD)",
+  motdPlaceholder: "Un servidor de Minecraft increíble",
+  motdDescription: "El mensaje que aparece en la lista de servidores",
+  serverNamePlaceholder: "Nombre de tu servidor",
+  maxPlayersPlaceholder: "20",
+  players: "Jugadores",
+  versionsAvailable: "versiones disponibles",
+  recommended: "Recomendadas",
+  popular: "Populares",
+  allVersions: "Todas las versiones",
+  selectVersion: "Seleccionar versión",
+  loadingVersions: "Cargando versiones...",
+  updateVersions: "Actualizar versiones",
+  list: "Lista",
+  manual: "Manual",
+  latest: "Última",
+
+  // Dificultad
+  selectDifficulty: "Seleccionar la dificultad",
+  peaceful: "Pacífico",
+  easy: "Fácil",
+  normal: "Normal",
+  hard: "Difícil",
+
+  // Modo de Juego
+  selectGameMode: "Seleccionar el modo de juego",
+  survival: "Supervivencia",
+  creative: "Creativo",
+  adventure: "Aventura",
+  spectator: "Espectador",
+
+  // Configuración del Mundo
+  worldSettings: "Mundo",
+  seed: "Semilla del Mundo",
+  seedPlaceholder: "Deja en blanco para semilla aleatoria",
+  seedDescription: "Semilla para la generación del mundo. Si usas un número negativo, asegúrate de ponerlo entre comillas.",
+  levelType: "Tipo de Mundo",
+  selectLevelType: "Seleccionar el tipo de mundo",
+  flat: "Plano",
+  largeBiomes: "Biomas Amplios",
+  amplified: "Amplificado",
+  singleBiomeSurface: "Bioma Único",
+
+  // Opciones del Mundo
+  hardcore: "Hardcore",
+  hardcoreDescription: "Si está activado, los jugadores pasarán a modo espectador al morir",
+  pvp: "PvP",
+  pvpDescription: "Permite el combate jugador contra jugador",
+  spawningOptions: "Opciones de Generación",
+  spawnAnimals: "Generar Animales",
+  spawnMonsters: "Generar Monstruos",
+  spawnNpcs: "Generar Aldeanos",
+  generateStructures: "Generar Estructuras",
+  generateStructuresDescription: "Define si se generarán estructuras como aldeas, templos, etc.",
+  allowNether: "Permitir Nether",
+  allowNetherDescription: "Habilita o deshabilita el acceso a la dimensión del Nether",
+
+  // ===========================
+  // PESTAÑA DE RENDIMIENTO
+  // ===========================
+  performanceConfig: "Configuración de Rendimiento",
+  viewDistance: "Distancia de Visión",
+  viewDistanceDesc: "Determina cuántos chunks se cargan alrededor de cada jugador. Valores más bajos mejoran el rendimiento.",
+  chunks: "chunks",
+  simulationDistance: "Distancia de Simulación",
+  simulationDistanceDesc: "Determina hasta dónde actualiza el servidor (mobs, cultivos, etc.). Puede ser menor que la distancia de visión.",
+  enableCommandBlocks: "Activar Bloques de Comandos",
+  enableCommandBlocksDesc: "Permite el uso de bloques de comandos, que pueden afectar al rendimiento si se usan en exceso.",
+
+  // ===========================
+  // PESTAÑA DE CONECTIVIDAD
+  // ===========================
+  serverPort: "Puerto del Servidor",
+  serverPortDesc: "Puerto en el que escuchará el servidor. El puerto por defecto es 25565.",
+  serverPortWarning: "⚠️ Este puerto debe ser distinto al de otros servidores en ejecución para evitar conflictos.",
+  playerIdleTimeout: "Tiempo de Inactividad de Jugadores (minutos)",
+  playerIdleTimeoutDesc: "Tiempo en minutos antes de expulsar a jugadores inactivos (0 para desactivar)",
+  onlineMode: "Modo Online",
+  onlineModeDesc: "Si está activado, el servidor verificará que los jugadores estén autenticados con Mojang. Es recomendable dejarlo activado para prevenir usuarios con nombres falsos.",
+  preventProxyConnections: "Prevenir Conexiones por Proxy",
+  preventProxyConnectionsDesc: "Si está activado, el servidor intentará detectar y bloquear conexiones a través de proxies/VPNs.",
+
+  // Control de Acceso
+  accessControl: "Control de Acceso",
+  serverOperators: "Operadores del Servidor",
+  serverOperatorsDesc: "Jugadores con permisos de administrador, separados por comas",
+  opPermissionLevel: "Nivel de Permisos de OPs",
+  selectOpPermissionLevel: "Seleccionar nivel",
+  opPermissionLevel1: "Nivel 1 (Mínimo)",
+  opPermissionLevel2: "Nivel 2",
+  opPermissionLevel3: "Nivel 3",
+  opPermissionLevel4: "Nivel 4 (Máximo)",
+  opPermissionLevelDesc: "Nivel de permisos para operadores (4 = acceso completo)",
+
+  // RCON
+  rcon: "RCON (Control Remoto)",
+  rconDesc: "Configura el acceso remoto a la consola del servidor",
+  enableRcon: "Activar RCON",
+  enableRconDesc: "Permite el control remoto del servidor a través del protocolo RCON",
+  backupRequiresRcon: "Las copias de seguridad requieren RCON activado para funcionar correctamente.",
+  broadcastRconToOps: "Difundir RCON a OPs",
+  broadcastRconToOpsDesc: "Difunde los comandos RCON ejecutados a los operadores conectados",
+  rconPort: "Puerto RCON",
+  rconPassword: "Contraseña RCON",
+  rconPasswordImportant: "¡Importante! Debes cambiar la contraseña por defecto",
+  backupRconDesc: "El servicio de backup RCON para realizar copias de seguridad.",
+
+  // Permisos Adicionales
+  additionalPermissions: "Permisos Adicionales",
+  commandBlock: "Bloques de Comandos",
+  commandBlockDesc: "Habilita el uso de bloques de comandos",
+  allowFlight: "Permitir Vuelo",
+  allowFlightDesc: "Permite a los jugadores volar (si tienen habilitado el modo creativo o mods de vuelo)",
+
+  // ===========================
+  // PESTAÑA AVANZADA
+  // ===========================
   advancedConfig: "Configuración Avanzada",
   advancedConfigDesc: "Opciones avanzadas para la configuración de tu servidor",
+  advanced: "Avanzado",
+
+  // Configuración Docker
   dockerImage: "Imagen Docker",
   dockerImageDesc: "Imagen Docker oficial a utilizar para el servidor",
   dockerImageHelp: "Imagen Docker a utilizar (latest, java21, java17)",
+  dockerImageHelpTags: "Aquí están los tags disponibles",
+  dockerImageHelpDocumentation: "Documentación de versiones Java",
+  dockerVolumes: "Volúmenes Docker",
+  dockerVolumesDesc: "Mapeos adicionales de volúmenes para el contenedor Docker",
+  dockerVolumesHelp: "Mapeos de volúmenes Docker (uno por línea, formato: ruta-local:ruta-contenedor)",
+
+  // Configuración de Puertos
   extraPorts: "Puertos Adicionales",
   extraPortsDesc: "Configura puertos adicionales para exponer servicios extra del servidor",
   portFormat: "Formato: puerto_host:puerto_contenedor[/protocolo]",
@@ -283,6 +370,8 @@ export const es = {
   portTcpSpecific: "Puerto TCP específico",
   portUdpPlugins: "Puerto UDP para plugins",
   portDynmap: "Dynmap u otros plugins web",
+
+  // Configuración del Servidor
   minecraftVersion: "Versión de Minecraft",
   minecraftVersionDesc: "Versión específica de Minecraft a instalar",
   minecraftVersionHelp: "Versión específica de Minecraft a utilizar",
@@ -294,24 +383,141 @@ export const es = {
   stopDelayDesc: "Tiempo de espera antes de detener forzosamente el servidor",
   stopDelayHelp: "Tiempo en segundos a esperar antes de detener forzosamente el servidor",
   restartPolicy: "Política de Reinicio",
-  addPort: "Agregar Puerto",
+  restartPolicyDesc: "Determina cómo se comportará el contenedor cuando finalice su ejecución",
+  noRestart: "No reiniciar",
+  alwaysRestart: "Siempre reiniciar",
+  restartOnFailure: "Reiniciar en caso de error",
+  restartUnlessStopped: "Reiniciar a menos que se detenga manualmente",
+  no: "No",
+  always: "Siempre",
+  onFailure: "En caso de error",
+  unlessStopped: "A menos que se detenga",
+
+  // Variables de Entorno
   environmentVars: "Variables de Entorno",
   environmentVarsDesc: "Variables de entorno personalizadas para el contenedor",
-  addVariable: "Agregar Variable",
+  environmentVarsHelp: "Variables de entorno adicionales para el contenedor (una por línea, formato: CLAVE=VALOR)",
   variableName: "Nombre de variable",
   variableValue: "Valor",
 
-  // Resources Tab
+  // Configuración de Backups
+  backupConfig: "Configuración de Copias de Seguridad",
+  enableBackup: "Activar Backups",
+  backupMethod: "Método de Backup",
+  backupMethodDesc: "Método utilizado para realizar las copias de seguridad",
+  selectBackupMethod: "Seleccionar el método de backup",
+  tarCompression: "tar (compresión)",
+  rsyncIncremental: "rsync (incremental)",
+  resticIncrementalEncrypted: "restic (incremental encriptado)",
+  rcloneRemote: "rclone (remoto)",
+  backupName: "Nombre de Backup",
+  backupNameDesc: "Nombre usado para identificar los archivos de backup",
+  backupInterval: "Intervalo de Backup",
+  backupIntervalDesc: "Tiempo entre cada backup (ej: 24h, 2h 30m)",
+  backupInitialDelay: "Retardo Inicial",
+  backupInitialDelayDesc: "Tiempo de espera antes del primer backup",
+  backupPruneDays: "Días de Retención",
+  backupPruneDaysDesc: "Eliminar backups más antiguos que este número de días",
+  backupDestDir: "Directorio Destino",
+  backupDestDirDesc: "Ruta donde se guardarán los backups",
+  backupExcludes: "Archivos a Excluir",
+  backupExcludesDesc: "Patrones de archivos a excluir del backup (separados por comas)",
+  backupExcludesHelp: "Archivos y directorios que no se incluirán en el backup",
+  tarCompressMethod: "Método de Compresión",
+  tarCompressMethodDesc: "Algoritmo de compresión para los archivos tar",
+  selectTarCompressMethod: "Seleccionar el método de compresión",
+  gzip: "gzip (estándar)",
+  bzip2: "bzip2 (mejor compresión)",
+  zstd: "zstd (rápido)",
+  backupOnStartup: "Realizar backup al iniciar",
+  backupOnStartupDesc: "Realizar un backup inmediatamente después de iniciar el servidor",
+  pauseIfNoPlayers: "Pausar backups cuando no hay jugadores",
+  pauseIfNoPlayersDesc: "No realizar backups automáticos cuando no hay jugadores conectados",
+
+  // ===========================
+  // PESTAÑA DE RECURSOS
+  // ===========================
   serverResources: "Recursos del Servidor",
   serverResourcesDesc: "Configura memoria, CPU y otras limitaciones de recursos para tu servidor",
   memoryCpu: "Memoria y CPU",
   jvmOptions: "Opciones JVM",
   advancedResources: "Recursos Avanzados",
+  resources: "Recursos",
+  cpu: "CPU",
+  serverInactive: "Servidor inactivo",
 
-  // Logs Tab
+  // Pestaña Memoria y CPU
+  initialMemoryJvm: "Memoria Inicial (JVM)",
+  initialMemoryTooltip: "Memoria inicial asignada a la JVM (-Xms)",
+  initialMemoryDesc: "Memoria inicial asignada a Java (Xms) - ej: 2G, 1024M",
+  maxMemoryJvm: "Memoria Máxima (JVM)",
+  maxMemoryTooltip: "Memoria máxima asignada a la JVM (-Xmx)",
+  maxMemoryDesc: "Memoria máxima asignada a Java (Xmx) - ej: 4G, 4096M",
+  cpuLimit: "Límite de CPU",
+  cpuLimitTooltip: "Límite máximo de CPU para el contenedor Docker",
+  cpuLimitDesc: "Número máximo de núcleos de CPU que puede usar el servidor",
+  cpuReservation: "Reserva de CPU",
+  cpuReservationTooltip: "Cantidad mínima de CPU garantizada para el contenedor",
+  cpuReservationDesc: "Cantidad mínima de CPU garantizada para el contenedor",
+  memoryReservationDocker: "Reserva de Memoria (Docker)",
+  memoryReservationTooltip: "Cantidad de memoria reservada para el contenedor Docker",
+  memoryReservationDesc: "Cantidad de memoria reservada para el contenedor Docker",
+  linuxUserUid: "Usuario Linux (UID)",
+  linuxUserDesc: "ID de usuario Linux bajo el cual se ejecutará el servidor",
+  linuxGroupGid: "Grupo Linux (GID)",
+  linuxGroupDesc: "ID de grupo Linux bajo el cual se ejecutará el servidor",
+
+  // Pestaña Opciones JVM
+  useAikarFlags: "Usar Flags de Aikar",
+  aikarFlagsTooltip: "Aikar ha realizado investigaciones para encontrar las banderas JVM óptimas para el ajuste de GC, lo que es más importante cuantos más usuarios se conectan simultáneamente.",
+  aikarFlagsRecommended: "Recomendado para servidores con muchos jugadores",
+  aikarFlagsDesc: "Utiliza configuraciones optimizadas de JVM para servidores con muchos jugadores",
+  enableJmx: "Habilitar JMX",
+  enableJmxTooltip: "Permite el monitoreo remoto JMX, como para perfilar con VisualVM o JMC",
+  enableJmxDesc: "Habilita el monitoreo remoto de JMX para herramientas de diagnóstico",
+  jmxHost: "Host JMX",
+  jmxHostDesc: "IP/Host que ejecuta el contenedor Docker (necesario para JMX remoto)",
+  jvmOptionsField: "Opciones de JVM",
+  jvmOptionsDesc: "Opciones generales de JVM separadas por espacios (argumentos comenzando con -X)",
+  jvmXxOptions: "Opciones XX de JVM",
+  jvmXxOptionsDesc: "Opciones específicas XX de JVM (deben preceder a las opciones -X)",
+  systemPropertiesDd: "Propiedades del Sistema (DD)",
+  systemPropertiesDdDesc: "Lista de propiedades del sistema separadas por comas (name=value o name:value)",
+  additionalArguments: "Argumentos Adicionales",
+  additionalArgumentsDesc: "Argumentos adicionales que se pasarán al archivo JAR del servidor",
+
+  // Pestaña Recursos Avanzados
+  timezone: "Zona Horaria",
+  selectTimezone: "Selecciona la zona horaria",
+  timezoneDesc: "Zona horaria del servidor (por defecto: UTC)",
+  enableAutoStop: "Habilitar Auto-Stop",
+  autoStopTooltip: "Detiene automáticamente el servidor cuando no hay jugadores durante el tiempo especificado",
+  cannotUseWithAutoPause: "No se puede usar junto con Auto-Pause",
+  initialTimeout: "Tiempo de inicio (segundos)",
+  autoStopTimeoutInitDesc: "Tiempo de espera inicial para detener el servidor si no hay jugadores",
+  establishedTimeout: "Tiempo establecido (segundos)",
+  autoStopTimeoutEstDesc: "Tiempo de espera para detener el servidor una vez está en ejecución",
+  enableAutoPause: "Habilitar Auto-Pause",
+  autoPauseTooltip: "Pausa automáticamente el servidor cuando no hay jugadores durante el tiempo especificado",
+  cannotUseWithAutoStop: "No se puede usar junto con Auto-Stop",
+  modCompatibilityWarning: "⚠️ Advertencia sobre compatibilidad con mods:",
+  modCompatibilityDesc: "Si el servidor tiene mods instalados, la función Auto-Pause puede causar problemas al intentar despertar el servidor. Algunos mods no son compatibles con esta característica y pueden provocar que el servidor se cuelgue o crashee durante el proceso de despertar. Se recomienda usar esta función solo en servidores Vanilla o probar cuidadosamente la compatibilidad antes de activarla en producción.",
+  autoPauseTimeoutInitDesc: "Tiempo de espera inicial para pausar el servidor si no hay jugadores",
+  autoPauseTimeoutEstDesc: "Tiempo de espera para pausar el servidor una vez está en ejecución",
+  reconnectInterface: "Interfaz de reconexión",
+  reconnectInterfaceDesc: "Dirección IP para escuchar conexiones que despierten el servidor (0.0.0.0 para todas)",
+  enableRollingLogs: "Habilitar Logs Rotativos",
+  rollingLogsTooltip: "Por defecto, el archivo de registro vanilla crecerá sin límite. El registrador se puede reconfigurar para usar una estrategia de archivos de registro rotativa.",
+  rollingLogsDesc: "Limita el tamaño de los archivos de log mediante rotación",
+  showTimeInLogs: "Mostrar Hora en Logs",
+  logTimestampTooltip: "Incluye la marca de tiempo con cada log",
+  logTimestampDesc: "Agrega marcas de tiempo en las entradas de los logs",
+
+  // ===========================
+  // PESTAÑA DE LOGS
+  // ===========================
   serverLogs: "Registros del Servidor",
   serverLogsDesc: "Visualiza y monitorea los logs de tu servidor en tiempo real",
-  search: "Buscar...",
   searchInLogs: "Buscar en logs...",
   filterByLevel: "Filtrar por nivel",
   allLevels: "Todos los niveles",
@@ -321,82 +527,42 @@ export const es = {
   onlyDebug: "Solo debug",
   autoScroll: "Auto-scroll",
   realTime: "Tiempo Real",
-  refresh: "Actualizar",
   lines: "líneas",
-  pause: "Pausar",
-  resume: "Reanudar",
   noLogsAvailable: "No hay logs disponibles",
   serverNotRunning: "El servidor no está ejecutándose",
-  logsError: "Error en los logs",
-  resourcesError: "Error en los recursos",
-  errorsDetected: "Errores detectados en los logs",
-  errorsDetectedDesc: "Se encontraron errores o excepciones en los logs del servidor",
+  serverNotRunning2: "El servidor no está en funcionamiento",
   lastUpdate: "Última actualización:",
-  cpu: "CPU",
-  serverInactive: "Servidor inactivo",
-  errorLoadingLogs: "Error al cargar logs",
-  retry: "Reintentar",
-  disconnected: "Desconectado",
-  withErrors: "Con errores",
   realTimeActive: "Tiempo real activo",
   realTimePaused: "Tiempo real pausado",
   showing: "Mostrando",
   of: "de",
   entries: "entradas",
-  resources: "Recursos",
   liveLabel: "EN VIVO",
   viewLogsRealtime: "Visualiza los logs en tiempo real del servidor",
   loadingLogs: "Cargando logs...",
-  errorFetchingResources: "Error al obtener recursos del servidor",
+  loadingServerConfig: "Cargando configuración del servidor...",
+  preparingBlocks: "Preparando bloques y configuraciones...",
 
-  // Dashboard Header
-  systemActive: "Sistema Activo",
-  admin: "Admin",
-  administrator: "Administrador",
-  changeLanguage: "Cambiar idioma",
-
-  // Dashboard Shell
-  initializing: "Inicializando...",
-  verifyingAuth: "Verificando autenticación...",
-
-  // Sidebar
-  minecraftPanel: "Minepanel",
-  navigation: "Navegación",
-
-  // Server Page Header
-  active: "Activo",
-  starting2: "Iniciando...",
-  stopped2: "Detenido",
-  notFound: "No encontrado",
-  unknown: "Desconocido",
-  stopServer: "Detener Servidor",
-  startServer: "Iniciar Servidor",
-  restart2: "Reiniciar",
-  restarting: "Reiniciando...",
-  tip: "Tip:",
-  configureServerTip: "Configura este servidor ajustando los parámetros en las pestañas de abajo.",
-  changesRequireRestart: "Los cambios requerirán reiniciar el servidor para aplicarse.",
-
-  // Commands Tab
+  // ===========================
+  // PESTAÑA DE COMANDOS
+  // ===========================
   serverCommands: "Comandos del Servidor",
   serverCommandsDesc: "Ejecuta comandos en tu servidor mediante RCON",
   commandConsole: "Consola de Comandos",
   commandConsoleDesc: "Ejecuta comandos directamente en el servidor de Minecraft",
-  serverNotRunning2: "El servidor no está en funcionamiento",
   startServerToExecute: "Inicia el servidor para poder ejecutar comandos.",
   quickCommands: "Comandos Rápidos",
   sendCommand: "Enviar Comando",
   enterMinecraftCommand: "Escribe un comando de Minecraft... (sin /)",
-  sending: "Enviando...",
-  send: "Enviar",
   serverResponse: "Respuesta del Servidor",
   pressTabToAutocomplete: "Presiona Tab para autocompletar, o Enter para enviar",
   commandsInfo: 'Los comandos se envían sin el símbolo "/" inicial. Usa Tab para autocompletar comandos sugeridos.',
   clearConsole: "Limpiar Consola",
   serverMustBeRunning: "El servidor debe estar en ejecución para ejecutar comandos",
   rconNotConfigured: "RCON no está configurado correctamente",
+  commands: "Comandos",
 
-  // Command labels
+  // Etiquetas de Comandos
   cmdListPlayers: "Listar jugadores",
   cmdTeleportPlayer: "Teletransportar a jugador",
   cmdGiveXP: "Dar experiencia",
@@ -425,7 +591,36 @@ export const es = {
   cmdViewTPS: "Ver TPS",
   cmdSpigotTimings: "Modo spigot timings",
 
-  // Plugin configuration options
+  // ===========================
+  // CONFIGURACIÓN DE PLUGINS
+  // ===========================
+  pluginsConfig: "Configuración de Plugins",
+  pluginsConfigDesc: "Configura plugins para tu servidor",
+  pluginsNotAvailable: "Esta sección solo está disponible para servidores Spigot, Paper o Bukkit",
+  pluginsSelectServerType: 'Selecciona el tipo de servidor Spigot, Paper o Bukkit en la pestaña "Tipo de Servidor" para configurar plugins.',
+  pluginsAutoDownload: "Descarga Automática desde Spiget",
+  pluginsAutoDownloadDesc: "Descarga automática de plugins desde SpigotMC usando la API de Spiget. Los archivos ZIP se expandirán automáticamente en la carpeta de plugins.",
+  pluginsManualInfo: "Para agregar plugins manualmente (archivos JAR), usa el File Browser para subirlos a la carpeta /plugins del servidor.",
+  pluginsSpigetResources: "Recursos de Spiget (SPIGET_RESOURCES)",
+  pluginsSpigetResourcesDesc: "IDs de recursos de SpigotMC (ej: LuckPerms=28140, Vault=34315)",
+  pluginsSpigetNote: "Nota importante: La variable es SPIGET con E, no SPIGOT.",
+  pluginsSpigetWarning: "⚠️ Algunos plugins como EssentialsX no permiten descargas automatizadas.",
+  pluginsManualTitle: "Agregar plugins manualmente",
+  pluginsManualStep1: "Accede al File Browser del servidor",
+  pluginsManualStep2: "Navega a la carpeta /plugins",
+  pluginsManualStep3: "Sube tus archivos JAR directamente",
+  pluginsManualStep4: "Reinicia el servidor para que se carguen los plugins",
+  pluginsTipsTitle: "Consejos útiles",
+  pluginsTip1: "Los plugins se descargarán automáticamente al iniciar el servidor",
+  pluginsTip2: "Los archivos ZIP se expandirán automáticamente en la carpeta de plugins",
+  pluginsTip3: "Puedes combinar Spiget con plugins manuales desde File Browser",
+  pluginsTip4: "Los plugins de Spigot también funcionan en Paper y Bukkit",
+  pluginsSave: "Guardar Configuración",
+  pluginsOpenPluginsFolder: "Abrir carpeta de plugins",
+  pluginsOpenServerFolder: "Abrir carpeta del servidor",
+  openFileBrowser: "Gestor de archivos",
+
+  // Configuraciones de Servidores de Plugins
   paperConfiguration: "Configuración de Paper",
   paperBuild: "Build de Paper",
   paperBuildDesc: "Número de build específico (dejar vacío para el último)",
@@ -466,18 +661,101 @@ export const es = {
   skipDownloadDefaults: "Saltar descarga de configuraciones por defecto",
   skipDownloadDefaultsDesc: "Omitir la verificación de archivos de configuración por defecto de Paper/Bukkit/Spigot",
 
-  pluginsOpenPluginsFolder: "Abrir carpeta de plugins",
-  pluginsOpenServerFolder: "Abrir carpeta del servidor",
-  openFileBrowser: "Gestor de archivos",
+  // ===========================
+  // CONFIGURACIÓN DE MODS
+  // ===========================
+  modsConfig: "Configuración de Mods",
+  modsConfigDesc: "Configura los detalles de mods para tu servidor",
+  modsNotAvailable: "Esta sección solo está disponible para servidores Forge o CurseForge",
+  modsSelectServerType: 'Selecciona el tipo de servidor Forge o CurseForge en la pestaña "Tipo de Servidor" para configurar los mods.',
 
-  // Page Component
-  serverInformation: "Información del Servidor",
-  currentStatus: "Estado Actual",
+  // Configuración de Forge
+  forgeVersion: "Versión de Forge",
+  forgeBuildDesc: "Número de build de Forge para la versión de Minecraft seleccionada",
 
-  // ServerConfigTab Component
-  advanced: "Avanzado",
-  commands: "Comandos"
+  // CurseForge Manual (Obsoleto)
+  deprecatedFeature: "Función obsoleta (Deprecated)",
+  manualCurseForgeDeprecated: "Este método manual para CurseForge está obsoleto. Se recomienda usar \"CurseForge Modpack\" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.",
+  modpackFile: "Archivo del Modpack (CF_SERVER_MOD)",
+  modpackFileHelp: "Ruta completa al archivo .zip del modpack en el contenedor.",
+  modpackFileExample: "Ejemplo: /modpacks/SkyFactory_4_Server_4.1.0.zip",
+  modpackFilePath: "Ruta al archivo ZIP del modpack de CurseForge dentro del contenedor",
+  baseDirectory: "Directorio Base (CF_BASE_DIR)",
+  baseDirectoryHelp: "Directorio donde se expandirá el modpack. Por defecto: /data",
+  baseDirectoryPath: "Directorio donde se extraerá y ejecutará el modpack",
+  useModpackStartScript: "Usar Script de Inicio del Modpack",
+  useModpackStartScriptDesc: "Si se desactiva, evita usar el script de inicio incluido en el modpack y usa la lógica estándar del servidor",
+  ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
+  ftbLegacyJavaFixerDesc: "Activa la corrección para modpacks que fallan con \"unable to launch forgemodloader\"",
+  cfApiKeyOptional: "API Key opcional para compatibilidad con algunos modpacks",
 
+  // Configuración Auto de CurseForge
+  importantInfo: "Información importante",
+  cfApiKeyRequired: "Para utilizar correctamente la funcionalidad de CurseForge, se requiere una API Key. La API key es necesaria para descargar modpacks privados o con restricciones.",
+  installationMethod: "Método de Instalación",
+  installationMethodHelp: "Selecciona cómo quieres obtener el modpack:",
+  methodUrl: "URL",
+  methodUrlDesc: "Dirección web directa al modpack en CurseForge",
+  methodSlug: "Slug",
+  methodSlugDesc: "Identificador único del modpack (ej: \"all-the-mods-7\")",
+  methodFile: "Archivo",
+  methodFileDesc: "Instalar desde un archivo .zip ya subido al servidor",
+  installFromUrl: "Instalar desde URL directa",
+  useIdSlug: "Usar ID/slug del modpack",
+  useLocalFile: "Usar archivo local en el servidor",
+
+  modpackUrl: "URL del Modpack (CF_PAGE_URL)",
+  modpackUrlHelp: "URL completa a la página del modpack o a un archivo específico.",
+  modpackUrlDesc: "URL directa de descarga del modpack de CurseForge",
+
+  curseForgeProject: "Proyecto de CurseForge (CF_SLUG)",
+  curseForgeProjectHelp: "El identificador (slug) del modpack en CurseForge.",
+  projectNameOrSlug: "Nombre del proyecto o slug en CurseForge",
+
+  fileId: "ID del Archivo (CF_FILE_ID)",
+  fileIdHelp: "ID numérico del archivo específico a descargar. Si se omite, se usará la versión más reciente.",
+  fileIdDesc: "ID específico del archivo a descargar. Si se deja en blanco, se usará la última versión.",
+
+  filePattern: "Patrón de Archivo (CF_FILENAME_MATCHER)",
+  filePatternHelp: "Especifica un substring para encontrar el archivo deseado en la carpeta /modpacks.",
+  filePatternDesc: "Patrón para encontrar el archivo del modpack en la carpeta /modpacks",
+
+  cfApiKey: "API Key de CurseForge (CF_API_KEY)",
+  cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
+  cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
+  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debe duplicar de ser necesario. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$2a$10$$T6sGlu...</code>. Esto es especialmente importante para el tercer <b>$</b> en adelante.",
+
+  // Opciones Avanzadas de CurseForge
+  advancedOptions: "Opciones Avanzadas",
+  synchronizeCurseForge: "Sincronizar CurseForge (CF_FORCE_SYNCHRONIZE)",
+  synchronizeCurseForgeDesc: "Sincroniza automáticamente actualizaciones del modpack cuando el servidor se reinicia",
+  parallelDownloads: "Descargas Paralelas (CF_PARALLEL_DOWNLOADS)",
+  parallelDownloadsHelp: "Número de descargas de mods que se realizarán en paralelo. Valor por defecto: 4",
+  parallelDownloadsDesc: "Especifica cuántas descargas paralelas de mods realizar",
+  download1: "1 descarga",
+  download2: "2 descargas",
+  download4: "4 descargas (recomendado)",
+  download6: "6 descargas",
+  download8: "8 descargas",
+  skipExistingFiles: "Omitir Archivos Existentes (CF_OVERRIDES_SKIP_EXISTING)",
+  skipExistingFilesDesc: "Si se activa, los archivos que ya existen en el directorio de datos no son reemplazados",
+  setLevelFrom: "Configurar Nivel Desde (CF_SET_LEVEL_FROM)",
+  setLevelFromHelp: "Determina cómo establecer los datos del mundo desde el modpack.",
+  setLevelFromDesc: "Configura cómo obtener los datos del mundo desde el modpack",
+  doNotSet: "No configurar",
+  worldFile: "Archivo de Mundo",
+  modpackOverrides: "Overrides del Modpack",
+  forceIncludeMods: "Forzar Inclusión de Mods (CF_FORCE_INCLUDE_MODS)",
+  forceIncludeModsHelp: "Lista de mods (separados por espacios o líneas) para incluir forzosamente, independientemente del modpack IDs o Slugs.",
+  forceIncludeModsDesc: "Lista de mods que siempre se incluirán incluso si no están en el modpack IDs o Slugs (uno por línea)",
+  excludeMods: "Excluir Mods (CF_EXCLUDE_MODS)",
+  excludeModsHelp: "Lista de mods (separados por espacios o líneas) que serán excluidos del modpack IDs o Slugs.",
+  excludeModsDesc: "Lista de mods que se excluirán del modpack IDs o Slugs (uno por línea, admite patrones glob)",
+
+  // ===========================
+  // COMPONENTES DE UI
+  // ===========================
+  tip: "Tip:",
+  configureServerTip: "Configura este servidor ajustando los parámetros en las pestañas de abajo.",
+  changesRequireRestart: "Los cambios requerirán reiniciar el servidor para aplicarse.",
 };
-
-export type TranslationKey = keyof typeof es;

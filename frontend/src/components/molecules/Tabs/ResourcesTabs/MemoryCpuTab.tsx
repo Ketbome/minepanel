@@ -1,158 +1,38 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import Image from "next/image";
+import { FormField } from "@/components/ui/form-field";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface MemoryCpuTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const MemoryCpuTab: FC<MemoryCpuTabProps> = ({ config, updateConfig }) => {
+  const { t } = useLanguage();
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="initMemory" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/clock.webp" alt="Memoria Inicial" width={16} height={16} />
-              Memoria Inicial (JVM)
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Memoria inicial asignada a la JVM (-Xms)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input id="initMemory" value={config.initMemory || "1G"} onChange={(e) => updateConfig("initMemory", e.target.value)} placeholder="1G" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">Memoria inicial asignada a Java (Xms) - ej: 2G, 1024M</p>
-        </div>
+        <FormField id="initMemory" label={t("initialMemoryJvm")} value={config.initMemory || "1G"} onChange={(value) => updateConfig("initMemory", value)} placeholder="1G" tooltip={t("initialMemoryTooltip")} description={t("initialMemoryDesc")} icon="/images/clock.webp" iconAlt={t("initialMemoryJvm")} />
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="maxMemory" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/clock.webp" alt="Memoria Máxima" width={16} height={16} />
-              Memoria Máxima (JVM)
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Memoria máxima asignada a la JVM (-Xmx)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input id="maxMemory" value={config.maxMemory || "1G"} onChange={(e) => updateConfig("maxMemory", e.target.value)} placeholder="1G" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">Memoria máxima asignada a Java (Xmx) - ej: 4G, 4096M</p>
-        </div>
+        <FormField id="maxMemory" label={t("maxMemoryJvm")} value={config.maxMemory || "1G"} onChange={(value) => updateConfig("maxMemory", value)} placeholder="1G" tooltip={t("maxMemoryTooltip")} description={t("maxMemoryDesc")} icon="/images/clock.webp" iconAlt={t("maxMemoryJvm")} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="cpuLimit" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/redstone.webp" alt="CPU Límite" width={16} height={16} />
-              Límite de CPU
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Límite máximo de CPU para el contenedor Docker</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input id="cpuLimit" value={config.cpuLimit} onChange={(e) => updateConfig("cpuLimit", e.target.value)} placeholder="2" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">Número máximo de núcleos de CPU que puede usar el servidor</p>
-        </div>
+        <FormField id="cpuLimit" label={t("cpuLimit")} value={config.cpuLimit} onChange={(value) => updateConfig("cpuLimit", value)} placeholder="2" tooltip={t("cpuLimitTooltip")} description={t("cpuLimitDesc")} icon="/images/redstone.webp" iconAlt={t("cpuLimit")} />
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="cpuReservation" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/repeater.webp" alt="CPU Reserva" width={16} height={16} />
-              Reserva de CPU
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Cantidad mínima de CPU garantizada para el contenedor</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input id="cpuReservation" value={config.cpuReservation} onChange={(e) => updateConfig("cpuReservation", e.target.value)} placeholder="0.5" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">Cantidad mínima de CPU garantizada para el contenedor</p>
-        </div>
+        <FormField id="cpuReservation" label={t("cpuReservation")} value={config.cpuReservation} onChange={(value) => updateConfig("cpuReservation", value)} placeholder="0.5" tooltip={t("cpuReservationTooltip")} description={t("cpuReservationDesc")} icon="/images/repeater.webp" iconAlt={t("cpuReservation")} />
       </div>
 
-      <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="memoryReservation" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-            <Image src="/images/iron-bars.webp" alt="Reserva de Memoria" width={16} height={16} />
-            Reserva de Memoria (Docker)
-          </Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                  <HelpCircle className="h-4 w-4 text-gray-400" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                <p>Cantidad de memoria reservada para el contenedor Docker</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <Input id="memoryReservation" value={config.memoryReservation} onChange={(e) => updateConfig("memoryReservation", e.target.value)} placeholder="2G" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-        <p className="text-xs text-gray-400">Cantidad de memoria reservada para el contenedor Docker</p>
+      <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+        <FormField id="memoryReservation" label={t("memoryReservationDocker")} value={config.memoryReservation} onChange={(value) => updateConfig("memoryReservation", value)} placeholder="2G" tooltip={t("memoryReservationTooltip")} description={t("memoryReservationDesc")} icon="/images/iron-bars.webp" iconAlt={t("memoryReservationDocker")} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-        <div className="space-y-2">
-          <Label htmlFor="uid" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-            <Image src="/images/player-head.png" alt="Usuario" width={16} height={16} />
-            Usuario Linux (UID)
-          </Label>
-          <Input id="uid" type="number" value={config.uid || "1000"} onChange={(e) => updateConfig("uid", e.target.value)} placeholder="1000" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">ID de usuario Linux bajo el cual se ejecutará el servidor</p>
-        </div>
+        <FormField id="uid" label={t("linuxUserUid")} type="number" value={config.uid || "1000"} onChange={(value) => updateConfig("uid", value)} placeholder="1000" description={t("linuxUserDesc")} icon="/images/player-head.png" iconAlt={t("linuxUserUid")} />
 
-        <div className="space-y-2">
-          <Label htmlFor="gid" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-            <Image src="/images/player-head.png" alt="Grupo" width={16} height={16} />
-            Grupo Linux (GID)
-          </Label>
-          <Input id="gid" type="number" value={config.gid || "1000"} onChange={(e) => updateConfig("gid", e.target.value)} placeholder="1000" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <p className="text-xs text-gray-400">ID de grupo Linux bajo el cual se ejecutará el servidor</p>
-        </div>
+        <FormField id="gid" label={t("linuxGroupGid")} type="number" value={config.gid || "1000"} onChange={(value) => updateConfig("gid", value)} placeholder="1000" description={t("linuxGroupDesc")} icon="/images/player-head.png" iconAlt={t("linuxGroupGid")} />
       </div>
     </>
   );

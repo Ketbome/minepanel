@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { getServerLogs } from "@/services/docker/fetchs";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface LogsError {
   type: "container_not_found" | "server_not_found" | "connection_error" | "unknown";
@@ -15,6 +16,7 @@ interface LogEntry {
 }
 
 export function useServerLogs(serverId: string) {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<string>("");
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -49,7 +51,7 @@ export function useServerLogs(serverId: string) {
   // Parse logs into structured entries
   const parseLogsToEntries = useCallback((logsContent: string): LogEntry[] => {
     if (!logsContent) return [];
-    
+
     const lines = logsContent.split('\n').filter(line => line.trim());
     return lines.map((line, index) => ({
       id: `${Date.now()}-${index}`,
@@ -67,24 +69,24 @@ export function useServerLogs(serverId: string) {
 
     intervalRef.current = setInterval(async () => {
       if (!isRealTime) return;
-      
+
       try {
         const data = await getServerLogs(serverId, lineCount);
-        
+
         // Only update if logs have changed
         if (data.logs !== previousLogsRef.current) {
           previousLogsRef.current = data.logs;
           setLogs(data.logs);
           setLogEntries(parseLogsToEntries(data.logs));
           setLastUpdate(new Date());
-          
+
           // Check for errors in new content
           const errorPatterns = [
             /ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi,
             /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi,
             /Failed to/gi, /Cannot/gi, /Unable to/gi
           ];
-          
+
           const logsHaveErrors = errorPatterns.some(pattern => pattern.test(data.logs));
           setHasErrors(logsHaveErrors);
         }
@@ -120,24 +122,24 @@ export function useServerLogs(serverId: string) {
     setError(null);
     try {
       const data = await getServerLogs(serverId, lineCount);
-      
+
       // Check for specific error messages in logs
       if (data.logs.includes("Container not found")) {
         setError({
           type: "container_not_found",
-          message: "El contenedor no está ejecutándose o no existe"
+          message: t("containerNotFound")
         });
-        setLogs("El servidor no está en ejecución. Inicia el servidor para ver los logs.");
+        setLogs(t("serverNotRunning"));
       } else if (data.logs.includes("Server not found")) {
         setError({
           type: "server_not_found",
-          message: "El servidor no existe en el sistema"
+          message: t("serverNotFound")
         });
-        setLogs("No se encontró el servidor especificado.");
+        setLogs(t("serverNotFoundSpecified"));
       } else if (data.logs.includes("Error retrieving logs:")) {
         setError({
           type: "connection_error",
-          message: "Error al conectar con Docker"
+          message: t("connectionErrorDocker")
         });
         setLogs(data.logs);
       } else {
@@ -145,29 +147,29 @@ export function useServerLogs(serverId: string) {
         setLogEntries(parseLogsToEntries(data.logs));
         setLastUpdate(new Date());
         previousLogsRef.current = data.logs;
-        
+
         // Check for errors in the logs content
         const errorPatterns = [
           /ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi,
           /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi,
           /Failed to/gi, /Cannot/gi, /Unable to/gi
         ];
-        
+
         const logsHaveErrors = errorPatterns.some(pattern => pattern.test(data.logs));
         setHasErrors(logsHaveErrors);
       }
-      
+
       return data.logs;
     } catch (error) {
       console.error("Error fetching logs:", error);
-      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
-      
+      const errorMessage = error instanceof Error ? error.message : t("unknownError");
+
       setError({
         type: "unknown",
         message: errorMessage
       });
-      
-      toast.error("Error al obtener los logs del servidor");
+
+      toast.error(t("errorGettingLogsServer"));
       return "";
     } finally {
       setLoading(false);
@@ -197,7 +199,7 @@ export function useServerLogs(serverId: string) {
 
   // Filter logs based on search term and level
   const filteredLogEntries = logEntries.filter(entry => {
-    const matchesSearch = searchTerm === "" || 
+    const matchesSearch = searchTerm === "" ||
       entry.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
     return matchesSearch && matchesLevel;

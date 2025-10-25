@@ -2,10 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen } from "lucide-react";
+import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
 import { env } from "next-runtime-env";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
@@ -15,17 +17,29 @@ interface ServerPageHeaderProps {
   readonly onStartServer: () => Promise<boolean>;
   readonly onStopServer: () => Promise<boolean>;
   readonly onRestartServer: () => Promise<boolean>;
+  readonly onClearData: () => Promise<boolean>;
 }
 
-export function ServerPageHeader({ serverId, serverName, serverStatus, isProcessing, onStartServer, onStopServer, onRestartServer }: ServerPageHeaderProps) {
+export function ServerPageHeader({ serverId, serverName, serverStatus, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
+  const [isClearing, setIsClearing] = useState(false);
 
   // Function to open File Browser
   const openFileBrowser = () => {
     const fileBrowserPath = `/files/${serverId}`;
     const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
+  };
+
+  // Function to handle clear data
+  const handleClearData = async () => {
+    setIsClearing(true);
+    try {
+      await onClearData();
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   // Function to get icon based on status
@@ -138,6 +152,26 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
             <FolderOpen className="h-4 w-4" />
             {t("openFileBrowser")}
           </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="outline" disabled={serverStatus === "running" || serverStatus === "starting"} className="gap-2 border-red-700/50 bg-red-900/20 text-red-400 hover:bg-red-600/30 hover:text-red-300 hover:border-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-gray-900 border-gray-700">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-400 font-minecraft">{t("deleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-300">{t("deleteConfirmDesc")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600">{t("cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearData} disabled={isClearing} className="bg-red-700 hover:bg-red-800 text-white border-red-900/50 font-minecraft">
+                  {isClearing ? t("deleting") : t("yesDeleteAll")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
