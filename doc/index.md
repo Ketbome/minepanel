@@ -6,7 +6,7 @@ hero:
   text: "Modern Minecraft Server Management"
   tagline: Manage multiple Minecraft servers with a beautiful web interface using Docker
   image:
-    src: /img/cubo.webp
+    src: /cubo.webp
     alt: Minepanel Dashboard
   actions:
     - theme: brand

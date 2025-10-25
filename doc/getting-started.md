@@ -2,7 +2,7 @@
 
 Welcome to Minepanel! This guide will help you get your Minecraft server management panel up and running in just a few minutes.
 
-![Minepanel Dashboard](/img/Animation.gif)
+![Minepanel Dashboard](/public/img/Animation.gif)
 
 ## Prerequisites
 

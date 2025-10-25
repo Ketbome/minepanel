@@ -12,7 +12,7 @@ A modern web-based panel for managing multiple Minecraft servers using Docker.
 
 Built on top of [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) and [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup).
 
-![Dashboard View](./doc/img/Animation.gif)
+![Dashboard View](./doc/public/img/Animation.gif)
 
 ## Why Minepanel?
 

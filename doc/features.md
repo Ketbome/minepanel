@@ -2,7 +2,7 @@
 
 Discover everything Minepanel can do to make managing Minecraft servers easier.
 
-![Minepanel Server Management](/img/modes.png)
+![Minepanel Server Management](/public/img/modes.png)
 
 ## 🚀 Server Management
 

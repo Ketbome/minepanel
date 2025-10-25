@@ -9,7 +9,7 @@ export default defineConfig({
     "Modern Minecraft Server Management Panel - Complete documentation and guides",
 
   head: [
-    ["link", { rel: "icon", href: "/img/favicon.ico" }],
+    ["link", { rel: "icon", href: "/minepanel/favicon.ico" }],
     ["meta", { name: "theme-color", content: "#3eaf7c" }],
     ["meta", { name: "og:type", content: "website" }],
     ["meta", { name: "og:locale", content: "en" }],
@@ -33,7 +33,7 @@ export default defineConfig({
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: "/img/cubo.svg",
+    logo: "/cubo.webp",
 
     nav: [
       { text: "Home", link: "/" },
