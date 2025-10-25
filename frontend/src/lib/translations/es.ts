@@ -360,7 +360,7 @@ export const es = {
   verifyingAuth: "Verificando autenticación...",
 
   // Sidebar
-  minecraftPanel: "MineCraft Panel",
+  minecraftPanel: "Minepanel",
   navigation: "Navegación",
 
   // Server Page Header

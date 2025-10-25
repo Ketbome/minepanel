@@ -1,12 +1,21 @@
-import { ServerConfig } from "@/lib/types/types";
+import { ServerConfig, ServerListItem } from "@/lib/types/types";
 import api from "../axios.service";
 
+/**
+ * Fetch complete configuration for a specific server
+ * GET /servers/:id
+ */
 export const fetchServerConfig = async (serverId: string): Promise<ServerConfig> => {
   const response = await api.get(`/servers/${serverId}`);
   return response.data;
 };
 
-export const fetchServerList = async (): Promise<ServerConfig[]> => {
+/**
+ * Fetch simplified list of all servers
+ * GET /servers
+ * Returns only essential information (id, name, motd, port, type, active)
+ */
+export const fetchServerList = async (): Promise<ServerListItem[]> => {
   const response = await api.get(`/servers`);
   return response.data;
 };
