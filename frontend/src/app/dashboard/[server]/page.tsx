@@ -10,6 +10,8 @@ import { ServerConfigTabs } from "@/components/organisms/ServerConfigTabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useLanguage } from "@/lib/hooks/useLanguage";
+
 
 export default function ServerConfig() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function ServerConfig() {
 
   const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData } = useServerConfig(serverId);
   const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
+  const { t } = useLanguage();
 
   // Auth check
   useEffect(() => {
@@ -137,22 +140,22 @@ export default function ServerConfig() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }} className="bg-gray-900/60 backdrop-blur-md rounded-lg border border-gray-700/40 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Image src="/images/command-block.webp" alt="Command Block" width={24} height={24} />
-          <h3 className="text-lg font-minecraft text-white">Información del Servidor</h3>
+          <h3 className="text-lg font-minecraft text-white">{ t("serverInformation") }</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
-            <p className="text-gray-400 mb-1">ID del Servidor</p>
+            <p className="text-gray-400 mb-1">{ t("serverId")}</p>
             <p className="text-white font-medium font-minecraft">{serverId}</p>
           </div>
           <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
-            <p className="text-gray-400 mb-1">Estado Actual</p>
+            <p className="text-gray-400 mb-1">{ t("currentStatus")} </p>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${status === "running" ? "bg-emerald-500" : status === "stopped" ? "bg-yellow-500" : status === "starting" ? "bg-orange-500" : "bg-red-500"}`} />
               <p className="text-white font-medium capitalize">{status}</p>
             </div>
           </div>
           <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
-            <p className="text-gray-400 mb-1">Puerto</p>
+            <p className="text-gray-400 mb-1">{ t('port')} </p>
             <p className="text-white font-medium">{config.port || "25565"}</p>
           </div>
         </div>

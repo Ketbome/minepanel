@@ -469,6 +469,15 @@ export const es = {
   pluginsOpenPluginsFolder: "Abrir carpeta de plugins",
   pluginsOpenServerFolder: "Abrir carpeta del servidor",
   openFileBrowser: "Gestor de archivos",
+
+  // Page Component
+  serverInformation: "Información del Servidor",
+  currentStatus: "Estado Actual",
+
+  // ServerConfigTab Component
+  advanced: "Avanzado",
+  commands: "Comandos"
+
 };
 
 export type TranslationKey = keyof typeof es;
