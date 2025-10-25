@@ -300,6 +300,47 @@ export const es = {
   addVariable: "Agregar Variable",
   variableName: "Nombre de variable",
   variableValue: "Valor",
+  restartPolicyDesc: "Determina cómo se comportará el contenedor cuando finalice su ejecución",
+  dockerVolumes: "Volúmenes Docker",
+  dockerVolumesDesc: "Mapeos adicionales de volúmenes para el contenedor Docker",
+  dockerVolumesHelp: "Mapeos de volúmenes Docker (uno por línea, formato: ruta-local:ruta-contenedor)",
+  backupConfig: "Configuración de Copias de Seguridad",
+  enableBackup: "Activar Backups",
+  backupMethod: "Método de Backup",
+  backupMethodDesc: "Método utilizado para realizar las copias de seguridad",
+  selectBackupMethod: "Seleccionar el método de backup",
+  tarCompression: "tar (compresión)",
+  rsyncIncremental: "rsync (incremental)",
+  resticIncrementalEncrypted: "restic (incremental encriptado)",
+  rcloneRemote: "rclone (remoto)",
+  backupName: "Nombre de Backup",
+  backupNameDesc: "Nombre usado para identificar los archivos de backup",
+  backupInterval: "Intervalo de Backup",
+  backupIntervalDesc: "Tiempo entre cada backup (ej: 24h, 2h 30m)",
+  backupInitialDelay: "Retardo Inicial",
+  backupInitialDelayDesc: "Tiempo de espera antes del primer backup",
+  backupPruneDays: "Días de Retención",
+  backupPruneDaysDesc: "Eliminar backups más antiguos que este número de días",
+  backupDestDir: "Directorio Destino",
+  backupDestDirDesc: "Ruta donde se guardarán los backups",
+  backupExcludes: "Archivos a Excluir",
+  backupExcludesDesc: "Patrones de archivos a excluir del backup (separados por comas)",
+  backupExcludesHelp: "Archivos y directorios que no se incluirán en el backup",
+  tarCompressMethod: "Método de Compresión",
+  tarCompressMethodDesc: "Algoritmo de compresión para los archivos tar",
+  selectTarCompressMethod: "Seleccionar el método de compresión",
+  gzip: "gzip (estándar)",
+  bzip2: "bzip2 (mejor compresión)",
+  zstd: "zstd (rápido)",
+  backupOnStartup: "Realizar backup al iniciar",
+  backupOnStartupDesc: "Realizar un backup inmediatamente después de iniciar el servidor",
+  pauseIfNoPlayers: "Pausar backups cuando no hay jugadores",
+  pauseIfNoPlayersDesc: "No realizar backups automáticos cuando no hay jugadores conectados",
+  noRestart: "No reiniciar",
+  alwaysRestart: "Siempre reiniciar",
+  restartOnFailure: "Reiniciar en caso de error",
+  restartUnlessStopped: "Reiniciar a menos que se detenga manualmente",
+  environmentVarsHelp: "Variables de entorno adicionales para el contenedor (una por línea, formato: CLAVE=VALOR)",
 
   // Resources Tab
   serverResources: "Recursos del Servidor",
@@ -348,6 +389,11 @@ export const es = {
   viewLogsRealtime: "Visualiza los logs en tiempo real del servidor",
   loadingLogs: "Cargando logs...",
   errorFetchingResources: "Error al obtener recursos del servidor",
+  errorGettingLogsServer: "Error al obtener los logs del servidor",
+  containerNotFound: "El contenedor no está ejecutándose o no existe",
+  serverNotFoundSpecified: "No se encontró el servidor especificado.",
+  connectionErrorDocker: "Error al conectar con Docker",
+  unknownError: "Error desconocido",
 
   // Dashboard Header
   systemActive: "Sistema Activo",
@@ -476,8 +522,10 @@ export const es = {
 
   // ServerConfigTab Component
   advanced: "Avanzado",
-  commands: "Comandos"
-
+  commands: "Comandos",
+  selectType: "Seleccionar tipo de servidor",
+  dockerImageHelpTags: "Aquí están los tags disponibles",
+  dockerImageHelpDocumentation: "Documentación de versiones Java"
 };
 
 export type TranslationKey = keyof typeof es;

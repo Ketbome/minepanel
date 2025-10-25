@@ -60,44 +60,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="dockerImage" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/barrier.webp" alt="Docker" width={16} height={16} />
-              {t("dockerImage")}
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>{t("dockerImageDesc")}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input id="dockerImage" value={config.dockerImage} onChange={(e) => updateConfig("dockerImage", e.target.value)} placeholder="java17" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-          <div className="space-y-1">
-            <p className="text-xs text-gray-400">{t("dockerImageHelp")}</p>
-            <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
-              <div className="flex-shrink-0">
-                <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="text-xs text-blue-300">
-                <span>Aquí están los tags disponibles: </span>
-                <a href="https://docker-minecraft-server.readthedocs.io/en/latest/versions/java/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
-                  Documentación de versiones Java
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-emerald-400" />
@@ -170,31 +132,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
             </div>
           </div>
         </div>
-
-        {!isCurseForge && (
-          <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="minecraftVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                <Image src="/images/grass.webp" alt="Versión" width={16} height={16} />
-                {t("minecraftVersion")}
-              </Label>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                      <HelpCircle className="h-4 w-4 text-gray-400" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                    <p>{t("minecraftVersionDesc")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <Input id="minecraftVersion" value={config.minecraftVersion} onChange={(e) => updateConfig("minecraftVersion", e.target.value)} placeholder="1.19.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-            <p className="text-xs text-gray-400">{t("minecraftVersionHelp")}</p>
-          </div>
-        )}
 
         {isCurseForge && (
           <div className="space-y-2 p-4 rounded-md bg-blue-900/30 border border-blue-700/30">
@@ -270,7 +207,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Determina cómo se comportará el contenedor cuando finalice su ejecución</p>
+                  <p>{t("restartPolicyDesc")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -280,20 +217,20 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
               <SelectValue placeholder="Selecciona la política de reinicio" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-              <SelectItem value="no">No reiniciar</SelectItem>
-              <SelectItem value="always">Siempre reiniciar</SelectItem>
-              <SelectItem value="on-failure">Reiniciar en caso de error</SelectItem>
-              <SelectItem value="unless-stopped">Reiniciar a menos que se detenga manualmente</SelectItem>
+              <SelectItem value="no">{t("noRestart")}</SelectItem>
+              <SelectItem value="always">{t("alwaysRestart")}</SelectItem>
+              <SelectItem value="on-failure">{t("restartOnFailure")}</SelectItem>
+              <SelectItem value="unless-stopped">{t("restartUnlessStopped")}</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-400">Política de reinicio del contenedor Docker</p>
+          <p className="text-xs text-gray-400">{t("restartPolicyDesc")}</p>
         </div>
 
         <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <Label htmlFor="dockerVolumes" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
               <Image src="/images/chest.webp" alt="Volúmenes" width={16} height={16} />
-              Volúmenes Docker
+              {t("dockerVolumes")}
             </Label>
             <TooltipProvider>
               <Tooltip>
@@ -303,7 +240,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Mapeos adicionales de volúmenes para el contenedor Docker</p>
+                  <p>{t("dockerVolumesDesc")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -316,7 +253,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
 ./modpacks:/modpacks:ro"
             className="min-h-20 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
           />
-          <p className="text-xs text-gray-400">Mapeos de volúmenes Docker (uno por línea, formato: ruta-local:ruta-contenedor)</p>
+          <p className="text-xs text-gray-400">{t("dockerVolumesHelp")}</p>
         </div>
 
         <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -333,7 +270,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>Variables de entorno adicionales para personalizar el servidor</p>
+                  <p>{t("environmentVarsDesc")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -346,18 +283,18 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
 MAX_TICK_TIME=60000"
             className="min-h-20 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
           />
-          <p className="text-xs text-gray-400">Variables de entorno adicionales para el contenedor (una por línea, formato: CLAVE=VALOR)</p>
+          <p className="text-xs text-gray-400">{t("environmentVarsHelp")}</p>
         </div>
 
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Image src="/images/ender_chest.webp" alt="Backup" width={20} height={20} />
-              <h3 className="text-emerald-400 font-minecraft text-md">Configuración de Copias de Seguridad</h3>
+              <h3 className="text-emerald-400 font-minecraft text-md">{t("backupConfig")}</h3>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-gray-300 text-sm">Activar Backups</span>
+              <span className="text-gray-300 text-sm">{t("enableBackup")}</span>
               <Switch checked={config.enableBackup || false} onCheckedChange={(checked: boolean) => updateConfig("enableBackup", checked)} className="data-[state=checked]:bg-emerald-500" />
             </div>
           </div>
@@ -369,7 +306,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/chest.webp" alt="Método" width={16} height={16} />
-                      Método de Backup
+                      {t("backupMethod")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -379,20 +316,20 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Método utilizado para realizar las copias de seguridad</p>
+                          <p>{t("backupMethodDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
                   <Select value={config.backupMethod || "tar"} onValueChange={(value) => updateConfig("backupMethod", value as "tar" | "rsync" | "restic" | "rclone")}>
                     <SelectTrigger id="backupMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
-                      <SelectValue placeholder="Selecciona el método" />
+                      <SelectValue placeholder={t("selectBackupMethod")} />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <SelectItem value="tar">tar (compresión)</SelectItem>
-                      <SelectItem value="rsync">rsync (incremental)</SelectItem>
-                      <SelectItem value="restic">restic (incremental encriptado)</SelectItem>
-                      <SelectItem value="rclone">rclone (remoto)</SelectItem>
+                      <SelectItem value="tar">{t("tarCompression")}</SelectItem>
+                      <SelectItem value="rsync">{t("rsyncIncremental")}</SelectItem>
+                      <SelectItem value="restic">{t("resticIncrementalEncrypted")}</SelectItem>
+                      <SelectItem value="rclone">{t("rcloneRemote")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -401,7 +338,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupName" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/name_tag.webp" alt="Nombre" width={16} height={16} />
-                      Nombre de Backup
+                      {t("backupName")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -411,7 +348,7 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Nombre usado para identificar los archivos de backup</p>
+                          <p>{t("backupNameDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -425,7 +362,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupInterval" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/clock.webp" alt="Intervalo" width={16} height={16} />
-                      Intervalo de Backup
+                      {t("backupInterval")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -435,7 +372,7 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Tiempo entre cada backup (ej: 24h, 2h 30m)</p>
+                          <p>{t("backupIntervalDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -447,7 +384,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupInitialDelay" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/compass.webp" alt="Retardo" width={16} height={16} />
-                      Retardo Inicial
+                      {t("backupInitialDelay")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -457,7 +394,7 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Tiempo de espera antes del primer backup</p>
+                          <p>{t("backupInitialDelayDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -471,7 +408,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupPruneDays" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/shears.webp" alt="Poda" width={16} height={16} />
-                      Días de Retención
+                      {t("backupPruneDays")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -481,7 +418,7 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Eliminar backups más antiguos que este número de días</p>
+                          <p>{t("backupPruneDaysDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -493,7 +430,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupDestDir" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/ender_chest.webp" alt="Destino" width={16} height={16} />
-                      Directorio Destino
+                      {t("backupDestDir")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -503,7 +440,7 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Ruta donde se guardarán los backups</p>
+                          <p>{t("backupDestDirDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -517,7 +454,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="backupExcludes" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/barrier.webp" alt="Excluir" width={16} height={16} />
-                      Archivos a Excluir
+                      {t("backupExcludes")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -527,13 +464,13 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Patrones de archivos a excluir del backup (separados por comas)</p>
+                          <p>{t("backupExcludesDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
                   <Input id="backupExcludes" value={config.backupExcludes || "*.jar,cache,logs,*.tmp"} onChange={(e) => updateConfig("backupExcludes", e.target.value)} placeholder="*.jar,cache,logs,*.tmp" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">Archivos y directorios que no se incluirán en el backup</p>
+                  <p className="text-xs text-gray-400">{t("backupExcludesHelp")}</p>
                 </div>
               </div>
 
@@ -541,7 +478,7 @@ MAX_TICK_TIME=60000"
                 <div className="flex items-center gap-3">
                   <Switch id="backupOnStartup" checked={config.backupOnStartup !== false} onCheckedChange={(checked) => updateConfig("backupOnStartup", checked)} className="data-[state=checked]:bg-emerald-500" />
                   <Label htmlFor="backupOnStartup" className="text-gray-200 font-minecraft text-sm">
-                    Realizar backup al iniciar
+                      {t("backupOnStartup")}
                   </Label>
                   <TooltipProvider>
                     <Tooltip>
@@ -551,7 +488,7 @@ MAX_TICK_TIME=60000"
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>Realizar un backup inmediatamente después de iniciar el servidor</p>
+                        <p>{t("backupOnStartupDesc")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -560,7 +497,7 @@ MAX_TICK_TIME=60000"
                 <div className="flex items-center gap-3">
                   <Switch id="pauseIfNoPlayers" checked={config.pauseIfNoPlayers || false} onCheckedChange={(checked) => updateConfig("pauseIfNoPlayers", checked)} className="data-[state=checked]:bg-emerald-500" />
                   <Label htmlFor="pauseIfNoPlayers" className="text-gray-200 font-minecraft text-sm">
-                    Pausar backups cuando no hay jugadores
+                    {t("pauseIfNoPlayers")}
                   </Label>
                   <TooltipProvider>
                     <Tooltip>
@@ -570,7 +507,7 @@ MAX_TICK_TIME=60000"
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>No realizar backups automáticos cuando no hay jugadores conectados</p>
+                        <p>{t("pauseIfNoPlayersDesc")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -582,7 +519,7 @@ MAX_TICK_TIME=60000"
                   <div className="flex items-center justify-between">
                     <Label htmlFor="tarCompressMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                       <Image src="/images/anvil.webp" alt="Compresión" width={16} height={16} />
-                      Método de Compresión
+                      {t("tarCompressMethod")}
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
@@ -592,19 +529,19 @@ MAX_TICK_TIME=60000"
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>Algoritmo de compresión para los archivos tar</p>
+                          <p>{t("tarCompressMethodDesc")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
                   <Select value={config.tarCompressMethod || "gzip"} onValueChange={(value) => updateConfig("tarCompressMethod", value as "gzip" | "bzip2" | "zstd")}>
                     <SelectTrigger id="tarCompressMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
-                      <SelectValue placeholder="Método de compresión" />
+                      <SelectValue placeholder={t("selectTarCompressMethod") as string} />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <SelectItem value="gzip">gzip (estándar)</SelectItem>
-                      <SelectItem value="bzip2">bzip2 (mejor compresión)</SelectItem>
-                      <SelectItem value="zstd">zstd (rápido)</SelectItem>
+                      <SelectItem value="gzip">{t("gzip")}</SelectItem>
+                      <SelectItem value="bzip2">{t("bzip2")}</SelectItem>
+                      <SelectItem value="zstd">{t("zstd")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
