@@ -469,4 +469,12 @@ export const en = {
   pluginsOpenPluginsFolder: "Open plugins folder",
   pluginsOpenServerFolder: "Open server folder",
   openFileBrowser: "File Manager",
+
+  // Page component
+  serverInformation: "Server Information",
+  currentStatus: "Current Status",
+
+  // ServerConfigTab Component
+  advanced: "Advanced",
+  commands: "Commands"
 };
