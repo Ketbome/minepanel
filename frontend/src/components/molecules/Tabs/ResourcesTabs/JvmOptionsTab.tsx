@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,7 @@ import Image from "next/image";
 
 interface JvmOptionsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const JvmOptionsTab: FC<JvmOptionsTabProps> = ({ config, updateConfig }) => {

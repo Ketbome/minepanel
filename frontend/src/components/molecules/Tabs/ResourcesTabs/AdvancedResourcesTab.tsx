@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import Image from "next/image";
 
 interface AdvancedResourcesTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, updateConfig }) => {

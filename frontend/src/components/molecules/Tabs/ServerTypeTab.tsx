@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -12,11 +9,10 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface ServerTypeTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
-  onSave: () => Promise<boolean>;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, onSave }) => {
+export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
@@ -137,13 +133,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, on
           </motion.div>
         </RadioGroup>
       </CardContent>
-
-      <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
-        <Button type="button" onClick={onSave} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-          <Save className="mr-2 h-4 w-4" />
-          {t("save")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

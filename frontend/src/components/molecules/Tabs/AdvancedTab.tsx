@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, HelpCircle, Network, Plus, Trash2 } from "lucide-react";
+import { HelpCircle, Network, Plus, Trash2 } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -15,11 +14,10 @@ import { Switch } from "@/components/ui/switch";
 
 interface AdvancedTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
-  onSave: () => Promise<boolean>;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, onSave }) => {
+export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [newPort, setNewPort] = useState("");
 
@@ -386,7 +384,7 @@ MAX_TICK_TIME=60000"
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <Select value={config.backupMethod || "tar"} onValueChange={(value) => updateConfig("backupMethod", value)}>
+                  <Select value={config.backupMethod || "tar"} onValueChange={(value) => updateConfig("backupMethod", value as "tar" | "rsync" | "restic" | "rclone")}>
                     <SelectTrigger id="backupMethod" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-emerald-500/30">
                       <SelectValue placeholder="Selecciona el método" />
                     </SelectTrigger>
@@ -615,13 +613,6 @@ MAX_TICK_TIME=60000"
           )}
         </div>
       </CardContent>
-
-      <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
-        <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-          <Save className="h-4 w-4" />
-          {t("saveConfiguration")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

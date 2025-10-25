@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ServerConfig } from "@/lib/types/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,12 +13,11 @@ import { ConnectivitySettingsTab } from "./SettingsTabs/ConnectivitySettingsTab"
 
 interface GeneralSettingsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
-  onSave: () => Promise<boolean>;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
   onClearData: () => Promise<boolean>;
 }
 
-export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig, onSave, onClearData }) => {
+export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig, onClearData }) => {
   const { t } = useLanguage();
   const [isClearing, setIsClearing] = useState(false);
 
@@ -97,13 +95,6 @@ export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, update
           </AlertDialog>
         </div>
       </CardContent>
-
-      <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
-        <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-          <Save className="h-4 w-4" />
-          {t("saveConfiguration")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

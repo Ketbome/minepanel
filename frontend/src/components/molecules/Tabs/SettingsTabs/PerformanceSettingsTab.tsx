@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 
 interface PerformanceSettingsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const PerformanceSettingsTab: FC<PerformanceSettingsTabProps> = ({ config, updateConfig }) => {

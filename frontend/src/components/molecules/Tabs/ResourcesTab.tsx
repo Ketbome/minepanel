@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerConfig } from "@/lib/types/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -13,11 +10,10 @@ import { AdvancedResourcesTab } from "./ResourcesTabs/AdvancedResourcesTab";
 
 interface ResourcesTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
-  onSave: () => Promise<boolean>;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, onSave }) => {
+export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
 
   return (
@@ -62,13 +58,6 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, onSa
           </TabsContent>
         </Tabs>
       </CardContent>
-
-      <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
-        <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-          <Save className="h-4 w-4" />
-          {t("saveConfiguration")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

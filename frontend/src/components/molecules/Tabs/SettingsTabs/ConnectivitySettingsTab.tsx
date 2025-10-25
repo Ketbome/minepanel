@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ConnectivitySettingsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({ config, updateConfig }) => {
@@ -35,9 +34,7 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({ conf
             <p className="text-xs text-gray-400">Puerto en el que escuchará el servidor. El puerto por defecto es 25565.</p>
             <Alert className="bg-amber-900/30 border-amber-800 text-amber-200 mt-2 py-2">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                ⚠️ Este puerto debe ser distinto al de otros servidores en ejecución para evitar conflictos.
-              </AlertDescription>
+              <AlertDescription>⚠️ Este puerto debe ser distinto al de otros servidores en ejecución para evitar conflictos.</AlertDescription>
             </Alert>
           </div>
 

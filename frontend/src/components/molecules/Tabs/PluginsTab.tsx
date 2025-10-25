@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save, HelpCircle, ExternalLink, Folder, FolderOpen } from "lucide-react";
+import { HelpCircle, ExternalLink, Folder, FolderOpen } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -13,18 +12,17 @@ import { env } from "next-runtime-env";
 
 interface PluginsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
-  onSave: () => Promise<boolean>;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }) => {
+export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
   const openFileBrowser = (preferPlugins: boolean = true) => {
     const fileBrowserPath = preferPlugins ? `/files/${config.id}/mc-data/plugins/` : `/files/${config.id}`;
 
-    const url = `${env('NEXT_PUBLIC_FILEBROWSER_URL')}${fileBrowserPath}`;
+    const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 
@@ -348,13 +346,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onSave }
           <p className="text-xs text-gray-400">{t("skipDownloadDefaultsDesc")}</p>
         </div>
       </CardContent>
-
-      <CardFooter className="flex justify-end pt-4 border-t border-gray-700/40">
-        <Button type="button" onClick={onSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-          <Save className="h-4 w-4" />
-          {t("pluginsSave")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

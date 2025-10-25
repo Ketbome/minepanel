@@ -1,35 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ServerConfig } from "@/lib/types/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { FormField } from "@/components/ui/form-field";
 import Image from "next/image";
 
 interface BasicSettingsTabProps {
   config: ServerConfig;
-  updateConfig: (field: keyof ServerConfig, value: any) => void;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
 export const BasicSettingsTab: FC<BasicSettingsTabProps> = ({ config, updateConfig }) => {
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="serverName" className="text-gray-200 font-minecraft text-sm">
-          Nombre del Servidor
-        </Label>
-        <Input id="serverName" value={config.serverName} onChange={(e) => updateConfig("serverName", e.target.value)} placeholder="Nombre de tu servidor" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-      </div>
+      <FormField id="serverName" label="Nombre del Servidor" value={config.serverName} onChange={(value) => updateConfig("serverName", value)} placeholder="Nombre de tu servidor" />
 
-      <div className="space-y-2">
-        <Label htmlFor="motd" className="text-gray-200 font-minecraft text-sm">
-          Mensaje del Día (MOTD)
-        </Label>
-        <Input id="motd" value={config.motd} onChange={(e) => updateConfig("motd", e.target.value)} placeholder="Un servidor de Minecraft increíble" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-        <p className="text-xs text-gray-400">El mensaje que aparece en la lista de servidores</p>
-      </div>
+      <FormField id="motd" label="Mensaje del Día (MOTD)" value={config.motd} onChange={(value) => updateConfig("motd", value)} placeholder="Un servidor de Minecraft increíble" description="El mensaje que aparece en la lista de servidores" />
 
       <div className="space-y-2 text-gray-200">
         <Label htmlFor="difficulty" className="text-gray-200 font-minecraft text-sm">
@@ -105,20 +93,9 @@ export const BasicSettingsTab: FC<BasicSettingsTabProps> = ({ config, updateConf
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="maxPlayers" className="text-gray-200 font-minecraft text-sm">
-          Número Máximo de Jugadores
-        </Label>
-        <Input id="maxPlayers" type="number" value={config.maxPlayers} onChange={(e) => updateConfig("maxPlayers", e.target.value)} placeholder="20" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-gray-200" />
-      </div>
+      <FormField id="maxPlayers" label="Número Máximo de Jugadores" type="number" value={config.maxPlayers} onChange={(value) => updateConfig("maxPlayers", value)} placeholder="20" icon="/images/player-head.png" iconAlt="Jugadores" />
 
-      <div className="space-y-2">
-        <Label htmlFor="seed" className="text-gray-200 font-minecraft text-sm">
-          Semilla del Mundo
-        </Label>
-        <Input id="seed" value={config.seed} onChange={(e) => updateConfig("seed", e.target.value)} placeholder="Deja en blanco para semilla aleatoria" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-gray-200" />
-        <p className="text-xs text-gray-400">Semilla para la generación del mundo. Si usas un número negativo, asegúrate de ponerlo entre comillas.</p>
-      </div>
+      <FormField id="seed" label="Semilla del Mundo" value={config.seed} onChange={(value) => updateConfig("seed", value)} placeholder="Deja en blanco para semilla aleatoria" description="Semilla para la generación del mundo. Si usas un número negativo, asegúrate de ponerlo entre comillas." />
 
       <div className="space-y-2 text-gray-200">
         <Label htmlFor="levelType" className="text-gray-200 font-minecraft text-sm">
