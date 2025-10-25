@@ -1,0 +1,23 @@
+{
+  "name": "minepanel-docs",
+  "version": "1.0.0",
+  "description": "Minepanel documentation built with VitePress",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "keywords": [
+    "minepanel",
+    "minecraft",
+    "server",
+    "docker",
+    "documentation"
+  ],
+  "author": "Ketbome",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^2.0.0-alpha.12"
+  }
+}
