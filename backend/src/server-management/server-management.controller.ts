@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadR
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { UpdateServerConfigDto } from './dto/server-config.model';
+import { ServerListItemDto } from './dto/server-list-item.dto';
 
 @Controller('servers')
 export class ServerManagementController {
@@ -11,8 +12,9 @@ export class ServerManagementController {
   ) {}
 
   @Get()
-  async getAllServers() {
-    return this.dockerComposeService.getAllServerConfigs();
+  async getAllServers(): Promise<ServerListItemDto[]> {
+    const serverConfigs = await this.dockerComposeService.getAllServerConfigs();
+    return ServerListItemDto.fromServerConfigs(serverConfigs);
   }
 
   @Get('all-status')
@@ -156,15 +158,9 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs')
-  async getServerLogs(
-    @Param('id') id: string, 
-    @Query('lines') lines?: number,
-    @Query('since') since?: string,
-    @Query('stream') stream?: string
-  ) {
-    // Validate lines parameter
+  async getServerLogs(@Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
     const lineCount = lines && lines > 0 ? Math.min(lines, 10000) : 100; // Max 10k lines for safety
-    
+
     if (stream === 'true' && since) {
       // Use the streaming method with since parameter
       return this.managementService.getServerLogsStream(id, lineCount, since);
@@ -178,21 +174,13 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs/stream')
-  async getServerLogsStream(
-    @Param('id') id: string,
-    @Query('lines') lines?: number,
-    @Query('since') since?: string
-  ) {
+  async getServerLogsStream(@Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string) {
     const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 500;
     return this.managementService.getServerLogsStream(id, lineCount, since);
   }
 
   @Get(':id/logs/since/:timestamp')
-  async getServerLogsSince(
-    @Param('id') id: string,
-    @Param('timestamp') timestamp: string,
-    @Query('lines') lines?: number
-  ) {
+  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string, @Query('lines') lines?: number) {
     const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 1000;
     return this.managementService.getServerLogsSince(id, timestamp, lineCount);
   }
