@@ -122,7 +122,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
       }
     };
 
-    // Delay to ensure complete hydration
     const timeoutId = setTimeout(() => {
       initializeServers();
     }, 100);
@@ -149,7 +148,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
     },
   ];
 
-  // Show skeleton during hydration
   if (!isHydrated) {
     return (
       <div className="fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-md border-r border-gray-700/60 shadow-2xl z-50">
@@ -173,7 +171,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   return (
     <motion.div initial={false} animate={{ width: isCollapsed ? 64 : 256 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="fixed left-0 top-0 h-full bg-gray-900/95 backdrop-blur-md border-r border-gray-700/60 shadow-2xl z-50">
-      {/* Header del Sidebar */}
       <div className="p-4 border-b border-gray-700/60">
         <div className="flex items-center justify-between">
           <AnimatePresence mode="wait">
@@ -191,7 +188,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         </div>
       </div>
 
-      {/* Main Navigation */}
       <div className="p-4 space-y-2">
         <AnimatePresence mode="wait">
           {!isCollapsed && (
@@ -217,7 +213,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         ))}
       </div>
 
-      {/* Lista de Servidores */}
       <div className="px-4 pb-4 flex-1">
         <div className="flex items-center justify-between mb-3">
           <AnimatePresence mode="wait">

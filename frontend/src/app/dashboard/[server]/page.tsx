@@ -21,7 +21,6 @@ export default function ServerConfig() {
   const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
   const { t } = useLanguage();
 
-  // Auth check
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push("/");
@@ -34,17 +33,14 @@ export default function ServerConfig() {
 
   return (
     <div className="space-y-8">
-      {/* Server Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={clearServerData} />
       </motion.div>
 
-      {/* Server Configuration Tabs */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
         <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} />
       </motion.div>
 
-      {/* Decorative Elements */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }} className="flex justify-center gap-8 pt-8">
         <motion.div animate={{ y: [-4, 4, -4], rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="opacity-40 hover:opacity-70 transition-opacity">
           <Image src="/images/ender-pearl.webp" alt="Ender Pearl" width={32} height={32} className="drop-shadow-md" />
@@ -60,7 +56,6 @@ export default function ServerConfig() {
         </motion.div>
       </motion.div>
 
-      {/* Additional Server Info Card */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }} className="bg-gray-900/60 backdrop-blur-md rounded-lg border border-gray-700/40 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Image src="/images/command-block.webp" alt="Command Block" width={24} height={24} />

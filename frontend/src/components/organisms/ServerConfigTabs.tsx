@@ -24,7 +24,6 @@ interface ServerConfigTabsProps {
 export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus }) => {
   const { t } = useLanguage();
 
-  // Determinar qué tabs mostrar según el tipo de servidor
   const showModsTab = config.serverType === "FORGE" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
   const showPluginsTab = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 
@@ -37,13 +36,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="bg-gray-900/80 backdrop-blur-md rounded-lg border border-gray-700/60 overflow-hidden text-gray-200">
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="type" className="w-full">
-          {/* Contenedor con scroll horizontal para los tabs */}
           <div className="overflow-x-auto custom-scrollbar text-gray-200">
             <TabsList className="flex w-max min-w-full h-auto p-1 bg-gray-800/70 border-b border-gray-700/60">
               <TabsTrigger value="type" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Server className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("serverType")}</span>
-                <span className="sm:hidden">Tipo</span>
+                <span className="sm:hidden">{t("serverType")}</span>
               </TabsTrigger>
 
               <TabsTrigger value="general" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
@@ -55,7 +53,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               <TabsTrigger value="resources" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Cpu className="h-4 w-4" />
                 <span className="hidden sm:inline"> {t("resources")}</span>
-                <span className="sm:hidden">Recursos</span>
+                <span className="sm:hidden">{t("resources")}</span>
               </TabsTrigger>
 
               {showModsTab && (
@@ -89,7 +87,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               <TabsTrigger value="commands" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Terminal className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("commands")}</span>
-                <span className="sm:hidden">CMD</span>
+                <span className="sm:hidden">{t("commands")}</span>
               </TabsTrigger>
             </TabsList>
           </div>

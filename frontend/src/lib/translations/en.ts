@@ -216,6 +216,9 @@ export const en = {
   help: "Help",
   privacy: "Privacy",
   terms: "Terms",
+  documentation: "Documentation",
+  github: "GitHub",
+  withLove: "Made with",
 
   // ===========================
   // GENERAL SETTINGS TAB

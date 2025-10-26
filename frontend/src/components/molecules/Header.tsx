@@ -8,13 +8,14 @@ import { useEffect, useState } from "react";
 import { logout } from "@/services/auth/auth.service";
 import { motion } from "framer-motion";
 import { LogOut, User } from "lucide-react";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function Header() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    // Obtener nombre de usuario
     if (typeof window !== "undefined") {
       const storedUsername = localStorage.getItem("username");
       if (storedUsername) {
@@ -47,7 +48,7 @@ export function Header() {
           )}
           <Button variant="outline" onClick={handleLogout} className="border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-red-600/20 hover:text-red-400 hover:border-red-600/50 transition-all flex items-center gap-2">
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Cerrar Sesión</span>
+            <span className="hidden sm:inline">{t("logout")}</span>
           </Button>
         </div>
       </div>

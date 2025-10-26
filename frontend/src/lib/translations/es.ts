@@ -216,8 +216,11 @@ export const es: Record<TranslationKey, string> = {
   enterServer: "ENTRAR AL SERVIDOR",
   allRightsReserved: "Todos los derechos reservados",
   help: "Ayuda",
+  documentation: "Documentación",
+  github: "GitHub",
   privacy: "Privacidad",
   terms: "Términos",
+  withLove: "Hecho con",
 
   // ===========================
   // PESTAÑA DE CONFIGURACIÓN GENERAL

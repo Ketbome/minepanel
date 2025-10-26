@@ -25,14 +25,12 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
 
-  // Function to open File Browser
   const openFileBrowser = () => {
     const fileBrowserPath = `/files/${serverId}`;
     const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 
-  // Function to handle clear data
   const handleClearData = async () => {
     setIsClearing(true);
     try {
@@ -42,7 +40,6 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
     }
   };
 
-  // Function to get icon based on status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "running":
@@ -57,8 +54,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
         return "/images/barrier.webp";
     }
   };
-
-  // Function to get CSS class for status indicator
+  
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "running":
