@@ -18,12 +18,9 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
 
   return (
     <div className="space-y-6">
-      {/* World Seed - Full Width */}
       <FormField id="seed" label={t("seed")} value={config.seed || ""} onChange={(value) => updateConfig("seed", value)} placeholder={t("seedPlaceholder")} description={t("seedDescription")} icon="/images/grass.webp" iconAlt={t("seed")} />
 
-      {/* Grid Layout para selectores - 2 columnas en tablet, 3 en desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* World Type */}
         <div className="space-y-2 text-gray-200">
           <Label htmlFor="levelType" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
             <Image src="/images/map.webp" alt={t("levelType")} width={16} height={16} />
@@ -43,7 +40,6 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
           </Select>
         </div>
 
-        {/* Difficulty */}
         <div className="space-y-2 text-gray-200">
           <Label htmlFor="difficulty" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
             <Image src="/images/sword.png" alt={t("difficulty")} width={16} height={16} />
@@ -82,7 +78,6 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
           </Select>
         </div>
 
-        {/* Game Mode */}
         <div className="space-y-2 text-gray-200">
           <Label htmlFor="gameMode" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
             <Image src="/images/diamond-pickaxe.webp" alt={t("gameMode")} width={16} height={16} />
