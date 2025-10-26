@@ -195,6 +195,10 @@ export const es: Record<TranslationKey, string> = {
   resourcesError: "Error en los recursos",
   errorsDetected: "Errores detectados en los logs",
   errorsDetectedDesc: "Se encontraron errores o excepciones en los logs del servidor",
+  saveFailed: "Error al guardar",
+  configSavedAutomatically: "Configuración guardada automáticamente",
+  errorSavingAutomatically: "Error al guardar automáticamente",
+  failedToFetchVersions: "Error al obtener las versiones",
 
   // ===========================
   // IDIOMA
@@ -561,6 +565,10 @@ export const es: Record<TranslationKey, string> = {
   serverMustBeRunning: "El servidor debe estar en ejecución para ejecutar comandos",
   rconNotConfigured: "RCON no está configurado correctamente",
   commands: "Comandos",
+  enterACommandToExecute: "Ingresa un comando para ejecutar",
+  rconPortNotConfigured: "El puerto RCON no está configurado",
+  commandExecutedSuccessfully: "Comando ejecutado correctamente",
+  errorExecutingCommand: "Error al ejecutar el comando",
 
   // Etiquetas de Comandos
   cmdListPlayers: "Listar jugadores",
@@ -675,7 +683,7 @@ export const es: Record<TranslationKey, string> = {
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
-  manualCurseForgeDeprecated: "Este método manual para CurseForge está obsoleto. Se recomienda usar \"CurseForge Modpack\" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.",
+  manualCurseForgeDeprecated: 'Este método manual para CurseForge está obsoleto. Se recomienda usar "CurseForge Modpack" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.',
   modpackFile: "Archivo del Modpack (CF_SERVER_MOD)",
   modpackFileHelp: "Ruta completa al archivo .zip del modpack en el contenedor.",
   modpackFileExample: "Ejemplo: /modpacks/SkyFactory_4_Server_4.1.0.zip",
@@ -686,7 +694,7 @@ export const es: Record<TranslationKey, string> = {
   useModpackStartScript: "Usar Script de Inicio del Modpack",
   useModpackStartScriptDesc: "Si se desactiva, evita usar el script de inicio incluido en el modpack y usa la lógica estándar del servidor",
   ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
-  ftbLegacyJavaFixerDesc: "Activa la corrección para modpacks que fallan con \"unable to launch forgemodloader\"",
+  ftbLegacyJavaFixerDesc: 'Activa la corrección para modpacks que fallan con "unable to launch forgemodloader"',
   cfApiKeyOptional: "API Key opcional para compatibilidad con algunos modpacks",
 
   // Configuración Auto de CurseForge
@@ -697,7 +705,7 @@ export const es: Record<TranslationKey, string> = {
   methodUrl: "URL",
   methodUrlDesc: "Dirección web directa al modpack en CurseForge",
   methodSlug: "Slug",
-  methodSlugDesc: "Identificador único del modpack (ej: \"all-the-mods-7\")",
+  methodSlugDesc: 'Identificador único del modpack (ej: "all-the-mods-7")',
   methodFile: "Archivo",
   methodFileDesc: "Instalar desde un archivo .zip ya subido al servidor",
   installFromUrl: "Instalar desde URL directa",

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "../axios.service";
 
 export const login = async (username: string, password: string) => {
@@ -13,11 +12,12 @@ export const login = async (username: string, password: string) => {
     }
 
     return { success: false, error: "NO_ACCESS_TOKEN" };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in login:", error);
+    const err = error as { response?: { data?: { message?: string } } };
     return {
       success: false,
-      error: error.response?.data?.message || "LOGIN_ERROR",
+      error: err.response?.data?.message || "LOGIN_ERROR",
     };
   }
 };

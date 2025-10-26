@@ -8,8 +8,6 @@ const defaultConfig: ServerConfig = {
   id: "Server",
   active: false,
   serverType: "VANILLA",
-
-  // General configuration
   serverName: "Minecraft Server",
   motd: "Un servidor de Minecraft increíble",
   port: "25565",
@@ -30,30 +28,20 @@ const defaultConfig: ServerConfig = {
   generateStructures: true,
   allowNether: true,
   entityBroadcastRange: "100",
-
-  // Auto-Stop
   enableAutoStop: false,
   autoStopTimeoutEst: "3600",
   autoStopTimeoutInit: "1800",
-
-  // Auto-Pause
   enableAutoPause: false,
   autoPauseTimeoutEst: "3600",
   autoPauseTimeoutInit: "600",
   autoPauseKnockInterface: "eth0",
-
-  // Connectivity
   playerIdleTimeout: "0",
   preventProxyConnections: false,
   opPermissionLevel: "4",
-
-  // RCON
   enableRcon: true,
   rconPort: "25575",
   rconPassword: "",
   broadcastRconToOps: false,
-
-  // Resources
   initMemory: "6G",
   maxMemory: "10G",
   cpuLimit: "2",
@@ -63,8 +51,6 @@ const defaultConfig: ServerConfig = {
   simulationDistance: "4",
   uid: "1000",
   gid: "1000",
-
-  // JVM Options
   useAikarFlags: false,
   enableJmx: false,
   jmxHost: "",
@@ -75,7 +61,6 @@ const defaultConfig: ServerConfig = {
   tz: "UTC",
   enableRollingLogs: false,
   logTimestamp: false,
-
   enableBackup: false,
   backupInterval: "24h",
   backupMethod: "tar",
@@ -91,8 +76,6 @@ const defaultConfig: ServerConfig = {
   backupIncludes: "",
   backupExcludes: "",
   tarCompressMethod: "gzip",
-
-  // Docker
   dockerImage: "latest",
   minecraftVersion: "1.19.2",
   dockerVolumes: "./mc-data:/data\n./modpacks:/modpacks:ro",
@@ -101,8 +84,6 @@ const defaultConfig: ServerConfig = {
   execDirectly: true,
   envVars: "",
   extraPorts: [],
-
-  // CurseForge specific
   cfMethod: "url",
   cfUrl: "",
   cfSlug: "",
@@ -115,43 +96,25 @@ const defaultConfig: ServerConfig = {
   cfParallelDownloads: "4",
   cfOverridesSkipExisting: false,
   cfSetLevelFrom: "",
-
-  // Manual CurseForge (deprecated) specific
   cfServerMod: "",
   cfBaseDir: "/data/FeedTheBeast",
   useModpackStartScript: true,
   ftbLegacyJavaFixer: false,
-
-  // Plugin specific
   spigetResources: "",
-
-  // Paper specific
   paperBuild: "",
   paperChannel: "",
   paperDownloadUrl: "",
-
-  // Bukkit/Spigot specific
   bukkitDownloadUrl: "",
   spigotDownloadUrl: "",
   buildFromSource: false,
-
-  // Pufferfish specific
   pufferfishBuild: "",
   useFlareFlags: false,
-
-  // Purpur specific
   purpurBuild: "",
   purpurDownloadUrl: "",
-
-  // Leaf specific
   leafBuild: "",
-
-  // Folia specific
   foliaBuild: "",
   foliaChannel: "",
   foliaDownloadUrl: "",
-
-  // General config
   skipDownloadDefaults: false,
 };
 
@@ -162,14 +125,12 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
   const [isClearing, setIsClearing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load server configuration
   useEffect(() => {
     async function loadConfig() {
       try {
         setLoading(true);
         const serverConfig = await fetchServerConfig(serverId);
 
-        // Set port based on serverId
         if (!serverConfig.port) {
           serverConfig.port = serverId === "daily" ? "25565" : "25566";
         }
@@ -189,7 +150,6 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
     loadConfig();
   }, [serverId]);
 
-  // Update a specific config field
   const updateConfig = <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => {
     setConfig((prev) => ({
       ...prev,
@@ -197,7 +157,6 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
     }));
   };
 
-  // Save the entire configuration
   const saveConfig = async (configToSave?: ServerConfig): Promise<boolean> => {
     const dataToSave = configToSave || config;
 
@@ -215,7 +174,6 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
     }
   };
 
-  // Auto-save functionality
   useAutoSaveWithToast(
     config,
     async (data) => {
@@ -233,11 +191,10 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
     {
       enabled: enableAutoSave && !loading,
       debounceMs: 2000,
-      showSuccessToast: false, // No mostrar toast en autosave para no ser intrusivo
+      showSuccessToast: false,
     }
   );
 
-  // Restart the server
   const restartServer = async () => {
     setIsRestarting(true);
     try {
@@ -257,7 +214,6 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
     }
   };
 
-  // Clear server data
   const clearServerData = async () => {
     setIsClearing(true);
     try {

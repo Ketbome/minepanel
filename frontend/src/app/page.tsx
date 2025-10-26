@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
@@ -22,7 +21,6 @@ export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
 
-  // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
       router.push("/dashboard");
@@ -40,10 +38,9 @@ export default function Home() {
         toast.success(t("loginSuccess"));
         router.push("/dashboard");
       } else {
-        // Try to translate error message if it's a translation key, otherwise use default
         const errorKey = result.error as string;
-        const hasTranslation = errorKey && ['NO_ACCESS_TOKEN', 'LOGIN_ERROR', 'invalidCredentials'].includes(errorKey);
-        const errorMessage = hasTranslation ? t(errorKey as 'NO_ACCESS_TOKEN' | 'LOGIN_ERROR' | 'invalidCredentials') : t('invalidCredentials');
+        const hasTranslation = errorKey && ["NO_ACCESS_TOKEN", "LOGIN_ERROR", "invalidCredentials"].includes(errorKey);
+        const errorMessage = hasTranslation ? t(errorKey as "NO_ACCESS_TOKEN" | "LOGIN_ERROR" | "invalidCredentials") : t("invalidCredentials");
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -56,7 +53,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[url('/images/minecraft-bg-blur.png')] bg-cover bg-center relative">
-      {/* Dark overlay to improve readability */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
       <header className="relative z-10 border-b border-gray-800/60 bg-black/30 backdrop-blur-md">
@@ -129,7 +125,6 @@ export default function Home() {
             </Card>
           </motion.div>
 
-          {/* Minecraft decorative elements */}
           <div className="mt-8 flex justify-center space-x-4">
             <Image src="/images/grass.webp" alt="Grass Block" width={40} height={40} className="animate-bounce" style={{ animationDelay: "0.1s", animationDuration: "2s" }} />
             <Image src="/images/diamond.webp" alt="Diamond" width={40} height={40} className="animate-bounce" style={{ animationDelay: "0.3s", animationDuration: "2.4s" }} />

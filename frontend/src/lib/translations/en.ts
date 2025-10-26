@@ -193,6 +193,10 @@ export const en = {
   resourcesError: "Error in resources",
   errorsDetected: "Errors detected in logs",
   errorsDetectedDesc: "Errors or exceptions were found in the server logs",
+  saveFailed: "Save failed",
+  configSavedAutomatically: "Config saved automatically",
+  errorSavingAutomatically: "Error saving automatically",
+  failedToFetchVersions: "Failed to fetch versions",
 
   // ===========================
   // LANGUAGE
@@ -559,6 +563,10 @@ export const en = {
   serverMustBeRunning: "Server must be running to execute commands",
   rconNotConfigured: "RCON is not configured properly",
   commands: "Commands",
+  enterACommandToExecute: "Enter a command to execute",
+  rconPortNotConfigured: "RCON port not configured",
+  commandExecutedSuccessfully: "Command executed successfully",
+  errorExecutingCommand: "Error executing command",
 
   // Command Labels
   cmdListPlayers: "List players",
@@ -673,7 +681,7 @@ export const en = {
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
-  manualCurseForgeDeprecated: "This manual method for CurseForge is deprecated. We recommend using \"CurseForge Modpack\" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.",
+  manualCurseForgeDeprecated: 'This manual method for CurseForge is deprecated. We recommend using "CurseForge Modpack" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.',
   modpackFile: "Modpack File (CF_SERVER_MOD)",
   modpackFileHelp: "Complete path to the modpack .zip file in the container.",
   modpackFileExample: "Example: /modpacks/SkyFactory_4_Server_4.1.0.zip",
@@ -684,7 +692,7 @@ export const en = {
   useModpackStartScript: "Use Modpack Start Script",
   useModpackStartScriptDesc: "If disabled, avoids using the modpack's included start script and uses standard server logic",
   ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
-  ftbLegacyJavaFixerDesc: "Enable fix for modpacks that fail with \"unable to launch forgemodloader\"",
+  ftbLegacyJavaFixerDesc: 'Enable fix for modpacks that fail with "unable to launch forgemodloader"',
   cfApiKeyOptional: "Optional API Key for compatibility with some modpacks",
 
   // CurseForge Auto Configuration
@@ -695,7 +703,7 @@ export const en = {
   methodUrl: "URL",
   methodUrlDesc: "Direct web address to the modpack on CurseForge",
   methodSlug: "Slug",
-  methodSlugDesc: "Unique modpack identifier (e.g: \"all-the-mods-7\")",
+  methodSlugDesc: 'Unique modpack identifier (e.g: "all-the-mods-7")',
   methodFile: "File",
   methodFileDesc: "Install from a .zip file already uploaded to the server",
   installFromUrl: "Install from direct URL",

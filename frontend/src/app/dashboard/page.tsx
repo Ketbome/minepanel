@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -123,9 +122,10 @@ export default function Dashboard() {
       } else {
         toast.error(`${t("errorDeletingServer")}: ${response.message}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting server:", error);
-      toast.error(error.response?.data?.message || t("errorDeletingServer"));
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || t("errorDeletingServer"));
     } finally {
       setIsDeletingServer(null);
     }
@@ -155,9 +155,10 @@ export default function Dashboard() {
       } else {
         toast.error(`${t("errorCreatingServer")}: ${response.message}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating server:", error);
-      toast.error(error.response?.data?.message || t("errorCreatingServer"));
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || t("errorCreatingServer"));
     } finally {
       setIsCreatingServer(false);
     }
@@ -229,7 +230,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Page header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white font-minecraft flex items-center gap-3">
@@ -288,7 +288,6 @@ export default function Dashboard() {
         </Dialog>
       </motion.div>
 
-      {/* Grid de servidores */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
         {servers.length === 0 && !isLoading ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
@@ -402,7 +401,6 @@ export default function Dashboard() {
         )}
       </motion.div>
 
-      {/* Decoration */}
       {servers.length > 0 && (
         <div className="flex justify-center gap-8 pt-8">
           <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
