@@ -663,7 +663,6 @@ export class DockerComposeService {
     const requestedPort = parseInt(config.port || '25565');
     const availablePort = await this.findAvailablePort(requestedPort, config.id);
     if (availablePort !== requestedPort) {
-      console.log(`Port ${requestedPort} in use. Using ${availablePort} for ${config.id}`);
       config.port = availablePort.toString();
     }
     return config.port;

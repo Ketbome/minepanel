@@ -55,4 +55,4 @@ export const setupAxiosInterceptors = () => {
   );
 };
 
-if (typeof window !== "undefined") setupAxiosInterceptors();
+if (globalThis.window !== undefined) setupAxiosInterceptors();
