@@ -1,6 +1,5 @@
 name: Deploy Documentation to GitHub Pages
 
-# Se ejecuta cuando se hace push a main o manualmente
 on:
     push:
         branches:
@@ -9,15 +8,13 @@ on:
         paths:
             - "doc/**"
             - ".github/workflows/deploy-docs.yml"
-    workflow_dispatch: # Permite ejecutar manualmente desde GitHub
+    workflow_dispatch:
 
-# Permisos necesarios para desplegar a GitHub Pages
 permissions:
     contents: read
     pages: write
     id-token: write
 
-# Permite solo un despliegue concurrente
 concurrency:
     group: pages
     cancel-in-progress: false
@@ -29,7 +26,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
-                  fetch-depth: 0 # Necesario para el lastUpdated de VitePress
+                  fetch-depth: 0
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
