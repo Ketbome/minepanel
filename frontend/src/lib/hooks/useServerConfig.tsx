@@ -9,7 +9,7 @@ const defaultConfig: ServerConfig = {
   active: false,
   serverType: "VANILLA",
   serverName: "Minecraft Server",
-  motd: "Un servidor de Minecraft increíble",
+  motd: "A Minecraft server",
   port: "25565",
   difficulty: "hard",
   maxPlayers: "10",

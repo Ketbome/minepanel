@@ -8,12 +8,10 @@ These are the features we're actively working on or planning to implement in the
 
 ### Enhanced Log Viewer
 
-**Status**: 📋 Planned
+**Status**: Planned
 
 Improve the current log viewing experience with:
 
-- **Advanced Filtering** - Filter logs by type (info, warning, error, debug)
-- **Search Functionality** - Search through historical logs
 - **Log Highlighting** - Better syntax highlighting for different log types
 - **Export Logs** - Download logs in various formats (TXT, JSON)
 - **Real-time Updates** - Live log streaming with auto-scroll control
@@ -22,7 +20,7 @@ Improve the current log viewing experience with:
 
 ### Server.properties Editor
 
-**Status**: 📋 Planned
+**Status**: Planned
 
 Edit `server.properties` directly from the web interface:
 
@@ -43,7 +41,7 @@ Edit `server.properties` directly from the web interface:
 
 ### Reverse Proxy Integration
 
-**Status**: 📋 Planned
+**Status**: Planned
 
 Built-in reverse proxy configuration for better security and easier access:
 
@@ -63,7 +61,7 @@ Built-in reverse proxy configuration for better security and easier access:
 
 ### CurseForge Modpack Browser
 
-**Status**: 📋 Planned
+**Status**: Planned
 
 Browse and install modpacks directly from CurseForge:
 
@@ -83,13 +81,13 @@ Browse and install modpacks directly from CurseForge:
 - NeoForge
 - Quilt
 
-## 🚀 Planned Features
+## Planned Features
 
 Features we're planning for future releases:
 
 ### User Roles & Permissions
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Multi-user support with granular permissions:
 
@@ -102,7 +100,7 @@ Multi-user support with granular permissions:
 
 ### Server Templates
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Quick server deployment with pre-configured templates:
 
@@ -122,7 +120,7 @@ Quick server deployment with pre-configured templates:
 
 ### Advanced Metrics Dashboard
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Detailed performance analytics and monitoring:
 
@@ -136,7 +134,7 @@ Detailed performance analytics and monitoring:
 
 ### Discord Integration
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Connect Minepanel with Discord for notifications and control:
 
@@ -153,7 +151,7 @@ Connect Minepanel with Discord for notifications and control:
 
 ### API Documentation (Swagger)
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Complete API documentation for developers:
 
@@ -166,7 +164,7 @@ Complete API documentation for developers:
 
 ### Scheduled Tasks
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Automate server maintenance and operations:
 
@@ -186,7 +184,7 @@ Automate server maintenance and operations:
 
 ### Plugin Manager
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Browse and manage plugins for Paper, Spigot, and Bukkit servers:
 
@@ -200,7 +198,7 @@ Browse and manage plugins for Paper, Spigot, and Bukkit servers:
 
 ### World Manager
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Manage server worlds easily:
 
@@ -213,7 +211,7 @@ Manage server worlds easily:
 
 ### Whitelist & Banlist Editor
 
-**Status**: 💡 Planned
+**Status**: Planned
 
 Manage player access from the web interface:
 
@@ -225,7 +223,7 @@ Manage player access from the web interface:
 - **Player Lookup** - Search by username or UUID
 - **OP Management** - Manage server operators
 
-## 💡 Under Consideration
+## Under Consideration
 
 Features we're considering for future development:
 
