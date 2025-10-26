@@ -14,7 +14,7 @@ const defaultConfig: ServerConfig = {
   difficulty: "hard",
   maxPlayers: "10",
   ops: "",
-  onlineMode: false,
+  onlineMode: true,
   pvp: true,
   commandBlock: true,
   allowFlight: true,
