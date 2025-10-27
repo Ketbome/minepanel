@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAuthenticated, login } from "@/services/auth/auth.service";
+import { healthService } from "@/services/health.service";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
@@ -18,6 +19,7 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [serverAvailable, setServerAvailable] = useState<boolean | null>(null);
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -26,6 +28,24 @@ export default function Home() {
       router.push("/dashboard");
     }
   }, [router]);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        await healthService();
+        setServerAvailable(true);
+      } catch (err) {
+        console.error("Error:", err);
+        setServerAvailable(false);
+        toast.error(t("serverUnavailable"), {
+          description: t("serverUnavailableDesc"),
+          duration: 10000,
+        });
+      }
+    };
+
+    checkHealth();
+  }, [t]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -110,15 +130,29 @@ export default function Home() {
                   </div>
                 </CardContent>
                 <CardFooter className="pb-6 pt-2">
-                  <Button type="submit" className="w-full font-minecraft bg-emerald-600 hover:bg-emerald-700 text-white py-2 transition-all" disabled={isLoading}>
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-5 h-5 border-t-2 border-r-2 border-white rounded-full animate-spin"></div>
-                        <span>{t("loading")}</span>
-                      </div>
-                    ) : (
-                      t("enterServer")
-                    )}
+                  <Button type="submit" className="w-full font-minecraft bg-emerald-600 hover:bg-emerald-700 text-white py-2 transition-all" disabled={isLoading || !serverAvailable}>
+                    {(() => {
+                      if (serverAvailable === null) {
+                        return (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-t-2 border-r-2 border-white rounded-full animate-spin"></div>
+                            <span>{t("checkingServerStatus")}</span>
+                          </div>
+                        );
+                      }
+                      if (isLoading) {
+                        return (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-t-2 border-r-2 border-white rounded-full animate-spin"></div>
+                            <span>{t("loading")}</span>
+                          </div>
+                        );
+                      }
+                      if (!serverAvailable) {
+                        return t("serverUnavailable");
+                      }
+                      return t("enterServer");
+                    })()}
                   </Button>
                 </CardFooter>
               </form>

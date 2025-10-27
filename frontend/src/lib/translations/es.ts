@@ -10,6 +10,9 @@ export const es: Record<TranslationKey, string> = {
   password: "Contraseña",
   invalidCredentials: "Credenciales inválidas",
   loginSuccess: "Inicio de sesión exitoso",
+  serverUnavailable: "No se puede conectar",
+  serverUnavailableDesc: "Parece que hay un problema de configuración. Revisa que la URL del backend esté bien configurada, que el servidor esté corriendo o si hay algún problema con el DNS.",
+  checkingServerStatus: "Chequeando conexión...",
 
   // ===========================
   // NAVEGACIÓN

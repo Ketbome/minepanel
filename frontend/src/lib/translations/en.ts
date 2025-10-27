@@ -8,6 +8,9 @@ export const en = {
   password: "Password",
   invalidCredentials: "Invalid credentials",
   loginSuccess: "Login successful",
+  serverUnavailable: "Can't connect",
+  serverUnavailableDesc: "Looks like there's a configuration issue. Check that the backend URL is set up correctly, that the server is running, or if there's a DNS problem.",
+  checkingServerStatus: "Checking connection...",
 
   // ===========================
   // NAVIGATION
