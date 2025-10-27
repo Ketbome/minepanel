@@ -273,6 +273,7 @@ export const en = {
   language: "Language",
   spanish: "Spanish",
   english: "English",
+  dutch: "Dutch",
   changeLanguage: "Change language",
 
   // ===========================

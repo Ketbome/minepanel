@@ -30,7 +30,7 @@ I got tired of managing Minecraft servers through terminal and tried several pan
 - Automatic backups
 - Supports all server types: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
 - CurseForge modpack installation
-- Multi-language (English/Spanish)
+- Multi-language (English/Spanish/Dutch)
 
 ## Requirements
 
