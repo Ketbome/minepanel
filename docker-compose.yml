@@ -9,7 +9,7 @@ services:
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
-      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
       # Frontend environment variables (loaded at runtime via @next/env)
@@ -18,6 +18,7 @@ services:
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
       - ${PWD}/servers:${PWD}/servers
+      - ${PWD}/data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
 

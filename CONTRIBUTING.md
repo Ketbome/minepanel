@@ -1,137 +1,96 @@
-# Contributing to Minepanel
+# Contributing
 
-First off, thank you for considering contributing to Minepanel! 🎉
+Want to help? Cool! Here's how.
 
-It's people like you that make Minepanel such a great tool for managing Minecraft servers.
-
-**📖 Before contributing, please check out our [complete documentation](https://minepanel.ketbome.lat) to understand the project better.**
-
-## Table of Contents
-
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [How Can I Contribute?](#how-can-i-contribute)
-- [Development Setup](#development-setup)
-- [Project Structure](#project-structure)
-- [Coding Guidelines](#coding-guidelines)
-- [Commit Messages](#commit-messages)
-- [Pull Request Process](#pull-request-process)
-- [Reporting Bugs](#reporting-bugs)
-- [Suggesting Enhancements](#suggesting-enhancements)
+Check the [documentation](https://minepanel.ketbome.lat) first if you're new to the project.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by our commitment to providing a welcoming and inspiring community for all. Please be respectful and constructive in all interactions.
+Don't be a jerk. That's it.
 
-### Our Standards
+- Be respectful
+- Give constructive feedback
+- Help others when you can
 
-- **Be respectful** of differing viewpoints and experiences
-- **Be constructive** when giving or receiving feedback
-- **Focus on what is best** for the community
-- **Show empathy** towards other community members
+## What you need
 
-## Getting Started
+- Node.js 18+
+- Docker & Docker Compose v2.0+
+- Git
+- Any code editor (VS Code works great)
 
-### Prerequisites
+## Setup
 
-Before you begin, ensure you have the following installed:
-
-- **Node.js** (v18 or higher)
-- **Docker** and **Docker Compose** (v2.0+)
-- **Git**
-- A code editor (we recommend [VS Code](https://code.visualstudio.com/))
-
-### First Time Setup
-
-1. **Fork the repository** on GitHub
-2. **Clone your fork** locally:
+1. Fork the repo
+2. Clone it:
 
    ```bash
    git clone https://github.com/YOUR_USERNAME/minepanel.git
    cd minepanel
    ```
 
-3. **Add the upstream remote**:
+3. Add upstream:
 
    ```bash
    git remote add upstream https://github.com/Ketbome/minepanel.git
    ```
 
-4. **Create a branch** for your changes:
+4. Create a branch:
    ```bash
-   git checkout -b feature/my-awesome-feature
+   git checkout -b feature/my-thing
    ```
 
-## How Can I Contribute?
+## Ways to help
 
-### Ways to Contribute
+- Fix bugs
+- Add features
+- Improve docs
+- Translate to other languages
+- Write tests
+- Make the UI better
 
-There are many ways to contribute to Minepanel:
+## Running locally
 
-- 🐛 **Report bugs** - Help us identify issues
-- 💡 **Suggest features** - Share your ideas for improvements
-- 📝 **Improve documentation** - Fix typos, clarify instructions, add examples
-- 🌍 **Translate** - Help make Minepanel available in more languages
-- 💻 **Write code** - Fix bugs, implement features
-- 🧪 **Write tests** - Improve test coverage
-- 🎨 **Improve UI/UX** - Make the interface more intuitive
-
-## Development Setup
-
-### Backend Setup (NestJS)
+### Backend
 
 ```bash
 cd backend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run start:dev
 ```
 
-The backend API will be available at `http://localhost:3000`
+Runs on `http://localhost:3000`
 
-### Frontend Setup (Next.js)
+### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3001`
+Runs on `http://localhost:3001`
 
-### Documentation Setup (VitePress)
+### Documentation
 
 ```bash
 cd doc
-
-# Install dependencies
 npm install
-
-# Start documentation server
 npm run docs:dev
 ```
 
-The documentation will be available at `http://localhost:5173`
+Runs on `http://localhost:5173`
 
-### Docker Development
-
-For testing the full stack with Docker:
+### Docker
 
 ```bash
-# Build and start all services
+# Full stack
 docker-compose -f docker-compose.split.yml up --build
 
-# View logs
+# Logs
 docker-compose logs -f
 
-# Stop services
+# Stop
 docker-compose down
 ```
 
@@ -144,6 +103,8 @@ minepanel/
 │   │   ├── auth/        # Authentication module
 │   │   ├── server-management/  # Server management logic
 │   │   └── docker-compose/     # Docker operations
+│   │   └── settings/           # User Settings
+│   │   └── users/              # User
 │   └── test/
 ├── frontend/            # Next.js frontend
 │   ├── src/
@@ -158,180 +119,154 @@ minepanel/
 └── servers/           # Minecraft server data (created at runtime)
 ```
 
-## Pull Request Process
+## Pull Requests
 
-### Before Submitting
+### Before submitting
 
-1. **Update from upstream**:
+1. Update from upstream:
 
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
-2. **Run tests**:
+2. Run tests:
 
    ```bash
-   # Backend tests
    cd backend && npm test
-
-   # Frontend tests (if available)
    cd frontend && npm test
    ```
 
-3. **Lint your code**:
+3. Lint:
 
    ```bash
-   # Backend
    cd backend && npm run lint
-
-   # Frontend
    cd frontend && npm run lint
    ```
 
-4. **Test manually** - Ensure your changes work as expected
+4. Test manually
 
-### Submitting the PR
+### Submitting
 
-1. **Push your changes**:
+1. Push:
 
    ```bash
-   git push origin feature/my-awesome-feature
+   git push origin feature/my-thing
    ```
 
-2. **Create a Pull Request** on GitHub
+2. Open a PR on GitHub
 
-3. **Fill out the PR template** with:
+3. Fill out the template:
+   - What changed
+   - Related issues
+   - Screenshots for UI stuff
+   - How to test
 
-   - Clear description of changes
-   - Related issue numbers (if applicable)
-   - Screenshots/GIFs for UI changes
-   - Testing instructions
-
-4. **Wait for review** - Be patient and responsive to feedback
-
-### PR Title Format
-
-Use the same format as commit messages:
+### Title format
 
 ```
-feat(server): add support for Purpur server type
+feat(server): add Purpur support
+fix(ui): correct button alignment
+docs: update installation guide
 ```
 
-### Review Process
+### Review
 
-- At least one maintainer will review your PR
-- Address any requested changes
-- Once approved, a maintainer will merge your PR
+- Someone will review it
+- Make requested changes
+- It gets merged
 
-## Reporting Bugs
+## Bug reports
 
-### Before Submitting a Bug Report
+Before opening an issue:
 
-- **Check existing issues** - Your bug may already be reported
-- **Try the latest version** - The bug might be fixed
-- **Gather information** - Logs, screenshots, steps to reproduce
+- Check if it's already reported
+- Try the latest version
+- Get logs and screenshots
 
-### How to Submit a Bug Report
-
-Create an issue on GitHub with:
-
-**Title**: Brief, descriptive summary
-
-**Description**:
+### Format
 
 ```markdown
-## Description
+## What's wrong
 
-A clear description of the bug.
+Clear description of the bug
 
-## Steps to Reproduce
+## How to reproduce
 
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
-4. See error
+1. Do this
+2. Do that
+3. See error
 
-## Expected Behavior
+## Expected vs actual
 
-What you expected to happen.
-
-## Actual Behavior
-
-What actually happened.
+Expected: X should happen
+Actual: Y happened instead
 
 ## Environment
 
-- OS: [e.g. Ubuntu 22.04]
-- Docker version: [e.g. 24.0.0]
-- Minepanel version: [e.g. 1.0.0]
-- Browser: [e.g. Chrome 120]
+- OS: Ubuntu 22.04
+- Docker: 24.0.0
+- Minepanel: 1.0.0
+- Browser: Chrome 120
 
 ## Logs
-```
 
-[Paste relevant logs here]
-
-```
+[Paste logs here]
 
 ## Screenshots
-[If applicable]
+
+[If you have any]
 ```
 
-## Suggesting Enhancements
+## Feature requests
 
-### Before Submitting an Enhancement
+Before suggesting:
 
-- **Check the roadmap** - It might be planned
-- **Check existing issues** - It might be suggested already
-- **Consider if it fits** - Does it align with project goals?
+- Check the roadmap
+- Check existing issues
+- Make sure it fits the project
 
-### How to Submit an Enhancement
-
-Create an issue on GitHub with:
+### Format
 
 ```markdown
-## Summary
+## What
 
-Brief description of the enhancement.
+Brief description
 
-## Motivation
+## Why
 
-Why should this feature be added? What problem does it solve?
+What problem does it solve?
 
-## Detailed Description
+## How
 
-Detailed explanation of the feature.
+Detailed explanation
 
-## Possible Implementation
+## Implementation ideas
 
-(Optional) How you think it could be implemented.
+(Optional) How it could work
 
-## Alternatives Considered
+## Alternatives
 
-(Optional) Other solutions you've considered.
+(Optional) Other solutions considered
 
-## Additional Context
+## Context
 
-(Optional) Screenshots, mockups, examples.
+(Optional) Screenshots, mockups, examples
 ```
 
-## Translation Contributions
+## Translations
 
-Help make Minepanel available in more languages!
+Want to add a new language?
 
-### Adding a New Language
-
-1. Create a new file in `frontend/src/lib/translations/`:
+1. Create `frontend/src/lib/translations/fr.ts`:
 
    ```typescript
-   // frontend/src/lib/translations/fr.ts
    export const fr = {
      // Copy from en.ts and translate
    };
    ```
 
-2. Register in `frontend/src/lib/translations/index.ts`:
+2. Register it in `frontend/src/lib/translations/index.ts`:
 
    ```typescript
    import { fr } from "./fr";
@@ -339,52 +274,36 @@ Help make Minepanel available in more languages!
    export const translations = {
      en,
      es,
-     fr, // Add new language
+     fr,
    };
    ```
 
-3. Test thoroughly in the UI
+3. Test it
 
-## Documentation Contributions
+## Documentation
 
-Documentation improvements are always welcome!
+Docs are at [minepanel.ketbome.lat](https://minepanel.ketbome.lat) and built with VitePress (in `doc/`).
 
-**📖 View the live documentation at [https://minepanel.ketbome.lat](https://minepanel.ketbome.lat)**
+Types of docs needed:
 
-The documentation is built with VitePress and located in the `doc/` directory. Changes are automatically deployed when merged to main.
+- API endpoints
+- User guides
+- Examples
+- Troubleshooting
 
-### Types of Documentation
+Keep it:
 
-- **API documentation** - Endpoint descriptions
-- **User guides** - How to use features
-- **Developer guides** - How to contribute
-- **Examples** - Real-world use cases
-- **Troubleshooting** - Common issues and solutions
-
-### Documentation Style
-
-- Use clear, simple language
-- Include code examples
-- Add screenshots for UI features
-- Keep it up-to-date with code changes
+- Simple and clear
+- With code examples
+- Updated with changes
+- With screenshots when helpful
 
 ## Questions?
 
-Don't hesitate to ask! You can:
-
-- Open a [GitHub Discussion](https://github.com/Ketbome/minepanel/discussions)
-- Open an issue with the `question` label
+- [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)
+- Open an issue
 - Check the [FAQ](https://minepanel.ketbome.lat/faq)
-- Read the [complete documentation](https://minepanel.ketbome.lat)
 
 ---
 
-## Recognition
-
-Contributors will be recognized in:
-
-- GitHub contributors page
-- Release notes (for significant contributions)
-- Our hearts ❤️
-
-Thank you for contributing to Minepanel! 🎮✨
+Thanks for helping!
