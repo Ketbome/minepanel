@@ -10,6 +10,22 @@ export const nl: Record<TranslationKey, string> = {
   password: "Wachtwoord",
   invalidCredentials: "Ongeldige inloggegevens",
   loginSuccess: "Succesvol ingelogd",
+  serverUnavailable: "Kan geen verbinding maken",
+  serverUnavailableDesc: "Het lijkt erop dat er een configuratieprobleem is. Controleer of de backend URL correct is ingesteld, of de server draait, of dat er een DNS-probleem is.",
+  checkingServerStatus: "Verbinding controleren...",
+  cannotConnectToServer: "Kan geen verbinding maken met server",
+  cannotConnectToServerDesc: "De applicatie kan geen verbinding maken met de backend server. Controleer je configuratie.",
+  troubleshootingSteps: "Probleemoplossingsstappen",
+  checkBackendUrl: "Controleer Backend URL",
+  checkBackendUrlDesc: "Verifieer dat de NEXT_PUBLIC_API_URL omgevingsvariabele correct is geconfigureerd",
+  checkServerRunning: "Controleer Server Status",
+  checkServerRunningDesc: "Zorg ervoor dat de backend server draait en toegankelijk is op de geconfigureerde poort",
+  checkDNS: "Controleer DNS/Netwerk",
+  checkDNSDesc: "Verifieer dat er geen DNS of firewall problemen zijn die de verbinding blokkeren",
+  needMoreHelp: "Meer hulp nodig?",
+  needMoreHelpDesc: "Raadpleeg de documentatie of neem contact op met support voor hulp",
+  retryConnection: "Verbinding opnieuw proberen",
+  retrying: "Opnieuw proberen...",
 
   // ===========================
   // NAVIGATIE
@@ -24,6 +40,7 @@ export const nl: Record<TranslationKey, string> = {
   // ALGEMENE ACTIES
   // ===========================
   save: "Opslaan",
+  saving: "Aan het opslaan...",
   cancel: "Annuleren",
   confirm: "Bevestigen",
   loading: "Laden...",
@@ -52,6 +69,7 @@ export const nl: Record<TranslationKey, string> = {
   saveChanges: "Wijzigingen opslaan",
   addPort: "Poort toevoegen",
   addVariable: "Variabele toevoegen",
+  comingSoon: "Binnenkort beschikbaar",
 
   // ===========================
   // STATUS
@@ -136,6 +154,59 @@ export const nl: Record<TranslationKey, string> = {
   administrator: "Beheerder",
   minecraftPanel: "Minepanel",
 
+  // ===========================
+  // THUIS PAGINA
+  // ===========================
+  homeTitle: "Thuis",
+  homeDescription: "Overzicht van je Minecraft server paneel",
+  welcomeBack: "Welkom terug",
+  quickStats: "Snelle Statistieken",
+  totalServers: "Totaal Servers",
+  runningServers: "Actieve Servers",
+  stoppedServers: "Gestopte Servers",
+  systemStatus: "Systeemstatus",
+  cpuUsage: "CPU Gebruik",
+  memoryUsage: "Geheugen Gebruik",
+  diskUsage: "Schijfgebruik",
+  recentActivity: "Recente Activiteit",
+  noRecentActivity: "Geen recente activiteit",
+  quickActions: "Snelle Acties",
+  viewAllServers: "Bekijk Alle Servers",
+  systemHealth: "Systeemgezondheid",
+  healthy: "Gezond",
+
+  // Settings Page
+  settingsTitle: "Instellingen",
+  settingsDescription: "Configureer je account en applicatievoorkeuren",
+  accountSettings: "Accountinstellingen",
+  yourUsername: "Jouw Gebruikersnaam",
+  changePassword: "Wachtwoord Wijzigen",
+  currentPassword: "Huidig Wachtwoord",
+  newPassword: "Nieuw Wachtwoord",
+  confirmPassword: "Bevestig Wachtwoord",
+  updatePassword: "Wachtwoord Bijwerken",
+  apiSettings: "API Instellingen",
+  apiSettingsDesc: "Configureer API sleutels voor externe integraties",
+  curseforgeApiKey: "CurseForge API Sleutel",
+  curseforgeApiKeyDesc: "API sleutel om mods en modpacks van CurseForge te downloaden",
+  importFromSettings: "Importeren uit Instellingen",
+  apiKeyImported: "API Sleutel succesvol geïmporteerd",
+  noApiKeyConfigured: "Geen API Sleutel geconfigureerd in Instellingen",
+  discordWebhook: "Discord Webhook URL",
+  discordWebhookDesc: "Webhook URL voor Discord notificaties",
+  appearanceSettings: "Uiterlijk",
+  languageDesc: "Selecteer je voorkeurstaal",
+  notificationSettings: "Notificaties",
+  enableNotifications: "Notificaties Inschakelen",
+  enableNotificationsDesc: "Ontvang notificaties over server gebeurtenissen",
+  dangerZone: "Gevarenzone",
+  dangerZoneDesc: "Onomkeerbare en destructieve acties",
+  settingsSaved: "Instellingen succesvol opgeslagen",
+  settingsSaveFailed: "Instellingen opslaan mislukt",
+  test: "Test",
+  webhookTestSuccess: "Webhook test succesvol! Controleer je Discord kanaal",
+  webhookTestFailed: "Webhook test mislukt",
+
   // Server Creation
   serverCreationDesc: "Maak een nieuwe Minecraft server aan",
   enterServerName: "Voer de naam in voor je nieuwe Minecraft server.",
@@ -195,6 +266,10 @@ export const nl: Record<TranslationKey, string> = {
   resourcesError: "Er is een probleem opgetreden bij het laden van de bronnen.",
   errorsDetected: "Er zijn problemen gedetecteerd in de logs.",
   errorsDetectedDesc: "Er zijn problemen of uitzonderingen gevonden in de serverlogs.",
+  saveFailed: "Opslaan mislukt",
+  configSavedAutomatically: "Configuratie automatisch opgeslagen",
+  errorSavingAutomatically: "Fout bij automatisch opslaan",
+  failedToFetchVersions: "Versies ophalen mislukt",
 
   // ===========================
   // TAAL
@@ -209,12 +284,16 @@ export const nl: Record<TranslationKey, string> = {
   // WELKOMSTPAGINA
   // ===========================
   welcomeDescription: "Beheer je Minecraft servers met gemak",
-  enterCredentials: "Voer je inloggegevens in om verder te gaan",
-  enterServer: "SERVER BETREDEN",
+  enterCredentials: "Voer je inloggegevens in om door te gaan",
+  enterServer: "Login",
   allRightsReserved: "Alle rechten voorbehouden",
-  help: "Help",
+  help: "Hulp",
   privacy: "Privacy",
   terms: "Voorwaarden",
+  documentation: "Documentatie",
+  github: "GitHub",
+  withLove: "Gemaakt met",
+
 
   // ===========================
   // ALGEMENE INSTELLINGEN TAB
@@ -574,6 +653,10 @@ export const nl: Record<TranslationKey, string> = {
   serverMustBeRunning: "Server moet actief zijn om commando's uit te voeren",
   rconNotConfigured: "RCON is niet correct geconfigureerd",
   commands: "Commando's",
+  enterACommandToExecute: "Voer een commando in om uit te voeren",
+  rconPortNotConfigured: "RCON poort niet geconfigureerd",
+  commandExecutedSuccessfully: "Commando succesvol uitgevoerd",
+  errorExecutingCommand: "Fout bij uitvoeren van commando",
 
   // Command Labels
   cmdListPlayers: "Spelers weergeven",
