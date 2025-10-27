@@ -8,7 +8,8 @@ FROM base AS backend-builder
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 COPY backend/ ./
 RUN npm run build
@@ -17,7 +18,8 @@ FROM base AS frontend-builder
 WORKDIR /app/frontend
 
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 COPY frontend/ ./
 
@@ -33,7 +35,8 @@ COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/package*.json ./backend/
 
 WORKDIR /app/backend
-RUN npm ci --only=production
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs && \
