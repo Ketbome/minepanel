@@ -53,7 +53,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       # Backend
-      - SERVERS_DIR=${PWD}/servers
+      - SERVERS_DIR=/app/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET= # Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
@@ -69,7 +69,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      - ${PWD}/servers:${PWD}/servers
+      - ./servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
@@ -81,7 +81,7 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${PWD}/servers:/data
+      - ../servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
