@@ -82,7 +82,6 @@ export default defineConfig({
           { text: "Roadmap", link: "/roadmap" },
           { text: "Architecture", link: "/architecture" },
           { text: "Development", link: "/development" },
-          { text: "API Reference", link: "/api" },
         ],
       },
       {
