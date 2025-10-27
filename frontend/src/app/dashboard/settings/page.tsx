@@ -8,19 +8,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { Save, User, Key, Bell, Globe, AlertTriangle, Loader2 } from "lucide-react";
+import { Save, User, Key, Bell, Globe, AlertTriangle, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getSettings, updateSettings, testDiscordWebhook, UserSettings } from "@/services/settings/settings.service";
+import { changePassword } from "@/services/users/users.service";
 import { toast } from "sonner";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { LanguageSelector } from "@/components/ui/language-selector";
 
 export default function SettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [username, setUsername] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const form = useForm<UserSettings>({
     defaultValues: {
@@ -84,6 +95,48 @@ export default function SettingsPage() {
     }
   };
 
+  const handleChangePassword = async () => {
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error(t("allPasswordFieldsRequired"));
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error(t("passwordsMustMatch"));
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      toast.success(t("passwordChangedSuccessfully"));
+
+      // Clear form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: unknown) {
+      console.error("Error changing password:", error);
+
+      // Handle specific error messages
+      const err = error as { response?: { status?: number } };
+      if (err.response?.status === 401) {
+        toast.error(t("incorrectCurrentPassword"));
+      } else {
+        toast.error(t("passwordChangeFailed"));
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -118,6 +171,73 @@ export default function SettingsPage() {
                   <Input id="username" value={username} disabled className="bg-gray-800/60 border-gray-700 text-gray-400" />
                   <p className="text-xs text-gray-500">{t("yourUsername")}</p>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
+            <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white font-minecraft">{t("securitySettings")}</CardTitle>
+                    <CardDescription className="text-gray-400">{t("securitySettingsDesc")}</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword" className="text-gray-200">
+                    {t("currentPassword")}
+                  </Label>
+                  <div className="relative">
+                    <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={passwordData.currentPassword} onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })} className="bg-gray-800 border-gray-700 text-white pr-10" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-gray-200">
+                    {t("newPassword")}
+                  </Label>
+                  <div className="relative">
+                    <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={passwordData.newPassword} onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} className="bg-gray-800 border-gray-700 text-white pr-10" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-gray-200">
+                    {t("confirmPassword")}
+                  </Label>
+                  <div className="relative">
+                    <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={passwordData.confirmPassword} onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} className="bg-gray-800 border-gray-700 text-white pr-10" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="button" onClick={handleChangePassword} disabled={isChangingPassword} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-minecraft mt-4">
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t("updatingPassword")}
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      {t("updatePassword")}
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -201,7 +321,7 @@ export default function SettingsPage() {
                   <Label htmlFor="language" className="text-gray-200">
                     {t("language")}
                   </Label>
-                  <LanguageSwitcher />
+                  <LanguageSelector />
                   <p className="text-xs text-gray-500">{t("languageDesc")}</p>
                 </div>
               </CardContent>

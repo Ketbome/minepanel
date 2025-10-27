@@ -1,4 +1,4 @@
-import {TranslationKey} from "@/lib/translations/en";
+import { TranslationKey } from "@/lib/translations/en";
 
 export const nl: Record<TranslationKey, string> = {
   // ===========================
@@ -206,6 +206,14 @@ export const nl: Record<TranslationKey, string> = {
   test: "Test",
   webhookTestSuccess: "Webhook test succesvol! Controleer je Discord kanaal",
   webhookTestFailed: "Webhook test mislukt",
+  securitySettings: "Beveiliging",
+  securitySettingsDesc: "Beheer je wachtwoord en beveiligingsvoorkeuren",
+  passwordChangedSuccessfully: "Wachtwoord succesvol gewijzigd",
+  passwordChangeFailed: "Wachtwoord wijzigen mislukt",
+  passwordsMustMatch: "Wachtwoorden moeten overeenkomen",
+  incorrectCurrentPassword: "Huidig wachtwoord is onjuist",
+  allPasswordFieldsRequired: "Alle wachtwoordvelden zijn verplicht",
+  updatingPassword: "Wachtwoord bijwerken...",
 
   // Server Creation
   serverCreationDesc: "Maak een nieuwe Minecraft server aan",
@@ -293,7 +301,6 @@ export const nl: Record<TranslationKey, string> = {
   documentation: "Documentatie",
   github: "GitHub",
   withLove: "Gemaakt met",
-
 
   // ===========================
   // ALGEMENE INSTELLINGEN TAB
@@ -648,7 +655,7 @@ export const nl: Record<TranslationKey, string> = {
   enterMinecraftCommand: "Voer een Minecraft commando in... (zonder /)",
   serverResponse: "Server reactie",
   pressTabToAutocomplete: "Druk op Tab voor automatisch aanvullen, of Enter om te verzenden",
-  commandsInfo: 'Commando\'s worden verzonden zonder het initiële "/" symbool. Gebruik Tab om voorgestelde commando\'s automatisch aan te vullen.',
+  commandsInfo: "Commando's worden verzonden zonder het initiële \"/\" symbool. Gebruik Tab om voorgestelde commando's automatisch aan te vullen.",
   clearConsole: "Console wissen",
   serverMustBeRunning: "Server moet actief zijn om commando's uit te voeren",
   rconNotConfigured: "RCON is niet correct geconfigureerd",
@@ -771,7 +778,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",
-  manualCurseForgeDeprecated: "Deze handmatige methode voor CurseForge is verouderd. We raden aan \"CurseForge Modpack\" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.",
+  manualCurseForgeDeprecated: 'Deze handmatige methode voor CurseForge is verouderd. We raden aan "CurseForge Modpack" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.',
   modpackFile: "Modpack bestand (CF_SERVER_MOD)",
   modpackFileHelp: "Volledig pad naar het modpack .zip bestand in de container.",
   modpackFileExample: "Voorbeeld: /modpacks/SkyFactory_4_Server_4.1.0.zip",
@@ -782,7 +789,7 @@ export const nl: Record<TranslationKey, string> = {
   useModpackStartScript: "Gebruik modpack start script",
   useModpackStartScriptDesc: "Indien uitgeschakeld, wordt het meegeleverde start script van het modpack vermeden en wordt standaard server logica gebruikt",
   ftbLegacyJavaFixer: "FTB Legacy Java fixer",
-  ftbLegacyJavaFixerDesc: "Schakel fix in voor modpacks die falen met \"unable to launch forgemodloader\"",
+  ftbLegacyJavaFixerDesc: 'Schakel fix in voor modpacks die falen met "unable to launch forgemodloader"',
   cfApiKeyOptional: "Optionele API key voor compatibiliteit met sommige modpacks",
 
   // CurseForge Auto Configuration
@@ -793,7 +800,7 @@ export const nl: Record<TranslationKey, string> = {
   methodUrl: "URL",
   methodUrlDesc: "Direct webadres naar het modpack op CurseForge",
   methodSlug: "Slug",
-  methodSlugDesc: "Unieke modpack identifier (bijv: \"all-the-mods-7\")",
+  methodSlugDesc: 'Unieke modpack identifier (bijv: "all-the-mods-7")',
   methodFile: "Bestand",
   methodFileDesc: "Installeer vanaf een .zip bestand dat al naar de server is geüpload",
   installFromUrl: "Installeer vanaf directe URL",

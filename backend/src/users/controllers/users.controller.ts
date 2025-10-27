@@ -1,8 +1,8 @@
-import { Controller, Get, UseGuards, Request, ValidationPipe, Body, Post, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, ValidationPipe, Body, Post, Param, Patch, Delete, Put } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UsersService } from '../services/users.service';
-import { CreateUsersDto, UpdateUsersDto } from '../dtos/users.dto';
+import { ChangePasswordDto, CreateUsersDto, UpdateUsersDto } from '../dtos/users.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -25,6 +25,11 @@ export class UsersController {
     return this.usersService.createUser(dto);
   }
 
+  @Put('/username/:username')
+  updateUserByUsername(@Param('username') username: string, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
+    return this.usersService.updateUserByUsername(username, dto);
+  }
+
   @Patch(':id')
   updateUser(@Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
     return this.usersService.updateUser(id, dto);
@@ -37,5 +42,11 @@ export class UsersController {
       success: true,
       message: 'User deleted successfully',
     };
+  }
+
+  @Post('change-password')
+  changePassword(@Request() req, @Body(new ValidationPipe()) dto: ChangePasswordDto) {
+    const user = req.user as PayloadToken;
+    return this.usersService.changePassword(user.userId, dto);
   }
 }

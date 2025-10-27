@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from '../entities/users.entity';
-import { CreateUsersDto, UpdateUsersDto } from '../dtos/users.dto';
+import { ChangePasswordDto, CreateUsersDto, UpdateUsersDto } from '../dtos/users.dto';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { Settings } from '../entities/settings.entity';
@@ -68,11 +68,22 @@ export class UsersService {
     }
   }
 
+  async updateUserByUsername(username: string, dto: UpdateUsersDto): Promise<Users> {
+    const user = await this.usersRepo.findOne({ where: { username } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    delete dto.password;
+    Object.assign(user, dto);
+    return this.usersRepo.save(user);
+  }
+
   async updateUser(id: number, dto: UpdateUsersDto): Promise<Users> {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    delete dto.password;
     Object.assign(user, dto);
     return this.usersRepo.save(user);
   }
@@ -83,5 +94,22 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     await this.usersRepo.delete(id);
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto): Promise<{ message: string }> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    user.password = await bcrypt.hash(dto.newPassword, 12);
+    await this.usersRepo.save(user);
+
+    return { message: 'Password changed successfully' };
   }
 }

@@ -204,6 +204,14 @@ export const es: Record<TranslationKey, string> = {
   test: "Probar",
   webhookTestSuccess: "¡Prueba exitosa! Revisa tu canal de Discord",
   webhookTestFailed: "Error al probar el webhook",
+  securitySettings: "Seguridad",
+  securitySettingsDesc: "Administra tu contraseña y preferencias de seguridad",
+  passwordChangedSuccessfully: "Contraseña cambiada exitosamente",
+  passwordChangeFailed: "Error al cambiar la contraseña",
+  passwordsMustMatch: "Las contraseñas deben coincidir",
+  incorrectCurrentPassword: "La contraseña actual es incorrecta",
+  allPasswordFieldsRequired: "Todos los campos de contraseña son requeridos",
+  updatingPassword: "Actualizando contraseña...",
 
   // Creación de Servidor
   serverCreationDesc: "Crea un nuevo servidor de Minecraft",

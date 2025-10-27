@@ -202,6 +202,14 @@ export const en = {
   test: "Test",
   webhookTestSuccess: "Webhook test successful! Check your Discord channel",
   webhookTestFailed: "Failed to test webhook",
+  securitySettings: "Security",
+  securitySettingsDesc: "Manage your password and security preferences",
+  passwordChangedSuccessfully: "Password changed successfully",
+  passwordChangeFailed: "Failed to change password",
+  passwordsMustMatch: "Passwords must match",
+  incorrectCurrentPassword: "Current password is incorrect",
+  allPasswordFieldsRequired: "All password fields are required",
+  updatingPassword: "Updating password...",
 
   // Server Creation
   serverCreationDesc: "Create a new Minecraft server",
