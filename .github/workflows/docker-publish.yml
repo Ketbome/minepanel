@@ -32,11 +32,15 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - '.github/workflows/**'
             frontend:
               - 'frontend/**'
+              - '.github/workflows/**'
             root:
               - 'Dockerfile'
               - 'config.json'
+              - 'frontend/**'
+              - 'backend/**'
               - '.github/workflows/**'
 
   build-and-push:
