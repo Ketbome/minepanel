@@ -1,0 +1,284 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
+import { useLanguage } from "@/lib/hooks/useLanguage";
+import { ModpackCard } from "@/components/organisms/ModpackCard";
+import { ModpackSearch } from "@/components/organisms/ModpackSearch";
+import { ModpackDetailsModal } from "@/components/organisms/ModpackDetailsModal";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  CurseForgeModpack,
+  searchModpacks,
+  getFeaturedModpacks,
+  getPopularModpacks,
+} from "@/services/curseforge/curseforge.service";
+import { toast } from "sonner";
+
+export default function TemplatesPage() {
+  const { t } = useLanguage();
+  const [modpacks, setModpacks] = useState<CurseForgeModpack[]>([]);
+  const [featuredModpacks, setFeaturedModpacks] = useState<CurseForgeModpack[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedModpack, setSelectedModpack] = useState<CurseForgeModpack | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("popular");
+  const [pagination, setPagination] = useState({
+    index: 0,
+    pageSize: 20,
+    totalCount: 0,
+  });
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [popularResponse, featuredResponse] = await Promise.all([
+        getPopularModpacks(20),
+        getFeaturedModpacks(12),
+      ]);
+
+      setModpacks(popularResponse.data);
+      setFeaturedModpacks(featuredResponse.data);
+      setPagination({
+        index: popularResponse.pagination.index,
+        pageSize: popularResponse.pagination.pageSize,
+        totalCount: popularResponse.pagination.totalCount,
+      });
+    } catch (err: unknown) {
+      console.error("Error loading modpacks:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+
+      if (errorMessage.includes("API key") || errorMessage.includes("403")) {
+        setError(t("curseforgeApiKeyNotConfigured"));
+      } else {
+        setError(t("errorLoadingModpacks"));
+      }
+      toast.error(t("errorLoadingModpacks"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = async (query: string, sortField: number, sortOrder: "asc" | "desc") => {
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      const response = await searchModpacks(query, 20, 0, sortField, sortOrder);
+      setModpacks(response.data);
+      setPagination({
+        index: response.pagination.index,
+        pageSize: response.pagination.pageSize,
+        totalCount: response.pagination.totalCount,
+      });
+      setActiveTab("search");
+    } catch (err) {
+      console.error("Error searching modpacks:", err);
+      toast.error(t("errorSearchingModpacks"));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const loadMoreModpacks = async () => {
+    setIsSearching(true);
+    try {
+      const nextIndex = pagination.index + pagination.pageSize;
+      const response = await searchModpacks("", 20, nextIndex, 2, "desc");
+      setModpacks([...modpacks, ...response.data]);
+      setPagination({
+        index: response.pagination.index,
+        pageSize: response.pagination.pageSize,
+        totalCount: response.pagination.totalCount,
+      });
+    } catch (err) {
+      console.error("Error loading more modpacks:", err);
+      toast.error(t("errorLoadingModpacks"));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectModpack = (modpack: CurseForgeModpack) => {
+    setSelectedModpack(modpack);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Loader2 className="w-16 h-16 text-emerald-400 animate-spin" />
+        <p className="text-gray-400 font-minecraft">{t("loadingModpacks")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <div className="flex items-center gap-3 mb-2">
+          <Image src="/images/bookshelf.webp" alt="Templates" width={40} height={40} />
+          <h1 className="text-3xl font-bold text-white font-minecraft">{t("modpackTemplates")}</h1>
+        </div>
+        <p className="text-gray-400">{t("modpackTemplatesDescription")}</p>
+      </motion.div>
+
+      {/* Error Alert */}
+      {error && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <Alert className="border-2 border-red-600/40 bg-red-900/20">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertTitle className="text-red-400">{t("error")}</AlertTitle>
+            <AlertDescription className="text-gray-300">
+              {error}
+              {error === t("curseforgeApiKeyNotConfigured") && (
+                <a href="/dashboard/settings" className="block mt-2 text-emerald-400 hover:underline">
+                  {t("goToSettings")}
+                </a>
+              )}
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {!error && (
+        <>
+          {/* Search */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <ModpackSearch onSearch={handleSearch} isLoading={isSearching} />
+          </motion.div>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-gray-800 border border-gray-700">
+              <TabsTrigger value="featured" className="data-[state=active]:bg-emerald-600">
+                <Star className="w-4 h-4 mr-2" />
+                {t("featured")}
+              </TabsTrigger>
+              <TabsTrigger value="popular" className="data-[state=active]:bg-emerald-600">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                {t("popular")}
+              </TabsTrigger>
+              <TabsTrigger value="search" className="data-[state=active]:bg-emerald-600">
+                <Package className="w-4 h-4 mr-2" />
+                {t("searchResults")}
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Featured Modpacks */}
+            <TabsContent value="featured" className="mt-6">
+              {featuredModpacks.length === 0 ? (
+                <div className="text-center py-12">
+                  <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
+                  <p className="text-gray-400">{t("noModpacksFound")}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {featuredModpacks.map((modpack) => (
+                    <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Popular Modpacks */}
+            <TabsContent value="popular" className="mt-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {modpacks.map((modpack) => (
+                    <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
+                  ))}
+                </div>
+
+                {modpacks.length < pagination.totalCount && (
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={loadMoreModpacks}
+                      disabled={isSearching}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8"
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t("loading")}
+                        </>
+                      ) : (
+                        t("loadMore")
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Search Results */}
+            <TabsContent value="search" className="mt-6">
+              {modpacks.length === 0 ? (
+                <div className="text-center py-12">
+                  <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
+                  <p className="text-gray-400">{t("noModpacksFound")}</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {modpacks.map((modpack) => (
+                      <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
+                    ))}
+                  </div>
+
+                  {modpacks.length < pagination.totalCount && (
+                    <div className="flex justify-center">
+                      <Button
+                        onClick={loadMoreModpacks}
+                        disabled={isSearching}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8"
+                      >
+                        {isSearching ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t("loading")}
+                          </>
+                        ) : (
+                          t("loadMore")
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+
+      {/* Modpack Details Modal */}
+      <ModpackDetailsModal modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
+
+      {/* Footer decoration */}
+      <div className="flex justify-center gap-8 pt-8">
+        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
+          <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+        </motion.div>
+        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5, ease: "easeInOut" }}>
+          <Image src="/images/bookshelf.webp" alt="Bookshelf" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+        </motion.div>
+        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 1, ease: "easeInOut" }}>
+          <Image src="/images/emerald.webp" alt="Emerald" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
