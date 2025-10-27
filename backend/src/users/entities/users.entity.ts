@@ -6,7 +6,7 @@ export class Users {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'text', name: 'username' })
+  @Column({ type: 'text', name: 'username', unique: true })
   username: string;
 
   @Exclude()
