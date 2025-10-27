@@ -1,4 +1,4 @@
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,57 +24,50 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
 
   const isServerRunning = serverStatus === "running";
 
-  // Expanded list of common Minecraft commands with categories
-  const allCommands = [
-    // Players
-    { label: t("cmdListPlayers"), command: "list", category: "players" },
-    { label: t("cmdTeleportPlayer"), command: "tp @p ~ ~ ~", category: "players" },
-    { label: t("cmdGiveXP"), command: "xp add @p 100 levels", category: "players" },
-    { label: t("cmdGiveEffect"), command: "effect give @p minecraft:speed 60 2", category: "players" },
-    { label: t("cmdCreativeMode"), command: "gamemode creative @p", category: "players" },
-    { label: t("cmdSurvivalMode"), command: "gamemode survival @p", category: "players" },
-    { label: t("cmdAdventureMode"), command: "gamemode adventure @p", category: "players" },
-    { label: t("cmdSpectatorMode"), command: "gamemode spectator @p", category: "players" },
+  const allCommands = useMemo(
+    () => [
+      { label: t("cmdListPlayers"), command: "list", category: "players" },
+      { label: t("cmdTeleportPlayer"), command: "tp @p ~ ~ ~", category: "players" },
+      { label: t("cmdGiveXP"), command: "xp add @p 100 levels", category: "players" },
+      { label: t("cmdGiveEffect"), command: "effect give @p minecraft:speed 60 2", category: "players" },
+      { label: t("cmdCreativeMode"), command: "gamemode creative @p", category: "players" },
+      { label: t("cmdSurvivalMode"), command: "gamemode survival @p", category: "players" },
+      { label: t("cmdAdventureMode"), command: "gamemode adventure @p", category: "players" },
+      { label: t("cmdSpectatorMode"), command: "gamemode spectator @p", category: "players" },
+      { label: t("cmdDayTime"), command: "time set day", category: "world" },
+      { label: t("cmdNightTime"), command: "time set night", category: "world" },
+      { label: t("cmdClearWeather"), command: "weather clear", category: "world" },
+      { label: t("cmdRainWeather"), command: "weather rain", category: "world" },
+      { label: t("cmdThunderWeather"), command: "weather thunder", category: "world" },
+      { label: t("cmdPeacefulDifficulty"), command: "difficulty peaceful", category: "world" },
+      { label: t("cmdEasyDifficulty"), command: "difficulty easy", category: "world" },
+      { label: t("cmdNormalDifficulty"), command: "difficulty normal", category: "world" },
+      { label: t("cmdHardDifficulty"), command: "difficulty hard", category: "world" },
+      { label: t("cmdGiveDiamonds"), command: "give @p minecraft:diamond 64", category: "items" },
+      { label: t("cmdGiveDiamondSword"), command: "give @p minecraft:diamond_sword", category: "items" },
+      { label: t("cmdGiveGoldenApples"), command: "give @p minecraft:golden_apple 16", category: "items" },
+      { label: t("cmdGiveCommandBlock"), command: "give @p minecraft:command_block", category: "items" },
+      { label: t("cmdSeedWorld"), command: "seed", category: "admin" },
+      { label: t("cmdSaveWorld"), command: "save-all", category: "admin" },
+      { label: t("cmdKickPlayer"), command: "kick <jugador>", category: "admin" },
+      { label: t("cmdBanPlayer"), command: "ban <jugador>", category: "admin" },
+      { label: t("cmdViewTPS"), command: "forge tps", category: "admin" },
+      { label: t("cmdSpigotTimings"), command: "timings on", category: "admin" },
+    ],
+    [t]
+  );
 
-    // World
-    { label: t("cmdDayTime"), command: "time set day", category: "world" },
-    { label: t("cmdNightTime"), command: "time set night", category: "world" },
-    { label: t("cmdClearWeather"), command: "weather clear", category: "world" },
-    { label: t("cmdRainWeather"), command: "weather rain", category: "world" },
-    { label: t("cmdThunderWeather"), command: "weather thunder", category: "world" },
-    { label: t("cmdPeacefulDifficulty"), command: "difficulty peaceful", category: "world" },
-    { label: t("cmdEasyDifficulty"), command: "difficulty easy", category: "world" },
-    { label: t("cmdNormalDifficulty"), command: "difficulty normal", category: "world" },
-    { label: t("cmdHardDifficulty"), command: "difficulty hard", category: "world" },
-
-    // Items
-    { label: t("cmdGiveDiamonds"), command: "give @p minecraft:diamond 64", category: "items" },
-    { label: t("cmdGiveDiamondSword"), command: "give @p minecraft:diamond_sword", category: "items" },
-    { label: t("cmdGiveGoldenApples"), command: "give @p minecraft:golden_apple 16", category: "items" },
-    { label: t("cmdGiveCommandBlock"), command: "give @p minecraft:command_block", category: "items" },
-
-    // Administration
-    { label: t("cmdSeedWorld"), command: "seed", category: "admin" },
-    { label: t("cmdSaveWorld"), command: "save-all", category: "admin" },
-    { label: t("cmdKickPlayer"), command: "kick <jugador>", category: "admin" },
-    { label: t("cmdBanPlayer"), command: "ban <jugador>", category: "admin" },
-    { label: t("cmdViewTPS"), command: "forge tps", category: "admin" },
-    { label: t("cmdSpigotTimings"), command: "timings on", category: "admin" },
-  ];
-
-  // Common commands to show as quick buttons
   const commonCommands = allCommands.slice(0, 7);
 
   useEffect(() => {
     if (command) {
       const filtered = allCommands.filter((cmd) => cmd.command.toLowerCase().includes(command.toLowerCase()) || cmd.label.toLowerCase().includes(command.toLowerCase()));
-      setFilteredCommands(filtered.slice(0, 5)); // Limitamos a 5 sugerencias
+      setFilteredCommands(filtered.slice(0, 5));
       setShowSuggestions(filtered.length > 0);
     } else {
       setShowSuggestions(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [command]);
+  }, [command, allCommands]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -89,7 +82,6 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
       setShowSuggestions(false);
     } else if (e.key === "ArrowDown" && showSuggestions) {
       e.preventDefault();
-      // Navegar por las sugerencias
     }
   };
 

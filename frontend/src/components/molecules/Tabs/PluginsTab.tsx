@@ -59,7 +59,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Paper specific options */}
         {config.serverType === "PAPER" && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -95,7 +94,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         )}
 
-        {/* Bukkit/Spigot specific options */}
         {(config.serverType === "BUKKIT" || config.serverType === "SPIGOT") && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -128,7 +126,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         )}
 
-        {/* Pufferfish specific options */}
         {config.serverType === "PUFFERFISH" && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -153,7 +150,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         )}
 
-        {/* Purpur specific options */}
         {config.serverType === "PURPUR" && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -186,7 +182,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         )}
 
-        {/* Leaf specific options */}
         {config.serverType === "LEAF" && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -204,7 +199,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         )}
 
-        {/* Folia specific options */}
         {config.serverType === "FOLIA" && (
           <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -335,7 +329,6 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
           </div>
         </div>
 
-        {/* General options for all plugin servers */}
         <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
           <div className="flex items-center space-x-2">
             <input type="checkbox" id="skipDownloadDefaults" checked={config.skipDownloadDefaults || false} onChange={(e) => updateConfig("skipDownloadDefaults", e.target.checked)} className="rounded border-gray-600 bg-gray-800" />

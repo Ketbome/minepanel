@@ -42,7 +42,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' config.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Version detected: $VERSION"
+          echo "Version detected: $VERSION"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -70,7 +70,6 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ steps.version.outputs.version }},enable={{is_default_branch}}
-            type=raw,value=v${{ steps.version.outputs.version }},enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -86,7 +85,7 @@ jobs:
 
       - name: Image digest
         run: |
-          echo "✅ Image ${{ matrix.image }} built successfully"
-          echo "📦 Version: ${{ steps.version.outputs.version }}"
-          echo "🏗️  Platforms: linux/amd64, linux/arm64"
-          echo "🏷️  Tags: ${{ steps.meta.outputs.tags }}"
+          echo "Image ${{ matrix.image }} built successfully"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo " Platforms: linux/amd64, linux/arm64"
+          echo "Tags: ${{ steps.meta.outputs.tags }}"

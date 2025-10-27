@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "Minepanel"
-  text: "Modern Minecraft Server Management"
-  tagline: Manage multiple Minecraft servers with a beautiful web interface using Docker
+  text: "Minecraft Server Management"
+  tagline: Manage multiple Minecraft servers with Docker
   image:
     src: /cubo.webp
     alt: Minepanel Dashboard
@@ -21,54 +21,47 @@ hero:
 
 features:
   - icon: 🚀
-    title: Quick Deployment
-    details: One-command deployment from Docker Hub. Get your server panel running in seconds.
+    title: Quick Setup
+    details: One command to get started. Takes about 2 minutes.
 
   - icon: 🎨
-    title: Modern Interface
-    details: Beautiful and intuitive web interface built with Next.js and React.
+    title: Web Interface
+    details: Built with Next.js. Works on any device with a browser.
 
   - icon: 🐳
-    title: Docker Native
-    details: Each server runs in its own isolated container for better performance and security.
+    title: Docker Based
+    details: Each server runs in its own container.
 
   - icon: 📊
-    title: Real-time Monitoring
-    details: Monitor CPU, RAM usage and view logs in real-time with error detection.
+    title: Monitoring
+    details: See CPU, RAM usage and logs in real-time. Detects errors automatically.
 
   - icon: 🔧
-    title: Full Control
-    details: Manage all server types - Vanilla, Paper, Forge, Fabric, Spigot, Purpur, and more.
+    title: All Server Types
+    details: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
 
   - icon: 📁
     title: File Browser
-    details: Integrated file browser for easy config editing and server management.
+    details: Edit configs without SSH.
 
   - icon: 💾
-    title: Automatic Backups
-    details: Built-in backup system to keep your worlds safe.
+    title: Backups
+    details: Automatic backup system included.
 
   - icon: 🌍
     title: Multi-language
-    details: Available in English and Spanish, with more languages coming soon.
+    details: English and Spanish. More coming.
 
   - icon: 🔄
-    title: Multi-architecture
-    details: Works on Intel/AMD, ARM, Raspberry Pi, and Apple Silicon.
+    title: Multi-arch
+    details: x86, ARM, Raspberry Pi, Apple Silicon.
 ---
 
-## Why Minepanel?
+## Why this exists
 
-After trying several server management solutions, I wanted something that was:
-
-- ✨ **Easy to use** - No complex configurations
-- 🎨 **Modern interface** - Built with Next.js
-- 🚀 **Quick to deploy** - One command installation
-- 💪 **Powerful** - Manage multiple servers effortlessly
+Got tired of managing servers through SSH. Tried other panels but they were either too complex or didn't work well. Made this instead.
 
 ## Quick Start
-
-Get up and running in less than 2 minutes:
 
 ```bash
 # Create docker-compose.yml file, then:
@@ -76,10 +69,10 @@ mkdir -p servers filebrowser-data
 docker compose up -d
 ```
 
-Access the panel at http://localhost:3000
+Go to http://localhost:3000
 
-::: tip Default Credentials
-Username: `admin` | Password: `admin` (change after first login!)
+::: tip Default login
+`admin` / `admin` (change this after first login)
 :::
 
 ## Built On
@@ -90,25 +83,25 @@ Username: `admin` | Password: `admin` (change after first login!)
 - **Backups**: [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup)
 - **File Browser**: [Filebrowser](https://filebrowser.org/)
 
-## 🗺️ Roadmap
+## What's next
 
-### 🎯 High Priority Features
+### Coming soon
 
-- **Enhanced Log Viewer** - Improved log interface with filtering, search, and better visualization
-- **Server.properties Editor** - Edit server.properties directly from the web interface with validation
-- **Reverse Proxy Integration** - Built-in proxy configuration for accessing servers without exposing URLs
-- **CurseForge Modpack Browser** - Browse, search and install modpacks directly from CurseForge with one-click installation
+- Better log viewer with search and filtering
+- Edit server.properties from the UI
+- Reverse proxy helper
+- CurseForge modpack browser
 
-### 🚀 Planned Features
+### Planned
 
-- **User Roles & Permissions** - Multi-user support with role-based access control
-- **Server Templates** - Pre-configured templates for quick server deployment
-- **Advanced Metrics Dashboard** - Detailed performance analytics and graphs
-- **Discord Integration** - Webhooks for server events and notifications
-- **Plugin Manager** - Browse and install plugins for supported server types
-- **World Manager** - Upload, download, and switch between different worlds
+- User roles and permissions
+- Server templates
+- Better graphs and metrics
+- Discord webhooks
+- Plugin manager
+- World uploader/switcher
 
-Want to contribute? Check out our [Contributing Guide](/development#contributing) and help us build these features!
+Want to help? Check the [Contributing Guide](/development#contributing)
 
 ## Community
 
@@ -122,4 +115,4 @@ Created by [@Ketbome](https://github.com/Ketbome)
 
 ---
 
-_This project was born from the frustration of managing Minecraft servers via terminal. If it helps you, I'm happy!_ ❤️
+Made this because I was tired of managing servers through SSH. Hope it helps you too.

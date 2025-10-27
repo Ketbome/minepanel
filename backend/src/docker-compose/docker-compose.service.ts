@@ -1,16 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
-import * as path from 'path';
-import { ConfigService } from '@nestjs/config';
+import * as path from 'node:path';
 import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+
+interface DockerComposeConfig {
+  services?: {
+    mc?: any;
+    backup?: any;
+  };
+}
 
 @Injectable()
 export class DockerComposeService {
-  private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
+  private readonly logger = new Logger(DockerComposeService.name);
+  private readonly BASE_DIR = process.env.SERVERS_DIR;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor() {
     fs.ensureDirSync(this.BASE_DIR);
+  }
+
+  private validateServerId(serverId: string): boolean {
+    return /^[a-zA-Z0-9_-]+$/.test(serverId);
   }
 
   private getDockerComposePath(serverId: string): string {
@@ -23,47 +34,46 @@ export class DockerComposeService {
 
   private async findAvailablePort(startPort: number, serverId: string): Promise<number> {
     try {
-      // Get all server configurations
       const serverIds = await this.getAllServerIds();
       const usedPorts = new Set<number>();
 
-      // Collect all ports used by other servers
       for (const id of serverIds) {
-        if (id === serverId) continue; // Skip current server
+        if (id === serverId) continue;
 
         const serverConfig = await this.loadServerConfigFromDockerCompose(id);
         if (serverConfig?.port) {
-          usedPorts.add(parseInt(serverConfig.port));
+          usedPorts.add(Number.parseInt(serverConfig.port));
         }
       }
 
-      // Find the next available port starting from startPort
       let port = startPort;
-      while (usedPorts.has(port)) {
-        port++;
-      }
+      while (usedPorts.has(port)) port++;
 
       return port;
     } catch (error) {
-      console.error('Error finding available port:', error);
+      this.logger.error('Error finding available port', error);
       return startPort;
     }
   }
 
   private async loadServerConfigFromDockerCompose(serverId: string): Promise<ServerConfig> {
+    if (!this.validateServerId(serverId)) {
+      this.logger.error(`Invalid server ID: ${serverId}`);
+      return this.createDefaultConfig(serverId);
+    }
+
     const dockerComposePath = this.getDockerComposePath(serverId);
 
     if (!fs.existsSync(dockerComposePath)) {
-      console.error(`Docker compose file does not exist for server ${serverId}`);
+      this.logger.error(`Docker compose file does not exist for server ${serverId}`);
       return this.createDefaultConfig(serverId);
     }
 
     try {
       const composeFileContent = await fs.readFile(dockerComposePath, 'utf8');
-      const composeConfig = yaml.load(composeFileContent) as any;
+      const composeConfig = yaml.load(composeFileContent) as DockerComposeConfig;
 
       if (!composeConfig.services?.mc) {
-        // Create default config if docker-compose.yml doesn't have mc service
         return this.createDefaultConfig(serverId);
       }
 
@@ -76,13 +86,11 @@ export class DockerComposeService {
       const port = mcService.ports?.[0]?.split(':')[0] ?? '25565';
       const extraPorts = mcService.ports?.slice(1) || [];
 
-      // Extract server config from docker-compose
       const serverConfig: ServerConfig = {
         id: env.ID_MANAGER ?? serverId,
         active: fs.existsSync(this.getMcDataPath(serverId)),
         serverType: env.TYPE ?? 'VANILLA',
 
-        // General configuration
         serverName: env.SERVER_NAME ?? 'Minecraft Server',
         motd: env.MOTD ?? 'Un servidor de Minecraft increíble',
         port: port,
@@ -105,28 +113,23 @@ export class DockerComposeService {
         allowNether: env.ALLOW_NETHER !== 'false',
         entityBroadcastRange: env.ENTITY_BROADCAST_RANGE_PERCENTAGE ?? '100',
 
-        // Auto-Stop
         enableAutoStop: env.ENABLE_AUTOSTOP === 'true',
         autoStopTimeoutEst: env.AUTOSTOP_TIMEOUT_EST ?? '3600',
         autoStopTimeoutInit: env.AUTOSTOP_TIMEOUT_INIT ?? '1800',
 
-        // Auto-Pause
         enableAutoPause: env.ENABLE_AUTOPAUSE === 'true',
         autoPauseTimeoutEst: env.AUTOPAUSE_TIMEOUT_EST ?? '3600',
         autoPauseTimeoutInit: env.AUTOPAUSE_TIMEOUT_INIT ?? '600',
         autoPauseKnockInterface: env.AUTOPAUSE_KNOCK_INTERFACE ?? 'eth0',
 
-        // Connectivity
         preventProxyConnections: env.PREVENT_PROXY_CONNECTIONS === 'true',
         opPermissionLevel: env.OP_PERMISSION_LEVEL ?? '4',
 
-        // RCON
         enableRcon: env.ENABLE_RCON !== 'false',
         rconPort: env.RCON_PORT ?? '25575',
         rconPassword: env.RCON_PASSWORD ?? '',
         broadcastRconToOps: env.BROADCAST_RCON_TO_OPS === 'true',
 
-        // Backup configuration.
         enableBackup: !!backupService,
         backupInterval: backupEnv.BACKUP_INTERVAL ?? '24h',
         backupMethod: backupEnv.BACKUP_METHOD ?? 'tar',
@@ -143,7 +146,6 @@ export class DockerComposeService {
         backupExcludes: backupEnv.EXCLUDES ?? '*.jar,cache,logs,*.tmp',
         tarCompressMethod: backupEnv.TAR_COMPRESS_METHOD ?? 'gzip',
 
-        // Resources
         initMemory: env.INIT_MEMORY ?? '6G',
         maxMemory: env.MAX_MEMORY ?? '10G',
         cpuLimit: resources.limits?.cpus ?? '2',
@@ -154,7 +156,6 @@ export class DockerComposeService {
         uid: env.UID ?? '1000',
         gid: env.GID ?? '1000',
 
-        // JVM Options
         useAikarFlags: env.USE_AIKAR_FLAGS === 'true',
         enableJmx: env.ENABLE_JMX === 'true',
         jmxHost: env.JMX_HOST ?? '',
@@ -166,9 +167,8 @@ export class DockerComposeService {
         enableRollingLogs: env.ENABLE_ROLLING_LOGS === 'true',
         logTimestamp: env.LOG_TIMESTAMP === 'true',
 
-        // Docker
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
-        minecraftVersion: env.VERSION,
+        minecraftVersion: String(env.VERSION),
         dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : './mc-data:/data\n./modpacks:/modpacks:ro',
         restartPolicy: mcService.restart ?? 'unless-stopped',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
@@ -177,9 +177,24 @@ export class DockerComposeService {
         extraPorts: extraPorts,
       };
 
-      // Add CurseForge specific config
-      if (serverConfig.serverType === 'AUTO_CURSEFORGE') {
-        serverConfig.cfMethod = env.CF_SERVER_MOD ? 'file' : env.CF_SLUG ? 'slug' : 'url';
+      this.parseServerTypeSpecificConfig(serverConfig, env);
+      return serverConfig;
+    } catch (error) {
+      this.logger.error(`Error loading config for server ${serverId}`, error);
+      return this.createDefaultConfig(serverId);
+    }
+  }
+
+  private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
+    const typeHandlers = {
+      AUTO_CURSEFORGE: () => {
+        let cfMethod: 'url' | 'file' | 'slug' = 'url';
+        if (env.CF_SERVER_MOD) {
+          cfMethod = 'file';
+        } else if (env.CF_SLUG) {
+          cfMethod = 'slug';
+        }
+        serverConfig.cfMethod = cfMethod;
         serverConfig.cfUrl = env.CF_PAGE_URL ?? '';
         serverConfig.cfSlug = env.CF_SLUG ?? '';
         serverConfig.cfFile = env.CF_FILE_ID ?? '';
@@ -191,71 +206,64 @@ export class DockerComposeService {
         serverConfig.cfOverridesSkipExisting = env.CF_OVERRIDES_SKIP_EXISTING === 'true';
         serverConfig.cfSetLevelFrom = env.CF_SET_LEVEL_FROM ?? '';
         serverConfig.cfApiKey = env.CF_API_KEY ?? '';
-      }
-
-      // Add Manual CurseForge specific config (deprecated)
-      if (serverConfig.serverType === 'CURSEFORGE') {
+      },
+      CURSEFORGE: () => {
         serverConfig.cfServerMod = env.CF_SERVER_MOD ?? '';
         serverConfig.cfBaseDir = env.CF_BASE_DIR ?? '/data';
         serverConfig.useModpackStartScript = env.USE_MODPACK_START_SCRIPT !== 'false';
         serverConfig.ftbLegacyJavaFixer = env.FTB_LEGACYJAVAFIXER === 'true';
         serverConfig.cfApiKey = env.CF_API_KEY ?? '';
-      }
+      },
+    };
 
-      // Add Plugin specific config (for plugin-based servers)
-      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'PUFFERFISH' || serverConfig.serverType === 'PURPUR' || serverConfig.serverType === 'LEAF' || serverConfig.serverType === 'FOLIA') {
-        serverConfig.spigetResources = env.SPIGET_RESOURCES ?? '';
-      }
+    const pluginServers = ['SPIGOT', 'PAPER', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'];
+    if (pluginServers.includes(serverConfig.serverType)) {
+      this.parsePluginServerConfig(serverConfig, env);
+    } else {
+      const handler = typeHandlers[serverConfig.serverType];
+      if (handler) handler();
+    }
+  }
 
-      // Paper specific config
-      if (serverConfig.serverType === 'PAPER') {
+  private parsePluginServerConfig(serverConfig: ServerConfig, env: any): void {
+    serverConfig.spigetResources = env.SPIGET_RESOURCES ?? '';
+    serverConfig.skipDownloadDefaults = env.SKIP_DOWNLOAD_DEFAULTS === 'true';
+
+    const specificParsers = {
+      PAPER: () => {
         serverConfig.paperBuild = env.PAPER_BUILD ?? '';
         serverConfig.paperChannel = env.PAPER_CHANNEL ?? '';
         serverConfig.paperDownloadUrl = env.PAPER_DOWNLOAD_URL ?? '';
-      }
-
-      // Bukkit/Spigot specific config
-      if (serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'SPIGOT') {
+      },
+      BUKKIT: () => {
         serverConfig.bukkitDownloadUrl = env.BUKKIT_DOWNLOAD_URL ?? '';
+        serverConfig.buildFromSource = env.BUILD_FROM_SOURCE === 'true';
+      },
+      SPIGOT: () => {
         serverConfig.spigotDownloadUrl = env.SPIGOT_DOWNLOAD_URL ?? '';
         serverConfig.buildFromSource = env.BUILD_FROM_SOURCE === 'true';
-      }
-
-      // Pufferfish specific config
-      if (serverConfig.serverType === 'PUFFERFISH') {
+      },
+      PUFFERFISH: () => {
         serverConfig.pufferfishBuild = env.PUFFERFISH_BUILD ?? '';
         serverConfig.useFlareFlags = env.USE_FLARE_FLAGS === 'true';
-      }
-
-      // Purpur specific config
-      if (serverConfig.serverType === 'PURPUR') {
+      },
+      PURPUR: () => {
         serverConfig.purpurBuild = env.PURPUR_BUILD ?? '';
         serverConfig.purpurDownloadUrl = env.PURPUR_DOWNLOAD_URL ?? '';
         serverConfig.useFlareFlags = env.USE_FLARE_FLAGS === 'true';
-      }
-
-      // Leaf specific config
-      if (serverConfig.serverType === 'LEAF') {
+      },
+      LEAF: () => {
         serverConfig.leafBuild = env.LEAF_BUILD ?? '';
-      }
-
-      // Folia specific config
-      if (serverConfig.serverType === 'FOLIA') {
+      },
+      FOLIA: () => {
         serverConfig.foliaBuild = env.FOLIA_BUILD ?? '';
         serverConfig.foliaChannel = env.FOLIA_CHANNEL ?? '';
         serverConfig.foliaDownloadUrl = env.FOLIA_DOWNLOAD_URL ?? '';
-      }
+      },
+    };
 
-      // General Paper/Bukkit/Spigot config
-      if (serverConfig.serverType === 'SPIGOT' || serverConfig.serverType === 'PAPER' || serverConfig.serverType === 'BUKKIT' || serverConfig.serverType === 'PUFFERFISH' || serverConfig.serverType === 'PURPUR' || serverConfig.serverType === 'LEAF' || serverConfig.serverType === 'FOLIA') {
-        serverConfig.skipDownloadDefaults = env.SKIP_DOWNLOAD_DEFAULTS === 'true';
-      }
-
-      return serverConfig;
-    } catch (error) {
-      console.error(`Error loading config for server ${serverId}:`, error);
-      return this.createDefaultConfig(serverId);
-    }
+    const parser = specificParsers[serverConfig.serverType];
+    if (parser) parser();
   }
 
   private createDefaultConfig(id: string): ServerConfig {
@@ -264,14 +272,13 @@ export class DockerComposeService {
       active: false,
       serverType: 'VANILLA',
 
-      // General configuration
       serverName: id,
       motd: 'Un servidor de Minecraft increíble',
       port: '25565',
       difficulty: 'hard',
       maxPlayers: '10',
       ops: '',
-      onlineMode: false,
+      onlineMode: true,
       pvp: true,
       commandBlock: true,
       allowFlight: true,
@@ -286,29 +293,24 @@ export class DockerComposeService {
       allowNether: true,
       entityBroadcastRange: '100',
 
-      // Auto-Stop
       enableAutoStop: false,
       autoStopTimeoutEst: '3600',
       autoStopTimeoutInit: '1800',
 
-      // Auto-Pause
       enableAutoPause: false,
       autoPauseTimeoutEst: '3600',
       autoPauseTimeoutInit: '600',
       autoPauseKnockInterface: 'eth0',
 
-      // Connectivity
       playerIdleTimeout: '0',
       preventProxyConnections: false,
       opPermissionLevel: '4',
 
-      // RCON
       enableRcon: true,
       rconPort: '25575',
       rconPassword: '',
       broadcastRconToOps: false,
 
-      // Backup configuration
       enableBackup: false,
       backupInterval: '24h',
       backupMethod: 'tar',
@@ -325,7 +327,6 @@ export class DockerComposeService {
       backupExcludes: '*.jar,cache,logs,*.tmp',
       tarCompressMethod: 'gzip',
 
-      // Resources
       initMemory: '6G',
       maxMemory: '10G',
       cpuLimit: '2',
@@ -336,7 +337,6 @@ export class DockerComposeService {
       uid: '1000',
       gid: '1000',
 
-      // JVM Options
       useAikarFlags: false,
       enableJmx: false,
       jmxHost: '',
@@ -348,7 +348,6 @@ export class DockerComposeService {
       enableRollingLogs: false,
       logTimestamp: false,
 
-      // Docker
       dockerImage: 'latest',
       minecraftVersion: '1.19.2',
       dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro',
@@ -358,7 +357,6 @@ export class DockerComposeService {
       envVars: '',
       extraPorts: [],
 
-      // CurseForge specific
       cfMethod: 'url',
       cfUrl: '',
       cfSlug: '',
@@ -372,42 +370,33 @@ export class DockerComposeService {
       cfOverridesSkipExisting: false,
       cfSetLevelFrom: '',
 
-      // Manual CurseForge (deprecated) specific
       cfServerMod: '',
       cfBaseDir: '/data',
       useModpackStartScript: true,
       ftbLegacyJavaFixer: false,
 
-      // Plugin specific
       spigetResources: '',
 
-      // Paper specific
       paperBuild: '',
       paperChannel: '',
       paperDownloadUrl: '',
 
-      // Bukkit/Spigot specific
       bukkitDownloadUrl: '',
       spigotDownloadUrl: '',
       buildFromSource: false,
 
-      // Pufferfish specific
       pufferfishBuild: '',
       useFlareFlags: false,
 
-      // Purpur specific
       purpurBuild: '',
       purpurDownloadUrl: '',
 
-      // Leaf specific
       leafBuild: '',
 
-      // Folia specific
       foliaBuild: '',
       foliaChannel: '',
       foliaDownloadUrl: '',
 
-      // General config
       skipDownloadDefaults: false,
     };
   }
@@ -420,11 +409,18 @@ export class DockerComposeService {
       }
 
       const entries = await fs.readdir(this.BASE_DIR, { withFileTypes: true });
-      const serverIds = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+      const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 
-      return serverIds;
+      const serverIds = await Promise.all(
+        directories.map(async (dir) => {
+          const hasDockerCompose = await fs.pathExists(this.getDockerComposePath(dir));
+          return hasDockerCompose ? dir : null;
+        }),
+      );
+
+      return serverIds.filter((id): id is string => id !== null);
     } catch (error) {
-      console.error('Error getting server IDs:', error);
+      this.logger.error('Error getting server IDs', error);
       return [];
     }
   }
@@ -458,30 +454,22 @@ export class DockerComposeService {
   }
 
   async createServer(id: string, config: UpdateServerConfig = {}): Promise<ServerConfig> {
-    // Validate server ID (only allow alphanumeric characters, hyphens and underscores)
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       throw new Error('El ID del servidor solo puede contener letras, números, guiones y guiones bajos');
     }
 
-    // Verificar si el servidor ya existe
     const serverPath = path.join(this.BASE_DIR, id);
     if (fs.existsSync(serverPath)) {
       throw new Error(`El servidor "${id}" ya existe`);
     }
 
-    // Crear el directorio del servidor
     await fs.ensureDir(serverPath);
-
-    // Crear el directorio de datos de Minecraft
     await fs.ensureDir(path.join(serverPath, 'mc-data'));
 
-    // Create default configuration and apply overrides
     const defaultConfig = this.createDefaultConfig(id);
     const serverConfig = { ...defaultConfig, ...config };
 
-    // Generar el archivo docker-compose.yml
     await this.generateDockerComposeFile(serverConfig);
-
     return serverConfig;
   }
 
@@ -493,13 +481,8 @@ export class DockerComposeService {
     return updatedConfig;
   }
 
-  private async generateDockerComposeFile(config: ServerConfig): Promise<void> {
-    // Create server directory if it doesn't exist
-    const serverDir = path.join(this.BASE_DIR, config.id);
-    await fs.ensureDir(serverDir);
-
-    // Create environment variables dictionary
-    const environment: Record<string, string> = {
+  private buildBaseEnvironment(config: ServerConfig): Record<string, string> {
+    const env: Record<string, string> = {
       ID_MANAGER: config.id,
       EULA: 'TRUE',
       MOTD: config.motd || config.serverName,
@@ -529,390 +512,270 @@ export class DockerComposeService {
       ALLOW_NETHER: String(config.allowNether),
       UID: config.uid,
       GID: config.gid,
+      INIT_MEMORY: config.initMemory,
+      MAX_MEMORY: config.maxMemory,
     };
 
-    // Add seed if defined
-    if (config.seed) {
-      environment['SEED'] = config.seed;
-    }
+    if (config.seed) env['SEED'] = config.seed;
+    return env;
+  }
 
-    // Add memory configuration
-    environment['INIT_MEMORY'] = config.initMemory;
-    environment['MAX_MEMORY'] = config.maxMemory;
-
-    // Add JVM options
-    if (config.useAikarFlags) {
-      environment['USE_AIKAR_FLAGS'] = 'true';
-    }
-
+  private addJvmOptions(env: Record<string, string>, config: ServerConfig): void {
+    if (config.useAikarFlags) env['USE_AIKAR_FLAGS'] = 'true';
     if (config.enableJmx) {
-      environment['ENABLE_JMX'] = 'true';
-      if (config.jmxHost) {
-        environment['JMX_HOST'] = config.jmxHost;
-      }
+      env['ENABLE_JMX'] = 'true';
+      if (config.jmxHost) env['JMX_HOST'] = config.jmxHost;
     }
+    if (config.jvmOpts) env['JVM_OPTS'] = config.jvmOpts;
+    if (config.jvmXxOpts) env['JVM_XX_OPTS'] = config.jvmXxOpts;
+    if (config.jvmDdOpts) env['JVM_DD_OPTS'] = config.jvmDdOpts;
+    if (config.extraArgs) env['EXTRA_ARGS'] = config.extraArgs;
+    if (config.logTimestamp) env['LOG_TIMESTAMP'] = 'true';
+  }
 
-    if (config.jvmOpts) {
-      environment['JVM_OPTS'] = config.jvmOpts;
-    }
-
-    if (config.jvmXxOpts) {
-      environment['JVM_XX_OPTS'] = config.jvmXxOpts;
-    }
-
-    if (config.jvmDdOpts) {
-      environment['JVM_DD_OPTS'] = config.jvmDdOpts;
-    }
-
-    if (config.extraArgs) {
-      environment['EXTRA_ARGS'] = config.extraArgs;
-    }
-
-    if (config.logTimestamp) {
-      environment['LOG_TIMESTAMP'] = 'true';
-    }
-
-    // Add Auto-Stop and Auto-Pause configuration
+  private addAutomationOptions(env: Record<string, string>, config: ServerConfig): void {
     if (config.enableAutoStop) {
-      environment['ENABLE_AUTOSTOP'] = 'true';
-      environment['AUTOSTOP_TIMEOUT_EST'] = config.autoStopTimeoutEst;
-      environment['AUTOSTOP_TIMEOUT_INIT'] = config.autoStopTimeoutInit;
+      env['ENABLE_AUTOSTOP'] = 'true';
+      env['AUTOSTOP_TIMEOUT_EST'] = config.autoStopTimeoutEst;
+      env['AUTOSTOP_TIMEOUT_INIT'] = config.autoStopTimeoutInit;
     }
 
     if (config.enableAutoPause) {
-      environment['ENABLE_AUTOPAUSE'] = 'true';
-      environment['AUTOPAUSE_TIMEOUT_EST'] = config.autoPauseTimeoutEst;
-      environment['AUTOPAUSE_TIMEOUT_INIT'] = config.autoPauseTimeoutInit;
-      environment['AUTOPAUSE_KNOCK_INTERFACE'] = config.autoPauseKnockInterface;
+      env['ENABLE_AUTOPAUSE'] = 'true';
+      env['AUTOPAUSE_TIMEOUT_EST'] = config.autoPauseTimeoutEst;
+      env['AUTOPAUSE_TIMEOUT_INIT'] = config.autoPauseTimeoutInit;
+      env['AUTOPAUSE_KNOCK_INTERFACE'] = config.autoPauseKnockInterface;
     }
+  }
 
-    // Add RCON configuration
+  private addRconConfig(env: Record<string, string>, config: ServerConfig): void {
     if (config.enableRcon) {
-      environment['ENABLE_RCON'] = 'true';
-      environment['RCON_PORT'] = config.rconPort;
-      if (config.rconPassword) {
-        environment['RCON_PASSWORD'] = config.rconPassword;
-      }
-      if (config.broadcastRconToOps) {
-        environment['BROADCAST_RCON_TO_OPS'] = 'true';
-      }
+      env['ENABLE_RCON'] = 'true';
+      env['RCON_PORT'] = config.rconPort;
+      if (config.rconPassword) env['RCON_PASSWORD'] = config.rconPassword;
+      if (config.broadcastRconToOps) env['BROADCAST_RCON_TO_OPS'] = 'true';
     } else {
-      environment['ENABLE_RCON'] = 'false';
+      env['ENABLE_RCON'] = 'false';
     }
+  }
 
-    // Add connectivity options
-    if (config.preventProxyConnections) {
-      environment['PREVENT_PROXY_CONNECTIONS'] = 'true';
-    }
+  private addConnectivityOptions(env: Record<string, string>, config: ServerConfig): void {
+    if (config.preventProxyConnections) env['PREVENT_PROXY_CONNECTIONS'] = 'true';
+    if (config.opPermissionLevel) env['OP_PERMISSION_LEVEL'] = config.opPermissionLevel;
+  }
 
-    if (config.opPermissionLevel) {
-      environment['OP_PERMISSION_LEVEL'] = config.opPermissionLevel;
-    }
-
-    // Add type-specific environment variables
-    // Set TYPE based on server type
-    if (config.serverType === 'AUTO_CURSEFORGE') {
-      environment['TYPE'] = 'AUTO_CURSEFORGE';
-    } else if (config.serverType === 'CURSEFORGE') {
-      environment['TYPE'] = 'CURSEFORGE';
-    } else {
-      environment['TYPE'] = config.serverType.toUpperCase();
-    }
+  private addServerTypeConfig(env: Record<string, string>, config: ServerConfig): void {
+    env['TYPE'] = config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' ? config.serverType : config.serverType.toUpperCase();
 
     if (config.serverType === 'FORGE' && config.forgeBuild) {
-      environment['FORGE_VERSION'] = config.forgeBuild;
+      env['FORGE_VERSION'] = config.forgeBuild;
     }
 
-    if (config.cfApiKey) {
-      environment['CF_API_KEY'] = config.cfApiKey;
-    } else if (this.configService.get('CF_API_KEY')) {
-      environment['CF_API_KEY'] = this.configService.get('CF_API_KEY');
-    }
+    const apiKey = config.cfApiKey;
+    if (apiKey) env['CF_API_KEY'] = apiKey;
 
-    if (config.serverType === 'AUTO_CURSEFORGE') {
-      if (config.cfMethod === 'url' && config.cfUrl) {
-        environment['CF_PAGE_URL'] = config.cfUrl;
-        environment['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-      } else if (config.cfMethod === 'slug' && config.cfSlug) {
-        environment['CF_SLUG'] = config.cfSlug;
-        environment['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-        if (config.cfFile) {
-          environment['CF_FILE_ID'] = config.cfFile;
-        }
-      } else if (config.cfMethod === 'file' && config.cfFilenameMatcher) {
-        environment['CF_FILENAME_MATCHER'] = config.cfFilenameMatcher;
-        environment['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-      }
+    const serverTypeHandlers = {
+      AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
+      CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
+      SPIGOT: () => this.addPluginServerConfig(env, config),
+      PAPER: () => this.addPluginServerConfig(env, config),
+      BUKKIT: () => this.addPluginServerConfig(env, config),
+      PUFFERFISH: () => this.addPluginServerConfig(env, config),
+      PURPUR: () => this.addPluginServerConfig(env, config),
+      LEAF: () => this.addPluginServerConfig(env, config),
+      FOLIA: () => this.addPluginServerConfig(env, config),
+    };
 
-      if (config.cfApiKey) {
-        environment['CF_API_KEY'] = config.cfApiKey;
-      }
-
-      if (config.cfSync) {
-        environment['CF_FORCE_SYNCHRONIZE'] = 'true';
-      }
-
-      if (config.cfForceInclude) {
-        environment['CF_FORCE_INCLUDE_MODS'] = config.cfForceInclude;
-      }
-
-      if (config.cfExclude) {
-        environment['CF_EXCLUDE_MODS'] = config.cfExclude;
-      }
-
-      if (config.cfParallelDownloads) {
-        environment['CF_PARALLEL_DOWNLOADS'] = config.cfParallelDownloads;
-      }
-
-      if (config.cfOverridesSkipExisting) {
-        environment['CF_OVERRIDES_SKIP_EXISTING'] = 'true';
-      }
-
-      if (config.cfSetLevelFrom) {
-        environment['CF_SET_LEVEL_FROM'] = config.cfSetLevelFrom;
-      }
-    } else if (config.serverType === 'CURSEFORGE') {
-      // Manual CurseForge (deprecated)
-      environment['TYPE'] = 'CURSEFORGE';
-      if (config.cfServerMod) {
-        environment['CF_SERVER_MOD'] = config.cfServerMod;
-      }
-      if (config.cfBaseDir) {
-        environment['CF_BASE_DIR'] = config.cfBaseDir;
-      }
-      if (config.useModpackStartScript === false) {
-        environment['USE_MODPACK_START_SCRIPT'] = 'false';
-      }
-      if (config.ftbLegacyJavaFixer) {
-        environment['FTB_LEGACYJAVAFIXER'] = 'true';
-      }
-      if (config.cfApiKey) {
-        environment['CF_API_KEY'] = config.cfApiKey;
-      }
-    } else if (config.serverType === 'SPIGOT' || config.serverType === 'PAPER' || config.serverType === 'BUKKIT' || config.serverType === 'PUFFERFISH' || config.serverType === 'PURPUR' || config.serverType === 'LEAF' || config.serverType === 'FOLIA') {
-      // Plugin-based servers configuration
-      environment['VERSION'] = config.minecraftVersion;
-
-      if (config.spigetResources) {
-        environment['SPIGET_RESOURCES'] = config.spigetResources;
-      }
-
-      // Paper specific
-      if (config.serverType === 'PAPER') {
-        if (config.paperBuild) environment['PAPER_BUILD'] = config.paperBuild;
-        if (config.paperChannel) environment['PAPER_CHANNEL'] = config.paperChannel;
-        if (config.paperDownloadUrl) environment['PAPER_DOWNLOAD_URL'] = config.paperDownloadUrl;
-      }
-
-      // Bukkit/Spigot specific
-      if (config.serverType === 'BUKKIT' || config.serverType === 'SPIGOT') {
-        if (config.bukkitDownloadUrl) environment['BUKKIT_DOWNLOAD_URL'] = config.bukkitDownloadUrl;
-        if (config.spigotDownloadUrl) environment['SPIGOT_DOWNLOAD_URL'] = config.spigotDownloadUrl;
-        if (config.buildFromSource) environment['BUILD_FROM_SOURCE'] = 'true';
-      }
-
-      // Pufferfish specific
-      if (config.serverType === 'PUFFERFISH') {
-        if (config.pufferfishBuild) environment['PUFFERFISH_BUILD'] = config.pufferfishBuild;
-        if (config.useFlareFlags) environment['USE_FLARE_FLAGS'] = 'true';
-      }
-
-      // Purpur specific
-      if (config.serverType === 'PURPUR') {
-        if (config.purpurBuild) environment['PURPUR_BUILD'] = config.purpurBuild;
-        if (config.purpurDownloadUrl) environment['PURPUR_DOWNLOAD_URL'] = config.purpurDownloadUrl;
-        if (config.useFlareFlags) environment['USE_FLARE_FLAGS'] = 'true';
-      }
-
-      // Leaf specific
-      if (config.serverType === 'LEAF') {
-        if (config.leafBuild) environment['LEAF_BUILD'] = config.leafBuild;
-      }
-
-      // Folia specific
-      if (config.serverType === 'FOLIA') {
-        if (config.foliaBuild) environment['FOLIA_BUILD'] = config.foliaBuild;
-        if (config.foliaChannel) environment['FOLIA_CHANNEL'] = config.foliaChannel;
-        if (config.foliaDownloadUrl) environment['FOLIA_DOWNLOAD_URL'] = config.foliaDownloadUrl;
-      }
-
-      // General config
-      if (config.skipDownloadDefaults) {
-        environment['SKIP_DOWNLOAD_DEFAULTS'] = 'true';
-      }
+    const handler = serverTypeHandlers[config.serverType];
+    if (handler) {
+      handler();
     } else {
-      environment['VERSION'] = config.minecraftVersion;
+      env['VERSION'] = String(config.minecraftVersion);
+    }
+  }
+
+  private addAutoCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
+    if (config.cfMethod === 'url' && config.cfUrl) {
+      env['CF_PAGE_URL'] = config.cfUrl;
+      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
+    } else if (config.cfMethod === 'slug' && config.cfSlug) {
+      env['CF_SLUG'] = config.cfSlug;
+      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
+      if (config.cfFile) env['CF_FILE_ID'] = config.cfFile;
+    } else if (config.cfMethod === 'file' && config.cfFilenameMatcher) {
+      env['CF_FILENAME_MATCHER'] = config.cfFilenameMatcher;
+      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
     }
 
-    // Add custom environment variables
-    if (config.envVars) {
-      const customEnvVars = config.envVars
-        .split('\n')
-        .filter((line) => line.trim() !== '')
-        .reduce(
-          (acc, line) => {
-            const [key, value] = line.split('=').map((part) => part.trim());
-            if (key && value) {
-              acc[key] = value;
-            }
-            return acc;
-          },
-          {} as Record<string, string>,
-        );
+    if (config.cfSync) env['CF_FORCE_SYNCHRONIZE'] = 'true';
+    if (config.cfForceInclude) env['CF_FORCE_INCLUDE_MODS'] = config.cfForceInclude;
+    if (config.cfExclude) env['CF_EXCLUDE_MODS'] = config.cfExclude;
+    if (config.cfParallelDownloads) env['CF_PARALLEL_DOWNLOADS'] = config.cfParallelDownloads;
+    if (config.cfOverridesSkipExisting) env['CF_OVERRIDES_SKIP_EXISTING'] = 'true';
+    if (config.cfSetLevelFrom) env['CF_SET_LEVEL_FROM'] = config.cfSetLevelFrom;
+  }
 
-      Object.assign(environment, customEnvVars);
-    }
+  private addManualCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
+    if (config.cfServerMod) env['CF_SERVER_MOD'] = config.cfServerMod;
+    if (config.cfBaseDir) env['CF_BASE_DIR'] = config.cfBaseDir;
+    if (config.useModpackStartScript === false) env['USE_MODPACK_START_SCRIPT'] = 'false';
+    if (config.ftbLegacyJavaFixer) env['FTB_LEGACYJAVAFIXER'] = 'true';
+  }
 
-    // Parse volumes
-    const volumes = config.dockerVolumes
+  private addPluginServerConfig(env: Record<string, string>, config: ServerConfig): void {
+    env['VERSION'] = String(config.minecraftVersion);
+
+    if (config.spigetResources) env['SPIGET_RESOURCES'] = config.spigetResources;
+    if (config.skipDownloadDefaults) env['SKIP_DOWNLOAD_DEFAULTS'] = 'true';
+
+    const specificConfigs = {
+      PAPER: () => {
+        if (config.paperBuild) env['PAPER_BUILD'] = config.paperBuild;
+        if (config.paperChannel) env['PAPER_CHANNEL'] = config.paperChannel;
+        if (config.paperDownloadUrl) env['PAPER_DOWNLOAD_URL'] = config.paperDownloadUrl;
+      },
+      BUKKIT: () => {
+        if (config.bukkitDownloadUrl) env['BUKKIT_DOWNLOAD_URL'] = config.bukkitDownloadUrl;
+        if (config.buildFromSource) env['BUILD_FROM_SOURCE'] = 'true';
+      },
+      SPIGOT: () => {
+        if (config.spigotDownloadUrl) env['SPIGOT_DOWNLOAD_URL'] = config.spigotDownloadUrl;
+        if (config.buildFromSource) env['BUILD_FROM_SOURCE'] = 'true';
+      },
+      PUFFERFISH: () => {
+        if (config.pufferfishBuild) env['PUFFERFISH_BUILD'] = config.pufferfishBuild;
+        if (config.useFlareFlags) env['USE_FLARE_FLAGS'] = 'true';
+      },
+      PURPUR: () => {
+        if (config.purpurBuild) env['PURPUR_BUILD'] = config.purpurBuild;
+        if (config.purpurDownloadUrl) env['PURPUR_DOWNLOAD_URL'] = config.purpurDownloadUrl;
+        if (config.useFlareFlags) env['USE_FLARE_FLAGS'] = 'true';
+      },
+      LEAF: () => {
+        if (config.leafBuild) env['LEAF_BUILD'] = config.leafBuild;
+      },
+      FOLIA: () => {
+        if (config.foliaBuild) env['FOLIA_BUILD'] = config.foliaBuild;
+        if (config.foliaChannel) env['FOLIA_CHANNEL'] = config.foliaChannel;
+        if (config.foliaDownloadUrl) env['FOLIA_DOWNLOAD_URL'] = config.foliaDownloadUrl;
+      },
+    };
+
+    const specificConfig = specificConfigs[config.serverType];
+    if (specificConfig) specificConfig();
+  }
+
+  private addCustomEnvVars(env: Record<string, string>, config: ServerConfig): void {
+    if (!config.envVars) return;
+    const customVars = config.envVars
       .split('\n')
-      .filter((line) => line.trim() !== '')
-      .map((line) => line.trim().replace('./mc-data', './mc-data')); // Keep relative path
+      .filter((line) => line.trim())
+      .reduce(
+        (acc, line) => {
+          const [key, value] = line.split('=').map((part) => part.trim());
+          if (key && value) acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+    Object.assign(env, customVars);
+  }
 
-    // Ensure the port is not already in use by another server
-    const requestedPort = parseInt(config.port || '25565');
+  private parseVolumes(config: ServerConfig): string[] {
+    return config.dockerVolumes
+      .split('\n')
+      .filter((line) => line.trim())
+      .map((line) => line.trim());
+  }
+
+  private async ensurePortAvailable(config: ServerConfig): Promise<string> {
+    const requestedPort = Number.parseInt(config.port || '25565');
     const availablePort = await this.findAvailablePort(requestedPort, config.id);
-
-    // Update the port if it changed
     if (availablePort !== requestedPort) {
-      console.log(`Port ${requestedPort} already in use. Using port ${availablePort} for server ${config.id}`);
       config.port = availablePort.toString();
     }
+    return config.port;
+  }
 
-    // Create Docker Compose configuration
-    const dockerComposeConfig: {
-      version: string;
-      services: {
-        mc: {
-          image: string;
-          tty: boolean;
-          stdin_open: boolean;
-          container_name: string;
-          ports: string[];
-          environment: Record<string, string>;
-          volumes: string[];
-          restart: string;
-          deploy: {
-            resources: {
-              limits: {
-                cpus: string;
-                memory: string;
-              };
-              reservations: {
-                cpus: string;
-                memory: string;
-              };
-            };
-          };
-        };
-        [key: string]: any;
-      };
-      volumes: Record<string, any>;
-    } = {
-      version: '3',
+  private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string): any {
+    return {
       services: {
         mc: {
           image: `itzg/minecraft-server:${config.dockerImage}`,
           tty: true,
           stdin_open: true,
           container_name: config.id,
-          ports: [`${config.port}:25565`, ...(config.extraPorts || [])],
+          ports: [`${port}:25565`, ...(config.extraPorts || [])],
           environment,
           volumes,
           restart: config.restartPolicy,
           deploy: {
             resources: {
-              limits: {
-                cpus: config.cpuLimit,
-                memory: config.maxMemory,
-              },
-              reservations: {
-                cpus: config.cpuReservation,
-                memory: config.memoryReservation,
-              },
+              limits: { cpus: config.cpuLimit, memory: config.maxMemory },
+              reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
             },
           },
         },
       },
-      volumes: {
-        'mc-data': {},
-      },
+      volumes: { 'mc-data': {} },
+    };
+  }
+
+  private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
+    const backupEnv: Record<string, string> = {
+      BACKUP_METHOD: config.backupMethod || 'tar',
+      BACKUP_NAME: config.backupName || 'world',
+      BACKUP_INTERVAL: config.backupInterval || '24h',
+      INITIAL_DELAY: config.backupInitialDelay || '2m',
+      RCON_HOST: 'mc',
+      RCON_PORT: config.rconPort || '25575',
+      PRUNE_BACKUPS_DAYS: config.backupPruneDays || '7',
+      DEST_DIR: config.backupDestDir || '/backups',
     };
 
+    if (config.rconPassword) backupEnv.RCON_PASSWORD = config.rconPassword;
+    if (config.pauseIfNoPlayers !== undefined) backupEnv.PAUSE_IF_NO_PLAYERS = String(config.pauseIfNoPlayers);
+    if (config.playersOnlineCheckInterval) backupEnv.PLAYERS_ONLINE_CHECK_INTERVAL = config.playersOnlineCheckInterval;
+    if (config.backupOnStartup !== undefined) backupEnv.BACKUP_ON_STARTUP = String(config.backupOnStartup);
+    if (config.rconRetries) backupEnv.RCON_RETRIES = config.rconRetries;
+    if (config.rconRetryInterval) backupEnv.RCON_RETRY_INTERVAL = config.rconRetryInterval;
+    if (config.backupIncludes) backupEnv.INCLUDES = config.backupIncludes;
+    if (config.backupExcludes) backupEnv.EXCLUDES = config.backupExcludes;
+    if (config.tarCompressMethod && config.backupMethod === 'tar') backupEnv.TAR_COMPRESS_METHOD = config.tarCompressMethod;
+
+    dockerComposeConfig.services.backup = {
+      image: 'itzg/mc-backup',
+      container_name: `${config.id}-backup`,
+      depends_on: ['mc'],
+      environment: backupEnv,
+      volumes: ['./mc-data:/data:ro', './backups:/backups'],
+      restart: 'unless-stopped',
+    };
+
+    dockerComposeConfig.volumes.backups = {};
+    await fs.ensureDir(path.join(serverDir, 'backups'));
+  }
+
+  private async generateDockerComposeFile(config: ServerConfig): Promise<void> {
+    const serverDir = path.join(this.BASE_DIR, config.id);
+    await fs.ensureDir(serverDir);
+
+    const environment = this.buildBaseEnvironment(config);
+    this.addJvmOptions(environment, config);
+    this.addAutomationOptions(environment, config);
+    this.addRconConfig(environment, config);
+    this.addConnectivityOptions(environment, config);
+    this.addServerTypeConfig(environment, config);
+    this.addCustomEnvVars(environment, config);
+
+    const availablePort = await this.ensurePortAvailable(config);
+    const volumes = this.parseVolumes(config);
+    const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort);
+
     if (config.enableBackup) {
-      // Create backup environment variables
-      const backupEnvironment: Record<string, string> = {
-        BACKUP_METHOD: config.backupMethod || 'tar',
-        BACKUP_NAME: config.backupName || 'world',
-        BACKUP_INTERVAL: config.backupInterval || '24h',
-        INITIAL_DELAY: config.backupInitialDelay || '2m',
-        RCON_HOST: 'mc',
-        RCON_PORT: config.rconPort || '25575',
-        PRUNE_BACKUPS_DAYS: config.backupPruneDays || '7',
-        DEST_DIR: config.backupDestDir || '/backups',
-      };
-
-      // Add RCON password if present
-      if (config.rconPassword) {
-        backupEnvironment['RCON_PASSWORD'] = config.rconPassword;
-      }
-
-      // Add backup options if present
-      if (config.pauseIfNoPlayers !== undefined) {
-        backupEnvironment['PAUSE_IF_NO_PLAYERS'] = String(config.pauseIfNoPlayers);
-      }
-
-      if (config.playersOnlineCheckInterval) {
-        backupEnvironment['PLAYERS_ONLINE_CHECK_INTERVAL'] = config.playersOnlineCheckInterval;
-      }
-
-      if (config.backupOnStartup !== undefined) {
-        backupEnvironment['BACKUP_ON_STARTUP'] = String(config.backupOnStartup);
-      }
-
-      if (config.rconRetries) {
-        backupEnvironment['RCON_RETRIES'] = config.rconRetries;
-      }
-
-      if (config.rconRetryInterval) {
-        backupEnvironment['RCON_RETRY_INTERVAL'] = config.rconRetryInterval;
-      }
-
-      if (config.backupIncludes) {
-        backupEnvironment['INCLUDES'] = config.backupIncludes;
-      }
-
-      if (config.backupExcludes) {
-        backupEnvironment['EXCLUDES'] = config.backupExcludes;
-      }
-
-      if (config.tarCompressMethod && config.backupMethod === 'tar') {
-        backupEnvironment['TAR_COMPRESS_METHOD'] = config.tarCompressMethod;
-      }
-
-      // Add backup service to docker compose
-      dockerComposeConfig.services.backup = {
-        image: 'itzg/mc-backup',
-        container_name: `${config.id}-backup`,
-        depends_on: ['mc'],
-        environment: backupEnvironment,
-        volumes: [
-          './mc-data:/data:ro', // Read-only access to minecraft data
-          './backups:/backups', // Directory for backups
-        ],
-        restart: 'unless-stopped',
-      };
-
-      dockerComposeConfig.volumes = {
-        'mc-data': {},
-        backups: {},
-      };
-
-      // Create backup volume if it doesn't exist
-      await fs.ensureDir(path.join(serverDir, 'backups'));
+      await this.addBackupService(dockerComposeConfig, config, serverDir);
     }
 
-    // Save Docker Compose file
     const yamlContent = yaml.dump(dockerComposeConfig);
     await fs.writeFile(this.getDockerComposePath(config.id), yamlContent);
   }

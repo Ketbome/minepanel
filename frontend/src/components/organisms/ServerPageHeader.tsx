@@ -25,14 +25,12 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
 
-  // Function to open File Browser
   const openFileBrowser = () => {
     const fileBrowserPath = `/files/${serverId}`;
     const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
     window.open(url, "_blank");
   };
 
-  // Function to handle clear data
   const handleClearData = async () => {
     setIsClearing(true);
     try {
@@ -42,7 +40,6 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
     }
   };
 
-  // Function to get icon based on status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "running":
@@ -58,7 +55,6 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
     }
   };
 
-  // Function to get CSS class for status indicator
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "running":
@@ -93,7 +89,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
   return (
     <div className="bg-gray-900/80 backdrop-blur-md p-6 rounded-lg border border-gray-700/60 space-y-4 text-gray-200">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard">
+        <Link href="/dashboard/servers">
           <Button variant="outline" size="icon" type="button" className="border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-emerald-600/20 hover:text-emerald-400 hover:border-emerald-600/50">
             <ArrowLeft className="h-4 w-4" />
           </Button>

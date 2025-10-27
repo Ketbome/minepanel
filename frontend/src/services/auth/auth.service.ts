@@ -1,34 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "../axios.service";
 
 export const login = async (username: string, password: string) => {
   try {
-    const response = await api.post(
-      `/auth/login`,
-      {
-        username,
-        password,
-      },
-      { withCredentials: true }
-    );
+    const response = await api.post(`/auth/login`, { username, password }, { withCredentials: true });
 
     if (response.data.access_token) {
-      // Save token in localStorage
       localStorage.setItem("token", response.data.access_token);
       localStorage.setItem("username", response.data.username);
-
-      // Configure Axios to include token in all future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${response.data.access_token}`;
-
       return { success: true, data: response.data };
     }
 
     return { success: false, error: "NO_ACCESS_TOKEN" };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in login:", error);
+    const err = error as { response?: { data?: { message?: string } } };
     return {
       success: false,
-      error: error.response?.data?.message || "LOGIN_ERROR",
+      error: err.response?.data?.message || "LOGIN_ERROR",
     };
   }
 };
@@ -54,25 +43,16 @@ export const isAuthenticated = (): boolean => {
 export const setupAxiosInterceptors = () => {
   if (typeof window === "undefined") return;
 
-  // Configure interceptor to add token to all requests
   const token = localStorage.getItem("token");
-  if (token) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  }
+  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-  // Interceptor to handle authentication errors
   api.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response?.status === 401) {
-        logout();
-      }
+      if (error.response?.status === 401) logout();
       return Promise.reject(error instanceof Error ? error : new Error(error.message || "Authentication error"));
     }
   );
 };
 
-// Call this function at the start of the application
-if (typeof window !== "undefined") {
-  setupAxiosInterceptors();
-}
+if (globalThis.window !== undefined) setupAxiosInterceptors();

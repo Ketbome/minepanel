@@ -10,6 +10,22 @@ export const es: Record<TranslationKey, string> = {
   password: "Contraseña",
   invalidCredentials: "Credenciales inválidas",
   loginSuccess: "Inicio de sesión exitoso",
+  serverUnavailable: "No se puede conectar",
+  serverUnavailableDesc: "Parece que hay un problema de configuración. Revisa que la URL del backend esté bien configurada, que el servidor esté corriendo o si hay algún problema con el DNS.",
+  checkingServerStatus: "Chequeando conexión...",
+  cannotConnectToServer: "No se puede conectar al servidor",
+  cannotConnectToServerDesc: "La aplicación no puede establecer conexión con el servidor backend. Por favor verifica tu configuración.",
+  troubleshootingSteps: "Pasos para Solucionar",
+  checkBackendUrl: "Verificar URL del Backend",
+  checkBackendUrlDesc: "Verifica que la variable de entorno NEXT_PUBLIC_API_URL esté correctamente configurada",
+  checkServerRunning: "Verificar Estado del Servidor",
+  checkServerRunningDesc: "Asegúrate de que el servidor backend esté ejecutándose y accesible en el puerto configurado",
+  checkDNS: "Verificar DNS/Red",
+  checkDNSDesc: "Verifica que no haya problemas de DNS o firewall bloqueando la conexión",
+  needMoreHelp: "¿Necesitas más ayuda?",
+  needMoreHelpDesc: "Consulta la documentación o contacta al soporte para asistencia",
+  retryConnection: "Reintentar Conexión",
+  retrying: "Reintentando...",
 
   // ===========================
   // NAVEGACIÓN
@@ -24,6 +40,7 @@ export const es: Record<TranslationKey, string> = {
   // ACCIONES COMUNES
   // ===========================
   save: "Guardar",
+  saving: "Guardando...",
   cancel: "Cancelar",
   confirm: "Confirmar",
   loading: "Cargando...",
@@ -52,6 +69,7 @@ export const es: Record<TranslationKey, string> = {
   saveChanges: "Guardar Cambios",
   addPort: "Agregar Puerto",
   addVariable: "Agregar Variable",
+  comingSoon: "Próximamente",
 
   // ===========================
   // ESTADOS
@@ -136,6 +154,57 @@ export const es: Record<TranslationKey, string> = {
   administrator: "Administrador",
   minecraftPanel: "Minepanel",
 
+  // Página de Inicio
+  homeTitle: "Inicio",
+  homeDescription: "Resumen de tu panel de servidores de Minecraft",
+  welcomeBack: "Bienvenido de nuevo",
+  quickStats: "Estadísticas Rápidas",
+  totalServers: "Total de Servidores",
+  runningServers: "Servidores Activos",
+  stoppedServers: "Servidores Detenidos",
+  systemStatus: "Estado del Sistema",
+  cpuUsage: "Uso de CPU",
+  memoryUsage: "Uso de Memoria",
+  diskUsage: "Uso de Disco",
+  recentActivity: "Actividad Reciente",
+  noRecentActivity: "Sin actividad reciente",
+  quickActions: "Acciones Rápidas",
+  viewAllServers: "Ver Todos los Servidores",
+  systemHealth: "Salud del Sistema",
+  healthy: "Saludable",
+
+  // Página de Configuración
+  settingsTitle: "Configuración",
+  settingsDescription: "Configura tu cuenta y preferencias de la aplicación",
+  accountSettings: "Configuración de Cuenta",
+  yourUsername: "Tu Nombre de Usuario",
+  changePassword: "Cambiar Contraseña",
+  currentPassword: "Contraseña Actual",
+  newPassword: "Nueva Contraseña",
+  confirmPassword: "Confirmar Contraseña",
+  updatePassword: "Actualizar Contraseña",
+  apiSettings: "Configuración de API",
+  apiSettingsDesc: "Configura las claves de API para integraciones externas",
+  curseforgeApiKey: "Clave API de CurseForge",
+  curseforgeApiKeyDesc: "Clave API para descargar mods y modpacks de CurseForge",
+  importFromSettings: "Importar desde Settings",
+  apiKeyImported: "API Key importada correctamente",
+  noApiKeyConfigured: "No hay API Key configurada en Settings",
+  discordWebhook: "URL del Webhook de Discord",
+  discordWebhookDesc: "URL del webhook para notificaciones de Discord",
+  appearanceSettings: "Apariencia",
+  languageDesc: "Selecciona tu idioma preferido",
+  notificationSettings: "Notificaciones",
+  enableNotifications: "Habilitar Notificaciones",
+  enableNotificationsDesc: "Recibe notificaciones sobre eventos del servidor",
+  dangerZone: "Zona de Peligro",
+  dangerZoneDesc: "Acciones irreversibles y destructivas",
+  settingsSaved: "Configuración guardada exitosamente",
+  settingsSaveFailed: "Error al guardar la configuración",
+  test: "Probar",
+  webhookTestSuccess: "¡Prueba exitosa! Revisa tu canal de Discord",
+  webhookTestFailed: "Error al probar el webhook",
+
   // Creación de Servidor
   serverCreationDesc: "Crea un nuevo servidor de Minecraft",
   enterServerName: "Ingresa el nombre para tu nuevo servidor de Minecraft.",
@@ -195,6 +264,10 @@ export const es: Record<TranslationKey, string> = {
   resourcesError: "Error en los recursos",
   errorsDetected: "Errores detectados en los logs",
   errorsDetectedDesc: "Se encontraron errores o excepciones en los logs del servidor",
+  saveFailed: "Error al guardar",
+  configSavedAutomatically: "Configuración guardada automáticamente",
+  errorSavingAutomatically: "Error al guardar automáticamente",
+  failedToFetchVersions: "Error al obtener las versiones",
 
   // ===========================
   // IDIOMA
@@ -212,8 +285,11 @@ export const es: Record<TranslationKey, string> = {
   enterServer: "ENTRAR AL SERVIDOR",
   allRightsReserved: "Todos los derechos reservados",
   help: "Ayuda",
+  documentation: "Documentación",
+  github: "GitHub",
   privacy: "Privacidad",
   terms: "Términos",
+  withLove: "Hecho con",
 
   // ===========================
   // PESTAÑA DE CONFIGURACIÓN GENERAL
@@ -561,6 +637,10 @@ export const es: Record<TranslationKey, string> = {
   serverMustBeRunning: "El servidor debe estar en ejecución para ejecutar comandos",
   rconNotConfigured: "RCON no está configurado correctamente",
   commands: "Comandos",
+  enterACommandToExecute: "Ingresa un comando para ejecutar",
+  rconPortNotConfigured: "El puerto RCON no está configurado",
+  commandExecutedSuccessfully: "Comando ejecutado correctamente",
+  errorExecutingCommand: "Error al ejecutar el comando",
 
   // Etiquetas de Comandos
   cmdListPlayers: "Listar jugadores",
@@ -675,7 +755,7 @@ export const es: Record<TranslationKey, string> = {
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
-  manualCurseForgeDeprecated: "Este método manual para CurseForge está obsoleto. Se recomienda usar \"CurseForge Modpack\" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.",
+  manualCurseForgeDeprecated: 'Este método manual para CurseForge está obsoleto. Se recomienda usar "CurseForge Modpack" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.',
   modpackFile: "Archivo del Modpack (CF_SERVER_MOD)",
   modpackFileHelp: "Ruta completa al archivo .zip del modpack en el contenedor.",
   modpackFileExample: "Ejemplo: /modpacks/SkyFactory_4_Server_4.1.0.zip",
@@ -686,7 +766,7 @@ export const es: Record<TranslationKey, string> = {
   useModpackStartScript: "Usar Script de Inicio del Modpack",
   useModpackStartScriptDesc: "Si se desactiva, evita usar el script de inicio incluido en el modpack y usa la lógica estándar del servidor",
   ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
-  ftbLegacyJavaFixerDesc: "Activa la corrección para modpacks que fallan con \"unable to launch forgemodloader\"",
+  ftbLegacyJavaFixerDesc: 'Activa la corrección para modpacks que fallan con "unable to launch forgemodloader"',
   cfApiKeyOptional: "API Key opcional para compatibilidad con algunos modpacks",
 
   // Configuración Auto de CurseForge
@@ -697,7 +777,7 @@ export const es: Record<TranslationKey, string> = {
   methodUrl: "URL",
   methodUrlDesc: "Dirección web directa al modpack en CurseForge",
   methodSlug: "Slug",
-  methodSlugDesc: "Identificador único del modpack (ej: \"all-the-mods-7\")",
+  methodSlugDesc: 'Identificador único del modpack (ej: "all-the-mods-7")',
   methodFile: "Archivo",
   methodFileDesc: "Instalar desde un archivo .zip ya subido al servidor",
   installFromUrl: "Instalar desde URL directa",
@@ -723,7 +803,7 @@ export const es: Record<TranslationKey, string> = {
   cfApiKey: "API Key de CurseForge (CF_API_KEY)",
   cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
   cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
-  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debe duplicar de ser necesario. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$2a$10$$T6sGlu...</code>. Esto es especialmente importante para el tercer <b>$</b> en adelante.",
+  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debes duplicar cada <b>$</b> a <b>$$</b>. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$$2a$$10$$T6sGlu...</code>",
 
   // Opciones Avanzadas de CurseForge
   advancedOptions: "Opciones Avanzadas",

@@ -35,15 +35,12 @@ export function DashboardHeader() {
   return (
     <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="sticky top-0 z-40 w-full border-b border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg">
       <div className="flex h-16 items-center justify-end px-6">
-        {/* Right side */}
         <div className="flex items-center gap-4">
-          {/* Status indicator */}
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span className="text-sm text-gray-300 font-minecraft">{t("systemActive")}</span>
           </div>
 
-          {/* User Menu */}
           <div className="relative" ref={menuRef}>
             <Button variant="ghost" className="flex items-center gap-3 hover:bg-gray-800/60 p-2" onClick={() => setShowUserMenu(!showUserMenu)}>
               <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center overflow-hidden">
@@ -56,7 +53,6 @@ export function DashboardHeader() {
               <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showUserMenu ? "rotate-180" : ""}`} />
             </Button>
 
-            {/* User Dropdown */}
             <AnimatePresence>
               {showUserMenu && (
                 <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute right-0 mt-2 w-56 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-xl z-50">
@@ -82,7 +78,6 @@ export function DashboardHeader() {
             </AnimatePresence>
           </div>
 
-          {/* Minecraft decoration */}
           <div className="hidden lg:flex items-center gap-2">
             <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}>
               <Image src="/images/diamond.webp" alt="Diamond" width={24} height={24} className="opacity-70" />

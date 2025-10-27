@@ -1,29 +1,33 @@
 # Getting Started
 
-Welcome to Minepanel! This guide will help you get your Minecraft server management panel up and running in just a few minutes.
+Get Minepanel running in about 2 minutes.
 
 ![Minepanel Dashboard](/public/img/Animation.gif)
 
-## Prerequisites
+## What you need
 
-Before you begin, make sure you have:
+- Docker 20.10+
+- Docker Compose v2.0+
+- 2GB+ RAM
+- Linux, macOS, or Windows with WSL2
 
-- **Docker** (version 20.10 or higher)
-- **Docker Compose** (v2.0 or higher)
-- **2GB+ RAM** available
-- **Operating System**: Linux, macOS, or Windows with WSL2
-
-::: tip Check Docker Installation
-Run `docker --version` and `docker compose version` to verify your installation.
+::: tip Check your install
+`docker --version` and `docker compose version`
 :::
 
-## Quick Installation
+## Installation
 
-The fastest way to get started is using our pre-built Docker image:
+::: warning Platform-Specific Configuration
+Configuration differs between operating systems:
 
-### Step 1: Create docker-compose.yml
+**macOS / Linux:** Use `SERVERS_DIR=${PWD}/servers` and volume mount `${PWD}/servers:${PWD}/servers`
 
-Create a new directory and a `docker-compose.yml` file:
+**Windows:** Use `SERVERS_DIR=/app/servers` and volume mount `./servers:/app/servers`
+
+Examples below use macOS/Linux format. Adjust for Windows as needed.
+:::
+
+### 1. Create docker-compose.yml
 
 ```yaml
 services:
@@ -33,19 +37,30 @@ services:
       - "${BACKEND_PORT:-8091}:8091"
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      # Backend environment variables
+      # Backend
+      # Windows: use /app/servers
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - JWT_SECRET= # Generate with: openssl rand -base64 32
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
-      # Frontend environment variables (informative, already baked in build)
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-minepanel}
+      - DB_USER=${DB_USER:-minepanel}
+      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
+      # Frontend
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
+      # Windows: use ./servers:/app/servers
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: always
 
   filebrowser:
@@ -58,6 +73,24 @@ services:
     environment:
       - FB_BASEURL=/
     restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME:-minepanel}
+      - POSTGRES_USER=${DB_USER:-minepanel}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
 ```
 
 ### Step 2: Create Required Directories
@@ -66,39 +99,31 @@ services:
 mkdir -p servers filebrowser-data
 ```
 
-### Step 3: Start the Services
+### 2. Start
 
 ```bash
 docker compose up -d
 ```
 
-::: info
-The `-d` flag runs the containers in detached mode (in the background).
-:::
+### 3. Access
 
-### Step 4: Access the Panel
-
-After a few seconds, you can access:
-
-- **Minepanel Web Interface**: http://localhost:3000
+- **Minepanel**: http://localhost:3000
 - **File Browser**: http://localhost:8080
 
-## First Login
+## First login
 
-### Minepanel Login
+### Minepanel
 
-Default credentials:
+- Username: `admin`
+- Password: `admin`
 
-- **Username**: `admin`
-- **Password**: `admin`
-
-::: warning Change Default Password
-For security, change the default password immediately after first login! See [Configuration Guide](/configuration#change-admin-password) for instructions.
+::: warning Change this
+Change the password after first login. See [Configuration](/configuration#change-admin-password).
 :::
 
-### Filebrowser Login
+### Filebrowser
 
-The first time you run Filebrowser, check the logs to get the auto-generated password:
+Check the logs for the auto-generated password:
 
 ```bash
 docker compose logs filebrowser
@@ -110,78 +135,56 @@ Look for a line like:
 filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / <generated-password>
 ```
 
-**Steps:**
+1. Copy the password
+2. Login to http://localhost:8080
+3. Change it
 
-1. Copy the generated password from the logs
-2. Login to http://localhost:8080 with `admin` and the password
-3. Change the password immediately to something secure
-
-::: tip Lost the Password?
-If you lost the logs, you can reset Filebrowser:
+::: tip Lost it?
 
 ```bash
 docker compose down
 rm -rf filebrowser-data/filebrowser.db
 docker compose up -d
-docker compose logs filebrowser  # Check the new password
+docker compose logs filebrowser
 ```
 
 :::
 
-## Creating Your First Server
+## Create your first server
 
-Once logged into Minepanel:
+1. Click "New Server"
+2. Fill in:
+   - Name
+   - Type (Vanilla, Paper, Forge, etc.)
+   - Minecraft version
+   - Port (default: 25565)
+   - Memory (e.g., 2G)
+3. Click "Create"
+4. Wait a few minutes (first time downloads files)
 
-1. Click **"Add Server"** or **"New Server"** button
-2. Fill in the server details:
-   - **Server Name**: Give it a unique name
-   - **Server Type**: Choose Vanilla, Paper, Forge, etc.
-   - **Minecraft Version**: Select the version you want
-   - **Port**: Choose a port (default: 25565)
-   - **Memory**: Allocate RAM (e.g., 2G for 2 gigabytes)
-3. Click **"Create Server"**
-4. Wait for the server to download and start (this may take a few minutes the first time)
+## Next
 
-::: tip
-The first server creation downloads the Minecraft server files, which can take 2-5 minutes depending on your internet connection.
-:::
-
-## Next Steps
-
-Now that you have Minepanel running:
-
-- 📖 [Learn about all features](/features)
-- ⚙️ [Configure your setup](/configuration)
-- 🏗️ [Understand the architecture](/architecture)
-- 🔧 [Explore advanced options](/installation#advanced-installation)
+- [Features](/features)
+- [Configuration](/configuration)
+- [Architecture](/architecture)
 
 ## Troubleshooting
 
-### Can't Connect to Docker Socket
-
-If you get permission errors on Linux:
+### Docker permission errors (Linux)
 
 ```bash
-# Add your user to the docker group
 sudo usermod -aG docker $USER
-
-# Log out and back in for changes to take effect
+# Log out and back in
 ```
 
-### Containers Keep Restarting
-
-Check the logs to see what's wrong:
+### Containers restarting
 
 ```bash
-# View all logs
-docker compose logs
-
-# View specific service logs
 docker compose logs minepanel
 docker compose logs filebrowser
 ```
 
-### Need More Help?
+### Need help?
 
 - 📚 Check the [FAQ](/faq)
 - 🐛 [Report an issue on GitHub](https://github.com/Ketbome/minepanel/issues)

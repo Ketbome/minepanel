@@ -23,19 +23,16 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const { t } = useLanguage();
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
 
-  // Fetch only release versions
   const { versions, loading, latestRelease, refresh, getRecommended } = useMinecraftVersions({
     filterType: "release",
-    limit: 100, // Last 100 releases
+    limit: 100,
   });
 
   const [showManualInput, setShowManualInput] = useState(false);
   const recommendedVersions = getRecommended();
 
-  // Filter out duplicates: exclude latestRelease from recommended
   const filteredRecommendedVersions = recommendedVersions.filter((v) => v.id !== latestRelease);
 
-  // Filter out duplicates: exclude latestRelease and recommended from all versions
   const recommendedIds = new Set(recommendedVersions.map((v) => v.id));
   const otherVersions = versions.filter((v) => v.id !== latestRelease && !recommendedIds.has(v.id));
 
@@ -97,7 +94,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                     </>
                   )}
 
-                  {/* Recommended Versions */}
                   {filteredRecommendedVersions.length > 0 && (
                     <>
                       <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">{t("recommended")}</div>
@@ -113,7 +109,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                     </>
                   )}
 
-                  {/* All Versions */}
                   <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">{t("allVersions")}</div>
                   {otherVersions.map((version) => (
                     <SelectItem key={version.id} value={version.id} className="text-white hover:bg-gray-700 focus:bg-gray-700">
@@ -127,13 +122,14 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
             {!loading && versions.length > 0 && (
               <div className="flex items-center gap-2 text-xs text-emerald-400/70">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{versions.length} {t("versionsAvailable")}</span>
+                <span>
+                  {versions.length} {t("versionsAvailable")}
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* Docker Image */}
         <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <Label htmlFor="dockerImage" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">

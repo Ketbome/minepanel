@@ -123,20 +123,6 @@ Minepanel implements several security measures:
 
 **Better option:** Use a VPN (WireGuard, Tailscale) for remote access.
 
-### How do I change the default password?
-
-1. Generate a bcrypt hash at https://bcrypt-generator.com/
-2. Edit `docker-compose.yml`:
-   ```yaml
-   environment:
-     - CLIENT_PASSWORD=$$2a$$12$$YourHashHere...
-   ```
-   (Note: double `$$` in docker-compose.yml)
-3. Restart:
-   ```bash
-   docker compose restart minepanel
-   ```
-
 ### Can I add multiple users?
 
 Not yet, but multi-user support is planned! Currently, Minepanel uses a single admin account.
