@@ -3,10 +3,10 @@ import { DockerComposeService } from 'src/docker-compose/docker-compose.service'
 import { ServerManagementService } from './server-management.service';
 import { UpdateServerConfigDto } from './dto/server-config.model';
 import { ServerListItemDto } from './dto/server-list-item.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('servers')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class ServerManagementController {
   constructor(
     private readonly dockerComposeService: DockerComposeService,

@@ -2,14 +2,13 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
-import { ConfigService } from '@nestjs/config';
 import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 
 @Injectable()
 export class DockerComposeService {
-  private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
+  private readonly BASE_DIR = path.join(process.cwd(), '..', 'servers');
 
-  constructor(private readonly configService: ConfigService) {
+  constructor() {
     fs.ensureDirSync(this.BASE_DIR);
   }
 
@@ -151,7 +150,7 @@ export class DockerComposeService {
         enableRollingLogs: env.ENABLE_ROLLING_LOGS === 'true',
         logTimestamp: env.LOG_TIMESTAMP === 'true',
 
-        dockerImage: mcService.image ? mcService.image.split(':')[1] ?? 'latest' : 'latest',
+        dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
         minecraftVersion: env.VERSION,
         dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : './mc-data:/data\n./modpacks:/modpacks:ro',
         restartPolicy: mcService.restart ?? 'unless-stopped',
@@ -542,7 +541,7 @@ export class DockerComposeService {
       env['FORGE_VERSION'] = config.forgeBuild;
     }
 
-    const apiKey = config.cfApiKey || this.configService.get('CF_API_KEY');
+    const apiKey = config.cfApiKey;
     if (apiKey) env['CF_API_KEY'] = apiKey;
 
     const serverTypeHandlers = {
