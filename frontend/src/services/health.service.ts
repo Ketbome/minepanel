@@ -1,6 +1,6 @@
 import api from "./axios.service";
 
 export const healthService = async (): Promise<string> => {
-  const response = await api.get(`/health`);
+  const response = await api.get('/');
   return response.data;
 };
