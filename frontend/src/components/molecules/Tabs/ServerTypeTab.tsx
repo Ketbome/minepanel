@@ -25,7 +25,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
 
   const { versions, loading, latestRelease, refresh, getRecommended } = useMinecraftVersions({
     filterType: "release",
-    limit: 100, // Last 100 releases
+    limit: 100,
   });
 
   const [showManualInput, setShowManualInput] = useState(false);

@@ -119,7 +119,7 @@ export class ServerManagementService {
         return acc;
       }, {});
     } catch (error) {
-      console.error('Error al obtener el estado de todos los servidores:', error);
+      console.error('Error obtaining all servers status:', error);
       return {};
     }
   }
@@ -471,12 +471,12 @@ export class ServerManagementService {
   async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<{ success: boolean; output: string }> {
     try {
       if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
-        return { success: false, output: 'Servidor no encontrado' };
+        return { success: false, output: 'Server not found' };
       }
 
       const containerId = await this.findContainerId(serverId);
       if (!containerId) {
-        return { success: false, output: 'Contenedor no encontrado o no está en ejecución' };
+        return { success: false, output: 'Container not found or not running' };
       }
 
       let rconConfig = `--port ${rconPort}`;
@@ -485,12 +485,12 @@ export class ServerManagementService {
       const { stdout, stderr } = await execAsync(`docker exec -i ${containerId} rcon-cli ${rconConfig} "${command}"`);
 
       if (stderr) {
-        return { success: false, output: `Error al ejecutar comando: ${stderr}` };
+        return { success: false, output: `Error executing command: ${stderr}` };
       }
 
-      return { success: true, output: stdout || 'Comando ejecutado correctamente' };
+      return { success: true, output: stdout || 'Command executed successfully' };
     } catch (error) {
-      console.error(`Error al ejecutar comando en servidor ${serverId}:`, error);
+      console.error(`Error executing command on server ${serverId}:`, error);
       return { success: false, output: `Error: ${error.message}` };
     }
   }

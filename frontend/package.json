@@ -7,9 +7,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 8090",
+    "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 8090",
+    "start": "next start -p 3000",
     "lint": "next lint"
   },
   "dependencies": {

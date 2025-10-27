@@ -3,6 +3,7 @@ import { ServerConfig } from "../types/types";
 import { apiClearServerData, apiRestartServer, fetchServerConfig, updateServerConfig } from "@/services/docker/fetchs";
 import { toast } from "sonner";
 import { useAutoSaveWithToast } from "./useAutoSave";
+import { minecraftVersionsService } from "@/services/minecraft-versions.service";
 
 const defaultConfig: ServerConfig = {
   id: "Server",
@@ -77,7 +78,7 @@ const defaultConfig: ServerConfig = {
   backupExcludes: "",
   tarCompressMethod: "gzip",
   dockerImage: "latest",
-  minecraftVersion: "1.19.2",
+  minecraftVersion: "",
   dockerVolumes: "./mc-data:/data\n./modpacks:/modpacks:ro",
   restartPolicy: "unless-stopped",
   stopDelay: "60",
@@ -133,6 +134,11 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
 
         if (!serverConfig.port) {
           serverConfig.port = serverId === "daily" ? "25565" : "25566";
+        }
+
+        if (!serverConfig.minecraftVersion) {
+          const latestRelease = await minecraftVersionsService.getLatestRelease();
+          serverConfig.minecraftVersion = latestRelease;
         }
 
         setConfig({

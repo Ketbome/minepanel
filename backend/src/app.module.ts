@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import config from 'src/config';
 import { DatabaseModule } from './database/database.module';
+import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DatabaseModule } from './database/database.module';
     UsersModule,
     ServerManagementModule,
     AuthModule,
+    SystemMonitoringModule,
   ],
   controllers: [AppController],
   providers: [AppService],

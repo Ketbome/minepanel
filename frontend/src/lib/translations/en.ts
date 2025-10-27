@@ -11,6 +11,19 @@ export const en = {
   serverUnavailable: "Can't connect",
   serverUnavailableDesc: "Looks like there's a configuration issue. Check that the backend URL is set up correctly, that the server is running, or if there's a DNS problem.",
   checkingServerStatus: "Checking connection...",
+  cannotConnectToServer: "Cannot connect to server",
+  cannotConnectToServerDesc: "The application cannot establish a connection with the backend server. Please verify your configuration.",
+  troubleshootingSteps: "Troubleshooting Steps",
+  checkBackendUrl: "Check Backend URL",
+  checkBackendUrlDesc: "Verify that the NEXT_PUBLIC_API_URL environment variable is correctly configured",
+  checkServerRunning: "Verify Server Status",
+  checkServerRunningDesc: "Ensure the backend server is running and accessible on the configured port",
+  checkDNS: "Check DNS/Network",
+  checkDNSDesc: "Verify there are no DNS or firewall issues blocking the connection",
+  needMoreHelp: "Need more help?",
+  needMoreHelpDesc: "Check the documentation or contact support for assistance",
+  retryConnection: "Retry Connection",
+  retrying: "Retrying...",
 
   // ===========================
   // NAVIGATION
@@ -25,6 +38,7 @@ export const en = {
   // COMMON ACTIONS
   // ===========================
   save: "Save",
+  saving: "Saving...",
   cancel: "Cancel",
   confirm: "Confirm",
   loading: "Loading...",
@@ -53,6 +67,7 @@ export const en = {
   saveChanges: "Save Changes",
   addPort: "Add Port",
   addVariable: "Add Variable",
+  comingSoon: "Coming Soon",
 
   // ===========================
   // STATUS
@@ -136,6 +151,50 @@ export const en = {
   admin: "Admin",
   administrator: "Administrator",
   minecraftPanel: "Minepanel",
+
+  // Home Page
+  homeTitle: "Home",
+  homeDescription: "Overview of your Minecraft server panel",
+  welcomeBack: "Welcome back",
+  quickStats: "Quick Stats",
+  totalServers: "Total Servers",
+  runningServers: "Running Servers",
+  stoppedServers: "Stopped Servers",
+  systemStatus: "System Status",
+  cpuUsage: "CPU Usage",
+  memoryUsage: "Memory Usage",
+  diskUsage: "Disk Usage",
+  recentActivity: "Recent Activity",
+  noRecentActivity: "No recent activity",
+  quickActions: "Quick Actions",
+  viewAllServers: "View All Servers",
+  systemHealth: "System Health",
+  healthy: "Healthy",
+
+  // Settings Page
+  settingsTitle: "Settings",
+  settingsDescription: "Configure your account and application preferences",
+  accountSettings: "Account Settings",
+  yourUsername: "Your Username",
+  changePassword: "Change Password",
+  currentPassword: "Current Password",
+  newPassword: "New Password",
+  confirmPassword: "Confirm Password",
+  updatePassword: "Update Password",
+  apiSettings: "API Settings",
+  cloudflareApiKey: "Cloudflare API Key",
+  cloudflareApiKeyDesc: "API key for Cloudflare integration",
+  discordWebhook: "Discord Webhook URL",
+  discordWebhookDesc: "Webhook URL for Discord notifications",
+  appearanceSettings: "Appearance",
+  languageDesc: "Select your preferred language",
+  notificationSettings: "Notifications",
+  enableNotifications: "Enable Notifications",
+  enableNotificationsDesc: "Receive notifications about server events",
+  dangerZone: "Danger Zone",
+  dangerZoneDesc: "Irreversible and destructive actions",
+  settingsSaved: "Settings saved successfully",
+  settingsSaveFailed: "Failed to save settings",
 
   // Server Creation
   serverCreationDesc: "Create a new Minecraft server",

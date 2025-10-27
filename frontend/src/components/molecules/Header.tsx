@@ -32,7 +32,7 @@ export function Header() {
   return (
     <header className="relative z-10 border-b border-gray-800/60 bg-black/30 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
-        <Link href="/dashboard" className="flex items-center gap-3 font-bold">
+        <Link href="/dashboard/home" className="flex items-center gap-3 font-bold">
           <motion.div whileHover={{ rotate: [0, -10, 10, -10, 0] }} transition={{ duration: 0.5 }}>
             <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" />
           </motion.div>

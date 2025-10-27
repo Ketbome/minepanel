@@ -13,6 +13,19 @@ export const es: Record<TranslationKey, string> = {
   serverUnavailable: "No se puede conectar",
   serverUnavailableDesc: "Parece que hay un problema de configuración. Revisa que la URL del backend esté bien configurada, que el servidor esté corriendo o si hay algún problema con el DNS.",
   checkingServerStatus: "Chequeando conexión...",
+  cannotConnectToServer: "No se puede conectar al servidor",
+  cannotConnectToServerDesc: "La aplicación no puede establecer conexión con el servidor backend. Por favor verifica tu configuración.",
+  troubleshootingSteps: "Pasos para Solucionar",
+  checkBackendUrl: "Verificar URL del Backend",
+  checkBackendUrlDesc: "Verifica que la variable de entorno NEXT_PUBLIC_API_URL esté correctamente configurada",
+  checkServerRunning: "Verificar Estado del Servidor",
+  checkServerRunningDesc: "Asegúrate de que el servidor backend esté ejecutándose y accesible en el puerto configurado",
+  checkDNS: "Verificar DNS/Red",
+  checkDNSDesc: "Verifica que no haya problemas de DNS o firewall bloqueando la conexión",
+  needMoreHelp: "¿Necesitas más ayuda?",
+  needMoreHelpDesc: "Consulta la documentación o contacta al soporte para asistencia",
+  retryConnection: "Reintentar Conexión",
+  retrying: "Reintentando...",
 
   // ===========================
   // NAVEGACIÓN
@@ -27,6 +40,7 @@ export const es: Record<TranslationKey, string> = {
   // ACCIONES COMUNES
   // ===========================
   save: "Guardar",
+  saving: "Guardando...",
   cancel: "Cancelar",
   confirm: "Confirmar",
   loading: "Cargando...",
@@ -55,6 +69,7 @@ export const es: Record<TranslationKey, string> = {
   saveChanges: "Guardar Cambios",
   addPort: "Agregar Puerto",
   addVariable: "Agregar Variable",
+  comingSoon: "Próximamente",
 
   // ===========================
   // ESTADOS
@@ -138,6 +153,50 @@ export const es: Record<TranslationKey, string> = {
   admin: "Admin",
   administrator: "Administrador",
   minecraftPanel: "Minepanel",
+
+  // Página de Inicio
+  homeTitle: "Inicio",
+  homeDescription: "Resumen de tu panel de servidores de Minecraft",
+  welcomeBack: "Bienvenido de nuevo",
+  quickStats: "Estadísticas Rápidas",
+  totalServers: "Total de Servidores",
+  runningServers: "Servidores Activos",
+  stoppedServers: "Servidores Detenidos",
+  systemStatus: "Estado del Sistema",
+  cpuUsage: "Uso de CPU",
+  memoryUsage: "Uso de Memoria",
+  diskUsage: "Uso de Disco",
+  recentActivity: "Actividad Reciente",
+  noRecentActivity: "Sin actividad reciente",
+  quickActions: "Acciones Rápidas",
+  viewAllServers: "Ver Todos los Servidores",
+  systemHealth: "Salud del Sistema",
+  healthy: "Saludable",
+
+  // Página de Configuración
+  settingsTitle: "Configuración",
+  settingsDescription: "Configura tu cuenta y preferencias de la aplicación",
+  accountSettings: "Configuración de Cuenta",
+  yourUsername: "Tu Nombre de Usuario",
+  changePassword: "Cambiar Contraseña",
+  currentPassword: "Contraseña Actual",
+  newPassword: "Nueva Contraseña",
+  confirmPassword: "Confirmar Contraseña",
+  updatePassword: "Actualizar Contraseña",
+  apiSettings: "Configuración de API",
+  cloudflareApiKey: "Clave API de Cloudflare",
+  cloudflareApiKeyDesc: "Clave API para la integración con Cloudflare",
+  discordWebhook: "URL del Webhook de Discord",
+  discordWebhookDesc: "URL del webhook para notificaciones de Discord",
+  appearanceSettings: "Apariencia",
+  languageDesc: "Selecciona tu idioma preferido",
+  notificationSettings: "Notificaciones",
+  enableNotifications: "Habilitar Notificaciones",
+  enableNotificationsDesc: "Recibe notificaciones sobre eventos del servidor",
+  dangerZone: "Zona de Peligro",
+  dangerZoneDesc: "Acciones irreversibles y destructivas",
+  settingsSaved: "Configuración guardada exitosamente",
+  settingsSaveFailed: "Error al guardar la configuración",
 
   // Creación de Servidor
   serverCreationDesc: "Crea un nuevo servidor de Minecraft",

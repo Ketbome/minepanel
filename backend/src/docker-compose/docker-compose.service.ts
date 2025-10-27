@@ -6,7 +6,7 @@ import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/serv
 
 @Injectable()
 export class DockerComposeService {
-  private readonly BASE_DIR = path.join(process.cwd(), '..', 'servers');
+  private readonly BASE_DIR = process.env.SERVERS_DIR;
 
   constructor() {
     fs.ensureDirSync(this.BASE_DIR);
@@ -386,9 +386,16 @@ export class DockerComposeService {
       }
 
       const entries = await fs.readdir(this.BASE_DIR, { withFileTypes: true });
-      const serverIds = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+      const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 
-      return serverIds;
+      const serverIds = await Promise.all(
+        directories.map(async (dir) => {
+          const hasDockerCompose = await fs.pathExists(this.getDockerComposePath(dir));
+          return hasDockerCompose ? dir : null;
+        }),
+      );
+
+      return serverIds.filter((id): id is string => id !== null);
     } catch (error) {
       console.error('Error getting server IDs:', error);
       return [];
