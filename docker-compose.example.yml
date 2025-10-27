@@ -6,9 +6,9 @@ services:
     ports:
       - "${BACKEND_PORT:-8091}:8091"
     environment:
-      - SERVERS_DIR=${PWD}/servers
+      - SERVERS_DIR=/app/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
+      - JWT_SECRET=dasasdadsasdasads-asddas-ads-asdadsasd # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       # Database
@@ -18,7 +18,7 @@ services:
       - DB_USER=${DB_USER:-minepanel}
       - DB_PASSWORD=${DB_PASSWORD:-minepanel}
     volumes:
-      - ${PWD}/servers:${PWD}/servers
+      - ./servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
@@ -45,7 +45,7 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${PWD}/servers:/data
+      - ./servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
