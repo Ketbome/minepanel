@@ -15,7 +15,32 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      root: ${{ steps.filter.outputs.root }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            root:
+              - 'Dockerfile'
+              - 'config.json'
+              - '.github/workflows/**'
+
   build-and-push:
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,34 +49,63 @@ jobs:
             dockerfile: ./Dockerfile
             context: .
             image: minepanel
+            condition: root
           - name: minepanel-backend
             dockerfile: ./backend/Dockerfile
             context: ./backend
             image: minepanel-backend
+            condition: backend
           - name: minepanel-frontend
             dockerfile: ./frontend/Dockerfile
             context: ./frontend
             image: minepanel-frontend
+            condition: frontend
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
 
       - name: Read version from config.json
         id: version
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         run: |
           VERSION=$(jq -r '.version' config.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version detected: $VERSION"
 
       - name: Set up QEMU
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
+        if: |
+          github.event_name != 'pull_request' && (
+            (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+            (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+            (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+            github.event_name == 'workflow_dispatch'
+          )
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -59,6 +113,11 @@ jobs:
 
       - name: Extract metadata (tags, labels)
         id: meta
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
@@ -72,6 +131,11 @@ jobs:
             type=raw,value=${{ steps.version.outputs.version }},enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
@@ -84,6 +148,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - name: Image digest
+        if: |
+          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
+          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
+          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
+          github.event_name == 'workflow_dispatch'
         run: |
           echo "Image ${{ matrix.image }} built successfully"
           echo "Version: ${{ steps.version.outputs.version }}"
