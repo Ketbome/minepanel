@@ -96,7 +96,6 @@ export default function SettingsPage() {
   };
 
   const handleChangePassword = async () => {
-    // Validation
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       toast.error(t("allPasswordFieldsRequired"));
       return;
@@ -116,7 +115,6 @@ export default function SettingsPage() {
 
       toast.success(t("passwordChangedSuccessfully"));
 
-      // Clear form
       setPasswordData({
         currentPassword: "",
         newPassword: "",

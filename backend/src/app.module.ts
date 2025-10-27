@@ -9,6 +9,7 @@ import config from 'src/config';
 import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
 import { DiscordModule } from './discord/discord.module';
+import { CurseforgeModule } from './curseforge/curseforge.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { DiscordModule } from './discord/discord.module';
     AuthModule,
     SystemMonitoringModule,
     DiscordModule,
+    CurseforgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -349,7 +349,7 @@ export class DockerComposeService {
       logTimestamp: false,
 
       dockerImage: 'latest',
-      minecraftVersion: '1.19.2',
+      minecraftVersion: '1.21.10',
       dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro',
       restartPolicy: 'unless-stopped',
       stopDelay: '60',

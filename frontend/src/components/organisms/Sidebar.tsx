@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings } from "lucide-react";
+import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings, Package } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -153,6 +153,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
       isActive: pathname === "/dashboard/servers",
     },
     {
+      label: t("templates"),
+      icon: Package,
+      href: "/dashboard/templates",
+      isActive: pathname === "/dashboard/templates",
+    },
+    {
       label: t("settings"),
       icon: Settings,
       href: "/dashboard/settings",
@@ -211,11 +217,11 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
         {navigationItems.map((item) => (
           <Link key={item.href} href={item.href}>
-            <Button variant="ghost" className={cn("w-full justify-start gap-3 h-10 px-3", " text-white transition-colors", item.isActive && "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30", isCollapsed && "justify-center px-0")}>
-              <item.icon size={18} />
+            <Button variant="ghost" className={cn("w-full justify-start gap-3 h-10 px-3 hover:bg-gray-800/60 hover:text-white", " text-white transition-colors", item.isActive && "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30", isCollapsed && "justify-center px-0")}>
+              <item.icon size={18} className="text-gray-400 hover:text-white" />
               <AnimatePresence mode="wait">
                 {!isCollapsed && (
-                  <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="font-minecraft text-sm">
+                  <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="font-minecraft text-sm ">
                     {item.label}
                   </motion.span>
                 )}

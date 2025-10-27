@@ -11,7 +11,7 @@ export const fetchServerList = async (): Promise<ServerListItem[]> => {
   return response.data;
 };
 
-export const createServer = async (data: { id: string }): Promise<{ success: boolean; message: string; server: ServerConfig }> => {
+export const createServer = async (data: Partial<ServerConfig>): Promise<{ success: boolean; message: string; server: ServerConfig }> => {
   const response = await api.post(`/servers`, data);
   return response.data;
 };
