@@ -23,6 +23,8 @@ minepanel/
 │   ├── src/
 │   │   ├── auth/
 │   │   ├── server-management/
+│   │   ├── discord/
+│   │   ├── system-monitoring/
 │   │   ├── docker-compose/
 │   │   ├── settings/
 │   │   └── users/
@@ -64,18 +66,26 @@ Runs on `http://localhost:3000`
 **backend/.env:**
 
 ```bash
+FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
+# Generate a strong random secret: openssl rand -base64 32
+JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
+CLIENT_PASSWORD= # Password for client
+CLIENT_USERNAME= # Username for the client
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=minepanel
+DB_USER=minepanel
+DB_PASSWORD=minepanel
 SERVERS_DIR=../servers
-FRONTEND_URL=http://localhost:3000
-CLIENT_USERNAME=admin
-CLIENT_PASSWORD=admin
-JWT_SECRET= # openssl rand -base64 32
+
 ```
 
 **frontend/.env:**
 
 ```bash
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
+NEXT_PUBLIC_BACKEND_URL='http://localhost:8091' # URL of the backend API, it's important start with http:// or https://
+NEXT_PUBLIC_FILEBROWSER_URL='http://localhost:8080' # URL of the FileBrowser instance, it's important start with http:// or https://
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en # es or en 
 ```
 
 ## Tech stack

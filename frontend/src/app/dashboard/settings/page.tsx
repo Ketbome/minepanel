@@ -131,7 +131,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-white font-minecraft">{t("apiSettings")}</CardTitle>
-                    <CardDescription className="text-gray-400">{t("cloudflareApiKey")}</CardDescription>
+                    <CardDescription className="text-gray-400">{t("apiSettingsDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -147,11 +147,12 @@ export default function SettingsPage() {
                       name="cfApiKey"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-200">{t("cloudflareApiKey")}</FormLabel>
+                          <FormLabel className="text-gray-200">{t("curseforgeApiKey")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="password" placeholder="••••••••••••••••" className="bg-gray-800 border-gray-700 text-white" />
                           </FormControl>
-                          <FormDescription className="text-gray-400">{t("cloudflareApiKeyDesc")}</FormDescription>
+                          <FormDescription className="text-gray-400">{t("curseforgeApiKeyDesc")}</FormDescription>
+                          <p className="text-xs text-amber-300 mt-2" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
                           <FormMessage />
                         </FormItem>
                       )}

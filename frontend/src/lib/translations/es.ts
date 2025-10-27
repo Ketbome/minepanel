@@ -184,8 +184,12 @@ export const es: Record<TranslationKey, string> = {
   confirmPassword: "Confirmar Contraseña",
   updatePassword: "Actualizar Contraseña",
   apiSettings: "Configuración de API",
-  cloudflareApiKey: "Clave API de Cloudflare",
-  cloudflareApiKeyDesc: "Clave API para la integración con Cloudflare",
+  apiSettingsDesc: "Configura las claves de API para integraciones externas",
+  curseforgeApiKey: "Clave API de CurseForge",
+  curseforgeApiKeyDesc: "Clave API para descargar mods y modpacks de CurseForge",
+  importFromSettings: "Importar desde Settings",
+  apiKeyImported: "API Key importada correctamente",
+  noApiKeyConfigured: "No hay API Key configurada en Settings",
   discordWebhook: "URL del Webhook de Discord",
   discordWebhookDesc: "URL del webhook para notificaciones de Discord",
   appearanceSettings: "Apariencia",
@@ -799,7 +803,7 @@ export const es: Record<TranslationKey, string> = {
   cfApiKey: "API Key de CurseForge (CF_API_KEY)",
   cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
   cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
-  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debe duplicar de ser necesario. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$2a$10$$T6sGlu...</code>. Esto es especialmente importante para el tercer <b>$</b> en adelante.",
+  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debes duplicar cada <b>$</b> a <b>$$</b>. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$$2a$$10$$T6sGlu...</code>",
 
   // Opciones Avanzadas de CurseForge
   advancedOptions: "Opciones Avanzadas",

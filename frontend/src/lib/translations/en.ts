@@ -182,8 +182,12 @@ export const en = {
   confirmPassword: "Confirm Password",
   updatePassword: "Update Password",
   apiSettings: "API Settings",
-  cloudflareApiKey: "Cloudflare API Key",
-  cloudflareApiKeyDesc: "API key for Cloudflare integration",
+  apiSettingsDesc: "Configure API keys for external integrations",
+  curseforgeApiKey: "CurseForge API Key",
+  curseforgeApiKeyDesc: "API key to download mods and modpacks from CurseForge",
+  importFromSettings: "Import from Settings",
+  apiKeyImported: "API Key imported successfully",
+  noApiKeyConfigured: "No API Key configured in Settings",
   discordWebhook: "Discord Webhook URL",
   discordWebhookDesc: "Webhook URL for Discord notifications",
   appearanceSettings: "Appearance",
@@ -797,7 +801,7 @@ export const en = {
   cfApiKey: "CurseForge API Key (CF_API_KEY)",
   cfApiKeyHelp: "CurseForge API Key (Eternal) required to download some modpacks.",
   cfApiKeyDesc: "API Key to download restricted modpacks (required for most modpacks)",
-  cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$2a$10$$T6sGlu...</code>. This is especially important for the third <b>$</b> onwards.",
+  cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols, you must double each <b>$</b> to <b>$$</b>. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$$2a$$10$$T6sGlu...</code>",
 
   // CurseForge Advanced Options
   advancedOptions: "Advanced Options",

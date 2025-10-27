@@ -24,32 +24,61 @@ services:
   minepanel:
     image: ketbom/minepanel:latest
     ports:
-      - "8091:8091" # Backend
-      - "3000:3000" # Frontend
+      - "${BACKEND_PORT:-8091}:8091"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      - SERVERS_DIR=${PWD}/servers
-      - FRONTEND_URL=http://localhost:3000
-      - CLIENT_PASSWORD=admin
+      # Backend environment variables
+      - SERVERS_DIR=/app/servers
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
-      - CLIENT_USERNAME=admin
-      - DEFAULT_LANGUAGE=en
-      - NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
+      - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-minepanel}
+      - DB_USER=${DB_USER:-minepanel}
+      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
+      # Frontend environment variables (loaded at runtime via @next/env)
+      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
+      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      - ${PWD}/servers:${PWD}/servers
+      - ./servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: always
 
   filebrowser:
     image: hurlenko/filebrowser
     ports:
-      - "8080:8080"
+      - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${PWD}/servers:/data
+      - ./servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME:-minepanel}
+      - POSTGRES_USER=${DB_USER:-minepanel}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
 ```
 
 ### Step 2: Launch
@@ -237,69 +266,6 @@ Make sure your domains point to your server's IP address before starting:
 
 ```bash
 docker compose -f docker-compose.split.yml up -d
-```
-
-### With Traefik
-
-If you prefer Traefik as your reverse proxy:
-
-```yaml
-networks:
-  traefik:
-    external: true
-
-services:
-  frontend:
-    image: ketbom/minepanel-frontend:latest
-    expose:
-      - 3000
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.minepanel.rule=Host(`minepanel.yourdomain.com`)"
-      - "traefik.http.routers.minepanel.entrypoints=websecure"
-      - "traefik.http.routers.minepanel.tls.certresolver=letsencrypt"
-      - "traefik.http.services.minepanel.loadbalancer.server.port=3000"
-    environment:
-      - NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
-      - NEXT_PUBLIC_FILEBROWSER_URL=https://files.yourdomain.com
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
-
-  backend:
-    image: ketbom/minepanel-backend:latest
-    expose:
-      - 8091
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.minepanel-api.rule=Host(`api.yourdomain.com`)"
-      - "traefik.http.routers.minepanel-api.entrypoints=websecure"
-      - "traefik.http.routers.minepanel-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.minepanel-api.loadbalancer.server.port=8091"
-    environment:
-      - SERVERS_DIR=/app/servers
-      - FRONTEND_URL=https://minepanel.yourdomain.com
-      - CLIENT_PASSWORD=admin
-      - CLIENT_USERNAME=admin
-    volumes:
-      - ./servers:/app/servers
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
-
-  filebrowser:
-    image: hurlenko/filebrowser
-    expose:
-      - 8080
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.filebrowser.rule=Host(`files.yourdomain.com`)"
-      - "traefik.http.routers.filebrowser.entrypoints=websecure"
-      - "traefik.http.routers.filebrowser.tls.certresolver=letsencrypt"
-      - "traefik.http.services.filebrowser.loadbalancer.server.port=8080"
-    volumes:
-      - ./servers:/data
-      - ./filebrowser-data:/config
-    restart: always
 ```
 
 ---
