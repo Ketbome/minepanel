@@ -29,7 +29,7 @@ services:
     environment:
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=http://localhost:3000
-      - CLIENT_PASSWORD=$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu
+      - CLIENT_PASSWORD=admin
       - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_USERNAME=admin
       - DEFAULT_LANGUAGE=en
@@ -202,7 +202,7 @@ services:
       - LETSENCRYPT_EMAIL=your-email@example.com
       - SERVERS_DIR=/app/servers
       - FRONTEND_URL=https://minepanel.yourdomain.com
-      - CLIENT_PASSWORD=$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu
+      - CLIENT_PASSWORD=admin
       - CLIENT_USERNAME=admin
       - DEFAULT_LANGUAGE=en
       - JWT_SECRET=
@@ -279,7 +279,7 @@ services:
     environment:
       - SERVERS_DIR=/app/servers
       - FRONTEND_URL=https://minepanel.yourdomain.com
-      - CLIENT_PASSWORD=$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu
+      - CLIENT_PASSWORD=admin
       - CLIENT_USERNAME=admin
     volumes:
       - ./servers:/app/servers

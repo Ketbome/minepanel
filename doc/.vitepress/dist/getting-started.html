@@ -1,31 +1,965 @@
 <!DOCTYPE html>
 <html lang="en-US" dir="ltr">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Getting Started | Minepanel Documentation</title>
-    <meta name="description" content="Modern Minecraft Server Management Panel - Complete documentation and guides">
-    <meta name="generator" content="VitePress v2.0.0-alpha.12">
-    <link rel="preload stylesheet" href="/assets/style.DlwjX6m1.css" as="style">
-    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
-    
+    <meta
+      name="description"
+      content="Modern Minecraft Server Management Panel - Complete documentation and guides"
+    />
+    <meta name="generator" content="VitePress v2.0.0-alpha.12" />
+    <link
+      rel="preload stylesheet"
+      href="/assets/style.DlwjX6m1.css"
+      as="style"
+    />
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style" />
+
     <script type="module" src="/assets/app.e48e_lG5.js"></script>
-    <link rel="preload" href="/assets/inter-roman-latin.Di8DUHzh.woff2" as="font" type="font/woff2" crossorigin="">
-    <link rel="modulepreload" href="/assets/chunks/theme.e3E8IiRF.js">
-    <link rel="modulepreload" href="/assets/chunks/framework.BeLwBMAU.js">
-    <link rel="modulepreload" href="/assets/getting-started.md.Dn0yM92W.lean.js">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="theme-color" content="#3eaf7c">
-    <meta name="og:type" content="website">
-    <meta name="og:locale" content="en">
-    <meta name="og:title" content="Minepanel | Modern Minecraft Server Management">
-    <meta name="og:description" content="Manage multiple Minecraft servers with a beautiful web interface using Docker">
-    <meta name="og:site_name" content="Minepanel">
-    <script id="check-dark-mode">(()=>{const e=localStorage.getItem("vitepress-theme-appearance")||"auto",a=window.matchMedia("(prefers-color-scheme: dark)").matches;(!e||e==="auto"?a:e==="dark")&&document.documentElement.classList.add("dark")})();</script>
-    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+    <link
+      rel="preload"
+      href="/assets/inter-roman-latin.Di8DUHzh.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin=""
+    />
+    <link rel="modulepreload" href="/assets/chunks/theme.e3E8IiRF.js" />
+    <link rel="modulepreload" href="/assets/chunks/framework.BeLwBMAU.js" />
+    <link
+      rel="modulepreload"
+      href="/assets/getting-started.md.Dn0yM92W.lean.js"
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="theme-color" content="#3eaf7c" />
+    <meta name="og:type" content="website" />
+    <meta name="og:locale" content="en" />
+    <meta
+      name="og:title"
+      content="Minepanel | Modern Minecraft Server Management"
+    />
+    <meta
+      name="og:description"
+      content="Manage multiple Minecraft servers with a beautiful web interface using Docker"
+    />
+    <meta name="og:site_name" content="Minepanel" />
+    <script id="check-dark-mode">
+      (() => {
+        const e = localStorage.getItem("vitepress-theme-appearance") || "auto",
+          a = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        (!e || e === "auto" ? a : e === "dark") &&
+          document.documentElement.classList.add("dark");
+      })();
+    </script>
+    <script id="check-mac-os">
+      document.documentElement.classList.toggle(
+        "mac",
+        /Mac|iPhone|iPod|iPad/i.test(navigator.platform)
+      );
+    </script>
   </head>
   <body>
-    <div id="app"><div class="Layout" data-v-304c8b69><!--[--><!--]--><!--[--><span tabindex="-1" data-v-fcbfc0e0></span><a href="#VPContent" class="VPSkipLink visually-hidden" data-v-fcbfc0e0>Skip to content</a><!--]--><!----><header class="VPNav" data-v-304c8b69 data-v-d5bf7c8e><div class="VPNavBar" data-v-d5bf7c8e data-v-8eab0e6d><div class="wrapper" data-v-8eab0e6d><div class="container" data-v-8eab0e6d><div class="title" data-v-8eab0e6d><div class="VPNavBarTitle has-sidebar" data-v-8eab0e6d data-v-d4488dd0><a class="title" href="/" data-v-d4488dd0><!--[--><!--]--><!--[--><img class="VPImage logo" src="/cubo.webp" alt data-v-ab19afbb><!--]--><span data-v-d4488dd0>Minepanel Documentation</span><!--[--><!--]--></a></div></div><div class="content" data-v-8eab0e6d><div class="content-body" data-v-8eab0e6d><!--[--><!--]--><div class="VPNavBarSearch search" data-v-8eab0e6d><!--[--><!----><div id="local-search"><button type="button" aria-label="Search" aria-keyshortcuts="/ control+k meta+k" class="DocSearch DocSearch-Button"><span class="DocSearch-Button-Container"><span class="vpi-search DocSearch-Search-Icon"></span><span class="DocSearch-Button-Placeholder">Search</span></span><span class="DocSearch-Button-Keys"><kbd class="DocSearch-Button-Key"></kbd><kbd class="DocSearch-Button-Key"></kbd></span></button></div><!--]--></div><nav aria-labelledby="main-nav-aria-label" class="VPNavBarMenu menu" data-v-8eab0e6d data-v-020be4db><span id="main-nav-aria-label" class="visually-hidden" data-v-020be4db> Main Navigation </span><!--[--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/" tabindex="0" data-v-020be4db data-v-815115f5><!--[--><span data-v-815115f5>Home</span><!--]--></a><!--]--><!--[--><a class="VPLink link VPNavBarMenuLink active" href="/getting-started.html" tabindex="0" data-v-020be4db data-v-815115f5><!--[--><span data-v-815115f5>Getting Started</span><!--]--></a><!--]--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/installation.html" tabindex="0" data-v-020be4db data-v-815115f5><!--[--><span data-v-815115f5>Guide</span><!--]--></a><!--]--><!--[--><div class="VPFlyout VPNavBarMenuGroup" data-v-020be4db data-v-d8fae6e2><button type="button" class="button" aria-haspopup="true" aria-expanded="false" data-v-d8fae6e2><span class="text" data-v-d8fae6e2><!----><span data-v-d8fae6e2>Resources</span><span class="vpi-chevron-down text-icon" data-v-d8fae6e2></span></span></button><div class="menu" data-v-d8fae6e2><div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8><div class="items" data-v-fcd1d7a8><!--[--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/features.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Features</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/roadmap.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Roadmap</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/architecture.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Architecture</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/api.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>API Reference</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/development.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Development</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link" href="/faq.html" data-v-f2aefde6><!--[--><span data-v-f2aefde6>FAQ</span><!--]--></a></div><!--]--><!--]--></div><!--[--><!--]--></div></div></div><!--]--><!--[--><div class="VPFlyout VPNavBarMenuGroup" data-v-020be4db data-v-d8fae6e2><button type="button" class="button" aria-haspopup="true" aria-expanded="false" data-v-d8fae6e2><span class="text" data-v-d8fae6e2><!----><span data-v-d8fae6e2>Links</span><span class="vpi-chevron-down text-icon" data-v-d8fae6e2></span></span></button><div class="menu" data-v-d8fae6e2><div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8><div class="items" data-v-fcd1d7a8><!--[--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link vp-external-link-icon" href="https://github.com/Ketbome/minepanel" target="_blank" rel="noreferrer" data-v-f2aefde6><!--[--><span data-v-f2aefde6>GitHub</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link vp-external-link-icon" href="https://hub.docker.com/r/ketbom/minepanel" target="_blank" rel="noreferrer" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Docker Hub</span><!--]--></a></div><!--]--><!--[--><div class="VPMenuLink" data-v-fcd1d7a8 data-v-f2aefde6><a class="VPLink link vp-external-link-icon" href="https://github.com/Ketbome/minepanel/issues" target="_blank" rel="noreferrer" data-v-f2aefde6><!--[--><span data-v-f2aefde6>Report Issue</span><!--]--></a></div><!--]--><!--]--></div><!--[--><!--]--></div></div></div><!--]--><!--]--></nav><!----><div class="VPNavBarAppearance appearance" data-v-8eab0e6d data-v-3f90c1a5><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-3f90c1a5 data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div><div class="VPSocialLinks VPNavBarSocialLinks social-links" data-v-8eab0e6d data-v-ef6192dc data-v-a1a7286e><!--[--><a class="VPSocialLink no-icon" href="https://github.com/Ketbome/minepanel" aria-label="github" target="_blank" rel="me noopener" data-v-a1a7286e data-v-32d78712><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://hub.docker.com/r/ketbom/minepanel" aria-label="docker" target="_blank" rel="me noopener" data-v-a1a7286e data-v-32d78712><span class="vpi-social-docker"></span></a><!--]--></div><div class="VPFlyout VPNavBarExtra extra" data-v-8eab0e6d data-v-f953d92f data-v-d8fae6e2><button type="button" class="button" aria-haspopup="true" aria-expanded="false" aria-label="extra navigation" data-v-d8fae6e2><span class="vpi-more-horizontal icon" data-v-d8fae6e2></span></button><div class="menu" data-v-d8fae6e2><div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8><!----><!--[--><!--[--><!----><div class="group" data-v-f953d92f><div class="item appearance" data-v-f953d92f><p class="label" data-v-f953d92f>Appearance</p><div class="appearance-action" data-v-f953d92f><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-f953d92f data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div></div></div><div class="group" data-v-f953d92f><div class="item social-links" data-v-f953d92f><div class="VPSocialLinks social-links-list" data-v-f953d92f data-v-a1a7286e><!--[--><a class="VPSocialLink no-icon" href="https://github.com/Ketbome/minepanel" aria-label="github" target="_blank" rel="me noopener" data-v-a1a7286e data-v-32d78712><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://hub.docker.com/r/ketbom/minepanel" aria-label="docker" target="_blank" rel="me noopener" data-v-a1a7286e data-v-32d78712><span class="vpi-social-docker"></span></a><!--]--></div></div></div><!--]--><!--]--></div></div></div><!--[--><!--]--><button type="button" class="VPNavBarHamburger hamburger" aria-label="mobile navigation" aria-expanded="false" aria-controls="VPNavScreen" data-v-8eab0e6d data-v-6bee1efd><span class="container" data-v-6bee1efd><span class="top" data-v-6bee1efd></span><span class="middle" data-v-6bee1efd></span><span class="bottom" data-v-6bee1efd></span></span></button></div></div></div></div><div class="divider" data-v-8eab0e6d><div class="divider-line" data-v-8eab0e6d></div></div></div><!----></header><div class="VPLocalNav has-sidebar empty" data-v-304c8b69 data-v-5ae341c6><div class="container" data-v-5ae341c6><button class="menu" aria-expanded="false" aria-controls="VPSidebarNav" data-v-5ae341c6><span class="vpi-align-left menu-icon" data-v-5ae341c6></span><span class="menu-text" data-v-5ae341c6>Menu</span></button><div class="VPLocalNavOutlineDropdown" style="--vp-vh:0px;" data-v-5ae341c6 data-v-e28a51a6><button data-v-e28a51a6>Return to top</button><!----></div></div></div><aside class="VPSidebar" data-v-304c8b69 data-v-e0eef791><div class="curtain" data-v-e0eef791></div><nav class="nav" id="VPSidebarNav" aria-labelledby="sidebar-aria-label" tabindex="-1" data-v-e0eef791><span class="visually-hidden" id="sidebar-aria-label" data-v-e0eef791> Sidebar Navigation </span><!--[--><!--]--><!--[--><div class="no-transition group" data-v-a84b7c21><section class="VPSidebarItem level-0 collapsible has-active" data-v-a84b7c21 data-v-6b36a2fd><div class="item" role="button" tabindex="0" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><h2 class="text" data-v-6b36a2fd>🚀 Getting Started</h2><div class="caret" role="button" aria-label="toggle section" tabindex="0" data-v-6b36a2fd><span class="vpi-chevron-right caret-icon" data-v-6b36a2fd></span></div></div><div class="items" data-v-6b36a2fd><!--[--><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/getting-started.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Introduction</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/installation.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Installation</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/configuration.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Configuration</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><div class="no-transition group" data-v-a84b7c21><section class="VPSidebarItem level-0 collapsible" data-v-a84b7c21 data-v-6b36a2fd><div class="item" role="button" tabindex="0" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><h2 class="text" data-v-6b36a2fd>📖 Guide</h2><div class="caret" role="button" aria-label="toggle section" tabindex="0" data-v-6b36a2fd><span class="vpi-chevron-right caret-icon" data-v-6b36a2fd></span></div></div><div class="items" data-v-6b36a2fd><!--[--><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/features.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Features Overview</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/roadmap.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Roadmap</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/architecture.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Architecture</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/development.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>Development</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/api.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>API Reference</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><div class="no-transition group" data-v-a84b7c21><section class="VPSidebarItem level-0 collapsible" data-v-a84b7c21 data-v-6b36a2fd><div class="item" role="button" tabindex="0" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><h2 class="text" data-v-6b36a2fd>❓ Help</h2><div class="caret" role="button" aria-label="toggle section" tabindex="0" data-v-6b36a2fd><span class="vpi-chevron-right caret-icon" data-v-6b36a2fd></span></div></div><div class="items" data-v-6b36a2fd><!--[--><div class="VPSidebarItem level-1 is-link" data-v-6b36a2fd data-v-6b36a2fd><div class="item" data-v-6b36a2fd><div class="indicator" data-v-6b36a2fd></div><a class="VPLink link link" href="/faq.html" data-v-6b36a2fd><!--[--><p class="text" data-v-6b36a2fd>FAQ</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><!--]--><!--[--><!--]--></nav></aside><div class="VPContent has-sidebar" id="VPContent" data-v-304c8b69 data-v-2652e39a><div class="VPDoc has-sidebar has-aside" data-v-2652e39a data-v-d668f7cc><!--[--><!--]--><div class="container" data-v-d668f7cc><div class="aside" data-v-d668f7cc><div class="aside-curtain" data-v-d668f7cc></div><div class="aside-container" data-v-d668f7cc><div class="aside-content" data-v-d668f7cc><div class="VPDocAside" data-v-d668f7cc data-v-cb998dce><!--[--><!--]--><!--[--><!--]--><nav aria-labelledby="doc-outline-aria-label" class="VPDocAsideOutline" data-v-cb998dce data-v-c8b19031><div class="content" data-v-c8b19031><div class="outline-marker" data-v-c8b19031></div><div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading" data-v-c8b19031>On this page</div><ul class="VPDocOutlineItem root" data-v-c8b19031 data-v-b7d7ef80><!--[--><!--]--></ul></div></nav><!--[--><!--]--><div class="spacer" data-v-cb998dce></div><!--[--><!--]--><!----><!--[--><!--]--><!--[--><!--]--></div></div></div></div><div class="content" data-v-d668f7cc><div class="content-container" data-v-d668f7cc><!--[--><!--]--><main class="main" data-v-d668f7cc><div style="position:relative;" class="vp-doc _getting-started" data-v-d668f7cc><div><h1 id="getting-started" tabindex="-1">Getting Started <a class="header-anchor" href="#getting-started" aria-label="Permalink to “Getting Started”">​</a></h1><p>Welcome to Minepanel! This guide will help you get your Minecraft server management panel up and running in just a few minutes.</p><p><img src="/assets/Animation.Du5zKPKY.gif" alt="Minepanel Dashboard"></p><h2 id="prerequisites" tabindex="-1">Prerequisites <a class="header-anchor" href="#prerequisites" aria-label="Permalink to “Prerequisites”">​</a></h2><p>Before you begin, make sure you have:</p><ul><li><strong>Docker</strong> (version 20.10 or higher)</li><li><strong>Docker Compose</strong> (v2.0 or higher)</li><li><strong>2GB+ RAM</strong> available</li><li><strong>Operating System</strong>: Linux, macOS, or Windows with WSL2</li></ul><div class="tip custom-block"><p class="custom-block-title">Check Docker Installation</p><p>Run <code>docker --version</code> and <code>docker compose version</code> to verify your installation.</p></div><h2 id="quick-installation" tabindex="-1">Quick Installation <a class="header-anchor" href="#quick-installation" aria-label="Permalink to “Quick Installation”">​</a></h2><p>The fastest way to get started is using our pre-built Docker image:</p><h3 id="step-1-create-docker-compose-yml" tabindex="-1">Step 1: Create docker-compose.yml <a class="header-anchor" href="#step-1-create-docker-compose-yml" aria-label="Permalink to “Step 1: Create docker-compose.yml”">​</a></h3><p>Create a new directory and a <code>docker-compose.yml</code> file:</p><div class="language-yaml line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">yaml</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">services</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+    <div id="app">
+      <div class="Layout" data-v-304c8b69>
+        <!--[--><!--]--><!--[--><span tabindex="-1" data-v-fcbfc0e0></span
+        ><a href="#VPContent" class="VPSkipLink visually-hidden" data-v-fcbfc0e0
+          >Skip to content</a
+        ><!--]--><!---->
+        <header class="VPNav" data-v-304c8b69 data-v-d5bf7c8e>
+          <div class="VPNavBar" data-v-d5bf7c8e data-v-8eab0e6d>
+            <div class="wrapper" data-v-8eab0e6d>
+              <div class="container" data-v-8eab0e6d>
+                <div class="title" data-v-8eab0e6d>
+                  <div
+                    class="VPNavBarTitle has-sidebar"
+                    data-v-8eab0e6d
+                    data-v-d4488dd0
+                  >
+                    <a class="title" href="/" data-v-d4488dd0
+                      ><!--[--><!--]--><!--[--><img
+                        class="VPImage logo"
+                        src="/cubo.webp"
+                        alt
+                        data-v-ab19afbb
+                      /><!--]--><span data-v-d4488dd0
+                        >Minepanel Documentation</span
+                      ><!--[--><!--]--></a
+                    >
+                  </div>
+                </div>
+                <div class="content" data-v-8eab0e6d>
+                  <div class="content-body" data-v-8eab0e6d>
+                    <!--[--><!--]-->
+                    <div class="VPNavBarSearch search" data-v-8eab0e6d>
+                      <!--[--><!---->
+                      <div id="local-search">
+                        <button
+                          type="button"
+                          aria-label="Search"
+                          aria-keyshortcuts="/ control+k meta+k"
+                          class="DocSearch DocSearch-Button"
+                        >
+                          <span class="DocSearch-Button-Container"
+                            ><span
+                              class="vpi-search DocSearch-Search-Icon"
+                            ></span
+                            ><span class="DocSearch-Button-Placeholder"
+                              >Search</span
+                            ></span
+                          ><span class="DocSearch-Button-Keys"
+                            ><kbd class="DocSearch-Button-Key"></kbd
+                            ><kbd class="DocSearch-Button-Key"></kbd
+                          ></span>
+                        </button>
+                      </div>
+                      <!--]-->
+                    </div>
+                    <nav
+                      aria-labelledby="main-nav-aria-label"
+                      class="VPNavBarMenu menu"
+                      data-v-8eab0e6d
+                      data-v-020be4db
+                    >
+                      <span
+                        id="main-nav-aria-label"
+                        class="visually-hidden"
+                        data-v-020be4db
+                      >
+                        Main Navigation </span
+                      ><!--[--><!--[--><a
+                        class="VPLink link VPNavBarMenuLink"
+                        href="/"
+                        tabindex="0"
+                        data-v-020be4db
+                        data-v-815115f5
+                        ><!--[--><span data-v-815115f5>Home</span
+                        ><!--]--></a
+                      ><!--]--><!--[--><a
+                        class="VPLink link VPNavBarMenuLink active"
+                        href="/getting-started.html"
+                        tabindex="0"
+                        data-v-020be4db
+                        data-v-815115f5
+                        ><!--[--><span data-v-815115f5>Getting Started</span
+                        ><!--]--></a
+                      ><!--]--><!--[--><a
+                        class="VPLink link VPNavBarMenuLink"
+                        href="/installation.html"
+                        tabindex="0"
+                        data-v-020be4db
+                        data-v-815115f5
+                        ><!--[--><span data-v-815115f5>Guide</span
+                        ><!--]--></a
+                      ><!--]--><!--[-->
+                      <div
+                        class="VPFlyout VPNavBarMenuGroup"
+                        data-v-020be4db
+                        data-v-d8fae6e2
+                      >
+                        <button
+                          type="button"
+                          class="button"
+                          aria-haspopup="true"
+                          aria-expanded="false"
+                          data-v-d8fae6e2
+                        >
+                          <span class="text" data-v-d8fae6e2
+                            ><!----><span data-v-d8fae6e2>Resources</span
+                            ><span
+                              class="vpi-chevron-down text-icon"
+                              data-v-d8fae6e2
+                            ></span
+                          ></span>
+                        </button>
+                        <div class="menu" data-v-d8fae6e2>
+                          <div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8>
+                            <div class="items" data-v-fcd1d7a8>
+                              <!--[--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/features.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6>Features</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/roadmap.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6>Roadmap</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/architecture.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6
+                                    >Architecture</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/api.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6
+                                    >API Reference</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/development.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6
+                                    >Development</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link"
+                                  href="/faq.html"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6>FAQ</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--]-->
+                            </div>
+                            <!--[--><!--]-->
+                          </div>
+                        </div>
+                      </div>
+                      <!--]--><!--[-->
+                      <div
+                        class="VPFlyout VPNavBarMenuGroup"
+                        data-v-020be4db
+                        data-v-d8fae6e2
+                      >
+                        <button
+                          type="button"
+                          class="button"
+                          aria-haspopup="true"
+                          aria-expanded="false"
+                          data-v-d8fae6e2
+                        >
+                          <span class="text" data-v-d8fae6e2
+                            ><!----><span data-v-d8fae6e2>Links</span
+                            ><span
+                              class="vpi-chevron-down text-icon"
+                              data-v-d8fae6e2
+                            ></span
+                          ></span>
+                        </button>
+                        <div class="menu" data-v-d8fae6e2>
+                          <div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8>
+                            <div class="items" data-v-fcd1d7a8>
+                              <!--[--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link vp-external-link-icon"
+                                  href="https://github.com/Ketbome/minepanel"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6>GitHub</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link vp-external-link-icon"
+                                  href="https://hub.docker.com/r/ketbom/minepanel"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6
+                                    >Docker Hub</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--[-->
+                              <div
+                                class="VPMenuLink"
+                                data-v-fcd1d7a8
+                                data-v-f2aefde6
+                              >
+                                <a
+                                  class="VPLink link vp-external-link-icon"
+                                  href="https://github.com/Ketbome/minepanel/issues"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  data-v-f2aefde6
+                                  ><!--[--><span data-v-f2aefde6
+                                    >Report Issue</span
+                                  ><!--]--></a
+                                >
+                              </div>
+                              <!--]--><!--]-->
+                            </div>
+                            <!--[--><!--]-->
+                          </div>
+                        </div>
+                      </div>
+                      <!--]--><!--]-->
+                    </nav>
+                    <!---->
+                    <div
+                      class="VPNavBarAppearance appearance"
+                      data-v-8eab0e6d
+                      data-v-3f90c1a5
+                    >
+                      <button
+                        class="VPSwitch VPSwitchAppearance"
+                        type="button"
+                        role="switch"
+                        title
+                        aria-checked="false"
+                        data-v-3f90c1a5
+                        data-v-be9742d9
+                        data-v-b4ccac88
+                      >
+                        <span class="check" data-v-b4ccac88
+                          ><span class="icon" data-v-b4ccac88
+                            ><!--[--><span
+                              class="vpi-sun sun"
+                              data-v-be9742d9
+                            ></span
+                            ><span class="vpi-moon moon" data-v-be9742d9></span
+                            ><!--]--></span
+                          ></span
+                        >
+                      </button>
+                    </div>
+                    <div
+                      class="VPSocialLinks VPNavBarSocialLinks social-links"
+                      data-v-8eab0e6d
+                      data-v-ef6192dc
+                      data-v-a1a7286e
+                    >
+                      <!--[--><a
+                        class="VPSocialLink no-icon"
+                        href="https://github.com/Ketbome/minepanel"
+                        aria-label="github"
+                        target="_blank"
+                        rel="me noopener"
+                        data-v-a1a7286e
+                        data-v-32d78712
+                        ><span class="vpi-social-github"></span></a
+                      ><a
+                        class="VPSocialLink no-icon"
+                        href="https://hub.docker.com/r/ketbom/minepanel"
+                        aria-label="docker"
+                        target="_blank"
+                        rel="me noopener"
+                        data-v-a1a7286e
+                        data-v-32d78712
+                        ><span class="vpi-social-docker"></span></a
+                      ><!--]-->
+                    </div>
+                    <div
+                      class="VPFlyout VPNavBarExtra extra"
+                      data-v-8eab0e6d
+                      data-v-f953d92f
+                      data-v-d8fae6e2
+                    >
+                      <button
+                        type="button"
+                        class="button"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-label="extra navigation"
+                        data-v-d8fae6e2
+                      >
+                        <span
+                          class="vpi-more-horizontal icon"
+                          data-v-d8fae6e2
+                        ></span>
+                      </button>
+                      <div class="menu" data-v-d8fae6e2>
+                        <div class="VPMenu" data-v-d8fae6e2 data-v-fcd1d7a8>
+                          <!----><!--[--><!--[--><!---->
+                          <div class="group" data-v-f953d92f>
+                            <div class="item appearance" data-v-f953d92f>
+                              <p class="label" data-v-f953d92f>Appearance</p>
+                              <div class="appearance-action" data-v-f953d92f>
+                                <button
+                                  class="VPSwitch VPSwitchAppearance"
+                                  type="button"
+                                  role="switch"
+                                  title
+                                  aria-checked="false"
+                                  data-v-f953d92f
+                                  data-v-be9742d9
+                                  data-v-b4ccac88
+                                >
+                                  <span class="check" data-v-b4ccac88
+                                    ><span class="icon" data-v-b4ccac88
+                                      ><!--[--><span
+                                        class="vpi-sun sun"
+                                        data-v-be9742d9
+                                      ></span
+                                      ><span
+                                        class="vpi-moon moon"
+                                        data-v-be9742d9
+                                      ></span
+                                      ><!--]--></span
+                                    ></span
+                                  >
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="group" data-v-f953d92f>
+                            <div class="item social-links" data-v-f953d92f>
+                              <div
+                                class="VPSocialLinks social-links-list"
+                                data-v-f953d92f
+                                data-v-a1a7286e
+                              >
+                                <!--[--><a
+                                  class="VPSocialLink no-icon"
+                                  href="https://github.com/Ketbome/minepanel"
+                                  aria-label="github"
+                                  target="_blank"
+                                  rel="me noopener"
+                                  data-v-a1a7286e
+                                  data-v-32d78712
+                                  ><span class="vpi-social-github"></span></a
+                                ><a
+                                  class="VPSocialLink no-icon"
+                                  href="https://hub.docker.com/r/ketbom/minepanel"
+                                  aria-label="docker"
+                                  target="_blank"
+                                  rel="me noopener"
+                                  data-v-a1a7286e
+                                  data-v-32d78712
+                                  ><span class="vpi-social-docker"></span></a
+                                ><!--]-->
+                              </div>
+                            </div>
+                          </div>
+                          <!--]--><!--]-->
+                        </div>
+                      </div>
+                    </div>
+                    <!--[--><!--]--><button
+                      type="button"
+                      class="VPNavBarHamburger hamburger"
+                      aria-label="mobile navigation"
+                      aria-expanded="false"
+                      aria-controls="VPNavScreen"
+                      data-v-8eab0e6d
+                      data-v-6bee1efd
+                    >
+                      <span class="container" data-v-6bee1efd
+                        ><span class="top" data-v-6bee1efd></span
+                        ><span class="middle" data-v-6bee1efd></span
+                        ><span class="bottom" data-v-6bee1efd></span
+                      ></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="divider" data-v-8eab0e6d>
+              <div class="divider-line" data-v-8eab0e6d></div>
+            </div>
+          </div>
+          <!---->
+        </header>
+        <div
+          class="VPLocalNav has-sidebar empty"
+          data-v-304c8b69
+          data-v-5ae341c6
+        >
+          <div class="container" data-v-5ae341c6>
+            <button
+              class="menu"
+              aria-expanded="false"
+              aria-controls="VPSidebarNav"
+              data-v-5ae341c6
+            >
+              <span class="vpi-align-left menu-icon" data-v-5ae341c6></span
+              ><span class="menu-text" data-v-5ae341c6>Menu</span>
+            </button>
+            <div
+              class="VPLocalNavOutlineDropdown"
+              style="--vp-vh: 0px"
+              data-v-5ae341c6
+              data-v-e28a51a6
+            >
+              <button data-v-e28a51a6>Return to top</button
+              ><!---->
+            </div>
+          </div>
+        </div>
+        <aside class="VPSidebar" data-v-304c8b69 data-v-e0eef791>
+          <div class="curtain" data-v-e0eef791></div>
+          <nav
+            class="nav"
+            id="VPSidebarNav"
+            aria-labelledby="sidebar-aria-label"
+            tabindex="-1"
+            data-v-e0eef791
+          >
+            <span
+              class="visually-hidden"
+              id="sidebar-aria-label"
+              data-v-e0eef791
+            >
+              Sidebar Navigation </span
+            ><!--[--><!--]--><!--[-->
+            <div class="no-transition group" data-v-a84b7c21>
+              <section
+                class="VPSidebarItem level-0 collapsible has-active"
+                data-v-a84b7c21
+                data-v-6b36a2fd
+              >
+                <div class="item" role="button" tabindex="0" data-v-6b36a2fd>
+                  <div class="indicator" data-v-6b36a2fd></div>
+                  <h2 class="text" data-v-6b36a2fd>🚀 Getting Started</h2>
+                  <div
+                    class="caret"
+                    role="button"
+                    aria-label="toggle section"
+                    tabindex="0"
+                    data-v-6b36a2fd
+                  >
+                    <span
+                      class="vpi-chevron-right caret-icon"
+                      data-v-6b36a2fd
+                    ></span>
+                  </div>
+                </div>
+                <div class="items" data-v-6b36a2fd>
+                  <!--[-->
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/getting-started.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Introduction</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/installation.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Installation</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/configuration.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Configuration</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <!--]-->
+                </div>
+              </section>
+            </div>
+            <div class="no-transition group" data-v-a84b7c21>
+              <section
+                class="VPSidebarItem level-0 collapsible"
+                data-v-a84b7c21
+                data-v-6b36a2fd
+              >
+                <div class="item" role="button" tabindex="0" data-v-6b36a2fd>
+                  <div class="indicator" data-v-6b36a2fd></div>
+                  <h2 class="text" data-v-6b36a2fd>📖 Guide</h2>
+                  <div
+                    class="caret"
+                    role="button"
+                    aria-label="toggle section"
+                    tabindex="0"
+                    data-v-6b36a2fd
+                  >
+                    <span
+                      class="vpi-chevron-right caret-icon"
+                      data-v-6b36a2fd
+                    ></span>
+                  </div>
+                </div>
+                <div class="items" data-v-6b36a2fd>
+                  <!--[-->
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/features.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Features Overview</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/roadmap.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Roadmap</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/architecture.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Architecture</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/development.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>Development</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/api.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>API Reference</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <!--]-->
+                </div>
+              </section>
+            </div>
+            <div class="no-transition group" data-v-a84b7c21>
+              <section
+                class="VPSidebarItem level-0 collapsible"
+                data-v-a84b7c21
+                data-v-6b36a2fd
+              >
+                <div class="item" role="button" tabindex="0" data-v-6b36a2fd>
+                  <div class="indicator" data-v-6b36a2fd></div>
+                  <h2 class="text" data-v-6b36a2fd>❓ Help</h2>
+                  <div
+                    class="caret"
+                    role="button"
+                    aria-label="toggle section"
+                    tabindex="0"
+                    data-v-6b36a2fd
+                  >
+                    <span
+                      class="vpi-chevron-right caret-icon"
+                      data-v-6b36a2fd
+                    ></span>
+                  </div>
+                </div>
+                <div class="items" data-v-6b36a2fd>
+                  <!--[-->
+                  <div
+                    class="VPSidebarItem level-1 is-link"
+                    data-v-6b36a2fd
+                    data-v-6b36a2fd
+                  >
+                    <div class="item" data-v-6b36a2fd>
+                      <div class="indicator" data-v-6b36a2fd></div>
+                      <a
+                        class="VPLink link link"
+                        href="/faq.html"
+                        data-v-6b36a2fd
+                        ><!--[-->
+                        <p class="text" data-v-6b36a2fd>FAQ</p>
+                        <!--]--></a
+                      ><!---->
+                    </div>
+                    <!---->
+                  </div>
+                  <!--]-->
+                </div>
+              </section>
+            </div>
+            <!--]--><!--[--><!--]-->
+          </nav>
+        </aside>
+        <div
+          class="VPContent has-sidebar"
+          id="VPContent"
+          data-v-304c8b69
+          data-v-2652e39a
+        >
+          <div
+            class="VPDoc has-sidebar has-aside"
+            data-v-2652e39a
+            data-v-d668f7cc
+          >
+            <!--[--><!--]-->
+            <div class="container" data-v-d668f7cc>
+              <div class="aside" data-v-d668f7cc>
+                <div class="aside-curtain" data-v-d668f7cc></div>
+                <div class="aside-container" data-v-d668f7cc>
+                  <div class="aside-content" data-v-d668f7cc>
+                    <div class="VPDocAside" data-v-d668f7cc data-v-cb998dce>
+                      <!--[--><!--]--><!--[--><!--]-->
+                      <nav
+                        aria-labelledby="doc-outline-aria-label"
+                        class="VPDocAsideOutline"
+                        data-v-cb998dce
+                        data-v-c8b19031
+                      >
+                        <div class="content" data-v-c8b19031>
+                          <div class="outline-marker" data-v-c8b19031></div>
+                          <div
+                            aria-level="2"
+                            class="outline-title"
+                            id="doc-outline-aria-label"
+                            role="heading"
+                            data-v-c8b19031
+                          >
+                            On this page
+                          </div>
+                          <ul
+                            class="VPDocOutlineItem root"
+                            data-v-c8b19031
+                            data-v-b7d7ef80
+                          >
+                            <!--[--><!--]-->
+                          </ul>
+                        </div>
+                      </nav>
+                      <!--[--><!--]-->
+                      <div class="spacer" data-v-cb998dce></div>
+                      <!--[--><!--]--><!----><!--[--><!--]--><!--[--><!--]-->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="content" data-v-d668f7cc>
+                <div class="content-container" data-v-d668f7cc>
+                  <!--[--><!--]-->
+                  <main class="main" data-v-d668f7cc>
+                    <div
+                      style="position: relative"
+                      class="vp-doc _getting-started"
+                      data-v-d668f7cc
+                    >
+                      <div>
+                        <h1 id="getting-started" tabindex="-1">
+                          Getting Started
+                          <a
+                            class="header-anchor"
+                            href="#getting-started"
+                            aria-label="Permalink to “Getting Started”"
+                            >​</a
+                          >
+                        </h1>
+                        <p>
+                          Welcome to Minepanel! This guide will help you get
+                          your Minecraft server management panel up and running
+                          in just a few minutes.
+                        </p>
+                        <p>
+                          <img
+                            src="/assets/Animation.Du5zKPKY.gif"
+                            alt="Minepanel Dashboard"
+                          />
+                        </p>
+                        <h2 id="prerequisites" tabindex="-1">
+                          Prerequisites
+                          <a
+                            class="header-anchor"
+                            href="#prerequisites"
+                            aria-label="Permalink to “Prerequisites”"
+                            >​</a
+                          >
+                        </h2>
+                        <p>Before you begin, make sure you have:</p>
+                        <ul>
+                          <li>
+                            <strong>Docker</strong> (version 20.10 or higher)
+                          </li>
+                          <li>
+                            <strong>Docker Compose</strong> (v2.0 or higher)
+                          </li>
+                          <li><strong>2GB+ RAM</strong> available</li>
+                          <li>
+                            <strong>Operating System</strong>: Linux, macOS, or
+                            Windows with WSL2
+                          </li>
+                        </ul>
+                        <div class="tip custom-block">
+                          <p class="custom-block-title">
+                            Check Docker Installation
+                          </p>
+                          <p>
+                            Run <code>docker --version</code> and
+                            <code>docker compose version</code> to verify your
+                            installation.
+                          </p>
+                        </div>
+                        <h2 id="quick-installation" tabindex="-1">
+                          Quick Installation
+                          <a
+                            class="header-anchor"
+                            href="#quick-installation"
+                            aria-label="Permalink to “Quick Installation”"
+                            >​</a
+                          >
+                        </h2>
+                        <p>
+                          The fastest way to get started is using our pre-built
+                          Docker image:
+                        </p>
+                        <h3 id="step-1-create-docker-compose-yml" tabindex="-1">
+                          Step 1: Create docker-compose.yml
+                          <a
+                            class="header-anchor"
+                            href="#step-1-create-docker-compose-yml"
+                            aria-label="Permalink to “Step 1: Create docker-compose.yml”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>
+                          Create a new directory and a
+                          <code>docker-compose.yml</code> file:
+                        </p>
+                        <div class="language-yaml line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">yaml</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">services</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
 <span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  minepanel</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
 <span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    image</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">ketbom/minepanel:latest</span></span>
 <span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    ports</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
@@ -35,7 +969,7 @@
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # Backend environment variables</span></span>
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">SERVERS_DIR=${PWD}/servers</span></span>
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}</span></span>
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">CLIENT_USERNAME=${CLIENT_USERNAME:-admin}</span></span>
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}</span></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # Frontend environment variables (informative, already baked in build)</span></span>
@@ -56,19 +990,581 @@
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">./filebrowser-data:/config</span></span>
 <span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    environment</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">FB_BASEURL=/</span></span>
-<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    restart</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">always</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br></div></div><h3 id="step-2-create-required-directories" tabindex="-1">Step 2: Create Required Directories <a class="header-anchor" href="#step-2-create-required-directories" aria-label="Permalink to “Step 2: Create Required Directories”">​</a></h3><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">mkdir</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -p</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> servers</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser-data</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br></div></div><h3 id="step-3-start-the-services" tabindex="-1">Step 3: Start the Services <a class="header-anchor" href="#step-3-start-the-services" aria-label="Permalink to “Step 3: Start the Services”">​</a></h3><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> up</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -d</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br></div></div><div class="info custom-block"><p class="custom-block-title custom-block-title-default">INFO</p><p>The <code>-d</code> flag runs the containers in detached mode (in the background).</p></div><h3 id="step-4-access-the-panel" tabindex="-1">Step 4: Access the Panel <a class="header-anchor" href="#step-4-access-the-panel" aria-label="Permalink to “Step 4: Access the Panel”">​</a></h3><p>After a few seconds, you can access:</p><ul><li><strong>Minepanel Web Interface</strong>: <a href="http://localhost:3000" target="_blank" rel="noreferrer">http://localhost:3000</a></li><li><strong>File Browser</strong>: <a href="http://localhost:8080" target="_blank" rel="noreferrer">http://localhost:8080</a></li></ul><h2 id="first-login" tabindex="-1">First Login <a class="header-anchor" href="#first-login" aria-label="Permalink to “First Login”">​</a></h2><h3 id="minepanel-login" tabindex="-1">Minepanel Login <a class="header-anchor" href="#minepanel-login" aria-label="Permalink to “Minepanel Login”">​</a></h3><p>Default credentials:</p><ul><li><strong>Username</strong>: <code>admin</code></li><li><strong>Password</strong>: <code>admin</code></li></ul><div class="warning custom-block"><p class="custom-block-title">Change Default Password</p><p>For security, change the default password immediately after first login! See <a href="/configuration.html#change-admin-password">Configuration Guide</a> for instructions.</p></div><h3 id="filebrowser-login" tabindex="-1">Filebrowser Login <a class="header-anchor" href="#filebrowser-login" aria-label="Permalink to “Filebrowser Login”">​</a></h3><p>The first time you run Filebrowser, check the logs to get the auto-generated password:</p><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br></div></div><p>Look for a line like:</p><div class="language- line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span>filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / &lt;generated-password&gt;</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br></div></div><p><strong>Steps:</strong></p><ol><li>Copy the generated password from the logs</li><li>Login to <a href="http://localhost:8080" target="_blank" rel="noreferrer">http://localhost:8080</a> with <code>admin</code> and the password</li><li>Change the password immediately to something secure</li></ol><div class="tip custom-block"><p class="custom-block-title">Lost the Password?</p><p>If you lost the logs, you can reset Filebrowser:</p><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> down</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    restart</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">always</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br /><span
+                              class="line-number"
+                              >2</span
+                            ><br /><span class="line-number">3</span><br /><span
+                              class="line-number"
+                              >4</span
+                            ><br /><span class="line-number">5</span><br /><span
+                              class="line-number"
+                              >6</span
+                            ><br /><span class="line-number">7</span><br /><span
+                              class="line-number"
+                              >8</span
+                            ><br /><span class="line-number">9</span><br /><span
+                              class="line-number"
+                              >10</span
+                            ><br /><span class="line-number">11</span
+                            ><br /><span class="line-number">12</span
+                            ><br /><span class="line-number">13</span
+                            ><br /><span class="line-number">14</span
+                            ><br /><span class="line-number">15</span
+                            ><br /><span class="line-number">16</span
+                            ><br /><span class="line-number">17</span
+                            ><br /><span class="line-number">18</span
+                            ><br /><span class="line-number">19</span
+                            ><br /><span class="line-number">20</span
+                            ><br /><span class="line-number">21</span
+                            ><br /><span class="line-number">22</span
+                            ><br /><span class="line-number">23</span
+                            ><br /><span class="line-number">24</span
+                            ><br /><span class="line-number">25</span
+                            ><br /><span class="line-number">26</span
+                            ><br /><span class="line-number">27</span
+                            ><br /><span class="line-number">28</span
+                            ><br /><span class="line-number">29</span
+                            ><br /><span class="line-number">30</span
+                            ><br /><span class="line-number">31</span
+                            ><br /><span class="line-number">32</span><br />
+                          </div>
+                        </div>
+                        <h3
+                          id="step-2-create-required-directories"
+                          tabindex="-1"
+                        >
+                          Step 2: Create Required Directories
+                          <a
+                            class="header-anchor"
+                            href="#step-2-create-required-directories"
+                            aria-label="Permalink to “Step 2: Create Required Directories”"
+                            >​</a
+                          >
+                        </h3>
+                        <div class="language-bash line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">bash</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">mkdir</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -p</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> servers</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser-data</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br />
+                          </div>
+                        </div>
+                        <h3 id="step-3-start-the-services" tabindex="-1">
+                          Step 3: Start the Services
+                          <a
+                            class="header-anchor"
+                            href="#step-3-start-the-services"
+                            aria-label="Permalink to “Step 3: Start the Services”"
+                            >​</a
+                          >
+                        </h3>
+                        <div class="language-bash line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">bash</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> up</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -d</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br />
+                          </div>
+                        </div>
+                        <div class="info custom-block">
+                          <p
+                            class="custom-block-title custom-block-title-default"
+                          >
+                            INFO
+                          </p>
+                          <p>
+                            The <code>-d</code> flag runs the containers in
+                            detached mode (in the background).
+                          </p>
+                        </div>
+                        <h3 id="step-4-access-the-panel" tabindex="-1">
+                          Step 4: Access the Panel
+                          <a
+                            class="header-anchor"
+                            href="#step-4-access-the-panel"
+                            aria-label="Permalink to “Step 4: Access the Panel”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>After a few seconds, you can access:</p>
+                        <ul>
+                          <li>
+                            <strong>Minepanel Web Interface</strong>:
+                            <a
+                              href="http://localhost:3000"
+                              target="_blank"
+                              rel="noreferrer"
+                              >http://localhost:3000</a
+                            >
+                          </li>
+                          <li>
+                            <strong>File Browser</strong>:
+                            <a
+                              href="http://localhost:8080"
+                              target="_blank"
+                              rel="noreferrer"
+                              >http://localhost:8080</a
+                            >
+                          </li>
+                        </ul>
+                        <h2 id="first-login" tabindex="-1">
+                          First Login
+                          <a
+                            class="header-anchor"
+                            href="#first-login"
+                            aria-label="Permalink to “First Login”"
+                            >​</a
+                          >
+                        </h2>
+                        <h3 id="minepanel-login" tabindex="-1">
+                          Minepanel Login
+                          <a
+                            class="header-anchor"
+                            href="#minepanel-login"
+                            aria-label="Permalink to “Minepanel Login”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>Default credentials:</p>
+                        <ul>
+                          <li><strong>Username</strong>: <code>admin</code></li>
+                          <li><strong>Password</strong>: <code>admin</code></li>
+                        </ul>
+                        <div class="warning custom-block">
+                          <p class="custom-block-title">
+                            Change Default Password
+                          </p>
+                          <p>
+                            For security, change the default password
+                            immediately after first login! See
+                            <a href="/configuration.html#change-admin-password"
+                              >Configuration Guide</a
+                            >
+                            for instructions.
+                          </p>
+                        </div>
+                        <h3 id="filebrowser-login" tabindex="-1">
+                          Filebrowser Login
+                          <a
+                            class="header-anchor"
+                            href="#filebrowser-login"
+                            aria-label="Permalink to “Filebrowser Login”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>
+                          The first time you run Filebrowser, check the logs to
+                          get the auto-generated password:
+                        </p>
+                        <div class="language-bash line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">bash</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br />
+                          </div>
+                        </div>
+                        <p>Look for a line like:</p>
+                        <div class="language- line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang"></span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span>filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / &lt;generated-password&gt;</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br />
+                          </div>
+                        </div>
+                        <p><strong>Steps:</strong></p>
+                        <ol>
+                          <li>Copy the generated password from the logs</li>
+                          <li>
+                            Login to
+                            <a
+                              href="http://localhost:8080"
+                              target="_blank"
+                              rel="noreferrer"
+                              >http://localhost:8080</a
+                            >
+                            with <code>admin</code> and the password
+                          </li>
+                          <li>
+                            Change the password immediately to something secure
+                          </li>
+                        </ol>
+                        <div class="tip custom-block">
+                          <p class="custom-block-title">Lost the Password?</p>
+                          <p>
+                            If you lost the logs, you can reset Filebrowser:
+                          </p>
+                          <div class="language-bash line-numbers-mode">
+                            <button title="Copy Code" class="copy"></button
+                            ><span class="lang">bash</span>
+                            <pre
+                              class="shiki shiki-themes github-light github-dark"
+                              style="
+                                --shiki-light: #24292e;
+                                --shiki-dark: #e1e4e8;
+                                --shiki-light-bg: #fff;
+                                --shiki-dark-bg: #24292e;
+                              "
+                              tabindex="0"
+                              dir="ltr"
+                            ><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> down</span></span>
 <span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">rm</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -rf</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser-data/filebrowser.db</span></span>
 <span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> up</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -d</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # Check the new password</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div></div><h2 id="creating-your-first-server" tabindex="-1">Creating Your First Server <a class="header-anchor" href="#creating-your-first-server" aria-label="Permalink to “Creating Your First Server”">​</a></h2><p>Once logged into Minepanel:</p><ol><li>Click <strong>&quot;Add Server&quot;</strong> or <strong>&quot;New Server&quot;</strong> button</li><li>Fill in the server details: <ul><li><strong>Server Name</strong>: Give it a unique name</li><li><strong>Server Type</strong>: Choose Vanilla, Paper, Forge, etc.</li><li><strong>Minecraft Version</strong>: Select the version you want</li><li><strong>Port</strong>: Choose a port (default: 25565)</li><li><strong>Memory</strong>: Allocate RAM (e.g., 2G for 2 gigabytes)</li></ul></li><li>Click <strong>&quot;Create Server&quot;</strong></li><li>Wait for the server to download and start (this may take a few minutes the first time)</li></ol><div class="tip custom-block"><p class="custom-block-title custom-block-title-default">TIP</p><p>The first server creation downloads the Minecraft server files, which can take 2-5 minutes depending on your internet connection.</p></div><h2 id="next-steps" tabindex="-1">Next Steps <a class="header-anchor" href="#next-steps" aria-label="Permalink to “Next Steps”">​</a></h2><p>Now that you have Minepanel running:</p><ul><li>📖 <a href="/features.html">Learn about all features</a></li><li>⚙️ <a href="/configuration.html">Configure your setup</a></li><li>🏗️ <a href="/architecture.html">Understand the architecture</a></li><li>🔧 <a href="/installation.html#advanced-installation">Explore advanced options</a></li></ul><h2 id="troubleshooting" tabindex="-1">Troubleshooting <a class="header-anchor" href="#troubleshooting" aria-label="Permalink to “Troubleshooting”">​</a></h2><h3 id="can-t-connect-to-docker-socket" tabindex="-1">Can&#39;t Connect to Docker Socket <a class="header-anchor" href="#can-t-connect-to-docker-socket" aria-label="Permalink to “Can&#39;t Connect to Docker Socket”">​</a></h3><p>If you get permission errors on Linux:</p><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Add your user to the docker group</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # Check the new password</span></span></code></pre>
+                            <div
+                              class="line-numbers-wrapper"
+                              aria-hidden="true"
+                            >
+                              <span class="line-number">1</span><br /><span
+                                class="line-number"
+                                >2</span
+                              ><br /><span class="line-number">3</span
+                              ><br /><span class="line-number">4</span><br />
+                            </div>
+                          </div>
+                        </div>
+                        <h2 id="creating-your-first-server" tabindex="-1">
+                          Creating Your First Server
+                          <a
+                            class="header-anchor"
+                            href="#creating-your-first-server"
+                            aria-label="Permalink to “Creating Your First Server”"
+                            >​</a
+                          >
+                        </h2>
+                        <p>Once logged into Minepanel:</p>
+                        <ol>
+                          <li>
+                            Click <strong>&quot;Add Server&quot;</strong> or
+                            <strong>&quot;New Server&quot;</strong> button
+                          </li>
+                          <li>
+                            Fill in the server details:
+                            <ul>
+                              <li>
+                                <strong>Server Name</strong>: Give it a unique
+                                name
+                              </li>
+                              <li>
+                                <strong>Server Type</strong>: Choose Vanilla,
+                                Paper, Forge, etc.
+                              </li>
+                              <li>
+                                <strong>Minecraft Version</strong>: Select the
+                                version you want
+                              </li>
+                              <li>
+                                <strong>Port</strong>: Choose a port (default:
+                                25565)
+                              </li>
+                              <li>
+                                <strong>Memory</strong>: Allocate RAM (e.g., 2G
+                                for 2 gigabytes)
+                              </li>
+                            </ul>
+                          </li>
+                          <li>
+                            Click <strong>&quot;Create Server&quot;</strong>
+                          </li>
+                          <li>
+                            Wait for the server to download and start (this may
+                            take a few minutes the first time)
+                          </li>
+                        </ol>
+                        <div class="tip custom-block">
+                          <p
+                            class="custom-block-title custom-block-title-default"
+                          >
+                            TIP
+                          </p>
+                          <p>
+                            The first server creation downloads the Minecraft
+                            server files, which can take 2-5 minutes depending
+                            on your internet connection.
+                          </p>
+                        </div>
+                        <h2 id="next-steps" tabindex="-1">
+                          Next Steps
+                          <a
+                            class="header-anchor"
+                            href="#next-steps"
+                            aria-label="Permalink to “Next Steps”"
+                            >​</a
+                          >
+                        </h2>
+                        <p>Now that you have Minepanel running:</p>
+                        <ul>
+                          <li>
+                            📖
+                            <a href="/features.html"
+                              >Learn about all features</a
+                            >
+                          </li>
+                          <li>
+                            ⚙️
+                            <a href="/configuration.html"
+                              >Configure your setup</a
+                            >
+                          </li>
+                          <li>
+                            🏗️
+                            <a href="/architecture.html"
+                              >Understand the architecture</a
+                            >
+                          </li>
+                          <li>
+                            🔧
+                            <a href="/installation.html#advanced-installation"
+                              >Explore advanced options</a
+                            >
+                          </li>
+                        </ul>
+                        <h2 id="troubleshooting" tabindex="-1">
+                          Troubleshooting
+                          <a
+                            class="header-anchor"
+                            href="#troubleshooting"
+                            aria-label="Permalink to “Troubleshooting”"
+                            >​</a
+                          >
+                        </h2>
+                        <h3 id="can-t-connect-to-docker-socket" tabindex="-1">
+                          Can&#39;t Connect to Docker Socket
+                          <a
+                            class="header-anchor"
+                            href="#can-t-connect-to-docker-socket"
+                            aria-label="Permalink to “Can&#39;t Connect to Docker Socket”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>If you get permission errors on Linux:</p>
+                        <div class="language-bash line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">bash</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Add your user to the docker group</span></span>
 <span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">sudo</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> usermod</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> -aG</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> docker</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> $USER</span></span>
 <span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Log out and back in for changes to take effect</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h3 id="containers-keep-restarting" tabindex="-1">Containers Keep Restarting <a class="header-anchor" href="#containers-keep-restarting" aria-label="Permalink to “Containers Keep Restarting”">​</a></h3><p>Check the logs to see what&#39;s wrong:</p><div class="language-bash line-numbers-mode"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e;" tabindex="0" dir="ltr"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># View all logs</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Log out and back in for changes to take effect</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br /><span
+                              class="line-number"
+                              >2</span
+                            ><br /><span class="line-number">3</span><br /><span
+                              class="line-number"
+                              >4</span
+                            ><br />
+                          </div>
+                        </div>
+                        <h3 id="containers-keep-restarting" tabindex="-1">
+                          Containers Keep Restarting
+                          <a
+                            class="header-anchor"
+                            href="#containers-keep-restarting"
+                            aria-label="Permalink to “Containers Keep Restarting”"
+                            >​</a
+                          >
+                        </h3>
+                        <p>Check the logs to see what&#39;s wrong:</p>
+                        <div class="language-bash line-numbers-mode">
+                          <button title="Copy Code" class="copy"></button
+                          ><span class="lang">bash</span>
+                          <pre
+                            class="shiki shiki-themes github-light github-dark"
+                            style="
+                              --shiki-light: #24292e;
+                              --shiki-dark: #e1e4e8;
+                              --shiki-light-bg: #fff;
+                              --shiki-dark-bg: #24292e;
+                            "
+                            tabindex="0"
+                            dir="ltr"
+                          ><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># View all logs</span></span>
 <span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># View specific service logs</span></span>
 <span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> minepanel</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span></span></code></pre><div class="line-numbers-wrapper" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br></div></div><h3 id="need-more-help" tabindex="-1">Need More Help? <a class="header-anchor" href="#need-more-help" aria-label="Permalink to “Need More Help?”">​</a></h3><ul><li>📚 Check the <a href="/faq.html">FAQ</a></li><li>🐛 <a href="https://github.com/Ketbome/minepanel/issues" target="_blank" rel="noreferrer">Report an issue on GitHub</a></li><li>💬 <a href="https://github.com/Ketbome/minepanel/discussions" target="_blank" rel="noreferrer">Join the discussion</a></li></ul></div></div></main><footer class="VPDocFooter" data-v-d668f7cc data-v-1bcd8184><!--[--><!--]--><div class="edit-info" data-v-1bcd8184><div class="edit-link" data-v-1bcd8184><a class="VPLink link vp-external-link-icon no-icon edit-link-button" href="https://github.com/Ketbome/minepanel/edit/main/doc/getting-started.md" target="_blank" rel="noreferrer" data-v-1bcd8184><!--[--><span class="vpi-square-pen edit-link-icon" data-v-1bcd8184></span> Edit this page on GitHub<!--]--></a></div><div class="last-updated" data-v-1bcd8184><p class="VPLastUpdated" data-v-1bcd8184 data-v-1bb0c8a8>Last updated: <time datetime="2025-10-25T16:38:26.000Z" data-v-1bb0c8a8></time></p></div></div><nav class="prev-next" aria-labelledby="doc-footer-aria-label" data-v-1bcd8184><span class="visually-hidden" id="doc-footer-aria-label" data-v-1bcd8184>Pager</span><div class="pager" data-v-1bcd8184><!----></div><div class="pager" data-v-1bcd8184><a class="VPLink link pager-link next" href="/installation.html" data-v-1bcd8184><!--[--><span class="desc" data-v-1bcd8184>Next page</span><span class="title" data-v-1bcd8184>Installation</span><!--]--></a></div></nav></footer><!--[--><!--]--></div></div></div><!--[--><!--]--></div></div><footer class="VPFooter has-sidebar" data-v-304c8b69 data-v-5b9946f5><div class="container" data-v-5b9946f5><p class="message" data-v-5b9946f5>Released under the MIT License.</p><p class="copyright" data-v-5b9946f5>Copyright © 2024 Ketbome</p></div></footer><!--[--><!--]--></div></div>
-    <script>window.__VP_HASH_MAP__=JSON.parse("{\"api-optimization.md\":\"BNNICpXi\",\"api.md\":\"yj2jTo01\",\"architecture.md\":\"CRv7INhf\",\"configuration.md\":\"BTqMzKVL\",\"development.md\":\"x8F3bmFe\",\"faq.md\":\"BQoJzem7\",\"features.md\":\"CJXQx6Ea\",\"getting-started.md\":\"Dn0yM92W\",\"index.md\":\"K5x2HgG7\",\"installation.md\":\"DFHCFPqW\",\"roadmap.md\":\"BPLnUDQ3\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Minepanel Documentation\",\"description\":\"Modern Minecraft Server Management Panel - Complete documentation and guides\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":true,\"themeConfig\":{\"logo\":\"/cubo.webp\",\"nav\":[{\"text\":\"Home\",\"link\":\"/\"},{\"text\":\"Getting Started\",\"link\":\"/getting-started\"},{\"text\":\"Guide\",\"link\":\"/installation\"},{\"text\":\"Resources\",\"items\":[{\"text\":\"Features\",\"link\":\"/features\"},{\"text\":\"Roadmap\",\"link\":\"/roadmap\"},{\"text\":\"Architecture\",\"link\":\"/architecture\"},{\"text\":\"API Reference\",\"link\":\"/api\"},{\"text\":\"Development\",\"link\":\"/development\"},{\"text\":\"FAQ\",\"link\":\"/faq\"}]},{\"text\":\"Links\",\"items\":[{\"text\":\"GitHub\",\"link\":\"https://github.com/Ketbome/minepanel\"},{\"text\":\"Docker Hub\",\"link\":\"https://hub.docker.com/r/ketbom/minepanel\"},{\"text\":\"Report Issue\",\"link\":\"https://github.com/Ketbome/minepanel/issues\"}]}],\"sidebar\":[{\"text\":\"🚀 Getting Started\",\"collapsed\":false,\"items\":[{\"text\":\"Introduction\",\"link\":\"/getting-started\"},{\"text\":\"Installation\",\"link\":\"/installation\"},{\"text\":\"Configuration\",\"link\":\"/configuration\"}]},{\"text\":\"📖 Guide\",\"collapsed\":false,\"items\":[{\"text\":\"Features Overview\",\"link\":\"/features\"},{\"text\":\"Roadmap\",\"link\":\"/roadmap\"},{\"text\":\"Architecture\",\"link\":\"/architecture\"},{\"text\":\"Development\",\"link\":\"/development\"},{\"text\":\"API Reference\",\"link\":\"/api\"}]},{\"text\":\"❓ Help\",\"collapsed\":false,\"items\":[{\"text\":\"FAQ\",\"link\":\"/faq\"}]}],\"socialLinks\":[{\"icon\":\"github\",\"link\":\"https://github.com/Ketbome/minepanel\"},{\"icon\":\"docker\",\"link\":\"https://hub.docker.com/r/ketbom/minepanel\"}],\"footer\":{\"message\":\"Released under the MIT License.\",\"copyright\":\"Copyright © 2024 Ketbome\"},\"editLink\":{\"pattern\":\"https://github.com/Ketbome/minepanel/edit/main/doc/:path\",\"text\":\"Edit this page on GitHub\"},\"search\":{\"provider\":\"local\",\"options\":{\"translations\":{\"button\":{\"buttonText\":\"Search\",\"buttonAriaLabel\":\"Search\"},\"modal\":{\"displayDetails\":\"Display detailed list\",\"resetButtonTitle\":\"Reset search\",\"backButtonTitle\":\"Close search\",\"noResultsText\":\"No results for\",\"footer\":{\"selectText\":\"to select\",\"selectKeyAriaLabel\":\"enter\",\"navigateText\":\"to navigate\",\"navigateUpKeyAriaLabel\":\"up arrow\",\"navigateDownKeyAriaLabel\":\"down arrow\",\"closeText\":\"to close\",\"closeKeyAriaLabel\":\"escape\"}}}}},\"outline\":{\"level\":[2,3],\"label\":\"On this page\"}},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false,\"additionalConfig\":{}}");</script>
-    
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">docker</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> compose</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> logs</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;"> filebrowser</span></span></code></pre>
+                          <div class="line-numbers-wrapper" aria-hidden="true">
+                            <span class="line-number">1</span><br /><span
+                              class="line-number"
+                              >2</span
+                            ><br /><span class="line-number">3</span><br /><span
+                              class="line-number"
+                              >4</span
+                            ><br /><span class="line-number">5</span><br /><span
+                              class="line-number"
+                              >6</span
+                            ><br />
+                          </div>
+                        </div>
+                        <h3 id="need-more-help" tabindex="-1">
+                          Need More Help?
+                          <a
+                            class="header-anchor"
+                            href="#need-more-help"
+                            aria-label="Permalink to “Need More Help?”"
+                            >​</a
+                          >
+                        </h3>
+                        <ul>
+                          <li>📚 Check the <a href="/faq.html">FAQ</a></li>
+                          <li>
+                            🐛
+                            <a
+                              href="https://github.com/Ketbome/minepanel/issues"
+                              target="_blank"
+                              rel="noreferrer"
+                              >Report an issue on GitHub</a
+                            >
+                          </li>
+                          <li>
+                            💬
+                            <a
+                              href="https://github.com/Ketbome/minepanel/discussions"
+                              target="_blank"
+                              rel="noreferrer"
+                              >Join the discussion</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </main>
+                  <footer class="VPDocFooter" data-v-d668f7cc data-v-1bcd8184>
+                    <!--[--><!--]-->
+                    <div class="edit-info" data-v-1bcd8184>
+                      <div class="edit-link" data-v-1bcd8184>
+                        <a
+                          class="VPLink link vp-external-link-icon no-icon edit-link-button"
+                          href="https://github.com/Ketbome/minepanel/edit/main/doc/getting-started.md"
+                          target="_blank"
+                          rel="noreferrer"
+                          data-v-1bcd8184
+                          ><!--[--><span
+                            class="vpi-square-pen edit-link-icon"
+                            data-v-1bcd8184
+                          ></span>
+                          Edit this page on GitHub<!--]--></a
+                        >
+                      </div>
+                      <div class="last-updated" data-v-1bcd8184>
+                        <p
+                          class="VPLastUpdated"
+                          data-v-1bcd8184
+                          data-v-1bb0c8a8
+                        >
+                          Last updated:
+                          <time
+                            datetime="2025-10-25T16:38:26.000Z"
+                            data-v-1bb0c8a8
+                          ></time>
+                        </p>
+                      </div>
+                    </div>
+                    <nav
+                      class="prev-next"
+                      aria-labelledby="doc-footer-aria-label"
+                      data-v-1bcd8184
+                    >
+                      <span
+                        class="visually-hidden"
+                        id="doc-footer-aria-label"
+                        data-v-1bcd8184
+                        >Pager</span
+                      >
+                      <div class="pager" data-v-1bcd8184><!----></div>
+                      <div class="pager" data-v-1bcd8184>
+                        <a
+                          class="VPLink link pager-link next"
+                          href="/installation.html"
+                          data-v-1bcd8184
+                          ><!--[--><span class="desc" data-v-1bcd8184
+                            >Next page</span
+                          ><span class="title" data-v-1bcd8184
+                            >Installation</span
+                          ><!--]--></a
+                        >
+                      </div>
+                    </nav>
+                  </footer>
+                  <!--[--><!--]-->
+                </div>
+              </div>
+            </div>
+            <!--[--><!--]-->
+          </div>
+        </div>
+        <footer class="VPFooter has-sidebar" data-v-304c8b69 data-v-5b9946f5>
+          <div class="container" data-v-5b9946f5>
+            <p class="message" data-v-5b9946f5>
+              Released under the MIT License.
+            </p>
+            <p class="copyright" data-v-5b9946f5>Copyright © 2024 Ketbome</p>
+          </div>
+        </footer>
+        <!--[--><!--]-->
+      </div>
+    </div>
+    <script>
+      window.__VP_HASH_MAP__ = JSON.parse(
+        '{"api-optimization.md":"BNNICpXi","api.md":"yj2jTo01","architecture.md":"CRv7INhf","configuration.md":"BTqMzKVL","development.md":"x8F3bmFe","faq.md":"BQoJzem7","features.md":"CJXQx6Ea","getting-started.md":"Dn0yM92W","index.md":"K5x2HgG7","installation.md":"DFHCFPqW","roadmap.md":"BPLnUDQ3"}'
+      );
+      window.__VP_SITE_DATA__ = JSON.parse(
+        '{"lang":"en-US","dir":"ltr","title":"Minepanel Documentation","description":"Modern Minecraft Server Management Panel - Complete documentation and guides","base":"/","head":[],"router":{"prefetchLinks":true},"appearance":true,"themeConfig":{"logo":"/cubo.webp","nav":[{"text":"Home","link":"/"},{"text":"Getting Started","link":"/getting-started"},{"text":"Guide","link":"/installation"},{"text":"Resources","items":[{"text":"Features","link":"/features"},{"text":"Roadmap","link":"/roadmap"},{"text":"Architecture","link":"/architecture"},{"text":"API Reference","link":"/api"},{"text":"Development","link":"/development"},{"text":"FAQ","link":"/faq"}]},{"text":"Links","items":[{"text":"GitHub","link":"https://github.com/Ketbome/minepanel"},{"text":"Docker Hub","link":"https://hub.docker.com/r/ketbom/minepanel"},{"text":"Report Issue","link":"https://github.com/Ketbome/minepanel/issues"}]}],"sidebar":[{"text":"🚀 Getting Started","collapsed":false,"items":[{"text":"Introduction","link":"/getting-started"},{"text":"Installation","link":"/installation"},{"text":"Configuration","link":"/configuration"}]},{"text":"📖 Guide","collapsed":false,"items":[{"text":"Features Overview","link":"/features"},{"text":"Roadmap","link":"/roadmap"},{"text":"Architecture","link":"/architecture"},{"text":"Development","link":"/development"},{"text":"API Reference","link":"/api"}]},{"text":"❓ Help","collapsed":false,"items":[{"text":"FAQ","link":"/faq"}]}],"socialLinks":[{"icon":"github","link":"https://github.com/Ketbome/minepanel"},{"icon":"docker","link":"https://hub.docker.com/r/ketbom/minepanel"}],"footer":{"message":"Released under the MIT License.","copyright":"Copyright © 2024 Ketbome"},"editLink":{"pattern":"https://github.com/Ketbome/minepanel/edit/main/doc/:path","text":"Edit this page on GitHub"},"search":{"provider":"local","options":{"translations":{"button":{"buttonText":"Search","buttonAriaLabel":"Search"},"modal":{"displayDetails":"Display detailed list","resetButtonTitle":"Reset search","backButtonTitle":"Close search","noResultsText":"No results for","footer":{"selectText":"to select","selectKeyAriaLabel":"enter","navigateText":"to navigate","navigateUpKeyAriaLabel":"up arrow","navigateDownKeyAriaLabel":"down arrow","closeText":"to close","closeKeyAriaLabel":"escape"}}}}},"outline":{"level":[2,3],"label":"On this page"}},"locales":{},"scrollOffset":134,"cleanUrls":false,"additionalConfig":{}}'
+      );
+    </script>
   </body>
 </html>
