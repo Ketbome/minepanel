@@ -1,15 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
-import * as path from 'path';
+import * as path from 'node:path';
 import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+
+interface DockerComposeConfig {
+  services?: {
+    mc?: any;
+    backup?: any;
+  };
+}
 
 @Injectable()
 export class DockerComposeService {
+  private readonly logger = new Logger(DockerComposeService.name);
   private readonly BASE_DIR = process.env.SERVERS_DIR;
 
   constructor() {
     fs.ensureDirSync(this.BASE_DIR);
+  }
+
+  private validateServerId(serverId: string): boolean {
+    return /^[a-zA-Z0-9_-]+$/.test(serverId);
   }
 
   private getDockerComposePath(serverId: string): string {
@@ -30,7 +42,7 @@ export class DockerComposeService {
 
         const serverConfig = await this.loadServerConfigFromDockerCompose(id);
         if (serverConfig?.port) {
-          usedPorts.add(parseInt(serverConfig.port));
+          usedPorts.add(Number.parseInt(serverConfig.port));
         }
       }
 
@@ -39,22 +51,27 @@ export class DockerComposeService {
 
       return port;
     } catch (error) {
-      console.error('Error finding available port:', error);
+      this.logger.error('Error finding available port', error);
       return startPort;
     }
   }
 
   private async loadServerConfigFromDockerCompose(serverId: string): Promise<ServerConfig> {
+    if (!this.validateServerId(serverId)) {
+      this.logger.error(`Invalid server ID: ${serverId}`);
+      return this.createDefaultConfig(serverId);
+    }
+
     const dockerComposePath = this.getDockerComposePath(serverId);
 
     if (!fs.existsSync(dockerComposePath)) {
-      console.error(`Docker compose file does not exist for server ${serverId}`);
+      this.logger.error(`Docker compose file does not exist for server ${serverId}`);
       return this.createDefaultConfig(serverId);
     }
 
     try {
       const composeFileContent = await fs.readFile(dockerComposePath, 'utf8');
-      const composeConfig = yaml.load(composeFileContent) as any;
+      const composeConfig = yaml.load(composeFileContent) as DockerComposeConfig;
 
       if (!composeConfig.services?.mc) {
         return this.createDefaultConfig(serverId);
@@ -151,7 +168,7 @@ export class DockerComposeService {
         logTimestamp: env.LOG_TIMESTAMP === 'true',
 
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
-        minecraftVersion: env.VERSION,
+        minecraftVersion: String(env.VERSION),
         dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : './mc-data:/data\n./modpacks:/modpacks:ro',
         restartPolicy: mcService.restart ?? 'unless-stopped',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
@@ -163,7 +180,7 @@ export class DockerComposeService {
       this.parseServerTypeSpecificConfig(serverConfig, env);
       return serverConfig;
     } catch (error) {
-      console.error(`Error loading config for server ${serverId}:`, error);
+      this.logger.error(`Error loading config for server ${serverId}`, error);
       return this.createDefaultConfig(serverId);
     }
   }
@@ -171,7 +188,13 @@ export class DockerComposeService {
   private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
     const typeHandlers = {
       AUTO_CURSEFORGE: () => {
-        serverConfig.cfMethod = env.CF_SERVER_MOD ? 'file' : env.CF_SLUG ? 'slug' : 'url';
+        let cfMethod: 'url' | 'file' | 'slug' = 'url';
+        if (env.CF_SERVER_MOD) {
+          cfMethod = 'file';
+        } else if (env.CF_SLUG) {
+          cfMethod = 'slug';
+        }
+        serverConfig.cfMethod = cfMethod;
         serverConfig.cfUrl = env.CF_PAGE_URL ?? '';
         serverConfig.cfSlug = env.CF_SLUG ?? '';
         serverConfig.cfFile = env.CF_FILE_ID ?? '';
@@ -397,7 +420,7 @@ export class DockerComposeService {
 
       return serverIds.filter((id): id is string => id !== null);
     } catch (error) {
-      console.error('Error getting server IDs:', error);
+      this.logger.error('Error getting server IDs', error);
       return [];
     }
   }
@@ -567,7 +590,7 @@ export class DockerComposeService {
     if (handler) {
       handler();
     } else {
-      env['VERSION'] = config.minecraftVersion;
+      env['VERSION'] = String(config.minecraftVersion);
     }
   }
 
@@ -600,7 +623,7 @@ export class DockerComposeService {
   }
 
   private addPluginServerConfig(env: Record<string, string>, config: ServerConfig): void {
-    env['VERSION'] = config.minecraftVersion;
+    env['VERSION'] = String(config.minecraftVersion);
 
     if (config.spigetResources) env['SPIGET_RESOURCES'] = config.spigetResources;
     if (config.skipDownloadDefaults) env['SKIP_DOWNLOAD_DEFAULTS'] = 'true';
@@ -666,7 +689,7 @@ export class DockerComposeService {
   }
 
   private async ensurePortAvailable(config: ServerConfig): Promise<string> {
-    const requestedPort = parseInt(config.port || '25565');
+    const requestedPort = Number.parseInt(config.port || '25565');
     const availablePort = await this.findAvailablePort(requestedPort, config.id);
     if (availablePort !== requestedPort) {
       config.port = availablePort.toString();
@@ -676,7 +699,6 @@ export class DockerComposeService {
 
   private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string): any {
     return {
-      version: '3',
       services: {
         mc: {
           image: `itzg/minecraft-server:${config.dockerImage}`,

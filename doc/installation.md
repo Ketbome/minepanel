@@ -17,6 +17,22 @@ Choose the method that best fits your needs:
 
 The fastest way to get started. Perfect for trying out Minepanel or running on a local network.
 
+::: warning Platform-Specific Configuration
+The configuration differs slightly between operating systems:
+
+**macOS / Linux:**
+
+- Use `SERVERS_DIR=${PWD}/servers`
+- Volume mount: `${PWD}/servers:${PWD}/servers`
+
+**Windows:**
+
+- Use `SERVERS_DIR=/app/servers`
+- Volume mount: `./servers:/app/servers`
+
+The examples below use the macOS/Linux configuration. If you're on Windows, adjust accordingly.
+:::
+
 ### Step 1: Create docker-compose.yml
 
 ```yaml
@@ -28,7 +44,8 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       # Backend environment variables
-      - SERVERS_DIR=/app/servers
+      # For Windows, use: /app/servers instead
+      - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
@@ -44,7 +61,8 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      - ./servers:/app/servers
+      # For Windows, use: ./servers:/app/servers instead
+      - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:

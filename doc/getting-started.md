@@ -17,6 +17,16 @@ Get Minepanel running in about 2 minutes.
 
 ## Installation
 
+::: warning Platform-Specific Configuration
+Configuration differs between operating systems:
+
+**macOS / Linux:** Use `SERVERS_DIR=${PWD}/servers` and volume mount `${PWD}/servers:${PWD}/servers`
+
+**Windows:** Use `SERVERS_DIR=/app/servers` and volume mount `./servers:/app/servers`
+
+Examples below use macOS/Linux format. Adjust for Windows as needed.
+:::
+
 ### 1. Create docker-compose.yml
 
 ```yaml
@@ -28,6 +38,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       # Backend
+      # Windows: use /app/servers
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET= # Generate with: openssl rand -base64 32
@@ -44,6 +55,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
+      # Windows: use ./servers:/app/servers
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:

@@ -167,8 +167,7 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs/since/:timestamp')
-  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string, @Query('lines') lines?: number) {
-    const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 1000;
+  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string) {
     return this.managementService.getServerLogsSince(id, timestamp);
   }
 

@@ -6,7 +6,9 @@ services:
     ports:
       - "${BACKEND_PORT:-8091}:8091"
     environment:
-      - SERVERS_DIR=/app/servers
+      # For Mac/Linux use: SERVERS_DIR=${PWD}/servers
+      # For Windows use: SERVERS_DIR=/app/servers
+      - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=dasasdadsasdasads-asddas-ads-asdadsasd # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
@@ -18,7 +20,9 @@ services:
       - DB_USER=${DB_USER:-minepanel}
       - DB_PASSWORD=${DB_PASSWORD:-minepanel}
     volumes:
-      - ./servers:/app/servers
+      # For Mac/Linux use: ${PWD}/servers:${PWD}/servers
+      # For Windows use: ./servers:/app/servers
+      - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:

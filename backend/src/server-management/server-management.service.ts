@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as path from 'path';
+import { Injectable, Logger } from '@nestjs/common';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
@@ -10,8 +10,59 @@ import { DiscordService } from 'src/discord/discord.service';
 
 const execAsync = promisify(exec);
 
+const DOCKER_COMMANDS = {
+  COMPOSE_DOWN: 'docker compose down',
+  COMPOSE_UP: 'docker compose up -d',
+  PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
+  PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
+  INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}:{{.State.Health.Status}}" ${containerId}`,
+  STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
+  STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
+  LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
+  LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
+  EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
+    const passwordArg = password ? ' --password ' + password : '';
+    return `docker exec -i ${containerId} rcon-cli --port ${port}${passwordArg} "${command}"`;
+  },
+  VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
+  VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
+  DU_SIZE: (worldPath: string) => `du -sb "${worldPath}" | cut -f1`,
+} as const;
+
+export type ServerStatus = 'running' | 'stopped' | 'starting' | 'not_found';
+
+export interface ServerInfo {
+  exists: boolean;
+  status: ServerStatus;
+  dockerComposeExists?: boolean;
+  mcDataExists?: boolean;
+  worldSize?: number;
+  lastUpdated?: Date | null;
+  worldSizeFormatted?: string;
+  error?: string;
+}
+
+export interface ServerLogsResponse {
+  logs: string;
+  hasErrors: boolean;
+  lastUpdate: Date;
+  status: ServerStatus;
+  metadata?: {
+    totalLines: number;
+    errorCount: number;
+    warningCount: number;
+  };
+  hasNewContent?: boolean;
+}
+
+export interface CommandExecutionResponse {
+  success: boolean;
+  output: string;
+}
+
 @Injectable()
 export class ServerManagementService {
+  private readonly logger = new Logger(ServerManagementService.name);
   private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
 
   constructor(
@@ -19,6 +70,14 @@ export class ServerManagementService {
     private readonly settingsRepo: Repository<Settings>,
     private readonly discordService: DiscordService,
   ) {}
+
+  private validateServerId(serverId: string): boolean {
+    return /^[a-zA-Z0-9_-]+$/.test(serverId);
+  }
+
+  private async serverExists(serverId: string): Promise<boolean> {
+    return fs.pathExists(path.join(this.BASE_DIR, serverId));
+  }
 
   private getDockerComposePath(serverId: string): string {
     return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');
@@ -38,48 +97,62 @@ export class ServerManagementService {
         webhook: settings?.discordWebhook || null,
         lang: settings?.language as 'en' | 'es',
       };
-    } catch {
+    } catch (error) {
+      this.logger.warn('Failed to get user settings', error);
       return { webhook: null, lang: 'es' };
     }
   }
 
-  private async sendDiscordNotification(type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning', serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
+  private async sendDiscordNotification(
+    type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning',
+    serverName: string,
+    details?: { port?: string; players?: string; version?: string; reason?: string },
+  ): Promise<void> {
     try {
       const { webhook, lang } = await this.getUserSettings();
       if (webhook) {
         await this.discordService.sendServerNotification(webhook, type, serverName, lang, details);
       }
     } catch (error) {
-      console.error('Discord notification error:', error);
+      this.logger.error('Discord notification error', error);
     }
   }
 
   private async findContainerId(serverId: string): Promise<string> {
-    const { stdout } = await execAsync(`docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`);
+    if (!this.validateServerId(serverId)) {
+      throw new Error(`Invalid server ID: ${serverId}`);
+    }
+
+    const { stdout } = await execAsync(DOCKER_COMMANDS.PS_FILTER(serverId));
     if (stdout.trim()) return stdout.trim();
 
-    const { stdout: partialMatch } = await execAsync(`docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`);
+    const { stdout: partialMatch } = await execAsync(DOCKER_COMMANDS.PS_PARTIAL(serverId));
     return partialMatch.trim();
   }
 
   async restartServer(serverId: string): Promise<boolean> {
     try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return false;
+      }
+
       const dockerComposePath = this.getDockerComposePath(serverId);
       if (!(await fs.pathExists(dockerComposePath))) {
-        console.error(`Docker compose file does not exist for server ${serverId}`);
+        this.logger.error(`Docker compose file does not exist for server ${serverId}`);
         return false;
       }
 
       const composeDir = path.dirname(dockerComposePath);
-      await execAsync('docker compose down', { cwd: composeDir });
-      await execAsync('docker compose up -d', { cwd: composeDir });
+      await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+      await execAsync(DOCKER_COMMANDS.COMPOSE_UP, { cwd: composeDir });
 
-      // Send Discord notification
+      this.logger.log(`Server ${serverId} restarted successfully`);
       await this.sendDiscordNotification('restarted', serverId);
 
       return true;
     } catch (error) {
-      console.error(`Failed to restart server ${serverId}:`, error);
+      this.logger.error(`Failed to restart server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
@@ -87,37 +160,49 @@ export class ServerManagementService {
 
   async clearServerData(serverId: string): Promise<boolean> {
     try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return false;
+      }
+
       const serverDataDir = this.getMcDataPath(serverId);
       const dockerComposePath = this.getDockerComposePath(serverId);
 
       if (await fs.pathExists(dockerComposePath)) {
         const composeDir = path.dirname(dockerComposePath);
-        await execAsync('docker compose down', { cwd: composeDir });
+        await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
       }
 
       if (await fs.pathExists(serverDataDir)) {
         await fs.remove(serverDataDir);
         await fs.ensureDir(serverDataDir);
+        this.logger.log(`Server data cleared for ${serverId}`);
         return true;
       }
 
+      this.logger.warn(`Server data directory not found for ${serverId}`);
       return false;
     } catch (error) {
-      console.error(`Failed to clear data for server "${serverId}":`, error);
+      this.logger.error(`Failed to clear data for server "${serverId}"`, error);
       return false;
     }
   }
 
-  async getServerStatus(serverId: string): Promise<'running' | 'stopped' | 'starting' | 'not_found'> {
+  async getServerStatus(serverId: string): Promise<ServerStatus> {
     try {
-      if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return 'not_found';
+      }
+
+      if (!(await this.serverExists(serverId))) {
         return 'not_found';
       }
 
       const containerId = await this.findContainerId(serverId);
 
       if (containerId) {
-        const { stdout } = await execAsync(`docker inspect --format="{{.State.Status}}:{{.State.Health.Status}}" ${containerId}`);
+        const { stdout } = await execAsync(DOCKER_COMMANDS.INSPECT_STATUS(containerId));
 
         if (stdout.includes('starting') || stdout.includes('health: starting')) return 'starting';
         if (stdout.includes('running')) return 'running';
@@ -130,12 +215,12 @@ export class ServerManagementService {
 
       return 'not_found';
     } catch (error) {
-      console.error(`Failed to get status for server ${serverId}:`, error);
+      this.logger.error(`Failed to get status for server ${serverId}`, error);
       return 'not_found';
     }
   }
 
-  async getAllServersStatus(): Promise<{ [serverId: string]: 'running' | 'stopped' | 'starting' | 'not_found' }> {
+  async getAllServersStatus(): Promise<Record<string, ServerStatus>> {
     try {
       const directories = await fs.readdir(this.BASE_DIR);
       const serverDirectories = await Promise.all(
@@ -147,7 +232,7 @@ export class ServerManagementService {
         }),
       );
 
-      const validServers = serverDirectories.filter(Boolean);
+      const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
       const statusPromises = validServers.map(async (serverId) => ({
         serverId,
         status: await this.getServerStatus(serverId),
@@ -157,15 +242,24 @@ export class ServerManagementService {
       return statusResults.reduce((acc, { serverId, status }) => {
         acc[serverId] = status;
         return acc;
-      }, {});
+      }, {} as Record<string, ServerStatus>);
     } catch (error) {
-      console.error('Error obtaining all servers status:', error);
+      this.logger.error('Error obtaining all servers status', error);
       return {};
     }
   }
 
-  async getServerInfo(serverId: string): Promise<any> {
+  async getServerInfo(serverId: string): Promise<ServerInfo> {
     try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return {
+          exists: false,
+          status: 'not_found',
+          error: 'Invalid server ID',
+        };
+      }
+
       const status = await this.getServerStatus(serverId);
       if (status === 'not_found') {
         return {
@@ -181,13 +275,13 @@ export class ServerManagementService {
       const mcDataExists = await fs.pathExists(mcDataPath);
 
       let worldSize = 0;
-      let lastUpdated = null;
+      let lastUpdated: Date | null = null;
 
       if (mcDataExists) {
         const worldPath = path.join(mcDataPath, 'world');
         if (await fs.pathExists(worldPath)) {
-          const { stdout } = await execAsync(`du -sb "${worldPath}" | cut -f1`);
-          worldSize = parseInt(stdout.trim(), 10);
+          const { stdout } = await execAsync(DOCKER_COMMANDS.DU_SIZE(worldPath));
+          worldSize = Number.parseInt(stdout.trim(), 10);
           const stats = await fs.stat(worldPath);
           lastUpdated = stats.mtime;
         }
@@ -203,10 +297,10 @@ export class ServerManagementService {
         worldSizeFormatted: this.formatBytes(worldSize),
       };
     } catch (error) {
-      console.error(`Failed to get info for server ${serverId}:`, error);
+      this.logger.error(`Failed to get info for server ${serverId}`, error);
       return {
         exists: false,
-        status: 'error',
+        status: 'not_found',
         error: error.message,
       };
     }
@@ -214,43 +308,48 @@ export class ServerManagementService {
 
   async deleteServer(serverId: string): Promise<boolean> {
     try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return false;
+      }
+
       const serverDir = path.join(this.BASE_DIR, serverId);
       const dockerComposePath = this.getDockerComposePath(serverId);
 
       if (!(await fs.pathExists(serverDir))) {
-        console.error(`Server directory does not exist for server ${serverId}`);
+        this.logger.error(`Server directory does not exist for server ${serverId}`);
         return false;
       }
 
       if (await fs.pathExists(dockerComposePath)) {
         const composeDir = path.dirname(dockerComposePath);
         try {
-          await execAsync('docker compose down', { cwd: composeDir });
+          await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
         } catch (error) {
-          console.warn(`Warning: Could not stop server ${serverId} before deletion:`, error);
+          this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
         }
       }
 
       await fs.remove(serverDir);
 
       try {
-        const { stdout: volumeList } = await execAsync(`docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`);
+        const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(serverId));
         if (volumeList.trim()) {
           const volumes = volumeList.trim().split('\n');
           for (const volume of volumes) {
-            await execAsync(`docker volume rm ${volume}`);
+            await execAsync(DOCKER_COMMANDS.VOLUME_REMOVE(volume));
           }
         }
       } catch (error) {
-        console.warn(`Warning: Could not clean up docker volumes for ${serverId}:`, error);
+        this.logger.warn(`Could not clean up docker volumes for ${serverId}`, error);
       }
 
-      // Send Discord notification
+      this.logger.log(`Server ${serverId} deleted successfully`);
       await this.sendDiscordNotification('deleted', serverId);
 
       return true;
     } catch (error) {
-      console.error(`Failed to delete server ${serverId}:`, error);
+      this.logger.error(`Failed to delete server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
     }
@@ -262,11 +361,15 @@ export class ServerManagementService {
     memoryLimit: string;
   }> {
     try {
+      if (!this.validateServerId(serverId)) {
+        throw new Error(`Invalid server ID: ${serverId}`);
+      }
+
       const containerId = await this.findContainerId(serverId);
       if (!containerId) throw new Error('Container not found or not running');
 
-      const { stdout: cpuStats } = await execAsync(`docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`);
-      const { stdout: memStats } = await execAsync(`docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`);
+      const { stdout: cpuStats } = await execAsync(DOCKER_COMMANDS.STATS_CPU(containerId));
+      const { stdout: memStats } = await execAsync(DOCKER_COMMANDS.STATS_MEM(containerId));
 
       const memoryParts = memStats.trim().split(' / ');
       return {
@@ -275,7 +378,7 @@ export class ServerManagementService {
         memoryLimit: memoryParts[1] || 'N/A',
       };
     } catch (error) {
-      console.error(`Failed to get resource usage for server ${serverId}:`, error);
+      this.logger.error(`Failed to get resource usage for server ${serverId}`, error);
       return {
         cpuUsage: 'N/A',
         memoryUsage: 'N/A',
@@ -288,29 +391,25 @@ export class ServerManagementService {
     if (bytes === 0) return '0 Bytes';
 
     const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
+    const dm = Math.max(0, decimals);
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
-  async getServerLogs(
-    serverId: string,
-    lines: number = 100,
-  ): Promise<{
-    logs: string;
-    hasErrors: boolean;
-    lastUpdate: Date;
-    status: 'running' | 'stopped' | 'starting' | 'not_found';
-    metadata?: {
-      totalLines: number;
-      errorCount: number;
-      warningCount: number;
-    };
-  }> {
+  async getServerLogs(serverId: string, lines: number = 100): Promise<ServerLogsResponse> {
     try {
-      if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
+      if (!this.validateServerId(serverId)) {
+        return {
+          logs: 'Invalid server ID',
+          hasErrors: true,
+          lastUpdate: new Date(),
+          status: 'not_found',
+        };
+      }
+
+      if (!(await this.serverExists(serverId))) {
         return {
           logs: 'Server not found',
           hasErrors: false,
@@ -331,7 +430,7 @@ export class ServerManagementService {
         };
       }
 
-      const { stdout: logs } = await execAsync(`docker logs --tail ${lines} --timestamps ${containerId} 2>&1`);
+      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, lines));
       const logAnalysis = this.analyzeLogs(logs);
 
       return {
@@ -346,7 +445,7 @@ export class ServerManagementService {
         },
       };
     } catch (error) {
-      console.error(`Failed to get logs for server ${serverId}:`, error);
+      this.logger.error(`Failed to get logs for server ${serverId}`, error);
       return {
         logs: `Error retrieving logs: ${error.message}`,
         hasErrors: true,
@@ -373,13 +472,13 @@ export class ServerManagementService {
     let errorCount = 0;
     let warningCount = 0;
 
-    lines.forEach((line) => {
+    for (const line of lines) {
       if (errorPatterns.some((pattern) => pattern.test(line))) {
         errorCount++;
       } else if (warningPatterns.some((pattern) => pattern.test(line))) {
         warningCount++;
       }
-    });
+    }
 
     return {
       hasErrors: errorCount > 0,
@@ -458,15 +557,19 @@ export class ServerManagementService {
   async getServerLogsSince(
     serverId: string,
     timestamp: string,
-  ): Promise<{
-    logs: string;
-    hasErrors: boolean;
-    lastUpdate: Date;
-    status: 'running' | 'stopped' | 'starting' | 'not_found';
-    hasNewContent: boolean;
-  }> {
+  ): Promise<ServerLogsResponse> {
     try {
-      if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
+      if (!this.validateServerId(serverId)) {
+        return {
+          logs: 'Invalid server ID',
+          hasErrors: true,
+          lastUpdate: new Date(),
+          status: 'not_found',
+          hasNewContent: false,
+        };
+      }
+
+      if (!(await this.serverExists(serverId))) {
         return {
           logs: 'Server not found',
           hasErrors: false,
@@ -489,7 +592,7 @@ export class ServerManagementService {
         };
       }
 
-      const { stdout: logs } = await execAsync(`docker logs --since ${timestamp} --timestamps ${containerId} 2>&1`);
+      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS_SINCE(containerId, timestamp));
       const hasNewContent = logs.trim().length > 0;
       const logAnalysis = this.analyzeLogs(logs);
 
@@ -501,7 +604,7 @@ export class ServerManagementService {
         hasNewContent,
       };
     } catch (error) {
-      console.error(`Failed to get logs since ${timestamp} for server ${serverId}:`, error);
+      this.logger.error(`Failed to get logs since ${timestamp} for server ${serverId}`, error);
       return {
         logs: `Error retrieving logs: ${error.message}`,
         hasErrors: true,
@@ -512,9 +615,18 @@ export class ServerManagementService {
     }
   }
 
-  async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<{ success: boolean; output: string }> {
+  async executeCommand(
+    serverId: string,
+    command: string,
+    rconPort: string,
+    rconPassword?: string,
+  ): Promise<CommandExecutionResponse> {
     try {
-      if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
+      if (!this.validateServerId(serverId)) {
+        return { success: false, output: 'Invalid server ID' };
+      }
+
+      if (!(await this.serverExists(serverId))) {
         return { success: false, output: 'Server not found' };
       }
 
@@ -523,44 +635,50 @@ export class ServerManagementService {
         return { success: false, output: 'Container not found or not running' };
       }
 
-      let rconConfig = `--port ${rconPort}`;
-      if (rconPassword) rconConfig += ` --password ${rconPassword}`;
-
-      const { stdout, stderr } = await execAsync(`docker exec -i ${containerId} rcon-cli ${rconConfig} "${command}"`);
+      const { stdout, stderr } = await execAsync(
+        DOCKER_COMMANDS.EXEC_RCON(containerId, rconPort, rconPassword || '', command),
+      );
 
       if (stderr) {
+        this.logger.warn(`Command execution error on ${serverId}: ${stderr}`);
         return { success: false, output: `Error executing command: ${stderr}` };
       }
 
+      this.logger.log(`Command executed on ${serverId}: ${command}`);
       return { success: true, output: stdout || 'Command executed successfully' };
     } catch (error) {
-      console.error(`Error executing command on server ${serverId}:`, error);
+      this.logger.error(`Error executing command on server ${serverId}`, error);
       return { success: false, output: `Error: ${error.message}` };
     }
   }
 
   async startServer(serverId: string): Promise<boolean> {
     try {
-      const dockerComposePath = this.getDockerComposePath(serverId);
-      if (!(await fs.pathExists(dockerComposePath))) {
-        console.error(`Docker compose file does not exist for server ${serverId}`);
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
         return false;
       }
 
-      const composeDir = this.getMcDataPath(serverId);
-
-      if ((await this.getServerStatus(serverId)) !== 'not_found') {
-        await execAsync('docker compose down', { cwd: composeDir });
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (!(await fs.pathExists(dockerComposePath))) {
+        this.logger.error(`Docker compose file does not exist for server ${serverId}`);
+        return false;
       }
 
-      await execAsync('docker compose up -d', { cwd: composeDir });
+      const composeDir = path.dirname(dockerComposePath);
 
-      // Send Discord notification
+      if ((await this.getServerStatus(serverId)) !== 'not_found') {
+        await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+      }
+
+      await execAsync(DOCKER_COMMANDS.COMPOSE_UP, { cwd: composeDir });
+
+      this.logger.log(`Server ${serverId} started successfully`);
       await this.sendDiscordNotification('started', serverId);
 
       return true;
     } catch (error) {
-      console.error(`Failed to start server ${serverId}:`, error);
+      this.logger.error(`Failed to start server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
     }
@@ -568,21 +686,26 @@ export class ServerManagementService {
 
   async stopServer(serverId: string): Promise<boolean> {
     try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return false;
+      }
+
       const dockerComposePath = this.getDockerComposePath(serverId);
       if (!(await fs.pathExists(dockerComposePath))) {
-        console.error(`Docker compose file does not exist for server ${serverId}`);
+        this.logger.error(`Docker compose file does not exist for server ${serverId}`);
         return false;
       }
 
       const composeDir = path.dirname(dockerComposePath);
-      await execAsync('docker compose down', { cwd: composeDir });
+      await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
 
-      // Send Discord notification
+      this.logger.log(`Server ${serverId} stopped successfully`);
       await this.sendDiscordNotification('stopped', serverId);
 
       return true;
     } catch (error) {
-      console.error(`Failed to stop server ${serverId}:`, error);
+      this.logger.error(`Failed to stop server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
     }
