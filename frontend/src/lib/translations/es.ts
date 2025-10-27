@@ -202,6 +202,7 @@ export const es: Record<TranslationKey, string> = {
   language: "Idioma",
   spanish: "Español",
   english: "Inglés",
+  dutch: "Holandés",
   changeLanguage: "Cambiar idioma",
 
   // ===========================
