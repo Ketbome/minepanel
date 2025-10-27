@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class Users {
@@ -8,6 +9,7 @@ export class Users {
   @Column({ type: 'text', name: 'username' })
   username: string;
 
+  @Exclude()
   @Column({ type: 'text', name: 'password' })
   password: string;
 
@@ -17,9 +19,11 @@ export class Users {
   @Column({ type: 'boolean', default: false })
   isActive: boolean;
 
+  @Exclude()
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
+  @Exclude()
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

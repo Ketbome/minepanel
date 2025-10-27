@@ -17,3 +17,9 @@ export class UpdateSettingsDto {
   preferences?: Record<string, any>;
 }
 
+export class SettingsResponseDto {
+  cfApiKey?: string;
+  discordWebhook?: string;
+  language: string;
+  preferences?: Record<string, any>;
+}

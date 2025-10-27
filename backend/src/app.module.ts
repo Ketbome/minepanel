@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import config from 'src/config';
 import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SystemMonitoringModule } from './system-monitoring/system-monitoring.mo
     ServerManagementModule,
     AuthModule,
     SystemMonitoringModule,
+    DiscordModule,
   ],
   controllers: [AppController],
   providers: [AppService],

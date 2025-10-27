@@ -18,7 +18,11 @@ export class SettingsService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return this.settingsRepo.findOne({ where: { userId: user.id } });
+    const settings = await this.settingsRepo.findOne({ where: { userId: user.id } });
+    if (!settings) {
+      throw new NotFoundException('Settings not found');
+    }
+    return settings;
   }
 
   async createSettings(userId: number): Promise<Settings> {

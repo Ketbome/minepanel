@@ -197,6 +197,9 @@ export const es: Record<TranslationKey, string> = {
   dangerZoneDesc: "Acciones irreversibles y destructivas",
   settingsSaved: "Configuración guardada exitosamente",
   settingsSaveFailed: "Error al guardar la configuración",
+  test: "Probar",
+  webhookTestSuccess: "¡Prueba exitosa! Revisa tu canal de Discord",
+  webhookTestFailed: "Error al probar el webhook",
 
   // Creación de Servidor
   serverCreationDesc: "Crea un nuevo servidor de Minecraft",

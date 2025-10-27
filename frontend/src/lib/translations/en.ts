@@ -195,6 +195,9 @@ export const en = {
   dangerZoneDesc: "Irreversible and destructive actions",
   settingsSaved: "Settings saved successfully",
   settingsSaveFailed: "Failed to save settings",
+  test: "Test",
+  webhookTestSuccess: "Webhook test successful! Check your Discord channel",
+  webhookTestFailed: "Failed to test webhook",
 
   // Server Creation
   serverCreationDesc: "Create a new Minecraft server",

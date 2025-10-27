@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { Save, User, Key, Bell, Globe, AlertTriangle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { getSettings, updateSettings, UserSettings } from "@/services/settings/settings.service";
+import { getSettings, updateSettings, testDiscordWebhook, UserSettings } from "@/services/settings/settings.service";
 import { toast } from "sonner";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [username, setUsername] = useState("");
 
   const form = useForm<UserSettings>({
@@ -55,6 +56,7 @@ export default function SettingsPage() {
   const onSubmit = async (data: UserSettings) => {
     setIsSaving(true);
     try {
+      data.language = localStorage.getItem("language") as "en" | "es";
       await updateSettings(data);
       toast.success(t("settingsSaved"));
     } catch (error) {
@@ -62,6 +64,23 @@ export default function SettingsPage() {
       toast.error(t("settingsSaveFailed"));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    setIsTesting(true);
+    try {
+      const result = await testDiscordWebhook();
+      if (result.success) {
+        toast.success(t("webhookTestSuccess"));
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error("Error testing webhook:", error);
+      toast.error(t("webhookTestFailed"));
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -78,7 +97,6 @@ export default function SettingsPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Account Settings */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
@@ -104,7 +122,6 @@ export default function SettingsPage() {
             </Card>
           </motion.div>
 
-          {/* API Settings */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
@@ -146,9 +163,14 @@ export default function SettingsPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-200">{t("discordWebhook")}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="url" placeholder="https://discord.com/api/webhooks/..." className="bg-gray-800 border-gray-700 text-white" />
-                          </FormControl>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input {...field} type="url" placeholder="https://discord.com/api/webhooks/..." className="bg-gray-800 border-gray-700 text-white flex-1" />
+                            </FormControl>
+                            <Button type="button" variant="outline" onClick={handleTestWebhook} disabled={isTesting || !field.value} className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
+                              {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("test")}
+                            </Button>
+                          </div>
                           <FormDescription className="text-gray-400">{t("discordWebhookDesc")}</FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -160,7 +182,6 @@ export default function SettingsPage() {
             </Card>
           </motion.div>
 
-          {/* Appearance Settings */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
@@ -186,7 +207,6 @@ export default function SettingsPage() {
             </Card>
           </motion.div>
 
-          {/* Notifications Settings */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}>
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
@@ -214,7 +234,6 @@ export default function SettingsPage() {
             </Card>
           </motion.div>
 
-          {/* Danger Zone */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}>
             <Card className="border-2 border-red-600/40 bg-red-900/10 backdrop-blur-md shadow-xl">
               <CardHeader>
@@ -237,7 +256,6 @@ export default function SettingsPage() {
             </Card>
           </motion.div>
 
-          {/* Save Button */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.6 }} className="flex justify-end">
             <Button type="submit" disabled={isSaving || isLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8">
               {isSaving ? (
@@ -256,7 +274,6 @@ export default function SettingsPage() {
         </form>
       </Form>
 
-      {/* Decorative Elements */}
       <div className="flex justify-center gap-8 pt-4">
         <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
           <Image src="/images/redstone.webp" alt="Redstone" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />

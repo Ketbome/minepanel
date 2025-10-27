@@ -1,9 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Users } from 'src/users/entities/users.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('settings')
 export class Settings {
   @PrimaryGeneratedColumn()
+  @Exclude()
   id: number;
 
   @ManyToOne(() => Users, (user) => user.id, { onDelete: 'CASCADE' })
@@ -22,9 +24,11 @@ export class Settings {
   @Column({ type: 'json', nullable: true })
   preferences?: Record<string, any>;
 
+  @Exclude()
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
+  @Exclude()
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

@@ -8,9 +8,10 @@ import config from 'src/config';
 import { SettingsController } from './controllers/settings.controller';
 import { Settings } from './entities/settings.entity';
 import { SettingsService } from './services/settings.service';
+import { DiscordModule } from 'src/discord/discord.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings]), ConfigModule.forFeature(config)],
+  imports: [TypeOrmModule.forFeature([Users, Settings]), ConfigModule.forFeature(config), DiscordModule],
   controllers: [UsersController, SettingsController],
   providers: [UsersService, SettingsService],
   exports: [UsersService, SettingsService],

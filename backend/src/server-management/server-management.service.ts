@@ -3,6 +3,10 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
+import { Settings } from 'src/users/entities/settings.entity';
+import { DiscordService } from 'src/discord/discord.service';
 
 const execAsync = promisify(exec);
 
@@ -10,12 +14,44 @@ const execAsync = promisify(exec);
 export class ServerManagementService {
   private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
 
+  constructor(
+    @InjectRepository(Settings)
+    private readonly settingsRepo: Repository<Settings>,
+    private readonly discordService: DiscordService,
+  ) {}
+
   private getDockerComposePath(serverId: string): string {
     return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');
   }
 
   private getMcDataPath(serverId: string): string {
     return path.join(this.BASE_DIR, serverId, 'mc-data');
+  }
+
+  private async getUserSettings(): Promise<{ webhook: string | null; lang: 'en' | 'es' }> {
+    try {
+      const settings = await this.settingsRepo.findOne({
+        where: { discordWebhook: Not(IsNull()) },
+        order: { id: 'ASC' },
+      });
+      return {
+        webhook: settings?.discordWebhook || null,
+        lang: settings?.language as 'en' | 'es',
+      };
+    } catch {
+      return { webhook: null, lang: 'es' };
+    }
+  }
+
+  private async sendDiscordNotification(type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning', serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
+    try {
+      const { webhook, lang } = await this.getUserSettings();
+      if (webhook) {
+        await this.discordService.sendServerNotification(webhook, type, serverName, lang, details);
+      }
+    } catch (error) {
+      console.error('Discord notification error:', error);
+    }
   }
 
   private async findContainerId(serverId: string): Promise<string> {
@@ -38,9 +74,13 @@ export class ServerManagementService {
       await execAsync('docker compose down', { cwd: composeDir });
       await execAsync('docker compose up -d', { cwd: composeDir });
 
+      // Send Discord notification
+      await this.sendDiscordNotification('restarted', serverId);
+
       return true;
     } catch (error) {
       console.error(`Failed to restart server ${serverId}:`, error);
+      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
   }
@@ -205,9 +245,13 @@ export class ServerManagementService {
         console.warn(`Warning: Could not clean up docker volumes for ${serverId}:`, error);
       }
 
+      // Send Discord notification
+      await this.sendDiscordNotification('deleted', serverId);
+
       return true;
     } catch (error) {
       console.error(`Failed to delete server ${serverId}:`, error);
+      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
     }
   }
@@ -510,9 +554,14 @@ export class ServerManagementService {
       }
 
       await execAsync('docker compose up -d', { cwd: composeDir });
+
+      // Send Discord notification
+      await this.sendDiscordNotification('started', serverId);
+
       return true;
     } catch (error) {
       console.error(`Failed to start server ${serverId}:`, error);
+      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
     }
   }
@@ -527,9 +576,14 @@ export class ServerManagementService {
 
       const composeDir = path.dirname(dockerComposePath);
       await execAsync('docker compose down', { cwd: composeDir });
+
+      // Send Discord notification
+      await this.sendDiscordNotification('stopped', serverId);
+
       return true;
     } catch (error) {
       console.error(`Failed to stop server ${serverId}:`, error);
+      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
     }
   }
