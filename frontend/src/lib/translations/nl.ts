@@ -1,0 +1,774 @@
+import {TranslationKey} from "@/lib/translations/en";
+
+export const nl: Record<TranslationKey, string> = {
+  // ===========================
+  // AUTHENTICATIE
+  // ===========================
+  login: "Inloggen",
+  logout: "Uitloggen",
+  username: "Gebruikersnaam",
+  password: "Wachtwoord",
+  invalidCredentials: "Ongeldige inloggegevens",
+  loginSuccess: "Succesvol ingelogd",
+
+  // ===========================
+  // NAVIGATIE
+  // ===========================
+  dashboard: "Dashboard",
+  servers: "Servers",
+  settings: "Instellingen",
+  home: "Thuis",
+  navigation: "Navigatie",
+
+  // ===========================
+  // ALGEMENE ACTIES
+  // ===========================
+  save: "Opslaan",
+  cancel: "Annuleren",
+  confirm: "Bevestigen",
+  loading: "Laden...",
+  error: "Fout",
+  success: "Succes",
+  welcome: "Welkom",
+  start: "Starten",
+  stop: "Stoppen",
+  restart: "Herstarten",
+  delete: "Verwijderen",
+  edit: "Bewerken",
+  console: "Console",
+  files: "Bestanden",
+  configure: "Configureren",
+  creating: "Aanmaken...",
+  eliminating: "Verwijderen...",
+  deleting: "Verwijderen...",
+  sending: "Verzenden...",
+  send: "Verzenden",
+  refresh: "Vernieuwen",
+  retry: "Opnieuw proberen",
+  pause: "Pauzeren",
+  resume: "Hervatten",
+  search: "Zoeken...",
+  saveConfiguration: "Configuratie opslaan",
+  saveChanges: "Wijzigingen opslaan",
+  addPort: "Poort toevoegen",
+  addVariable: "Variabele toevoegen",
+
+  // ===========================
+  // STATUS
+  // ===========================
+  online: "Online",
+  offline: "Offline",
+  starting: "Opstarten",
+  stopping: "Stoppen",
+  running: "Actief",
+  stopped: "Gestopt",
+  not_found: "Niets gevonden",
+  active: "Actief",
+  starting2: "Opstarten...",
+  stopped2: "Gestopt",
+  notFound: "Niets gevonden",
+  unknown: "Onbekend",
+  restarting: "Herstarten...",
+  initializing: "Initialiseren...",
+  verifyingAuth: "Authenticatie controleren...",
+  disconnected: "Verbinding verbroken",
+  withErrors: "Met problemen",
+
+  // ===========================
+  // SERVERBEHEER
+  // ===========================
+  createServer: "Server aanmaken",
+  serverName: "Servernaam",
+  serverType: "Servertype",
+  serverTypeDescription: "Selecteer het type Minecraft server dat je wilt configureren.",
+  version: "Versie",
+  memory: "Geheugen",
+  port: "Poort",
+  difficulty: "Moeilijkheidsgraad",
+  gameMode: "Spelmodus",
+  maxPlayers: "Maximaal aantal spelers",
+  serverId: "Server ID",
+  serverIdLabel: "Server ID",
+  serverIdDescription: "Unieke naam voor de server (alleen letters, cijfers, koppeltekens en underscores)",
+  serverIdPlaceholder: "mijn-server",
+  serverIdDesc: "Unieke naam voor je server",
+  serverDefaultName: "Server",
+  minecraftServer: "Minecraft Server",
+  currentStatus: "Huidige status",
+  serverInformation: "Serverinformatie",
+  container: "Container",
+
+  // Server Types
+  serverVanilla: "Standaard Vanilla Minecraft server (zonder mods of plugins). Ideaal voor het spelen in klassieke survival-modus.",
+  serverForge: "Server met ondersteuning voor mods via Forge. Vereist configuratie van de specifieke Forge-versie die gebruikt moet worden.",
+  serverCurseForge: "Installeert automatisch modpacks van CurseForge. Kan geconfigureerd worden met de URL of slug van het modpack.",
+  serverCurseForgeManual: "Handmatige modus voor CurseForge modpacks. (Gebruikt vooraf geladen ZIP-bestanden) (Verouderde functie, we raden aan CurseForge Modpack te gebruiken)",
+  serverSpigot: "Geoptimaliseerde server compatibel met Bukkit plugins",
+  serverPaper: "Geoptimaliseerde server gebaseerd op Spigot met extra optimalisaties",
+  serverBukkit: "Klassieke server met plugin API ondersteuning",
+  serverPufferfish: "Geoptimaliseerde Paper fork voor grote servers die maximale prestaties vereisen",
+  serverPurpur: "Server met leuke en configureerbare functies gebaseerd op Paper",
+  serverLeaf: "Paper fork gericht op prestaties en low-level optimalisaties",
+  serverFolia: "Experimentele Paper server met multi-threading ondersteuning (voor regio's)",
+  selectType: "Selecteer een servertype",
+
+  // Server Actions
+  startServer: "Server starten",
+  stopServer: "Server stoppen",
+  restart2: "Herstarten",
+  consoleStatus: "Console",
+  manageServer: "Server beheren",
+
+  // ===========================
+  // DASHBOARD
+  // ===========================
+  dashboardTitle: "Server Dashboard",
+  dashboardDescription: "Beheer en configureer je Minecraft servers",
+  myServers: "Mijn Servers",
+  noServers: "Je hebt nog geen servers aangemaakt",
+  noServersDesc: "Maak je eerste server aan om te beginnen",
+  noServersAvailable: "Er zijn geen servers beschikbaar",
+  noServersAvailableDesc: "Creëer je eerste server aan om het avontuur te beginnen",
+  createFirstServer: "Creëer mijn eerste server",
+  createNewServer: "Nieuwe server aanmaken",
+  systemActive: "Systeem actief",
+  admin: "Admin",
+  administrator: "Beheerder",
+  minecraftPanel: "Minepanel",
+
+  // Server Creation
+  serverCreationDesc: "Maak een nieuwe Minecraft server aan",
+  enterServerName: "Voer de naam in voor je nieuwe Minecraft server.",
+
+  // Server Deletion
+  deleteServer: "Server verwijderen",
+  deleteServerTitle: "Server verwijderen",
+  deleteServerConfirm: "Weet je zeker dat je deze server wilt verwijderen?",
+  deleteServerDesc: "Deze actie kan niet ongedaan worden gemaakt. Dit zal de server en alle bijbehorende gegevens permanent verwijderen.",
+  deleteServerWarning: "Weet je zeker dat je de server wilt verwijderen",
+  cannotBeUndone: "Deze actie kan niet ongedaan worden gemaakt en zal alle servergegevens verwijderen.",
+  deleteServerData: "Servergegevens verwijderen",
+  deleteConfirmTitle: "Weet je het absoluut zeker?",
+  deleteConfirmDesc: "Deze actie kan niet ongedaan worden gemaakt. Alle werelden, configuraties en opgeslagen servergegevens worden verwijderd.",
+  yesDeleteAll: "Ja, alles verwijderen",
+
+  // ===========================
+  // FORMULIERVALIDATIE
+  // ===========================
+  idMinLength: "ID moet minimaal 3 tekens bevatten",
+  idMaxLength: "ID mag maximaal 20 tekens bevatten",
+  idInvalidChars: "ID mag alleen letters, cijfers, koppeltekens en underscores bevatten",
+
+  // ===========================
+  // BERICHTEN & MELDINGEN
+  // ===========================
+  serverCreated: "Server succesvol aangemaakt",
+  serverDeleted: "Server succesvol verwijderd",
+  serverStarted: "Server succesvol gestart",
+  serverStopped: "Server succesvol gestopt",
+  serverCreatedSuccess: "Server succesvol aangemaakt",
+  serverDeletedSuccess: "Server succesvol verwijderd",
+
+  // ===========================
+  // FOUTEN
+  // ===========================
+  serverNotFound: "De server is niet gevonden",
+  connectionError: "Verbindingsfout",
+  unexpectedError: "Onverwachts probleem",
+  NO_ACCESS_TOKEN: "Er is geen toegangstoken ontvangen",
+  LOGIN_ERROR: "Inlogfout",
+  SERVER_START_ERROR: "De server kon niet worden gestart vanwege een probleem.",
+  SERVER_STOP_ERROR: "De server kon niet worden gestopt vanwege een probleem.",
+  errorLoadingServerList: "Er is een probleem opgetreden bij het laden van de serverlijst.",
+  errorProcessingStatuses: "Er is een probleem opgetreden bij het verwerken van de serverstatussen.",
+  errorDeletingServer: "Er is een probleem opgetreden bij het verwijderen van de server.",
+  errorCreatingServer: "Er is een probleem opgetreden bij het aanmaken van de server.",
+  errorLoadingServerInfo: "Er is een probleem opgetreden bij het laden van de serverinformatie.",
+  errorLoadingLogs: "Er is een probleem opgetreden bij het laden van de serverlogs.",
+  errorFetchingResources: "Er is een probleem opgetreden bij het ophalen van de serverbronnen.",
+  errorGettingLogsServer: "Er is een probleem opgetreden bij het ophalen van de serverlogs.",
+  containerNotFound: "Er is een probleem opgetreden: container niet gevonden.",
+  serverNotFoundSpecified: "Er is een probleem opgetreden: de opgegeven server is niet gevonden.",
+  connectionErrorDocker: "Er is een probleem opgetreden bij het verbinden met Docker.",
+  unknownError: "Er is een onbekend probleem opgetreden.",
+  logsError: "Er is een probleem opgetreden bij het verwerken van de logs.",
+  resourcesError: "Er is een probleem opgetreden bij het laden van de bronnen.",
+  errorsDetected: "Er zijn problemen gedetecteerd in de logs.",
+  errorsDetectedDesc: "Er zijn problemen of uitzonderingen gevonden in de serverlogs.",
+
+  // ===========================
+  // TAAL
+  // ===========================
+  language: "Taal",
+  spanish: "Spaans",
+  english: "Engels",
+  dutch: "Nederlands",
+  changeLanguage: "Taal wijzigen",
+
+  // ===========================
+  // WELKOMSTPAGINA
+  // ===========================
+  welcomeDescription: "Beheer je Minecraft servers met gemak",
+  enterCredentials: "Voer je inloggegevens in om verder te gaan",
+  enterServer: "SERVER BETREDEN",
+  allRightsReserved: "Alle rechten voorbehouden",
+  help: "Help",
+  privacy: "Privacy",
+  terms: "Voorwaarden",
+
+  // ===========================
+  // ALGEMENE INSTELLINGEN TAB
+  // ===========================
+  generalSettings: "Algemene instellingen",
+  generalSettingsDesc: "Algemene instellingen voor je Minecraft server",
+  basicSettings: "Basisinstellingen",
+  performanceSettings: "Prestaties",
+  connectivitySettings: "Connectiviteit",
+
+  // ===========================
+  // BASISINSTELLINGEN TAB
+  // ===========================
+  motd: "Bericht van de dag (MOTD)",
+  motdPlaceholder: "Een geweldige Minecraft server",
+  motdDescription: "Het bericht dat verschijnt in de serverlijst",
+  serverNamePlaceholder: "Jouw servernaam",
+  maxPlayersPlaceholder: "20",
+  players: "Spelers",
+  versionsAvailable: "versies beschikbaar",
+  recommended: "Aanbevolen",
+  popular: "Populair",
+  allVersions: "Alle versies",
+  selectVersion: "Selecteer versie",
+  loadingVersions: "Versies laden",
+  updateVersions: "Versies bijwerken",
+  list: "Lijst",
+  manual: "Handmatig",
+  latest: "Laatste",
+
+  // ===========================
+  // MOEILIJKHEIDSGRAAD
+  // ===========================
+  selectDifficulty: "Selecteer moeilijkheidsgraad",
+  peaceful: "Vreedzaam",
+  easy: "Makkelijk",
+  normal: "Normaal",
+  hard: "Moeilijk",
+
+  // ===========================
+  // SPELMODUS
+  // ===========================
+  selectGameMode: "Selecteer spelmodus",
+  survival: "Survival",
+  creative: "Creatief",
+  adventure: "Avontuur",
+  spectator: "Toeschouwer",
+
+  // ===========================
+  // WERELD INSTELLINGEN
+  // ===========================
+  worldSettings: "Wereld",
+  seed: "Wereld seed",
+  seedPlaceholder: "Laat leeg voor willekeurige seed",
+  seedDescription: "Wereld seed voor wereldgeneratie. Als je een negatief getal gebruikt, zorg ervoor dat je het tussen aanhalingstekens zet.",
+  levelType: "Wereldtype",
+  selectLevelType: "Selecteer wereldtype",
+  flat: "Vlak",
+  largeBiomes: "Grote biomen",
+  amplified: "Versterkt",
+  singleBiomeSurface: "Enkel bioom oppervlak",
+
+  // ===========================
+  // WERELD OPTIES
+  // ===========================
+  hardcore: "Hardcore",
+  hardcoreDescription: "Indien ingeschakeld, worden spelers toeschouwer wanneer ze sterven",
+  pvp: "PvP",
+  pvpDescription: "Sta speler tegen speler gevechten toe",
+  spawningOptions: "Spawn opties",
+  spawnAnimals: "Dieren spawnen",
+  spawnMonsters: "Monsters spawnen",
+  spawnNpcs: "NPC's spawnen",
+  generateStructures: "Structuren genereren",
+  generateStructuresDescription: "Bepaal of structuren zoals dorpen, tempels, etc. gegenereerd worden",
+  allowNether: "Nether toestaan",
+  allowNetherDescription: "Schakel toegang tot de Nether dimensie in of uit",
+
+  // ===========================
+  // PRESTATIE INSTELLINGEN TAB
+  // ===========================
+  performanceConfig: "Prestatie configuratie",
+  viewDistance: "Zichtafstand",
+  viewDistanceDesc: "Bepaalt hoeveel chunks rondom elke speler geladen worden. Lagere waarden verbeteren de prestaties.",
+  chunks: "chunks",
+  simulationDistance: "Simulatieafstand",
+  simulationDistanceDesc: "Bepaalt hoe ver de server updates uitvoert (mobs, gewassen, etc.). Kan lager zijn dan de zichtafstand.",
+  enableCommandBlocks: "Command blocks inschakelen",
+  enableCommandBlocksDesc: "Staat het gebruik van command blocks toe, wat de prestaties kan beïnvloeden bij overmatig gebruik.",
+
+  // ===========================
+  // CONNECTIVITEIT INSTELLINGEN TAB
+  // ===========================
+  serverPort: "Serverpoort",
+  serverPortDesc: "Poort waarop de server luistert. De standaardpoort is 25565.",
+  serverPortWarning: "Deze poort moet anders zijn dan andere actieve servers om conflicten te voorkomen.",
+  playerIdleTimeout: "Speler inactief timeout (minuten)",
+  playerIdleTimeoutDesc: "Tijd voordat inactieve spelers worden verwijderd (0 om uit te schakelen)",
+  onlineMode: "Online modus",
+  onlineModeDesc: "Indien ingeschakeld, controleert de server of spelers zijn geauthenticeerd bij Mojang. Het is aanbevolen om dit ingeschakeld te laten om gebruikers met valse namen te voorkomen.",
+  preventProxyConnections: "Proxyverbindingen voorkomen",
+  preventProxyConnectionsDesc: "Indien ingeschakeld, probeert de server verbindingen via proxies/VPN's te detecteren en blokkeren.",
+
+  // ===========================
+  // TOEGANGSCONTROLE
+  // ===========================
+  accessControl: "Toegangscontrole",
+  serverOperators: "Serverbeheerders",
+  serverOperatorsDesc: "Spelers met beheerdersrechten, gescheiden door komma's",
+  opPermissionLevel: "OP rechten niveau",
+  selectOpPermissionLevel: "Selecteer OP rechten niveau",
+  opPermissionLevel1: "Niveau 1 (Minimum)",
+  opPermissionLevel2: "Niveau 2",
+  opPermissionLevel3: "Niveau 3",
+  opPermissionLevel4: "Niveau 4 (Maximum)",
+  opPermissionLevelDesc: "Rechten niveau voor beheerders (4 = volledige toegang)",
+
+  // RCON
+  rcon: "RCON (Externe bediening)",
+  rconDesc: "Configureer externe toegang tot de serverconsole",
+  enableRcon: "RCON inschakelen",
+  enableRconDesc: "Sta externe bediening van de server toe via het RCON protocol",
+  backupRequiresRcon: "Back-ups vereisen RCON om goed te werken.",
+  broadcastRconToOps: "RCON uitzenden naar OPs",
+  broadcastRconToOpsDesc: "Zend uitgevoerde RCON commando's uit naar verbonden beheerders",
+  rconPort: "RCON poort",
+  rconPassword: "RCON wachtwoord",
+  rconPasswordImportant: "Belangrijk! Je moet het standaard wachtwoord wijzigen",
+  backupRconDesc: "De RCON back-up service voor het uitvoeren van back-ups.",
+
+  // ===========================
+  // BIJGEVOEGDE RECHTEN
+  // ===========================
+  additionalPermissions: "Aanvullende rechten",
+  commandBlock: "Command block",
+  commandBlockDesc: "Schakel het gebruik van command blocks in",
+  allowFlight: "Vliegen toestaan",
+  allowFlightDesc: "Sta spelers toe om te vliegen (als ze creative modus of vlieg mods hebben ingeschakeld)",
+
+  // ===========================
+  // GEAVANCEERD TAB
+  // ===========================
+  advancedConfig: "Geavanceerde configuratie",
+  advancedConfigDesc: "Geavanceerde opties voor je serverconfiguratie",
+  advanced: "Geavanceerd",
+
+  // Docker Configuration
+  dockerImage: "Docker image",
+  dockerImageDesc: "Officiële Docker image om te gebruiken voor de server",
+  dockerImageHelp: "Docker image om te gebruiken (latest, java21, java17)",
+  dockerImageHelpTags: "Hier zijn de beschikbare tags",
+  dockerImageHelpDocumentation: "Java versie documentatie",
+  dockerVolumes: "Docker volumes",
+  dockerVolumesDesc: "Aanvullende volume mappings voor de Docker container",
+  dockerVolumesHelp: "Docker volume mappings (één per regel, formaat: lokaal-pad:container-pad)",
+
+  // Ports Configuration
+  extraPorts: "Extra poorten",
+  extraPortsDesc: "Configureer aanvullende poorten om extra serverdiensten beschikbaar te maken",
+  portFormat: "Formaat: host_poort:container_poort[/protocol]",
+  configuredPorts: "Geconfigureerde poorten",
+  noExtraPorts: "Geen extra poorten geconfigureerd",
+  extraPortsUseful: "Extra poorten zijn nuttig voor plugins die specifieke verbindingen vereisen",
+  configExamples: "Configuratie voorbeelden:",
+  portVoiceChat: "Voice Chat mod poort",
+  portTcpSpecific: "Specifieke TCP poort",
+  portUdpPlugins: "UDP poort voor plugins",
+  portDynmap: "Dynmap of andere web plugins",
+
+  // Server Configuration
+  minecraftVersion: "Minecraft versie",
+  minecraftVersionDesc: "Specifieke Minecraft versie om te installeren",
+  minecraftVersionHelp: "Specifieke Minecraft versie om te gebruiken",
+  curseforgeVersionAuto: "Minecraft versie wordt automatisch verkregen van het CurseForge modpack",
+  idleTimeout: "Inactiviteitstijd (minuten)",
+  idleTimeoutDesc: "Tijd voordat inactieve spelers worden verwijderd",
+  idleTimeoutHelp: "Tijd in minuten voordat inactieve spelers worden verwijderd (0 om uit te schakelen)",
+  stopDelay: "Stop vertraging (sec)",
+  stopDelayDesc: "Wachttijd voordat de server geforceerd wordt gestopt",
+  stopDelayHelp: "Tijd in seconden om te wachten voordat de server geforceerd wordt afgesloten",
+  restartPolicy: "Herstart beleid",
+  restartPolicyDesc: "Bepaalt hoe de container zich gedraagt wanneer deze zijn uitvoering beëindigt",
+  noRestart: "Niet herstarten",
+  alwaysRestart: "Altijd herstarten",
+  restartOnFailure: "Herstarten bij problemen",
+  restartUnlessStopped: "Herstarten tenzij gestopt",
+  no: "Nee",
+  always: "Altijd",
+  onFailure: "Bij problemen",
+  unlessStopped: "Tenzij gestopt",
+
+  // Environment Variables
+  environmentVars: "Omgevingsvariabelen",
+  environmentVarsDesc: "Aangepaste omgevingsvariabelen voor de container",
+  environmentVarsHelp: "Aanvullende omgevingsvariabelen voor de container (één per regel, formaat: SLEUTEL=WAARDE)",
+  variableName: "Variabele naam",
+  variableValue: "Waarde",
+
+  // Backup Configuration
+  backupConfig: "Back-up configuratie",
+  enableBackup: "Back-ups inschakelen",
+  backupMethod: "Back-up methode",
+  backupMethodDesc: "Methode gebruikt om back-ups uit te voeren",
+  selectBackupMethod: "Selecteer back-up methode",
+  tarCompression: "tar (compressie)",
+  rsyncIncremental: "rsync (incrementeel)",
+  resticIncrementalEncrypted: "restic (incrementeel versleuteld)",
+  rcloneRemote: "rclone (extern)",
+  backupName: "Back-up naam",
+  backupNameDesc: "Naam gebruikt om back-up bestanden te identificeren",
+  backupInterval: "Back-up interval",
+  backupIntervalDesc: "Tijd tussen elke back-up (bijv: 24h, 2h 30m)",
+  backupInitialDelay: "Initiële vertraging",
+  backupInitialDelayDesc: "Tijd om te wachten voor de eerste back-up",
+  backupPruneDays: "Opschoon dagen",
+  backupPruneDaysDesc: "Verwijder back-ups ouder dan dit aantal dagen",
+  backupDestDir: "Back-up locatie",
+  backupDestDirDesc: "Pad waar back-ups worden opgeslagen",
+  backupExcludes: "Back-up uitsluitingen",
+  backupExcludesDesc: "Patronen van bestanden om uit te sluiten van back-up (gescheiden door komma's)",
+  backupExcludesHelp: "Bestanden en mappen die niet worden opgenomen in de back-up",
+  tarCompressMethod: "Tar compressie methode",
+  tarCompressMethodDesc: "Compressie algoritme voor tar bestanden",
+  selectTarCompressMethod: "Selecteer compressie methode",
+  gzip: "gzip (standaard)",
+  bzip2: "bzip2 (betere compressie)",
+  zstd: "zstd (snelst)",
+  backupOnStartup: "Back-up bij opstarten",
+  backupOnStartupDesc: "Voer direct een back-up uit na het starten van de server",
+  pauseIfNoPlayers: "Back-ups pauzeren wanneer er geen spelers zijn",
+  pauseIfNoPlayersDesc: "Voer geen automatische back-ups uit wanneer er geen spelers verbonden zijn",
+
+  // ===========================
+  // BRONNEN TAB
+  // ===========================
+  serverResources: "Serverbronnen",
+  serverResourcesDesc: "Configureer geheugen, CPU en andere limitaties in voor je server",
+  memoryCpu: "Geheugen & CPU",
+  jvmOptions: "JVM opties",
+  advancedResources: "Geavanceerde Configuraties",
+  resources: "Bronnen",
+  cpu: "CPU",
+  serverInactive: "Server inactief",
+
+  // Memory & CPU Tab
+  initialMemoryJvm: "Initiaal geheugen (JVM)",
+  initialMemoryTooltip: "Initiaal geheugen toegewezen aan de JVM (-Xms)",
+  initialMemoryDesc: "Initiaal geheugen toegewezen aan Java (Xms) - bijv: 2G, 1024M",
+  maxMemoryJvm: "Maximaal geheugen (JVM)",
+  maxMemoryTooltip: "Maximaal geheugen toegewezen aan de JVM (-Xmx)",
+  maxMemoryDesc: "Maximaal geheugen toegewezen aan Java (Xmx) - bijv: 4G, 4096M",
+  cpuLimit: "CPU limiet",
+  cpuLimitTooltip: "Maximale CPU limiet voor de Docker container",
+  cpuLimitDesc: "Maximaal aantal CPU kernen dat de server kan gebruiken",
+  cpuReservation: "CPU reservering",
+  cpuReservationTooltip: "Minimale hoeveelheid CPU cores gereserveerd voor de container",
+  cpuReservationDesc: "Minimale hoeveelheid CPU cores gereserveerd voor de container",
+  memoryReservationDocker: "Geheugen reservering (Docker)",
+  memoryReservationTooltip: "Hoeveelheid geheugen gereserveerd voor de Docker container",
+  memoryReservationDesc: "Hoeveelheid geheugen gereserveerd voor de Docker container",
+  linuxUserUid: "Linux gebruiker (UID)",
+  linuxUserDesc: "Linux gebruikers-ID waaronder de server wordt uitgevoerd",
+  linuxGroupGid: "Linux groep (GID)",
+  linuxGroupDesc: "Linux groeps-ID waaronder de server wordt uitgevoerd",
+
+  // JVM Options Tab
+  useAikarFlags: "Gebruik Aikar's flags",
+  aikarFlagsTooltip: "Aikar heeft onderzoek gedaan om de optimale JVM flags te vinden voor GC tuning, wat vooral belangrijk is naarmate meer gebruikers gelijktijdig verbinden.",
+  aikarFlagsRecommended: "Aanbevolen voor servers met veel spelers",
+  aikarFlagsDesc: "Gebruik geoptimaliseerde JVM instellingen voor servers met veel spelers",
+  enableJmx: "JMX inschakelen",
+  enableJmxTooltip: "Schakelt externe JMX monitoring in, zoals profilering met VisualVM of JMC",
+  enableJmxDesc: "Schakelt externe JMX monitoring in voor diagnostische tools",
+  jmxHost: "JMX host",
+  jmxHostDesc: "IP/Host waarop de Docker container draait (vereist voor externe JMX)",
+  jvmOptionsField: "JVM opties",
+  jvmOptionsDesc: "Algemene JVM opties gescheiden door spaties (argumenten beginnend met -X)",
+  jvmXxOptions: "JVM XX opties",
+  jvmXxOptionsDesc: "Specifieke JVM XX opties (moeten voorafgaan aan -X opties)",
+  systemPropertiesDd: "Systeem eigenschappen (DD)",
+  systemPropertiesDdDesc: "Lijst van systeemeigenschappen gescheiden door komma's (name=value of name:value)",
+  additionalArguments: "Aanvullende argumenten",
+  additionalArgumentsDesc: "Aanvullende argumenten om door te geven aan het server JAR bestand",
+
+  // Advanced Resources Tab
+  timezone: "Tijdzone",
+  selectTimezone: "Selecteer tijdzone",
+  timezoneDesc: "Server tijdzone (standaard: UTC)",
+  enableAutoStop: "Auto-stop inschakelen",
+  autoStopTooltip: "Stopt de server automatisch wanneer er gedurende de opgegeven tijd geen spelers zijn",
+  cannotUseWithAutoPause: "Kan niet samen gebruikt worden met auto-pause",
+  initialTimeout: "Initiële timeout (seconden)",
+  autoStopTimeoutInitDesc: "Initiële wachttijd om de server te stoppen als er geen spelers zijn",
+  establishedTimeout: "Vastgestelde timeout (seconden)",
+  autoStopTimeoutEstDesc: "Wachttijd om de server te stoppen zodra deze draait",
+  enableAutoPause: "Auto-pause inschakelen",
+  autoPauseTooltip: "Pauzeert de server automatisch wanneer er gedurende de opgegeven tijd geen spelers zijn",
+  cannotUseWithAutoStop: "Kan niet samen gebruikt worden met auto-stop",
+  modCompatibilityWarning: "⚠️ Waarschuwing over mod compatibiliteit:",
+  modCompatibilityDesc: "Als de server mods heeft geïnstalleerd, kan de auto-pause functie problemen veroorzaken bij het ontwaken van de server. Sommige mods zijn niet compatibel met deze functie en kunnen ervoor zorgen dat de server vastloopt of crasht tijdens het ontwaken. Het wordt aanbevolen deze functie alleen te gebruiken op vanilla servers of de compatibiliteit grondig te testen voordat je het in productie inschakelt.",
+  autoPauseTimeoutInitDesc: "Initiële wachttijd om de server te pauzeren als er geen spelers zijn",
+  autoPauseTimeoutEstDesc: "Wachttijd om de server te pauzeren zodra deze draait",
+  reconnectInterface: "Herverbindings interface",
+  reconnectInterfaceDesc: "IP-adres om te luisteren naar verbindingen die de server ontwaken (0.0.0.0 voor alle)",
+  enableRollingLogs: "Rolling logs inschakelen",
+  rollingLogsTooltip: "Standaard zal het vanilla logbestand zonder limiet groeien. De logger kan worden herconfigureerd om een rolling logbestand strategie te gebruiken.",
+  rollingLogsDesc: "Beperkt de grootte van logbestanden door rotatie",
+  showTimeInLogs: "Tijd tonen in logs",
+  logTimestampTooltip: "Voeg tijdstempel toe bij elke log entry",
+  logTimestampDesc: "Voegt tijdstempels toe aan log entries",
+
+  // ===========================
+  // LOGS TAB
+  // ===========================
+  serverLogs: "Serverlogs",
+  serverLogsDesc: "Bekijk en monitor je serverlogs in realtime",
+  searchInLogs: "Zoeken in logs...",
+  filterByLevel: "Filteren op niveau",
+  allLevels: "Alle niveaus",
+  onlyErrors: "Alleen fouten",
+  onlyWarnings: "Alleen waarschuwingen",
+  onlyInfo: "Alleen info",
+  onlyDebug: "Alleen debug",
+  autoScroll: "Auto-scroll",
+  realTime: "Realtime",
+  lines: "regels",
+  noLogsAvailable: "Geen logs beschikbaar",
+  serverNotRunning: "Server is niet actief",
+  serverNotRunning2: "Server is niet actief",
+  lastUpdate: "Laatste update:",
+  realTimeActive: "Realtime actief",
+  realTimePaused: "Realtime gepauzeerd",
+  showing: "Toont",
+  of: "van",
+  entries: "vermeldingen",
+  liveLabel: "LIVE",
+  viewLogsRealtime: "Bekijk serverlogs in realtime",
+  loadingLogs: "Logs laden...",
+  loadingServerConfig: "Serverconfiguratie laden...",
+  preparingBlocks: "Blokken en instellingen voorbereiden...",
+
+  // ===========================
+  // COMMANDO'S TAB
+  // ===========================
+  serverCommands: "Servercommando's",
+  serverCommandsDesc: "Voer commando's uit op je server via RCON",
+  commandConsole: "Commando console",
+  commandConsoleDesc: "Voer commando's direct uit op de Minecraft server",
+  startServerToExecute: "Start de server om commando's uit te voeren.",
+  quickCommands: "Snelle commando's",
+  sendCommand: "Commando verzenden",
+  enterMinecraftCommand: "Voer een Minecraft commando in... (zonder /)",
+  serverResponse: "Server reactie",
+  pressTabToAutocomplete: "Druk op Tab voor automatisch aanvullen, of Enter om te verzenden",
+  commandsInfo: 'Commando\'s worden verzonden zonder het initiële "/" symbool. Gebruik Tab om voorgestelde commando\'s automatisch aan te vullen.',
+  clearConsole: "Console wissen",
+  serverMustBeRunning: "Server moet actief zijn om commando's uit te voeren",
+  rconNotConfigured: "RCON is niet correct geconfigureerd",
+  commands: "Commando's",
+
+  // Command Labels
+  cmdListPlayers: "Spelers weergeven",
+  cmdTeleportPlayer: "Speler teleporteren",
+  cmdGiveXP: "Ervaring geven",
+  cmdGiveEffect: "Effect geven",
+  cmdCreativeMode: "Creatieve modus",
+  cmdSurvivalMode: "Survival modus",
+  cmdAdventureMode: "Avontuur modus",
+  cmdSpectatorMode: "Toeschouwer modus",
+  cmdDayTime: "Dag instellen",
+  cmdNightTime: "Nacht instellen",
+  cmdClearWeather: "Helder weer",
+  cmdRainWeather: "Regenachtig weer",
+  cmdThunderWeather: "Onweer",
+  cmdPeacefulDifficulty: "Vreedzame moeilijkheidsgraad",
+  cmdEasyDifficulty: "Makkelijke moeilijkheidsgraad",
+  cmdNormalDifficulty: "Normale moeilijkheidsgraad",
+  cmdHardDifficulty: "Moeilijke moeilijkheidsgraad",
+  cmdGiveDiamonds: "Diamanten geven",
+  cmdGiveDiamondSword: "Diamanten zwaard geven",
+  cmdGiveGoldenApples: "Gouden appels geven",
+  cmdGiveCommandBlock: "Command block geven",
+  cmdSeedWorld: "Wereld seed bekijken",
+  cmdSaveWorld: "Wereld opslaan",
+  cmdKickPlayer: "Speler verwijderen",
+  cmdBanPlayer: "Speler bannen",
+  cmdViewTPS: "TPS bekijken",
+  cmdSpigotTimings: "Spigot timings modus",
+
+  // ===========================
+  // PLUGINS CONFIGURATIE
+  // ===========================
+  pluginsConfig: "Plugins configuratie",
+  pluginsConfigDesc: "Configureer plugins voor je server",
+  pluginsNotAvailable: "Deze sectie is alleen beschikbaar voor Spigot, Paper of Bukkit servers",
+  pluginsSelectServerType: 'Selecteer Spigot, Paper of Bukkit server type in de "Server type" tab om plugins te configureren.',
+  pluginsAutoDownload: "Automatisch downloaden van Spiget",
+  pluginsAutoDownloadDesc: "Automatische plugin downloads van SpigotMC met behulp van Spiget API. ZIP-bestanden worden automatisch uitgepakt in de plugins map.",
+  pluginsManualInfo: "Om plugins handmatig toe te voegen (JAR-bestanden), gebruik de bestandsbeheerder om ze te uploaden naar de /plugins map van de server.",
+  pluginsSpigetResources: "Spiget bronnen (SPIGET_RESOURCES)",
+  pluginsSpigetResourcesDesc: "SpigotMC bron-ID's (bijv: LuckPerms=28140, Vault=34315)",
+  pluginsSpigetNote: "Belangrijke opmerking: De variabele is SPIGET met E, niet SPIGOT.",
+  pluginsSpigetWarning: "⚠️ Sommige plugins zoals EssentialsX staan geen geautomatiseerde downloads toe.",
+  pluginsManualTitle: "Plugins handmatig toevoegen",
+  pluginsManualStep1: "Open de bestandsbeheerder van de server",
+  pluginsManualStep2: "Navigeer naar de /plugins map",
+  pluginsManualStep3: "Upload je JAR-bestanden direct",
+  pluginsManualStep4: "Herstart de server om de plugins te laden",
+  pluginsTipsTitle: "Handige tips",
+  pluginsTip1: "Plugins worden automatisch gedownload bij het starten van de server",
+  pluginsTip2: "ZIP-bestanden worden automatisch uitgepakt in de plugins map",
+  pluginsTip3: "Je kunt Spiget combineren met handmatige plugins via de bestandsbeheerder",
+  pluginsTip4: "Spigot plugins werken ook op Paper en Bukkit",
+  pluginsSave: "Configuratie opslaan",
+  pluginsOpenPluginsFolder: "Plugins map openen",
+  pluginsOpenServerFolder: "Server map openen",
+  openFileBrowser: "Bestandsbeheerder",
+
+  // Plugin Server Configurations
+  paperConfiguration: "Paper configuratie",
+  paperBuild: "Paper build",
+  paperBuildDesc: "Specifiek Paper build nummer (laat leeg voor laatste)",
+  paperChannel: "Paper kanaal",
+  paperChannelDesc: "Kanaal: default of experimental",
+  customDownloadUrl: "Aangepaste download URL",
+  paperDownloadUrlDesc: "Overschrijf Paper download URL (optioneel)",
+
+  bukkitSpigotConfiguration: "Bukkit/Spigot configuratie",
+  bukkitDownloadUrl: "Bukkit download link",
+  bukkitDownloadUrlDesc: "Aangepaste Bukkit download link",
+  spigotDownloadUrl: "Spigot download URL",
+  spigotDownloadUrlDesc: "Aangepaste Spigot download link",
+  buildFromSource: "Spigot compileren vanaf broncode",
+
+  pufferfishConfiguration: "Pufferfish configuratie",
+  pufferfishBuild: "Pufferfish build",
+  pufferfishBuildDesc: "Specifiek build nummer of lastSuccessfulBuild",
+  useFlareFlags: "Gebruik Flare profiler flags",
+
+  purpurConfiguration: "Purpur configuratie",
+  purpurBuild: "Purpur build",
+  purpurBuildDesc: "LATEST of specifiek build nummer",
+  purpurDownloadUrlDesc: "Overschrijf Purpur download link (optioneel)",
+
+  leafConfiguration: "Leaf configuratie",
+  leafBuild: "Leaf build",
+  leafBuildDesc: "Specifiek Leaf build nummer (laat leeg voor laatste)",
+
+  foliaConfiguration: "Folia configuratie",
+  foliaWarning: "Folia is experimenteel en veel plugins werken mogelijk niet correct vanwege multi-threading wijzigingen.",
+  foliaBuild: "Folia build",
+  foliaBuildDesc: "Specifiek Folia build nummer",
+  foliaChannel: "Folia kanaal",
+  foliaChannelDesc: "Release kanaal (experimental aanbevolen)",
+  foliaDownloadUrlDesc: "Overschrijf Folia download URL (optioneel)",
+
+  skipDownloadDefaults: "Standaard configs downloaden overslaan",
+  skipDownloadDefaultsDesc: "Sla controle over voor standaard Paper/Bukkit/Spigot configuratiebestanden om te downloaden",
+
+  // ===========================
+  // MODS CONFIGURATIE
+  // ===========================
+  modsConfig: "Mods configuratie",
+  modsConfigDesc: "Configureer mod details voor je server",
+  modsNotAvailable: "Deze sectie is alleen beschikbaar voor Forge of CurseForge servers",
+  modsSelectServerType: 'Selecteer Forge of CurseForge servertype in de "Servertype" tab om mods te configureren.',
+
+  // Forge Configuration
+  forgeVersion: "Forge versie",
+  forgeBuildDesc: "Forge build nummer voor de geselecteerde Minecraft versie",
+
+  // Manual CurseForge (Deprecated)
+  deprecatedFeature: "Verouderde functie",
+  manualCurseForgeDeprecated: "Deze handmatige methode voor CurseForge is verouderd. We raden aan \"CurseForge Modpack\" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.",
+  modpackFile: "Modpack bestand (CF_SERVER_MOD)",
+  modpackFileHelp: "Volledig pad naar het modpack .zip bestand in de container.",
+  modpackFileExample: "Voorbeeld: /modpacks/SkyFactory_4_Server_4.1.0.zip",
+  modpackFilePath: "Pad naar het CurseForge modpack ZIP-bestand in de container",
+  baseDirectory: "Basis map (CF_BASE_DIR)",
+  baseDirectoryHelp: "Map waar het modpack uitgepakt wordt. Standaard: /data",
+  baseDirectoryPath: "Map waar het modpack wordt uitgepakt en uitgevoerd",
+  useModpackStartScript: "Gebruik modpack start script",
+  useModpackStartScriptDesc: "Indien uitgeschakeld, wordt het meegeleverde start script van het modpack vermeden en wordt standaard server logica gebruikt",
+  ftbLegacyJavaFixer: "FTB Legacy Java fixer",
+  ftbLegacyJavaFixerDesc: "Schakel fix in voor modpacks die falen met \"unable to launch forgemodloader\"",
+  cfApiKeyOptional: "Optionele API key voor compatibiliteit met sommige modpacks",
+
+  // CurseForge Auto Configuration
+  importantInfo: "Belangrijke informatie",
+  cfApiKeyRequired: "Om CurseForge functionaliteit correct te gebruiken, is een API key vereist. De API key is nodig om privé of beperkte modpacks te downloaden.",
+  installationMethod: "Installatiemethode",
+  installationMethodHelp: "Selecteer hoe je het modpack wilt verkrijgen:",
+  methodUrl: "URL",
+  methodUrlDesc: "Direct webadres naar het modpack op CurseForge",
+  methodSlug: "Slug",
+  methodSlugDesc: "Unieke modpack identifier (bijv: \"all-the-mods-7\")",
+  methodFile: "Bestand",
+  methodFileDesc: "Installeer vanaf een .zip bestand dat al naar de server is geüpload",
+  installFromUrl: "Installeer vanaf directe URL",
+  useIdSlug: "Gebruik modpack ID/slug",
+  useLocalFile: "Gebruik lokaal bestand op server",
+
+  modpackUrl: "Modpack URL (CF_PAGE_URL)",
+  modpackUrlHelp: "Volledige URL naar de modpack pagina of specifiek bestand.",
+  modpackUrlDesc: "Directe download URL van het CurseForge modpack",
+
+  curseForgeProject: "CurseForge project (CF_SLUG)",
+  curseForgeProjectHelp: "De identifier (slug) van het modpack op CurseForge.",
+  projectNameOrSlug: "Projectnaam of slug op CurseForge",
+
+  fileId: "Bestand ID (CF_FILE_ID)",
+  fileIdHelp: "Numeriek ID van het specifieke bestand om te downloaden. Indien weggelaten, wordt de laatste versie gebruikt.",
+  fileIdDesc: "Specifiek bestand ID om te downloaden. Indien leeg gelaten, wordt de laatste versie gebruikt.",
+
+  filePattern: "Bestand patroon (CF_FILENAME_MATCHER)",
+  filePatternHelp: "Geef een substring op om het gewenste bestand te vinden in de /modpacks map.",
+  filePatternDesc: "Patroon om het modpack bestand te vinden in de /modpacks map",
+
+  cfApiKey: "CurseForge API key (CF_API_KEY)",
+  cfApiKeyHelp: "CurseForge API key (Eternal) vereist om sommige modpacks te downloaden.",
+  cfApiKeyDesc: "API key om beperkte modpacks te downloaden (vereist voor de meeste modpacks)",
+  cfApiKeyDollarWarning: "Als je API key <b>$</b> symbolen bevat, moet het verdubbeld worden indien nodig. Voorbeeld: <code>$2a$10$T6sGlu...</code> wordt <code>$2a$10$$T6sGlu...</code>. Dit is vooral belangrijk voor het derde <b>$</b> en verder.",
+
+  // CurseForge Advanced Options
+  advancedOptions: "Geavanceerde opties",
+  synchronizeCurseForge: "CurseForge synchroniseren (CF_FORCE_SYNCHRONIZE)",
+  synchronizeCurseForgeDesc: "Synchroniseer automatisch modpack updates wanneer de server herstart",
+  parallelDownloads: "Parallelle downloads (CF_PARALLEL_DOWNLOADS)",
+  parallelDownloadsHelp: "Aantal mod downloads dat parallel uitgevoerd wordt. Standaardwaarde: 4",
+  parallelDownloadsDesc: "Geef aan hoeveel parallelle mod downloads uitgevoerd moeten worden",
+  download1: "1 download",
+  download2: "2 downloads",
+  download4: "4 downloads (aanbevolen)",
+  download6: "6 downloads",
+  download8: "8 downloads",
+  skipExistingFiles: "Bestaande bestanden overslaan (CF_OVERRIDES_SKIP_EXISTING)",
+  skipExistingFilesDesc: "Indien ingeschakeld, worden bestanden die al bestaan in de data map niet vervangen",
+  setLevelFrom: "Niveau instellen van (CF_SET_LEVEL_FROM)",
+  setLevelFromHelp: "Bepaalt hoe wereldgegevens van het modpack worden ingesteld.",
+  setLevelFromDesc: "Configureer hoe wereldgegevens van het modpack verkregen worden",
+  doNotSet: "Niet instellen",
+  worldFile: "Wereld bestand",
+  modpackOverrides: "Modpack overschrijvingen",
+  forceIncludeMods: "Mods geforceerd toevoegen (CF_FORCE_INCLUDE_MODS)",
+  forceIncludeModsHelp: "Lijst van mods (gescheiden door spaties of regels) om geforceerd toe te voegen, ongeacht het modpack ID's of Slugs.",
+  forceIncludeModsDesc: "Lijst van mods die altijd toegevoegd worden, zelfs als ze niet in het modpack staan ID's of Slugs (één per regel)",
+  excludeMods: "Mods uitsluiten (CF_EXCLUDE_MODS)",
+  excludeModsHelp: "Lijst van mods (gescheiden door spaties of regels) die uitgesloten worden van het modpack ID's of Slugs.",
+  excludeModsDesc: "Lijst van mods die uitgesloten worden van het modpack ID's of Slugs (één per regel, ondersteunt glob patronen)",
+
+  // ===========================
+  // UI COMPONENTEN
+  // ===========================
+  tip: "Tip:",
+  configureServerTip: "Configureer deze server door de parameters in de onderstaande tabs aan te passen.",
+  changesRequireRestart: "Wijzigingen vereisen een herstart van de server om toegepast te worden.",
+};
