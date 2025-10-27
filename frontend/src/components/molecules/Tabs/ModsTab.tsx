@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Info, HelpCircle, Eye, EyeOff } from "lucide-react";
+import { Info, HelpCircle, Eye, EyeOff, Download } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
+import { getSettings } from "@/services/settings/settings.service";
+import { toast } from "sonner";
 
 interface ModsTabProps {
   config: ServerConfig;
@@ -22,9 +24,28 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [showApiKeyManual, setShowApiKeyManual] = useState(false);
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isForge = config.serverType === "FORGE";
+
+  const handleImportApiKey = async () => {
+    setIsImporting(true);
+    try {
+      const settings = await getSettings();
+      if (settings.cfApiKey) {
+        updateConfig("cfApiKey", settings.cfApiKey);
+        toast.success(t("apiKeyImported"));
+      } else {
+        toast.error(t("noApiKeyConfigured"));
+      }
+    } catch (error) {
+      console.error("Error importing API key:", error);
+      toast.error(t("noApiKeyConfigured"));
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   if (!isCurseForge && !isForge && !isManualCurseForge) {
     return (
@@ -155,6 +176,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
                   {t("cfApiKey")}
                 </Label>
+                <Button type="button" variant="outline" size="sm" onClick={handleImportApiKey} disabled={isImporting} className="bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-emerald-400 text-xs">
+                  <Download className="h-3 w-3 mr-1" />
+                  {t("importFromSettings")}
+                </Button>
               </div>
               <div className="relative">
                 <Input id="cfApiKeyManual" value={config.cfApiKey || ""} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyManual ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />
@@ -327,23 +352,29 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
             )}
 
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cfApiKey" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
                   <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
-                  {t("cfApiKey")}
-                </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                        <HelpCircle className="h-4 w-4 text-gray-400" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                      <p>{t("cfApiKeyHelp")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                  <Label htmlFor="cfApiKey" className="text-gray-200 font-minecraft text-sm">
+                    {t("cfApiKey")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("cfApiKeyHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleImportApiKey} disabled={isImporting} className="bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-emerald-400 text-xs">
+                  <Download className="h-3 w-3 mr-1" />
+                  {t("importFromSettings")}
+                </Button>
               </div>
               <div className="relative">
                 <Input id="cfApiKey" value={config.cfApiKey} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyAuto ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />

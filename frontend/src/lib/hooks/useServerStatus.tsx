@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import {
-  getServerStatus as apiGetServerStatus,
-  startServer as apiStartServer,
-  stopServer as apiStopServer,
-} from "@/services/docker/fetchs";
+import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function useServerStatus(serverId: string) {
@@ -12,12 +8,10 @@ export function useServerStatus(serverId: string) {
   const [status, setStatus] = useState<string>("unknown");
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
-  // Helper function to translate error messages
   const translateMessage = (message: string): string => {
-    // Try to translate if it's a translation key, otherwise return the original message
-    const knownKeys = ['serverStarted', 'serverStopped', 'connectionError', 'unexpectedError', 'SERVER_START_ERROR', 'SERVER_STOP_ERROR'];
+    const knownKeys = ["serverStarted", "serverStopped", "connectionError", "unexpectedError", "SERVER_START_ERROR", "SERVER_STOP_ERROR"];
     if (knownKeys.includes(message)) {
-      return t(message as 'serverStarted' | 'serverStopped' | 'connectionError' | 'unexpectedError' | 'SERVER_START_ERROR' | 'SERVER_STOP_ERROR');
+      return t(message as "serverStarted" | "serverStopped" | "connectionError" | "unexpectedError" | "SERVER_START_ERROR" | "SERVER_STOP_ERROR");
     }
     return message;
   };
@@ -33,11 +27,8 @@ export function useServerStatus(serverId: string) {
     }
   }, [serverId]);
 
-  // Initial status load
   useEffect(() => {
     fetchStatus();
-
-    // Optional: Polling for status updates
     const interval = setInterval(fetchStatus, 10000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
@@ -47,8 +38,7 @@ export function useServerStatus(serverId: string) {
     try {
       const result = await apiStartServer(serverId);
       if (result.success) {
-        toast.success(t('serverStarted'));
-        // Wait a moment and update status
+        toast.success(t("serverStarted"));
         setTimeout(fetchStatus, 3000);
         return true;
       } else {
@@ -56,7 +46,7 @@ export function useServerStatus(serverId: string) {
       }
     } catch (error) {
       console.error("Error starting server:", error);
-      const errorMessage = error instanceof Error ? translateMessage(error.message) : t('SERVER_START_ERROR');
+      const errorMessage = error instanceof Error ? translateMessage(error.message) : t("SERVER_START_ERROR");
       toast.error(errorMessage);
       return false;
     } finally {
@@ -69,8 +59,7 @@ export function useServerStatus(serverId: string) {
     try {
       const result = await apiStopServer(serverId);
       if (result.success) {
-        toast.success(t('serverStopped'));
-        // Update status
+        toast.success(t("serverStopped"));
         fetchStatus();
         return true;
       } else {
@@ -78,7 +67,7 @@ export function useServerStatus(serverId: string) {
       }
     } catch (error) {
       console.error("Error stopping server:", error);
-      const errorMessage = error instanceof Error ? translateMessage(error.message) : t('SERVER_STOP_ERROR');
+      const errorMessage = error instanceof Error ? translateMessage(error.message) : t("SERVER_STOP_ERROR");
       toast.error(errorMessage);
       return false;
     } finally {

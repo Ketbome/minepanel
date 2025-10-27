@@ -1,23 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { minecraftVersionsService, MinecraftVersion } from "@/services/minecraft-versions.service";
+import { useLanguage } from "./useLanguage";
 
 export interface UseMinecraftVersionsOptions {
-  autoFetch?: boolean; // Auto fetch on mount
-  filterType?: MinecraftVersion["type"]; // Filter by version type
-  limit?: number; // Limit number of versions
+  autoFetch?: boolean;
+  filterType?: MinecraftVersion["type"];
+  limit?: number;
 }
 
 export const useMinecraftVersions = (options: UseMinecraftVersionsOptions = {}) => {
   const { autoFetch = true, filterType, limit } = options;
-
+  const { t } = useLanguage();
   const [versions, setVersions] = useState<MinecraftVersion[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [latestRelease, setLatestRelease] = useState<string>("");
 
-  /**
-   * Fetch versions from API
-   */
   const fetchVersions = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -34,36 +32,28 @@ export const useMinecraftVersions = (options: UseMinecraftVersionsOptions = {}) 
         fetchedVersions = await minecraftVersionsService.fetchVersions();
       }
 
-      // Apply limit if specified
       if (limit && limit > 0) {
         fetchedVersions = fetchedVersions.slice(0, limit);
       }
 
       setVersions(fetchedVersions);
 
-      // Get latest release
       const latest = await minecraftVersionsService.getLatestRelease();
       setLatestRelease(latest);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch versions";
+      const errorMessage = err instanceof Error ? err.message : t("failedToFetchVersions");
       setError(errorMessage);
       console.error("Error fetching versions:", err);
     } finally {
       setLoading(false);
     }
-  }, [filterType, limit]);
+  }, [filterType, limit, t]);
 
-  /**
-   * Refresh versions (clears cache)
-   */
   const refresh = useCallback(() => {
     minecraftVersionsService.clearCache();
     fetchVersions();
   }, [fetchVersions]);
 
-  /**
-   * Search versions
-   */
   const search = useCallback(
     async (query: string) => {
       if (!query.trim()) {
@@ -76,15 +66,11 @@ export const useMinecraftVersions = (options: UseMinecraftVersionsOptions = {}) 
     [versions, filterType]
   );
 
-  /**
-   * Get recommended versions
-   */
   const getRecommended = useCallback(() => {
     const recommended = minecraftVersionsService.getRecommendedVersions();
     return versions.filter((v) => recommended.includes(v.id));
   }, [versions]);
 
-  // Auto fetch on mount
   useEffect(() => {
     if (autoFetch) {
       fetchVersions();

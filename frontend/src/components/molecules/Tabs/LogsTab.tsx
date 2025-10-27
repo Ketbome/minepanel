@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { useServerLogs } from "@/lib/hooks/useServerLogs";
 import { getResources } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
-// Subcomponents for refactor
+
 interface LogsControlsProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
@@ -22,6 +21,18 @@ interface LogsControlsProps {
   toggleRealTime: () => void;
   loading: boolean;
   handleRefreshLogs: () => void | Promise<void>;
+}
+
+interface LogEntry {
+  id: string;
+  content: string;
+  timestamp: Date;
+  level: "info" | "warn" | "error" | "debug" | "unknown";
+}
+
+interface LogsError {
+  type: "container_not_found" | "server_not_found" | "connection_error" | "unknown";
+  message: string;
 }
 
 function LogsControls({ searchTerm, setSearchTerm, levelFilter, setLevelFilter, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs }: Readonly<LogsControlsProps>) {
@@ -75,7 +86,7 @@ function LogsControls({ searchTerm, setSearchTerm, levelFilter, setLevelFilter, 
   );
 }
 
-function LogsErrorAlert({ error, resourcesError }: Readonly<{ error: any; resourcesError: string | null }>) {
+function LogsErrorAlert({ error, resourcesError }: Readonly<{ error: LogsError | null; resourcesError: string | null }>) {
   const { t } = useLanguage();
   if (!error && !resourcesError) return null;
   return (
@@ -93,7 +104,7 @@ function LogsErrorAlert({ error, resourcesError }: Readonly<{ error: any; resour
   );
 }
 
-function LogsStatusAlert({ hasErrors, error }: Readonly<{ hasErrors: boolean; error: any }>) {
+function LogsStatusAlert({ hasErrors, error }: Readonly<{ hasErrors: boolean; error: LogsError | null }>) {
   const { t } = useLanguage();
   if (!hasErrors || error) return null;
   return (
@@ -111,7 +122,7 @@ function LogsStatusAlert({ hasErrors, error }: Readonly<{ hasErrors: boolean; er
   );
 }
 
-function LogsLastUpdate({ lastUpdate, error }: Readonly<{ lastUpdate: Date | null; error: any }>) {
+function LogsLastUpdate({ lastUpdate, error }: Readonly<{ lastUpdate: Date | null; error: LogsError | null }>) {
   const { t } = useLanguage();
   if (!lastUpdate || error) return null;
   return (
@@ -180,9 +191,8 @@ function LogsResources({ resources, loadingResources, resourcesError }: Readonly
   );
 }
 
-function LogsDisplay({ logsContainerRef, filteredLogEntries, logs, loading, error, hasErrors, handleRefreshLogs }: Readonly<{ logsContainerRef: React.RefObject<HTMLPreElement>; filteredLogEntries: any[]; logs: string; loading: boolean; error: any; hasErrors: boolean; handleRefreshLogs: () => void | Promise<void> }>) {
+function LogsDisplay({ logsContainerRef, filteredLogEntries, logs, loading, error, hasErrors, handleRefreshLogs }: Readonly<{ logsContainerRef: React.RefObject<HTMLPreElement>; filteredLogEntries: LogEntry[]; logs: string; loading: boolean; error: LogsError | null; hasErrors: boolean; handleRefreshLogs: () => void | Promise<void> }>) {
   const { t } = useLanguage();
-  // Extract className for the status bar
   const statusBarClassName = "absolute top-0 right-0 px-3 py-1 text-xs font-minecraft rounded-bl-md flex items-center border-l border-b border-gray-700/50 " + (error ? "bg-red-800/80 text-red-400" : hasErrors ? "bg-yellow-800/80 text-yellow-400" : "bg-gray-800/80 text-emerald-400");
 
   return (
@@ -236,7 +246,7 @@ function LogsDisplay({ logsContainerRef, filteredLogEntries, logs, loading, erro
   );
 }
 
-function LogsFooter({ error, hasErrors, isRealTime, lastUpdate, filteredLogEntries, logEntries, loadingResources, fetchServerResources, resourcesError }: { error: any; hasErrors: boolean; isRealTime: boolean; lastUpdate: Date | null; filteredLogEntries: any[]; logEntries: any[]; loadingResources: boolean; fetchServerResources: () => void | Promise<void>; resourcesError: string | null }) {
+function LogsFooter({ error, hasErrors, isRealTime, lastUpdate, filteredLogEntries, logEntries, loadingResources, fetchServerResources, resourcesError }: { error: LogsError | null; hasErrors: boolean; isRealTime: boolean; lastUpdate: Date | null; filteredLogEntries: LogEntry[]; logEntries: LogEntry[]; loadingResources: boolean; fetchServerResources: () => void | Promise<void>; resourcesError: string | null }) {
   const { t } = useLanguage();
   return (
     <CardContent className="flex justify-between mt-4">

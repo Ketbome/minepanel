@@ -1,2 +1,3 @@
 .env
 filebrowser-data/*
+postgres_data/*

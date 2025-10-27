@@ -1,57 +1,44 @@
 FROM node:18-alpine AS base
 
-# Install docker CLI (needed for backend to execute docker commands)
 RUN apk add --no-cache docker-cli docker-cli-compose
 
 WORKDIR /app
 
-# ================================
-# Build Backend
-# ================================
 FROM base AS backend-builder
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 COPY backend/ ./
 RUN npm run build
 
-# ================================
-# Build Frontend
-# ================================
 FROM base AS frontend-builder
 WORKDIR /app/frontend
 
-# Install dependencies
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
-# Copy frontend source
 COPY frontend/ ./
 
 RUN npm run build
 
-# ================================
-# Production Image - Multi-service
-# ================================
 FROM base AS runner
 
-# Install supervisor to run multiple processes
 RUN apk add --no-cache supervisor
 
 WORKDIR /app
 
-# Copy backend build
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/package*.json ./backend/
 
-# Install only production dependencies for backend
 WORKDIR /app/backend
-RUN npm ci --only=production
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production
 WORKDIR /app
 
-# Copy frontend build
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
@@ -61,7 +48,6 @@ COPY --from=frontend-builder /app/frontend/.next/static ./frontend/.next/static
 
 RUN chown -R nextjs:nodejs /app/frontend
 
-# Create supervisor config
 RUN mkdir -p /var/log/supervisor
 COPY <<EOF /etc/supervisord.conf
 [supervisord]
@@ -94,9 +80,7 @@ stderr_logfile_maxbytes=0
 environment=NODE_ENV=production,PORT=3000,HOSTNAME="0.0.0.0"
 EOF
 
-# Expose both ports
 EXPOSE 8091 3000
 
-# Start supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 

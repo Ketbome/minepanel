@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { UpdateServerConfigDto } from './dto/server-config.model';
 import { ServerListItemDto } from './dto/server-list-item.dto';
+import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('servers')
+@UseGuards(JwtAuthGuard)
 export class ServerManagementController {
   constructor(
     private readonly dockerComposeService: DockerComposeService,
@@ -36,12 +38,7 @@ export class ServerManagementController {
   async createServer(@Body(new ValidationPipe()) data: UpdateServerConfigDto) {
     try {
       const id = data.id;
-
-      if (!id) {
-        throw new BadRequestException('Server ID is required');
-      }
-
-      // Validate server ID (only alphanumeric characters, hyphens and underscores)
+      if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
@@ -53,9 +50,7 @@ export class ServerManagementController {
         server: serverConfig,
       };
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
+      if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(error.message || 'Failed to create server');
     }
   }
@@ -148,29 +143,21 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    // Get configuration info as well
     const config = await this.dockerComposeService.getServerConfig(id);
-
-    return {
-      ...serverInfo,
-      config: config || undefined,
-    };
+    return { ...serverInfo, config: config || undefined };
   }
 
   @Get(':id/logs')
   async getServerLogs(@Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
-    const lineCount = lines && lines > 0 ? Math.min(lines, 10000) : 100; // Max 10k lines for safety
+    const lineCount = lines && lines > 0 ? Math.min(lines, 10000) : 100;
 
     if (stream === 'true' && since) {
-      // Use the streaming method with since parameter
       return this.managementService.getServerLogsStream(id, lineCount, since);
-    } else if (since) {
-      // Use the since method for incremental updates
-      return this.managementService.getServerLogsSince(id, since, lineCount);
-    } else {
-      // Use the standard method
-      return this.managementService.getServerLogs(id, lineCount);
     }
+    if (since) {
+      return this.managementService.getServerLogsSince(id, since);
+    }
+    return this.managementService.getServerLogs(id, lineCount);
   }
 
   @Get(':id/logs/stream')
@@ -180,9 +167,8 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs/since/:timestamp')
-  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string, @Query('lines') lines?: number) {
-    const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 1000;
-    return this.managementService.getServerLogsSince(id, timestamp, lineCount);
+  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string) {
+    return this.managementService.getServerLogsSince(id, timestamp);
   }
 
   @Post(':id/command')

@@ -1,23 +1,29 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DockerComposeService } from './docker-compose/docker-compose.service';
-import { ServerManagementService } from './server-management/server-management.service';
-import { ServerManagementController } from './server-management/server-management.controller';
 import { ServerManagementModule } from './server-management/server-management.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
+import config from 'src/config';
+import { DatabaseModule } from './database/database.module';
+import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      load: [config],
+      isGlobal: true,
+    }),
+    DatabaseModule,
+    UsersModule,
     ServerManagementModule,
     AuthModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    SystemMonitoringModule,
+    DiscordModule,
   ],
-  controllers: [AppController, ServerManagementController],
-  providers: [AppService, DockerComposeService, ServerManagementService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

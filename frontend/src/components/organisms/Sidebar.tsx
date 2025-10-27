@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -122,7 +122,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
       }
     };
 
-    // Delay to ensure complete hydration
     const timeoutId = setTimeout(() => {
       initializeServers();
     }, 100);
@@ -142,14 +141,25 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   const navigationItems = [
     {
-      label: t("dashboard"),
+      label: t("home"),
       icon: Home,
-      href: "/dashboard",
-      isActive: pathname === "/dashboard",
+      href: "/dashboard/home",
+      isActive: pathname === "/dashboard/home",
+    },
+    {
+      label: t("dashboard"),
+      icon: LayoutDashboard,
+      href: "/dashboard/servers",
+      isActive: pathname === "/dashboard/servers",
+    },
+    {
+      label: t("settings"),
+      icon: Settings,
+      href: "/dashboard/settings",
+      isActive: pathname === "/dashboard/settings",
     },
   ];
 
-  // Show skeleton during hydration
   if (!isHydrated) {
     return (
       <div className="fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-md border-r border-gray-700/60 shadow-2xl z-50">
@@ -173,7 +183,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   return (
     <motion.div initial={false} animate={{ width: isCollapsed ? 64 : 256 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="fixed left-0 top-0 h-full bg-gray-900/95 backdrop-blur-md border-r border-gray-700/60 shadow-2xl z-50">
-      {/* Header del Sidebar */}
       <div className="p-4 border-b border-gray-700/60">
         <div className="flex items-center justify-between">
           <AnimatePresence mode="wait">
@@ -191,7 +200,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         </div>
       </div>
 
-      {/* Main Navigation */}
       <div className="p-4 space-y-2">
         <AnimatePresence mode="wait">
           {!isCollapsed && (
@@ -217,7 +225,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         ))}
       </div>
 
-      {/* Lista de Servidores */}
       <div className="px-4 pb-4 flex-1">
         <div className="flex items-center justify-between mb-3">
           <AnimatePresence mode="wait">
@@ -234,7 +241,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             </Button>
 
             {!isCollapsed && (
-              <Link href="/dashboard">
+              <Link href="/dashboard/servers">
                 <Button variant="ghost" size="sm" className="p-1.5 hover:bg-gray-800/60 text-emerald-400 hover:text-emerald-300">
                   <Plus size={14} />
                 </Button>
@@ -245,7 +252,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
         <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
           {servers.map((server) => (
-            <Link key={server.id} href={`/dashboard/${server.id}`}>
+            <Link key={server.id} href={`/dashboard/servers/${server.id}`}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-lg border transition-all duration-200", "bg-gray-800/40 border-gray-700/40 hover:bg-gray-700/60", pathname === `/dashboard/${server.id}` && "bg-emerald-600/20 border-emerald-600/40 text-emerald-400 shadow-lg shadow-emerald-600/10", isCollapsed && "p-2")}>
                 <div className="flex items-center gap-3">
                   <div className="relative">

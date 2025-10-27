@@ -20,7 +20,7 @@ export function useServerLogs(serverId: string) {
   const [logs, setLogs] = useState<string>("");
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [lineCount, setLineCount] = useState<number>(500); // Increased default
+  const [lineCount, setLineCount] = useState<number>(500);
   const [error, setError] = useState<LogsError | null>(null);
   const [hasErrors, setHasErrors] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -30,7 +30,6 @@ export function useServerLogs(serverId: string) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
 
-  // Parse log level from content
   const parseLogLevel = useCallback((content: string): "info" | "warn" | "error" | "debug" | "unknown" => {
     const upperContent = content.toUpperCase();
     if (upperContent.includes("[ERROR]") || upperContent.includes("ERROR") || upperContent.includes("SEVERE") || upperContent.includes("FATAL")) {
@@ -48,20 +47,21 @@ export function useServerLogs(serverId: string) {
     return "unknown";
   }, []);
 
-  // Parse logs into structured entries
-  const parseLogsToEntries = useCallback((logsContent: string): LogEntry[] => {
-    if (!logsContent) return [];
+  const parseLogsToEntries = useCallback(
+    (logsContent: string): LogEntry[] => {
+      if (!logsContent) return [];
 
-    const lines = logsContent.split('\n').filter(line => line.trim());
-    return lines.map((line, index) => ({
-      id: `${Date.now()}-${index}`,
-      content: line,
-      timestamp: new Date(),
-      level: parseLogLevel(line)
-    }));
-  }, [parseLogLevel]);
+      const lines = logsContent.split("\n").filter((line) => line.trim());
+      return lines.map((line, index) => ({
+        id: `${Date.now()}-${index}`,
+        content: line,
+        timestamp: new Date(),
+        level: parseLogLevel(line),
+      }));
+    },
+    [parseLogLevel]
+  );
 
-  // Start real-time updates
   const startRealTimeUpdates = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -73,30 +73,23 @@ export function useServerLogs(serverId: string) {
       try {
         const data = await getServerLogs(serverId, lineCount);
 
-        // Only update if logs have changed
         if (data.logs !== previousLogsRef.current) {
           previousLogsRef.current = data.logs;
           setLogs(data.logs);
           setLogEntries(parseLogsToEntries(data.logs));
           setLastUpdate(new Date());
 
-          // Check for errors in new content
-          const errorPatterns = [
-            /ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi,
-            /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi,
-            /Failed to/gi, /Cannot/gi, /Unable to/gi
-          ];
+          const errorPatterns = [/ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi, /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi, /Failed to/gi, /Cannot/gi, /Unable to/gi];
 
-          const logsHaveErrors = errorPatterns.some(pattern => pattern.test(data.logs));
+          const logsHaveErrors = errorPatterns.some((pattern) => pattern.test(data.logs));
           setHasErrors(logsHaveErrors);
         }
       } catch (error) {
         console.error("Real-time log update failed:", error);
       }
-    }, 3000); // Update every 3 seconds
+    }, 3000);
   }, [serverId, lineCount, isRealTime, parseLogsToEntries]);
 
-  // Stop real-time updates
   const stopRealTimeUpdates = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -104,9 +97,8 @@ export function useServerLogs(serverId: string) {
     }
   }, []);
 
-  // Toggle real-time mode
   const toggleRealTime = useCallback(() => {
-    setIsRealTime(prev => {
+    setIsRealTime((prev) => {
       const newValue = !prev;
       if (newValue) {
         startRealTimeUpdates();
@@ -123,23 +115,22 @@ export function useServerLogs(serverId: string) {
     try {
       const data = await getServerLogs(serverId, lineCount);
 
-      // Check for specific error messages in logs
       if (data.logs.includes("Container not found")) {
         setError({
           type: "container_not_found",
-          message: t("containerNotFound")
+          message: t("containerNotFound"),
         });
         setLogs(t("serverNotRunning"));
       } else if (data.logs.includes("Server not found")) {
         setError({
           type: "server_not_found",
-          message: t("serverNotFound")
+          message: t("serverNotFound"),
         });
         setLogs(t("serverNotFoundSpecified"));
       } else if (data.logs.includes("Error retrieving logs:")) {
         setError({
           type: "connection_error",
-          message: t("connectionErrorDocker")
+          message: t("connectionErrorDocker"),
         });
         setLogs(data.logs);
       } else {
@@ -148,14 +139,9 @@ export function useServerLogs(serverId: string) {
         setLastUpdate(new Date());
         previousLogsRef.current = data.logs;
 
-        // Check for errors in the logs content
-        const errorPatterns = [
-          /ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi,
-          /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi,
-          /Failed to/gi, /Cannot/gi, /Unable to/gi
-        ];
+        const errorPatterns = [/ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi, /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi, /Failed to/gi, /Cannot/gi, /Unable to/gi];
 
-        const logsHaveErrors = errorPatterns.some(pattern => pattern.test(data.logs));
+        const logsHaveErrors = errorPatterns.some((pattern) => pattern.test(data.logs));
         setHasErrors(logsHaveErrors);
       }
 
@@ -166,7 +152,7 @@ export function useServerLogs(serverId: string) {
 
       setError({
         type: "unknown",
-        message: errorMessage
+        message: errorMessage,
       });
 
       toast.error(t("errorGettingLogsServer"));
@@ -176,7 +162,6 @@ export function useServerLogs(serverId: string) {
     }
   };
 
-  // Effect for managing real-time updates
   useEffect(() => {
     if (isRealTime) {
       startRealTimeUpdates();
@@ -197,10 +182,8 @@ export function useServerLogs(serverId: string) {
     setError(null);
   };
 
-  // Filter logs based on search term and level
-  const filteredLogEntries = logEntries.filter(entry => {
-    const matchesSearch = searchTerm === "" ||
-      entry.content.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredLogEntries = logEntries.filter((entry) => {
+    const matchesSearch = searchTerm === "" || entry.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
     return matchesSearch && matchesLevel;
   });

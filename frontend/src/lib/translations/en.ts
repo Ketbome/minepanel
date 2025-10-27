@@ -8,6 +8,22 @@ export const en = {
   password: "Password",
   invalidCredentials: "Invalid credentials",
   loginSuccess: "Login successful",
+  serverUnavailable: "Can't connect",
+  serverUnavailableDesc: "Looks like there's a configuration issue. Check that the backend URL is set up correctly, that the server is running, or if there's a DNS problem.",
+  checkingServerStatus: "Checking connection...",
+  cannotConnectToServer: "Cannot connect to server",
+  cannotConnectToServerDesc: "The application cannot establish a connection with the backend server. Please verify your configuration.",
+  troubleshootingSteps: "Troubleshooting Steps",
+  checkBackendUrl: "Check Backend URL",
+  checkBackendUrlDesc: "Verify that the NEXT_PUBLIC_API_URL environment variable is correctly configured",
+  checkServerRunning: "Verify Server Status",
+  checkServerRunningDesc: "Ensure the backend server is running and accessible on the configured port",
+  checkDNS: "Check DNS/Network",
+  checkDNSDesc: "Verify there are no DNS or firewall issues blocking the connection",
+  needMoreHelp: "Need more help?",
+  needMoreHelpDesc: "Check the documentation or contact support for assistance",
+  retryConnection: "Retry Connection",
+  retrying: "Retrying...",
 
   // ===========================
   // NAVIGATION
@@ -22,6 +38,7 @@ export const en = {
   // COMMON ACTIONS
   // ===========================
   save: "Save",
+  saving: "Saving...",
   cancel: "Cancel",
   confirm: "Confirm",
   loading: "Loading...",
@@ -50,6 +67,7 @@ export const en = {
   saveChanges: "Save Changes",
   addPort: "Add Port",
   addVariable: "Add Variable",
+  comingSoon: "Coming Soon",
 
   // ===========================
   // STATUS
@@ -134,6 +152,57 @@ export const en = {
   administrator: "Administrator",
   minecraftPanel: "Minepanel",
 
+  // Home Page
+  homeTitle: "Home",
+  homeDescription: "Overview of your Minecraft server panel",
+  welcomeBack: "Welcome back",
+  quickStats: "Quick Stats",
+  totalServers: "Total Servers",
+  runningServers: "Running Servers",
+  stoppedServers: "Stopped Servers",
+  systemStatus: "System Status",
+  cpuUsage: "CPU Usage",
+  memoryUsage: "Memory Usage",
+  diskUsage: "Disk Usage",
+  recentActivity: "Recent Activity",
+  noRecentActivity: "No recent activity",
+  quickActions: "Quick Actions",
+  viewAllServers: "View All Servers",
+  systemHealth: "System Health",
+  healthy: "Healthy",
+
+  // Settings Page
+  settingsTitle: "Settings",
+  settingsDescription: "Configure your account and application preferences",
+  accountSettings: "Account Settings",
+  yourUsername: "Your Username",
+  changePassword: "Change Password",
+  currentPassword: "Current Password",
+  newPassword: "New Password",
+  confirmPassword: "Confirm Password",
+  updatePassword: "Update Password",
+  apiSettings: "API Settings",
+  apiSettingsDesc: "Configure API keys for external integrations",
+  curseforgeApiKey: "CurseForge API Key",
+  curseforgeApiKeyDesc: "API key to download mods and modpacks from CurseForge",
+  importFromSettings: "Import from Settings",
+  apiKeyImported: "API Key imported successfully",
+  noApiKeyConfigured: "No API Key configured in Settings",
+  discordWebhook: "Discord Webhook URL",
+  discordWebhookDesc: "Webhook URL for Discord notifications",
+  appearanceSettings: "Appearance",
+  languageDesc: "Select your preferred language",
+  notificationSettings: "Notifications",
+  enableNotifications: "Enable Notifications",
+  enableNotificationsDesc: "Receive notifications about server events",
+  dangerZone: "Danger Zone",
+  dangerZoneDesc: "Irreversible and destructive actions",
+  settingsSaved: "Settings saved successfully",
+  settingsSaveFailed: "Failed to save settings",
+  test: "Test",
+  webhookTestSuccess: "Webhook test successful! Check your Discord channel",
+  webhookTestFailed: "Failed to test webhook",
+
   // Server Creation
   serverCreationDesc: "Create a new Minecraft server",
   enterServerName: "Enter the name for your new Minecraft server.",
@@ -193,6 +262,10 @@ export const en = {
   resourcesError: "Error in resources",
   errorsDetected: "Errors detected in logs",
   errorsDetectedDesc: "Errors or exceptions were found in the server logs",
+  saveFailed: "Save failed",
+  configSavedAutomatically: "Config saved automatically",
+  errorSavingAutomatically: "Error saving automatically",
+  failedToFetchVersions: "Failed to fetch versions",
 
   // ===========================
   // LANGUAGE
@@ -213,6 +286,9 @@ export const en = {
   help: "Help",
   privacy: "Privacy",
   terms: "Terms",
+  documentation: "Documentation",
+  github: "GitHub",
+  withLove: "Made with",
 
   // ===========================
   // GENERAL SETTINGS TAB
@@ -560,6 +636,10 @@ export const en = {
   serverMustBeRunning: "Server must be running to execute commands",
   rconNotConfigured: "RCON is not configured properly",
   commands: "Commands",
+  enterACommandToExecute: "Enter a command to execute",
+  rconPortNotConfigured: "RCON port not configured",
+  commandExecutedSuccessfully: "Command executed successfully",
+  errorExecutingCommand: "Error executing command",
 
   // Command Labels
   cmdListPlayers: "List players",
@@ -674,7 +754,7 @@ export const en = {
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
-  manualCurseForgeDeprecated: "This manual method for CurseForge is deprecated. We recommend using \"CurseForge Modpack\" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.",
+  manualCurseForgeDeprecated: 'This manual method for CurseForge is deprecated. We recommend using "CurseForge Modpack" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.',
   modpackFile: "Modpack File (CF_SERVER_MOD)",
   modpackFileHelp: "Complete path to the modpack .zip file in the container.",
   modpackFileExample: "Example: /modpacks/SkyFactory_4_Server_4.1.0.zip",
@@ -685,7 +765,7 @@ export const en = {
   useModpackStartScript: "Use Modpack Start Script",
   useModpackStartScriptDesc: "If disabled, avoids using the modpack's included start script and uses standard server logic",
   ftbLegacyJavaFixer: "FTB Legacy Java Fixer",
-  ftbLegacyJavaFixerDesc: "Enable fix for modpacks that fail with \"unable to launch forgemodloader\"",
+  ftbLegacyJavaFixerDesc: 'Enable fix for modpacks that fail with "unable to launch forgemodloader"',
   cfApiKeyOptional: "Optional API Key for compatibility with some modpacks",
 
   // CurseForge Auto Configuration
@@ -696,7 +776,7 @@ export const en = {
   methodUrl: "URL",
   methodUrlDesc: "Direct web address to the modpack on CurseForge",
   methodSlug: "Slug",
-  methodSlugDesc: "Unique modpack identifier (e.g: \"all-the-mods-7\")",
+  methodSlugDesc: 'Unique modpack identifier (e.g: "all-the-mods-7")',
   methodFile: "File",
   methodFileDesc: "Install from a .zip file already uploaded to the server",
   installFromUrl: "Install from direct URL",
@@ -722,7 +802,7 @@ export const en = {
   cfApiKey: "CurseForge API Key (CF_API_KEY)",
   cfApiKeyHelp: "CurseForge API Key (Eternal) required to download some modpacks.",
   cfApiKeyDesc: "API Key to download restricted modpacks (required for most modpacks)",
-  cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$2a$10$$T6sGlu...</code>. This is especially important for the third <b>$</b> onwards.",
+  cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols, you must double each <b>$</b> to <b>$$</b>. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$$2a$$10$$T6sGlu...</code>",
 
   // CurseForge Advanced Options
   advancedOptions: "Advanced Options",

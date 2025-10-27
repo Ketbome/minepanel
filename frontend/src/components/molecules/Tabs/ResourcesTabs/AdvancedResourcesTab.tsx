@@ -17,21 +17,16 @@ interface AdvancedResourcesTabProps {
 
 export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
-  // Function to handle Auto-Stop change
+
   const handleAutoStopChange = (checked: boolean) => {
     updateConfig("enableAutoStop", checked);
-
-    // Si se activa Auto-Stop, desactivar Auto-Pause
     if (checked && config.enableAutoPause) {
       updateConfig("enableAutoPause", false);
     }
   };
 
-  // Function to handle Auto-Pause change
   const handleAutoPauseChange = (checked: boolean) => {
     updateConfig("enableAutoPause", checked);
-
-    // Si se activa Auto-Pause, desactivar Auto-Stop
     if (checked && config.enableAutoStop) {
       updateConfig("enableAutoStop", false);
     }
@@ -63,7 +58,6 @@ export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, up
         <p className="text-xs text-gray-400">{t("timezoneDesc")}</p>
       </div>
 
-      {/* Auto-Stop Section */}
       <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -109,8 +103,6 @@ export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, up
         )}
       </div>
 
-      {/* Auto-Pause Section */}
-      {/* Auto-Pause Section */}
       <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

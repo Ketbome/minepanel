@@ -1,20 +1,11 @@
 import { ServerConfig, ServerListItem } from "@/lib/types/types";
 import api from "../axios.service";
 
-/**
- * Fetch complete configuration for a specific server
- * GET /servers/:id
- */
 export const fetchServerConfig = async (serverId: string): Promise<ServerConfig> => {
   const response = await api.get(`/servers/${serverId}`);
   return response.data;
 };
 
-/**
- * Fetch simplified list of all servers
- * GET /servers
- * Returns only essential information (id, name, motd, port, type, active)
- */
 export const fetchServerList = async (): Promise<ServerListItem[]> => {
   const response = await api.get(`/servers`);
   return response.data;
@@ -31,13 +22,11 @@ export const updateServerConfig = async (serverId: string, config: Partial<Serve
 };
 
 export const apiRestartServer = async (serverId: string): Promise<{ success: boolean; message: string }> => {
-  // Fixed: was passing withCredentials as request body
   const response = await api.post(`/servers/${serverId}/restart`, {});
   return response.data;
 };
 
 export const apiClearServerData = async (serverId: string): Promise<{ success: boolean; message: string }> => {
-  // Fixed: was passing withCredentials as request body
   const response = await api.post(`/servers/${serverId}/clear-data`, {});
   return response.data;
 };
@@ -82,7 +71,6 @@ export const getServerLogs = async (
     params,
   });
 
-  // Convert lastUpdate string back to Date if needed
   const data = response.data;
   if (data.lastUpdate && typeof data.lastUpdate === "string") {
     data.lastUpdate = new Date(data.lastUpdate);
@@ -116,7 +104,6 @@ export const getServerLogsStream = async (
     params,
   });
 
-  // Convert lastUpdate string back to Date if needed
   const data = response.data;
   if (data.lastUpdate && typeof data.lastUpdate === "string") {
     data.lastUpdate = new Date(data.lastUpdate);
@@ -142,7 +129,6 @@ export const getServerLogsSince = async (
     params,
   });
 
-  // Convert lastUpdate string back to Date if needed
   const data = response.data;
   if (data.lastUpdate && typeof data.lastUpdate === "string") {
     data.lastUpdate = new Date(data.lastUpdate);

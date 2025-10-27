@@ -6,21 +6,34 @@ services:
     ports:
       - "${BACKEND_PORT:-8091}:8091"
     environment:
+      # For Mac/Linux use: SERVERS_DIR=${PWD}/servers
+      # For Windows use: SERVERS_DIR=/app/servers
       - SERVERS_DIR=${PWD}/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
-      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-$$2a$$12$$kvlrbEjbVd6SsbD8JdIB.OOQWXTPL5dFgo5nDeIXgeW.BhIyy8ocu}
+      - JWT_SECRET=dasasdadsasdasads-asddas-ads-asdadsasd # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
+      - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-minepanel}
+      - DB_USER=${DB_USER:-minepanel}
+      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
     volumes:
+      # For Mac/Linux use: ${PWD}/servers:${PWD}/servers
+      # For Windows use: ./servers:/app/servers
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: always
     working_dir: /app
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     environment:
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
@@ -36,8 +49,26 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${PWD}/servers:/data
+      - ./servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME:-minepanel}
+      - POSTGRES_USER=${DB_USER:-minepanel}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

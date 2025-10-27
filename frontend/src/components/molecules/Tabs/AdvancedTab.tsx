@@ -21,7 +21,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [newPort, setNewPort] = useState("");
 
-  // CurseForge obtiene la versión automáticamente del modpack
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
 
   const addExtraPort = () => {
@@ -341,7 +340,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
             </TooltipProvider>
           </div>
 
-          {/* Add new port */}
           <div className="flex gap-2">
             <div className="flex-1">
               <Input placeholder="8080:8080 o 9000:9000/tcp" value={newPort} onChange={(e) => setNewPort(e.target.value)} onKeyPress={(e) => e.key === "Enter" && addExtraPort()} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
@@ -352,7 +350,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
             </Button>
           </div>
 
-          {/* List of extra ports */}
           {config.extraPorts && config.extraPorts.length > 0 && (
             <div className="space-y-2">
               <Label className="text-gray-200 font-minecraft text-sm">{t("configuredPorts")}</Label>
@@ -376,7 +373,6 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
             </div>
           )}
 
-          {/* Examples */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-600/50">
             <Label className="text-gray-300 font-minecraft text-xs">{t("configExamples")}</Label>
             <div className="text-xs text-gray-400 mt-2 space-y-1">
