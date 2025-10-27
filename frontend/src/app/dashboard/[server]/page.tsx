@@ -11,6 +11,7 @@ import { ServerLoadingSkeleton } from "@/components/organisms/ServerLoadingSkele
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import {TranslationKey} from "@/lib/translations";
 
 export default function ServerConfig() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function ServerConfig() {
             <p className="text-gray-400 mb-1">{t("currentStatus")} </p>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${status === "running" ? "bg-emerald-500" : status === "stopped" ? "bg-yellow-500" : status === "starting" ? "bg-orange-500" : "bg-red-500"}`} />
-              <p className="text-white font-medium capitalize">{status}</p>
+              <p className="text-white font-medium capitalize">{ t(status as TranslationKey) }</p>
             </div>
           </div>
           <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
