@@ -7,7 +7,7 @@ import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ModpackCard } from "@/components/organisms/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
-import { ModpackDetailsModal } from "@/components/organisms/ModpackDetailsModal";
+import { ModpackDetailsModalEnhanced } from "@/components/organisms/ModpackDetailsModalEnhanced";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -155,29 +155,26 @@ export default function TemplatesPage() {
 
       {!error && (
         <>
-          {/* Search */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
             <ModpackSearch onSearch={handleSearch} isLoading={isSearching} />
           </motion.div>
 
-          {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="bg-gray-800 border border-gray-700">
-              <TabsTrigger value="featured" className="data-[state=active]:bg-emerald-600">
+              <TabsTrigger value="featured" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 <Star className="w-4 h-4 mr-2" />
                 {t("featured")}
               </TabsTrigger>
-              <TabsTrigger value="popular" className="data-[state=active]:bg-emerald-600">
+              <TabsTrigger value="popular" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 {t("popular")}
               </TabsTrigger>
-              <TabsTrigger value="search" className="data-[state=active]:bg-emerald-600">
+              <TabsTrigger value="search" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 <Package className="w-4 h-4 mr-2" />
                 {t("searchResults")}
               </TabsTrigger>
             </TabsList>
 
-            {/* Featured Modpacks */}
             <TabsContent value="featured" className="mt-6">
               {featuredModpacks.length === 0 ? (
                 <div className="text-center py-12">
@@ -185,7 +182,7 @@ export default function TemplatesPage() {
                   <p className="text-gray-400">{t("noModpacksFound")}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                   {featuredModpacks.map((modpack) => (
                     <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
                   ))}
@@ -193,10 +190,9 @@ export default function TemplatesPage() {
               )}
             </TabsContent>
 
-            {/* Popular Modpacks */}
             <TabsContent value="popular" className="mt-6">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                   {modpacks.map((modpack) => (
                     <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
                   ))}
@@ -223,16 +219,15 @@ export default function TemplatesPage() {
               </div>
             </TabsContent>
 
-            {/* Search Results */}
             <TabsContent value="search" className="mt-6">
               {modpacks.length === 0 ? (
                 <div className="text-center py-12">
                   <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
                   <p className="text-gray-400">{t("noModpacksFound")}</p>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                     {modpacks.map((modpack) => (
                       <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
                     ))}
@@ -263,8 +258,7 @@ export default function TemplatesPage() {
         </>
       )}
 
-      {/* Modpack Details Modal */}
-      <ModpackDetailsModal modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
+      <ModpackDetailsModalEnhanced modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
 
       {/* Footer decoration */}
       <div className="flex justify-center gap-8 pt-8">

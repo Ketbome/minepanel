@@ -888,6 +888,9 @@ export const en = {
   loadMore: "Load More",
   curseforgeApiKeyNotConfigured: "CurseForge API Key is not configured. Please add it in Settings to use this feature.",
   goToSettings: "Go to Settings",
+  createServerFromModpack: "Create a new server using this modpack",
+  serverIdRequired: "Server ID is required",
+  optional: "optional",
 };
 
 export type TranslationKey = keyof typeof en;

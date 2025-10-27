@@ -904,4 +904,7 @@ export const nl: Record<TranslationKey, string> = {
   loadMore: "Meer Laden",
   curseforgeApiKeyNotConfigured: "CurseForge API Key is niet geconfigureerd. Voeg deze toe in Instellingen om deze functie te gebruiken.",
   goToSettings: "Ga naar Instellingen",
+  createServerFromModpack: "Maak een nieuwe server met dit modpack",
+  serverIdRequired: "Server ID is vereist",
+  optional: "optioneel",
 };

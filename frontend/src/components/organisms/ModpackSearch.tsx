@@ -54,7 +54,7 @@ export function ModpackSearch({ onSearch, isLoading }: ModpackSearchProps) {
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="border-gray-700 text-gray-300 hover:bg-gray-800"
+          className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-emerald-400 hover:border-emerald-500"
         >
           <SlidersHorizontal className="w-4 h-4" />
         </Button>

@@ -890,4 +890,7 @@ export const es: Record<TranslationKey, string> = {
   loadMore: "Cargar Más",
   curseforgeApiKeyNotConfigured: "La clave API de CurseForge no está configurada. Por favor agrégala en Configuración para usar esta función.",
   goToSettings: "Ir a Configuración",
+  createServerFromModpack: "Crear un nuevo servidor usando este modpack",
+  serverIdRequired: "El ID del servidor es requerido",
+  optional: "opcional",
 };
