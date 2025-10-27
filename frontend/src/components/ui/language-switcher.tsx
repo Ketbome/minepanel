@@ -23,6 +23,9 @@ export function LanguageSwitcher() {
         <DropdownMenuItem onClick={() => setLanguage("en")} className={`flex items-center gap-2 px-3 py-2 rounded font-minecraft text-sm transition-colors ${language === "en" ? "bg-emerald-700/80 text-white" : "hover:bg-emerald-800/60 hover:text-emerald-200 text-emerald-300"}`}>
           <span>🇺🇸</span> {t("english")}
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setLanguage("nl")} className={`flex items-center gap-2 px-3 py-2 rounded font-minecraft text-sm transition-colors ${language === "nl" ? "bg-emerald-700/80 text-white" : "hover:bg-emerald-800/60 hover:text-emerald-200 text-emerald-300"}`}>
+          <span>🇳🇱</span> {t("dutch")}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
