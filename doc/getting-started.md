@@ -110,6 +110,34 @@ docker compose up -d
 - **Minepanel**: http://localhost:3000
 - **File Browser**: http://localhost:8080
 
+#### Remote Access (Outside Your Network)
+
+If you want to access Minepanel from outside your local network, you need to configure the environment variables with your server's public IP or domain name.
+
+**Update your docker-compose.yml:**
+
+```yaml
+environment:
+  # Backend - CRITICAL: Controls CORS
+  - FRONTEND_URL=http://your-server-ip:3000  # or https://minepanel.yourdomain.com
+  
+  # Frontend - Must point to your server's address
+  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091  # or https://api.yourdomain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080  # or https://files.yourdomain.com
+```
+
+**Then access via:**
+- **Minepanel**: `http://your-server-ip:3000` or `https://minepanel.yourdomain.com`
+- **File Browser**: `http://your-server-ip:8080` or `https://files.yourdomain.com`
+
+::: warning Important
+- Always include `http://` or `https://` in the URLs
+- `FRONTEND_URL` is critical - it controls CORS in the backend
+- After changing these variables, restart: `docker compose restart`
+- For production, use HTTPS with a reverse proxy (see [Installation](/installation#split-services-installation))
+- Make sure ports are open in your firewall/router
+:::
+
 ## First login
 
 ### Minepanel

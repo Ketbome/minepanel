@@ -197,6 +197,36 @@ Put all services on the same network as nginx-proxy.
 
 **Default login:** `admin` / `admin` (change this after first login)
 
+#### Remote Access (from outside your network)
+
+If you want to access the panel from outside your local network, you'll need to use your server's public IP address or DNS name. Always use the protocol prefix:
+
+- **Web Panel**: `http://your-server-ip:3000` or `https://your-domain.com`
+- **Filebrowser**: `http://your-server-ip:8080` or `https://files.your-domain.com`
+
+**Important - Update environment variables:**
+
+You MUST update these variables in your `docker-compose.yml` to match your server's address:
+
+```yaml
+environment:
+  # Backend - CRITICAL: Controls CORS
+  - FRONTEND_URL=http://your-server-ip:3000  # or https://your-domain.com
+  
+  # Frontend - Must point to your server's address
+  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091  # or https://api.your-domain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080  # or https://files.your-domain.com
+```
+
+**Notes:**
+- Replace `your-server-ip` with your server's public IP address
+- Replace `your-domain.com` with your domain name (if you have one)
+- Always include `http://` or `https://` at the beginning
+- `FRONTEND_URL` is critical - it controls CORS in the backend
+- For production use, it's highly recommended to use HTTPS with a reverse proxy (nginx-proxy, Traefik, Caddy, etc.)
+- Make sure the ports are open in your firewall/router
+- After changing these variables, restart the containers: `docker compose restart`
+
 ### Filebrowser setup
 
 First time running Filebrowser, check the logs for the auto-generated password:

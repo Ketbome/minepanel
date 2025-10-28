@@ -9,20 +9,88 @@ How to configure Minepanel.
 ```bash
 # Required
 JWT_SECRET=your_secret_here  # openssl rand -base64 32
+
 # Optional
 CLIENT_USERNAME=admin
 CLIENT_PASSWORD=admin
-FRONTEND_URL=http://localhost:3000
 DEFAULT_LANGUAGE=en
+
+# CRITICAL: Controls CORS - Must match frontend URL
+FRONTEND_URL=http://localhost:3000
 ```
+
+::: danger FRONTEND_URL is Critical
+The `FRONTEND_URL` variable controls CORS (Cross-Origin Resource Sharing) in the backend. If this doesn't match the URL you're using to access the frontend, API requests will be blocked.
+
+**Examples:**
+- Local: `FRONTEND_URL=http://localhost:3000`
+- Remote IP: `FRONTEND_URL=http://192.168.1.100:3000`
+- Domain: `FRONTEND_URL=https://minepanel.yourdomain.com`
+
+Always restart after changing: `docker compose restart`
+:::
 
 ### Frontend
 
 ```bash
+# Must point to backend API URL
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
+
+# Must point to filebrowser URL
 NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
+
+# Default language (en, es, nl)
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en
 ```
+
+::: tip Frontend Variables
+These variables are loaded at runtime and must include the full URL with `http://` or `https://` protocol.
+:::
+
+## Remote Access Configuration
+
+To access Minepanel from outside your local network:
+
+### 1. Update Environment Variables
+
+Edit your `docker-compose.yml`:
+
+```yaml
+environment:
+  # Backend - Controls CORS
+  - FRONTEND_URL=http://your-server-ip:3000
+  
+  # Frontend - API endpoints
+  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091
+  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080
+```
+
+### 2. Using a Domain Name
+
+If you have a domain:
+
+```yaml
+environment:
+  # Backend
+  - FRONTEND_URL=https://minepanel.yourdomain.com
+  
+  # Frontend
+  - NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=https://files.yourdomain.com
+```
+
+### 3. Restart Services
+
+```bash
+docker compose restart
+```
+
+::: warning Security
+- Always use HTTPS for production deployments
+- See [SSL/HTTPS](#ssl-https) section below for setup
+- Make sure your firewall allows the required ports
+- Don't expose ports publicly without proper authentication
+:::
 
 ## Change admin password
 
@@ -173,13 +241,21 @@ Run multiple Minepanel instances:
 
 ### Proxy configuration
 
-Behind a reverse proxy? Set:
+Behind a reverse proxy? Update all three critical variables:
 
 ```yaml
 environment:
+  # Backend - CRITICAL for CORS
   - FRONTEND_URL=https://your-domain.com
+  
+  # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=https://files.your-domain.com
 ```
+
+::: tip
+See the [Remote Access Configuration](#remote-access-configuration) section above for detailed examples.
+:::
 
 ### Custom network
 
