@@ -26,6 +26,7 @@ export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
   delete api.defaults.headers.common["Authorization"];
+  window.location.href = "/";
 };
 
 export const isAuthenticated = (): boolean => {
