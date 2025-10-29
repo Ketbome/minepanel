@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
@@ -25,6 +25,7 @@ export default function TemplatesPage() {
   const [featuredModpacks, setFeaturedModpacks] = useState<CurseForgeModpack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedModpack, setSelectedModpack] = useState<CurseForgeModpack | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("popular");
@@ -33,8 +34,11 @@ export default function TemplatesPage() {
     pageSize: 20,
     totalCount: 0,
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSort, setSearchSort] = useState({ field: 2, order: "desc" as "asc" | "desc" });
 
-  // Load initial data
+  const observerTarget = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -74,6 +78,8 @@ export default function TemplatesPage() {
   const handleSearch = async (query: string, sortField: number, sortOrder: "asc" | "desc") => {
     setIsSearching(true);
     setError(null);
+    setSearchQuery(query);
+    setSearchSort({ field: sortField, order: sortOrder });
 
     try {
       const response = await searchModpacks(query, 20, 0, sortField, sortOrder);
@@ -92,12 +98,21 @@ export default function TemplatesPage() {
     }
   };
 
-  const loadMoreModpacks = async () => {
-    setIsSearching(true);
+  const loadMoreModpacks = useCallback(async () => {
+    if (isLoadingMore || modpacks.length >= pagination.totalCount) return;
+
+    setIsLoadingMore(true);
     try {
       const nextIndex = pagination.index + pagination.pageSize;
-      const response = await searchModpacks("", 20, nextIndex, 2, "desc");
-      setModpacks([...modpacks, ...response.data]);
+      let response;
+
+      if (activeTab === "search" && searchQuery) {
+        response = await searchModpacks(searchQuery, 20, nextIndex, searchSort.field, searchSort.order);
+      } else {
+        response = await searchModpacks("", 20, nextIndex, 2, "desc");
+      }
+
+      setModpacks(prev => [...prev, ...response.data]);
       setPagination({
         index: response.pagination.index,
         pageSize: response.pagination.pageSize,
@@ -107,13 +122,35 @@ export default function TemplatesPage() {
       console.error("Error loading more modpacks:", err);
       toast.error(t("errorLoadingModpacks"));
     } finally {
-      setIsSearching(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, [isLoadingMore, modpacks.length, pagination, activeTab, searchQuery, searchSort, t]);
 
   const handleSelectModpack = (modpack: CurseForgeModpack) => {
     setSelectedModpack(modpack);
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && !isSearching) {
+          loadMoreModpacks();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMoreModpacks, isLoadingMore, isSearching]);
 
   if (isLoading) {
     return (
@@ -126,7 +163,6 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="flex items-center gap-3 mb-2">
           <Image src="/images/bookshelf.webp" alt="Templates" width={40} height={40} />
@@ -135,7 +171,6 @@ export default function TemplatesPage() {
         <p className="text-gray-400">{t("modpackTemplatesDescription")}</p>
       </motion.div>
 
-      {/* Error Alert */}
       {error && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Alert className="border-2 border-red-600/40 bg-red-900/20">
@@ -199,21 +234,19 @@ export default function TemplatesPage() {
                 </div>
 
                 {modpacks.length < pagination.totalCount && (
-                  <div className="flex justify-center">
-                    <Button
-                      onClick={loadMoreModpacks}
-                      disabled={isSearching}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8"
-                    >
-                      {isSearching ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t("loading")}
-                        </>
-                      ) : (
-                        t("loadMore")
-                      )}
-                    </Button>
+                  <div ref={observerTarget} className="flex justify-center py-8">
+                    {isLoadingMore && (
+                      <div className="flex items-center gap-2 text-emerald-400">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="font-minecraft">{t("loading")}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {modpacks.length >= pagination.totalCount && modpacks.length > 0 && (
+                  <div className="text-center py-4 text-gray-500 font-minecraft">
+                    {t("showing")} {modpacks.length} {t("of")} {pagination.totalCount} modpacks
                   </div>
                 )}
               </div>
@@ -225,30 +258,28 @@ export default function TemplatesPage() {
                   <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
                   <p className="text-gray-400">{t("noModpacksFound")}</p>
                 </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                     {modpacks.map((modpack) => (
                       <ModpackCard key={modpack.id} modpack={modpack} onSelect={handleSelectModpack} />
                     ))}
                   </div>
 
                   {modpacks.length < pagination.totalCount && (
-                    <div className="flex justify-center">
-                      <Button
-                        onClick={loadMoreModpacks}
-                        disabled={isSearching}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8"
-                      >
-                        {isSearching ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {t("loading")}
-                          </>
-                        ) : (
-                          t("loadMore")
-                        )}
-                      </Button>
+                    <div ref={observerTarget} className="flex justify-center py-8">
+                      {isLoadingMore && (
+                        <div className="flex items-center gap-2 text-emerald-400">
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                          <span className="font-minecraft">{t("loading")}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {modpacks.length >= pagination.totalCount && modpacks.length > 0 && (
+                    <div className="text-center py-4 text-gray-500 font-minecraft">
+                      {t("showing")} {modpacks.length} {t("of")} {pagination.totalCount} modpacks
                     </div>
                   )}
                 </div>
@@ -260,7 +291,6 @@ export default function TemplatesPage() {
 
       <ModpackDetailsModalEnhanced modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
 
-      {/* Footer decoration */}
       <div className="flex justify-center gap-8 pt-8">
         <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
           <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
