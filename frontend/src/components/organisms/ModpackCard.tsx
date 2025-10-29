@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CurseForgeModpack, formatDownloadCount } from "@/services/curseforge/curseforge.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { memo } from "react";
+import { FC, memo } from "react";
 
 interface ModpackCardProps {
   readonly modpack: CurseForgeModpack;
   readonly onSelect?: (modpack: CurseForgeModpack) => void;
 }
 
-export const ModpackCard = memo<ModpackCardProps>(({ modpack, onSelect }) => {
+const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
   const { t } = useLanguage();
 
   const getLatestVersion = () => {
@@ -102,5 +102,6 @@ export const ModpackCard = memo<ModpackCardProps>(({ modpack, onSelect }) => {
       </Card>
     </motion.div>
   );
-});
+}
 
+export default memo(ModpackCard);

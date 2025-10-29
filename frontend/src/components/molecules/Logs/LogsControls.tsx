@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { FC, memo } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ interface LogsControlsProps {
   handleRefreshLogs: () => void | Promise<void>;
 }
 
-export const LogsControls = memo<LogsControlsProps>(({ searchTerm, setSearchTerm, levelFilter, setLevelFilter, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs }) => {
+const LogsControls: FC<LogsControlsProps> = ({ searchTerm, setSearchTerm, levelFilter, setLevelFilter, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs }) => {
   const { t } = useLanguage();
 
   return (
@@ -68,4 +68,6 @@ export const LogsControls = memo<LogsControlsProps>(({ searchTerm, setSearchTerm
       </div>
     </div>
   );
-});
+}
+
+export default memo(LogsControls);

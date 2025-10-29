@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { FC, memo } from "react";
 import { LogEntry, LogsError } from "../Tabs/LogsTab";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ interface LogsFooterProps {
   resourcesError: string | null;
 }
 
-export const LogsFooter = memo<LogsFooterProps>(({ error, hasErrors, isRealTime, lastUpdate, filteredLogEntries, logEntries, loadingResources, fetchServerResources, resourcesError }) => {
+const LogsFooter: FC<LogsFooterProps> = ({ error, hasErrors, isRealTime, lastUpdate, filteredLogEntries, logEntries, loadingResources, fetchServerResources, resourcesError }) => {
   const { t } = useLanguage();
   return (
     <CardContent className="flex justify-between mt-4">
@@ -44,5 +44,6 @@ export const LogsFooter = memo<LogsFooterProps>(({ error, hasErrors, isRealTime,
       </div>
     </CardContent>
   );
-});
+};
 
+export default memo(LogsFooter);

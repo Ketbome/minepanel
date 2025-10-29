@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { FC, memo } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
@@ -9,7 +9,7 @@ interface LogsLastUpdateProps {
   error: LogsError | null;
 }
 
-export const LogsLastUpdate = memo<LogsLastUpdateProps>(({ lastUpdate, error }) => {
+const LogsLastUpdate: FC<LogsLastUpdateProps> = ({ lastUpdate, error }) => {
   const { t } = useLanguage();
   if (!lastUpdate || !!error) return null;
   return (
@@ -24,4 +24,6 @@ export const LogsLastUpdate = memo<LogsLastUpdateProps>(({ lastUpdate, error }) 
       </div>
     </CardContent>
   );
-});
+}
+
+export default memo(LogsLastUpdate);

@@ -1,16 +1,16 @@
 import { CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { memo } from "react";
+import { FC, memo } from "react";
 import { ResourcesData } from "../Tabs/LogsTab";
 import { Cpu, RefreshCcw, Server } from "lucide-react";
 
 interface LogsResourcesProps {
-  resources: ResourcesData | null;
-  loadingResources: boolean;
-  resourcesError: string | null;
+  readonly resources: ResourcesData | null;
+  readonly loadingResources: boolean;
+  readonly resourcesError: string | null;
 }
 
-export const LogsResources = memo<LogsResourcesProps>(({ resources, loadingResources, resourcesError }) => {
+const LogsResources: FC<LogsResourcesProps> = ({ resources, loadingResources, resourcesError }) => {
   const { t } = useLanguage();
   return (
     <CardContent className="pb-2">
@@ -60,4 +60,6 @@ export const LogsResources = memo<LogsResourcesProps>(({ resources, loadingResou
       </div>
     </CardContent>
   );
-});
+}
+
+export default memo(LogsResources);

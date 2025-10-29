@@ -8,7 +8,6 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ModpackCard } from "@/components/organisms/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/organisms/ModpackDetailsModalEnhanced";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -41,7 +40,7 @@ export default function TemplatesPage() {
 
   useEffect(() => {
     loadInitialData();
-  }, []);
+  });
 
   const loadInitialData = async () => {
     setIsLoading(true);

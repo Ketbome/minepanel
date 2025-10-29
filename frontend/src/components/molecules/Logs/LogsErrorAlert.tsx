@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { FC, memo } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { CardContent } from "@/components/ui/card";
 import { XCircle } from "lucide-react";
@@ -9,7 +9,7 @@ interface LogsErrorAlertProps {
   resourcesError: string | null;
 }
 
-export const LogsErrorAlert = memo<LogsErrorAlertProps>(({ error, resourcesError }) => {
+const LogsErrorAlert: FC<LogsErrorAlertProps> = ({ error, resourcesError }) => {
   const { t } = useLanguage();
   if (!error && !resourcesError) return null;
   return (
@@ -25,4 +25,6 @@ export const LogsErrorAlert = memo<LogsErrorAlertProps>(({ error, resourcesError
       </div>
     </CardContent>
   );
-});
+};
+
+export default memo(LogsErrorAlert);

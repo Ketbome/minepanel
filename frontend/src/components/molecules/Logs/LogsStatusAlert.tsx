@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { FC, memo } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
@@ -9,7 +9,7 @@ interface LogsStatusAlertProps {
   error: LogsError | null;
 }
 
-export const LogsStatusAlert = memo<LogsStatusAlertProps>(({ hasErrors, error }) => {
+const LogsStatusAlert: FC<LogsStatusAlertProps> = ({ hasErrors, error }) => {
   const { t } = useLanguage();
   if (!hasErrors || error) return null;
   return (
@@ -25,4 +25,6 @@ export const LogsStatusAlert = memo<LogsStatusAlertProps>(({ hasErrors, error })
       </div>
     </CardContent>
   );
-});
+}
+
+export default memo(LogsStatusAlert);
