@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { getServerLogs } from "@/services/docker/fetchs";
+import { getServerLogsStream } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface LogsError {
@@ -29,6 +29,8 @@ export function useServerLogs(serverId: string) {
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
+  const lastTimestampRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef<boolean>(true);
 
   const parseLogLevel = useCallback((content: string): "info" | "warn" | "error" | "debug" | "unknown" => {
     const upperContent = content.toUpperCase();
@@ -48,16 +50,21 @@ export function useServerLogs(serverId: string) {
   }, []);
 
   const parseLogsToEntries = useCallback(
-    (logsContent: string): LogEntry[] => {
+    (logsContent: string, existingEntries: LogEntry[] = []): LogEntry[] => {
       if (!logsContent) return [];
 
       const lines = logsContent.split("\n").filter((line) => line.trim());
-      return lines.map((line, index) => ({
-        id: `${Date.now()}-${index}`,
-        content: line,
-        timestamp: new Date(),
-        level: parseLogLevel(line),
-      }));
+
+      const existingContents = new Set(existingEntries.map(entry => entry.content));
+
+      return lines
+        .filter(line => !existingContents.has(line))
+        .map((line, index) => ({
+          id: `${Date.now()}-${index}`,
+          content: line,
+          timestamp: new Date(),
+          level: parseLogLevel(line),
+        }));
     },
     [parseLogLevel]
   );
@@ -71,18 +78,40 @@ export function useServerLogs(serverId: string) {
       if (!isRealTime) return;
 
       try {
-        const data = await getServerLogs(serverId, lineCount);
+        const since = lastTimestampRef.current || undefined;
+        const data = await getServerLogsStream(serverId, lineCount, since);
 
-        if (data.logs !== previousLogsRef.current) {
-          previousLogsRef.current = data.logs;
-          setLogs(data.logs);
-          setLogEntries(parseLogsToEntries(data.logs));
+        if (data.logs?.trim()) {
+          if (isInitialLoadRef.current || !lastTimestampRef.current) {
+            setLogs(data.logs);
+            setLogEntries(parseLogsToEntries(data.logs, []));
+            isInitialLoadRef.current = false;
+          } else {
+            const newLines = data.logs.split("\n").filter((line) => line.trim());
+            if (newLines.length > 0) {
+              setLogs((prevLogs) => {
+                const combined = prevLogs ? `${prevLogs}\n${data.logs}` : data.logs;
+                const allLines = combined.split("\n");
+                return allLines.slice(-2000).join("\n");
+              });
+
+              setLogEntries((prevEntries) => {
+                const newEntries = parseLogsToEntries(data.logs, prevEntries);
+                const combined = [...prevEntries, ...newEntries];
+                return combined.slice(-2000);
+              });
+            }
+          }
+
+          if (data.lastTimestamp) {
+            lastTimestampRef.current = data.lastTimestamp;
+          }
+
           setLastUpdate(new Date());
 
           const errorPatterns = [/ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi, /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi, /Failed to/gi, /Cannot/gi, /Unable to/gi];
-
           const logsHaveErrors = errorPatterns.some((pattern) => pattern.test(data.logs));
-          setHasErrors(logsHaveErrors);
+          setHasErrors((prev) => prev || logsHaveErrors);
         }
       } catch (error) {
         console.error("Real-time log update failed:", error);
@@ -113,7 +142,7 @@ export function useServerLogs(serverId: string) {
     setLoading(true);
     setError(null);
     try {
-      const data = await getServerLogs(serverId, lineCount);
+      const data = await getServerLogsStream(serverId, lineCount);
 
       if (data.logs.includes("Container not found")) {
         setError({
@@ -135,14 +164,20 @@ export function useServerLogs(serverId: string) {
         setLogs(data.logs);
       } else {
         setLogs(data.logs);
-        setLogEntries(parseLogsToEntries(data.logs));
+        setLogEntries(parseLogsToEntries(data.logs, []));
         setLastUpdate(new Date());
         previousLogsRef.current = data.logs;
+
+        if (data.lastTimestamp) {
+          lastTimestampRef.current = data.lastTimestamp;
+        }
+
+        isInitialLoadRef.current = false;
 
         const errorPatterns = [/ERROR/gi, /SEVERE/gi, /FATAL/gi, /Exception/gi, /java\.lang\./gi, /Caused by:/gi, /\[STDERR\]/gi, /Failed to/gi, /Cannot/gi, /Unable to/gi];
 
         const logsHaveErrors = errorPatterns.some((pattern) => pattern.test(data.logs));
-        setHasErrors(logsHaveErrors);
+        setHasErrors(data.hasErrors || logsHaveErrors);
       }
 
       return data.logs;
@@ -182,11 +217,13 @@ export function useServerLogs(serverId: string) {
     setError(null);
   };
 
-  const filteredLogEntries = logEntries.filter((entry) => {
-    const matchesSearch = searchTerm === "" || entry.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
-    return matchesSearch && matchesLevel;
-  });
+  const filteredLogEntries = useMemo(() => {
+    return logEntries.filter((entry) => {
+      const matchesSearch = searchTerm === "" || entry.content.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
+      return matchesSearch && matchesLevel;
+    });
+  }, [logEntries, searchTerm, levelFilter]);
 
   return {
     logs,

@@ -303,6 +303,7 @@ export const es: Record<TranslationKey, string> = {
   // ===========================
   // PESTAÑA DE CONFIGURACIÓN GENERAL
   // ===========================
+  general: "General",
   generalSettings: "Configuración General",
   generalSettingsDesc: "Ajustes generales de tu servidor de Minecraft",
   basicSettings: "Ajustes Básicos",
@@ -601,6 +602,7 @@ export const es: Record<TranslationKey, string> = {
   // ===========================
   // PESTAÑA DE LOGS
   // ===========================
+  logs: "Logs",
   serverLogs: "Registros del Servidor",
   serverLogsDesc: "Visualiza y monitorea los logs de tu servidor en tiempo real",
   searchInLogs: "Buscar en logs...",
@@ -683,6 +685,7 @@ export const es: Record<TranslationKey, string> = {
   // ===========================
   // CONFIGURACIÓN DE PLUGINS
   // ===========================
+  plugins: "Plugins",
   pluginsConfig: "Configuración de Plugins",
   pluginsConfigDesc: "Configura plugins para tu servidor",
   pluginsNotAvailable: "Esta sección solo está disponible para servidores Spigot, Paper o Bukkit",
@@ -753,6 +756,7 @@ export const es: Record<TranslationKey, string> = {
   // ===========================
   // CONFIGURACIÓN DE MODS
   // ===========================
+  mods: "Mods",
   modsConfig: "Configuración de Mods",
   modsConfigDesc: "Configura los detalles de mods para tu servidor",
   modsNotAvailable: "Esta sección solo está disponible para servidores Forge o CurseForge",

@@ -87,6 +87,7 @@ export const getServerLogsStream = async (
   logs: string;
   hasErrors: boolean;
   lastUpdate: Date;
+  lastTimestamp?: string;
   status: "running" | "stopped" | "starting" | "not_found";
   metadata?: {
     totalLines: number;
