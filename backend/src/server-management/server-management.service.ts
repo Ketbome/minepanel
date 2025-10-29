@@ -543,7 +543,9 @@ export class ServerManagementService {
           const lastLine = lines[lines.length - 1];
           const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
           if (timestampMatch) {
-            lastTimestamp = timestampMatch[1];
+            const timestamp = new Date(timestampMatch[1]);
+            timestamp.setMilliseconds(timestamp.getMilliseconds() + 1);
+            lastTimestamp = timestamp.toISOString();
           }
         }
       }
