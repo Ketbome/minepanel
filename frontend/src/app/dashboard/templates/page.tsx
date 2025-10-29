@@ -5,17 +5,12 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { ModpackCard } from "@/components/organisms/ModpackCard";
+import ModpackCard from "@/components/organisms/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/organisms/ModpackDetailsModalEnhanced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  CurseForgeModpack,
-  searchModpacks,
-  getFeaturedModpacks,
-  getPopularModpacks,
-} from "@/services/curseforge/curseforge.service";
+import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks } from "@/services/curseforge/curseforge.service";
 import { toast } from "sonner";
 
 export default function TemplatesPage() {
@@ -47,10 +42,7 @@ export default function TemplatesPage() {
     setError(null);
 
     try {
-      const [popularResponse, featuredResponse] = await Promise.all([
-        getPopularModpacks(20),
-        getFeaturedModpacks(12),
-      ]);
+      const [popularResponse, featuredResponse] = await Promise.all([getPopularModpacks(20), getFeaturedModpacks(12)]);
 
       setModpacks(popularResponse.data);
       setFeaturedModpacks(featuredResponse.data);
@@ -59,7 +51,7 @@ export default function TemplatesPage() {
         pageSize: popularResponse.pagination.pageSize,
         totalCount: popularResponse.pagination.totalCount,
       });
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error loading modpacks:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
@@ -111,7 +103,7 @@ export default function TemplatesPage() {
         response = await searchModpacks("", 20, nextIndex, 2, "desc");
       }
 
-      setModpacks(prev => [...prev, ...response.data]);
+      setModpacks((prev) => [...prev, ...response.data]);
       setPagination({
         index: response.pagination.index,
         pageSize: response.pagination.pageSize,
@@ -136,7 +128,7 @@ export default function TemplatesPage() {
           loadMoreModpacks();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { threshold: 0.1, rootMargin: "100px" }
     );
 
     const currentTarget = observerTarget.current;
@@ -304,4 +296,3 @@ export default function TemplatesPage() {
     </div>
   );
 }
-

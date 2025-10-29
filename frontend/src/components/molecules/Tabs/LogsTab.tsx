@@ -6,12 +6,12 @@ import { useServerLogs } from "@/lib/hooks/useServerLogs";
 import { getResources } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
-import { LogsControls } from "../Logs/LogsControls";
-import { LogsErrorAlert } from "../Logs/LogsErrorAlert";
-import { LogsStatusAlert } from "../Logs/LogsStatusAlert";
-import { LogsLastUpdate } from "../Logs/LogsLastUpdate";
-import { LogsFooter } from "../Logs/LogsFooter";
-import { LogsResources } from "../Logs/LogsResources";
+import LogsControls from "../Logs/LogsControls";
+import LogsErrorAlert from "../Logs/LogsErrorAlert";
+import LogsStatusAlert from "../Logs/LogsStatusAlert";
+import LogsLastUpdate from "../Logs/LogsLastUpdate";
+import LogsFooter from "../Logs/LogsFooter";
+import LogsResources from "../Logs/LogsResources";
 import { LogsDisplay } from "../Logs/LogsDisplay";
 
 export interface LogEntry {
