@@ -205,7 +205,7 @@ export class DockerComposeService {
         serverConfig.cfParallelDownloads = env.CF_PARALLEL_DOWNLOADS ?? '4';
         serverConfig.cfOverridesSkipExisting = env.CF_OVERRIDES_SKIP_EXISTING === 'true';
         serverConfig.cfSetLevelFrom = env.CF_SET_LEVEL_FROM ?? '';
-        serverConfig.cfApiKey = env.CF_API_KEY ?? '';
+        serverConfig.cfApiKey = env.CF_API_KEY.split('$$').join('$') ?? '';
       },
       CURSEFORGE: () => {
         serverConfig.cfServerMod = env.CF_SERVER_MOD ?? '';
@@ -447,7 +447,6 @@ export class DockerComposeService {
   }
 
   async saveServerConfigs(configs: ServerConfig[]): Promise<void> {
-    // Generate docker-compose.yml for each server
     for (const config of configs) {
       await this.generateDockerComposeFile(config);
     }
@@ -572,7 +571,7 @@ export class DockerComposeService {
     }
 
     const apiKey = config.cfApiKey;
-    if (apiKey) env['CF_API_KEY'] = apiKey;
+    if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
 
     const serverTypeHandlers = {
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),

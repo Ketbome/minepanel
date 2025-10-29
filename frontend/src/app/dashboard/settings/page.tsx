@@ -270,7 +270,6 @@ export default function SettingsPage() {
                             <Input {...field} type="password" placeholder="••••••••••••••••" className="bg-gray-800 border-gray-700 text-white" />
                           </FormControl>
                           <FormDescription className="text-gray-400">{t("curseforgeApiKeyDesc")}</FormDescription>
-                          <p className="text-xs text-amber-300 mt-2" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
                           <FormMessage />
                         </FormItem>
                       )}

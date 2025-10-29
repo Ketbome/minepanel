@@ -830,7 +830,6 @@ export const nl: Record<TranslationKey, string> = {
   cfApiKey: "CurseForge API key (CF_API_KEY)",
   cfApiKeyHelp: "CurseForge API key (Eternal) vereist om sommige modpacks te downloaden.",
   cfApiKeyDesc: "API key om beperkte modpacks te downloaden (vereist voor de meeste modpacks)",
-  cfApiKeyDollarWarning: "Als je API key <b>$</b> symbolen bevat, moet het verdubbeld worden indien nodig. Voorbeeld: <code>$2a$10$T6sGlu...</code> wordt <code>$2a$10$$T6sGlu...</code>. Dit is vooral belangrijk voor het derde <b>$</b> en verder.",
 
   // CurseForge Advanced Options
   advancedOptions: "Geavanceerde opties",

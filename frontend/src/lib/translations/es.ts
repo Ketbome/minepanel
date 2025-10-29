@@ -816,7 +816,6 @@ export const es: Record<TranslationKey, string> = {
   cfApiKey: "API Key de CurseForge (CF_API_KEY)",
   cfApiKeyHelp: "API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.",
   cfApiKeyDesc: "API Key para descargar modpacks restringidos (requerida para la mayoría de modpacks)",
-  cfApiKeyDollarWarning: "Si tu API Key contiene símbolos <b>$</b>, debes duplicar cada <b>$</b> a <b>$$</b>. Ejemplo: <code>$2a$10$T6sGlu...</code> se convierte en <code>$$2a$$10$$T6sGlu...</code>",
 
   // Opciones Avanzadas de CurseForge
   advancedOptions: "Opciones Avanzadas",

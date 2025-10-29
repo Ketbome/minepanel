@@ -188,7 +188,6 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                 </Button>
               </div>
               <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
-              <p className="text-xs text-amber-300 mt-1 font-minecraft" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
             </div>
           </>
         )}
@@ -383,7 +382,6 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                 </Button>
               </div>
               <p className="text-xs text-gray-400">{t("cfApiKeyDesc")}</p>
-              <p className="text-xs text-amber-300 mt-1 font-minecraft" dangerouslySetInnerHTML={{ __html: t("cfApiKeyDollarWarning") }} />
             </div>
 
             <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">

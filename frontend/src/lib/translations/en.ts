@@ -814,7 +814,6 @@ export const en = {
   cfApiKey: "CurseForge API Key (CF_API_KEY)",
   cfApiKeyHelp: "CurseForge API Key (Eternal) required to download some modpacks.",
   cfApiKeyDesc: "API Key to download restricted modpacks (required for most modpacks)",
-  cfApiKeyDollarWarning: "If your API Key contains <b>$</b> symbols, you must double each <b>$</b> to <b>$$</b>. Example: <code>$2a$10$T6sGlu...</code> becomes <code>$$2a$$10$$T6sGlu...</code>",
 
   // CurseForge Advanced Options
   advancedOptions: "Advanced Options",

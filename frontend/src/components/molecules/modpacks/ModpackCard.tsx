@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CurseForgeModpack, formatDownloadCount } from "@/services/curseforge/curseforge.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { FC, memo } from "react";
+import { FC } from "react";
 
 interface ModpackCardProps {
   readonly modpack: CurseForgeModpack;
   readonly onSelect?: (modpack: CurseForgeModpack) => void;
 }
 
-const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
+export const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
   const { t } = useLanguage();
 
   const getLatestVersion = () => {
@@ -28,23 +28,11 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-      className="h-full"
-    >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} transition={{ duration: 0.2 }} className="h-full">
       <Card className="group relative h-full overflow-hidden border border-gray-700 bg-gray-900 transition-all hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/20">
         <div className="relative h-40 w-full overflow-hidden bg-gray-800">
           {modpack.logo?.url ? (
-            <Image
-              src={modpack.logo.url}
-              alt={modpack.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="400px"
-            />
+            <Image src={modpack.logo.url} alt={modpack.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="400px" />
           ) : (
             <div className="flex h-full items-center justify-center bg-gray-800">
               <Image src="/images/grass.webp" alt="Default" width={64} height={64} className="opacity-30" />
@@ -67,13 +55,9 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
         </div>
 
         <div className="flex flex-col gap-3 p-4">
-          <h3 className="line-clamp-2 min-h-[2.5rem] font-minecraft text-base font-bold leading-tight text-white group-hover:text-emerald-400">
-            {modpack.name}
-          </h3>
+          <h3 className="line-clamp-2 min-h-[2.5rem] font-minecraft text-base font-bold leading-tight text-white group-hover:text-emerald-400">{modpack.name}</h3>
 
-          <p className="line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-gray-400">
-            {modpack.summary}
-          </p>
+          <p className="line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-gray-400">{modpack.summary}</p>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Calendar className="h-3 w-3" />
@@ -81,20 +65,11 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => onSelect?.(modpack)}
-              size="sm"
-              className="flex-1 bg-emerald-600 font-minecraft text-xs hover:bg-emerald-500"
-            >
+            <Button onClick={() => onSelect?.(modpack)} size="sm" className="flex-1 bg-emerald-600 font-minecraft text-xs hover:bg-emerald-500">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               {t("selectModpack")}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExternalLink}
-              className="border-gray-700 text-gray-300 hover:border-emerald-500 hover:bg-gray-800 hover:text-emerald-400"
-            >
+            <Button variant="outline" size="sm" onClick={handleExternalLink} className="border-gray-700 text-gray-300 hover:border-emerald-500 hover:bg-gray-800 hover:text-emerald-400">
               <ExternalLink className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -102,6 +77,4 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
       </Card>
     </motion.div>
   );
-}
-
-export default memo(ModpackCard);
+};

@@ -17,50 +17,30 @@ export class CurseforgeController {
     if (!settings?.cfApiKey) {
       throw new Error('CurseForge API key not configured. Please add it in settings.');
     }
-    const cfApiKey = settings.cfApiKey.split('$$').join('$');
+    const cfApiKey = settings.cfApiKey;
     return cfApiKey;
   }
 
   @Get('search')
-  async searchModpacks(
-    @Request() req,
-    @Query('searchFilter') searchFilter?: string,
-    @Query('pageSize') pageSize?: string,
-    @Query('index') index?: string,
-    @Query('sortField') sortField?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-  ) {
+  async searchModpacks(@Request() req, @Query('searchFilter') searchFilter?: string, @Query('pageSize') pageSize?: string, @Query('index') index?: string, @Query('sortField') sortField?: string, @Query('sortOrder') sortOrder?: 'asc' | 'desc') {
     const user = req.user as PayloadToken;
     const apiKey = await this.getApiKey(user.userId);
 
-    return this.curseforgeService.searchModpacks(
-      apiKey,
-      searchFilter,
-      pageSize ? Number.parseInt(pageSize, 10) : 20,
-      index ? Number.parseInt(index, 10) : 0,
-      sortField ? Number.parseInt(sortField, 10) : 2,
-      sortOrder || 'desc',
-    );
+    return this.curseforgeService.searchModpacks(apiKey, searchFilter, pageSize ? Number.parseInt(pageSize, 10) : 20, index ? Number.parseInt(index, 10) : 0, sortField ? Number.parseInt(sortField, 10) : 2, sortOrder || 'desc');
   }
 
   @Get('featured')
   async getFeaturedModpacks(@Request() req, @Query('limit') limit?: string) {
     const user = req.user as PayloadToken;
     const apiKey = await this.getApiKey(user.userId);
-    return this.curseforgeService.getFeaturedModpacks(
-      apiKey,
-      limit ? Number.parseInt(limit, 10) : 10,
-    );
+    return this.curseforgeService.getFeaturedModpacks(apiKey, limit ? Number.parseInt(limit, 10) : 10);
   }
 
   @Get('popular')
   async getPopularModpacks(@Request() req, @Query('limit') limit?: string) {
     const user = req.user as PayloadToken;
     const apiKey = await this.getApiKey(user.userId);
-    return this.curseforgeService.getPopularModpacks(
-      apiKey,
-      limit ? Number.parseInt(limit, 10) : 10,
-    );
+    return this.curseforgeService.getPopularModpacks(apiKey, limit ? Number.parseInt(limit, 10) : 10);
   }
 
   @Get(':id')
@@ -70,4 +50,3 @@ export class CurseforgeController {
     return this.curseforgeService.getModpack(apiKey, Number.parseInt(id, 10));
   }
 }
-
