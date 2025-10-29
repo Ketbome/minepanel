@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { ModpackCard } from "@/components/molecules/modpacks/ModpackCard";
+import ModpackCard from "@/components/molecules/modpacks/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/molecules/modpacks/ModpackDetailsModalEnhanced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,16 +33,12 @@ export default function TemplatesPage() {
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadInitialData();
-  });
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const [popularResponse, featuredResponse] = await Promise.all([getPopularModpacks(20), getFeaturedModpacks(12)]);
+      const [popularResponse, featuredResponse] = await Promise.all([getPopularModpacks(18), getFeaturedModpacks(12)]);
 
       setModpacks(popularResponse.data);
       setFeaturedModpacks(featuredResponse.data);
@@ -64,7 +60,11 @@ export default function TemplatesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleSearch = async (query: string, sortField: number, sortOrder: "asc" | "desc") => {
     setIsSearching(true);
@@ -73,7 +73,7 @@ export default function TemplatesPage() {
     setSearchSort({ field: sortField, order: sortOrder });
 
     try {
-      const response = await searchModpacks(query, 20, 0, sortField, sortOrder);
+      const response = await searchModpacks(query, 18, 0, sortField, sortOrder);
       setModpacks(response.data);
       setPagination({
         index: response.pagination.index,
@@ -98,9 +98,9 @@ export default function TemplatesPage() {
       let response;
 
       if (activeTab === "search" && searchQuery) {
-        response = await searchModpacks(searchQuery, 20, nextIndex, searchSort.field, searchSort.order);
+        response = await searchModpacks(searchQuery, 18, nextIndex, searchSort.field, searchSort.order);
       } else {
-        response = await searchModpacks("", 20, nextIndex, 2, "desc");
+        response = await searchModpacks("", 18, nextIndex, 2, "desc");
       }
 
       setModpacks((prev) => [...prev, ...response.data]);
