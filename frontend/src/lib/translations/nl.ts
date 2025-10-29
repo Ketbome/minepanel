@@ -305,6 +305,7 @@ export const nl: Record<TranslationKey, string> = {
   // ===========================
   // ALGEMENE INSTELLINGEN TAB
   // ===========================
+  general: "Algemeen",
   generalSettings: "Algemene instellingen",
   generalSettingsDesc: "Algemene instellingen voor je Minecraft server",
   basicSettings: "Basisinstellingen",
@@ -615,6 +616,7 @@ export const nl: Record<TranslationKey, string> = {
   // ===========================
   // LOGS TAB
   // ===========================
+  logs: "Logs",
   serverLogs: "Serverlogs",
   serverLogsDesc: "Bekijk en monitor je serverlogs in realtime",
   searchInLogs: "Zoeken in logs...",
@@ -697,6 +699,7 @@ export const nl: Record<TranslationKey, string> = {
   // ===========================
   // PLUGINS CONFIGURATIE
   // ===========================
+  plugins: "Plugins",
   pluginsConfig: "Plugins configuratie",
   pluginsConfigDesc: "Configureer plugins voor je server",
   pluginsNotAvailable: "Deze sectie is alleen beschikbaar voor Spigot, Paper of Bukkit servers",
@@ -767,6 +770,7 @@ export const nl: Record<TranslationKey, string> = {
   // ===========================
   // MODS CONFIGURATIE
   // ===========================
+  mods: "Mods",
   modsConfig: "Mods configuratie",
   modsConfigDesc: "Configureer mod details voor je server",
   modsNotAvailable: "Deze sectie is alleen beschikbaar voor Forge of CurseForge servers",

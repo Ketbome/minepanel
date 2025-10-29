@@ -171,7 +171,6 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
         </div>
       </div>
 
-      {/* Mensaje informativo */}
       <div className="text-xs text-gray-300 px-2">
         <span className="font-medium">{t("tip")}</span> {t("configureServerTip")}
         {serverStatus === "running" && ` ${t("changesRequireRestart")}`}

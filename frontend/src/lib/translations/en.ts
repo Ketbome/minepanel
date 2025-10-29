@@ -301,6 +301,7 @@ export const en = {
   // ===========================
   // GENERAL SETTINGS TAB
   // ===========================
+  general: "General",
   generalSettings: "General Settings",
   generalSettingsDesc: "General settings for your Minecraft server",
   basicSettings: "Basic Settings",
@@ -599,6 +600,7 @@ export const en = {
   // ===========================
   // LOGS TAB
   // ===========================
+  logs: "Logs",
   serverLogs: "Server Logs",
   serverLogsDesc: "View and monitor your server logs in real-time",
   searchInLogs: "Search in logs...",
@@ -681,6 +683,7 @@ export const en = {
   // ===========================
   // PLUGINS CONFIGURATION
   // ===========================
+  plugins: "Plugins",
   pluginsConfig: "Plugins Configuration",
   pluginsConfigDesc: "Configure plugins for your server",
   pluginsNotAvailable: "This section is only available for Spigot, Paper or Bukkit servers",
@@ -751,6 +754,7 @@ export const en = {
   // ===========================
   // MODS CONFIGURATION
   // ===========================
+  mods: "Mods",
   modsConfig: "Mods Configuration",
   modsConfigDesc: "Configure mod details for your server",
   modsNotAvailable: "This section is only available for Forge or CurseForge servers",
