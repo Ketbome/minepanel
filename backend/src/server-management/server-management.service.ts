@@ -497,6 +497,7 @@ export class ServerManagementService {
     hasErrors: boolean;
     lastUpdate: Date;
     status: 'running' | 'stopped' | 'starting' | 'not_found';
+    lastTimestamp?: string;
     metadata?: {
       totalLines: number;
       errorCount: number;
@@ -525,18 +526,34 @@ export class ServerManagementService {
         };
       }
 
-      let dockerCommand = `docker logs --tail ${lines} --timestamps`;
-      if (since) dockerCommand += ` --since ${since}`;
-      dockerCommand += ` ${containerId} 2>&1`;
+      let dockerCommand: string;
+      if (since) {
+        dockerCommand = `docker logs --since ${since} --timestamps ${containerId} 2>&1`;
+      } else {
+        dockerCommand = `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`;
+      }
 
       const { stdout: logs } = await execAsync(dockerCommand);
       const logAnalysis = this.analyzeLogs(logs);
+
+      let lastTimestamp: string | undefined;
+      if (logs) {
+        const lines = logs.split('\n').filter(line => line.trim());
+        if (lines.length > 0) {
+          const lastLine = lines[lines.length - 1];
+          const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
+          if (timestampMatch) {
+            lastTimestamp = timestampMatch[1];
+          }
+        }
+      }
 
       return {
         logs,
         hasErrors: logAnalysis.hasErrors,
         lastUpdate: new Date(),
         status: serverStatus,
+        lastTimestamp,
         metadata: {
           totalLines: logAnalysis.totalLines,
           errorCount: logAnalysis.errorCount,
