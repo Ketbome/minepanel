@@ -5,6 +5,6 @@ export default () => ({
   frontendUrl: process.env.FRONTEND_URL,
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
   database: {
-    path: process.env.DB_PATH || './data/minepanel.db',
+    path: process.env.DB_PATH || '/app/data/minepanel.db',
   },
 });
