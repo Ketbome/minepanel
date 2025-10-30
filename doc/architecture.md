@@ -590,7 +590,7 @@ healthcheck:
 
 2. **Database Integration**
 
-   - PostgreSQL for persistent data
+   - SQLite for persistent data
    - Store server configs
    - User management
    - Audit logs

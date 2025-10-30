@@ -23,6 +23,7 @@ FRONTEND_URL=http://localhost:3000
 The `FRONTEND_URL` variable controls CORS (Cross-Origin Resource Sharing) in the backend. If this doesn't match the URL you're using to access the frontend, API requests will be blocked.
 
 **Examples:**
+
 - Local: `FRONTEND_URL=http://localhost:3000`
 - Remote IP: `FRONTEND_URL=http://192.168.1.100:3000`
 - Domain: `FRONTEND_URL=https://minepanel.yourdomain.com`
@@ -59,7 +60,7 @@ Edit your `docker-compose.yml`:
 environment:
   # Backend - Controls CORS
   - FRONTEND_URL=http://your-server-ip:3000
-  
+
   # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091
   - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080
@@ -73,7 +74,7 @@ If you have a domain:
 environment:
   # Backend
   - FRONTEND_URL=https://minepanel.yourdomain.com
-  
+
   # Frontend
   - NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
   - NEXT_PUBLIC_FILEBROWSER_URL=https://files.yourdomain.com
@@ -86,11 +87,12 @@ docker compose restart
 ```
 
 ::: warning Security
+
 - Always use HTTPS for production deployments
 - See [SSL/HTTPS](#ssl-https) section below for setup
 - Make sure your firewall allows the required ports
 - Don't expose ports publicly without proper authentication
-:::
+  :::
 
 ## Change admin password
 
@@ -218,9 +220,44 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf servers/ filebrowser-data/ data/
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 docker compose up -d
 ```
+
+## Database Management
+
+Minepanel uses SQLite for data persistence. The database file is stored at `./data/minepanel.db`.
+
+### Backup Database
+
+```bash
+# Simple backup
+cp data/minepanel.db data/minepanel.db.backup
+
+# Backup with timestamp
+cp data/minepanel.db data/minepanel.db.$(date +%Y%m%d_%H%M%S)
+```
+
+### Restore Database
+
+```bash
+# Restore from backup
+docker compose down
+cp data/minepanel.db.backup data/minepanel.db
+docker compose up -d
+```
+
+### Reset Database
+
+**WARNING: This will delete all your servers, users, and configuration!**
+
+```bash
+docker compose down
+rm -f data/minepanel.db
+docker compose up -d
+```
+
+After reset, you'll need to log in again with the default credentials (admin/admin).
 
 ## Advanced
 
@@ -247,7 +284,7 @@ Behind a reverse proxy? Update all three critical variables:
 environment:
   # Backend - CRITICAL for CORS
   - FRONTEND_URL=https://your-domain.com
-  
+
   # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
   - NEXT_PUBLIC_FILEBROWSER_URL=https://files.your-domain.com
@@ -286,13 +323,21 @@ sudo usermod -aG docker $USER
 
 Change ports in docker-compose.yml
 
-### Can't connect to database
+### Database issues
 
-Make sure postgres service is running:
+The database is stored at `./data/minepanel.db`. If you have issues:
 
 ```bash
-docker compose ps postgres
-docker compose logs postgres
+# Check if the database file exists
+ls -l data/minepanel.db
+
+# Check minepanel logs
+docker compose logs minepanel
+
+# Reset database (WARNING: deletes all data)
+docker compose down
+rm -f data/minepanel.db
+docker compose up -d
 ```
 
 ### Lost admin password

@@ -65,7 +65,7 @@ Got tired of managing servers through SSH. Tried other panels but they were eith
 
 ```bash
 # Create docker-compose.yml file, then:
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 docker compose up -d
 ```
 

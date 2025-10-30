@@ -2,21 +2,17 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-// For future
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const { user, host, name, password, port } = configService.get('database');
+        const { path } = configService.get('database');
         return {
-          type: 'postgres',
-          host,
-          port,
-          username: user,
-          password,
-          database: name,
+          type: 'sqljs',
+          location: path,
+          autoSave: true,
           synchronize: true,
           autoLoadEntities: true,
           entities: ['dist/**/*.entity{.ts,.js}'],

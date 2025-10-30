@@ -44,12 +44,6 @@ services:
       - JWT_SECRET= # Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      # Database
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-minepanel}
-      - DB_USER=${DB_USER:-minepanel}
-      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
       # Frontend
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
@@ -58,9 +52,7 @@ services:
       # Windows: use ./servers:/app/servers
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./data:/app/data
     restart: always
 
   filebrowser:
@@ -68,35 +60,17 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${PWD}/servers:/data
+      - ./servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=${DB_NAME:-minepanel}
-      - POSTGRES_USER=${DB_USER:-minepanel}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
 ```
 
 ### Step 2: Create Required Directories
 
 ```bash
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 ```
 
 ### 2. Start
@@ -119,24 +93,26 @@ If you want to access Minepanel from outside your local network, you need to con
 ```yaml
 environment:
   # Backend - CRITICAL: Controls CORS
-  - FRONTEND_URL=http://your-server-ip:3000  # or https://minepanel.yourdomain.com
-  
+  - FRONTEND_URL=http://your-server-ip:3000 # or https://minepanel.yourdomain.com
+
   # Frontend - Must point to your server's address
-  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091  # or https://api.yourdomain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080  # or https://files.yourdomain.com
+  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091 # or https://api.yourdomain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080 # or https://files.yourdomain.com
 ```
 
 **Then access via:**
+
 - **Minepanel**: `http://your-server-ip:3000` or `https://minepanel.yourdomain.com`
 - **File Browser**: `http://your-server-ip:8080` or `https://files.yourdomain.com`
 
 ::: warning Important
+
 - Always include `http://` or `https://` in the URLs
 - `FRONTEND_URL` is critical - it controls CORS in the backend
 - After changing these variables, restart: `docker compose restart`
 - For production, use HTTPS with a reverse proxy (see [Installation](/installation#split-services-installation))
 - Make sure ports are open in your firewall/router
-:::
+  :::
 
 ## First login
 

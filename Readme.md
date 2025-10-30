@@ -75,9 +75,7 @@ services:
       # For Windows: ./servers:/app/servers
       - ${PWD}/servers:${PWD}/servers
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./data:/app/data
     restart: always
 
   filebrowser:
@@ -85,35 +83,17 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ../servers:/data
+      - ./servers:/data
       - ./filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=${DB_NAME:-minepanel}
-      - POSTGRES_USER=${DB_USER:-minepanel}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
 ```
 
 Then:
 
 ```bash
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 docker compose up -d
 ```
 
@@ -122,7 +102,7 @@ docker compose up -d
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 docker compose up -d
 ```
 
@@ -133,7 +113,7 @@ If you're using **nginx-proxy** or **Traefik** with automatic SSL, there's a spl
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
 docker compose -f docker-compose.split.yml up -d
 ```
 
@@ -211,14 +191,15 @@ You MUST update these variables in your `docker-compose.yml` to match your serve
 ```yaml
 environment:
   # Backend - CRITICAL: Controls CORS
-  - FRONTEND_URL=http://your-server-ip:3000  # or https://your-domain.com
-  
+  - FRONTEND_URL=http://your-server-ip:3000 # or https://your-domain.com
+
   # Frontend - Must point to your server's address
-  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091  # or https://api.your-domain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080  # or https://files.your-domain.com
+  - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091 # or https://api.your-domain.com
+  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080 # or https://files.your-domain.com
 ```
 
 **Notes:**
+
 - Replace `your-server-ip` with your server's public IP address
 - Replace `your-domain.com` with your domain name (if you have one)
 - Always include `http://` or `https://` at the beginning
@@ -247,7 +228,7 @@ Steps:
 2. Login to http://localhost:8080 with `admin` and that password
 3. Change it to something secure
 
-**Lost the logs?** Delete the database and restart:
+**Lost the logs?** Delete the filebrowser database and restart:
 
 ```bash
 docker compose down
@@ -256,12 +237,36 @@ docker compose up -d
 docker compose logs filebrowser
 ```
 
+## Database
+
+Minepanel uses SQLite for data persistence. The database file is stored at `./data/minepanel.db`.
+
+**Backup your data:**
+
+```bash
+# Backup
+cp data/minepanel.db data/minepanel.db.backup
+
+# Restore
+cp data/minepanel.db.backup data/minepanel.db
+docker compose restart minepanel
+```
+
+**Reset database:**
+
+```bash
+docker compose down
+rm -rf data/minepanel.db
+docker compose up -d
+```
+
 ## How it works
 
 Minepanel runs in a single container with:
 
 - Backend (NestJS) on port 8091
 - Frontend (Next.js) on port 3000
+- SQLite database for data persistence
 - Filebrowser for file management
 
 The backend talks to Docker through the socket to create and manage server containers. Each Minecraft server runs in its own isolated container.

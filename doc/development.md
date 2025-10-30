@@ -71,11 +71,7 @@ FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
 JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
 CLIENT_PASSWORD= # Password for client
 CLIENT_USERNAME= # Username for the client
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=minepanel
-DB_USER=minepanel
-DB_PASSWORD=minepanel
+DB_PATH=./data/minepanel.db
 SERVERS_DIR=../servers
 
 ```
@@ -85,7 +81,7 @@ SERVERS_DIR=../servers
 ```bash
 NEXT_PUBLIC_BACKEND_URL='http://localhost:8091' # URL of the backend API, it's important start with http:// or https://
 NEXT_PUBLIC_FILEBROWSER_URL='http://localhost:8080' # URL of the FileBrowser instance, it's important start with http:// or https://
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en # es or en 
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en # es or en
 ```
 
 ## Tech stack
@@ -93,7 +89,7 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en # es or en
 ### Backend
 
 - NestJS
-- TypeORM + PostgreSQL
+- TypeORM + SQLite (sql.js)
 - Docker API
 - Passport JWT
 

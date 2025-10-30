@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY frontend/ ./
 
-RUN npm run build
+RUN npm run build:turbopack
 
 FROM base AS runner
 

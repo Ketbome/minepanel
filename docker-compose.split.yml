@@ -10,18 +10,10 @@ services:
       - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      # Database
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-minepanel}
-      - DB_USER=${DB_USER:-minepanel}
-      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
     volumes:
       - ./servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./data:/app/data
     restart: always
     networks:
       - minepanel-network
@@ -54,27 +46,6 @@ services:
     networks:
       - minepanel-network
 
-  
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=${DB_NAME:-minepanel}
-      - POSTGRES_USER=${DB_USER:-minepanel}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-minepanel}
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minepanel}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - minepanel-network
-
 networks:
   minepanel-network:
     driver: bridge
-
-volumes:
-  postgres_data:
