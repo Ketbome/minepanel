@@ -50,11 +50,12 @@ export function useServerLogs(serverId: string) {
   }, []);
 
   const cleanLogContent = useCallback((line: string): string => {
-    let cleaned = line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
+    let cleaned = line.replace(/>\[2K/g, "");
+    cleaned = cleaned.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
     cleaned = cleaned.replace(/^\[[\d:]+\]\s*/, "");
     cleaned = cleaned.replace(/^\[.+?\]:\s*/, "");
 
-    return cleaned;
+    return cleaned.trim();
   }, []);
 
   const parseLogsToEntries = useCallback(

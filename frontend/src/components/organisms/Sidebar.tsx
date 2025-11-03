@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings, Package } from "lucide-react";
+import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings, Package, FolderOpen } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -151,6 +151,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
       icon: LayoutDashboard,
       href: "/dashboard/servers",
       isActive: pathname === "/dashboard/servers",
+    },
+    {
+      label: t("files"),
+      icon: FolderOpen,
+      href: "/dashboard/files",
+      isActive: pathname === "/dashboard/files",
     },
     {
       label: t("templates"),

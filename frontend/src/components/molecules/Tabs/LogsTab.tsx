@@ -161,7 +161,7 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
       <LogsLastUpdate lastUpdate={lastUpdate} error={error} />
       <LogsResources resources={resources} loadingResources={loadingResources} resourcesError={resourcesError} />
       <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} />
-      {rconPort && rconPassword && <QuickCommandConsole serverId={serverId} rconPort={rconPort} rconPassword={rconPassword} serverStatus={serverStatus || "stopped"} />}
+      <QuickCommandConsole serverId={serverId} rconPort={rconPort || ""} rconPassword={rconPassword || ""} serverStatus={serverStatus || "stopped"} />
       <LogsFooter error={error} hasErrors={hasErrors} isRealTime={isRealTime} lastUpdate={lastUpdate} filteredLogEntries={filteredLogEntries} logEntries={logEntries} loadingResources={loadingResources} fetchServerResources={fetchServerResources} resourcesError={resourcesError} />
       <style jsx global>{`
         .minecraft-log {
