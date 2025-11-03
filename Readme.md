@@ -60,12 +60,6 @@ services:
       - JWT_SECRET= # Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      # Database
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-minepanel}
-      - DB_USER=${DB_USER:-minepanel}
-      - DB_PASSWORD=${DB_PASSWORD:-minepanel}
       # Frontend
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
