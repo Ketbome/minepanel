@@ -49,24 +49,32 @@ export function useServerLogs(serverId: string) {
     return "unknown";
   }, []);
 
+  const cleanLogContent = useCallback((line: string): string => {
+    let cleaned = line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
+    cleaned = cleaned.replace(/^\[[\d:]+\]\s*/, "");
+    cleaned = cleaned.replace(/^\[.+?\]:\s*/, "");
+
+    return cleaned;
+  }, []);
+
   const parseLogsToEntries = useCallback(
     (logsContent: string, existingEntries: LogEntry[] = []): LogEntry[] => {
       if (!logsContent) return [];
 
       const lines = logsContent.split("\n").filter((line) => line.trim());
 
-      const existingContents = new Set(existingEntries.map(entry => entry.content));
+      const existingContents = new Set(existingEntries.map((entry) => entry.content));
 
       return lines
-        .filter(line => !existingContents.has(line))
+        .filter((line) => !existingContents.has(cleanLogContent(line)))
         .map((line, index) => ({
           id: `${Date.now()}-${index}`,
-          content: line,
+          content: cleanLogContent(line),
           timestamp: new Date(),
           level: parseLogLevel(line),
         }));
     },
-    [parseLogLevel]
+    [parseLogLevel, cleanLogContent]
   );
 
   const startRealTimeUpdates = useCallback(() => {
