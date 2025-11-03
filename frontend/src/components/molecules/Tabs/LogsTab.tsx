@@ -13,6 +13,7 @@ import LogsLastUpdate from "../Logs/LogsLastUpdate";
 import LogsFooter from "../Logs/LogsFooter";
 import LogsResources from "../Logs/LogsResources";
 import { LogsDisplay } from "../Logs/LogsDisplay";
+import { QuickCommandConsole } from "../Logs/QuickCommandConsole";
 
 export interface LogEntry {
   id: string;
@@ -35,9 +36,12 @@ export interface ResourcesData {
 
 interface LogsTabProps {
   serverId: string;
+  rconPort?: string;
+  rconPassword?: string;
+  serverStatus?: string;
 }
 
-export function LogsTab({ serverId }: Readonly<LogsTabProps>) {
+export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Readonly<LogsTabProps>) {
   const { t } = useLanguage();
   const { logs, logEntries, filteredLogEntries, loading, lineCount, error, hasErrors, lastUpdate, isRealTime, searchTerm, levelFilter, fetchLogs, setLogLines, clearError, toggleRealTime, setSearchTerm, setLevelFilter } = useServerLogs(serverId);
 
@@ -79,8 +83,8 @@ export function LogsTab({ serverId }: Readonly<LogsTabProps>) {
       }, 150);
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [autoScroll]);
 
   useEffect(() => {
@@ -128,7 +132,7 @@ export function LogsTab({ serverId }: Readonly<LogsTabProps>) {
   };
 
   return (
-    <Card className={`bg-gray-900/60 border-gray-700/50 shadow-lg transition-all duration-300 `}>
+    <Card className={`bg-gray-900/60 border-gray-700/50 shadow-lg transition-all duration-300 overflow-hidden`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
           <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
@@ -157,10 +161,18 @@ export function LogsTab({ serverId }: Readonly<LogsTabProps>) {
       <LogsLastUpdate lastUpdate={lastUpdate} error={error} />
       <LogsResources resources={resources} loadingResources={loadingResources} resourcesError={resourcesError} />
       <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} />
+      {rconPort && rconPassword && <QuickCommandConsole serverId={serverId} rconPort={rconPort} rconPassword={rconPassword} serverStatus={serverStatus || "stopped"} />}
       <LogsFooter error={error} hasErrors={hasErrors} isRealTime={isRealTime} lastUpdate={lastUpdate} filteredLogEntries={filteredLogEntries} logEntries={logEntries} loadingResources={loadingResources} fetchServerResources={fetchServerResources} resourcesError={resourcesError} />
       <style jsx global>{`
         .minecraft-log {
           line-height: 1.4;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+        }
+        .log-entry {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
         .minecraft-log .error,
         .minecraft-log .severe,

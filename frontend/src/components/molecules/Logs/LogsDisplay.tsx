@@ -21,13 +21,13 @@ export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLo
   const statusBarClassName = "absolute top-0 right-0 px-3 py-1 text-xs font-minecraft rounded-bl-md flex items-center border-l border-b border-gray-700/50 " + (error ? "bg-red-800/80 text-red-400" : hasErrors ? "bg-yellow-800/80 text-yellow-400" : "bg-gray-800/80 text-emerald-400");
 
   return (
-    <CardContent className="pt-0">
-      <div className="relative border border-gray-700/50 rounded-md shadow-inner">
+    <CardContent className="pt-0 overflow-hidden">
+      <div className="relative border border-gray-700/50 rounded-md shadow-inner overflow-hidden">
         <div className={statusBarClassName}>
           <Terminal className="h-3 w-3 mr-1" />
           {error ? t("error") : hasErrors ? t("withErrors") : t("console")}
         </div>
-        <pre ref={logsContainerRef} className={`logs-container p-4 pt-6 rounded-md overflow-auto text-xs font-mono border-gray-700/50 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 h-[600px] ${error ? "bg-red-950/40 text-red-300" : hasErrors ? "bg-yellow-950/20 text-emerald-400" : "bg-gray-950/80 text-emerald-400"}`}>
+        <pre ref={logsContainerRef} className={`logs-container p-4 pt-6 rounded-md overflow-x-auto overflow-y-auto text-xs font-mono border-gray-700/50 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 h-[600px] wrap-break-word whitespace-pre-wrap ${error ? "bg-red-950/40 text-red-300" : hasErrors ? "bg-yellow-950/20 text-emerald-400" : "bg-gray-950/80 text-emerald-400"}`}>
           {filteredLogEntries.length > 0 ? (
             <div className="minecraft-log">
               {filteredLogEntries.map((entry: any) => (
@@ -69,4 +69,4 @@ export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLo
       </div>
     </CardContent>
   );
-}
+};

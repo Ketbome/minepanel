@@ -74,8 +74,8 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsTrigger value="general" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
                 <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('general')}</span>
-                <span className="sm:hidden">{t('general')}</span>
+                <span className="hidden sm:inline">{t("general")}</span>
+                <span className="sm:hidden">{t("general")}</span>
               </TabsTrigger>
 
               <TabsTrigger value="resources" className="flex text-gray-200 items-center gap-1.5 py-2.5 px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-sm whitespace-nowrap">
@@ -150,7 +150,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
             </TabsContent>
 
             <TabsContent value="logs" className="space-y-4 mt-0">
-              <LogsTab serverId={serverId} />
+              <LogsTab serverId={serverId} rconPort={config.rconPort} rconPassword={config.rconPassword} serverStatus={serverStatus} />
             </TabsContent>
 
             <TabsContent value="commands" className="space-y-4 mt-0">
