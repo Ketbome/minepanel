@@ -21,12 +21,10 @@ interface ServerConfigTabsProps {
   readonly updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
   readonly saveConfig: () => Promise<boolean>;
   readonly serverStatus: string;
-  readonly autoSaveEnabled: boolean;
-  readonly setAutoSaveEnabled: (enabled: boolean) => void;
   readonly isSaving: boolean;
 }
 
-export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, autoSaveEnabled, setAutoSaveEnabled, isSaving }) => {
+export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving }) => {
   const { t } = useLanguage();
 
   const showModsTab = config.serverType === "FORGE" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
@@ -40,6 +38,14 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
+  const [savedConfig, setSavedConfig] = useState(config);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Detect unsaved changes
+  useEffect(() => {
+    const configChanged = JSON.stringify(config) !== JSON.stringify(savedConfig);
+    setHasUnsavedChanges(configChanged);
+  }, [config, savedConfig]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -62,48 +68,85 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    await saveConfig();
+    const success = await saveConfig();
+    if (success) {
+      setSavedConfig(config);
+    }
   };
+
+  const handleSaveConfig = async () => {
+    const success = await saveConfig();
+    if (success) {
+      setSavedConfig(config);
+    }
+    return success;
+  };
+
+  const isServerRunning = serverStatus === "running" || serverStatus === "starting";
+
+  useEffect(() => {
+    if (isServerRunning) {
+      const disabledTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "files"];
+      if (disabledTabs.includes(activeTab)) {
+        setActiveTab("logs");
+      }
+    }
+  }, [isServerRunning, activeTab]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
-      <SaveModeControl autoSaveEnabled={autoSaveEnabled} setAutoSaveEnabled={setAutoSaveEnabled} onManualSave={saveConfig} isSaving={isSaving} />
+      {!isServerRunning && <SaveModeControl onManualSave={handleSaveConfig} isSaving={isSaving} hasUnsavedChanges={hasUnsavedChanges} />}
+
+      {isServerRunning && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-amber-900/30 backdrop-blur-md rounded-lg border border-amber-700/40 flex items-start gap-3">
+          <div className="shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h4 className="text-amber-300 font-minecraft font-semibold text-sm mb-1">{t("serverRunningWarning")}</h4>
+            <p className="text-amber-200/80 text-xs">{t("serverRunningWarningDesc")}</p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="bg-gray-900/80 backdrop-blur-md rounded-lg border border-gray-700/60 overflow-hidden text-gray-200">
         <form onSubmit={handleSubmit}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="relative overflow-hidden">
               <div className="overflow-x-auto overflow-y-hidden custom-scrollbar text-gray-200 scroll-smooth">
                 <TabsList className="flex w-max min-w-full h-auto p-1 bg-gray-800/70 border-b border-gray-700/60">
-                  <TabsTrigger value="type" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                  <TabsTrigger value="type" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Server className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("serverType")}</span>
                   </TabsTrigger>
 
-                  <TabsTrigger value="general" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                  <TabsTrigger value="general" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Settings className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("general")}</span>
                   </TabsTrigger>
 
-                  <TabsTrigger value="resources" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                  <TabsTrigger value="resources" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Cpu className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("resources")}</span>
                   </TabsTrigger>
 
                   {showModsTab && (
-                    <TabsTrigger value="mods" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                    <TabsTrigger value="mods" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                       <Package className="h-4 w-4 shrink-0" />
                       <span className="hidden md:inline">{t("mods")}</span>
                     </TabsTrigger>
                   )}
 
                   {showPluginsTab && (
-                    <TabsTrigger value="plugins" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                    <TabsTrigger value="plugins" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                       <Layers className="h-4 w-4 shrink-0" />
                       <span className="hidden md:inline">{t("plugins")}</span>
                     </TabsTrigger>
                   )}
 
-                  <TabsTrigger value="advanced" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                  <TabsTrigger value="advanced" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Code className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("advanced")}</span>
                   </TabsTrigger>
@@ -118,7 +161,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <span className="hidden md:inline">{t("commands")}</span>
                   </TabsTrigger>
 
-                  <TabsTrigger value="files" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                  <TabsTrigger value="files" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <FolderOpen className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("files")}</span>
                   </TabsTrigger>
@@ -131,31 +174,31 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
             <div className="p-4 bg-gray-900/60 min-h-[400px]">
               <TabsContent value="type" className="space-y-4 mt-0">
-                <ServerTypeTab config={config} updateConfig={updateConfig} />
+                <ServerTypeTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
               </TabsContent>
 
               <TabsContent value="general" className="space-y-4 mt-0">
-                <GeneralSettingsTab config={config} updateConfig={updateConfig} />
+                <GeneralSettingsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
               </TabsContent>
 
               <TabsContent value="resources" className="space-y-4 mt-0">
-                <ResourcesTab config={config} updateConfig={updateConfig} />
+                <ResourcesTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
               </TabsContent>
 
               {showModsTab && (
                 <TabsContent value="mods" className="space-y-4 mt-0">
-                  <ModsTab config={config} updateConfig={updateConfig} />
+                  <ModsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
                 </TabsContent>
               )}
 
               {showPluginsTab && (
                 <TabsContent value="plugins" className="space-y-4 mt-0">
-                  <PluginsTab config={config} updateConfig={updateConfig} />
+                  <PluginsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
                 </TabsContent>
               )}
 
               <TabsContent value="advanced" className="space-y-4 mt-0">
-                <AdvancedTab config={config} updateConfig={updateConfig} />
+                <AdvancedTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
               </TabsContent>
 
               <TabsContent value="logs" className="space-y-4 mt-0">

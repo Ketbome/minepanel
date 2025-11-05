@@ -15,9 +15,10 @@ import { Switch } from "@/components/ui/switch";
 interface AdvancedTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  disabled?: boolean;
 }
 
-export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
+export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig, disabled = false }) => {
   const { t } = useLanguage();
   const [newPort, setNewPort] = useState("");
 

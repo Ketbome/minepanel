@@ -282,6 +282,10 @@ export const nl: Record<TranslationKey, string> = {
   manualSave: "Handmatig Opslaan",
   saveNow: "Nu Opslaan",
   autoSaveActive: "Actief",
+  serverRunningWarning: "Server is Actief",
+  serverRunningWarningDesc: "Configuratie kan niet worden bewerkt terwijl de server actief is. Stop de server om wijzigingen aan te brengen.",
+  unsavedChanges: "Niet-opgeslagen Wijzigingen",
+  allChangesSaved: "Alle Wijzigingen Opgeslagen",
   failedToFetchVersions: "Versies ophalen mislukt",
 
   // ===========================

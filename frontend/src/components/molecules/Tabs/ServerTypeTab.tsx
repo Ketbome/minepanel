@@ -17,9 +17,10 @@ import { Badge } from "@/components/ui/badge";
 interface ServerTypeTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  disabled?: boolean;
 }
 
-export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) => {
+export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig, disabled = false }) => {
   const { t } = useLanguage();
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
 
@@ -74,9 +75,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
             </div>
 
             {showManualInput ? (
-              <Input id="minecraftVersion" value={config.minecraftVersion} onChange={(e) => updateConfig("minecraftVersion", e.target.value)} placeholder="1.20.4" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white" />
+              <Input id="minecraftVersion" value={config.minecraftVersion} onChange={(e) => updateConfig("minecraftVersion", e.target.value)} placeholder="1.20.4" disabled={disabled} className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white" />
             ) : (
-              <Select value={config.minecraftVersion} onValueChange={(value) => updateConfig("minecraftVersion", value)} disabled={loading}>
+              <Select value={config.minecraftVersion} onValueChange={(value) => updateConfig("minecraftVersion", value)} disabled={loading || disabled}>
                 <SelectTrigger className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white">
                   <SelectValue placeholder={loading ? t("loadingVersions") : t("selectVersion")} />
                 </SelectTrigger>
@@ -170,7 +171,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
 
         <div className="border-t border-gray-700/50 pt-4">
           <h3 className="text-sm font-minecraft text-gray-300 mb-4">{t("selectType")}</h3>
-          <RadioGroup value={config.serverType} onValueChange={(value: ServerConfig["serverType"]) => updateConfig("serverType", value)} className="space-y-4">
+          <RadioGroup value={config.serverType} onValueChange={(value: ServerConfig["serverType"]) => updateConfig("serverType", value)} disabled={disabled} className="space-y-4">
             <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "VANILLA" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/grass.webp" alt="Vanilla" width={24} height={24} />

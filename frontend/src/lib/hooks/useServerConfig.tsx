@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ServerConfig } from "../types/types";
 import { apiClearServerData, apiRestartServer, fetchServerConfig, updateServerConfig } from "@/services/docker/fetchs";
 import { toast } from "sonner";
-import { useAutoSaveWithToast } from "./useAutoSave";
 import { minecraftVersionsService } from "@/services/minecraft-versions.service";
 
 const defaultConfig: ServerConfig = {
@@ -119,7 +118,7 @@ const defaultConfig: ServerConfig = {
   skipDownloadDefaults: false,
 };
 
-export function useServerConfig(serverId: string, enableAutoSave = true) {
+export function useServerConfig(serverId: string) {
   const [config, setConfig] = useState<ServerConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -179,27 +178,6 @@ export function useServerConfig(serverId: string, enableAutoSave = true) {
       setIsSaving(false);
     }
   };
-
-  useAutoSaveWithToast(
-    config,
-    async (data) => {
-      try {
-        setIsSaving(true);
-        await updateServerConfig(serverId, data);
-        return true;
-      } catch (error) {
-        console.error("Auto-save error:", error);
-        return false;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    {
-      enabled: enableAutoSave && !loading,
-      debounceMs: 2000,
-      showSuccessToast: false,
-    }
-  );
 
   const restartServer = async () => {
     setIsRestarting(true);

@@ -13,9 +13,10 @@ import { env } from "next-runtime-env";
 interface PluginsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  disabled?: boolean;
 }
 
-export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
+export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, disabled = false }) => {
   const { t } = useLanguage();
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isAuthenticated } from "@/services/auth/auth.service";
 import { useServerStatus } from "@/lib/hooks/useServerStatus";
@@ -17,9 +17,8 @@ export default function ServerConfig() {
   const router = useRouter();
   const params = useParams();
   const serverId = params.server as string;
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
-  const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId, autoSaveEnabled);
+  const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId);
   const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
   const { t } = useLanguage();
 
@@ -40,7 +39,7 @@ export default function ServerConfig() {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} autoSaveEnabled={autoSaveEnabled} setAutoSaveEnabled={setAutoSaveEnabled} isSaving={isSaving} />
+        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} />
       </motion.div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }} className="flex justify-center gap-8 pt-8">

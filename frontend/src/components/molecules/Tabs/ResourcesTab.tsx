@@ -11,9 +11,10 @@ import { AdvancedResourcesTab } from "./ResourcesTabs/AdvancedResourcesTab";
 interface ResourcesTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  disabled?: boolean;
 }
 
-export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) => {
+export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig, disabled = false }) => {
   const { t } = useLanguage();
 
   return (
@@ -46,15 +47,15 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) =>
           </div>
 
           <TabsContent value="memory" className="space-y-6 text-gray-200">
-            <MemoryCpuTab config={config} updateConfig={updateConfig} />
+            <MemoryCpuTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
 
           <TabsContent value="jvm" className="space-y-6 text-gray-200">
-            <JvmOptionsTab config={config} updateConfig={updateConfig} />
+            <JvmOptionsTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-6 text-gray-200">
-            <AdvancedResourcesTab config={config} updateConfig={updateConfig} />
+            <AdvancedResourcesTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
         </Tabs>
       </CardContent>

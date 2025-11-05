@@ -280,6 +280,10 @@ export const es: Record<TranslationKey, string> = {
   manualSave: "Guardado Manual",
   saveNow: "Guardar Ahora",
   autoSaveActive: "Activo",
+  serverRunningWarning: "Servidor en Ejecución",
+  serverRunningWarningDesc: "No se puede editar la configuración mientras el servidor está corriendo. Detén el servidor para hacer cambios.",
+  unsavedChanges: "Cambios sin Guardar",
+  allChangesSaved: "Todos los Cambios Guardados",
   failedToFetchVersions: "Error al obtener las versiones",
 
   // ===========================
