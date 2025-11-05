@@ -928,4 +928,26 @@ export const nl: Record<TranslationKey, string> = {
   createServerFromModpack: "Maak een nieuwe server met dit modpack",
   serverIdRequired: "Server ID is vereist",
   optional: "optioneel",
+
+  // ===========================
+  // Domein/Traefik Tabblad
+  // ===========================
+  domain: "Domein",
+  traefikNotAvailable: "Traefik Niet Beschikbaar",
+  traefikNotAvailableDesc: "Traefik is niet actief of niet juist geconfigureerd. Zorg ervoor dat Traefik draait in je docker-compose setup.",
+  enableTraefik: "Traefik Inschakelen",
+  enableTraefikDesc: "Schakel Traefik reverse proxy in om aangepaste domeinen voor deze server te gebruiken",
+  enableTraefikLabel: "Traefik Routing Inschakelen",
+  domainTitle: "Domeinconfiguratie",
+  domainDescription: "Configureer de domeinnaam voor je Minecraft server. Gebruik * voor wildcard (catch-all)",
+  domainLabel: "Domein / Hostnaam",
+  domainHint: "Voorbeelden: mc.example.com, mc1.example.com, of * voor catch-all",
+  checkingDomain: "Domein controleren...",
+  tcpRoutingLabel: "SNI Routing Inschakelen",
+  tcpRoutingDescription: "Gebruik SNI (Server Name Indication) voor routing. Uitschakelen voor wildcard domeinen",
+  entrypointLabel: "Traefik Entrypoint",
+  entrypointHint: "Het Traefik entrypoint om te gebruiken. Standaard is minecraft (poort 25565)",
+  infoTitle: "Verbindingsinformatie",
+  connectInfo: "Verbind met:",
+  checkingTraefik: "Traefik status controleren...",
 };

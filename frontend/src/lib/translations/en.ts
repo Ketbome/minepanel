@@ -912,6 +912,28 @@ export const en = {
   createServerFromModpack: "Create a new server using this modpack",
   serverIdRequired: "Server ID is required",
   optional: "optional",
+
+  // ===========================
+  // Domain/Traefik Tab
+  // ===========================
+  domain: "Domain",
+  traefikNotAvailable: "Traefik Not Available",
+  traefikNotAvailableDesc: "Traefik is not running or not properly configured. Please ensure Traefik is running in your docker-compose setup.",
+  enableTraefik: "Enable Traefik",
+  enableTraefikDesc: "Enable Traefik reverse proxy for this server to use custom domains",
+  enableTraefikLabel: "Enable Traefik Routing",
+  domainTitle: "Domain Configuration",
+  domainDescription: "Configure the domain name for your Minecraft server. Use * for wildcard (catch-all)",
+  domainLabel: "Domain / Hostname",
+  domainHint: "Examples: mc.example.com, mc1.example.com, or * for catch-all",
+  checkingDomain: "Checking domain...",
+  tcpRoutingLabel: "Enable SNI Routing",
+  tcpRoutingDescription: "Use SNI (Server Name Indication) for routing. Disable for wildcard domains",
+  entrypointLabel: "Traefik Entrypoint",
+  entrypointHint: "The Traefik entrypoint to use. Default is minecraft (port 25565)",
+  infoTitle: "Connection Information",
+  connectInfo: "Connect using:",
+  checkingTraefik: "Checking Traefik status...",
 };
 
 export type TranslationKey = keyof typeof en;

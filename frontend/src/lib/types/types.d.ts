@@ -164,4 +164,10 @@ export interface ServerConfig {
 
   // General Paper/Bukkit/Spigot config
   skipDownloadDefaults?: boolean;
+
+  // Traefik / Domain Configuration
+  enableTraefik?: boolean;
+  domain?: string;
+  enableTcpRouting?: boolean;
+  traefikEntrypoint?: string;
 }

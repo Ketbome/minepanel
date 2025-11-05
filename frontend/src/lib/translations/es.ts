@@ -914,4 +914,26 @@ export const es: Record<TranslationKey, string> = {
   createServerFromModpack: "Crear un nuevo servidor usando este modpack",
   serverIdRequired: "El ID del servidor es requerido",
   optional: "opcional",
+
+  // ===========================
+  // Pestaña de Dominio/Traefik
+  // ===========================
+  domain: "Dominio",
+  traefikNotAvailable: "Traefik No Disponible",
+  traefikNotAvailableDesc: "Traefik no está ejecutándose o no está configurado correctamente. Asegúrate de que Traefik esté corriendo en tu configuración docker-compose.",
+  enableTraefik: "Habilitar Traefik",
+  enableTraefikDesc: "Habilitar proxy reverso Traefik para usar dominios personalizados en este servidor",
+  enableTraefikLabel: "Habilitar Enrutamiento Traefik",
+  domainTitle: "Configuración de Dominio",
+  domainDescription: "Configura el nombre de dominio para tu servidor de Minecraft. Usa * para comodín (catch-all)",
+  domainLabel: "Dominio / Hostname",
+  domainHint: "Ejemplos: mc.example.com, mc1.example.com, o * para catch-all",
+  checkingDomain: "Verificando dominio...",
+  tcpRoutingLabel: "Habilitar Enrutamiento SNI",
+  tcpRoutingDescription: "Usar SNI (Server Name Indication) para enrutamiento. Deshabilitar para dominios comodín",
+  entrypointLabel: "Entrypoint de Traefik",
+  entrypointHint: "El entrypoint de Traefik a usar. Por defecto es minecraft (puerto 25565)",
+  infoTitle: "Información de Conexión",
+  connectInfo: "Conectar usando:",
+  checkingTraefik: "Verificando estado de Traefik...",
 };

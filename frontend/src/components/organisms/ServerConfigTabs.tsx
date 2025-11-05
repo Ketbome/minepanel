@@ -10,8 +10,9 @@ import { ResourcesTab } from "../molecules/Tabs/ResourcesTab";
 import { GeneralSettingsTab } from "../molecules/Tabs/GeneralSettingsTab";
 import { ServerTypeTab } from "../molecules/Tabs/ServerTypeTab";
 import { FilesTab } from "../molecules/Tabs/FilesTab";
+import { DomainTraefikTab } from "../molecules/Tabs/DomainTraefikTab";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -33,7 +34,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "logs", "commands", "files"];
+    const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "domain", "logs", "commands", "files"];
     return validTabs.includes(hash) ? hash : "type";
   };
 
@@ -56,7 +57,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "logs", "commands", "files"];
+      const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "domain", "logs", "commands", "files"];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -86,7 +87,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     if (isServerRunning) {
-      const disabledTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "files"];
+      const disabledTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "domain", "files"];
       if (disabledTabs.includes(activeTab)) {
         setActiveTab("logs");
       }
@@ -151,6 +152,11 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <span className="hidden md:inline">{t("advanced")}</span>
                   </TabsTrigger>
 
+                  <TabsTrigger value="domain" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Globe className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">{t("domain") || "Domain"}</span>
+                  </TabsTrigger>
+
                   <TabsTrigger value="logs" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
                     <ScrollText className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("logs")}</span>
@@ -199,6 +205,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsContent value="advanced" className="space-y-4 mt-0">
                 <AdvancedTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+              </TabsContent>
+
+              <TabsContent value="domain" className="space-y-4 mt-0">
+                <DomainTraefikTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
               </TabsContent>
 
               <TabsContent value="logs" className="space-y-4 mt-0">
