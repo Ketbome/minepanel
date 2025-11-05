@@ -3,6 +3,7 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
 import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { TraefikService } from 'src/traefik/traefik.service';
 
 interface DockerComposeConfig {
   services?: {
@@ -16,7 +17,7 @@ export class DockerComposeService {
   private readonly logger = new Logger(DockerComposeService.name);
   private readonly BASE_DIR = process.env.SERVERS_DIR;
 
-  constructor() {
+  constructor(private readonly traefikService: TraefikService) {
     fs.ensureDirSync(this.BASE_DIR);
   }
 
@@ -175,6 +176,12 @@ export class DockerComposeService {
         execDirectly: env.EXEC_DIRECTLY === 'true',
         envVars: '',
         extraPorts: extraPorts,
+
+        // Traefik configuration
+        enableTraefik: mcService.labels?.['traefik.enable'] === 'true',
+        domain: this.extractDomainFromLabels(mcService.labels, serverId),
+        enableTcpRouting: this.checkTcpRoutingEnabled(mcService.labels, serverId),
+        traefikEntrypoint: this.extractEntrypoint(mcService.labels, serverId) || 'minecraft',
       };
 
       this.parseServerTypeSpecificConfig(serverConfig, env);
@@ -398,7 +405,36 @@ export class DockerComposeService {
       foliaDownloadUrl: '',
 
       skipDownloadDefaults: false,
+
+      // Traefik configuration
+      enableTraefik: false,
+      domain: '',
+      enableTcpRouting: false,
+      traefikEntrypoint: 'minecraft',
     };
+  }
+
+  private extractDomainFromLabels(labels: any, serverId: string): string {
+    if (!labels) return '';
+    const ruleKey = `traefik.tcp.routers.${serverId}.rule`;
+    const rule = labels[ruleKey];
+    if (rule) {
+      const match = rule.match(/HostSNI\(`([^`]+)`\)/);
+      return match ? match[1] : '';
+    }
+    return '';
+  }
+
+  private checkTcpRoutingEnabled(labels: any, serverId: string): boolean {
+    if (!labels) return false;
+    const ruleKey = `traefik.tcp.routers.${serverId}.rule`;
+    return !!labels[ruleKey];
+  }
+
+  private extractEntrypoint(labels: any, serverId: string): string {
+    if (!labels) return '';
+    const entrypointKey = `traefik.tcp.routers.${serverId}.entrypoints`;
+    return labels[entrypointKey] || '';
   }
 
   async getAllServerIds(): Promise<string[]> {
@@ -697,27 +733,58 @@ export class DockerComposeService {
   }
 
   private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string): any {
-    return {
-      services: {
-        mc: {
-          image: `itzg/minecraft-server:${config.dockerImage}`,
-          tty: true,
-          stdin_open: true,
-          container_name: config.id,
-          ports: [`${port}:25565`, ...(config.extraPorts || [])],
-          environment,
-          volumes,
-          restart: config.restartPolicy,
-          deploy: {
-            resources: {
-              limits: { cpus: config.cpuLimit, memory: config.maxMemory },
-              reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
-            },
-          },
+    const mcService: any = {
+      image: `itzg/minecraft-server:${config.dockerImage}`,
+      tty: true,
+      stdin_open: true,
+      container_name: config.id,
+      environment,
+      volumes,
+      restart: config.restartPolicy,
+      deploy: {
+        resources: {
+          limits: { cpus: config.cpuLimit, memory: config.maxMemory },
+          reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
         },
       },
-      volumes: { 'mc-data': {} },
     };
+
+    // Add Traefik labels if enabled
+    if (config.enableTraefik) {
+      mcService.labels = this.buildTraefikLabels(config);
+      mcService.networks = ['minepanel-network'];
+      mcService.expose = [25565];
+    } else {
+      mcService.ports = [`${port}:25565`, ...(config.extraPorts || [])];
+    }
+
+    return {
+      services: { mc: mcService },
+      volumes: { 'mc-data': {} },
+      ...(config.enableTraefik && {
+        networks: {
+          'minepanel-network': {
+            external: true,
+          },
+        },
+      }),
+    };
+  }
+
+  private buildTraefikLabels(config: ServerConfig): string[] {
+    const labels: string[] = ['traefik.enable=true'];
+    const routerName = config.id;
+    const serviceName = `${config.id}-svc`;
+
+    if (config.enableTcpRouting && config.domain && config.domain !== '*') {
+      // TCP routing with SNI for specific domains
+      labels.push(`traefik.tcp.routers.${routerName}.rule=HostSNI(\`${config.domain}\`)`, `traefik.tcp.routers.${routerName}.entrypoints=${config.traefikEntrypoint || 'minecraft'}`, `traefik.tcp.routers.${routerName}.service=${serviceName}`, `traefik.tcp.services.${serviceName}.loadbalancer.server.port=25565`);
+    } else if (config.domain === '*' || !config.enableTcpRouting) {
+      // Wildcard or no SNI routing - catch all traffic on the entrypoint
+      labels.push(`traefik.tcp.routers.${routerName}.rule=HostSNI(\`*\`)`, `traefik.tcp.routers.${routerName}.entrypoints=${config.traefikEntrypoint || 'minecraft'}`, `traefik.tcp.routers.${routerName}.service=${serviceName}`, `traefik.tcp.services.${serviceName}.loadbalancer.server.port=25565`);
+    }
+
+    return labels;
   }
 
   private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
@@ -777,5 +844,27 @@ export class DockerComposeService {
 
     const yamlContent = yaml.dump(dockerComposeConfig);
     await fs.writeFile(this.getDockerComposePath(config.id), yamlContent);
+
+    if (config.enableTraefik && config.domain) {
+      await this.updateTraefikConfig(config);
+    } else {
+      await this.traefikService.removeServerConfig(config.id).catch((err) => {
+        this.logger.warn(`Failed to remove Traefik config for ${config.id}`, err);
+      });
+    }
+  }
+
+  private async updateTraefikConfig(config: ServerConfig): Promise<void> {
+    try {
+      await this.traefikService.generateServerConfig({
+        serverId: config.id,
+        domain: config.domain,
+        port: Number.parseInt(config.port || '25565'),
+        entrypoint: config.traefikEntrypoint || 'minecraft',
+      });
+      this.logger.log(`Traefik config updated for server ${config.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to update Traefik config for ${config.id}`, error);
+    }
   }
 }

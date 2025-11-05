@@ -10,6 +10,7 @@ import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
 import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
+import { TraefikModule } from './traefik/traefik.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CurseforgeModule } from './curseforge/curseforge.module';
     SystemMonitoringModule,
     DiscordModule,
     CurseforgeModule,
+    TraefikModule,
   ],
   controllers: [AppController],
   providers: [AppService],

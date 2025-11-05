@@ -467,6 +467,23 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   skipDownloadDefaults?: boolean;
+
+  // Traefik / Domain Configuration
+  @IsBoolean()
+  @IsOptional()
+  enableTraefik?: boolean;
+
+  @IsString()
+  @IsOptional()
+  domain?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  enableTcpRouting?: boolean;
+
+  @IsString()
+  @IsOptional()
+  traefikEntrypoint?: string;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

@@ -1,4 +1,22 @@
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: minepanel-traefik
+    command:
+      - "--entrypoints.minecraft.address=:25565"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=minepanel-network"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+    ports:
+      - "25565:25565"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${TRAEFIK_DYNAMIC_CONFIG_DIR:-./traefik/dynamic}:/etc/traefik/dynamic
+    networks:
+      - minepanel-network
+    restart: always
+
   backend:
     image: ketbom/minepanel-backend:latest
     ports:
@@ -18,6 +36,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Application data (backups, configs, etc.)
       - ${DATA_DIR:-./data}:/app/data
+      # Traefik dynamic configuration
+      - ${TRAEFIK_DYNAMIC_CONFIG_DIR:-./traefik/dynamic}:/app/traefik/dynamic
     restart: always
     networks:
       - minepanel-network
@@ -56,3 +76,4 @@ services:
 networks:
   minepanel-network:
     driver: bridge
+    name: minepanel-network

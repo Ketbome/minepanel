@@ -1,4 +1,21 @@
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: minepanel-traefik
+    command:
+      - "--entrypoints.minecraft.address=:25565"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=minepanel-network"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+    ports:
+      - "25565:25565"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - minepanel-network
+    restart: always
+
   minepanel:
     image: ketbom/minepanel:latest
     ports:
@@ -23,6 +40,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Application data (backups, configs, etc.)
       - ${DATA_DIR:-./data}:/app/data
+    networks:
+      - minepanel-network
     restart: always
 
   filebrowser:
@@ -36,4 +55,11 @@ services:
       - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
     environment:
       - FB_BASEURL=/
+    networks:
+      - minepanel-network
     restart: always
+
+networks:
+  minepanel-network:
+    driver: bridge
+    name: minepanel-network
