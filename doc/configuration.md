@@ -2,21 +2,119 @@
 
 How to configure Minepanel.
 
-## Environment variables
+## Environment Variables
 
-### Backend
+All environment variables can be set in a `.env` file or directly in `docker-compose.yml`.
+
+### Complete Variable Reference
+
+#### Ports
+
+| Variable           | Default | Description                 |
+| ------------------ | ------- | --------------------------- |
+| `BACKEND_PORT`     | `8091`  | Backend API port            |
+| `FRONTEND_PORT`    | `3000`  | Frontend web interface port |
+| `FILEBROWSER_PORT` | `8080`  | File browser port           |
+
+#### Directories
+
+| Variable          | Default              | Description                                        |
+| ----------------- | -------------------- | -------------------------------------------------- |
+| `SERVERS_DIR`     | `./servers`          | Directory for Minecraft servers data               |
+| `DATA_DIR`        | `./data`             | Directory for application data (database, backups) |
+| `FILEBROWSER_DIR` | `./filebrowser-data` | Directory for file browser configuration           |
+
+#### Authentication
+
+| Variable          | Required | Default | Description                                               |
+| ----------------- | -------- | ------- | --------------------------------------------------------- |
+| `JWT_SECRET`      | ✅ Yes   | -       | JWT secret key (generate with: `openssl rand -base64 32`) |
+| `CLIENT_USERNAME` | No       | `admin` | Admin username                                            |
+| `CLIENT_PASSWORD` | No       | `admin` | Admin password                                            |
+
+#### URLs
+
+| Variable                      | Default                 | Description                  |
+| ----------------------------- | ----------------------- | ---------------------------- |
+| `FRONTEND_URL`                | `http://localhost:3000` | Frontend URL (controls CORS) |
+| `NEXT_PUBLIC_BACKEND_URL`     | `http://localhost:8091` | Backend API URL              |
+| `NEXT_PUBLIC_FILEBROWSER_URL` | `http://localhost:8080` | File browser URL             |
+
+#### Other
+
+| Variable                       | Default | Description                         |
+| ------------------------------ | ------- | ----------------------------------- |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`) |
+
+### Using Environment Variables
+
+#### Option 1: .env File (Recommended)
+
+Create a `.env` file in the same directory as `docker-compose.yml`:
 
 ```bash
-# Required
-JWT_SECRET=your_secret_here  # openssl rand -base64 32
+# Ports
+BACKEND_PORT=8091
+FRONTEND_PORT=3000
+FILEBROWSER_PORT=8080
 
-# Optional
+# Directories
+SERVERS_DIR=./servers
+DATA_DIR=./data
+FILEBROWSER_DIR=./filebrowser-data
+
+# Authentication
+JWT_SECRET=your_generated_secret_here
 CLIENT_USERNAME=admin
 CLIENT_PASSWORD=admin
-DEFAULT_LANGUAGE=en
 
-# CRITICAL: Controls CORS - Must match frontend URL
+# URLs
 FRONTEND_URL=http://localhost:3000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
+NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
+
+# Language
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en
+```
+
+Then run:
+
+```bash
+docker compose up -d
+```
+
+#### Option 2: Inline Variables
+
+```bash
+SERVERS_DIR=/custom/path JWT_SECRET=my_secret docker compose up -d
+```
+
+#### Option 3: Directly in docker-compose.yml
+
+```yaml
+environment:
+  - SERVERS_DIR=/app/servers
+  - JWT_SECRET=your_secret_here
+```
+
+### Custom Directories Example
+
+To use custom directories for your data:
+
+```bash
+# In .env file
+SERVERS_DIR=/mnt/storage/minecraft-servers
+DATA_DIR=/mnt/storage/minepanel-data
+FILEBROWSER_DIR=/mnt/storage/filebrowser-config
+```
+
+Or directly in docker-compose.yml:
+
+```yaml
+volumes:
+  - ${SERVERS_DIR:-./servers}:/app/servers
+  - ${DATA_DIR:-./data}:/app/data
+  - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
 ```
 
 ::: danger FRONTEND_URL is Critical
@@ -31,21 +129,8 @@ The `FRONTEND_URL` variable controls CORS (Cross-Origin Resource Sharing) in the
 Always restart after changing: `docker compose restart`
 :::
 
-### Frontend
-
-```bash
-# Must point to backend API URL
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-
-# Must point to filebrowser URL
-NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
-
-# Default language (en, es, nl)
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en
-```
-
 ::: tip Frontend Variables
-These variables are loaded at runtime and must include the full URL with `http://` or `https://` protocol.
+Frontend variables (`NEXT_PUBLIC_*`) are loaded at runtime and must include the full URL with `http://` or `https://` protocol.
 :::
 
 ## Remote Access Configuration
@@ -130,18 +215,39 @@ ports:
   - "9000:8091" # Backend on 9000
 ```
 
-## Server directory
+## Custom Server Directory
 
-Where server files are stored:
+By default, server files are stored in `./servers` relative to your `docker-compose.yml` file. To use a different location:
 
-```yaml
-environment:
-  - SERVERS_DIR=${PWD}/servers
-volumes:
-  - ${PWD}/servers:${PWD}/servers
+### Using .env file:
+
+```bash
+SERVERS_DIR=/custom/path/to/servers
 ```
 
-Change `${PWD}/servers` to your preferred path.
+### Using docker-compose.yml:
+
+```yaml
+volumes:
+  - ${SERVERS_DIR:-./servers}:/app/servers
+```
+
+### Examples:
+
+```bash
+# External drive
+SERVERS_DIR=/mnt/external-drive/minecraft-servers
+
+# Home directory
+SERVERS_DIR=~/minecraft-servers
+
+# Absolute path
+SERVERS_DIR=/var/lib/minepanel/servers
+```
+
+::: tip
+The `:-./servers` syntax means: use `SERVERS_DIR` if set, otherwise default to `./servers`. This works on all operating systems (Linux, macOS, Windows).
+:::
 
 ## Language
 

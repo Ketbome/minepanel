@@ -17,20 +17,8 @@ Choose the method that best fits your needs:
 
 The fastest way to get started. Perfect for trying out Minepanel or running on a local network.
 
-::: warning Platform-Specific Configuration
-The configuration differs slightly between operating systems:
-
-**macOS / Linux:**
-
-- Use `SERVERS_DIR=${PWD}/servers`
-- Volume mount: `${PWD}/servers:${PWD}/servers`
-
-**Windows:**
-
-- Use `SERVERS_DIR=/app/servers`
-- Volume mount: `./servers:/app/servers`
-
-The examples below use the macOS/Linux configuration. If you're on Windows, adjust accordingly.
+::: tip Cross-Platform
+This configuration works on all operating systems (Linux, macOS, Windows). Variables with `:-` syntax provide sensible defaults that work everywhere.
 :::
 
 ### Step 1: Create docker-compose.yml
@@ -43,22 +31,21 @@ services:
       - "${BACKEND_PORT:-8091}:8091"
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      # Backend environment variables
-      # For Windows, use: /app/servers instead
-      - SERVERS_DIR=${PWD}/servers
+      # Backend Configuration
+      - SERVERS_DIR=/app/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET= # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
+      - JWT_SECRET=${JWT_SECRET} # Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      # Frontend environment variables (loaded at runtime via @next/env)
+
+      # Frontend Configuration
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      # For Windows, use: ./servers:/app/servers instead
-      - ${PWD}/servers:${PWD}/servers
+      - ${SERVERS_DIR:-./servers}:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
+      - ${DATA_DIR:-./data}:/app/data
     restart: always
 
   filebrowser:
@@ -66,8 +53,8 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ./servers:/data
-      - ./filebrowser-data:/config
+      - ${SERVERS_DIR:-./servers}:/data
+      - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
     environment:
       - FB_BASEURL=/
     restart: always
@@ -76,12 +63,28 @@ services:
 ### Step 2: Launch
 
 ```bash
-mkdir -p servers filebrowser-data
+# Create required directories
+mkdir -p servers filebrowser-data data
+
+# Generate JWT secret
+export JWT_SECRET=$(openssl rand -base64 32)
+
+# Start services
 docker compose up -d
 ```
 
-::: tip
-Use a `.env` file to customize ports and other settings without modifying docker-compose.yml
+::: tip Environment Variables
+Use a `.env` file to customize directories, ports, and other settings without modifying docker-compose.yml:
+
+```bash
+# .env file
+JWT_SECRET=your_generated_secret
+SERVERS_DIR=./servers
+DATA_DIR=./data
+FILEBROWSER_DIR=./filebrowser-data
+```
+
+See [Configuration Guide](/configuration#using-environment-variables) for all available variables.
 :::
 
 ---
@@ -96,7 +99,10 @@ git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
 
 # Create required directories
-mkdir -p servers filebrowser-data
+mkdir -p servers filebrowser-data data
+
+# Generate JWT secret (optional, can use .env)
+export JWT_SECRET=$(openssl rand -base64 32)
 
 # Start services
 docker compose up -d
@@ -127,7 +133,14 @@ Use this method if you want to:
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
-mkdir -p servers filebrowser-data
+
+# Create required directories
+mkdir -p servers filebrowser-data data
+
+# Generate JWT secret
+export JWT_SECRET=$(openssl rand -base64 32)
+
+# Start services
 docker compose -f docker-compose.split.yml up -d
 ```
 
@@ -351,7 +364,7 @@ docker buildx build \
 
 ### Linux
 
-No special configuration needed. Just make sure your user is in the `docker` group:
+Make sure your user is in the `docker` group:
 
 ```bash
 sudo usermod -aG docker $USER
@@ -360,32 +373,39 @@ sudo usermod -aG docker $USER
 
 ### macOS
 
-Docker Desktop for Mac handles everything automatically. No additional setup required.
+Install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop). Everything works out of the box.
 
-### Windows (WSL2)
+### Windows
 
 1. Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install)
 2. Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
 3. Enable WSL2 integration in Docker Desktop settings
-4. Run all commands inside WSL2 (Ubuntu)
+4. Run commands inside WSL2 (Ubuntu terminal)
 
-::: tip
+::: tip Better Performance
 Use WSL2 file system for better performance: `/home/username/minepanel` instead of `/mnt/c/Users/...`
 :::
 
 ### Raspberry Pi / ARM
 
-Minepanel supports ARM architecture (arm64). Use the same installation commands:
-
-```bash
-docker compose up -d
-```
-
-Docker will automatically pull the correct ARM image.
+Minepanel fully supports ARM64 architecture. Use the same installation commands - Docker automatically pulls the correct ARM image.
 
 ::: info Performance Note
-On Raspberry Pi 4 (4GB+), you can comfortably run 2-3 small Minecraft servers. Allocate 1-2GB RAM per server.
+On Raspberry Pi 4 (4GB+), you can run 2-3 small Minecraft servers. Allocate 1-2GB RAM per server.
 :::
+
+### Custom Directories
+
+To use custom directories on any platform, set environment variables:
+
+```bash
+# Create .env file
+SERVERS_DIR=/custom/path/servers
+DATA_DIR=/custom/path/data
+FILEBROWSER_DIR=/custom/path/filebrowser
+```
+
+See the [Configuration Guide](/configuration#using-environment-variables) for more details.
 
 ---
 
@@ -397,8 +417,8 @@ To completely remove Minepanel:
 # Stop all containers
 docker compose down
 
-# Remove all server data (WARNING: This deletes everything!)
-rm -rf servers/ filebrowser-data/
+# Remove all data (WARNING: This deletes everything!)
+rm -rf servers/ filebrowser-data/ data/
 
 # Remove Docker images
 docker rmi ketbom/minepanel:latest

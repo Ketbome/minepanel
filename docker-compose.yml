@@ -5,24 +5,24 @@ services:
       - "${BACKEND_PORT:-8091}:8091"
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      # Backend environment variables
-      # For Mac/Linux use: SERVERS_DIR=${PWD}/servers
-      # For Windows use: SERVERS_DIR=/app/servers
-      - SERVERS_DIR=${PWD}/servers
+      # Backend Configuration
+      - SERVERS_DIR=/app/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET} # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
-      # Frontend environment variables (loaded at runtime via @next/env)
+
+      # Frontend Configuration (loaded at runtime)
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      # For Mac/Linux use: ${PWD}/servers:${PWD}/servers
-      # For Windows use: ./servers:/app/servers
-      - ${PWD}/servers:${PWD}/servers
+      # Minecraft servers directory
+      - ${SERVERS_DIR:-./servers}:/app/servers
+      # Docker socket for container management
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
+      # Application data (backups, configs, etc.)
+      - ${DATA_DIR:-./data}:/app/data
     restart: always
 
   filebrowser:
@@ -30,8 +30,10 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ./servers:/data
-      - ./filebrowser-data:/config
+      # Access to Minecraft servers directory
+      - ${SERVERS_DIR:-./servers}:/data
+      # File browser configuration
+      - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
     environment:
       - FB_BASEURL=/
     restart: always
