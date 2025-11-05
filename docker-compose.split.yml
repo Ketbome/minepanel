@@ -11,9 +11,11 @@ services:
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
     volumes:
-      - ./servers:/app/servers
+      # For Mac/Linux use: ${PWD}/servers:${PWD}/servers
+      # For Windows use: ./servers:/app/servers
+      - ${PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
+      - ${PWD}/data:/app/data
     restart: always
     networks:
       - minepanel-network
@@ -38,8 +40,8 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ./servers:/data
-      - ./filebrowser-data:/config
+      - ${PWD}/servers:/data
+      - ${PWD}/filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
