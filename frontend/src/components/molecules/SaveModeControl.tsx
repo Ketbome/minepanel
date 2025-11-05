@@ -23,10 +23,9 @@ export const SaveModeControl: FC<SaveModeControlProps> = ({ onManualSave, isSavi
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-900/60 backdrop-blur-md rounded-lg border border-gray-700/50">
-      {/* Unsaved changes indicator */}
       {hasUnsavedChanges && !isSaving && (
-        <motion.div 
-          initial={{ opacity: 0, x: -10 }} 
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-2 text-amber-400 text-sm"
         >
@@ -39,7 +38,7 @@ export const SaveModeControl: FC<SaveModeControlProps> = ({ onManualSave, isSavi
           <span className="font-minecraft">{t("unsavedChanges")}</span>
         </motion.div>
       )}
-      
+
       {!hasUnsavedChanges && !isSaving && (
         <div className="flex items-center gap-2 text-emerald-400 text-sm">
           <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
@@ -49,8 +48,8 @@ export const SaveModeControl: FC<SaveModeControlProps> = ({ onManualSave, isSavi
 
       {isSaving && (
         <div className="flex items-center gap-2 text-blue-400 text-sm">
-          <motion.div 
-            animate={{ rotate: 360 }} 
+          <motion.div
+            animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           >
             <Save className="h-4 w-4" />
@@ -58,11 +57,10 @@ export const SaveModeControl: FC<SaveModeControlProps> = ({ onManualSave, isSavi
           <span className="font-minecraft">{t("saving")}...</span>
         </div>
       )}
-
-      {/* Save button */}
-      <Button 
-        type="button" 
-        onClick={handleManualSave} 
+      
+      <Button
+        type="button"
+        onClick={handleManualSave}
         disabled={isSaving || !hasUnsavedChanges}
         size="sm"
         className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft gap-2 transition-all disabled:opacity-50"
