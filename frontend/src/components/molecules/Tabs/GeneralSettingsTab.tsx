@@ -52,19 +52,19 @@ export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, update
           </div>
 
           <TabsContent value="basic" className="space-y-6 text-gray-200">
-            <BasicSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
+            <BasicSettingsTab config={config} updateConfig={updateConfig} />
           </TabsContent>
 
           <TabsContent value="world" className="space-y-6 text-gray-200">
-            <WorldSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
+            <WorldSettingsTab config={config} updateConfig={updateConfig} />
           </TabsContent>
 
           <TabsContent value="performance" className="space-y-6 text-gray-200">
-            <PerformanceSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
+            <PerformanceSettingsTab config={config} updateConfig={updateConfig} />
           </TabsContent>
 
           <TabsContent value="connectivity" className="space-y-6 text-gray-200">
-            <ConnectivitySettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
+            <ConnectivitySettingsTab config={config} updateConfig={updateConfig} />
           </TabsContent>
         </Tabs>
       </CardContent>

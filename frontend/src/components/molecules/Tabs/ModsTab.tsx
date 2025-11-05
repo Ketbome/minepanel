@@ -18,10 +18,9 @@ import { toast } from "sonner";
 interface ModsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
-  disabled?: boolean;
 }
 
-export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig, disabled = false }) => {
+export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [showApiKeyManual, setShowApiKeyManual] = useState(false);
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);

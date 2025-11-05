@@ -167,38 +167,37 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                   </TabsTrigger>
                 </TabsList>
               </div>
-              {/* Gradient indicators for scroll */}
               <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-gray-800/70 to-transparent"></div>
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-gray-800/70 to-transparent"></div>
             </div>
 
             <div className="p-4 bg-gray-900/60 min-h-[400px]">
               <TabsContent value="type" className="space-y-4 mt-0">
-                <ServerTypeTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                <ServerTypeTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               <TabsContent value="general" className="space-y-4 mt-0">
-                <GeneralSettingsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                <GeneralSettingsTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               <TabsContent value="resources" className="space-y-4 mt-0">
-                <ResourcesTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                <ResourcesTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               {showModsTab && (
                 <TabsContent value="mods" className="space-y-4 mt-0">
-                  <ModsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                  <ModsTab config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 
               {showPluginsTab && (
                 <TabsContent value="plugins" className="space-y-4 mt-0">
-                  <PluginsTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                  <PluginsTab config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 
               <TabsContent value="advanced" className="space-y-4 mt-0">
-                <AdvancedTab config={config} updateConfig={updateConfig} disabled={isServerRunning} />
+                <AdvancedTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               <TabsContent value="logs" className="space-y-4 mt-0">
