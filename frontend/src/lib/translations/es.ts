@@ -275,6 +275,11 @@ export const es: Record<TranslationKey, string> = {
   saveFailed: "Error al guardar",
   configSavedAutomatically: "Configuración guardada automáticamente",
   errorSavingAutomatically: "Error al guardar automáticamente",
+  saveMode: "Modo de Guardado",
+  autoSave: "Guardado Automático",
+  manualSave: "Guardado Manual",
+  saveNow: "Guardar Ahora",
+  autoSaveActive: "Activo",
   failedToFetchVersions: "Error al obtener las versiones",
 
   // ===========================

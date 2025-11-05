@@ -273,6 +273,11 @@ export const en = {
   saveFailed: "Save failed",
   configSavedAutomatically: "Config saved automatically",
   errorSavingAutomatically: "Error saving automatically",
+  saveMode: "Save Mode",
+  autoSave: "Auto Save",
+  manualSave: "Manual Save",
+  saveNow: "Save Now",
+  autoSaveActive: "Active",
   failedToFetchVersions: "Failed to fetch versions",
 
   // ===========================

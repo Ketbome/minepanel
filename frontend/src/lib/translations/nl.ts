@@ -277,6 +277,11 @@ export const nl: Record<TranslationKey, string> = {
   saveFailed: "Opslaan mislukt",
   configSavedAutomatically: "Configuratie automatisch opgeslagen",
   errorSavingAutomatically: "Fout bij automatisch opslaan",
+  saveMode: "Opslagmodus",
+  autoSave: "Automatisch Opslaan",
+  manualSave: "Handmatig Opslaan",
+  saveNow: "Nu Opslaan",
+  autoSaveActive: "Actief",
   failedToFetchVersions: "Versies ophalen mislukt",
 
   // ===========================
