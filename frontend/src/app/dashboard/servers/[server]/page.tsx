@@ -11,14 +11,14 @@ import { ServerLoadingSkeleton } from "@/components/organisms/ServerLoadingSkele
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import {TranslationKey} from "@/lib/translations";
+import { TranslationKey } from "@/lib/translations";
 
 export default function ServerConfig() {
   const router = useRouter();
   const params = useParams();
   const serverId = params.server as string;
 
-  const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData } = useServerConfig(serverId);
+  const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId);
   const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
   const { t } = useLanguage();
 
@@ -39,7 +39,7 @@ export default function ServerConfig() {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} />
+        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} />
       </motion.div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }} className="flex justify-center gap-8 pt-8">
@@ -71,7 +71,7 @@ export default function ServerConfig() {
             <p className="text-gray-400 mb-1">{t("currentStatus")} </p>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${status === "running" ? "bg-emerald-500" : status === "stopped" ? "bg-yellow-500" : status === "starting" ? "bg-orange-500" : "bg-red-500"}`} />
-              <p className="text-white font-medium capitalize">{ t(status as TranslationKey) }</p>
+              <p className="text-white font-medium capitalize">{t(status as TranslationKey)}</p>
             </div>
           </div>
           <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">

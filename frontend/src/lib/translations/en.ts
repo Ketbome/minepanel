@@ -273,6 +273,15 @@ export const en = {
   saveFailed: "Save failed",
   configSavedAutomatically: "Config saved automatically",
   errorSavingAutomatically: "Error saving automatically",
+  saveMode: "Save Mode",
+  autoSave: "Auto Save",
+  manualSave: "Manual Save",
+  saveNow: "Save Now",
+  autoSaveActive: "Active",
+  serverRunningWarning: "Server is Running",
+  serverRunningWarningDesc: "Configuration cannot be edited while the server is running. Stop the server to make changes.",
+  unsavedChanges: "Unsaved Changes",
+  allChangesSaved: "All Changes Saved",
   failedToFetchVersions: "Failed to fetch versions",
 
   // ===========================

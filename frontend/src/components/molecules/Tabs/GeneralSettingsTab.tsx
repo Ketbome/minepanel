@@ -12,9 +12,10 @@ import { ConnectivitySettingsTab } from "./SettingsTabs/ConnectivitySettingsTab"
 interface GeneralSettingsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  disabled?: boolean;
 }
 
-export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig }) => {
+export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, updateConfig, disabled = false }) => {
   const { t } = useLanguage();
 
   return (
@@ -51,19 +52,19 @@ export const GeneralSettingsTab: FC<GeneralSettingsTabProps> = ({ config, update
           </div>
 
           <TabsContent value="basic" className="space-y-6 text-gray-200">
-            <BasicSettingsTab config={config} updateConfig={updateConfig} />
+            <BasicSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
 
           <TabsContent value="world" className="space-y-6 text-gray-200">
-            <WorldSettingsTab config={config} updateConfig={updateConfig} />
+            <WorldSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
 
           <TabsContent value="performance" className="space-y-6 text-gray-200">
-            <PerformanceSettingsTab config={config} updateConfig={updateConfig} />
+            <PerformanceSettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
 
           <TabsContent value="connectivity" className="space-y-6 text-gray-200">
-            <ConnectivitySettingsTab config={config} updateConfig={updateConfig} />
+            <ConnectivitySettingsTab config={config} updateConfig={updateConfig} disabled={disabled} />
           </TabsContent>
         </Tabs>
       </CardContent>

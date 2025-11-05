@@ -9,7 +9,7 @@ services:
       # Backend Configuration
       - SERVERS_DIR=/app/servers
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-sdadsdsasda}
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
     volumes:
@@ -21,21 +21,6 @@ services:
       - ${DATA_DIR:-./data}:/app/data
     restart: always
     working_dir: /app
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    environment:
-      # Frontend Configuration (loaded at runtime)
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
-      - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    restart: always
-    depends_on:
-      - backend
 
   filebrowser:
     image: hurlenko/filebrowser
