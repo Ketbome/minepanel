@@ -103,7 +103,7 @@ export interface ServerConfig {
   // Docker
   dockerImage: string;
   minecraftVersion: string;
-  dockerVolumes: string;
+  dockerVolumes?: string;
   restartPolicy: "no" | "always" | "on-failure" | "unless-stopped";
   stopDelay: string;
   execDirectly: boolean;

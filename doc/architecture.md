@@ -185,6 +185,91 @@ This allows Minepanel to:
 - Execute commands
 - Manage networks/volumes
 
+### Docker Socket and Path Resolution
+
+**The Challenge:**
+When Minepanel (running in a container) creates Minecraft server containers via the Docker socket, volume paths are **interpreted from the host's perspective**, not from Minepanel's container.
+
+**Example:**
+```
+Minepanel container internal path: /app/servers/my-server
+Host machine actual path:          /Users/username/minepanel/servers/my-server
+```
+
+**Without BASE_DIR (doesn't work):**
+```yaml
+# Minepanel generates this docker-compose.yml for a Minecraft server:
+services:
+  mc:
+    volumes:
+      - ./mc-data:/data  # ❌ Docker looks for ./mc-data on the HOST
+```
+
+When Docker tries to mount `./mc-data`, it looks for it **relative to where `docker compose up` runs**, not inside Minepanel's container. This fails with:
+```
+Error: path ./mc-data is not shared from the host
+```
+
+**With BASE_DIR (works correctly):**
+```yaml
+# Minepanel knows the host path via BASE_DIR environment variable
+environment:
+  - BASE_DIR=/Users/username/minepanel  # Host path
+
+# Generates docker-compose.yml with absolute paths:
+services:
+  mc:
+    volumes:
+      - /Users/username/minepanel/servers/my-server/mc-data:/data  # ✅ Absolute host path
+```
+
+Now Docker correctly finds the directory on the host machine.
+
+**Implementation:**
+```typescript
+// backend/src/docker-compose/docker-compose.service.ts
+private parseVolumes(config: ServerConfig): string[] {
+  return config.dockerVolumes
+    .split('\n')
+    .map((line) => {
+      const volume = line.trim();
+      // Convert relative paths to absolute paths using BASE_DIR
+      if (volume.startsWith('./')) {
+        const [hostPath, ...containerParts] = volume.split(':');
+        const containerPath = containerParts.join(':');
+        const absoluteHostPath = path.join(
+          this.BASE_DIR,  // e.g., /Users/username/minepanel
+          'servers',
+          config.id,
+          hostPath.substring(2)
+        );
+        return `${absoluteHostPath}:${containerPath}`;
+      }
+      return volume;
+    });
+}
+```
+
+**Configuration:**
+```yaml
+services:
+  minepanel:
+    environment:
+      - BASE_DIR=${BASE_DIR:-$PWD}  # Defaults to current directory
+    volumes:
+      - ${BASE_DIR:-$PWD}/servers:/app/servers  # Mount with same BASE_DIR
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+**Key Points:**
+- ✅ `BASE_DIR` is set to the host's working directory (typically where docker-compose.yml is located)
+- ✅ Minepanel mounts `${BASE_DIR}/servers` to `/app/servers` internally
+- ✅ When creating server containers, Minepanel uses `${BASE_DIR}/servers/server-name` for volumes
+- ✅ Docker socket operations use these absolute host paths correctly
+- ✅ All containers share the same base directory structure
+
+This pattern is the same used by **Portainer**, **Yacht**, and other Docker management panels that communicate via the Docker socket.
+
 ---
 
 ## Data Flow

@@ -18,11 +18,12 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Directories
 
-| Variable          | Default              | Description                                        |
-| ----------------- | -------------------- | -------------------------------------------------- |
-| `SERVERS_DIR`     | `./servers`          | Directory for Minecraft servers data               |
-| `DATA_DIR`        | `./data`             | Directory for application data (database, backups) |
-| `FILEBROWSER_DIR` | `./filebrowser-data` | Directory for file browser configuration           |
+| Variable          | Default              | Description                                                            |
+| ----------------- | -------------------- | ---------------------------------------------------------------------- |
+| `BASE_DIR`        | `$PWD`               | Base directory for servers (required for Docker socket communication) |
+| `SERVERS_DIR`     | `./servers`          | Directory for Minecraft servers data                                   |
+| `DATA_DIR`        | `./data`             | Directory for application data (database, backups)                     |
+| `FILEBROWSER_DIR` | `./filebrowser-data` | Directory for file browser configuration                               |
 
 #### Authentication
 
@@ -59,6 +60,7 @@ FRONTEND_PORT=3000
 FILEBROWSER_PORT=8080
 
 # Directories
+BASE_DIR=$PWD
 SERVERS_DIR=./servers
 DATA_DIR=./data
 FILEBROWSER_DIR=./filebrowser-data
@@ -215,38 +217,104 @@ ports:
   - "9000:8091" # Backend on 9000
 ```
 
+## BASE_DIR Configuration
+
+`BASE_DIR` is a **critical environment variable** that tells Minepanel where server files are located on the **host machine**. This is necessary because Minepanel uses the Docker socket to create and manage Minecraft server containers.
+
+### Why BASE_DIR is Required
+
+When Minepanel creates a Minecraft server container via the Docker socket (`/var/run/docker.sock`), it needs to mount directories from the host machine. Since Minepanel itself runs in a container, it must provide **absolute host paths** for volume mounts.
+
+**Without BASE_DIR:**
+```yaml
+# ❌ This won't work with Docker socket
+volumes:
+  - ./mc-data:/data  # Relative path doesn't exist on host
+```
+
+**With BASE_DIR:**
+```yaml
+# ✅ This works - uses absolute host path
+volumes:
+  - /Users/username/minepanel/servers/my-server/mc-data:/data
+```
+
+### Default Configuration
+
+```yaml
+environment:
+  - BASE_DIR=${BASE_DIR:-$PWD}
+volumes:
+  - ${BASE_DIR:-$PWD}/servers:/app/servers
+  - ${BASE_DIR:-$PWD}/data:/app/data
+```
+
+This configuration:
+- Defaults to current directory (`$PWD`)
+- Uses host-side paths for Docker operations
+- Maps to `/app/servers` and `/app/data` inside the container
+
+### Custom BASE_DIR
+
+If you want to store servers in a different location:
+
+```bash
+# In .env file
+BASE_DIR=/mnt/storage/minepanel
+```
+
+Or directly:
+
+```bash
+BASE_DIR=/mnt/storage/minepanel docker compose up -d
+```
+
+### Examples
+
+```bash
+# External drive
+BASE_DIR=/mnt/external-drive/minepanel
+
+# Home directory
+BASE_DIR=/home/username/minepanel
+
+# Absolute path on Windows WSL2
+BASE_DIR=/home/username/minepanel  # NOT /mnt/c/...
+```
+
+::: warning Important
+- `BASE_DIR` must be an **absolute path** on the host machine
+- On WSL2, use Linux paths (`/home/...`) not Windows paths (`/mnt/c/...`)
+- The directory must be accessible to Docker
+- Check Docker Desktop → Settings → Resources → File Sharing
+:::
+
+::: tip Technical Details
+See [Architecture - Docker Socket Communication](/architecture#docker-socket-access) for more details on why `BASE_DIR` is necessary.
+:::
+
 ## Custom Server Directory
 
-By default, server files are stored in `./servers` relative to your `docker-compose.yml` file. To use a different location:
+By default, server files are stored in `${BASE_DIR}/servers`. To use a different structure, you can customize both `BASE_DIR` and mount points:
 
 ### Using .env file:
 
 ```bash
-SERVERS_DIR=/custom/path/to/servers
+BASE_DIR=/custom/path/minepanel
 ```
 
 ### Using docker-compose.yml:
 
 ```yaml
+environment:
+  - BASE_DIR=${BASE_DIR:-$PWD}
 volumes:
-  - ${SERVERS_DIR:-./servers}:/app/servers
-```
-
-### Examples:
-
-```bash
-# External drive
-SERVERS_DIR=/mnt/external-drive/minecraft-servers
-
-# Home directory
-SERVERS_DIR=~/minecraft-servers
-
-# Absolute path
-SERVERS_DIR=/var/lib/minepanel/servers
+  - ${BASE_DIR:-$PWD}/servers:/app/servers
+  - ${BASE_DIR:-$PWD}/data:/app/data
 ```
 
 ::: tip
-The `:-./servers` syntax means: use `SERVERS_DIR` if set, otherwise default to `./servers`. This works on all operating systems (Linux, macOS, Windows).
+The `:-$PWD` syntax means: use `BASE_DIR` if set, otherwise default to current directory. This works on all operating systems (Linux, macOS, Windows).
 :::
 
 ## Language

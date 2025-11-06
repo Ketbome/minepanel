@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService } from 'src/discord/discord.service';
+import { ConfigService } from '@nestjs/config';
 
 const execAsync = promisify(exec);
 
@@ -15,7 +16,7 @@ const DOCKER_COMMANDS = {
   COMPOSE_UP: 'docker compose up -d',
   PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
   PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
-  INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}:{{.State.Health.Status}}" ${containerId}`,
+  INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
@@ -63,28 +64,32 @@ export interface CommandExecutionResponse {
 @Injectable()
 export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
-  private readonly BASE_DIR = process.env.SERVERS_DIR || path.join(process.cwd(), '..', 'servers');
+  private readonly SERVERS_DIR: string;
 
   constructor(
+    private readonly configService: ConfigService,
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
     private readonly discordService: DiscordService,
-  ) {}
+  ) {
+    this.SERVERS_DIR = this.configService.get('serversDir');
+    fs.ensureDirSync(this.SERVERS_DIR);
+  }
 
   private validateServerId(serverId: string): boolean {
     return /^[a-zA-Z0-9_-]+$/.test(serverId);
   }
 
   private async serverExists(serverId: string): Promise<boolean> {
-    return fs.pathExists(path.join(this.BASE_DIR, serverId));
+    return fs.pathExists(path.join(this.SERVERS_DIR, serverId));
   }
 
   private getDockerComposePath(serverId: string): string {
-    return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');
+    return path.join(this.SERVERS_DIR, serverId, 'docker-compose.yml');
   }
 
   private getMcDataPath(serverId: string): string {
-    return path.join(this.BASE_DIR, serverId, 'mc-data');
+    return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
   private async getUserSettings(): Promise<{ webhook: string | null; lang: 'en' | 'es' }> {
@@ -203,9 +208,11 @@ export class ServerManagementService {
 
       if (containerId) {
         const { stdout } = await execAsync(DOCKER_COMMANDS.INSPECT_STATUS(containerId));
+        const status = stdout.trim().toLowerCase();
 
-        if (stdout.includes('starting') || stdout.includes('health: starting')) return 'starting';
-        if (stdout.includes('running')) return 'running';
+        if (status.includes('restarting') || status.includes('created')) return 'starting';
+        if (status.includes('running')) return 'running';
+        if (status.includes('paused') || status.includes('exited') || status.includes('dead')) return 'stopped';
         return 'stopped';
       }
 
@@ -222,10 +229,10 @@ export class ServerManagementService {
 
   async getAllServersStatus(): Promise<Record<string, ServerStatus>> {
     try {
-      const directories = await fs.readdir(this.BASE_DIR);
+      const directories = await fs.readdir(this.SERVERS_DIR);
       const serverDirectories = await Promise.all(
         directories.map(async (dir) => {
-          const fullPath = path.join(this.BASE_DIR, dir);
+          const fullPath = path.join(this.SERVERS_DIR, dir);
           const isDirectory = (await fs.stat(fullPath)).isDirectory();
           const hasDockerCompose = await fs.pathExists(this.getDockerComposePath(dir));
           return isDirectory && hasDockerCompose ? dir : null;
@@ -313,7 +320,7 @@ export class ServerManagementService {
         return false;
       }
 
-      const serverDir = path.join(this.BASE_DIR, serverId);
+      const serverDir = path.join(this.SERVERS_DIR, serverId);
       const dockerComposePath = this.getDockerComposePath(serverId);
 
       if (!(await fs.pathExists(serverDir))) {
@@ -505,7 +512,7 @@ export class ServerManagementService {
     };
   }> {
     try {
-      if (!(await fs.pathExists(path.join(this.BASE_DIR, serverId)))) {
+      if (!(await fs.pathExists(path.join(this.SERVERS_DIR, serverId)))) {
         return {
           logs: 'Server not found',
           hasErrors: false,

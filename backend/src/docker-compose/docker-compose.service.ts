@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
@@ -14,10 +15,13 @@ interface DockerComposeConfig {
 @Injectable()
 export class DockerComposeService {
   private readonly logger = new Logger(DockerComposeService.name);
-  private readonly BASE_DIR = process.env.SERVERS_DIR;
+  private readonly SERVERS_DIR: string;
+  private readonly BASE_DIR: string;
 
-  constructor() {
-    fs.ensureDirSync(this.BASE_DIR);
+  constructor(private readonly configService: ConfigService) {
+      this.SERVERS_DIR = this.configService.get('serversDir');
+      this.BASE_DIR = this.configService.get('baseDir');
+      fs.ensureDirSync(this.SERVERS_DIR);
   }
 
   private validateServerId(serverId: string): boolean {
@@ -25,11 +29,11 @@ export class DockerComposeService {
   }
 
   private getDockerComposePath(serverId: string): string {
-    return path.join(this.BASE_DIR, serverId, 'docker-compose.yml');
+    return path.join(this.SERVERS_DIR, serverId, 'docker-compose.yml');
   }
 
   private getMcDataPath(serverId: string): string {
-    return path.join(this.BASE_DIR, serverId, 'mc-data');
+    return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
   private async findAvailablePort(startPort: number, serverId: string): Promise<number> {
@@ -169,7 +173,7 @@ export class DockerComposeService {
 
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
         minecraftVersion: String(env.VERSION),
-        dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : './mc-data:/data\n./modpacks:/modpacks:ro',
+        dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : undefined,
         restartPolicy: mcService.restart ?? 'unless-stopped',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
         execDirectly: env.EXEC_DIRECTLY === 'true',
@@ -403,12 +407,12 @@ export class DockerComposeService {
 
   async getAllServerIds(): Promise<string[]> {
     try {
-      if (!fs.existsSync(this.BASE_DIR)) {
-        await fs.ensureDir(this.BASE_DIR);
+      if (!fs.existsSync(this.SERVERS_DIR)) {
+        await fs.ensureDir(this.SERVERS_DIR);
         return [];
       }
 
-      const entries = await fs.readdir(this.BASE_DIR, { withFileTypes: true });
+      const entries = await fs.readdir(this.SERVERS_DIR, { withFileTypes: true });
       const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 
       const serverIds = await Promise.all(
@@ -438,7 +442,7 @@ export class DockerComposeService {
   }
 
   async getServerConfig(id: string): Promise<ServerConfig | null> {
-    const serverPath = path.join(this.BASE_DIR, id);
+    const serverPath = path.join(this.SERVERS_DIR, id);
     if (!fs.existsSync(serverPath)) {
       return null;
     }
@@ -457,7 +461,7 @@ export class DockerComposeService {
       throw new Error('El ID del servidor solo puede contener letras, números, guiones y guiones bajos');
     }
 
-    const serverPath = path.join(this.BASE_DIR, id);
+    const serverPath = path.join(this.SERVERS_DIR, id);
     if (fs.existsSync(serverPath)) {
       throw new Error(`El servidor "${id}" ya existe`);
     }
@@ -684,7 +688,16 @@ export class DockerComposeService {
     return config.dockerVolumes
       .split('\n')
       .filter((line) => line.trim())
-      .map((line) => line.trim());
+      .map((line) => {
+        const volume = line.trim();
+        if (volume.startsWith('./')) {
+          const [hostPath, ...containerParts] = volume.split(':');
+          const containerPath = containerParts.join(':');
+          const absoluteHostPath = path.join(this.BASE_DIR, 'servers', config.id, hostPath.substring(2));
+          return `${absoluteHostPath}:${containerPath}`;
+        }
+        return volume;
+      });
   }
 
   private async ensurePortAvailable(config: ServerConfig): Promise<string> {
@@ -742,12 +755,15 @@ export class DockerComposeService {
     if (config.backupExcludes) backupEnv.EXCLUDES = config.backupExcludes;
     if (config.tarCompressMethod && config.backupMethod === 'tar') backupEnv.TAR_COMPRESS_METHOD = config.tarCompressMethod;
 
+    const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');
+    const backupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
+
     dockerComposeConfig.services.backup = {
       image: 'itzg/mc-backup',
       container_name: `${config.id}-backup`,
       depends_on: ['mc'],
       environment: backupEnv,
-      volumes: ['./mc-data:/data:ro', './backups:/backups'],
+      volumes: [`${mcDataPath}:/data:ro`, `${backupsPath}:/backups`],
       restart: 'unless-stopped',
     };
 
@@ -756,7 +772,7 @@ export class DockerComposeService {
   }
 
   private async generateDockerComposeFile(config: ServerConfig): Promise<void> {
-    const serverDir = path.join(this.BASE_DIR, config.id);
+    const serverDir = path.join(this.SERVERS_DIR, config.id);
     await fs.ensureDir(serverDir);
 
     const environment = this.buildBaseEnvironment(config);
