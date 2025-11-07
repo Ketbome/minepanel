@@ -11,4 +11,9 @@ export class SystemMonitoringController {
   async getSystemStats() {
     return this.systemMonitoringService.getSystemStats();
   }
+
+  @Get('network')
+  getNetworkInfo() {
+    return this.systemMonitoringService.getNetworkInfo();
+  }
 }

@@ -18,9 +18,9 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Directories
 
-| Variable          | Default              | Description                                                            |
-| ----------------- | -------------------- | ---------------------------------------------------------------------- |
-| `BASE_DIR`        | `$PWD`               | Base directory for servers (required for Docker socket communication) |
+| Variable   | Default | Description                                                           |
+| ---------- | ------- | --------------------------------------------------------------------- |
+| `BASE_DIR` | `$PWD`  | Base directory for servers (required for Docker socket communication) |
 
 #### Authentication
 
@@ -40,9 +40,10 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Other
 
-| Variable                       | Default | Description                         |
-| ------------------------------ | ------- | ----------------------------------- |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`) |
+| Variable                       | Default | Description                                  |
+| ------------------------------ | ------- | -------------------------------------------- |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)          |
+| `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play |
 
 ### Using Environment Variables
 
@@ -71,6 +72,9 @@ NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
 
 # Language
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en
+
+# Network (optional)
+# HOST_LAN_IP=192.168.1.100  # Your LAN IP for local network play
 ```
 
 Then run:
@@ -165,6 +169,81 @@ docker compose restart
 - Don't expose ports publicly without proper authentication
   :::
 
+## LAN Network Configuration
+
+When you create a Minecraft server, Minepanel automatically shows the connection information to share with players. By default, it shows your **public IP** (obtained automatically via ipify.org). However, if you want players on your **local network (LAN)** to see your local IP address, you need to configure it manually.
+
+### Why Configure LAN IP?
+
+- **Better performance**: Players on your local network will connect directly without going through your router
+- **No port forwarding needed**: For LAN players, you don't need to configure port forwarding
+- **Both options**: The panel will show both public IP (for internet players) and LAN IP (for local players)
+
+### How to Get Your LAN IP {#how-to-get-your-lan-ip}
+
+**On macOS:**
+
+```bash
+ipconfig getifaddr en0
+# Example output: 192.168.3.208
+```
+
+**On Linux:**
+
+```bash
+hostname -I | awk '{print $1}'
+# Example output: 192.168.1.100
+```
+
+**On Windows (PowerShell):**
+
+```powershell
+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet").IPAddress
+# Example output: 192.168.1.50
+```
+
+::: tip
+Your LAN IP typically starts with `192.168.x.x` or `10.x.x.x`
+:::
+
+### Configuration
+
+Add the `HOST_LAN_IP` variable to your `docker-compose.yml`:
+
+```yaml
+services:
+  minepanel:
+    environment:
+      # ... other variables
+      - HOST_LAN_IP=192.168.3.208 # Replace with your actual LAN IP
+```
+
+Or in your `.env` file:
+
+```bash
+HOST_LAN_IP=192.168.3.208
+```
+
+### Restart Services
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### How It Works
+
+When a Minecraft server is running, the panel will show a **Server Connection** section with:
+
+1. **Public IP/Domain**: `203.0.113.50:25565` (for external players)
+2. **LAN IP**: `192.168.3.208:25565` (for local network players)
+
+Both addresses are easily copyable with one click.
+
+::: info
+If you don't configure `HOST_LAN_IP`, only the public IP will be shown. This is fine if all your players are connecting from the internet.
+:::
+
 ## Change admin password
 
 ### From UI
@@ -210,13 +289,15 @@ ports:
 When Minepanel creates a Minecraft server container via the Docker socket (`/var/run/docker.sock`), it needs to mount directories from the host machine. Since Minepanel itself runs in a container, it must provide **absolute host paths** for volume mounts.
 
 **Without BASE_DIR:**
+
 ```yaml
 # ❌ This won't work with Docker socket
 volumes:
-  - ./mc-data:/data  # Relative path doesn't exist on host
+  - ./mc-data:/data # Relative path doesn't exist on host
 ```
 
 **With BASE_DIR:**
+
 ```yaml
 # ✅ This works - uses absolute host path
 volumes:
@@ -234,6 +315,7 @@ volumes:
 ```
 
 This configuration:
+
 - Defaults to current directory (`$PWD`)
 - Uses host-side paths for Docker operations
 - Maps to `/app/servers` and `/app/data` inside the container
@@ -267,11 +349,12 @@ BASE_DIR=/home/username/minepanel  # NOT /mnt/c/...
 ```
 
 ::: warning Important
+
 - `BASE_DIR` must be an **absolute path** on the host machine
 - On WSL2, use Linux paths (`/home/...`) not Windows paths (`/mnt/c/...`)
 - The directory must be accessible to Docker
 - Check Docker Desktop → Settings → Resources → File Sharing
-:::
+  :::
 
 ::: tip Technical Details
 See [Architecture - Docker Socket Communication](/architecture#docker-socket-access) for more details on why `BASE_DIR` is necessary.
