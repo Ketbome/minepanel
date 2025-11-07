@@ -918,6 +918,8 @@ export const nl: Record<TranslationKey, string> = {
   playingLAN: "Speel je op LAN?",
   learnHow: "Leer hoe je het configureert",
   forgotPassword: "Wachtwoord vergeten?",
+  fileBrowserPasswordTip: "Weet je het FileBrowser-wachtwoord niet?",
+  learnHowToGetIt: "Leer hoe je het kunt krijgen",
   viewOnCurseForge: "Bekijk op CurseForge",
   close: "Sluiten",
   featured: "Uitgelicht",

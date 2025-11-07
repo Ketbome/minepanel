@@ -904,6 +904,8 @@ export const es: Record<TranslationKey, string> = {
   playingLAN: "¿Jugando en LAN?",
   learnHow: "Aprende cómo configurarlo",
   forgotPassword: "¿Olvidaste tu contraseña?",
+  fileBrowserPasswordTip: "¿No sabes la contraseña de FileBrowser?",
+  learnHowToGetIt: "Aprende cómo obtenerla",
   viewOnCurseForge: "Ver en CurseForge",
   close: "Cerrar",
   featured: "Destacado",

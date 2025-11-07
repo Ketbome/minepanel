@@ -363,6 +363,98 @@ To avoid getting locked out:
 3. **Set `CLIENT_PASSWORD` in .env file** for easy reference
 4. **Regular backups** of your `data/` directory
 
+## FileBrowser Password {#filebrowser-password}
+
+FileBrowser is the integrated file manager that allows you to browse and edit your Minecraft server files. On first run, it generates a random admin password.
+
+### Getting the Password
+
+When you first start FileBrowser, it generates a random admin password. To find it:
+
+**Step 1: Check the logs**
+
+```bash
+docker compose logs filebrowser
+```
+
+**Step 2: Look for the password**
+
+You'll see something like:
+
+```
+filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / a1b2c3d4e5f6
+```
+
+**Step 3: Login and change it**
+
+1. Go to http://localhost:8080 (or your configured FileBrowser URL)
+2. Login with:
+   - Username: `admin`
+   - Password: `<the-generated-password>`
+3. Click on **Settings** → **User Management** → **admin**
+4. Change the password to something memorable and secure
+
+### Lost the Password?
+
+If you lost the FileBrowser password and can't see it in the logs:
+
+**Option 1: Check existing logs (if container hasn't restarted)**
+
+```bash
+# View all logs (including old ones)
+docker compose logs filebrowser --tail 1000
+```
+
+**Option 2: Reset FileBrowser (recommended)**
+
+```bash
+# Stop services
+docker compose down
+
+# Delete FileBrowser database
+rm -rf filebrowser-data/
+
+# Start services (will create new database with new password)
+docker compose up -d
+
+# Check logs for new password
+docker compose logs filebrowser
+```
+
+::: warning
+This will reset FileBrowser settings but will NOT delete your server files.
+:::
+
+**Option 3: Manual database reset (advanced)**
+
+If you only want to reset the password without losing settings:
+
+```bash
+# Stop FileBrowser
+docker compose stop filebrowser
+
+# Delete the database file
+rm filebrowser-data/database.db
+
+# Start FileBrowser
+docker compose start filebrowser
+
+# Check logs for new password
+docker compose logs filebrowser
+```
+
+### Security Tips
+
+1. **Change the default password** immediately after first login
+2. **Use a strong password** - it protects all your server files
+3. **Don't share FileBrowser URL publicly** - it has full file system access
+4. **Save the password** in a password manager
+5. **Regular backups** of `filebrowser-data/` directory
+
+::: info
+FileBrowser login is independent from Minepanel login. They use separate authentication systems.
+:::
+
 ## Ports
 
 Default ports:

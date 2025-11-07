@@ -902,6 +902,8 @@ export const en = {
   playingLAN: "Playing on LAN?",
   learnHow: "Learn how to configure it",
   forgotPassword: "Forgot your password?",
+  fileBrowserPasswordTip: "Don't know the FileBrowser password?",
+  learnHowToGetIt: "Learn how to get it",
   viewOnCurseForge: "View on CurseForge",
   close: "Close",
   featured: "Featured",
