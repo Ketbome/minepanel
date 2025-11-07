@@ -74,7 +74,7 @@ export default function Home() {
   return (
     <>
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
-      <div className="min-h-screen flex flex-col bg-[url('/images/minecraft-bg-blur.png')] bg-cover bg-center relative overflow-hidden">
+      <div className="min-h-screen flex flex-col bg-[url('/images/background.webp')] bg-cover bg-center relative overflow-hidden">
         {/* Overlay más oscuro para mejor contraste */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 

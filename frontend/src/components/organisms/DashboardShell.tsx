@@ -52,7 +52,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[url('/images/minecraft-bg-blur.png')] bg-cover bg-fixed bg-center relative">
+    <div className="flex min-h-screen bg-[url('/images/background.webp')] bg-cover bg-fixed bg-center relative">
       <div className="absolute inset-0 bg-black/60"></div>
 
       <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
