@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { getAllIPs } from "@/services/network.service";
+import { LINK_LEARN_HOW_LAN } from "@/lib/providers/constants";
 
 interface ServerConnectionInfoProps {
   readonly port: string;
@@ -132,26 +133,21 @@ export function ServerConnectionInfo({ port, serverId }: ServerConnectionInfoPro
             </div>
           )}
 
-      <div className="pt-2 border-t border-emerald-600/20 space-y-2">
-        <p className="text-xs text-gray-400 flex items-center gap-1">
-          <span className="text-emerald-400">💡</span>
-          {t("connectionTip")}
-        </p>
-        {!lanAddress && (
-          <p className="text-xs text-gray-400 flex items-center gap-1">
-            <span className="text-blue-400">🏠</span>
-            {t("playingLAN")}{" "}
-            <a
-              href="https://minepanel.ketbome.lat/configuration.html#how-to-get-your-lan-ip"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 underline transition-colors"
-            >
-              {t("learnHow")}
-            </a>
-          </p>
-        )}
-      </div>
+          <div className="pt-2 border-t border-emerald-600/20 space-y-2">
+            <p className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="text-emerald-400">💡</span>
+              {t("connectionTip")}
+            </p>
+            {!lanAddress && (
+              <p className="text-xs text-gray-400 flex items-center gap-1">
+                <span className="text-blue-400">🏠</span>
+                {t("playingLAN")}{" "}
+                <a href={LINK_LEARN_HOW_LAN} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline transition-colors">
+                  {t("learnHow")}
+                </a>
+              </p>
+            )}
+          </div>
         </>
       )}
     </motion.div>

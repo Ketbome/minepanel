@@ -15,6 +15,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ConnectionErrorDialog } from "@/components/ui/connection-error-dialog";
+import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from "@/lib/providers/constants";
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -288,14 +289,14 @@ export default function Home() {
               &copy; {new Date().getFullYear()} Minepanel. {t("allRightsReserved")}
             </p>
             <div className="flex space-x-4 text-gray-300">
-              <Link href={t("link")} className="hover:text-emerald-400 transition-all hover:scale-105">
+              <Link href={LINK} className="hover:text-emerald-400 transition-all hover:scale-105">
                 {t("help")}
               </Link>
-              <Link href={t("link")} className="hover:text-emerald-400 transition-all hover:scale-105">
-                {t("privacy")}
+              <Link href={LINK_DOCUMENTATION} className="hover:text-emerald-400 transition-all hover:scale-105">
+                {t("documentation")}
               </Link>
-              <Link href={t("link")} className="hover:text-emerald-400 transition-all hover:scale-105">
-                {t("terms")}
+              <Link href={LINK_GITHUB} className="hover:text-emerald-400 transition-all hover:scale-105">
+                {t("github")}
               </Link>
             </div>
           </div>

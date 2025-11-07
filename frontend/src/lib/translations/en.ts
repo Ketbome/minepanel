@@ -919,14 +919,6 @@ export const en = {
   createServerFromModpack: "Create a new server using this modpack",
   serverIdRequired: "Server ID is required",
   optional: "optional",
-
-
-  // ===========================
-  // LIKS
-  // ===========================
-  link: "https://minepanel.ketbome.lat",
-  linkGithub: "https://github.com/Ketbome/minepanel",
-  linkDocumentation: "https://minepanel.ketbome.lat/configuration.html",
 };
 
 export type TranslationKey = keyof typeof en;

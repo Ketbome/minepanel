@@ -935,11 +935,4 @@ export const nl: Record<TranslationKey, string> = {
   createServerFromModpack: "Maak een nieuwe server met dit modpack",
   serverIdRequired: "Server ID is vereist",
   optional: "optioneel",
-
-  // ===========================
-  // LIKS
-  // ===========================
-  link: "https://minepanel.ketbome.lat",
-  linkGithub: "https://github.com/Ketbome/minepanel",
-  linkDocumentation: "https://minepanel.ketbome.lat/configuration.html",
 };
