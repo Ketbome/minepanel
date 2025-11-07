@@ -58,6 +58,7 @@ services:
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - BASE_DIR=${BASE_DIR:-$PWD}
+      # - HOST_LAN_IP=${HOST_LAN_IP} # Optional: Your LAN IP for local network play
 
       # Frontend Configuration
       - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
@@ -198,6 +199,44 @@ environment:
 - For production use, it's highly recommended to use HTTPS with a reverse proxy (nginx-proxy, Traefik, Caddy, etc.)
 - Make sure the ports are open in your firewall/router
 - After changing these variables, restart the containers: `docker compose restart`
+
+#### LAN Play - Showing Local Network IP
+
+By default, the panel shows your public IP for server connections. If you want players on your local network to see your LAN IP (e.g., `192.168.1.100:25565`) instead, you can configure it manually:
+
+**1. Get your LAN IP:**
+
+```bash
+# On Mac
+ipconfig getifaddr en0
+
+# On Linux
+hostname -I | awk '{print $1}'
+
+# On Windows (PowerShell)
+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet").IPAddress
+```
+
+**2. Add it to your `docker-compose.yml`:**
+
+Uncomment and set the `HOST_LAN_IP` environment variable:
+
+```yaml
+environment:
+  - HOST_LAN_IP=192.168.1.100 # Replace with your actual LAN IP
+```
+
+**3. Restart the services:**
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+Now when a Minecraft server is running, the panel will show both:
+
+- **Public IP**: For external players (obtained automatically via ipify.org)
+- **LAN IP**: For local network players (the IP you configured)
 
 ### Filebrowser setup
 

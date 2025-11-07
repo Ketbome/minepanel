@@ -1,10 +1,11 @@
 import { FC, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { FolderOpen, ExternalLink, AlertCircle } from "lucide-react";
+import { FolderOpen, ExternalLink, AlertCircle, Key } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { env } from "next-runtime-env";
+import { LINK_FILEBROWSER_PASSWORD } from "@/lib/providers/constants";
 
 interface FilesTabProps {
   serverId: string;
@@ -57,12 +58,27 @@ export const FilesTab: FC<FilesTabProps> = ({ serverId }) => {
           </div>
         )}
 
-        <div className="mt-4 p-3 bg-blue-900/20 border border-blue-700/30 rounded-md">
-          <div className="flex items-start gap-2">
-            <FolderOpen className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-blue-300 text-xs font-minecraft">{t("fileBrowserTip")}</p>
-              <p className="text-blue-200/70 text-xs">{t("fileBrowserTipDesc")}</p>
+        <div className="mt-4 space-y-3">
+          <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-md">
+            <div className="flex items-start gap-2">
+              <FolderOpen className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-blue-300 text-xs font-minecraft">{t("fileBrowserTip")}</p>
+                <p className="text-blue-200/70 text-xs">{t("fileBrowserTipDesc")}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-amber-900/20 border border-amber-700/30 rounded-md">
+            <div className="flex items-start gap-2">
+              <Key className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-amber-300 text-xs font-minecraft">{t("fileBrowserPasswordTip")}</p>
+                <a href={LINK_FILEBROWSER_PASSWORD} target="_blank" rel="noopener noreferrer" className="text-amber-200 hover:text-amber-100 text-xs underline transition-colors inline-flex items-center gap-1">
+                  {t("learnHowToGetIt")}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

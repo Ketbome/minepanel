@@ -18,12 +18,9 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Directories
 
-| Variable          | Default              | Description                                                            |
-| ----------------- | -------------------- | ---------------------------------------------------------------------- |
-| `BASE_DIR`        | `$PWD`               | Base directory for servers (required for Docker socket communication) |
-| `SERVERS_DIR`     | `./servers`          | Directory for Minecraft servers data                                   |
-| `DATA_DIR`        | `./data`             | Directory for application data (database, backups)                     |
-| `FILEBROWSER_DIR` | `./filebrowser-data` | Directory for file browser configuration                               |
+| Variable   | Default | Description                                                           |
+| ---------- | ------- | --------------------------------------------------------------------- |
+| `BASE_DIR` | `$PWD`  | Base directory for servers (required for Docker socket communication) |
 
 #### Authentication
 
@@ -43,9 +40,10 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Other
 
-| Variable                       | Default | Description                         |
-| ------------------------------ | ------- | ----------------------------------- |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`) |
+| Variable                       | Default | Description                                  |
+| ------------------------------ | ------- | -------------------------------------------- |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)          |
+| `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play |
 
 ### Using Environment Variables
 
@@ -61,9 +59,6 @@ FILEBROWSER_PORT=8080
 
 # Directories
 BASE_DIR=$PWD
-SERVERS_DIR=./servers
-DATA_DIR=./data
-FILEBROWSER_DIR=./filebrowser-data
 
 # Authentication
 JWT_SECRET=your_generated_secret_here
@@ -77,6 +72,9 @@ NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
 
 # Language
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en
+
+# Network (optional)
+# HOST_LAN_IP=192.168.1.100  # Your LAN IP for local network play
 ```
 
 Then run:
@@ -85,17 +83,10 @@ Then run:
 docker compose up -d
 ```
 
-#### Option 2: Inline Variables
-
-```bash
-SERVERS_DIR=/custom/path JWT_SECRET=my_secret docker compose up -d
-```
-
-#### Option 3: Directly in docker-compose.yml
+#### Option 2: Directly in docker-compose.yml
 
 ```yaml
 environment:
-  - SERVERS_DIR=/app/servers
   - JWT_SECRET=your_secret_here
 ```
 
@@ -105,18 +96,15 @@ To use custom directories for your data:
 
 ```bash
 # In .env file
-SERVERS_DIR=/mnt/storage/minecraft-servers
-DATA_DIR=/mnt/storage/minepanel-data
-FILEBROWSER_DIR=/mnt/storage/filebrowser-config
+BASE_DIR=/home/user/minepanel
 ```
 
 Or directly in docker-compose.yml:
 
 ```yaml
 volumes:
-  - ${SERVERS_DIR:-./servers}:/app/servers
-  - ${DATA_DIR:-./data}:/app/data
-  - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
+  - ${BASE_DIR:-$PWD}/servers:/app/servers
+  - ${BASE_DIR:-$PWD}/data:/app/data
 ```
 
 ::: danger FRONTEND_URL is Critical
@@ -181,6 +169,81 @@ docker compose restart
 - Don't expose ports publicly without proper authentication
   :::
 
+## LAN Network Configuration
+
+When you create a Minecraft server, Minepanel automatically shows the connection information to share with players. By default, it shows your **public IP** (obtained automatically via ipify.org). However, if you want players on your **local network (LAN)** to see your local IP address, you need to configure it manually.
+
+### Why Configure LAN IP?
+
+- **Better performance**: Players on your local network will connect directly without going through your router
+- **No port forwarding needed**: For LAN players, you don't need to configure port forwarding
+- **Both options**: The panel will show both public IP (for internet players) and LAN IP (for local players)
+
+### How to Get Your LAN IP {#how-to-get-your-lan-ip}
+
+**On macOS:**
+
+```bash
+ipconfig getifaddr en0
+# Example output: 192.168.3.208
+```
+
+**On Linux:**
+
+```bash
+hostname -I | awk '{print $1}'
+# Example output: 192.168.1.100
+```
+
+**On Windows (PowerShell):**
+
+```powershell
+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet").IPAddress
+# Example output: 192.168.1.50
+```
+
+::: tip
+Your LAN IP typically starts with `192.168.x.x` or `10.x.x.x`
+:::
+
+### Configuration
+
+Add the `HOST_LAN_IP` variable to your `docker-compose.yml`:
+
+```yaml
+services:
+  minepanel:
+    environment:
+      # ... other variables
+      - HOST_LAN_IP=192.168.3.208 # Replace with your actual LAN IP
+```
+
+Or in your `.env` file:
+
+```bash
+HOST_LAN_IP=192.168.3.208
+```
+
+### Restart Services
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### How It Works
+
+When a Minecraft server is running, the panel will show a **Server Connection** section with:
+
+1. **Public IP/Domain**: `203.0.113.50:25565` (for external players)
+2. **LAN IP**: `192.168.3.208:25565` (for local network players)
+
+Both addresses are easily copyable with one click.
+
+::: info
+If you don't configure `HOST_LAN_IP`, only the public IP will be shown. This is fine if all your players are connecting from the internet.
+:::
+
 ## Change admin password
 
 ### From UI
@@ -200,6 +263,197 @@ node -e "const bcrypt = require('bcrypt'); bcrypt.hash('newpassword', 12).then(c
 # Use in docker-compose.yml
 CLIENT_PASSWORD=$2a$12$your_hash_here
 ```
+
+## Forgot Your Password? {#forgot-password}
+
+If you forgot your admin password and can't access the panel, you have two options to recover access:
+
+::: warning Important
+The `CLIENT_PASSWORD` environment variable only works for the initial setup. Once a user exists in the database, you must use one of the methods below.
+:::
+
+### Method 1: Reset Database (Easiest)
+
+**WARNING: This will delete ALL your configuration, including server settings and preferences!**
+
+```bash
+# Stop services
+docker compose down
+
+# Delete the database
+rm -f data/minepanel.db
+
+# Start services (will create fresh database)
+docker compose up -d
+```
+
+After this, you'll have a fresh installation with default credentials:
+
+- Username: `admin`
+- Password: `admin`
+
+::: danger Data Loss
+This method will reset:
+
+- ✅ Admin password (back to default)
+- ❌ **All your server configurations**
+- ❌ **All your saved settings**
+- ❌ **All custom preferences**
+
+Your Minecraft server files (`servers/` directory) will **NOT** be deleted.
+:::
+
+### Method 2: Manual Password Update (Advanced)
+
+If you're comfortable with SQLite, you can manually update the password in the database:
+
+**Step 1: Generate a bcrypt hash**
+
+```bash
+# Using Node.js (if installed)
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('yournewpassword', 12).then(console.log)"
+
+# Or using an online bcrypt generator
+# Visit: https://bcrypt-generator.com/
+# Choose rounds: 12
+```
+
+**Step 2: Access the database**
+
+```bash
+# Install sqlite3 if needed
+# Ubuntu/Debian: sudo apt install sqlite3
+# macOS: brew install sqlite3
+
+# Open the database
+sqlite3 data/minepanel.db
+```
+
+**Step 3: Update the password**
+
+```sql
+-- View current users
+SELECT username FROM users;
+
+-- Update the password (replace with your hash)
+UPDATE users
+SET password = '$2a$12$your_generated_hash_here'
+WHERE username = 'admin';
+
+-- Exit sqlite
+.exit
+```
+
+**Step 4: Restart services**
+
+```bash
+docker compose restart
+```
+
+::: info
+Make sure the bcrypt hash starts with `$2a$12$` or `$2b$12$` and has the correct format.
+:::
+
+### Prevention Tips
+
+To avoid getting locked out:
+
+1. **Save your credentials** in a password manager
+2. **Document your password** in a secure location
+3. **Set `CLIENT_PASSWORD` in .env file** for easy reference
+4. **Regular backups** of your `data/` directory
+
+## FileBrowser Password {#filebrowser-password}
+
+FileBrowser is the integrated file manager that allows you to browse and edit your Minecraft server files. On first run, it generates a random admin password.
+
+### Getting the Password
+
+When you first start FileBrowser, it generates a random admin password. To find it:
+
+**Step 1: Check the logs**
+
+```bash
+docker compose logs filebrowser
+```
+
+**Step 2: Look for the password**
+
+You'll see something like:
+
+```
+filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / a1b2c3d4e5f6
+```
+
+**Step 3: Login and change it**
+
+1. Go to http://localhost:8080 (or your configured FileBrowser URL)
+2. Login with:
+   - Username: `admin`
+   - Password: `<the-generated-password>`
+3. Click on **Settings** → **User Management** → **admin**
+4. Change the password to something memorable and secure
+
+### Lost the Password?
+
+If you lost the FileBrowser password and can't see it in the logs:
+
+**Option 1: Check existing logs (if container hasn't restarted)**
+
+```bash
+# View all logs (including old ones)
+docker compose logs filebrowser --tail 1000
+```
+
+**Option 2: Reset FileBrowser (recommended)**
+
+```bash
+# Stop services
+docker compose down
+
+# Delete FileBrowser database
+rm -rf filebrowser-data/
+
+# Start services (will create new database with new password)
+docker compose up -d
+
+# Check logs for new password
+docker compose logs filebrowser
+```
+
+::: warning
+This will reset FileBrowser settings but will NOT delete your server files.
+:::
+
+**Option 3: Manual database reset (advanced)**
+
+If you only want to reset the password without losing settings:
+
+```bash
+# Stop FileBrowser
+docker compose stop filebrowser
+
+# Delete the database file
+rm filebrowser-data/database.db
+
+# Start FileBrowser
+docker compose start filebrowser
+
+# Check logs for new password
+docker compose logs filebrowser
+```
+
+### Security Tips
+
+1. **Change the default password** immediately after first login
+2. **Use a strong password** - it protects all your server files
+3. **Don't share FileBrowser URL publicly** - it has full file system access
+4. **Save the password** in a password manager
+5. **Regular backups** of `filebrowser-data/` directory
+
+::: info
+FileBrowser login is independent from Minepanel login. They use separate authentication systems.
+:::
 
 ## Ports
 
@@ -226,13 +480,15 @@ ports:
 When Minepanel creates a Minecraft server container via the Docker socket (`/var/run/docker.sock`), it needs to mount directories from the host machine. Since Minepanel itself runs in a container, it must provide **absolute host paths** for volume mounts.
 
 **Without BASE_DIR:**
+
 ```yaml
 # ❌ This won't work with Docker socket
 volumes:
-  - ./mc-data:/data  # Relative path doesn't exist on host
+  - ./mc-data:/data # Relative path doesn't exist on host
 ```
 
 **With BASE_DIR:**
+
 ```yaml
 # ✅ This works - uses absolute host path
 volumes:
@@ -250,6 +506,7 @@ volumes:
 ```
 
 This configuration:
+
 - Defaults to current directory (`$PWD`)
 - Uses host-side paths for Docker operations
 - Maps to `/app/servers` and `/app/data` inside the container
@@ -283,11 +540,12 @@ BASE_DIR=/home/username/minepanel  # NOT /mnt/c/...
 ```
 
 ::: warning Important
+
 - `BASE_DIR` must be an **absolute path** on the host machine
 - On WSL2, use Linux paths (`/home/...`) not Windows paths (`/mnt/c/...`)
 - The directory must be accessible to Docker
 - Check Docker Desktop → Settings → Resources → File Sharing
-:::
+  :::
 
 ::: tip Technical Details
 See [Architecture - Docker Socket Communication](/architecture#docker-socket-access) for more details on why `BASE_DIR` is necessary.

@@ -80,9 +80,6 @@ Use a `.env` file to customize directories, ports, and other settings without mo
 # .env file
 JWT_SECRET=your_generated_secret
 BASE_DIR=$PWD
-SERVERS_DIR=./servers
-DATA_DIR=./data
-FILEBROWSER_DIR=./filebrowser-data
 ```
 
 See [Configuration Guide](/configuration#using-environment-variables) for all available variables.
@@ -402,10 +399,7 @@ To use custom directories on any platform, set environment variables:
 
 ```bash
 # Create .env file
-BASE_DIR=/custom/path/minepanel
-SERVERS_DIR=${BASE_DIR}/servers
-DATA_DIR=${BASE_DIR}/data
-FILEBROWSER_DIR=${BASE_DIR}/filebrowser
+BASE_DIR=${PWD}
 ```
 
 See the [Configuration Guide](/configuration#using-environment-variables) for more details.

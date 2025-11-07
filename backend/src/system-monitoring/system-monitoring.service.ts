@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as os from 'node:os';
@@ -30,6 +31,8 @@ export interface SystemStats {
 @Injectable()
 export class SystemMonitoringService {
   private previousCpuInfo: { idle: number; total: number } | null = null;
+
+  constructor(private readonly configService: ConfigService) {}
 
   async getSystemStats(): Promise<SystemStats> {
     const cpuUsage = await this.getCpuUsage();
@@ -193,5 +196,29 @@ export class SystemMonitoringService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  getNetworkInfo(): { hostname: string; localIPs: string[] } {
+    const localIPs: string[] = [];
+
+    const configuredIP = this.configService.get<string>('hostLanIP');
+    if (configuredIP && this.isValidIP(configuredIP)) {
+      localIPs.push(configuredIP);
+    }
+
+    return {
+      hostname: os.hostname(),
+      localIPs,
+    };
+  }
+
+  private isValidIP(ip: string): boolean {
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+
+    return parts.every(part => {
+      const num = Number.parseInt(part, 10);
+      return !Number.isNaN(num) && num >= 0 && num <= 255;
+    });
   }
 }

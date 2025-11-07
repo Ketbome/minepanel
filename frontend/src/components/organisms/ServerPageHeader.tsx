@@ -8,11 +8,13 @@ import { motion } from "framer-motion";
 import { env } from "next-runtime-env";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
   readonly serverName: string;
   readonly serverStatus: string;
+  readonly serverPort: string;
   readonly isProcessing: boolean;
   readonly onStartServer: () => Promise<boolean>;
   readonly onStopServer: () => Promise<boolean>;
@@ -20,7 +22,7 @@ interface ServerPageHeaderProps {
   readonly onClearData: () => Promise<boolean>;
 }
 
-export function ServerPageHeader({ serverId, serverName, serverStatus, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData }: ServerPageHeaderProps) {
+export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
@@ -170,6 +172,12 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, isProcess
           </AlertDialog>
         </div>
       </div>
+
+      {serverStatus === "running" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}>
+          <ServerConnectionInfo port={serverPort} serverId={serverId} />
+        </motion.div>
+      )}
 
       <div className="text-xs text-gray-300 px-2">
         <span className="font-medium">{t("tip")}</span> {t("configureServerTip")}

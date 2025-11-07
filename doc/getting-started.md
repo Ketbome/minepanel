@@ -32,7 +32,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       # Backend Configuration
-      - SERVERS_DIR=/app/servers
+      - BASE_DIR=${BASE_DIR:-$PWD}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET} # Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
@@ -43,9 +43,9 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
-      - ${SERVERS_DIR:-./servers}:/app/servers
+      - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${DATA_DIR:-./data}:/app/data
+      - ${BASE_DIR:-$PWD}/data:/app/data
     restart: always
 
   filebrowser:
@@ -53,8 +53,8 @@ services:
     ports:
       - "${FILEBROWSER_PORT:-8080}:8080"
     volumes:
-      - ${SERVERS_DIR:-./servers}:/data
-      - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
+      - ${BASE_DIR:-$PWD}/servers:/data
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
     environment:
       - FB_BASEURL=/
     restart: always
