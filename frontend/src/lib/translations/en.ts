@@ -901,6 +901,7 @@ export const en = {
   connectionTip: "Share this address with players to join your server",
   playingLAN: "Playing on LAN?",
   learnHow: "Learn how to configure it",
+  forgotPassword: "Forgot your password?",
   viewOnCurseForge: "View on CurseForge",
   close: "Close",
   featured: "Featured",

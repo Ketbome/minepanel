@@ -917,6 +917,7 @@ export const nl: Record<TranslationKey, string> = {
   connectionTip: "Deel dit adres met spelers om lid te worden van je server",
   playingLAN: "Speel je op LAN?",
   learnHow: "Leer hoe je het configureert",
+  forgotPassword: "Wachtwoord vergeten?",
   viewOnCurseForge: "Bekijk op CurseForge",
   close: "Sluiten",
   featured: "Uitgelicht",

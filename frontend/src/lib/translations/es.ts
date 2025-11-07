@@ -903,6 +903,7 @@ export const es: Record<TranslationKey, string> = {
   connectionTip: "Comparte esta dirección con los jugadores para que se unan a tu servidor",
   playingLAN: "¿Jugando en LAN?",
   learnHow: "Aprende cómo configurarlo",
+  forgotPassword: "¿Olvidaste tu contraseña?",
   viewOnCurseForge: "Ver en CurseForge",
   close: "Cerrar",
   featured: "Destacado",

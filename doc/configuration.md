@@ -264,6 +264,105 @@ node -e "const bcrypt = require('bcrypt'); bcrypt.hash('newpassword', 12).then(c
 CLIENT_PASSWORD=$2a$12$your_hash_here
 ```
 
+## Forgot Your Password? {#forgot-password}
+
+If you forgot your admin password and can't access the panel, you have two options to recover access:
+
+::: warning Important
+The `CLIENT_PASSWORD` environment variable only works for the initial setup. Once a user exists in the database, you must use one of the methods below.
+:::
+
+### Method 1: Reset Database (Easiest)
+
+**WARNING: This will delete ALL your configuration, including server settings and preferences!**
+
+```bash
+# Stop services
+docker compose down
+
+# Delete the database
+rm -f data/minepanel.db
+
+# Start services (will create fresh database)
+docker compose up -d
+```
+
+After this, you'll have a fresh installation with default credentials:
+
+- Username: `admin`
+- Password: `admin`
+
+::: danger Data Loss
+This method will reset:
+
+- ✅ Admin password (back to default)
+- ❌ **All your server configurations**
+- ❌ **All your saved settings**
+- ❌ **All custom preferences**
+
+Your Minecraft server files (`servers/` directory) will **NOT** be deleted.
+:::
+
+### Method 2: Manual Password Update (Advanced)
+
+If you're comfortable with SQLite, you can manually update the password in the database:
+
+**Step 1: Generate a bcrypt hash**
+
+```bash
+# Using Node.js (if installed)
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('yournewpassword', 12).then(console.log)"
+
+# Or using an online bcrypt generator
+# Visit: https://bcrypt-generator.com/
+# Choose rounds: 12
+```
+
+**Step 2: Access the database**
+
+```bash
+# Install sqlite3 if needed
+# Ubuntu/Debian: sudo apt install sqlite3
+# macOS: brew install sqlite3
+
+# Open the database
+sqlite3 data/minepanel.db
+```
+
+**Step 3: Update the password**
+
+```sql
+-- View current users
+SELECT username FROM users;
+
+-- Update the password (replace with your hash)
+UPDATE users
+SET password = '$2a$12$your_generated_hash_here'
+WHERE username = 'admin';
+
+-- Exit sqlite
+.exit
+```
+
+**Step 4: Restart services**
+
+```bash
+docker compose restart
+```
+
+::: info
+Make sure the bcrypt hash starts with `$2a$12$` or `$2b$12$` and has the correct format.
+:::
+
+### Prevention Tips
+
+To avoid getting locked out:
+
+1. **Save your credentials** in a password manager
+2. **Document your password** in a secure location
+3. **Set `CLIENT_PASSWORD` in .env file** for easy reference
+4. **Regular backups** of your `data/` directory
+
 ## Ports
 
 Default ports:

@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ConnectionErrorDialog } from "@/components/ui/connection-error-dialog";
-import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from "@/lib/providers/constants";
+import { LINK, LINK_DOCUMENTATION, LINK_GITHUB, LINK_FORGOT_PASSWORD } from "@/lib/providers/constants";
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -218,7 +218,7 @@ export default function Home() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="pb-6 pt-2">
+                  <CardFooter className="pb-4 pt-2 flex-col space-y-3">
                     <Button type="submit" className="w-full font-minecraft bg-emerald-600 hover:bg-emerald-700 text-white py-2 transition-all hover:shadow-lg hover:shadow-emerald-600/50 hover:scale-[1.02] active:scale-[0.98]" disabled={isLoading || !serverAvailable}>
                       {(() => {
                         if (serverAvailable === null) {
@@ -243,6 +243,9 @@ export default function Home() {
                         return t("enterServer");
                       })()}
                     </Button>
+                    <a href={LINK_FORGOT_PASSWORD} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-emerald-400 transition-colors text-center">
+                      {t("forgotPassword")}
+                    </a>
                   </CardFooter>
                 </form>
               </Card>
