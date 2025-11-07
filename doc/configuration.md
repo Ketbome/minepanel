@@ -21,9 +21,6 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 | Variable          | Default              | Description                                                            |
 | ----------------- | -------------------- | ---------------------------------------------------------------------- |
 | `BASE_DIR`        | `$PWD`               | Base directory for servers (required for Docker socket communication) |
-| `SERVERS_DIR`     | `./servers`          | Directory for Minecraft servers data                                   |
-| `DATA_DIR`        | `./data`             | Directory for application data (database, backups)                     |
-| `FILEBROWSER_DIR` | `./filebrowser-data` | Directory for file browser configuration                               |
 
 #### Authentication
 
@@ -61,9 +58,6 @@ FILEBROWSER_PORT=8080
 
 # Directories
 BASE_DIR=$PWD
-SERVERS_DIR=./servers
-DATA_DIR=./data
-FILEBROWSER_DIR=./filebrowser-data
 
 # Authentication
 JWT_SECRET=your_generated_secret_here
@@ -85,17 +79,10 @@ Then run:
 docker compose up -d
 ```
 
-#### Option 2: Inline Variables
-
-```bash
-SERVERS_DIR=/custom/path JWT_SECRET=my_secret docker compose up -d
-```
-
-#### Option 3: Directly in docker-compose.yml
+#### Option 2: Directly in docker-compose.yml
 
 ```yaml
 environment:
-  - SERVERS_DIR=/app/servers
   - JWT_SECRET=your_secret_here
 ```
 
@@ -105,18 +92,15 @@ To use custom directories for your data:
 
 ```bash
 # In .env file
-SERVERS_DIR=/mnt/storage/minecraft-servers
-DATA_DIR=/mnt/storage/minepanel-data
-FILEBROWSER_DIR=/mnt/storage/filebrowser-config
+BASE_DIR=/home/user/minepanel
 ```
 
 Or directly in docker-compose.yml:
 
 ```yaml
 volumes:
-  - ${SERVERS_DIR:-./servers}:/app/servers
-  - ${DATA_DIR:-./data}:/app/data
-  - ${FILEBROWSER_DIR:-./filebrowser-data}:/config
+  - ${BASE_DIR:-$PWD}/servers:/app/servers
+  - ${BASE_DIR:-$PWD}/data:/app/data
 ```
 
 ::: danger FRONTEND_URL is Critical

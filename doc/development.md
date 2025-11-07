@@ -72,7 +72,7 @@ JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
 CLIENT_PASSWORD= # Password for client
 CLIENT_USERNAME= # Username for the client
 DB_PATH=./data/minepanel.db
-SERVERS_DIR=../servers
+BASE_DIR=.
 
 ```
 
