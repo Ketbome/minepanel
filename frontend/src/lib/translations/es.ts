@@ -914,4 +914,11 @@ export const es: Record<TranslationKey, string> = {
   createServerFromModpack: "Crear un nuevo servidor usando este modpack",
   serverIdRequired: "El ID del servidor es requerido",
   optional: "opcional",
+
+  // ===========================
+  // LIKS
+  // ===========================
+  link: "https://minepanel.ketbome.lat",
+  linkGithub: "https://github.com/Ketbome/minepanel",
+  linkDocumentation: "https://minepanel.ketbome.lat/configuration.html",
 };

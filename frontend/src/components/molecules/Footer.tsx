@@ -16,15 +16,15 @@ export function Footer() {
         </div>
 
         <div className="flex space-x-6 text-gray-300">
-          <Link href="ketbome.github.io/minepanel/" className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+          <Link href={t("link")} className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-sm"></span>
             {t("help")}
           </Link>
-          <Link href="ketbome.github.io/minepanel/" className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+          <Link href={t("linkDocumentation")} className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-sm"></span>
             {t("documentation")}
           </Link>
-          <Link href="https://github.com/Ketbome/minepanel" className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+          <Link href={t("linkGithub")} className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-1.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-sm"></span>
             {t("github")}
           </Link>
