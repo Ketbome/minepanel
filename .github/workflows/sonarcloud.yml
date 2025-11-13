@@ -1,0 +1,67 @@
+name: SonarCloud Analysis
+
+on:
+    push:
+        branches:
+            - main
+            - develop
+    pull_request:
+        types: [opened, synchronize, reopened]
+    workflow_dispatch:
+
+jobs:
+    sonarcloud:
+        name: SonarCloud Scan
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            # Frontend Analysis
+            - name: Install frontend dependencies
+              working-directory: frontend
+              run: npm ci
+
+            - name: Run frontend tests with coverage
+              working-directory: frontend
+              run: npm run test:coverage || true
+              continue-on-error: true
+
+            # Backend Analysis
+            - name: Install backend dependencies
+              working-directory: backend
+              run: npm ci
+
+            - name: Run backend tests with coverage
+              working-directory: backend
+              run: npm run test:cov || true
+              continue-on-error: true
+
+            # SonarCloud Scan
+            - name: SonarCloud Scan
+              uses: SonarSource/sonarcloud-github-action@master
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                  args: >
+                      -Dsonar.organization=tu-organizacion
+                      -Dsonar.projectKey=minepanel
+                      -Dsonar.sources=frontend/src,backend/src
+                      -Dsonar.tests=frontend/__tests__,backend/test
+                      -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
+                      -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json,backend/tsconfig.json
+                      -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/coverage/**
+
+            - name: Analysis complete
+              run: |
+                  echo "✅ SonarCloud analysis complete"
+                  echo "📊 View results at: https://sonarcloud.io/dashboard?id=minepanel"
