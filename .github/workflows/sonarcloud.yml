@@ -52,7 +52,7 @@ jobs:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
               with:
                   args: >
-                      -Dsonar.organization=tu-organizacion
+                      -Dsonar.organization=minepanel
                       -Dsonar.projectKey=minepanel
                       -Dsonar.sources=frontend/src,backend/src
                       -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/coverage/**,**/dist-electron/**,**/electron/**
