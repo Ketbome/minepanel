@@ -55,10 +55,7 @@ jobs:
                       -Dsonar.organization=tu-organizacion
                       -Dsonar.projectKey=minepanel
                       -Dsonar.sources=frontend/src,backend/src
-                      -Dsonar.tests=frontend/__tests__,backend/test
-                      -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
-                      -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json,backend/tsconfig.json
-                      -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/coverage/**
+                      -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/coverage/**,**/dist-electron/**,**/electron/**
 
             - name: Analysis complete
               run: |
