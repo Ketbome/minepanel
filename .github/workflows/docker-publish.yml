@@ -220,7 +220,6 @@ jobs:
         id: verify_changes
         if: steps.version_changed.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
         run: |
-          # Solo crear tag si realmente se buildearon imágenes (hubo cambios)
           if [ "${{ needs.build-and-push.result }}" = "success" ]; then
             echo "should_create=true" >> $GITHUB_OUTPUT
             echo "✅ Docker images built successfully - proceeding with tag"

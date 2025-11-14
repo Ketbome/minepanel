@@ -76,10 +76,8 @@ export default function Home() {
     <>
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
       <div className="min-h-screen flex flex-col bg-[url('/images/background.webp')] bg-cover bg-center relative overflow-hidden">
-        {/* Overlay más oscuro para mejor contraste */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
-        {/* Partículas flotantes decorativas */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
             animate={{
