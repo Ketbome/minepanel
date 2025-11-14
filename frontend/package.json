@@ -1,11 +1,20 @@
 {
   "name": "minepanel",
+  "description": "Minecraft server management panel",
   "author": {
     "name": "Ketbome",
     "email": "pablo.moraga.san@gmail.com"
   },
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ketbome/minepanel.git"
+  },
+  "homepage": "https://github.com/Ketbome/minepanel#readme",
+  "bugs": {
+    "url": "https://github.com/Ketbome/minepanel/issues"
+  },
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:turbopack": "next dev -p 3000 --turbopack",
