@@ -162,3 +162,106 @@ jobs:
           echo "Version: ${{ steps.version.outputs.version }}"
           echo " Platforms: linux/amd64, linux/arm64"
           echo "Tags: ${{ steps.meta.outputs.tags }}"
+
+  create-release-tag:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from config.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' config.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Current version in config.json: $VERSION"
+
+      - name: Get last tag version
+        id: last_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "🏷️  Last tag: $LAST_TAG"
+
+      - name: Check if version changed
+        id: version_changed
+        run: |
+          CURRENT_VERSION="v${{ steps.version.outputs.version }}"
+          LAST_TAG="${{ steps.last_tag.outputs.tag }}"
+
+          if [ "$LAST_TAG" = "none" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✨ No previous tags found - first release"
+          elif [ "$CURRENT_VERSION" = "$LAST_TAG" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "⏭️  Version unchanged ($CURRENT_VERSION = $LAST_TAG) - skipping tag"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "🆕 Version changed: $LAST_TAG → $CURRENT_VERSION"
+          fi
+
+      - name: Check if tag exists
+        id: check_tag
+        if: steps.version_changed.outputs.changed == 'true'
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag v${{ steps.version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag v${{ steps.version.outputs.version }} does not exist - will create"
+          fi
+
+      - name: Verify changes were built
+        id: verify_changes
+        if: steps.version_changed.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Solo crear tag si realmente se buildearon imágenes (hubo cambios)
+          if [ "${{ needs.build-and-push.result }}" = "success" ]; then
+            echo "should_create=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker images built successfully - proceeding with tag"
+          else
+            echo "should_create=false" >> $GITHUB_OUTPUT
+            echo "⏭️  No Docker builds ran - skipping tag"
+          fi
+
+      - name: Create and push tag
+        if: |
+          steps.version_changed.outputs.changed == 'true' && 
+          steps.check_tag.outputs.exists == 'false' && 
+          steps.verify_changes.outputs.should_create == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag created
+        if: |
+          steps.version_changed.outputs.changed == 'true' && 
+          steps.check_tag.outputs.exists == 'false' && 
+          steps.verify_changes.outputs.should_create == 'true'
+        run: |
+          echo "✅ Tag v${{ steps.version.outputs.version }} created successfully"
+          echo "🚀 Electron build workflow will start automatically"
+
+      - name: Skip reason
+        if: |
+          steps.version_changed.outputs.changed == 'false' || 
+          steps.check_tag.outputs.exists == 'true' || 
+          steps.verify_changes.outputs.should_create == 'false'
+        run: |
+          echo "ℹ️  Tag creation skipped"
+          if [ "${{ steps.version_changed.outputs.changed }}" = "false" ]; then
+            echo "   Reason: Version in config.json hasn't changed"
+          elif [ "${{ steps.check_tag.outputs.exists }}" = "true" ]; then
+            echo "   Reason: Tag already exists"
+          else
+            echo "   Reason: No significant changes to build"
+          fi

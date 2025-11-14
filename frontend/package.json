@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "minepanel",
   "author": {
     "name": "Ketbome",
     "email": "pablo.moraga.san@gmail.com"
@@ -12,7 +12,12 @@
     "build": "next build",
     "build:turbopack": "next build --turbopack",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron:dev": "electron .",
+    "electron:build": "electron-builder",
+    "electron:build:win": "electron-builder --win",
+    "electron:build:mac": "electron-builder --mac",
+    "electron:build:linux": "electron-builder --linux"
   },
   "dependencies": {
     "@hookform/resolvers": "5.2.2",
@@ -50,10 +55,17 @@
     "@types/node": "20",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "concurrently": "9.1.2",
+    "cross-env": "7.0.3",
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "electron-store": "11.0.2",
     "eslint": "9.38.0",
     "eslint-config-next": "15.5.6",
     "tailwindcss": "4.1.16",
     "tw-animate-css": "1.4.0",
-    "typescript": "5.9.3"
-  }
+    "typescript": "5.9.3",
+    "wait-on": "8.0.1"
+  },
+  "main": "electron/main.js"
 }
