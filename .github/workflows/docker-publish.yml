@@ -247,7 +247,7 @@ jobs:
           steps.verify_changes.outputs.should_create == 'true'
         run: |
           echo "✅ Tag v${{ steps.version.outputs.version }} created successfully"
-          echo "🚀 Electron build workflow will start automatically"
+          echo "🚀 GitHub Release will be created automatically"
 
       - name: Skip reason
         if: |
@@ -263,3 +263,115 @@ jobs:
           else
             echo "   Reason: No significant changes to build"
           fi
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: create-release-tag
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from config.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' config.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Get last tag version
+        id: last_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Check if should create release
+        id: should_release
+        run: |
+          CURRENT_VERSION="v${{ steps.version.outputs.version }}"
+          LAST_TAG="${{ steps.last_tag.outputs.tag }}"
+
+          if [ "$LAST_TAG" = "none" ] || [ "$CURRENT_VERSION" != "$LAST_TAG" ]; then
+            if git rev-parse "$CURRENT_VERSION" >/dev/null 2>&1; then
+              echo "create=true" >> $GITHUB_OUTPUT
+              echo "✅ Will create release for $CURRENT_VERSION"
+            else
+              echo "create=false" >> $GITHUB_OUTPUT
+              echo "⏭️  Tag $CURRENT_VERSION doesn't exist yet - skipping release"
+            fi
+          else
+            echo "create=false" >> $GITHUB_OUTPUT
+            echo "⏭️  No new version - skipping release"
+          fi
+
+      - name: Create Release
+        if: steps.should_release.outputs.create == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Minepanel v${{ steps.version.outputs.version }}
+          body: |
+            ## 🎮 Minepanel v${{ steps.version.outputs.version }}
+
+            ### 🐳 Docker Images
+
+            Docker images are available for multiple architectures (amd64, arm64):
+
+            **Full Stack (Recommended)**:
+            ```bash
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:${{ steps.version.outputs.version }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:latest
+            ```
+
+            **Backend Only**:
+            ```bash
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend:${{ steps.version.outputs.version }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend:latest
+            ```
+
+            **Frontend Only**:
+            ```bash
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend:${{ steps.version.outputs.version }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend:latest
+            ```
+
+            ### 🚀 Quick Start
+
+            ```bash
+            docker run -d \
+              -p 3000:3000 \
+              -p 8080:8080 \
+              --name minepanel \
+              ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:${{ steps.version.outputs.version }}
+            ```
+
+            ### 📦 What's Included
+
+            - Multi-language support (English, Spanish, Dutch)
+            - Easy server connection management
+            - Real-time server monitoring
+            - Modern and responsive UI
+            - Multi-architecture support (amd64, arm64)
+
+            ### 🔗 Links
+
+            - [Documentation](https://github.com/${{ github.repository }})
+            - [Report Issues](https://github.com/${{ github.repository }}/issues)
+            - [Source Code](https://github.com/${{ github.repository }})
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release created
+        if: steps.should_release.outputs.create == 'true'
+        run: |
+          echo "✅ Release v${{ steps.version.outputs.version }} created successfully!"
+          echo "🐳 Docker images are now available"
+          echo "📦 Supports linux/amd64 and linux/arm64"

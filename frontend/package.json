@@ -24,9 +24,9 @@
     "lint": "next lint",
     "electron:dev": "electron .",
     "electron:build": "electron-builder",
-    "electron:build:win": "electron-builder --win",
-    "electron:build:mac": "electron-builder --mac",
-    "electron:build:linux": "electron-builder --linux"
+    "electron:build:win": "electron-builder --win --publish=never",
+    "electron:build:mac": "electron-builder --mac --publish=never",
+    "electron:build:linux": "electron-builder --linux --publish=never"
   },
   "dependencies": {
     "@hookform/resolvers": "5.2.2",

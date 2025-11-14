@@ -20,7 +20,9 @@
         "arch": ["x64"]
       }
     ],
-    "artifactName": "${productName}-${version}-${arch}.${ext}"
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "sign": null,
+    "verifyUpdateCodeSignature": false
   },
   "nsis": {
     "oneClick": false,
