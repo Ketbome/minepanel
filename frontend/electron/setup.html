@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conect to Minepanel</title>
+    <style>
+      @font-face {
+        font-family: "Minecraft";
+        src: url("../public/fonts/minecraft.woff2") format("woff2");
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #111827;
+        background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h60v60H0z' fill='%23111827'/%3E%3Cpath d='M0 0h30v30H0zm30 30h30v30H30z' fill='%231f2937'/%3E%3C/svg%3E");
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        color: #f9fafb;
+      }
+
+      .container {
+        max-width: 500px;
+        width: 100%;
+        animation: slideUp 0.5s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+        display: inline-block;
+        animation: logoGlow 2s infinite;
+      }
+
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 24px rgba(16, 185, 129, 0.4)) drop-shadow(0 0 32px rgba(16, 185, 129, 0.2));
+      }
+
+      @keyframes logoGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 24px rgba(16, 185, 129, 0.4));
+        }
+        50% {
+          filter: drop-shadow(0 0 12px rgba(16, 185, 129, 1)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 32px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 44px rgba(16, 185, 129, 0.4));
+        }
+      }
+
+      h1 {
+        font-family: "Minecraft", monospace;
+        font-size: 36px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+        letter-spacing: 1px;
+      }
+
+      .subtitle {
+        color: #d1d5db;
+        font-size: 16px;
+      }
+
+      .card {
+        background: rgba(17, 24, 39, 0.95);
+        border: 2px solid rgba(16, 185, 129, 0.3);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(135deg, #10b981, #059669, #10b981);
+        border-radius: 16px;
+        opacity: 0.3;
+        filter: blur(20px);
+        z-index: -1;
+        animation: glow 3s infinite;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .card:hover {
+        border-color: rgba(16, 185, 129, 0.5);
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      label {
+        display: block;
+        color: #e5e7eb;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 12px 16px;
+        background: rgba(31, 41, 55, 0.9);
+        border: 2px solid #374151;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #f3f4f6;
+        font-family: "Courier New", monospace;
+        transition: all 0.3s ease;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        background: rgba(31, 41, 55, 1);
+      }
+
+      input[type="text"]::placeholder {
+        color: #6b7280;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        width: 100%;
+        font-family: "Minecraft", monospace;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+      }
+
+      .btn-primary:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .btn-test {
+        background: rgba(31, 41, 55, 0.9);
+        border: 2px solid #374151;
+        color: #d1d5db;
+        min-width: 80px;
+      }
+
+      .btn-test:hover:not(:disabled) {
+        border-color: #10b981;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+
+      .status {
+        margin-top: 16px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .status.success {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+      }
+
+      .status.error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+
+      .examples {
+        margin-top: 24px;
+        padding: 20px;
+        background: rgba(31, 41, 55, 0.5);
+        border-radius: 12px;
+        border: 1px solid #374151;
+      }
+
+      .examples-title {
+        font-size: 13px;
+        color: #d1d5db;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .examples-title::before {
+        content: "✨";
+        font-size: 16px;
+      }
+
+      .example-item {
+        padding: 10px 12px;
+        color: #9ca3af;
+        font-size: 13px;
+        font-family: "Courier New", monospace;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        margin-bottom: 4px;
+      }
+
+      .example-item:hover {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        transform: translateX(4px);
+      }
+
+      .tip {
+        margin-top: 24px;
+        padding: 16px;
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #93c5fd;
+        line-height: 1.6;
+      }
+
+      .tip strong {
+        color: #60a5fa;
+      }
+
+      .loader {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .footer {
+        margin-top: 32px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .footer::before {
+        content: "⚡";
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #059669;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Language Selector -->
+      <div style="position: absolute; top: 20px; right: 20px">
+        <select id="languageSelector" style="padding: 8px 12px; background: rgba(31, 41, 55, 0.9); border: 2px solid #374151; border-radius: 8px; color: #f3f4f6; cursor: pointer; font-size: 14px">
+          <option value="en">🇬🇧 English</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="nl">🇳🇱 Nederlands</option>
+        </select>
+      </div>
+
+      <div class="header">
+        <div class="logo">
+          <img src="img/logo.webp" alt="Minepanel Logo" />
+        </div>
+        <h1>Minepanel</h1>
+        <p class="subtitle" data-i18n="subtitle">Conecta tu servidor para comenzar</p>
+      </div>
+
+      <div class="card">
+        <form id="setupForm">
+          <div class="form-group">
+            <label for="serverUrl" data-i18n="serverUrlLabel">🌐 URL del Servidor</label>
+            <div class="input-group">
+              <input type="text" id="serverUrl" data-i18n-placeholder="serverUrlPlaceholder" placeholder="http://192.168.1.100:3000" required autocomplete="off" />
+              <button type="button" class="btn-test" id="testBtn" data-i18n="testBtn">Test</button>
+            </div>
+          </div>
+
+          <div id="status" class="status"></div>
+
+          <button type="submit" class="btn-primary" id="connectBtn" data-i18n="connectBtn">Conectar al Servidor</button>
+        </form>
+
+        <div class="examples">
+          <div class="examples-title" data-i18n="examples">Ejemplos:</div>
+          <div class="example-item" data-url="http://localhost:3000">📍 http://localhost:3000</div>
+          <div class="example-item" data-url="http://192.168.1.100:3000">🏠 http://192.168.1.100:3000</div>
+          <div class="example-item" data-url="https://minepanel.ejemplo.com">🌍 https://minepanel.ejemplo.com</div>
+        </div>
+
+        <div class="tip">
+          <span data-i18n="tipTitle">💡 <strong>Consejo:</strong></span> <span data-i18n="tipContent">La URL debe ser donde está desplegado tu servidor Minepanel. Si está en tu red local, usa la IP con el puerto (ej: http://192.168.1.100:3000)</span>
+        </div>
+      </div>
+
+      <div class="footer" data-i18n="footer">Minepanel Desktop • Versión Electron</div>
+    </div>
+
+    <script>
+      // ==========================================
+      // TRANSLATIONS
+      // ==========================================
+      let translations = {};
+      let currentLang = "en";
+
+      // Load translations from main process
+      async function loadTranslations() {
+        try {
+          currentLang = await window.electron.getLanguage();
+          const allTranslations = await window.electron.getTranslations(currentLang);
+          translations = allTranslations.setup || {};
+        } catch (error) {
+          console.error("Error loading translations:", error);
+          currentLang = "en";
+        }
+      }
+
+      // ==========================================
+      // I18N FUNCTIONS
+      // ==========================================
+      function t(key) {
+        return translations[key] || key;
+      }
+
+      function updateTexts() {
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          el.innerHTML = t(key);
+        });
+
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          const key = el.getAttribute("data-i18n-placeholder");
+          el.placeholder = t(key);
+        });
+      }
+
+      async function changeLanguage(lang) {
+        currentLang = lang;
+        await window.electron.setLanguage(lang);
+        const allTranslations = await window.electron.getTranslations(lang);
+        translations = allTranslations.setup || {};
+        updateTexts();
+      }
+
+      // ==========================================
+      // SETUP LOGIC
+      // ==========================================
+      const serverUrlInput = document.getElementById("serverUrl");
+      const testBtn = document.getElementById("testBtn");
+      const connectBtn = document.getElementById("connectBtn");
+      const setupForm = document.getElementById("setupForm");
+      const statusDiv = document.getElementById("status");
+      const languageSelector = document.getElementById("languageSelector");
+
+      // Initialize translations and UI
+      async function init() {
+        await loadTranslations();
+        languageSelector.value = currentLang;
+        updateTexts();
+      }
+
+      init();
+
+      languageSelector.addEventListener("change", (e) => {
+        changeLanguage(e.target.value);
+      });
+
+      document.querySelectorAll(".example-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          serverUrlInput.value = item.dataset.url;
+          statusDiv.style.display = "none";
+          serverUrlInput.focus();
+        });
+      });
+
+      testBtn.addEventListener("click", async () => {
+        const url = serverUrlInput.value.trim();
+        if (!url) {
+          showStatus(t("pleaseEnterUrl"), "error");
+          return;
+        }
+
+        testBtn.disabled = true;
+        testBtn.innerHTML = '<span class="loader"></span>';
+
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            mode: "no-cors",
+          });
+
+          showStatus(t("serverAccessible"), "success");
+          testBtn.textContent = "✓";
+          setTimeout(() => {
+            testBtn.textContent = t("testBtn");
+          }, 2000);
+        } catch (error) {
+          showStatus(t("cannotConnect"), "error");
+          testBtn.textContent = "✗";
+          setTimeout(() => {
+            testBtn.textContent = t("testBtn");
+          }, 2000);
+        } finally {
+          testBtn.disabled = false;
+        }
+      });
+
+      setupForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        let url = serverUrlInput.value.trim();
+        if (!url) {
+          showStatus(t("pleaseEnterUrl"), "error");
+          return;
+        }
+
+        url = url.replace(/\/$/, "");
+
+        connectBtn.disabled = true;
+        connectBtn.innerHTML = `<span class="loader"></span> ${t("connecting")}`;
+
+        try {
+          await fetch(url, { method: "GET", mode: "no-cors" });
+
+          await window.electron.setServerUrl(url);
+          showStatus(t("connectedSuccess"), "success");
+        } catch (error) {
+          showStatus(t("errorConnecting"), "error");
+          connectBtn.disabled = false;
+          connectBtn.textContent = t("connectBtn");
+        }
+      });
+
+      function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+        statusDiv.style.display = "block";
+      }
+
+      serverUrlInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          setupForm.dispatchEvent(new Event("submit"));
+        }
+      });
+
+      serverUrlInput.addEventListener("input", () => {
+        statusDiv.style.display = "none";
+      });
+    </script>
+  </body>
+</html>

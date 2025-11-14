@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 data/
+
+# Electron
+dist-electron/
+*.exe
+*.dmg
+*.deb
+*.rpm
+*.AppImage

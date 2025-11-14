@@ -1,0 +1,41 @@
+{
+  "menu": {
+    "file": "Bestand",
+    "changeServer": "Server Wijzigen",
+    "reloadConnection": "Verbinding Herladen",
+    "quit": "Afsluiten",
+    "view": "Weergave",
+    "reloadPage": "Pagina Herladen",
+    "devTools": "Ontwikkeltools",
+    "fullScreen": "Volledig Scherm",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen",
+    "zoomReset": "Zoom Resetten",
+    "help": "Help",
+    "about": "Over Minepanel",
+    "aboutDialog": {
+      "title": "Minepanel Desktop",
+      "message": "Minepanel Desktop",
+      "version": "Versie",
+      "close": "Sluiten"
+    }
+  },
+  "setup": {
+    "title": "Minepanel",
+    "subtitle": "Verbind met je server om te beginnen",
+    "serverUrlLabel": "🌐 Server URL",
+    "serverUrlPlaceholder": "http://192.168.1.100:3000",
+    "testBtn": "Test",
+    "connectBtn": "Verbinden met Server",
+    "examples": "Voorbeelden:",
+    "tipTitle": "💡 <strong>Tip:</strong>",
+    "tipContent": "De URL moet zijn waar je Minepanel server is geïnstalleerd. Als het op je lokale netwerk staat, gebruik dan het IP met de poort (bijv: http://192.168.1.100:3000)",
+    "footer": "Minepanel Desktop • Electron Versie",
+    "pleaseEnterUrl": "❌ Voer een URL in",
+    "serverAccessible": "✅ Server bereikbaar",
+    "cannotConnect": "❌ Kan geen verbinding maken met server",
+    "connecting": "Verbinden...",
+    "connectedSuccess": "✅ Succesvol verbonden",
+    "errorConnecting": "❌ Fout bij verbinden met server"
+  }
+}
