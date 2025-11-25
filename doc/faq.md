@@ -195,18 +195,160 @@ Yes! Use the integrated **File Browser**:
 
 ### Can I migrate existing servers?
 
-Yes! Copy your existing server files to the `servers/` directory:
+Yes! Copy your existing server files to the `servers/` directory **inside the `mc-data` folder**:
 
 ```bash
 servers/
 └── my-old-server/
-    ├── world/
-    ├── server.properties
-    ├── ops.json
-    └── ...
+    └── mc-data/
+        ├── world/
+        ├── server.properties
+        ├── ops.json
+        ├── banned-players.json
+        ├── banned-ips.json
+        ├── whitelist.json
+        └── ...
 ```
 
-Then create a server in Minepanel with the same name. It will detect and use the existing files.
+**Important:** Minepanel uses a `mc-data` subfolder to organize server files. This differs from itzg/docker-minecraft-server's flat structure.
+
+**Migration steps:**
+
+1. **Choose a server ID/name** (e.g., `my-old-server`) - this will be used everywhere
+2. Create the server directory: `mkdir -p servers/my-old-server/mc-data`
+3. Copy your itzg server files into `mc-data/`:
+   ```bash
+   cp -r /path/to/old-server/* servers/my-old-server/mc-data/
+   ```
+4. **Create a server in Minepanel with EXACTLY the same name** (`my-old-server`)
+   - Minepanel will generate the docker-compose.yml automatically
+   - The `container_name` and `ID_MANAGER` will match your server ID
+5. Start the server - it will use your existing world and configs
+
+**Example of correct naming:**
+
+- Folder: `servers/test/`
+- Server name in Minepanel: `test`
+- Generated docker-compose.yml will have:
+  ```yaml
+  container_name: test
+  environment:
+    ID_MANAGER: test
+  ```
+
+**Important:** The generated `docker-compose.yml` must have the **complete path** to `mc-data/` and **matching names**. Minepanel handles this automatically, but if you're manually creating/editing docker-compose files:
+
+```yaml
+services:
+  mc:
+    image: itzg/minecraft-server:latest
+    container_name: my-old-server # ⚠️ Must match server ID
+    environment:
+      ID_MANAGER: my-old-server # ⚠️ Must match server ID
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      # ... other env vars
+    volumes:
+      - ./mc-data:/data # ✅ Correct - points to mc-data subfolder
+      - ./modpacks:/modpacks:ro
+    ports:
+      - "25565:25565"
+```
+
+**Critical: `container_name` and `ID_MANAGER` MUST match the server folder name.**
+
+If your server is in `servers/test/`:
+
+```yaml
+container_name: test # ✅ Matches folder name
+environment:
+  ID_MANAGER: test # ✅ Matches folder name
+```
+
+**Incorrect examples:**
+
+```yaml
+# Wrong volume paths
+volumes:
+  - ./:/data # ❌ Points to root, not mc-data
+  - /data:/data # ❌ Absolute path
+  - ./world:/data # ❌ Only mounts world folder
+
+# Wrong naming
+container_name: minecraft # ❌ Doesn't match server ID
+ID_MANAGER: server1 # ❌ Doesn't match server ID
+```
+
+**Automatic migration:** As of the latest version, Minepanel will automatically detect and migrate server files if you accidentally place them in the wrong location (root folder instead of `mc-data/`). This fixes a common issue when migrating from itzg/docker-minecraft-server.
+
+---
+
+### Migration Naming Example (Complete)
+
+Let's say you want to migrate a server called `survival-world`:
+
+**1. File structure:**
+
+```
+servers/
+└── survival-world/           ← Folder name
+    ├── docker-compose.yml
+    └── mc-data/
+        ├── world/
+        ├── server.properties
+        └── ...
+```
+
+**2. In Minepanel UI:**
+
+- Create server with ID: `survival-world`
+
+**3. Generated docker-compose.yml:**
+
+```yaml
+services:
+  mc:
+    container_name: survival-world # ← Same as folder
+    environment:
+      ID_MANAGER: survival-world # ← Same as folder
+      SERVER_NAME: survival-world
+    volumes:
+      - ./mc-data:/data # ← Points to mc-data
+```
+
+**Everything must match:**
+
+- ✅ Folder: `servers/survival-world/`
+- ✅ Server ID in Minepanel: `survival-world`
+- ✅ `container_name`: `survival-world`
+- ✅ `ID_MANAGER`: `survival-world`
+
+**What happens if they don't match:**
+
+- ❌ Minepanel can't find/control the container
+- ❌ Server status shows as "not found"
+- ❌ Start/stop buttons won't work
+
+### Why does Minepanel use a different folder structure than itzg?
+
+Minepanel organizes server files into subfolders for better management:
+
+```
+servers/my-server/
+├── docker-compose.yml    # Server configuration (source of truth)
+├── mc-data/              # Minecraft server files (mounted to /data)
+├── backups/              # Server backups
+└── modpacks/             # Modpack files (if applicable)
+```
+
+This structure provides:
+
+- **Clean separation** between config, data, and backups
+- **Easier backups** - backup just `mc-data/` without compose files
+- **Better organization** - especially with multiple servers
+- **Modpack support** - dedicated folder for modpack files
+
+**Note:** Server configuration is stored in `docker-compose.yml` files, not in a separate database. Minepanel reads these files and Docker container metadata to display server information, making it mostly stateless regarding server data.
 
 ### How do I backup my servers?
 

@@ -19,9 +19,9 @@ export class DockerComposeService {
   private readonly BASE_DIR: string;
 
   constructor(private readonly configService: ConfigService) {
-      this.SERVERS_DIR = this.configService.get('serversDir');
-      this.BASE_DIR = this.configService.get('baseDir');
-      fs.ensureDirSync(this.SERVERS_DIR);
+    this.SERVERS_DIR = this.configService.get('serversDir');
+    this.BASE_DIR = this.configService.get('baseDir');
+    fs.ensureDirSync(this.SERVERS_DIR);
   }
 
   private validateServerId(serverId: string): boolean {
@@ -462,18 +462,68 @@ export class DockerComposeService {
     }
 
     const serverPath = path.join(this.SERVERS_DIR, id);
-    if (fs.existsSync(serverPath)) {
+    const dockerComposePath = this.getDockerComposePath(id);
+
+    // Check if server already exists (has docker-compose.yml)
+    if (await fs.pathExists(dockerComposePath)) {
       throw new Error(`El servidor "${id}" ya existe`);
     }
 
+    const serverExists = await fs.pathExists(serverPath);
+
     await fs.ensureDir(serverPath);
-    await fs.ensureDir(path.join(serverPath, 'mc-data'));
+    const mcDataPath = path.join(serverPath, 'mc-data');
+    await fs.ensureDir(mcDataPath);
+
+    if (serverExists) {
+      this.logger.log(`Server directory "${id}" already exists, checking for uploaded data...`);
+      await this.detectAndMigrateMisplacedData(serverPath, mcDataPath);
+    }
 
     const defaultConfig = this.createDefaultConfig(id);
     const serverConfig = { ...defaultConfig, ...config };
 
     await this.generateDockerComposeFile(serverConfig);
     return serverConfig;
+  }
+
+  private async detectAndMigrateMisplacedData(serverPath: string, mcDataPath: string): Promise<void> {
+    try {
+      // Check for common minecraft server files in the root server directory
+      const minecraftFiles = ['world', 'server.properties', 'eula.txt', 'ops.json', 'whitelist.json'];
+      const foundFiles = [];
+
+      for (const file of minecraftFiles) {
+        const filePath = path.join(serverPath, file);
+        if (await fs.pathExists(filePath)) {
+          foundFiles.push(file);
+        }
+      }
+
+      // If we found minecraft files in root, move them to mc-data
+      if (foundFiles.length > 0) {
+        this.logger.log(`Detected ${foundFiles.length} minecraft files in root directory. Migrating to mc-data...`);
+
+        const entries = await fs.readdir(serverPath, { withFileTypes: true });
+        for (const entry of entries) {
+          // Skip mc-data folder itself and docker-compose.yml
+          if (entry.name === 'mc-data' || entry.name === 'docker-compose.yml' || entry.name === 'backups' || entry.name === 'modpacks') {
+            continue;
+          }
+
+          const sourcePath = path.join(serverPath, entry.name);
+          const destPath = path.join(mcDataPath, entry.name);
+
+          await fs.move(sourcePath, destPath, { overwrite: false });
+          this.logger.log(`Migrated: ${entry.name} -> mc-data/${entry.name}`);
+        }
+
+        this.logger.log(`Successfully migrated server data from root to mc-data folder`);
+      }
+    } catch (error) {
+      this.logger.warn('Error during misplaced data detection/migration', error);
+      // Don't throw - let server creation continue
+    }
   }
 
   async updateServerConfig(id: string, config: Partial<ServerConfig>): Promise<ServerConfig | null> {

@@ -108,11 +108,7 @@ export class ServerManagementService {
     }
   }
 
-  private async sendDiscordNotification(
-    type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning',
-    serverName: string,
-    details?: { port?: string; players?: string; version?: string; reason?: string },
-  ): Promise<void> {
+  private async sendDiscordNotification(type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning', serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
       const { webhook, lang } = await this.getUserSettings();
       if (webhook) {
@@ -129,10 +125,19 @@ export class ServerManagementService {
     }
 
     const { stdout } = await execAsync(DOCKER_COMMANDS.PS_FILTER(serverId));
-    if (stdout.trim()) return stdout.trim();
+    if (stdout.trim()) {
+      const containerIds = stdout
+        .trim()
+        .split('\n')
+        .filter((id) => id.trim());
+      if (containerIds.length > 1) {
+        this.logger.warn(`Multiple exact matches found for server "${serverId}". Using first: ${containerIds[0]}. ` + `Found: ${containerIds.join(', ')}`);
+      }
+      return containerIds[0];
+    }
 
-    const { stdout: partialMatch } = await execAsync(DOCKER_COMMANDS.PS_PARTIAL(serverId));
-    return partialMatch.trim();
+    this.logger.debug(`No container found with exact name matching "${serverId}"`);
+    return '';
   }
 
   async restartServer(serverId: string): Promise<boolean> {
@@ -246,10 +251,13 @@ export class ServerManagementService {
       }));
 
       const statusResults = await Promise.all(statusPromises);
-      return statusResults.reduce((acc, { serverId, status }) => {
-        acc[serverId] = status;
-        return acc;
-      }, {} as Record<string, ServerStatus>);
+      return statusResults.reduce(
+        (acc, { serverId, status }) => {
+          acc[serverId] = status;
+          return acc;
+        },
+        {} as Record<string, ServerStatus>,
+      );
     } catch (error) {
       this.logger.error('Error obtaining all servers status', error);
       return {};
@@ -545,7 +553,7 @@ export class ServerManagementService {
 
       let lastTimestamp: string | undefined;
       if (logs) {
-        const lines = logs.split('\n').filter(line => line.trim());
+        const lines = logs.split('\n').filter((line) => line.trim());
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
           const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
@@ -580,10 +588,7 @@ export class ServerManagementService {
     }
   }
 
-  async getServerLogsSince(
-    serverId: string,
-    timestamp: string,
-  ): Promise<ServerLogsResponse> {
+  async getServerLogsSince(serverId: string, timestamp: string): Promise<ServerLogsResponse> {
     try {
       if (!this.validateServerId(serverId)) {
         return {
@@ -641,12 +646,7 @@ export class ServerManagementService {
     }
   }
 
-  async executeCommand(
-    serverId: string,
-    command: string,
-    rconPort: string,
-    rconPassword?: string,
-  ): Promise<CommandExecutionResponse> {
+  async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
     try {
       if (!this.validateServerId(serverId)) {
         return { success: false, output: 'Invalid server ID' };
@@ -661,9 +661,7 @@ export class ServerManagementService {
         return { success: false, output: 'Container not found or not running' };
       }
 
-      const { stdout, stderr } = await execAsync(
-        DOCKER_COMMANDS.EXEC_RCON(containerId, rconPort, rconPassword || '', command),
-      );
+      const { stdout, stderr } = await execAsync(DOCKER_COMMANDS.EXEC_RCON(containerId, rconPort, rconPassword || '', command));
 
       if (stderr) {
         this.logger.warn(`Command execution error on ${serverId}: ${stderr}`);
@@ -689,6 +687,14 @@ export class ServerManagementService {
       if (!(await fs.pathExists(dockerComposePath))) {
         this.logger.error(`Docker compose file does not exist for server ${serverId}`);
         return false;
+      }
+
+      const mcDataPath = this.getMcDataPath(serverId);
+      if (await fs.pathExists(mcDataPath)) {
+        const entries = await fs.readdir(mcDataPath);
+        if (entries.length === 0) {
+          this.logger.warn(`Server ${serverId}: mc-data folder is empty. The server will generate a new world. ` + `If you uploaded existing server data, make sure it's placed in servers/${serverId}/mc-data/`);
+        }
       }
 
       const composeDir = path.dirname(dockerComposePath);
