@@ -49,14 +49,12 @@ services:
     restart: always
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     ports:
-      - "${FILEBROWSER_PORT:-8080}:8080"
+      - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/data
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
-    environment:
-      - FB_BASEURL=/
+      - ${BASE_DIR:-$PWD}/servers:/srv
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
     restart: always
 ```
 
@@ -245,18 +243,17 @@ services:
     restart: always
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     expose:
-      - 8080
+      - 80
     environment:
       - VIRTUAL_HOST=files.yourdomain.com
-      - VIRTUAL_PORT=8080
+      - VIRTUAL_PORT=80
       - LETSENCRYPT_HOST=files.yourdomain.com
       - LETSENCRYPT_EMAIL=your-email@example.com
-      - FB_BASEURL=/
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/data
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
+      - ${BASE_DIR:-$PWD}/servers:/srv
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
     restart: always
 ```
 
@@ -321,9 +318,9 @@ npm run dev
 ```bash
 docker run -d \
   --name filebrowser \
-  -p 8080:8080 \
-  -v $(pwd)/servers:/data \
-  hurlenko/filebrowser
+  -p 8080:80 \
+  -v $(pwd)/servers:/srv \
+  filebrowser/filebrowser:latest
 ```
 
 Now you can access:
@@ -419,7 +416,7 @@ rm -rf servers/ filebrowser-data/ data/
 
 # Remove Docker images
 docker rmi ketbom/minepanel:latest
-docker rmi hurlenko/filebrowser
+docker rmi filebrowser/filebrowser:latest
 ```
 
 To keep your server data but stop the panel:

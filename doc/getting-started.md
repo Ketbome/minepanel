@@ -49,14 +49,12 @@ services:
     restart: always
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     ports:
-      - "${FILEBROWSER_PORT:-8080}:8080"
+      - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/data
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
-    environment:
-      - FB_BASEURL=/
+      - ${BASE_DIR:-$PWD}/servers:/srv
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
     restart: always
 ```
 
@@ -121,29 +119,23 @@ Change the password after first login. See [Configuration](/configuration#change
 
 ### Filebrowser
 
-Check the logs for the auto-generated password:
+Default credentials:
 
-```bash
-docker compose logs filebrowser
-```
+- Username: `admin`
+- Password: `admin`
 
-Look for a line like:
+::: warning Change the password!
+After first login, go to Settings (gear icon) → User Management → Edit admin user and change the password.
+:::
 
-```
-filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / <generated-password>
-```
+**To access:** http://localhost:8080
 
-1. Copy the password
-2. Login to http://localhost:8080
-3. Change it
-
-::: tip Lost it?
+::: tip Reset password
 
 ```bash
 docker compose down
-rm -rf filebrowser-data/filebrowser.db
+rm -rf filebrowser-data
 docker compose up -d
-docker compose logs filebrowser
 ```
 
 :::

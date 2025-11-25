@@ -365,90 +365,59 @@ To avoid getting locked out:
 
 ## FileBrowser Password {#filebrowser-password}
 
-FileBrowser is the integrated file manager that allows you to browse and edit your Minecraft server files. On first run, it generates a random admin password.
+FileBrowser is the integrated file manager that allows you to browse and edit your Minecraft server files.
 
-### Getting the Password
+### Default Credentials
 
-When you first start FileBrowser, it generates a random admin password. To find it:
+FileBrowser starts with default credentials:
 
-**Step 1: Check the logs**
+- **Username:** `admin`
+- **Password:** `admin`
 
-```bash
-docker compose logs filebrowser
-```
+::: danger Change immediately!
+The default password is **NOT secure**. Change it immediately after first login!
+:::
 
-**Step 2: Look for the password**
+### Changing the Password
 
-You'll see something like:
-
-```
-filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / a1b2c3d4e5f6
-```
-
-**Step 3: Login and change it**
+**Step 1: Login**
 
 1. Go to http://localhost:8080 (or your configured FileBrowser URL)
-2. Login with:
-   - Username: `admin`
-   - Password: `<the-generated-password>`
-3. Click on **Settings** → **User Management** → **admin**
-4. Change the password to something memorable and secure
+2. Login with `admin` / `admin`
 
-### Lost the Password?
+**Step 2: Change password**
 
-If you lost the FileBrowser password and can't see it in the logs:
+1. Click on **Settings** (gear icon in top right)
+2. Go to **User Management**
+3. Click on the **admin** user
+4. Enter a new secure password
+5. Click **Update**
 
-**Option 1: Check existing logs (if container hasn't restarted)**
+### Reset Password
 
-```bash
-# View all logs (including old ones)
-docker compose logs filebrowser --tail 1000
-```
-
-**Option 2: Reset FileBrowser (recommended)**
+If you forgot your FileBrowser password:
 
 ```bash
 # Stop services
 docker compose down
 
-# Delete FileBrowser database
+# Delete FileBrowser database (this will reset to admin/admin)
 rm -rf filebrowser-data/
 
-# Start services (will create new database with new password)
+# Start services
 docker compose up -d
-
-# Check logs for new password
-docker compose logs filebrowser
 ```
 
 ::: warning
-This will reset FileBrowser settings but will NOT delete your server files.
+This will reset FileBrowser settings to defaults but will NOT delete your server files.
 :::
-
-**Option 3: Manual database reset (advanced)**
-
-If you only want to reset the password without losing settings:
-
-```bash
-# Stop FileBrowser
-docker compose stop filebrowser
-
-# Delete the database file
-rm filebrowser-data/database.db
-
-# Start FileBrowser
-docker compose start filebrowser
-
-# Check logs for new password
-docker compose logs filebrowser
-```
 
 ### Security Tips
 
 1. **Change the default password** immediately after first login
 2. **Use a strong password** - it protects all your server files
 3. **Don't share FileBrowser URL publicly** - it has full file system access
-4. **Save the password** in a password manager
+4. **Consider using a reverse proxy with SSL** for production
 5. **Regular backups** of `filebrowser-data/` directory
 
 ::: info
