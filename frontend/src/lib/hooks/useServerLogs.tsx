@@ -50,10 +50,12 @@ export function useServerLogs(serverId: string) {
   }, []);
 
   const cleanLogContent = useCallback((line: string): string => {
+    // Solo limpiar caracteres de control innecesarios, mantener códigos ANSI
     let cleaned = line.replace(/>\[2K/g, "");
+    cleaned = cleaned.replace(/\r/g, "");
+
+    // Remover timestamp Docker al inicio
     cleaned = cleaned.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
-    cleaned = cleaned.replace(/^\[[\d:]+\]\s*/, "");
-    cleaned = cleaned.replace(/^\[.+?\]:\s*/, "");
 
     return cleaned.trim();
   }, []);

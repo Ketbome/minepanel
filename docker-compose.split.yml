@@ -35,14 +35,12 @@ services:
       - minepanel-network
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     ports:
-      - "${FILEBROWSER_PORT:-8080}:8080"
+      - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/data
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
-    environment:
-      - FB_BASEURL=/
+      - ${BASE_DIR:-$PWD}/servers:/srv
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
     restart: always
     networks:
       - minepanel-network
