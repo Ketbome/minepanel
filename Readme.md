@@ -71,14 +71,12 @@ services:
     restart: always
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     ports:
-      - "${FILEBROWSER_PORT:-8080}:8080"
+      - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/data
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/config
-    environment:
-      - FB_BASEURL=/
+      - ${BASE_DIR:-$PWD}/servers:/srv
+      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
     restart: always
 ```
 
@@ -149,12 +147,12 @@ services:
     # ... rest of config
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: filebrowser/filebrowser:latest
     expose:
-      - 8080
+      - 80
     environment:
       - VIRTUAL_HOST=files.yourdomain.com
-      - VIRTUAL_PORT=8080
+      - VIRTUAL_PORT=80
       - LETSENCRYPT_HOST=files.yourdomain.com
       - LETSENCRYPT_EMAIL=your-email@example.com
     # ... rest of config
@@ -240,31 +238,23 @@ Now when a Minecraft server is running, the panel will show both:
 
 ### Filebrowser setup
 
-First time running Filebrowser, check the logs for the auto-generated password:
+Default credentials:
 
-```bash
-docker compose logs filebrowser
-```
+- Username: `admin`
+- Password: `admin`
 
-Look for:
+**Important:** Change the password after first login!
 
-```
-filebrowser  | 2024/10/24 12:34:56 Admin credentials: admin / <generated-password>
-```
+1. Login to http://localhost:8080
+2. Go to Settings (gear icon) → User Management
+3. Click on admin user and change the password
 
-Steps:
-
-1. Copy that password
-2. Login to http://localhost:8080 with `admin` and that password
-3. Change it to something secure
-
-**Lost the logs?** Delete the filebrowser database and restart:
+**Reset password:** If you forget it, delete the database and restart:
 
 ```bash
 docker compose down
-rm -rf filebrowser-data/filebrowser.db
+rm -rf filebrowser-data
 docker compose up -d
-docker compose logs filebrowser
 ```
 
 ## Database
