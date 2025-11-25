@@ -5,6 +5,7 @@ import { Terminal, RefreshCcw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { FC } from "react";
+import { AnsiText } from "@/lib/utils/ansiParser";
 
 interface LogsDisplayProps {
   logsContainerRef: React.RefObject<HTMLPreElement>;
@@ -33,12 +34,14 @@ export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLo
               {filteredLogEntries.map((entry: any) => (
                 <div key={entry.id} className={`log-entry mb-1 p-1 rounded ${entry.level === "error" ? "bg-red-900/20 border-l-2 border-red-500" : entry.level === "warn" ? "bg-yellow-900/20 border-l-2 border-yellow-500" : entry.level === "debug" ? "bg-gray-800/20" : ""}`}>
                   <span className={`level-indicator mr-2 px-1 rounded text-xs ${entry.level === "error" ? "bg-red-600 text-white" : entry.level === "warn" ? "bg-yellow-600 text-white" : entry.level === "info" ? "bg-blue-600 text-white" : entry.level === "debug" ? "bg-gray-600 text-white" : "bg-gray-500 text-white"}`}>{entry.level.toUpperCase()}</span>
-                  {entry.content}
+                  <AnsiText text={entry.content} />
                 </div>
               ))}
             </div>
           ) : logs ? (
-            <div className="minecraft-log">{logs}</div>
+            <div className="minecraft-log">
+              <AnsiText text={logs} />
+            </div>
           ) : loading ? (
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-3">
