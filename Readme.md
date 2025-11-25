@@ -1,6 +1,6 @@
 # Minepanel
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)
 ![Made with NestJS](https://img.shields.io/badge/Backend-NestJS-red)
 ![Made with Next.js](https://img.shields.io/badge/Frontend-Next.js-black)
 ![Docker Hub](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker)
@@ -395,7 +395,9 @@ Check [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-MIT - do whatever you want with it.
+**Creative Commons BY-NC-SA 4.0** - You can use, modify, and share freely, but **NOT for commercial use** without authorization.
+
+For commercial use (sales, paid services, commercial hosting), contact: pablo.moraga.san@gmail.com
 
 ## Contact
 
