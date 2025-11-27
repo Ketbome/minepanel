@@ -179,6 +179,7 @@ export class DockerComposeService {
         execDirectly: env.EXEC_DIRECTLY === 'true',
         envVars: '',
         extraPorts: extraPorts,
+        forgeBuild: '',
       };
 
       this.parseServerTypeSpecificConfig(serverConfig, env);
@@ -191,6 +192,11 @@ export class DockerComposeService {
 
   private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
     const typeHandlers = {
+      FORGE: () => {
+        if (env.FORGE_VERSION) {
+          serverConfig.forgeBuild = env.FORGE_VERSION;
+        }
+      },
       AUTO_CURSEFORGE: () => {
         let cfMethod: 'url' | 'file' | 'slug' = 'url';
         if (env.CF_SERVER_MOD) {
@@ -402,6 +408,8 @@ export class DockerComposeService {
       foliaDownloadUrl: '',
 
       skipDownloadDefaults: false,
+
+      forgeBuild: '',
     };
   }
 
