@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { LogOut, ChevronDown } from "lucide-react";
-import { logout } from "@/services/auth/auth.service";
 import { motion, AnimatePresence } from "framer-motion";
 import { LanguageSwitcher } from "../ui/language-switcher";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useAuthStore } from "@/lib/store";
 
 export function DashboardHeader() {
   const { t } = useLanguage();
-  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +28,6 @@ export function DashboardHeader() {
 
   const handleLogout = () => {
     logout();
-    router.push("/");
   };
 
   return (
