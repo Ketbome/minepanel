@@ -10,12 +10,8 @@ import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashbo
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-
-interface SidebarProps {
-  readonly isCollapsed: boolean;
-  readonly onToggleCollapse: () => void;
-}
 
 type ServerInfo = {
   id: string;
@@ -24,7 +20,10 @@ type ServerInfo = {
   port?: string;
 };
 
-export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar() {
+  const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const isCollapsed = isSidebarCollapsed;
   const { t } = useLanguage();
   const pathname = usePathname();
   const [servers, setServers] = useState<ServerInfo[]>([]);
@@ -206,7 +205,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             )}
           </AnimatePresence>
 
-          <Button variant="ghost" size="sm" onClick={onToggleCollapse} className="p-2 hover:bg-gray-800/60 text-gray-400 hover:text-white">
+          <Button variant="ghost" size="sm" onClick={toggleSidebar} className="p-2 hover:bg-gray-800/60 text-gray-400 hover:text-white">
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </Button>
         </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated } from "@/services/auth/auth.service";
 import { Sidebar } from "@/components/organisms/Sidebar";
 import { DashboardHeader } from "@/components/organisms/DashboardHeader";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useAuthStore, useUIStore } from "@/lib/store";
 import { motion } from "framer-motion";
 
 interface DashboardShellProps {
@@ -15,32 +15,21 @@ interface DashboardShellProps {
 export function DashboardShell({ children }: DashboardShellProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const { isSidebarCollapsed, isHydrated, setHydrated } = useUIStore();
 
   useEffect(() => {
-    setIsHydrated(true);
+    initialize();
+    setHydrated(true);
+  }, [initialize, setHydrated]);
 
-    const checkAuth = () => {
-      try {
-        if (!isAuthenticated()) {
-          router.push("/");
-        } else {
-          setIsAuthChecked(true);
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        router.push("/");
-      }
-    };
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
-    const timeoutId = setTimeout(checkAuth, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [router]);
-
-  if (!isHydrated || !isAuthChecked) {
+  if (!isHydrated || isLoading) {
     return (
       <div className="flex min-h-screen bg-gray-900 items-center justify-center">
         <div className="text-center">
@@ -51,11 +40,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
     );
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen bg-[url('/images/background.webp')] bg-cover bg-fixed bg-center relative">
       <div className="absolute inset-0 bg-black/60"></div>
 
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+      <Sidebar />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"}`}>
         <DashboardHeader />
