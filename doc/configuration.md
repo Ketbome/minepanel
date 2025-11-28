@@ -402,7 +402,8 @@ If you forgot your FileBrowser password:
 docker compose down
 
 # Delete FileBrowser database (this will reset to admin/admin)
-rm -rf filebrowser-data/
+docker compose down
+docker volume rm minepanel_filebrowser-db
 
 # Start services
 docker compose up -d
@@ -418,7 +419,7 @@ This will reset FileBrowser settings to defaults but will NOT delete your server
 2. **Use a strong password** - it protects all your server files
 3. **Don't share FileBrowser URL publicly** - it has full file system access
 4. **Consider using a reverse proxy with SSL** for production
-5. **Regular backups** of `filebrowser-data/` directory
+5. **Regular backups** of the `filebrowser-db` Docker volume
 
 ::: info
 FileBrowser login is independent from Minepanel login. They use separate authentication systems.
@@ -620,8 +621,8 @@ docker compose up -d
 
 ```bash
 docker compose down
-rm -rf servers/ filebrowser-data/ data/
-mkdir -p servers filebrowser-data data
+rm -rf servers/ data/
+docker volume rm minepanel_filebrowser-db
 docker compose up -d
 ```
 
