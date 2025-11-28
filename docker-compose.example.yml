@@ -39,5 +39,8 @@ services:
       - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/srv
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
+      - filebrowser-db:/database
     restart: always
+
+volumes:
+  filebrowser-db:
