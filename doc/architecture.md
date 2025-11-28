@@ -487,8 +487,8 @@ minepanel/
 │   └── backups/                # Backup storage
 │       ├── server-1/
 │       └── server-2/
-└── filebrowser-data/           # Filebrowser config
-    └── filebrowser.db
+└── Docker volumes:
+    └── filebrowser-db/         # Filebrowser database (managed by Docker)
 ```
 
 ### Volume Strategy

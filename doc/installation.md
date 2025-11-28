@@ -50,24 +50,29 @@ services:
 
   filebrowser:
     image: filebrowser/filebrowser:latest
+    command: --database /database/filebrowser.db
     ports:
       - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/srv
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
+      - filebrowser-db:/database
     restart: always
+
+volumes:
+  filebrowser-db:
 ```
+
+::: info Automatic Database Creation
+Filebrowser automatically creates its database file on first startup. The `command` parameter ensures the database is created in the correct location within the Docker volume.
+:::
 
 ### Step 2: Launch
 
 ```bash
-# Create required directories
-mkdir -p servers filebrowser-data data
-
 # Generate JWT secret
 export JWT_SECRET=$(openssl rand -base64 32)
 
-# Start services
+# Start services (Docker creates all volumes automatically)
 docker compose up -d
 ```
 
@@ -94,13 +99,10 @@ Clone the repository for the latest development version or to modify the code.
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
 
-# Create required directories
-mkdir -p servers filebrowser-data data
-
 # Generate JWT secret (optional, can use .env)
 export JWT_SECRET=$(openssl rand -base64 32)
 
-# Start services
+# Start services (Docker creates volumes automatically)
 docker compose up -d
 ```
 
@@ -130,13 +132,10 @@ Use this method if you want to:
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
 
-# Create required directories
-mkdir -p servers filebrowser-data data
-
 # Generate JWT secret
 export JWT_SECRET=$(openssl rand -base64 32)
 
-# Start services
+# Start services (Docker creates volumes automatically)
 docker compose -f docker-compose.split.yml up -d
 ```
 
@@ -244,6 +243,7 @@ services:
 
   filebrowser:
     image: filebrowser/filebrowser:latest
+    command: --database /database/filebrowser.db
     expose:
       - 80
     environment:
@@ -253,8 +253,11 @@ services:
       - LETSENCRYPT_EMAIL=your-email@example.com
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/srv
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
+      - filebrowser-db:/database
     restart: always
+
+volumes:
+  filebrowser-db:
 ```
 
 ::: warning DNS Configuration
@@ -320,7 +323,8 @@ docker run -d \
   --name filebrowser \
   -p 8080:80 \
   -v $(pwd)/servers:/srv \
-  filebrowser/filebrowser:latest
+  -v filebrowser-db:/database \
+  filebrowser/filebrowser:latest --database /database/filebrowser.db
 ```
 
 Now you can access:
@@ -412,7 +416,8 @@ To completely remove Minepanel:
 docker compose down
 
 # Remove all data (WARNING: This deletes everything!)
-rm -rf servers/ filebrowser-data/ data/
+rm -rf servers/ data/
+docker volume rm minepanel_filebrowser-db
 
 # Remove Docker images
 docker rmi ketbom/minepanel:latest

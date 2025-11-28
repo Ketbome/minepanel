@@ -72,18 +72,22 @@ services:
 
   filebrowser:
     image: filebrowser/filebrowser:latest
+    command: --database /database/filebrowser.db
     ports:
       - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/srv
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
+      - filebrowser-db:/database
     restart: always
+
+volumes:
+  filebrowser-db:
 ```
 
 Then:
 
 ```bash
-mkdir -p servers filebrowser-data data
+# Start the panel (Docker will create everything automatically)
 docker compose up -d
 ```
 
@@ -92,7 +96,6 @@ docker compose up -d
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
-mkdir -p servers filebrowser-data data
 docker compose up -d
 ```
 
@@ -103,7 +106,6 @@ If you're using **nginx-proxy** or **Traefik** with automatic SSL, there's a spl
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
-mkdir -p servers filebrowser-data data
 docker compose -f docker-compose.split.yml up -d
 ```
 
@@ -253,7 +255,7 @@ Default credentials:
 
 ```bash
 docker compose down
-rm -rf filebrowser-data
+docker volume rm minepanel_filebrowser-db  # Remove filebrowser volume
 docker compose up -d
 ```
 

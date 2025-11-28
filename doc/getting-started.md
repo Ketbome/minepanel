@@ -50,24 +50,25 @@ services:
 
   filebrowser:
     image: filebrowser/filebrowser:latest
+    command: --database /database/filebrowser.db
     ports:
       - "${FILEBROWSER_PORT:-8080}:80"
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/srv
-      - ${BASE_DIR:-$PWD}/filebrowser-data:/database
+      - filebrowser-db:/database
     restart: always
+
+volumes:
+  filebrowser-db:
 ```
 
 ### 2. Launch
 
 ```bash
-# Create required directories
-mkdir -p servers filebrowser-data data
-
 # Generate JWT secret
 export JWT_SECRET=$(openssl rand -base64 32)
 
-# Start services
+# Start services (volumes are created automatically)
 docker compose up -d
 ```
 
@@ -134,7 +135,7 @@ After first login, go to Settings (gear icon) → User Management → Edit admin
 
 ```bash
 docker compose down
-rm -rf filebrowser-data
+docker volume rm minepanel_filebrowser-db
 docker compose up -d
 ```
 

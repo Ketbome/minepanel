@@ -433,7 +433,7 @@ sudo systemctl restart docker
 ```bash
 # Delete database to generate new password
 docker compose down
-rm -rf filebrowser-data/filebrowser.db
+docker volume rm minepanel_filebrowser-db
 docker compose up -d
 
 # Check logs for new password
