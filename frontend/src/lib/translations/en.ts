@@ -796,6 +796,21 @@ export const en = {
   fabricLauncherVersion: "Fabric Launcher Version",
   fabricLauncherDesc: "Specific Fabric launcher version (leave empty for latest)",
 
+  // Modrinth Configuration
+  modrinthProjects: "Modrinth Projects",
+  modrinthProjectsHelp: "Comma or newline separated list of project slugs/IDs. Supports version and release type filters (e.g., fabric-api:0.119.2, cloth-config:beta, datapack:terralith)",
+  modrinthProjectsDesc: "Auto-download mods, plugins, and datapacks from Modrinth",
+  modrinthDependencies: "Download Dependencies",
+  modrinthDependenciesHelp: "Whether to download required and/or optional dependencies",
+  modrinthVersionType: "Default Version Type",
+  modrinthVersionTypeHelp: "The version type to use when selecting the newest version (release, beta, or alpha)",
+  dependenciesNone: "None",
+  dependenciesRequired: "Required",
+  dependenciesOptional: "Required + Optional",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
   manualCurseForgeDeprecated: 'This manual method for CurseForge is deprecated. We recommend using "CurseForge Modpack" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.',

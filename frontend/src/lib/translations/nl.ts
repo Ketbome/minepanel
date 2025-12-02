@@ -812,6 +812,21 @@ export const nl: Record<TranslationKey, string> = {
   fabricLauncherVersion: "Fabric Launcher Versie",
   fabricLauncherDesc: "Specifieke Fabric launcher versie (leeg laten voor nieuwste)",
 
+  // Modrinth Configuration
+  modrinthProjects: "Modrinth Projecten",
+  modrinthProjectsHelp: "Komma of nieuwe regel gescheiden lijst van project slugs/IDs. Ondersteunt versie en release type filters (bijv: fabric-api:0.119.2, cloth-config:beta, datapack:terralith)",
+  modrinthProjectsDesc: "Automatisch downloaden van mods, plugins en datapacks van Modrinth",
+  modrinthDependencies: "Download Afhankelijkheden",
+  modrinthDependenciesHelp: "Of vereiste en/of optionele afhankelijkheden moeten worden gedownload",
+  modrinthVersionType: "Standaard Versie Type",
+  modrinthVersionTypeHelp: "Het versietype om te gebruiken bij het selecteren van de nieuwste versie (release, beta of alpha)",
+  dependenciesNone: "Geen",
+  dependenciesRequired: "Vereist",
+  dependenciesOptional: "Vereist + Optioneel",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",
   manualCurseForgeDeprecated: 'Deze handmatige methode voor CurseForge is verouderd. We raden aan "CurseForge Modpack" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.',

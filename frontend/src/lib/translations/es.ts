@@ -798,6 +798,21 @@ export const es: Record<TranslationKey, string> = {
   fabricLauncherVersion: "Versión del Launcher de Fabric",
   fabricLauncherDesc: "Versión específica del launcher de Fabric (dejar vacío para usar la última)",
 
+  // Configuración de Modrinth
+  modrinthProjects: "Proyectos de Modrinth",
+  modrinthProjectsHelp: "Lista separada por comas o saltos de línea de slugs/IDs de proyectos. Soporta filtros de versión y tipo de release (ej: fabric-api:0.119.2, cloth-config:beta, datapack:terralith)",
+  modrinthProjectsDesc: "Descarga automática de mods, plugins y datapacks desde Modrinth",
+  modrinthDependencies: "Descargar Dependencias",
+  modrinthDependenciesHelp: "Si se deben descargar dependencias requeridas y/u opcionales",
+  modrinthVersionType: "Tipo de Versión por Defecto",
+  modrinthVersionTypeHelp: "El tipo de versión a usar al seleccionar la más reciente (release, beta o alpha)",
+  dependenciesNone: "Ninguna",
+  dependenciesRequired: "Requeridas",
+  dependenciesOptional: "Requeridas + Opcionales",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
   manualCurseForgeDeprecated: 'Este método manual para CurseForge está obsoleto. Se recomienda usar "CurseForge Modpack" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.',

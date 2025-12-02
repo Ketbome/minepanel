@@ -429,7 +429,102 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
             </div>
+          </>
+        )}
 
+        {(isForge || isFabric || isCurseForge) && (
+          <>
+            <div className="space-y-2 p-4 rounded-md bg-blue-900/10 border-2 border-blue-500/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="modrinthProjects" className="text-blue-400 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/enchanted-book.webp" alt="Modrinth" width={16} height={16} />
+                  {t("modrinthProjects")}
+                </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-blue-700/30">
+                        <HelpCircle className="h-4 w-4 text-blue-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t("modrinthProjectsHelp")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Textarea id="modrinthProjects" value={config.modrinthProjects || ""} onChange={(e) => updateConfig("modrinthProjects", e.target.value)} placeholder="fabric-api, cloth-config, datapack:terralith" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-blue-500/50 focus:ring-blue-500/30" />
+              <p className="text-xs text-gray-400">{t("modrinthProjectsDesc")}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="modrinthDownloadDependencies" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                    <Image src="/images/hopper.webp" alt="Dependencies" width={16} height={16} />
+                    {t("modrinthDependencies")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("modrinthDependenciesHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Select value={config.modrinthDownloadDependencies || "none"} onValueChange={(value: "none" | "required" | "optional") => updateConfig("modrinthDownloadDependencies", value)}>
+                  <SelectTrigger className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-blue-500/30">
+                    <SelectValue placeholder="none" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <SelectItem value="none">{t("dependenciesNone")}</SelectItem>
+                    <SelectItem value="required">{t("dependenciesRequired")}</SelectItem>
+                    <SelectItem value="optional">{t("dependenciesOptional")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="modrinthDefaultVersionType" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                    <Image src="/images/compass.webp" alt="Version Type" width={16} height={16} />
+                    {t("modrinthVersionType")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("modrinthVersionTypeHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Select value={config.modrinthDefaultVersionType || "release"} onValueChange={(value: "release" | "beta" | "alpha") => updateConfig("modrinthDefaultVersionType", value)}>
+                  <SelectTrigger className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:ring-blue-500/30">
+                    <SelectValue placeholder="release" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <SelectItem value="release">{t("versionRelease")}</SelectItem>
+                    <SelectItem value="beta">{t("versionBeta")}</SelectItem>
+                    <SelectItem value="alpha">{t("versionAlpha")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        )}
+
+        {isCurseForge && (
+          <>
             <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">
               <AccordionItem value="advanced" className="border-b-0">
                 <AccordionTrigger className="px-4 py-3 text-gray-200 font-minecraft text-sm hover:bg-gray-700/30 rounded-t-md">

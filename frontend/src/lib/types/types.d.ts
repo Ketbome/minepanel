@@ -120,6 +120,12 @@ export interface ServerConfig {
   fabricLauncherUrl?: string;
   fabricForceReinstall?: boolean;
 
+  // Modrinth specific
+  modrinthProjects?: string;
+  modrinthDownloadDependencies?: "none" | "required" | "optional";
+  modrinthDefaultVersionType?: "release" | "beta" | "alpha";
+  modrinthLoader?: string;
+
   // CurseForge specific
   cfMethod?: "url" | "slug" | "file";
   cfUrl?: string;
