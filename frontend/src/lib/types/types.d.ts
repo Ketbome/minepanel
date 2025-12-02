@@ -120,6 +120,7 @@ export interface ServerConfig {
   cfFile?: string;
   cfApiKey?: string;
   cfSync?: boolean;
+  cfFiles?: string;
   cfForceInclude?: string;
   cfExclude?: string;
   cfFilenameMatcher?: string;

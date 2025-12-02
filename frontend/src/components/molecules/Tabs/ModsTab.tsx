@@ -483,6 +483,29 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
+                      <Label htmlFor="cfFiles" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                        <Image src="/images/ender_chest.webp" alt="Incluir" width={16} height={16} />
+                        {t("curseforgeFiles")}
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                              <HelpCircle className="h-4 w-4 text-gray-400" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                            <p>{t("curseforgeFilesHelp")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="distant-horizons, chunky" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                    <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
                       <Label htmlFor="cfForceInclude" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
                         <Image src="/images/chest.webp" alt="Incluir" width={16} height={16} />
                         {t("forceIncludeMods")}
@@ -500,7 +523,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <Textarea id="cfForceInclude" value={config.cfForceInclude} onChange={(e) => updateConfig("cfForceInclude", e.target.value)} placeholder="699872,228404" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                    <Textarea id="cfForceInclude" value={config.cfForceInclude} onChange={(e) => updateConfig("cfForceInclude", e.target.value)} placeholder="699872,Clumps,228404" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
                     <p className="text-xs text-gray-400">{t("forceIncludeModsDesc")}</p>
                   </div>
 
@@ -523,7 +546,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <Textarea id="cfExclude" value={config.cfExclude} onChange={(e) => updateConfig("cfExclude", e.target.value)} placeholder="699872,228404" className="min-h-20 text-gray-200 bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                    <Textarea id="cfExclude" value={config.cfExclude} onChange={(e) => updateConfig("cfExclude", e.target.value)} placeholder="699872,Clumps,228404" className="min-h-20 text-gray-200 bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
                     <p className="text-xs text-gray-400">{t("excludeModsDesc")}</p>
                   </div>
                 </AccordionContent>
