@@ -1,753 +1,499 @@
-# Frequently Asked Questions (FAQ)
+# FAQ - Frequently Asked Questions
 
-Common questions and answers about Minepanel.
+Quick answers to common questions. For detailed guides, see the linked documentation.
 
-## General Questions
+## 🚀 Getting Started
 
 ### What is Minepanel?
 
-Minepanel is a modern web-based control panel for managing multiple Minecraft servers using Docker containers. It provides an easy-to-use interface for creating, configuring, and monitoring Minecraft servers without needing command-line knowledge.
+A modern web-based control panel for managing multiple Minecraft servers using Docker. Easy to use, no command-line knowledge required.
 
-### Is Minepanel free?
+### Is it free?
 
-Yes! Minepanel is completely free and open-source under the MIT license. You can use it for personal or commercial purposes without any restrictions.
+Yes! Completely free and open-source (MIT license).
 
-### What makes Minepanel different from other panels?
+### What are the requirements?
 
-- **One-command installation** - Get started in seconds
-- **Modern UI** - Built with Next.js for a smooth experience
-- **Docker native** - Each server runs isolated in its own container
-- **Multi-architecture** - Works on x86, ARM, Raspberry Pi, and Apple Silicon
-- **Easy to use** - No complex configurations needed
+- **Minimum**: 2GB RAM, 2 CPU cores, 10GB disk
+- **Recommended**: 4GB+ RAM, 4+ CPU cores, 50GB+ SSD
+- Docker 20.10+ and Docker Compose v2.0+
 
-### Who should use Minepanel?
+**→ Full requirements:** [Installation Guide](/installation)
 
-Minepanel is perfect for:
+### What platforms are supported?
 
-- Server admins managing multiple Minecraft servers
-- Players who want to easily run servers for friends
-- Developers testing mods/plugins
-- Anyone tired of managing servers via terminal
+- ✅ Linux (Ubuntu, Debian, CentOS, Fedora, Arch)
+- ✅ Windows (with WSL2)
+- ✅ macOS (Intel & Apple Silicon)
+- ✅ Raspberry Pi (ARM64)
+- ✅ Any x86_64 or ARM64 system with Docker
 
----
-
-## Installation & Setup
-
-### What are the system requirements?
-
-**Minimum:**
-
-- 2GB RAM
-- 2 CPU cores
-- 10GB disk space
-- Docker 20.10+
-- Docker Compose v2.0+
-
-**Recommended:**
-
-- 4GB+ RAM (more for multiple servers)
-- 4+ CPU cores
-- 50GB+ SSD storage
-- Docker 24.0+
-
-### Can I run Minepanel on Windows?
-
-Yes! Use **Windows with WSL2** (Windows Subsystem for Linux):
-
-1. Install WSL2
-2. Install Docker Desktop for Windows
-3. Enable WSL2 integration in Docker Desktop
-4. Run Minepanel inside WSL2 (Ubuntu)
-
-::: tip
-Use WSL2's native filesystem for better performance: `/home/username/minepanel`
-:::
-
-### Can I run it on a Raspberry Pi?
-
-Yes! Minepanel supports ARM64 architecture. It works on:
-
-- Raspberry Pi 4 (4GB+ RAM recommended)
-- Raspberry Pi 5
-- Other ARM-based devices
-
-Docker automatically pulls the correct ARM image.
-
-### Does it work on macOS?
-
-Yes! Minepanel works on both Intel and Apple Silicon (M1/M2/M3/M4) Macs. Just install Docker Desktop for Mac and follow the standard installation.
-
-### Do I need to know Docker?
-
-No! Minepanel handles all Docker operations for you. However, basic Docker knowledge can help with troubleshooting.
-
-### How do I update Minepanel?
+### How do I install it?
 
 ```bash
-# Pull latest image
-docker pull ketbom/minepanel:latest
-
-# Recreate container
+git clone https://github.com/Ketbome/minepanel.git
+cd minepanel
 docker compose up -d
-
-# Clean old images
-docker image prune
 ```
 
-Your server data is preserved during updates.
+**→ Full guide:** [Installation Guide](/installation)
 
----
+### How do I update it?
 
-## Security
+```bash
+docker compose pull
+docker compose up -d
+```
 
-### How secure is Minepanel?
+Your data is preserved during updates.
 
-Minepanel implements several security measures:
-
-- bcrypt password hashing (12 rounds)
-- JWT token authentication
-- httpOnly cookies to prevent XSS
-- Input validation and sanitization
-- Docker container isolation
-
-### Should I expose Minepanel to the internet?
-
-**Not recommended without additional security!** If you must:
-
-- ✅ Use strong, unique passwords
-- ✅ Set up HTTPS/SSL with reverse proxy
-- ✅ Use Cloudflare Tunnel or VPN
-- ✅ Enable firewall rules
-- ✅ Keep Minepanel updated
-- ❌ Never expose with default credentials
-
-**Better option:** Use a VPN (WireGuard, Tailscale) for remote access.
-
-### Can I add multiple users?
-
-Not yet, but multi-user support is planned! Currently, Minepanel uses a single admin account.
-
-### Is the Docker socket access safe?
-
-Direct Docker socket access can be risky as it provides root-level access. Minepanel is designed with minimal privileges, but for maximum security, consider using a [Docker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
-
----
-
-## Server Management
-
-### How many servers can I run?
-
-As many as your hardware can support! Each server uses:
-
-- **Vanilla/Paper**: 1-2GB RAM, 1 CPU core
-- **Modded (light)**: 2-4GB RAM, 1-2 CPU cores
-- **Modded (heavy)**: 4-8GB RAM, 2-4 CPU cores
-
-**Example:** A server with 16GB RAM can comfortably run 4-6 Minecraft servers.
+## 🎮 Server Management
 
 ### What server types are supported?
 
-All major types:
+Vanilla, Fabric, Forge, Paper, Spigot, Bukkit, Purpur, Pufferfish, Folia, Leaf, and CurseForge modpacks.
 
-- Vanilla
-- Paper (recommended for survival)
-- Spigot
-- Purpur
-- Fabric
-- Forge
-- NeoForge
-- Quilt
-- Sponge
+**→ Details:** [Server Types Guide](/server-types)
 
-### Can I install modpacks?
+### Can I run multiple servers?
 
-Yes! Minepanel supports **CurseForge modpacks**:
+Yes! Run as many as your hardware allows. Each server is isolated in its own Docker container.
 
-1. Get the modpack URL from CurseForge
-2. Paste it when creating a server
-3. Minepanel downloads and installs everything automatically
+### How do I add mods?
 
-### Can I upload my own mods/plugins?
+Use Modrinth or CurseForge integration for automatic mod downloads and updates.
 
-Yes! Use the integrated **File Browser**:
+**→ Full guide:** [Mods & Plugins](/mods-plugins)
 
-1. Open Filebrowser (port 8080)
-2. Navigate to your server folder
-3. Go to `plugins/` (for plugins) or `mods/` (for mods)
-4. Upload your files
-5. Restart the server
+### Can I import existing servers?
 
-### How do I change server.properties?
-
-**Method 1 - Web Interface:**
-
-1. Click on your server
-2. Go to Settings tab
-3. Edit values in the form
-4. Save changes
-
-**Method 2 - File Browser:**
-
-1. Open Filebrowser (port 8080)
-2. Navigate to your server
-3. Edit `server.properties`
-4. Save and restart server
-
-### Can I migrate existing servers?
-
-Yes! Copy your existing server files to the `servers/` directory **inside the `mc-data` folder**:
-
-```bash
-servers/
-└── my-old-server/
-    └── mc-data/
-        ├── world/
-        ├── server.properties
-        ├── ops.json
-        ├── banned-players.json
-        ├── banned-ips.json
-        ├── whitelist.json
-        └── ...
-```
-
-**Important:** Minepanel uses a `mc-data` subfolder to organize server files. This differs from itzg/docker-minecraft-server's flat structure.
-
-**Migration steps:**
-
-1. **Choose a server ID/name** (e.g., `my-old-server`) - this will be used everywhere
-2. Create the server directory: `mkdir -p servers/my-old-server/mc-data`
-3. Copy your itzg server files into `mc-data/`:
-   ```bash
-   cp -r /path/to/old-server/* servers/my-old-server/mc-data/
-   ```
-4. **Create a server in Minepanel with EXACTLY the same name** (`my-old-server`)
-   - Minepanel will generate the docker-compose.yml automatically
-   - The `container_name` and `ID_MANAGER` will match your server ID
-5. Start the server - it will use your existing world and configs
-
-**Example of correct naming:**
-
-- Folder: `servers/test/`
-- Server name in Minepanel: `test`
-- Generated docker-compose.yml will have:
-  ```yaml
-  container_name: test
-  environment:
-    ID_MANAGER: test
-  ```
-
-**Important:** The generated `docker-compose.yml` must have the **complete path** to `mc-data/` and **matching names**. Minepanel handles this automatically, but if you're manually creating/editing docker-compose files:
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:latest
-    container_name: my-old-server # ⚠️ Must match server ID
-    environment:
-      ID_MANAGER: my-old-server # ⚠️ Must match server ID
-      EULA: "TRUE"
-      TYPE: "PAPER"
-      # ... other env vars
-    volumes:
-      - ./mc-data:/data # ✅ Correct - points to mc-data subfolder
-      - ./modpacks:/modpacks:ro
-    ports:
-      - "25565:25565"
-```
-
-**Critical: `container_name` and `ID_MANAGER` MUST match the server folder name.**
-
-If your server is in `servers/test/`:
-
-```yaml
-container_name: test # ✅ Matches folder name
-environment:
-  ID_MANAGER: test # ✅ Matches folder name
-```
-
-**Incorrect examples:**
-
-```yaml
-# Wrong volume paths
-volumes:
-  - ./:/data # ❌ Points to root, not mc-data
-  - /data:/data # ❌ Absolute path
-  - ./world:/data # ❌ Only mounts world folder
-
-# Wrong naming
-container_name: minecraft # ❌ Doesn't match server ID
-ID_MANAGER: server1 # ❌ Doesn't match server ID
-```
-
-**Automatic migration:** As of the latest version, Minepanel will automatically detect and migrate server files if you accidentally place them in the wrong location (root folder instead of `mc-data/`). This fixes a common issue when migrating from itzg/docker-minecraft-server.
-
----
-
-### Migration Naming Example (Complete)
-
-Let's say you want to migrate a server called `survival-world`:
-
-**1. File structure:**
-
-```
-servers/
-└── survival-world/           ← Folder name
-    ├── docker-compose.yml
-    └── mc-data/
-        ├── world/
-        ├── server.properties
-        └── ...
-```
-
-**2. In Minepanel UI:**
-
-- Create server with ID: `survival-world`
-
-**3. Generated docker-compose.yml:**
-
-```yaml
-services:
-  mc:
-    container_name: survival-world # ← Same as folder
-    environment:
-      ID_MANAGER: survival-world # ← Same as folder
-      SERVER_NAME: survival-world
-    volumes:
-      - ./mc-data:/data # ← Points to mc-data
-```
-
-**Everything must match:**
-
-- ✅ Folder: `servers/survival-world/`
-- ✅ Server ID in Minepanel: `survival-world`
-- ✅ `container_name`: `survival-world`
-- ✅ `ID_MANAGER`: `survival-world`
-
-**What happens if they don't match:**
-
-- ❌ Minepanel can't find/control the container
-- ❌ Server status shows as "not found"
-- ❌ Start/stop buttons won't work
-
-### Why does Minepanel use a different folder structure than itzg?
-
-Minepanel organizes server files into subfolders for better management:
-
-```
-servers/my-server/
-├── docker-compose.yml    # Server configuration (source of truth)
-├── mc-data/              # Minecraft server files (mounted to /data)
-├── backups/              # Server backups
-└── modpacks/             # Modpack files (if applicable)
-```
-
-This structure provides:
-
-- **Clean separation** between config, data, and backups
-- **Easier backups** - backup just `mc-data/` without compose files
-- **Better organization** - especially with multiple servers
-- **Modpack support** - dedicated folder for modpack files
-
-**Note:** Server configuration is stored in `docker-compose.yml` files, not in a separate database. Minepanel reads these files and Docker container metadata to display server information, making it mostly stateless regarding server data.
+Yes! Copy your existing server data to `servers/your-server/mc-data` and create the server in Minepanel.
 
 ### How do I backup my servers?
 
-**Automatic backups:**
-Configure backups in server settings (powered by itzg/docker-mc-backup).
+Enable automatic backups in server settings, or backup manually via the UI.
 
-**Manual backup:**
+**→ Details:** [Administration Guide](/administration#server-backups)
+
+### Can I schedule restarts?
+
+Not yet directly in the UI, but you can use Docker restart policies and cron jobs.
+
+**→ Planned:** [Roadmap](/roadmap)
+
+## 🌐 Networking & Access
+
+### How do I access it remotely?
+
+Update `FRONTEND_URL` to your public IP or domain, open firewall ports, and optionally set up SSL.
+
+**→ Full guide:** [Networking Guide](/networking)
+
+### How do I set up HTTPS/SSL?
+
+Use a reverse proxy (Nginx/Caddy) with Let's Encrypt certificates.
+
+**→ Step-by-step:** [SSL/HTTPS Setup](/networking#ssl-https)
+
+### Can I use a custom domain?
+
+Yes! Configure your DNS, set up a reverse proxy, and update environment variables.
+
+**→ Guide:** [Domain Setup](/networking#using-a-domain-name)
+
+### How do I configure LAN access?
+
+Set `HOST_LAN_IP` to your local IP address to show LAN connection info to players.
+
+**→ Details:** [LAN Configuration](/networking#lan-network-configuration)
+
+### What ports does it use?
+
+- **3000**: Web interface
+- **8091**: API server  
+- **8080**: File browser
+- **25565+**: Minecraft servers
+
+**→ Port management:** [Port Configuration](/networking#port-configuration)
+
+## 🔐 Security & Admin
+
+### How do I change the admin password?
+
+Go to profile → Change Password in the UI.
+
+**→ Full guide:** [Password Management](/administration#password-management)
+
+### I forgot my password, what do I do?
+
+Reset the database or manually update via SQL.
+
+**→ Recovery steps:** [Forgot Password](/administration#forgot-your-password)
+
+### Is it secure?
+
+Yes, with proper configuration:
+- Change default passwords immediately
+- Use HTTPS for remote access
+- Keep firewall configured properly
+- Update regularly
+
+**→ Best practices:** [Security Guide](/networking)
+
+### Can I have multiple users?
+
+Not yet. Multi-user support with permissions is planned.
+
+**→ Roadmap:** [Roadmap](/roadmap)
+
+### Where is data stored?
+
+- **Database**: `./data/minepanel.db`
+- **Server files**: `./servers/`
+- **Backups**: Configurable per server
+
+**→ Database management:** [Administration Guide](/administration#database-management)
+
+## 🔧 Configuration
+
+### How do I change ports?
+
+Edit `.env` file or `docker-compose.yml`:
 
 ```bash
-# Stop server first
-docker compose down
-
-# Backup
-tar -czf backup-$(date +%Y%m%d).tar.gz servers/
-
-# Restart
-docker compose up -d
+FRONTEND_PORT=3000
+BACKEND_PORT=8091
+FILEBROWSER_PORT=8080
 ```
 
-### How do I restore from backup?
+**→ Full guide:** [Configuration Reference](/configuration)
 
-```bash
-# Stop services
-docker compose down
+### Can I use custom Java versions?
 
-# Extract backup
-tar -xzf backup-20241024.tar.gz
+Yes! Use different Docker image tags (java8, java17, java21, etc.)
 
-# Restart
-docker compose up -d
-```
+**→ Details:** [Server Types](/server-types)
 
----
+### How do I set resource limits?
 
-## Troubleshooting
+Configure CPU and memory limits in server settings.
 
-### Ports are already in use
+**→ Guide:** [Resource Management](/administration#resource-management)
 
-**Error:** `port is already allocated`
+### Can I use custom JVM flags?
 
-**Solution:**
+Yes! Add them in the server's advanced settings.
 
-1. Find what's using the port:
+**→ Configuration:** [Configuration Reference](/configuration)
 
-   ```bash
-   # Linux/Mac
-   sudo lsof -i :3000
+## ⚡ Performance
 
-   # Windows (PowerShell)
-   netstat -ano | findstr :3000
-   ```
+### How many servers can I run?
 
-2. Kill the process or use different ports:
-   ```bash
-   # Create .env file
-   FRONTEND_PORT=3001
-   BACKEND_PORT=8092
-   ```
+Depends on your hardware. General guideline:
+- **4GB RAM**: 1-2 small servers
+- **8GB RAM**: 2-4 medium servers
+- **16GB+ RAM**: 4+ servers or large modded servers
 
-### Can't connect to Docker
+### Why is my server slow?
 
-**Error:** `Cannot connect to Docker daemon`
+Common causes:
+- Insufficient RAM/CPU
+- Too many players/mods
+- HDD instead of SSD
+- High view distance
 
-**Solution:**
+**→ Optimization:** [Troubleshooting - Performance](/troubleshooting#performance-issues)
+
+### Should I use Vanilla or Paper?
+
+- **Vanilla**: Pure Minecraft experience
+- **Paper**: Better performance, plugin support
+
+**→ Comparison:** [Server Types](/server-types)
+
+### How do I reduce memory usage?
+
+- Lower view distance
+- Use Paper/Purpur
+- Enable Aikar's flags
+- Reduce max players
+
+**→ Full guide:** [Performance Optimization](/troubleshooting#performance-issues)
+
+## 🐛 Troubleshooting
+
+### Server won't start
+
+Check logs for specific errors. Common issues:
+- Port conflicts
+- Insufficient memory
+- Missing EULA acceptance
+- Corrupted files
+
+**→ Solutions:** [Troubleshooting Guide](/troubleshooting#server-wont-start)
+
+### Can't access from remote
+
+1. Check `FRONTEND_URL` matches your access URL
+2. Verify firewall ports are open
+3. Check router port forwarding
+
+**→ Full guide:** [Connection Issues](/troubleshooting#connection-issues)
+
+### CORS errors in browser console
+
+Your `FRONTEND_URL` doesn't match how you're accessing the panel. Update it and restart.
+
+**→ Fix:** [CORS Errors](/troubleshooting#cors-errors)
+
+### Mods not downloading
+
+- Verify API key (CurseForge)
+- Check project names
+- Ensure version compatibility
+- Check server logs
+
+**→ Solutions:** [Mod Issues](/troubleshooting#mod-plugin-issues)
+
+### Docker errors
 
 ```bash
 # Check Docker is running
 docker ps
 
-# Add user to docker group (Linux)
-sudo usermod -aG docker $USER
-# Log out and back in
+# View logs
+docker compose logs
 
-# Restart Docker (if needed)
-sudo systemctl restart docker
-```
-
-### Filebrowser password lost
-
-**Solution:**
-
-```bash
-# Delete database to generate new password
-docker compose down
-docker volume rm minepanel_filebrowser-db
-docker compose up -d
-
-# Check logs for new password
-docker compose logs filebrowser
-```
-
-### Server won't start
-
-**Check logs:**
-
-```bash
-docker compose logs minepanel
-```
-
-**Common causes:**
-
-- EULA not accepted (Minepanel auto-accepts)
-- Insufficient memory
-- Port already in use
-- Corrupt world files
-- Wrong server type/version
-
-### Server keeps restarting
-
-**Check server logs:**
-
-1. Open Minepanel
-2. Go to your server
-3. View Logs tab
-
-**Common causes:**
-
-- Out of memory
-- Incompatible mods/plugins
-- Java version mismatch
-- Corrupted world
-
-### High CPU/RAM usage
-
-**Solutions:**
-
-- Reduce view distance in server.properties
-- Lower max players
-- Optimize JVM arguments
-- Use Paper instead of Vanilla
-- Add more RAM to server
-- Remove unnecessary plugins/mods
-
-### Minecraft server not visible in server list
-
-**Check:**
-
-1. Server is running (green status)
-2. Port is exposed and correct (default 25565)
-3. Firewall allows the port
-4. Using correct IP address
-5. Server is in online mode (if needed)
-
-**Port forwarding (for external access):**
-
-- Forward port 25565 on your router
-- Use your public IP address
-- Consider using a dynamic DNS service
-
-### Changes not taking effect
-
-**Solution:**
-
-```bash
-# Restart services
+# Restart everything
 docker compose restart
-
-# Or force recreate
-docker compose up -d --force-recreate
 ```
 
----
+**→ Full troubleshooting:** [Troubleshooting Guide](/troubleshooting)
 
-## Features & Functionality
+## 📦 Features
 
-### Can I access server console?
+### Does it support modpacks?
 
-Yes! Each server page has a console tab where you can:
+Yes! CurseForge modpacks are fully supported with automatic installation.
 
-- View real-time logs
-- Execute commands
-- See player chat
-- Monitor errors
+**→ Setup:** [CurseForge Modpacks](/server-types#curseforge-modpacks)
 
-### Does it support server icons?
+### Can I use Fabric mods?
 
-Yes! Place a `server-icon.png` (64x64) in your server directory via Filebrowser.
+Yes! Fabric is fully supported with Modrinth and CurseForge integration.
 
-### Can I schedule backups?
+**→ Guide:** [Fabric Server Setup](/server-types#fabric)
 
-Yes! Configure automatic backups in server settings with:
+### Is there a mobile app?
 
-- Backup interval (hourly, daily, etc.)
-- Retention policy (keep last N backups)
-- Compression options
+Not yet, but the web UI is mobile-friendly.
 
-### Does it support RCON?
+**→ Planned:** [Roadmap](/roadmap)
 
-The underlying Minecraft server supports RCON. You can enable it in server settings and use any RCON client to connect.
+### Can I use plugins?
 
-### Can I transfer servers between Minepanel instances?
+Yes! Paper, Spigot, Bukkit, and other plugin-based servers are supported.
 
-Yes! Your servers are just Docker containers with data in `servers/` directory:
+**→ Details:** [Plugin Management](/mods-plugins#plugin-management)
 
-1. Backup servers on old instance
-2. Copy `servers/` directory to new instance
-3. Restart Minepanel on new instance
-4. Servers will be automatically detected
+### Does it have automatic backups?
 
-### Does it work with BungeeCord/Velocity?
+Yes! Configure backup frequency, retention, and method per server.
 
-Yes! You can create multiple servers and set up a proxy:
+**→ Setup:** [Backup Configuration](/administration#server-backups)
 
-1. Create your game servers (lobby, survival, creative, etc.)
-2. Create a BungeeCord/Velocity server
-3. Configure the proxy to connect to your servers
-4. Players connect to the proxy server
+### Can I edit server.properties?
 
----
+Yes! Use the built-in file browser or edit directly in the UI (coming soon).
 
-## Performance
+**→ File management:** [FileBrowser](/administration)
 
-### How much RAM do I need?
+## 💻 Development
 
-**Per Minecraft server:**
+### Can I contribute?
 
-- Vanilla/Paper (5-10 players): 1-2GB
-- Vanilla/Paper (10-20 players): 2-4GB
-- Light modpack (5-10 players): 2-4GB
-- Heavy modpack (5-10 players): 4-8GB
+Yes! Contributions are welcome. See the contributing guidelines.
 
-**For Minepanel itself:**
-
-- Frontend + Backend: ~500MB
-
-### Can I run this on a VPS?
-
-Yes! Many users run Minepanel on VPS providers:
-
-- DigitalOcean
-- Linode
-- Vultr
-- AWS
-- Google Cloud
-- Oracle Cloud (free tier!)
-- Hetzner
-
-Choose a VPS with enough RAM for your servers.
-
-### What's the best server type for performance?
-
-**Paper** is recommended for survival servers:
-
-- Better performance than Vanilla
-- Plugin support (Bukkit/Spigot plugins)
-- Active development
-- Large community
-
-For modded, use **Fabric** (lightweight) or **Forge** (more mods available).
-
----
-
-## Development & Contributing
-
-### How can I contribute?
-
-We welcome contributions!
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-See [Development Guide](/development) for details.
-
-### Where can I report bugs?
-
-[GitHub Issues](https://github.com/Ketbome/minepanel/issues)
-
-Please include:
-
-- Minepanel version
-- Operating system
-- Docker version
-- Steps to reproduce
-- Error messages/logs
-
-### Can I translate Minepanel to my language?
-
-Yes! We need translators. Create a translation file in `frontend/src/lib/translations/` and submit a PR.
-
-Current languages:
-
-- English (en)
-- Spanish (es)
-
-Planned:
-
-- French (fr)
-- German (de)
-- Portuguese (pt)
+**→ Guide:** [Development Guide](/development)
 
 ### Is there an API?
 
-Yes! The backend exposes a REST API. API documentation is coming soon.
+Yes! The backend provides a REST API for all operations.
 
-### Can I build custom features?
+**→ Documentation:** Coming soon
 
-Absolutely! Minepanel is open-source. Fork it and customize as needed. We'd love to see your contributions merged back!
+### Can I customize the UI?
 
----
+Yes! The project is open-source. Fork and modify as needed.
 
-## Comparison with Alternatives
+**→ Architecture:** [Architecture Guide](/architecture)
 
-### Minepanel vs Pterodactyl
+### What tech stack is used?
 
-| Feature            | Minepanel           | Pterodactyl       |
-| ------------------ | ------------------- | ----------------- |
-| Installation       | 🟢 Very easy        | 🔴 Complex        |
-| UI                 | 🟢 Modern (Next.js) | 🟢 Modern (React) |
-| Multi-architecture | 🟢 Yes              | 🟡 Limited        |
-| Game support       | 🔴 Minecraft only   | 🟢 Multiple games |
-| Setup time         | < 5 minutes         | 1-2 hours         |
+- **Frontend**: Next.js, React, TypeScript, TailwindCSS
+- **Backend**: NestJS, TypeScript, SQLite
+- **Infrastructure**: Docker, Docker Compose
 
-**Use Minepanel if:** You want easy Minecraft-specific management
+**→ Details:** [Architecture Guide](/architecture)
 
-**Use Pterodactyl if:** You need to manage multiple game types
+## 🆚 Comparisons
 
-### Minepanel vs AMP
+### Minepanel vs Pterodactyl?
 
-| Feature     | Minepanel    | AMP       |
-| ----------- | ------------ | --------- |
-| Price       | 🟢 Free      | 🔴 Paid   |
-| Open source | 🟢 Yes       | 🔴 No     |
-| Setup       | 🟢 Very easy | 🟡 Medium |
-| Features    | 🟡 Growing   | 🟢 Mature |
+**Minepanel:**
+- ✅ Easier installation (one command)
+- ✅ Lighter weight
+- ✅ Focused on Minecraft
+- ❌ Single-user only (for now)
+- ❌ Fewer advanced features
 
-**Use Minepanel if:** You want free and open-source
+**Pterodactyl:**
+- ✅ Multi-user with permissions
+- ✅ Supports many game types
+- ✅ More mature project
+- ❌ Complex installation
+- ❌ More resource intensive
 
-**Use AMP if:** You want enterprise features and support
+### Minepanel vs AMP?
 
-### Minepanel vs Multicraft
+**Minepanel:**
+- ✅ Free and open-source
+- ✅ Modern UI
+- ✅ Docker-native
 
-| Feature | Minepanel | Multicraft  |
-| ------- | --------- | ----------- |
-| Price   | 🟢 Free   | 🔴 Paid     |
-| UI      | 🟢 Modern | 🔴 Outdated |
-| Docker  | 🟢 Native | 🔴 No       |
-| Setup   | 🟢 Easy   | 🟡 Medium   |
+**AMP:**
+- ✅ More features
+- ✅ Professional support
+- ❌ Paid license
+- ❌ Closed source
 
-**Use Minepanel if:** You want modern UI and Docker containers
+### Minepanel vs Crafty Controller?
 
-**Use Multicraft if:** You need traditional shared hosting features
+**Minepanel:**
+- ✅ More modern UI
+- ✅ Docker-based
+- ✅ Better mod management
 
----
+**Crafty:**
+- ✅ More mature
+- ✅ Multi-user
+- ❌ Different architecture
 
-## Support
+### Why not just use command line?
 
-### Where can I get help?
+Minepanel offers:
+- Visual server management
+- Easy configuration
+- Log viewing
+- File editing
+- One-click mod installation
+- Automatic backups
+- Resource monitoring
 
-- 📚 [Documentation](https://github.com/Ketbome/minepanel/tree/main/doc)
-- 💬 [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)
-- 🐛 [GitHub Issues](https://github.com/Ketbome/minepanel/issues)
+Perfect for those who prefer GUI over CLI.
 
-### Is there a Discord server?
+## 🚀 Roadmap & Future
 
-Not yet! For now, use GitHub Discussions for community support.
+### What features are coming?
 
-### How can I support the project?
+See the [Roadmap](/roadmap) for:
+- Multi-user support
+- Server templates
+- Better metrics
+- Discord webhooks
+- Plugin manager
+- And more!
 
-- ⭐ Star the project on GitHub
-- 🐛 Report bugs and issues
-- 💡 Suggest features
-- 🔧 Contribute code
-- 📖 Improve documentation
-- 🌍 Help with translations
-- 💰 Sponsor (coming soon)
+### Can I request features?
 
----
-
-## Roadmap
-
-### What features are planned?
-
-- [ ] Multi-user support with roles
-- [ ] Server templates
-- [ ] Advanced metrics dashboard
-- [ ] Discord webhooks
-- [ ] Scheduled tasks
-- [ ] Plugin marketplace
-- [ ] SFTP access
-- [ ] Mobile app
-- [ ] More languages
-
-Vote for features or suggest new ones on [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)!
+Yes! Open an issue on [GitHub](https://github.com/Ketbome/minepanel/issues) with your suggestion.
 
 ### When will X feature be added?
 
-Minepanel is actively developed. Check the [GitHub Issues](https://github.com/Ketbome/minepanel/issues) for progress on specific features.
+Check the [Roadmap](/roadmap) for planned features. No specific ETAs, as this is developed in free time.
 
----
+## 📞 Support
 
-## Still Have Questions?
+### Where do I get help?
 
-If your question isn't answered here:
+1. Check this FAQ
+2. Read the [Troubleshooting Guide](/troubleshooting)
+3. Search [GitHub Issues](https://github.com/Ketbome/minepanel/issues)
+4. Create a new issue with details
 
-1. Check the [full documentation](/getting-started)
-2. Search [GitHub Issues](https://github.com/Ketbome/minepanel/issues)
-3. Ask on [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)
-4. Create a new issue if it's a bug
+### How do I report a bug?
 
-We're here to help! 🎉
+Create an issue on GitHub with:
+- Steps to reproduce
+- Expected vs actual behavior
+- System information
+- Relevant logs
+- Screenshots if applicable
+
+### Is there a Discord/community?
+
+Not yet, but GitHub Discussions are available for questions and community interaction.
+
+### Can I hire you for custom work?
+
+This is a personal project maintained in free time. For professional support, consider contributing to the project or sponsoring development.
+
+## 🎯 Best Practices
+
+### Recommended setup for production?
+
+1. Use SSD storage
+2. Set up HTTPS with Let's Encrypt
+3. Configure regular backups
+4. Use strong passwords
+5. Keep firewall configured
+6. Update regularly
+7. Monitor resource usage
+
+**→ Full guide:** [Administration Best Practices](/administration#best-practices)
+
+### How should I organize multiple servers?
+
+- Use clear naming conventions
+- Document each server's purpose
+- Set appropriate resource limits
+- Configure automatic backups
+- Monitor performance regularly
+
+### What should I backup?
+
+- `data/minepanel.db` (database)
+- `servers/` (all server data)
+- Your `docker-compose.yml` configuration
+
+**→ Backup guide:** [Database Backups](/administration#backup-database)
+
+## 📚 Documentation
+
+### Where's the full documentation?
+
+- [Installation](/installation) - Get started
+- [Configuration](/configuration) - Environment variables
+- [Server Types](/server-types) - Supported servers
+- [Mods & Plugins](/mods-plugins) - Mod management
+- [Networking](/networking) - Remote access, SSL
+- [Administration](/administration) - Backups, updates
+- [Troubleshooting](/troubleshooting) - Fix issues
+- [Architecture](/architecture) - How it works
+- [Development](/development) - Contributing
+
+### Is there video documentation?
+
+Not yet! Community contributions welcome.
+
+### Can I improve the docs?
+
+Yes! Documentation is in the GitHub repo. PRs welcome.
+
+## ❓ Still Have Questions?
+
+- 📖 Read the [full documentation](/getting-started)
+- 🐛 Check [Troubleshooting](/troubleshooting)
+- 💬 Ask on [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)
+- 🐞 Report bugs on [GitHub Issues](https://github.com/Ketbome/minepanel/issues)

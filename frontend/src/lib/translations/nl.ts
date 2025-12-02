@@ -826,7 +826,6 @@ export const nl: Record<TranslationKey, string> = {
   versionRelease: "Release",
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
-  documentation: "Documentatie",
   browseMods: "Blader Mods",
 
   // Manual CurseForge (Deprecated)

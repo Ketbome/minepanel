@@ -812,7 +812,6 @@ export const es: Record<TranslationKey, string> = {
   versionRelease: "Release",
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
-  documentation: "Documentación",
   browseMods: "Explorar Mods",
 
   // CurseForge Manual (Obsoleto)

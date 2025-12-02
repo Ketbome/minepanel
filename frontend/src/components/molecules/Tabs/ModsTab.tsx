@@ -79,14 +79,9 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
             </CardTitle>
             <CardDescription className="text-gray-300">{t("modsConfigDesc")}</CardDescription>
           </div>
-          <a
-            href="https://minepanel.ketbome.com/configuration#server-types-and-mods"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-          >
+          <a href="https://minepanel.ketbome.com/mods-plugins" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
             <BookOpen className="h-4 w-4" />
-            {t("documentation")}
+            Docs
           </a>
         </div>
       </CardHeader>
@@ -427,12 +422,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   {t("curseforgeFiles")}
                 </Label>
                 <div className="flex items-center gap-2">
-                  <a
-                    href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-emerald-400 hover:text-emerald-300 underline"
-                  >
+                  <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
                   <TooltipProvider>
@@ -464,12 +454,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   {t("modrinthProjects")}
                 </Label>
                 <div className="flex items-center gap-2">
-                  <a
-                    href="https://modrinth.com/mods"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-400 hover:text-blue-300 underline"
-                  >
+                  <a href="https://modrinth.com/mods" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline">
                     {t("browseMods")}
                   </a>
                   <TooltipProvider>

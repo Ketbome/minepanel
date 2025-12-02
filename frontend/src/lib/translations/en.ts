@@ -810,7 +810,6 @@ export const en = {
   versionRelease: "Release",
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
-  documentation: "Documentation",
   browseMods: "Browse Mods",
 
   // Manual CurseForge (Deprecated)
