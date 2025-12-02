@@ -814,7 +814,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Modrinth Configuration
   modrinthProjects: "Modrinth Projecten",
-  modrinthProjectsHelp: "Komma of nieuwe regel gescheiden lijst van project slugs/IDs. Ondersteunt versie en release type filters (bijv: fabric-api:0.119.2, cloth-config:beta, datapack:terralith)",
+  modrinthProjectsHelp: "Komma of nieuwe regel gescheiden lijst van slugs/IDs. Formaten: 'fabric-api' (nieuwste), 'fabric-api:0.119.2' (versie), 'fabric-api:beta' (release type), 'datapack:terralith', '@/pad/naar/bestand.txt' (lijst). Zie documentatie voor alle formaten.",
   modrinthProjectsDesc: "Automatisch downloaden van mods, plugins en datapacks van Modrinth",
   modrinthDependencies: "Download Afhankelijkheden",
   modrinthDependenciesHelp: "Of vereiste en/of optionele afhankelijkheden moeten worden gedownload",
@@ -826,6 +826,8 @@ export const nl: Record<TranslationKey, string> = {
   versionRelease: "Release",
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
+  documentation: "Documentatie",
+  browseMods: "Blader Mods",
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",
@@ -899,8 +901,8 @@ export const nl: Record<TranslationKey, string> = {
   worldFile: "Wereld bestand",
   modpackOverrides: "Modpack overschrijvingen",
   curseforgeFiles: "Extra Mods Downloaden (CURSEFORGE_FILES)",
-  curseforgeFilesHelp: "Download en update mods automatisch vanaf CurseForge. Geef een door komma's of spaties gescheiden lijst van projectreferenties (slug of ID). Mods worden automatisch beheerd - verwijderde referenties worden opgeschoond.",
-  curseforgeFilesDesc: "Door komma's of spaties gescheiden lijst van CurseForge project slugs of ID's om te downloaden (bijv: jei, chunky, 238222)",
+  curseforgeFilesHelp: "Individuele mods downloaden vanaf CurseForge. Formaten: 'jei' (nieuwste), 'jei:4593548' (bestand ID), 'jei@10.2.1' (versie), volledige URL, of '@/pad/naar/bestand.txt' (lijst). Automatisch beheerd - verwijderde items worden opgeschoond. Zie documentatie voor alle formaten.",
+  curseforgeFilesDesc: "Komma of nieuwe regel gescheiden lijst (bijv: jei, geckolib:4593548, aquaculture@1.0.0)",
   forceIncludeMods: "Forceer Inclusie van Client Mods (CF_FORCE_INCLUDE_MODS)",
   forceIncludeModsHelp: "Forceer inclusie van mods die verkeerd gelabeld zijn als client-only. Download GEEN extra mods - overschrijft alleen client-only labels voor mods die al in het modpack of CURSEFORGE_FILES zitten.",
   forceIncludeModsDesc: "Project slugs of ID's om te forceren ondanks client-only label (gescheiden door komma's of spaties)",

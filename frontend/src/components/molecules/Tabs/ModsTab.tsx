@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Info, HelpCircle, Eye, EyeOff, Download } from "lucide-react";
+import { Info, HelpCircle, Eye, EyeOff, Download, BookOpen } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -71,11 +71,24 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
-          <Image src="/images/gold.webp" alt="Mods" width={24} height={24} className="opacity-90" />
-          {t("modsConfig")}
-        </CardTitle>
-        <CardDescription className="text-gray-300">{t("modsConfigDesc")}</CardDescription>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
+              <Image src="/images/gold.webp" alt="Mods" width={24} height={24} className="opacity-90" />
+              {t("modsConfig")}
+            </CardTitle>
+            <CardDescription className="text-gray-300">{t("modsConfigDesc")}</CardDescription>
+          </div>
+          <a
+            href="https://minepanel.ketbome.com/configuration#server-types-and-mods"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            <BookOpen className="h-4 w-4" />
+            {t("documentation")}
+          </a>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -413,18 +426,28 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <Image src="/images/ender_chest.webp" alt="Incluir" width={16} height={16} />
                   {t("curseforgeFiles")}
                 </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
-                        <HelpCircle className="h-4 w-4 text-emerald-400" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                      <p>{t("curseforgeFilesHelp")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-emerald-400 hover:text-emerald-300 underline"
+                  >
+                    {t("browseMods")}
+                  </a>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
+                          <HelpCircle className="h-4 w-4 text-emerald-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("curseforgeFilesHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
               <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
@@ -440,18 +463,28 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <Image src="/images/enchanted-book.webp" alt="Modrinth" width={16} height={16} />
                   {t("modrinthProjects")}
                 </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-blue-700/30">
-                        <HelpCircle className="h-4 w-4 text-blue-400" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                      <p>{t("modrinthProjectsHelp")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://modrinth.com/mods"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                  >
+                    {t("browseMods")}
+                  </a>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-blue-700/30">
+                          <HelpCircle className="h-4 w-4 text-blue-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("modrinthProjectsHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
               <Textarea id="modrinthProjects" value={config.modrinthProjects || ""} onChange={(e) => updateConfig("modrinthProjects", e.target.value)} placeholder="fabric-api, cloth-config, datapack:terralith" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-blue-500/50 focus:ring-blue-500/30" />
               <p className="text-xs text-gray-400">{t("modrinthProjectsDesc")}</p>

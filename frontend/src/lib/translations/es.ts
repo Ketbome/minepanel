@@ -800,7 +800,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Configuración de Modrinth
   modrinthProjects: "Proyectos de Modrinth",
-  modrinthProjectsHelp: "Lista separada por comas o saltos de línea de slugs/IDs de proyectos. Soporta filtros de versión y tipo de release (ej: fabric-api:0.119.2, cloth-config:beta, datapack:terralith)",
+  modrinthProjectsHelp: "Lista separada por comas o saltos de línea de slugs/IDs. Formatos: 'fabric-api' (última), 'fabric-api:0.119.2' (versión), 'fabric-api:beta' (tipo release), 'datapack:terralith', '@/ruta/archivo.txt' (listado). Ver documentación para todos los formatos.",
   modrinthProjectsDesc: "Descarga automática de mods, plugins y datapacks desde Modrinth",
   modrinthDependencies: "Descargar Dependencias",
   modrinthDependenciesHelp: "Si se deben descargar dependencias requeridas y/u opcionales",
@@ -812,6 +812,8 @@ export const es: Record<TranslationKey, string> = {
   versionRelease: "Release",
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
+  documentation: "Documentación",
+  browseMods: "Explorar Mods",
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
@@ -885,8 +887,8 @@ export const es: Record<TranslationKey, string> = {
   worldFile: "Archivo de Mundo",
   modpackOverrides: "Overrides del Modpack",
   curseforgeFiles: "Descargar Mods Adicionales (CURSEFORGE_FILES)",
-  curseforgeFilesHelp: "Descarga y actualiza mods automáticamente desde CurseForge. Proporciona una lista delimitada por comas o espacios de referencias de proyecto (slug o ID). Los mods se gestionan automáticamente - las referencias eliminadas se limpian.",
-  curseforgeFilesDesc: "Lista separada por comas o espacios de slugs o IDs de proyectos de CurseForge para descargar (ej: jei, chunky, 238222)",
+  curseforgeFilesHelp: "Descarga individual de mods desde CurseForge. Formatos: 'jei' (última), 'jei:4593548' (ID archivo), 'jei@10.2.1' (versión), URL completa, o '@/ruta/archivo.txt' (listado). Gestión automática - las entradas eliminadas se limpian. Ver documentación para todos los formatos.",
+  curseforgeFilesDesc: "Lista separada por comas o saltos de línea (ej: jei, geckolib:4593548, aquaculture@1.0.0)",
   forceIncludeMods: "Forzar Inclusión de Mods Cliente (CF_FORCE_INCLUDE_MODS)",
   forceIncludeModsHelp: "Forzar inclusión de mods etiquetados incorrectamente como solo cliente. NO descarga mods adicionales - solo anula etiquetas de solo cliente para mods ya en el modpack o CURSEFORGE_FILES.",
   forceIncludeModsDesc: "Slugs o IDs de proyectos a forzar incluir a pesar de la etiqueta de solo cliente (separados por comas o espacios)",

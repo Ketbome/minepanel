@@ -677,13 +677,13 @@ A lightweight modding platform alternative to Forge.
 
 #### Configuration Options
 
-| Option | Environment Variable | Description | Default |
-|--------|---------------------|-------------|---------|
-| Loader Version | `FABRIC_LOADER_VERSION` | Specific Fabric loader version | Latest |
-| Launcher Version | `FABRIC_LAUNCHER_VERSION` | Specific Fabric launcher version | Latest |
-| Custom Launcher | `FABRIC_LAUNCHER` | Path to custom launcher jar | - |
-| Launcher URL | `FABRIC_LAUNCHER_URL` | URL to download custom launcher | - |
-| Force Reinstall | `FABRIC_FORCE_REINSTALL` | Re-install launcher if corrupted | `false` |
+| Option           | Environment Variable      | Description                      | Default |
+| ---------------- | ------------------------- | -------------------------------- | ------- |
+| Loader Version   | `FABRIC_LOADER_VERSION`   | Specific Fabric loader version   | Latest  |
+| Launcher Version | `FABRIC_LAUNCHER_VERSION` | Specific Fabric launcher version | Latest  |
+| Custom Launcher  | `FABRIC_LAUNCHER`         | Path to custom launcher jar      | -       |
+| Launcher URL     | `FABRIC_LAUNCHER_URL`     | URL to download custom launcher  | -       |
+| Force Reinstall  | `FABRIC_FORCE_REINSTALL`  | Re-install launcher if corrupted | `false` |
 
 #### Example Configuration
 
@@ -705,9 +705,9 @@ The most popular mod loader with extensive mod compatibility.
 
 #### Configuration Options
 
-| Option | Environment Variable | Description |
-|--------|---------------------|-------------|
-| Forge Version | `FORGE_VERSION` | Specific Forge build number | Latest for MC version |
+| Option        | Environment Variable | Description                 |
+| ------------- | -------------------- | --------------------------- | --------------------- |
+| Forge Version | `FORGE_VERSION`      | Specific Forge build number | Latest for MC version |
 
 #### Example
 
@@ -725,17 +725,17 @@ Automatically download and manage mods, plugins, and datapacks from Modrinth.
 #### Supported Server Types
 
 - ✅ Fabric
-- ✅ Forge  
+- ✅ Forge
 - ✅ CurseForge (AUTO_CURSEFORGE)
 
 #### Configuration
 
-| Option | Environment Variable | Description | Default |
-|--------|---------------------|-------------|---------|
-| Projects | `MODRINTH_PROJECTS` | List of mods/plugins to install | - |
-| Dependencies | `MODRINTH_DOWNLOAD_DEPENDENCIES` | Download dependencies: `none`, `required`, `optional` | `none` |
-| Version Type | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | Preferred version: `release`, `beta`, `alpha` | `release` |
-| Loader | `MODRINTH_LOADER` | Force specific loader type | Auto-detected |
+| Option       | Environment Variable                     | Description                                           | Default       |
+| ------------ | ---------------------------------------- | ----------------------------------------------------- | ------------- |
+| Projects     | `MODRINTH_PROJECTS`                      | List of mods/plugins to install                       | -             |
+| Dependencies | `MODRINTH_DOWNLOAD_DEPENDENCIES`         | Download dependencies: `none`, `required`, `optional` | `none`        |
+| Version Type | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | Preferred version: `release`, `beta`, `alpha`         | `release`     |
+| Loader       | `MODRINTH_LOADER`                        | Force specific loader type                            | Auto-detected |
 
 #### Project Reference Formats
 
@@ -802,6 +802,7 @@ environment:
 **Using a listing file:**
 
 Create `/path/to/mods.txt`:
+
 ```
 # Performance mods
 fabric-api
@@ -814,6 +815,7 @@ modmenu
 ```
 
 Then reference it:
+
 ```yaml
 volumes:
   - ./mods-list:/extras:ro
@@ -835,10 +837,10 @@ You need a CurseForge API key to use this feature. Get one from [CurseForge for 
 
 #### Configuration
 
-| Option | Environment Variable | Description |
-|--------|---------------------|-------------|
-| API Key | `CF_API_KEY` | Your CurseForge API key (required) |
-| Files | `CURSEFORGE_FILES` | List of project-file references |
+| Option  | Environment Variable | Description                        |
+| ------- | -------------------- | ---------------------------------- |
+| API Key | `CF_API_KEY`         | Your CurseForge API key (required) |
+| Files   | `CURSEFORGE_FILES`   | List of project-file references    |
 
 #### Project-File Reference Formats
 
@@ -888,6 +890,7 @@ environment:
 **Using listing file:**
 
 Create `cf-mods.txt`:
+
 ```
 # Core mods
 jei:4593548
@@ -899,6 +902,7 @@ naturalist
 ```
 
 Mount and reference:
+
 ```yaml
 volumes:
   - ./cf-list:/extras:ro
@@ -921,6 +925,7 @@ Install complete modpacks from CurseForge.
 #### Methods
 
 **1. URL Method (easiest):**
+
 ```yaml
 environment:
   TYPE: AUTO_CURSEFORGE
@@ -929,6 +934,7 @@ environment:
 ```
 
 **2. Slug + File ID:**
+
 ```yaml
 environment:
   TYPE: AUTO_CURSEFORGE
@@ -938,6 +944,7 @@ environment:
 ```
 
 **3. Auto-select latest:**
+
 ```yaml
 environment:
   TYPE: AUTO_CURSEFORGE
@@ -947,14 +954,14 @@ environment:
 
 #### Advanced Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Force Sync | `CF_FORCE_SYNCHRONIZE` | Re-download even if exists | `false` |
-| Parallel Downloads | `CF_PARALLEL_DOWNLOADS` | Concurrent downloads | `4` |
-| Skip Existing | `CF_OVERRIDES_SKIP_EXISTING` | Don't overwrite files | `false` |
-| Set Level From | `CF_SET_LEVEL_FROM` | World source: `WORLD_FILE`, `OVERRIDES` | - |
-| Force Include | `CF_FORCE_INCLUDE_MODS` | Force download specific mods | - |
-| Exclude Mods | `CF_EXCLUDE_MODS` | Exclude specific mods | - |
+| Option             | Variable                     | Description                             | Default |
+| ------------------ | ---------------------------- | --------------------------------------- | ------- |
+| Force Sync         | `CF_FORCE_SYNCHRONIZE`       | Re-download even if exists              | `false` |
+| Parallel Downloads | `CF_PARALLEL_DOWNLOADS`      | Concurrent downloads                    | `4`     |
+| Skip Existing      | `CF_OVERRIDES_SKIP_EXISTING` | Don't overwrite files                   | `false` |
+| Set Level From     | `CF_SET_LEVEL_FROM`          | World source: `WORLD_FILE`, `OVERRIDES` | -       |
+| Force Include      | `CF_FORCE_INCLUDE_MODS`      | Force download specific mods            | -       |
+| Exclude Mods       | `CF_EXCLUDE_MODS`            | Exclude specific mods                   | -       |
 
 ### Combining Modrinth and CurseForge
 
@@ -964,14 +971,13 @@ You can use both Modrinth and CurseForge Files together:
 environment:
   TYPE: FABRIC
   VERSION: 1.21.4
-  
+
   # Modrinth mods (preferred for performance)
   MODRINTH_PROJECTS: |
     fabric-api
     sodium
     lithium
   MODRINTH_DOWNLOAD_DEPENDENCIES: required
-  
   # CurseForge exclusive mods
   CF_API_KEY: your_key
   CURSEFORGE_FILES: |
