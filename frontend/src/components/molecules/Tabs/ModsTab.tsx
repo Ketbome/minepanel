@@ -384,6 +384,29 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <p className="text-xs text-gray-400">{t("cfApiKeyDesc")}</p>
             </div>
 
+            <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cfFiles" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/ender_chest.webp" alt="Incluir" width={16} height={16} />
+                  {t("curseforgeFiles")}
+                </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
+                        <HelpCircle className="h-4 w-4 text-emerald-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t("curseforgeFilesHelp")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
+
             <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">
               <AccordionItem value="advanced" className="border-b-0">
                 <AccordionTrigger className="px-4 py-3 text-gray-200 font-minecraft text-sm hover:bg-gray-700/30 rounded-t-md">
@@ -479,29 +502,6 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-400">{t("setLevelFromDesc")}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="cfFiles" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                        <Image src="/images/ender_chest.webp" alt="Incluir" width={16} height={16} />
-                        {t("curseforgeFiles")}
-                      </Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                              <HelpCircle className="h-4 w-4 text-gray-400" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                            <p>{t("curseforgeFilesHelp")}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="distant-horizons, chunky" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                    <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
                   </div>
 
                   <div className="space-y-2">
