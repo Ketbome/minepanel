@@ -523,7 +523,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <Textarea id="cfForceInclude" value={config.cfForceInclude} onChange={(e) => updateConfig("cfForceInclude", e.target.value)} placeholder="699872,228404" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                    <Textarea id="cfForceInclude" value={config.cfForceInclude} onChange={(e) => updateConfig("cfForceInclude", e.target.value)} placeholder="699872,Clumps,228404" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
                     <p className="text-xs text-gray-400">{t("forceIncludeModsDesc")}</p>
                   </div>
 
@@ -546,7 +546,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <Textarea id="cfExclude" value={config.cfExclude} onChange={(e) => updateConfig("cfExclude", e.target.value)} placeholder="699872,228404" className="min-h-20 text-gray-200 bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                    <Textarea id="cfExclude" value={config.cfExclude} onChange={(e) => updateConfig("cfExclude", e.target.value)} placeholder="699872,Clumps,228404" className="min-h-20 text-gray-200 bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
                     <p className="text-xs text-gray-400">{t("excludeModsDesc")}</p>
                   </div>
                 </AccordionContent>
