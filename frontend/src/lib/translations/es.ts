@@ -791,6 +791,29 @@ export const es: Record<TranslationKey, string> = {
   forgeVersion: "Versión de Forge",
   forgeBuildDesc: "Número de build de Forge para la versión de Minecraft seleccionada",
 
+  // Configuración de Fabric
+  serverFabric: "Servidor con soporte para mods de Fabric. Una plataforma de modding ligera alternativa a Forge.",
+  fabricLoaderVersion: "Versión del Loader de Fabric",
+  fabricLoaderDesc: "Versión específica del loader de Fabric (dejar vacío para usar la última)",
+  fabricLauncherVersion: "Versión del Launcher de Fabric",
+  fabricLauncherDesc: "Versión específica del launcher de Fabric (dejar vacío para usar la última)",
+
+  // Configuración de Modrinth
+  modrinthProjects: "Proyectos de Modrinth",
+  modrinthProjectsHelp: "Lista separada por comas o saltos de línea de slugs/IDs. Formatos: 'fabric-api' (última), 'fabric-api:0.119.2' (versión), 'fabric-api:beta' (tipo release), 'datapack:terralith', '@/ruta/archivo.txt' (listado). Ver documentación para todos los formatos.",
+  modrinthProjectsDesc: "Descarga automática de mods, plugins y datapacks desde Modrinth",
+  modrinthDependencies: "Descargar Dependencias",
+  modrinthDependenciesHelp: "Si se deben descargar dependencias requeridas y/u opcionales",
+  modrinthVersionType: "Tipo de Versión por Defecto",
+  modrinthVersionTypeHelp: "El tipo de versión a usar al seleccionar la más reciente (release, beta o alpha)",
+  dependenciesNone: "Ninguna",
+  dependenciesRequired: "Requeridas",
+  dependenciesOptional: "Requeridas + Opcionales",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+  browseMods: "Explorar Mods",
+
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
   manualCurseForgeDeprecated: 'Este método manual para CurseForge está obsoleto. Se recomienda usar "CurseForge Modpack" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.',
@@ -863,8 +886,8 @@ export const es: Record<TranslationKey, string> = {
   worldFile: "Archivo de Mundo",
   modpackOverrides: "Overrides del Modpack",
   curseforgeFiles: "Descargar Mods Adicionales (CURSEFORGE_FILES)",
-  curseforgeFilesHelp: "Descarga y actualiza mods automáticamente desde CurseForge. Proporciona una lista delimitada por comas o espacios de referencias de proyecto (slug o ID). Los mods se gestionan automáticamente - las referencias eliminadas se limpian.",
-  curseforgeFilesDesc: "Lista separada por comas o espacios de slugs o IDs de proyectos de CurseForge para descargar (ej: jei, chunky, 238222)",
+  curseforgeFilesHelp: "Descarga individual de mods desde CurseForge. Formatos: 'jei' (última), 'jei:4593548' (ID archivo), 'jei@10.2.1' (versión), URL completa, o '@/ruta/archivo.txt' (listado). Gestión automática - las entradas eliminadas se limpian. Ver documentación para todos los formatos.",
+  curseforgeFilesDesc: "Lista separada por comas o saltos de línea (ej: jei, geckolib:4593548, aquaculture@1.0.0)",
   forceIncludeMods: "Forzar Inclusión de Mods Cliente (CF_FORCE_INCLUDE_MODS)",
   forceIncludeModsHelp: "Forzar inclusión de mods etiquetados incorrectamente como solo cliente. NO descarga mods adicionales - solo anula etiquetas de solo cliente para mods ya en el modpack o CURSEFORGE_FILES.",
   forceIncludeModsDesc: "Slugs o IDs de proyectos a forzar incluir a pesar de la etiqueta de solo cliente (separados por comas o espacios)",

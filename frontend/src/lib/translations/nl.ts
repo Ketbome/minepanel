@@ -805,6 +805,29 @@ export const nl: Record<TranslationKey, string> = {
   forgeVersion: "Forge versie",
   forgeBuildDesc: "Forge build nummer voor de geselecteerde Minecraft versie",
 
+  // Fabric Configuration
+  serverFabric: "Server met ondersteuning voor Fabric mods. Een lichtgewicht modding platform alternatief voor Forge.",
+  fabricLoaderVersion: "Fabric Loader Versie",
+  fabricLoaderDesc: "Specifieke Fabric loader versie (leeg laten voor nieuwste)",
+  fabricLauncherVersion: "Fabric Launcher Versie",
+  fabricLauncherDesc: "Specifieke Fabric launcher versie (leeg laten voor nieuwste)",
+
+  // Modrinth Configuration
+  modrinthProjects: "Modrinth Projecten",
+  modrinthProjectsHelp: "Komma of nieuwe regel gescheiden lijst van slugs/IDs. Formaten: 'fabric-api' (nieuwste), 'fabric-api:0.119.2' (versie), 'fabric-api:beta' (release type), 'datapack:terralith', '@/pad/naar/bestand.txt' (lijst). Zie documentatie voor alle formaten.",
+  modrinthProjectsDesc: "Automatisch downloaden van mods, plugins en datapacks van Modrinth",
+  modrinthDependencies: "Download Afhankelijkheden",
+  modrinthDependenciesHelp: "Of vereiste en/of optionele afhankelijkheden moeten worden gedownload",
+  modrinthVersionType: "Standaard Versie Type",
+  modrinthVersionTypeHelp: "Het versietype om te gebruiken bij het selecteren van de nieuwste versie (release, beta of alpha)",
+  dependenciesNone: "Geen",
+  dependenciesRequired: "Vereist",
+  dependenciesOptional: "Vereist + Optioneel",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+  browseMods: "Blader Mods",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",
   manualCurseForgeDeprecated: 'Deze handmatige methode voor CurseForge is verouderd. We raden aan "CurseForge Modpack" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.',
@@ -877,8 +900,8 @@ export const nl: Record<TranslationKey, string> = {
   worldFile: "Wereld bestand",
   modpackOverrides: "Modpack overschrijvingen",
   curseforgeFiles: "Extra Mods Downloaden (CURSEFORGE_FILES)",
-  curseforgeFilesHelp: "Download en update mods automatisch vanaf CurseForge. Geef een door komma's of spaties gescheiden lijst van projectreferenties (slug of ID). Mods worden automatisch beheerd - verwijderde referenties worden opgeschoond.",
-  curseforgeFilesDesc: "Door komma's of spaties gescheiden lijst van CurseForge project slugs of ID's om te downloaden (bijv: jei, chunky, 238222)",
+  curseforgeFilesHelp: "Individuele mods downloaden vanaf CurseForge. Formaten: 'jei' (nieuwste), 'jei:4593548' (bestand ID), 'jei@10.2.1' (versie), volledige URL, of '@/pad/naar/bestand.txt' (lijst). Automatisch beheerd - verwijderde items worden opgeschoond. Zie documentatie voor alle formaten.",
+  curseforgeFilesDesc: "Komma of nieuwe regel gescheiden lijst (bijv: jei, geckolib:4593548, aquaculture@1.0.0)",
   forceIncludeMods: "Forceer Inclusie van Client Mods (CF_FORCE_INCLUDE_MODS)",
   forceIncludeModsHelp: "Forceer inclusie van mods die verkeerd gelabeld zijn als client-only. Download GEEN extra mods - overschrijft alleen client-only labels voor mods die al in het modpack of CURSEFORGE_FILES zitten.",
   forceIncludeModsDesc: "Project slugs of ID's om te forceren ondanks client-only label (gescheiden door komma's of spaties)",

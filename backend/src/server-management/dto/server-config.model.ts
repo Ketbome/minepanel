@@ -325,6 +325,44 @@ export class ServerConfigDto {
   @IsOptional()
   forgeBuild?: string;
 
+  // Fabric specific
+  @IsString()
+  @IsOptional()
+  fabricLoaderVersion?: string;
+
+  @IsString()
+  @IsOptional()
+  fabricLauncherVersion?: string;
+
+  @IsString()
+  @IsOptional()
+  fabricLauncher?: string;
+
+  @IsString()
+  @IsOptional()
+  fabricLauncherUrl?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  fabricForceReinstall?: boolean;
+
+  // Modrinth specific
+  @IsString()
+  @IsOptional()
+  modrinthProjects?: string;
+
+  @IsEnum(['none', 'required', 'optional'])
+  @IsOptional()
+  modrinthDownloadDependencies?: 'none' | 'required' | 'optional';
+
+  @IsEnum(['release', 'beta', 'alpha'])
+  @IsOptional()
+  modrinthDefaultVersionType?: 'release' | 'beta' | 'alpha';
+
+  @IsString()
+  @IsOptional()
+  modrinthLoader?: string;
+
   // Ports
   @IsString({ each: true })
   @IsOptional()

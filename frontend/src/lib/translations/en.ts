@@ -789,6 +789,29 @@ export const en = {
   forgeVersion: "Forge Version",
   forgeBuildDesc: "Forge build number for the selected Minecraft version",
 
+  // Fabric Configuration
+  serverFabric: "Server with support for Fabric mods. A lightweight modding platform alternative to Forge.",
+  fabricLoaderVersion: "Fabric Loader Version",
+  fabricLoaderDesc: "Specific Fabric loader version (leave empty for latest)",
+  fabricLauncherVersion: "Fabric Launcher Version",
+  fabricLauncherDesc: "Specific Fabric launcher version (leave empty for latest)",
+
+  // Modrinth Configuration
+  modrinthProjects: "Modrinth Projects",
+  modrinthProjectsHelp: "Comma or newline separated list of project slugs/IDs. Formats: 'fabric-api' (latest), 'fabric-api:0.119.2' (version), 'fabric-api:beta' (release type), 'datapack:terralith', '@/path/to/file.txt' (listing). See documentation for all formats.",
+  modrinthProjectsDesc: "Auto-download mods, plugins, and datapacks from Modrinth",
+  modrinthDependencies: "Download Dependencies",
+  modrinthDependenciesHelp: "Whether to download required and/or optional dependencies",
+  modrinthVersionType: "Default Version Type",
+  modrinthVersionTypeHelp: "The version type to use when selecting the newest version (release, beta, or alpha)",
+  dependenciesNone: "None",
+  dependenciesRequired: "Required",
+  dependenciesOptional: "Required + Optional",
+  versionRelease: "Release",
+  versionBeta: "Beta (+ Release)",
+  versionAlpha: "Alpha (+ Beta + Release)",
+  browseMods: "Browse Mods",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
   manualCurseForgeDeprecated: 'This manual method for CurseForge is deprecated. We recommend using "CurseForge Modpack" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.',
@@ -861,8 +884,8 @@ export const en = {
   worldFile: "World File",
   modpackOverrides: "Modpack Overrides",
   curseforgeFiles: "Download Additional Mods (CURSEFORGE_FILES)",
-  curseforgeFilesHelp: "Auto-download and upgrade mods from CurseForge. Provide a comma or space delimited list of project-file references (project slug or ID). Mods are automatically managed - removed references are cleaned up.",
-  curseforgeFilesDesc: "Comma or space separated list of CurseForge project slugs or IDs to download (e.g: jei, chunky, 238222)",
+  curseforgeFilesHelp: "Auto-download individual mods from CurseForge. Formats: 'jei' (latest), 'jei:4593548' (file ID), 'jei@10.2.1' (version), full URL, or '@/path/to/file.txt' (listing). Automatically managed - removed entries are cleaned up. See documentation for all formats.",
+  curseforgeFilesDesc: "Comma or newline separated list (e.g: jei, geckolib:4593548, aquaculture@1.0.0)",
   forceIncludeMods: "Force Include Client Mods (CF_FORCE_INCLUDE_MODS)",
   forceIncludeModsHelp: "Force inclusion of mods incorrectly tagged as client-only. Does NOT download additional mods - only overrides client-only tags for mods already in the modpack or CURSEFORGE_FILES.",
   forceIncludeModsDesc: "Project slugs or IDs to force include despite client-only tag (comma or space separated)",

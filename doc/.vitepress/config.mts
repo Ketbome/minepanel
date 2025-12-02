@@ -75,19 +75,32 @@ export default defineConfig({
         ],
       },
       {
-        text: "📖 Guide",
+        text: "⚙️ Server Management",
         collapsed: false,
         items: [
-          { text: "Features Overview", link: "/features" },
-          { text: "Roadmap", link: "/roadmap" },
-          { text: "Architecture", link: "/architecture" },
-          { text: "Development", link: "/development" },
+          { text: "Server Types", link: "/server-types" },
+          { text: "Mods & Plugins", link: "/mods-plugins" },
         ],
       },
       {
-        text: "❓ Help",
+        text: "🔧 Administration",
         collapsed: false,
-        items: [{ text: "FAQ", link: "/faq" }],
+        items: [
+          { text: "Networking", link: "/networking" },
+          { text: "Administration", link: "/administration" },
+          { text: "Troubleshooting", link: "/troubleshooting" },
+        ],
+      },
+      {
+        text: "📖 Resources",
+        collapsed: false,
+        items: [
+          { text: "Features", link: "/features" },
+          { text: "Roadmap", link: "/roadmap" },
+          { text: "Architecture", link: "/architecture" },
+          { text: "Development", link: "/development" },
+          { text: "FAQ", link: "/faq" },
+        ],
       },
     ],
 

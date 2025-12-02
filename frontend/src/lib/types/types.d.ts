@@ -113,6 +113,19 @@ export interface ServerConfig {
   // Forge specific
   forgeBuild?: string;
 
+  // Fabric specific
+  fabricLoaderVersion?: string;
+  fabricLauncherVersion?: string;
+  fabricLauncher?: string;
+  fabricLauncherUrl?: string;
+  fabricForceReinstall?: boolean;
+
+  // Modrinth specific
+  modrinthProjects?: string;
+  modrinthDownloadDependencies?: "none" | "required" | "optional";
+  modrinthDefaultVersionType?: "release" | "beta" | "alpha";
+  modrinthLoader?: string;
+
   // CurseForge specific
   cfMethod?: "url" | "slug" | "file";
   cfUrl?: string;

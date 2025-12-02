@@ -180,6 +180,15 @@ export class DockerComposeService {
         envVars: this.extractCustomEnvVars(env),
         extraPorts: extraPorts,
         forgeBuild: '',
+        fabricLoaderVersion: '',
+        fabricLauncherVersion: '',
+        fabricLauncher: '',
+        fabricLauncherUrl: '',
+        fabricForceReinstall: false,
+        modrinthProjects: '',
+        modrinthDownloadDependencies: 'none',
+        modrinthDefaultVersionType: 'release',
+        modrinthLoader: '',
       };
 
       this.parseServerTypeSpecificConfig(serverConfig, env);
@@ -191,7 +200,7 @@ export class DockerComposeService {
   }
 
   private extractCustomEnvVars(env: any): string {
-    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL']);
+    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL']);
 
     const customVars: string[] = [];
     for (const [key, value] of Object.entries(env)) {
@@ -209,6 +218,13 @@ export class DockerComposeService {
         if (env.FORGE_VERSION) {
           serverConfig.forgeBuild = env.FORGE_VERSION;
         }
+      },
+      FABRIC: () => {
+        serverConfig.fabricLoaderVersion = env.FABRIC_LOADER_VERSION ?? '';
+        serverConfig.fabricLauncherVersion = env.FABRIC_LAUNCHER_VERSION ?? '';
+        serverConfig.fabricLauncher = env.FABRIC_LAUNCHER ?? '';
+        serverConfig.fabricLauncherUrl = env.FABRIC_LAUNCHER_URL ?? '';
+        serverConfig.fabricForceReinstall = env.FABRIC_FORCE_REINSTALL === 'true';
       },
       AUTO_CURSEFORGE: () => {
         let cfMethod: 'url' | 'file' | 'slug' = 'url';
@@ -240,6 +256,9 @@ export class DockerComposeService {
       },
     };
 
+    // Parse Modrinth config for compatible server types
+    this.parseModrinthConfig(serverConfig, env);
+
     const pluginServers = ['SPIGOT', 'PAPER', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'];
     if (pluginServers.includes(serverConfig.serverType)) {
       this.parsePluginServerConfig(serverConfig, env);
@@ -247,6 +266,13 @@ export class DockerComposeService {
       const handler = typeHandlers[serverConfig.serverType];
       if (handler) handler();
     }
+  }
+
+  private parseModrinthConfig(serverConfig: ServerConfig, env: any): void {
+    serverConfig.modrinthProjects = env.MODRINTH_PROJECTS ?? '';
+    serverConfig.modrinthDownloadDependencies = env.MODRINTH_DOWNLOAD_DEPENDENCIES ?? 'none';
+    serverConfig.modrinthDefaultVersionType = env.MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE ?? 'release';
+    serverConfig.modrinthLoader = env.MODRINTH_LOADER ?? '';
   }
 
   private parsePluginServerConfig(serverConfig: ServerConfig, env: any): void {
@@ -425,6 +451,17 @@ export class DockerComposeService {
       skipDownloadDefaults: false,
 
       forgeBuild: '',
+
+      fabricLoaderVersion: '',
+      fabricLauncherVersion: '',
+      fabricLauncher: '',
+      fabricLauncherUrl: '',
+      fabricForceReinstall: false,
+
+      modrinthProjects: '',
+      modrinthDownloadDependencies: 'none',
+      modrinthDefaultVersionType: 'release',
+      modrinthLoader: '',
     };
   }
 
@@ -647,6 +684,18 @@ export class DockerComposeService {
       env['FORGE_VERSION'] = config.forgeBuild;
     }
 
+    if (config.serverType === 'FABRIC') {
+      if (config.fabricLoaderVersion) env['FABRIC_LOADER_VERSION'] = config.fabricLoaderVersion;
+      if (config.fabricLauncherVersion) env['FABRIC_LAUNCHER_VERSION'] = config.fabricLauncherVersion;
+      if (config.fabricLauncher) env['FABRIC_LAUNCHER'] = config.fabricLauncher;
+      if (config.fabricLauncherUrl) env['FABRIC_LAUNCHER_URL'] = config.fabricLauncherUrl;
+      if (config.fabricForceReinstall) env['FABRIC_FORCE_REINSTALL'] = 'true';
+      env['VERSION'] = String(config.minecraftVersion);
+    }
+
+    // Add Modrinth config for compatible server types
+    this.addModrinthConfig(env, config);
+
     const apiKey = config.cfApiKey;
     if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
 
@@ -665,9 +714,23 @@ export class DockerComposeService {
     const handler = serverTypeHandlers[config.serverType];
     if (handler) {
       handler();
-    } else {
+    } else if (config.serverType !== 'FABRIC') {
       env['VERSION'] = String(config.minecraftVersion);
     }
+  }
+
+  private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
+    const compatibleTypes = ['FORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
+    if (!compatibleTypes.includes(config.serverType)) return;
+
+    if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
+    if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
+      env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
+    }
+    if (config.modrinthDefaultVersionType && config.modrinthDefaultVersionType !== 'release') {
+      env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
+    }
+    if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
   }
 
   private addAutoCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
