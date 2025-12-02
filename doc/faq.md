@@ -110,7 +110,7 @@ Set `HOST_LAN_IP` to your local IP address to show LAN connection info to player
 ### What ports does it use?
 
 - **3000**: Web interface
-- **8091**: API server  
+- **8091**: API server
 - **8080**: File browser
 - **25565+**: Minecraft servers
 
@@ -133,6 +133,7 @@ Reset the database or manually update via SQL.
 ### Is it secure?
 
 Yes, with proper configuration:
+
 - Change default passwords immediately
 - Use HTTPS for remote access
 - Keep firewall configured properly
@@ -191,6 +192,7 @@ Yes! Add them in the server's advanced settings.
 ### How many servers can I run?
 
 Depends on your hardware. General guideline:
+
 - **4GB RAM**: 1-2 small servers
 - **8GB RAM**: 2-4 medium servers
 - **16GB+ RAM**: 4+ servers or large modded servers
@@ -198,6 +200,7 @@ Depends on your hardware. General guideline:
 ### Why is my server slow?
 
 Common causes:
+
 - Insufficient RAM/CPU
 - Too many players/mods
 - HDD instead of SSD
@@ -226,6 +229,7 @@ Common causes:
 ### Server won't start
 
 Check logs for specific errors. Common issues:
+
 - Port conflicts
 - Insufficient memory
 - Missing EULA acceptance
@@ -342,6 +346,7 @@ Yes! The project is open-source. Fork and modify as needed.
 ### Minepanel vs Pterodactyl?
 
 **Minepanel:**
+
 - ✅ Easier installation (one command)
 - ✅ Lighter weight
 - ✅ Focused on Minecraft
@@ -349,6 +354,7 @@ Yes! The project is open-source. Fork and modify as needed.
 - ❌ Fewer advanced features
 
 **Pterodactyl:**
+
 - ✅ Multi-user with permissions
 - ✅ Supports many game types
 - ✅ More mature project
@@ -358,11 +364,13 @@ Yes! The project is open-source. Fork and modify as needed.
 ### Minepanel vs AMP?
 
 **Minepanel:**
+
 - ✅ Free and open-source
 - ✅ Modern UI
 - ✅ Docker-native
 
 **AMP:**
+
 - ✅ More features
 - ✅ Professional support
 - ❌ Paid license
@@ -371,11 +379,13 @@ Yes! The project is open-source. Fork and modify as needed.
 ### Minepanel vs Crafty Controller?
 
 **Minepanel:**
+
 - ✅ More modern UI
 - ✅ Docker-based
 - ✅ Better mod management
 
 **Crafty:**
+
 - ✅ More mature
 - ✅ Multi-user
 - ❌ Different architecture
@@ -383,6 +393,7 @@ Yes! The project is open-source. Fork and modify as needed.
 ### Why not just use command line?
 
 Minepanel offers:
+
 - Visual server management
 - Easy configuration
 - Log viewing
@@ -398,6 +409,7 @@ Perfect for those who prefer GUI over CLI.
 ### What features are coming?
 
 See the [Roadmap](/roadmap) for:
+
 - Multi-user support
 - Server templates
 - Better metrics
@@ -425,6 +437,7 @@ Check the [Roadmap](/roadmap) for planned features. No specific ETAs, as this is
 ### How do I report a bug?
 
 Create an issue on GitHub with:
+
 - Steps to reproduce
 - Expected vs actual behavior
 - System information
