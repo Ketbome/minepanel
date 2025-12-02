@@ -28,6 +28,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isForge = config.serverType === "FORGE";
+  const isFabric = config.serverType === "FABRIC";
 
   const handleImportApiKey = async () => {
     setIsImporting(true);
@@ -47,7 +48,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
     }
   };
 
-  if (!isCurseForge && !isForge && !isManualCurseForge) {
+  if (!isCurseForge && !isForge && !isManualCurseForge && !isFabric) {
     return (
       <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
         <CardHeader className="pb-3">
@@ -87,6 +88,28 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
             <Input id="forgeBuild" value={config.forgeBuild} onChange={(e) => updateConfig("forgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
             <p className="text-xs text-gray-400">{t("forgeBuildDesc")}</p>
           </div>
+        )}
+
+        {isFabric && (
+          <>
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <Label htmlFor="fabricLoaderVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/crafting-table.webp" alt="Fabric Loader" width={16} height={16} />
+                {t("fabricLoaderVersion")}
+              </Label>
+              <Input id="fabricLoaderVersion" value={config.fabricLoaderVersion || ""} onChange={(e) => updateConfig("fabricLoaderVersion", e.target.value)} placeholder="0.13.1" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("fabricLoaderDesc")}</p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <Label htmlFor="fabricLauncherVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/compass.webp" alt="Fabric Launcher" width={16} height={16} />
+                {t("fabricLauncherVersion")}
+              </Label>
+              <Input id="fabricLauncherVersion" value={config.fabricLauncherVersion || ""} onChange={(e) => updateConfig("fabricLauncherVersion", e.target.value)} placeholder="0.10.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("fabricLauncherDesc")}</p>
+            </div>
+          </>
         )}
 
         {isManualCurseForge && (

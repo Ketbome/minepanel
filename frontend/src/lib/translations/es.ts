@@ -791,6 +791,13 @@ export const es: Record<TranslationKey, string> = {
   forgeVersion: "Versión de Forge",
   forgeBuildDesc: "Número de build de Forge para la versión de Minecraft seleccionada",
 
+  // Configuración de Fabric
+  serverFabric: "Servidor con soporte para mods de Fabric. Una plataforma de modding ligera alternativa a Forge.",
+  fabricLoaderVersion: "Versión del Loader de Fabric",
+  fabricLoaderDesc: "Versión específica del loader de Fabric (dejar vacío para usar la última)",
+  fabricLauncherVersion: "Versión del Launcher de Fabric",
+  fabricLauncherDesc: "Versión específica del launcher de Fabric (dejar vacío para usar la última)",
+
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
   manualCurseForgeDeprecated: 'Este método manual para CurseForge está obsoleto. Se recomienda usar "CurseForge Modpack" (AUTO_CURSEFORGE) para nuevas instalaciones. Este modo requiere que subas manualmente los archivos de modpack al servidor.',

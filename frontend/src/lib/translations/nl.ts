@@ -805,6 +805,13 @@ export const nl: Record<TranslationKey, string> = {
   forgeVersion: "Forge versie",
   forgeBuildDesc: "Forge build nummer voor de geselecteerde Minecraft versie",
 
+  // Fabric Configuration
+  serverFabric: "Server met ondersteuning voor Fabric mods. Een lichtgewicht modding platform alternatief voor Forge.",
+  fabricLoaderVersion: "Fabric Loader Versie",
+  fabricLoaderDesc: "Specifieke Fabric loader versie (leeg laten voor nieuwste)",
+  fabricLauncherVersion: "Fabric Launcher Versie",
+  fabricLauncherDesc: "Specifieke Fabric launcher versie (leeg laten voor nieuwste)",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",
   manualCurseForgeDeprecated: 'Deze handmatige methode voor CurseForge is verouderd. We raden aan "CurseForge Modpack" (AUTO_CURSEFORGE) te gebruiken voor nieuwe installaties. Deze modus vereist dat je de modpack bestanden handmatig naar de server uploadt.',

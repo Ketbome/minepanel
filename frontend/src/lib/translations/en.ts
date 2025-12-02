@@ -789,6 +789,13 @@ export const en = {
   forgeVersion: "Forge Version",
   forgeBuildDesc: "Forge build number for the selected Minecraft version",
 
+  // Fabric Configuration
+  serverFabric: "Server with support for Fabric mods. A lightweight modding platform alternative to Forge.",
+  fabricLoaderVersion: "Fabric Loader Version",
+  fabricLoaderDesc: "Specific Fabric loader version (leave empty for latest)",
+  fabricLauncherVersion: "Fabric Launcher Version",
+  fabricLauncherDesc: "Specific Fabric launcher version (leave empty for latest)",
+
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
   manualCurseForgeDeprecated: 'This manual method for CurseForge is deprecated. We recommend using "CurseForge Modpack" (AUTO_CURSEFORGE) for new installations. This mode requires you to manually upload the modpack files to the server.',
