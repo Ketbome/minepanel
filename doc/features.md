@@ -29,6 +29,26 @@ From 1.8 to latest. Snapshots too.
 3. Wait
 4. Done
 
+### Mod Management
+
+**Modrinth Integration:**
+- Auto-download mods from Modrinth
+- Support for Fabric, Forge, and modded servers
+- Automatic dependency resolution
+- Version type selection (release/beta/alpha)
+- Multiple reference formats (slug, version, project ID)
+
+**CurseForge Files:**
+- Download individual mods from CurseForge
+- Multiple reference formats (URL, slug, file ID)
+- Auto-select latest compatible versions
+- Works alongside Modrinth
+
+**Combined Support:**
+- Use both Modrinth and CurseForge simultaneously
+- Automatic cleanup of removed mods
+- File listing support for easier management
+
 ## Monitoring
 
 ### Status at a glance

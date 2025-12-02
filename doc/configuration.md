@@ -661,6 +661,328 @@ docker compose up -d
 
 After reset, you'll need to log in again with the default credentials (admin/admin).
 
+## Server Types and Mods
+
+Minepanel supports multiple server types and mod loaders. Each type has specific configuration options.
+
+### Fabric
+
+A lightweight modding platform alternative to Forge.
+
+#### Basic Setup
+
+1. Select **Fabric** as server type
+2. Choose your Minecraft version
+3. Optionally specify loader/launcher versions
+
+#### Configuration Options
+
+| Option | Environment Variable | Description | Default |
+|--------|---------------------|-------------|---------|
+| Loader Version | `FABRIC_LOADER_VERSION` | Specific Fabric loader version | Latest |
+| Launcher Version | `FABRIC_LAUNCHER_VERSION` | Specific Fabric launcher version | Latest |
+| Custom Launcher | `FABRIC_LAUNCHER` | Path to custom launcher jar | - |
+| Launcher URL | `FABRIC_LAUNCHER_URL` | URL to download custom launcher | - |
+| Force Reinstall | `FABRIC_FORCE_REINSTALL` | Re-install launcher if corrupted | `false` |
+
+#### Example Configuration
+
+```yaml
+environment:
+  TYPE: FABRIC
+  VERSION: 1.21.4
+  FABRIC_LOADER_VERSION: 0.13.1
+  FABRIC_LAUNCHER_VERSION: 0.10.2
+```
+
+::: tip Fabric API
+Most Fabric mods require the Fabric API mod. Install it easily using Modrinth (see below).
+:::
+
+### Forge
+
+The most popular mod loader with extensive mod compatibility.
+
+#### Configuration Options
+
+| Option | Environment Variable | Description |
+|--------|---------------------|-------------|
+| Forge Version | `FORGE_VERSION` | Specific Forge build number | Latest for MC version |
+
+#### Example
+
+```yaml
+environment:
+  TYPE: FORGE
+  VERSION: 1.20.4
+  FORGE_VERSION: 43.2.0
+```
+
+### Modrinth Auto-Download
+
+Automatically download and manage mods, plugins, and datapacks from Modrinth.
+
+#### Supported Server Types
+
+- ✅ Fabric
+- ✅ Forge  
+- ✅ CurseForge (AUTO_CURSEFORGE)
+
+#### Configuration
+
+| Option | Environment Variable | Description | Default |
+|--------|---------------------|-------------|---------|
+| Projects | `MODRINTH_PROJECTS` | List of mods/plugins to install | - |
+| Dependencies | `MODRINTH_DOWNLOAD_DEPENDENCIES` | Download dependencies: `none`, `required`, `optional` | `none` |
+| Version Type | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | Preferred version: `release`, `beta`, `alpha` | `release` |
+| Loader | `MODRINTH_LOADER` | Force specific loader type | Auto-detected |
+
+#### Project Reference Formats
+
+The `MODRINTH_PROJECTS` variable accepts multiple formats (comma or newline separated):
+
+```yaml
+# Basic formats
+MODRINTH_PROJECTS: |
+  fabric-api
+  jei
+  geckolib
+```
+
+**Advanced formats:**
+
+1. **Project slug** (simplest): `fabric-api`
+2. **With version ID**: `fabric-api:bQZpGIz0`
+3. **With version number**: `fabric-api:0.119.2+1.21.4`
+4. **With release type**: `fabric-api:beta`
+5. **With prefix** (loader override): `fabric:fabric-api`
+6. **Datapacks**: `datapack:terralith` or `datapack:terralith:2.5.5`
+7. **Using project ID**: `P7dR8mSH`
+8. **From file**: `@/path/to/modrinth-mods.txt`
+
+#### Real-World Examples
+
+**Fabric server with common mods:**
+
+```yaml
+environment:
+  TYPE: FABRIC
+  VERSION: 1.21.4
+  MODRINTH_PROJECTS: |
+    fabric-api
+    cloth-config
+    sodium
+    lithium
+  MODRINTH_DOWNLOAD_DEPENDENCIES: required
+```
+
+**Forge server with specific versions:**
+
+```yaml
+environment:
+  TYPE: FORGE
+  VERSION: 1.20.1
+  MODRINTH_PROJECTS: |
+    jei:10.2.1.1005
+    geckolib
+    create
+```
+
+**Mixed mods with datapacks:**
+
+```yaml
+environment:
+  TYPE: FABRIC
+  MODRINTH_PROJECTS: |
+    fabric-api
+    datapack:terralith:2.5.5
+    datapack:incendium
+```
+
+**Using a listing file:**
+
+Create `/path/to/mods.txt`:
+```
+# Performance mods
+fabric-api
+sodium
+lithium
+
+# QoL mods
+cloth-config
+modmenu
+```
+
+Then reference it:
+```yaml
+volumes:
+  - ./mods-list:/extras:ro
+environment:
+  MODRINTH_PROJECTS: "@/extras/mods.txt"
+```
+
+::: tip Auto-Removal
+Mods removed from `MODRINTH_PROJECTS` will be automatically deleted from the server. Set to empty string to remove all mods.
+:::
+
+### CurseForge Files Auto-Download
+
+Download specific mods/plugins from CurseForge for any server type that supports mods.
+
+::: warning API Key Required
+You need a CurseForge API key to use this feature. Get one from [CurseForge for Studios](https://console.curseforge.com/).
+:::
+
+#### Configuration
+
+| Option | Environment Variable | Description |
+|--------|---------------------|-------------|
+| API Key | `CF_API_KEY` | Your CurseForge API key (required) |
+| Files | `CURSEFORGE_FILES` | List of project-file references |
+
+#### Project-File Reference Formats
+
+The `CURSEFORGE_FILES` variable accepts these formats (comma or space separated):
+
+1. **Project page URL**: `https://www.curseforge.com/minecraft/mc-mods/jei`
+2. **File page URL**: `https://www.curseforge.com/minecraft/mc-mods/jei/files/4593548`
+3. **Project slug**: `jei`
+4. **Project ID**: `238222`
+5. **Slug/ID with file ID**: `jei:4593548` or `238222:4593548`
+6. **Slug/ID with partial filename**: `jei@10.2.1.1005`
+7. **From listing file**: `@/path/to/cf-mods.txt`
+
+#### Examples
+
+**Basic mod list:**
+
+```yaml
+environment:
+  CF_API_KEY: $2a$10$Iao...
+  CURSEFORGE_FILES: |
+    jei
+    geckolib
+    aquaculture
+```
+
+**Specific versions:**
+
+```yaml
+environment:
+  CURSEFORGE_FILES: |
+    jei:4593548
+    geckolib@4.2.1
+    238222:4593548
+```
+
+**Mixed formats:**
+
+```yaml
+environment:
+  CURSEFORGE_FILES: |
+    https://www.curseforge.com/minecraft/mc-mods/jei
+    geckolib:4.2.1
+    aquaculture
+```
+
+**Using listing file:**
+
+Create `cf-mods.txt`:
+```
+# Core mods
+jei:4593548
+geckolib
+
+# Extra mods
+aquaculture
+naturalist
+```
+
+Mount and reference:
+```yaml
+volumes:
+  - ./cf-list:/extras:ro
+environment:
+  CURSEFORGE_FILES: "@/extras/cf-mods.txt"
+```
+
+::: tip Auto-Selection
+If you don't specify a file version, the newest compatible file for your Minecraft version and server type will be selected automatically.
+:::
+
+::: info Dependencies
+CurseForge Files can detect missing dependencies but cannot resolve them automatically. Make sure to include all required dependencies in your list.
+:::
+
+### CurseForge Modpacks (AUTO_CURSEFORGE)
+
+Install complete modpacks from CurseForge.
+
+#### Methods
+
+**1. URL Method (easiest):**
+```yaml
+environment:
+  TYPE: AUTO_CURSEFORGE
+  CF_API_KEY: your_key
+  CF_PAGE_URL: https://www.curseforge.com/minecraft/modpacks/all-the-mods-9/download/5464988
+```
+
+**2. Slug + File ID:**
+```yaml
+environment:
+  TYPE: AUTO_CURSEFORGE
+  CF_API_KEY: your_key
+  CF_SLUG: all-the-mods-9
+  CF_FILE_ID: 5464988
+```
+
+**3. Auto-select latest:**
+```yaml
+environment:
+  TYPE: AUTO_CURSEFORGE
+  CF_API_KEY: your_key
+  CF_SLUG: all-the-mods-9
+```
+
+#### Advanced Options
+
+| Option | Variable | Description | Default |
+|--------|----------|-------------|---------|
+| Force Sync | `CF_FORCE_SYNCHRONIZE` | Re-download even if exists | `false` |
+| Parallel Downloads | `CF_PARALLEL_DOWNLOADS` | Concurrent downloads | `4` |
+| Skip Existing | `CF_OVERRIDES_SKIP_EXISTING` | Don't overwrite files | `false` |
+| Set Level From | `CF_SET_LEVEL_FROM` | World source: `WORLD_FILE`, `OVERRIDES` | - |
+| Force Include | `CF_FORCE_INCLUDE_MODS` | Force download specific mods | - |
+| Exclude Mods | `CF_EXCLUDE_MODS` | Exclude specific mods | - |
+
+### Combining Modrinth and CurseForge
+
+You can use both Modrinth and CurseForge Files together:
+
+```yaml
+environment:
+  TYPE: FABRIC
+  VERSION: 1.21.4
+  
+  # Modrinth mods (preferred for performance)
+  MODRINTH_PROJECTS: |
+    fabric-api
+    sodium
+    lithium
+  MODRINTH_DOWNLOAD_DEPENDENCIES: required
+  
+  # CurseForge exclusive mods
+  CF_API_KEY: your_key
+  CURSEFORGE_FILES: |
+    some-cf-exclusive-mod
+    another-cf-mod
+```
+
+::: warning Version Compatibility
+Always ensure mods from both sources are compatible with your Minecraft version and loader type.
+:::
+
 ## Advanced
 
 ### Custom Docker socket

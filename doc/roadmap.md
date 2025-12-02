@@ -2,6 +2,35 @@
 
 What's planned for Minepanel.
 
+## Recently Completed
+
+### ✅ CurseForge browser
+
+- ~~Search modpacks~~
+- ~~Filter by version/loader~~
+- ~~One-click install~~
+- ~~Auto updates~~
+
+### ✅ Fabric Support
+
+- Full Fabric server type support
+- Loader and launcher version configuration
+- Compatible with mod management features
+
+### ✅ Modrinth Integration
+
+- Auto-download mods from Modrinth
+- Support for Fabric, Forge, and modded servers
+- Dependency resolution (required/optional)
+- Multiple project reference formats
+
+### ✅ CurseForge Files
+
+- Individual mod downloads from CurseForge
+- Works alongside Modrinth
+- Multiple reference formats
+- Auto-version selection
+
 ## Coming soon
 
 ### Better log viewer
@@ -24,13 +53,6 @@ What's planned for Minepanel.
 - SSL with Let's Encrypt
 - Custom domains
 - No exposed ports
-
-### CurseForge browser
-
-- Search modpacks
-- Filter by version/loader
-- One-click install
-- Auto updates
 
 ## Planned
 
