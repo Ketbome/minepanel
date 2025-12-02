@@ -3,6 +3,7 @@ import { ServerConfig } from "../types/types";
 import { apiClearServerData, apiRestartServer, fetchServerConfig, updateServerConfig } from "@/services/docker/fetchs";
 import { toast } from "sonner";
 import { minecraftVersionsService } from "@/services/minecraft-versions.service";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 const defaultConfig: ServerConfig = {
   id: "Server",
@@ -118,6 +119,7 @@ const defaultConfig: ServerConfig = {
 };
 
 export function useServerConfig(serverId: string) {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<ServerConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -145,7 +147,7 @@ export function useServerConfig(serverId: string) {
         });
       } catch (error) {
         console.error("Error loading server config:", error);
-        toast.error("Error al cargar la configuración del servidor");
+        toast.error(t("loadConfigError"));
       } finally {
         setLoading(false);
       }
@@ -167,11 +169,11 @@ export function useServerConfig(serverId: string) {
     try {
       setIsSaving(true);
       await updateServerConfig(serverId, dataToSave);
-      toast.success("Configuración guardada correctamente");
+      toast.success(t("saveConfigurationSuccess"));
       return true;
     } catch (error) {
       console.error("Error saving config:", error);
-      toast.error("Error al guardar la configuración");
+      toast.error(t("saveConfigurationError"));
       return false;
     } finally {
       setIsSaving(false);
@@ -183,14 +185,14 @@ export function useServerConfig(serverId: string) {
     try {
       const result = await apiRestartServer(serverId);
       if (result.success) {
-        toast.success("Servidor reiniciado correctamente");
+        toast.success(t("serverRestartSuccess"));
         return true;
       } else {
-        throw new Error(result.message || "Error al reiniciar el servidor");
+        throw new Error(result.message || t("serverRestartError"));
       }
     } catch (error) {
       console.error("Error restarting server:", error);
-      toast.error("Error al reiniciar el servidor");
+      toast.error(t("serverRestartError"));
       return false;
     } finally {
       setIsRestarting(false);
@@ -202,14 +204,14 @@ export function useServerConfig(serverId: string) {
     try {
       const result = await apiClearServerData(serverId);
       if (result.success) {
-        toast.success("Datos del servidor borrados correctamente");
+        toast.success(t("clearDataSuccess"));
         return true;
       } else {
-        throw new Error(result.message || "Error al borrar los datos del servidor");
+        throw new Error(result.message || t("clearDataError"));
       }
     } catch (error) {
       console.error("Error clearing server data:", error);
-      toast.error("Error al borrar los datos del servidor");
+      toast.error(t("clearDataError"));
       return false;
     } finally {
       setIsClearing(false);
