@@ -357,6 +357,10 @@ export class ServerConfigDto {
 
   @IsString()
   @IsOptional()
+  cfFiles?: string;
+
+  @IsString()
+  @IsOptional()
   cfForceInclude?: string;
 
   @IsString()
