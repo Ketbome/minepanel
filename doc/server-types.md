@@ -2,6 +2,8 @@
 
 Learn about different Minecraft server types and how to configure them.
 
+![Server Types](/public/img/server-types.png)
+
 ## Vanilla
 
 Basic Minecraft server without mods or plugins.

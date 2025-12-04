@@ -2,6 +2,8 @@
 
 Common issues and how to solve them.
 
+![Troubleshooting](/public/img/troubleshooting.png)
+
 ## Quick Checks
 
 Before diving into specific problems, try these:

@@ -2,6 +2,8 @@
 
 How to configure Minepanel.
 
+![Configuration](/public/img/configuration.png)
+
 ## Environment Variables
 
 All environment variables can be set in a `.env` file or directly in `docker-compose.yml`.

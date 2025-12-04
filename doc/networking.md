@@ -2,6 +2,8 @@
 
 Configure remote access, LAN connectivity, SSL/HTTPS, and port management.
 
+![Server Connection](/public/img/server-connection.png)
+
 ## Remote Access Configuration
 
 To access Minepanel from outside your local network:

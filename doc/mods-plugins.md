@@ -2,6 +2,8 @@
 
 Automatically download and manage mods and plugins for your Minecraft servers.
 
+![Mods Tab](/public/img/mods-tab.png)
+
 ## Modrinth
 
 Automatically download and manage mods, plugins, and datapacks from [Modrinth](https://modrinth.com).
