@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { motion } from "framer-motion";
-import { env } from "next-runtime-env";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
@@ -20,18 +19,13 @@ interface ServerPageHeaderProps {
   readonly onStopServer: () => Promise<boolean>;
   readonly onRestartServer: () => Promise<boolean>;
   readonly onClearData: () => Promise<boolean>;
+  readonly onOpenFiles?: () => void;
 }
 
-export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData }: ServerPageHeaderProps) {
+export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
-
-  const openFileBrowser = () => {
-    const fileBrowserPath = `/files/${serverId}`;
-    const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
-    window.open(url, "_blank");
-  };
 
   const handleClearData = async () => {
     setIsClearing(true);
@@ -146,10 +140,12 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
             {isProcessing ? t("restarting") : t("restart2")}
           </Button>
 
-          <Button type="button" variant="outline" onClick={openFileBrowser} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
-            <FolderOpen className="h-4 w-4" />
-            {t("openFileBrowser")}
-          </Button>
+          {onOpenFiles && (
+            <Button type="button" variant="outline" onClick={onOpenFiles} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
+              <FolderOpen className="h-4 w-4" />
+              {t("files")}
+            </Button>
+          )}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>

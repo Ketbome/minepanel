@@ -745,6 +745,7 @@ export const nl: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: "Server map openen",
   openFileBrowser: "Bestandsbeheerder",
   filesDesc: "Blader, bewerk en beheer je serverbestanden",
+  allServersFilesDesc: "Blader en beheer bestanden van al je servers",
   openInNewTab: "Openen in nieuw tabblad",
   fileBrowserError: "Kan bestandsbeheerder niet laden",
   fileBrowserErrorDesc: "Probeer het te openen in een nieuw tabblad",

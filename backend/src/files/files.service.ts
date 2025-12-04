@@ -20,17 +20,21 @@ export class FilesService {
     this.SERVERS_DIR = this.configService.get('serversDir');
   }
 
-  private getServerPath(serverId: string): string {
+  private getBasePath(serverId: string): string {
+    // "_root" means the servers directory itself
+    if (serverId === '_root') {
+      return this.SERVERS_DIR;
+    }
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
   private validatePath(serverId: string, filePath: string): string {
-    const serverPath = this.getServerPath(serverId);
-    const fullPath = path.join(serverPath, filePath || '');
+    const basePath = this.getBasePath(serverId);
+    const fullPath = path.join(basePath, filePath || '');
     const normalized = path.normalize(fullPath);
 
     // Prevent path traversal attacks
-    if (!normalized.startsWith(serverPath)) {
+    if (!normalized.startsWith(basePath)) {
       throw new BadRequestException('Invalid path');
     }
 

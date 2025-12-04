@@ -729,6 +729,7 @@ export const en = {
   pluginsOpenServerFolder: "Open server folder",
   openFileBrowser: "File Manager",
   filesDesc: "Browse, edit and manage your server files",
+  allServersFilesDesc: "Browse and manage files for all your servers",
   openInNewTab: "Open in new tab",
   fileBrowserError: "Unable to load File Browser",
   fileBrowserErrorDesc: "Please try opening in a new tab",

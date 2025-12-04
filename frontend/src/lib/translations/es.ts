@@ -731,6 +731,7 @@ export const es: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: "Abrir carpeta del servidor",
   openFileBrowser: "Gestor de archivos",
   filesDesc: "Explora, edita y gestiona los archivos de tu servidor",
+  allServersFilesDesc: "Explora y gestiona archivos de todos tus servidores",
   openInNewTab: "Abrir en nueva pestaña",
   fileBrowserError: "No se pudo cargar el Gestor de Archivos",
   fileBrowserErrorDesc: "Por favor intenta abrirlo en una nueva pestaña",

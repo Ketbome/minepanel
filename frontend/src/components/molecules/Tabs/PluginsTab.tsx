@@ -3,28 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, ExternalLink, Folder, FolderOpen } from "lucide-react";
+import { HelpCircle, FolderOpen } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
-import { env } from "next-runtime-env";
 
 interface PluginsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
+  onOpenFiles?: () => void;
 }
 
-export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
+export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onOpenFiles }) => {
   const { t } = useLanguage();
   const isPluginServer = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
-
-  const openFileBrowser = (preferPlugins: boolean = true) => {
-    const fileBrowserPath = preferPlugins ? `/files/${config.id}/mc-data/plugins/` : `/files/${config.id}`;
-
-    const url = `${env("NEXT_PUBLIC_FILEBROWSER_URL")}${fileBrowserPath}`;
-    window.open(url, "_blank");
-  };
 
   if (!isPluginServer) {
     return (
@@ -291,18 +284,14 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig }) => {
               </div>
               <p className="text-xs text-gray-400 mt-1">{t("pluginsManualInfo")}</p>
 
-              <div className="mt-3 flex gap-2">
-                <Button type="button" onClick={() => openFileBrowser(true)} variant="outline" className="gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 border-gray-600 font-minecraft text-xs">
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  {t("pluginsOpenPluginsFolder")}
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-                <Button type="button" onClick={() => openFileBrowser(false)} variant="outline" className="gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 border-gray-600 font-minecraft text-xs">
-                  <Folder className="h-3.5 w-3.5" />
-                  {t("pluginsOpenServerFolder")}
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </div>
+              {onOpenFiles && (
+                <div className="mt-3">
+                  <Button type="button" onClick={onOpenFiles} variant="outline" className="gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 border-gray-600 font-minecraft text-xs">
+                    <FolderOpen className="h-3.5 w-3.5" />
+                    {t("openFileBrowser")}
+                  </Button>
+                </div>
+              )}
 
               <ol className="text-xs text-gray-400 mt-3 space-y-1 list-decimal list-inside">
                 <li>{t("pluginsManualStep1")}</li>
