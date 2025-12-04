@@ -1,9 +1,20 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useState, useCallback } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Dynamic import for Monaco to avoid SSR issues
+const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((mod) => mod.default), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 flex items-center justify-center bg-gray-950">
+      <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+    </div>
+  ),
+});
 
 interface FileEditorProps {
   path: string;
@@ -19,49 +30,59 @@ const getLanguageFromPath = (path: string): string => {
     yml: "yaml",
     yaml: "yaml",
     xml: "xml",
-    properties: "properties",
+    properties: "ini",
     cfg: "ini",
     conf: "ini",
-    toml: "toml",
+    toml: "ini",
     ini: "ini",
     sh: "shell",
-    bat: "batch",
+    bat: "bat",
     md: "markdown",
     txt: "plaintext",
     log: "plaintext",
+    mcmeta: "json",
+    lang: "ini",
+    js: "javascript",
+    ts: "typescript",
+    java: "java",
   };
   return langMap[ext || ""] || "plaintext";
 };
 
-export const FileEditor: FC<FileEditorProps> = ({
-  path,
-  content,
-  onSave,
-  onClose,
-}) => {
+export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose }) => {
   const { t } = useLanguage();
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const hasChanges = editedContent !== content;
 
   const fileName = path.split("/").pop() || path;
+  const language = getLanguageFromPath(path);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true);
     await onSave(editedContent);
     setIsSaving(false);
-  };
+  }, [editedContent, onSave]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Ctrl/Cmd + S to save
-    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-      e.preventDefault();
-      if (hasChanges) handleSave();
-    }
-  };
+  const handleEditorChange = useCallback((value: string | undefined) => {
+    setEditedContent(value || "");
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (hasChanges) handleSave();
+      }
+    },
+    [hasChanges, handleSave]
+  );
 
   return (
-    <div className="flex flex-col h-[600px] bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
+    <div
+      className="flex flex-col h-[600px] bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden"
+      onKeyDown={handleKeyDown}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-700/50">
         <div className="flex items-center gap-3">
@@ -73,7 +94,10 @@ export const FileEditor: FC<FileEditorProps> = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <span className="text-gray-200 font-medium">{fileName}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-200 font-medium">{fileName}</span>
+            <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{language}</span>
+          </div>
           {hasChanges && (
             <span className="text-xs text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded">
               {t("unsaved")}
@@ -86,28 +110,43 @@ export const FileEditor: FC<FileEditorProps> = ({
           className="gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
           size="sm"
         >
-          <Save className="h-4 w-4" />
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isSaving ? t("saving") : t("save")}
         </Button>
       </div>
 
       {/* Editor */}
-      <div className="flex-1 relative">
-        <textarea
+      <div className="flex-1">
+        <MonacoEditor
+          height="100%"
+          language={language}
           value={editedContent}
-          onChange={(e) => setEditedContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="absolute inset-0 w-full h-full bg-gray-950 text-gray-200 font-mono text-sm p-4 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
-          spellCheck={false}
+          onChange={handleEditorChange}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+            lineNumbers: "on",
+            wordWrap: "on",
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            padding: { top: 12, bottom: 12 },
+            renderLineHighlight: "line",
+            cursorBlinking: "smooth",
+            smoothScrolling: true,
+            tabSize: 2,
+            folding: true,
+            bracketPairColorization: { enabled: true },
+          }}
         />
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-800/30 border-t border-gray-700/50 text-xs text-gray-500">
-        <span>{getLanguageFromPath(path)}</span>
-        <span>Ctrl+S to save</span>
+        <span>{path}</span>
+        <span>Ctrl+S {t("toSave")}</span>
       </div>
     </div>
   );
 };
-

@@ -172,3 +172,26 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Minecraft pixelated images */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Toast animations */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-minecraft {
+  animation: toast-slide-in 0.3s ease-out;
+}

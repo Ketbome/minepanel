@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as archiver from 'archiver';
 
 export interface FileItem {
   name: string;
@@ -165,5 +166,26 @@ export class FilesService {
 
   getFullPath(serverId: string, filePath: string): string {
     return this.validatePath(serverId, filePath);
+  }
+
+  async createZipStream(serverId: string, dirPath: string): Promise<{ stream: archiver.Archiver; name: string }> {
+    const fullPath = this.validatePath(serverId, dirPath);
+
+    if (!(await fs.pathExists(fullPath))) {
+      throw new NotFoundException('Directory not found');
+    }
+
+    const stats = await fs.stat(fullPath);
+    if (!stats.isDirectory()) {
+      throw new BadRequestException('Path is not a directory');
+    }
+
+    const folderName = path.basename(fullPath);
+    const archive = archiver('zip', { zlib: { level: 6 } });
+
+    archive.directory(fullPath, folderName);
+    archive.finalize();
+
+    return { stream: archive, name: `${folderName}.zip` };
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ServerConfig } from "../types/types";
 import { apiClearServerData, apiRestartServer, fetchServerConfig, updateServerConfig } from "@/services/docker/fetchs";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { minecraftVersionsService } from "@/services/minecraft-versions.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -147,7 +147,7 @@ export function useServerConfig(serverId: string) {
         });
       } catch (error) {
         console.error("Error loading server config:", error);
-        toast.error(t("loadConfigError"));
+        mcToast.error(t("loadConfigError"));
       } finally {
         setLoading(false);
       }
@@ -169,11 +169,11 @@ export function useServerConfig(serverId: string) {
     try {
       setIsSaving(true);
       await updateServerConfig(serverId, dataToSave);
-      toast.success(t("saveConfigurationSuccess"));
+      mcToast.success(t("saveConfigurationSuccess"));
       return true;
     } catch (error) {
       console.error("Error saving config:", error);
-      toast.error(t("saveConfigurationError"));
+      mcToast.error(t("saveConfigurationError"));
       return false;
     } finally {
       setIsSaving(false);
@@ -185,14 +185,14 @@ export function useServerConfig(serverId: string) {
     try {
       const result = await apiRestartServer(serverId);
       if (result.success) {
-        toast.success(t("serverRestartSuccess"));
+        mcToast.success(t("serverRestartSuccess"));
         return true;
       } else {
         throw new Error(result.message || t("serverRestartError"));
       }
     } catch (error) {
       console.error("Error restarting server:", error);
-      toast.error(t("serverRestartError"));
+      mcToast.error(t("serverRestartError"));
       return false;
     } finally {
       setIsRestarting(false);
@@ -204,14 +204,14 @@ export function useServerConfig(serverId: string) {
     try {
       const result = await apiClearServerData(serverId);
       if (result.success) {
-        toast.success(t("clearDataSuccess"));
+        mcToast.success(t("clearDataSuccess"));
         return true;
       } else {
         throw new Error(result.message || t("clearDataError"));
       }
     } catch (error) {
       console.error("Error clearing server data:", error);
-      toast.error(t("clearDataError"));
+      mcToast.error(t("clearDataError"));
       return false;
     } finally {
       setIsClearing(false);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Globe, Wifi, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
@@ -31,7 +31,7 @@ export function ServerConnectionInfo({ port, serverId }: ServerConnectionInfoPro
         setLocalIPs(fetchedLocalIPs);
       } catch (error) {
         console.error("Error fetching IPs:", error);
-        toast.error(t("error"));
+        mcToast.error(t("error"));
       } finally {
         setIsLoading(false);
       }
@@ -50,10 +50,10 @@ export function ServerConnectionInfo({ port, serverId }: ServerConnectionInfoPro
         setCopiedLAN(true);
         setTimeout(() => setCopiedLAN(false), 2000);
       }
-      toast.success(t("copiedToClipboard"));
+      mcToast.success(t("copiedToClipboard"));
     } catch (err) {
       console.error("Error copying to clipboard:", err);
-      toast.error(t("copyError"));
+      mcToast.error(t("copyError"));
     }
   };
 

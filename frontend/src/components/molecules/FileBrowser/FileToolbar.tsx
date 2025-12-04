@@ -12,14 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  FolderPlus,
-  Upload,
-  RefreshCw,
-  Trash2,
-  Download,
-  Pencil,
-} from "lucide-react";
+import { FolderPlus, Upload, RefreshCw, Trash2, Download, Pencil, Loader2 } from "lucide-react";
 
 interface FileToolbarProps {
   onCreateFolder: (name: string) => void;
@@ -29,6 +22,7 @@ interface FileToolbarProps {
   onDelete: (file: FileItem) => void;
   onRename: (file: FileItem, newName: string) => void;
   onDownload: (file: FileItem) => void;
+  isUploading?: boolean;
 }
 
 export const FileToolbar: FC<FileToolbarProps> = ({
@@ -39,6 +33,7 @@ export const FileToolbar: FC<FileToolbarProps> = ({
   onDelete,
   onRename,
   onDownload,
+  isUploading = false,
 }) => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +83,7 @@ export const FileToolbar: FC<FileToolbarProps> = ({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border-b border-gray-700/50">
+      <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border-b border-gray-700/50 select-none">
         <Button
           variant="ghost"
           size="sm"
@@ -104,9 +99,10 @@ export const FileToolbar: FC<FileToolbarProps> = ({
           size="sm"
           className="gap-2 text-gray-300 hover:text-white hover:bg-gray-700/50"
           onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
         >
-          <Upload className="h-4 w-4" />
-          {t("upload")}
+          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {isUploading ? t("uploading") : t("upload")}
         </Button>
 
         <input

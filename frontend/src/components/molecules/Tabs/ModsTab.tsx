@@ -14,7 +14,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { getSettings } from "@/services/settings/settings.service";
 import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 
 interface ModsTabProps {
   config: ServerConfig;
@@ -37,13 +37,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
       const settings = await getSettings();
       if (settings.cfApiKey) {
         updateConfig("cfApiKey", settings.cfApiKey);
-        toast.success(t("apiKeyImported"));
+        mcToast.success(t("apiKeyImported"));
       } else {
-        toast.error(t("noApiKeyConfigured"));
+        mcToast.error(t("noApiKeyConfigured"));
       }
     } catch (error) {
       console.error("Error importing API key:", error);
-      toast.error(t("noApiKeyConfigured"));
+      mcToast.error(t("noApiKeyConfigured"));
     } finally {
       setIsImporting(false);
     }

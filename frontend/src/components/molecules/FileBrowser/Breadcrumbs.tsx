@@ -19,7 +19,7 @@ export const Breadcrumbs: FC<BreadcrumbsProps> = ({ path, onNavigate, onNavigate
   };
 
   return (
-    <div className="flex items-center gap-1 px-3 py-2 bg-gray-800/30 border-b border-gray-700/50 text-sm">
+    <div className="flex items-center gap-1 px-3 py-2 bg-gray-800/30 border-b border-gray-700/50 text-sm select-none">
       <Button
         variant="ghost"
         size="icon"

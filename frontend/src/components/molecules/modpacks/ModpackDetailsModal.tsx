@@ -10,7 +10,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 
 interface ModpackDetailsModalProps {
   modpack: CurseForgeModpack | null;
@@ -41,7 +41,7 @@ export function ModpackDetailsModal({ modpack, open, onClose }: ModpackDetailsMo
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success(`${label} ${t("copiedToClipboard")}`);
+    mcToast.success(`${label} ${t("copiedToClipboard")}`);
     setTimeout(() => setCopied(false), 2000);
   };
 

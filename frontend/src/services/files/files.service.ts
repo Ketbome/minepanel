@@ -54,5 +54,9 @@ export const filesService = {
   getDownloadUrl(serverId: string, path: string): string {
     return `${api.defaults.baseURL}/files/${serverId}/download?path=${encodeURIComponent(path)}`;
   },
+
+  getDownloadZipUrl(serverId: string, path: string): string {
+    return `${api.defaults.baseURL}/files/${serverId}/download-zip?path=${encodeURIComponent(path)}`;
+  },
 };
 

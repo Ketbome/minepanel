@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { useLanguage } from "./useLanguage";
 
 interface UseAutoSaveOptions<T> {
@@ -101,14 +101,14 @@ export function useAutoSaveWithToast<T>(
     debounceMs: options?.debounceMs ?? 1500,
     onSuccess: () => {
       if (showSuccessToast) {
-        toast.success(t("configSavedAutomatically"), {
+        mcToast.success(t("configSavedAutomatically"), {
           duration: 2000,
         });
       }
     },
     onError: (error) => {
       console.error("Auto-save error:", error);
-      toast.error(t("errorSavingAutomatically"));
+      mcToast.error(t("errorSavingAutomatically"));
     },
   });
 }

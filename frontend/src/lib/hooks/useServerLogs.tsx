@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerLogsStream } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -201,7 +201,7 @@ export function useServerLogs(serverId: string) {
         message: errorMessage,
       });
 
-      toast.error(t("errorGettingLogsServer"));
+      mcToast.error(t("errorGettingLogsServer"));
       return "";
     } finally {
       setLoading(false);

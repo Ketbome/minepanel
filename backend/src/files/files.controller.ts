@@ -38,6 +38,20 @@ export class FilesController {
     stream.pipe(res);
   }
 
+  @Get(':serverId/download-zip')
+  async downloadZip(@Param('serverId') serverId: string, @Query('path') dirPath: string, @Res() res: Response): Promise<void> {
+    if (!dirPath) {
+      throw new BadRequestException('Path is required');
+    }
+
+    const { stream, name } = await this.filesService.createZipStream(serverId, dirPath);
+
+    res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
+    res.setHeader('Content-Type', 'application/zip');
+
+    stream.pipe(res);
+  }
+
   @Get(':serverId/info')
   async getFileInfo(@Param('serverId') serverId: string, @Query('path') filePath: string): Promise<FileItem> {
     if (!filePath) {
