@@ -11,7 +11,7 @@ import { ModpackDetailsModalEnhanced } from "@/components/molecules/modpacks/Mod
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks } from "@/services/curseforge/curseforge.service";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 
 export default function TemplatesPage() {
   const { t } = useLanguage();
@@ -56,7 +56,7 @@ export default function TemplatesPage() {
       } else {
         setError(t("errorLoadingModpacks"));
       }
-      toast.error(t("errorLoadingModpacks"));
+      mcToast.error(t("errorLoadingModpacks"));
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ export default function TemplatesPage() {
       setActiveTab("search");
     } catch (err) {
       console.error("Error searching modpacks:", err);
-      toast.error(t("errorSearchingModpacks"));
+      mcToast.error(t("errorSearchingModpacks"));
     } finally {
       setIsSearching(false);
     }
@@ -111,7 +111,7 @@ export default function TemplatesPage() {
       });
     } catch (err) {
       console.error("Error loading more modpacks:", err);
-      toast.error(t("errorLoadingModpacks"));
+      mcToast.error(t("errorLoadingModpacks"));
     } finally {
       setIsLoadingMore(false);
     }

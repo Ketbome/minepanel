@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -38,7 +38,7 @@ export function useServerStatus(serverId: string) {
     try {
       const result = await apiStartServer(serverId);
       if (result.success) {
-        toast.success(t("serverStarted"));
+        mcToast.success(t("serverStarted"));
         setTimeout(fetchStatus, 3000);
         return true;
       } else {
@@ -47,7 +47,7 @@ export function useServerStatus(serverId: string) {
     } catch (error) {
       console.error("Error starting server:", error);
       const errorMessage = error instanceof Error ? translateMessage(error.message) : t("SERVER_START_ERROR");
-      toast.error(errorMessage);
+      mcToast.error(errorMessage);
       return false;
     } finally {
       setIsProcessingAction(false);
@@ -59,7 +59,7 @@ export function useServerStatus(serverId: string) {
     try {
       const result = await apiStopServer(serverId);
       if (result.success) {
-        toast.success(t("serverStopped"));
+        mcToast.success(t("serverStopped"));
         fetchStatus();
         return true;
       } else {
@@ -68,7 +68,7 @@ export function useServerStatus(serverId: string) {
     } catch (error) {
       console.error("Error stopping server:", error);
       const errorMessage = error instanceof Error ? translateMessage(error.message) : t("SERVER_STOP_ERROR");
-      toast.error(errorMessage);
+      mcToast.error(errorMessage);
       return false;
     } finally {
       setIsProcessingAction(false);

@@ -16,7 +16,6 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 | ------------------ | ------- | --------------------------- |
 | `BACKEND_PORT`     | `8091`  | Backend API port            |
 | `FRONTEND_PORT`    | `3000`  | Frontend web interface port |
-| `FILEBROWSER_PORT` | `8080`  | File browser port           |
 
 #### Directories
 
@@ -38,7 +37,6 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 | ----------------------------- | ----------------------- | ---------------------------- |
 | `FRONTEND_URL`                | `http://localhost:3000` | Frontend URL (controls CORS) |
 | `NEXT_PUBLIC_BACKEND_URL`     | `http://localhost:8091` | Backend API URL              |
-| `NEXT_PUBLIC_FILEBROWSER_URL` | `http://localhost:8080` | File browser URL             |
 
 #### Other
 
@@ -57,7 +55,6 @@ Create a `.env` file in the same directory as `docker-compose.yml`:
 # Ports
 BACKEND_PORT=8091
 FRONTEND_PORT=3000
-FILEBROWSER_PORT=8080
 
 # Directories
 BASE_DIR=$PWD
@@ -70,7 +67,6 @@ CLIENT_PASSWORD=admin
 # URLs
 FRONTEND_URL=http://localhost:3000
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
-NEXT_PUBLIC_FILEBROWSER_URL=http://localhost:8080
 
 # Language
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en

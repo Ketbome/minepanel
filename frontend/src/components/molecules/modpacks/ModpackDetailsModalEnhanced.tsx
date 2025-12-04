@@ -10,7 +10,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { createServer } from "@/services/docker/fetchs";
@@ -50,13 +50,13 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success(`${label} ${t("copiedToClipboard")}`);
+    mcToast.success(`${label} ${t("copiedToClipboard")}`);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleCreateServer = async () => {
     if (!serverId.trim()) {
-      toast.error(t("serverIdRequired") || "Server ID is required");
+      mcToast.error(t("serverIdRequired") || "Server ID is required");
       return;
     }
 
@@ -73,12 +73,12 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
       };
 
       await createServer(config);
-      toast.success(t("serverCreated"));
+      mcToast.success(t("serverCreated"));
       onClose();
       router.push(`/dashboard/servers/${serverId}`);
     } catch (error) {
       console.error("Error creating server:", error);
-      toast.error(t("errorCreatingServer"));
+      mcToast.error(t("errorCreatingServer"));
     } finally {
       setIsCreating(false);
     }

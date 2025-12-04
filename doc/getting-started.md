@@ -39,7 +39,6 @@ services:
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
 
       # Frontend Configuration
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
@@ -47,19 +46,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${BASE_DIR:-$PWD}/data:/app/data
     restart: always
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    ports:
-      - "${FILEBROWSER_PORT:-8080}:80"
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
 ```
 
 ### 2. Launch
@@ -75,7 +61,6 @@ docker compose up -d
 ### 3. Access
 
 - **Minepanel**: http://localhost:3000
-- **File Browser**: http://localhost:8080
 
 #### Remote Access (Outside Your Network)
 
@@ -90,13 +75,11 @@ environment:
 
   # Frontend - Must point to your server's address
   - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091 # or https://api.yourdomain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080 # or https://files.yourdomain.com
 ```
 
 **Then access via:**
 
 - **Minepanel**: `http://your-server-ip:3000` or `https://minepanel.yourdomain.com`
-- **File Browser**: `http://your-server-ip:8080` or `https://files.yourdomain.com`
 
 ::: warning Important
 
@@ -118,29 +101,6 @@ environment:
 Change the password after first login. See [Configuration](/configuration#change-admin-password).
 :::
 
-### Filebrowser
-
-Default credentials:
-
-- Username: `admin`
-- Password: `admin`
-
-::: warning Change the password!
-After first login, go to Settings (gear icon) → User Management → Edit admin user and change the password.
-:::
-
-**To access:** http://localhost:8080
-
-::: tip Reset password
-
-```bash
-docker compose down
-docker volume rm minepanel_filebrowser-db
-docker compose up -d
-```
-
-:::
-
 ## Create your first server
 
 1. Click "New Server"
@@ -152,6 +112,16 @@ docker compose up -d
    - Memory (e.g., 2G)
 3. Click "Create"
 4. Wait a few minutes (first time downloads files)
+
+## File Management
+
+Minepanel includes a built-in file browser:
+
+- Navigate to Dashboard → Files
+- Or access the "Files" tab on any server
+- Features: Upload, download, edit, delete, create folders
+- Drag & drop support for file uploads
+- Code editor with syntax highlighting
 
 ## Next
 
@@ -172,7 +142,6 @@ sudo usermod -aG docker $USER
 
 ```bash
 docker compose logs minepanel
-docker compose logs filebrowser
 ```
 
 ### Need help?

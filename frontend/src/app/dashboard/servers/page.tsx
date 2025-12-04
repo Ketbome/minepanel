@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Trash2, Settings as SettingsIcon } from "lucide-react";
 import { fetchServerList, createServer, getAllServersStatus, deleteServer } from "@/services/docker/fetchs";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ export default function Dashboard() {
         return updatedServers;
       } catch (error) {
         console.error("Error processing server statuses:", error);
-        toast.error(t("errorProcessingStatuses"));
+        mcToast.error(t("errorProcessingStatuses"));
         return serversList.map((server) => ({ ...server, status: "not_found" }));
       }
     },
@@ -106,7 +106,7 @@ export default function Dashboard() {
       setServers(updatedServers);
     } catch (error) {
       console.error("Error fetching server list:", error);
-      toast.error(t("errorLoadingServerList"));
+      mcToast.error(t("errorLoadingServerList"));
     } finally {
       setIsLoading(false);
     }
@@ -117,15 +117,15 @@ export default function Dashboard() {
     try {
       const response = await deleteServer(serverId);
       if (response.success) {
-        toast.success(`${t("serverDeletedSuccess")} "${serverId}"`);
+        mcToast.success(`${t("serverDeletedSuccess")} "${serverId}"`);
         await fetchServersFromBackend();
       } else {
-        toast.error(`${t("errorDeletingServer")}: ${response.message}`);
+        mcToast.error(`${t("errorDeletingServer")}: ${response.message}`);
       }
     } catch (error) {
       console.error("Error deleting server:", error);
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || t("errorDeletingServer"));
+      mcToast.error(err.response?.data?.message || t("errorDeletingServer"));
     } finally {
       setIsDeletingServer(null);
     }
@@ -138,7 +138,7 @@ export default function Dashboard() {
       setServers(updatedServers);
     } catch (error) {
       console.error("Error loading server information:", error);
-      toast.error(t("errorLoadingServerInfo"));
+      mcToast.error(t("errorLoadingServerInfo"));
     }
   }, [servers, t, processServerStatuses]);
 
@@ -147,18 +147,18 @@ export default function Dashboard() {
     try {
       const response = await createServer({ id: values.id });
       if (response.success) {
-        toast.success(`${t("serverCreatedSuccess")} "${values.id}"`);
+        mcToast.success(`${t("serverCreatedSuccess")} "${values.id}"`);
         setIsDialogOpen(false);
         form.reset();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await fetchServersFromBackend();
       } else {
-        toast.error(`${t("errorCreatingServer")}: ${response.message}`);
+        mcToast.error(`${t("errorCreatingServer")}: ${response.message}`);
       }
     } catch (error) {
       console.error("Error creating server:", error);
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || t("errorCreatingServer"));
+      mcToast.error(err.response?.data?.message || t("errorCreatingServer"));
     } finally {
       setIsCreatingServer(false);
     }

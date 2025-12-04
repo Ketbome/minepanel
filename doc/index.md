@@ -41,8 +41,8 @@ features:
     details: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
 
   - icon: 📁
-    title: File Browser
-    details: Edit configs without SSH.
+    title: Built-in File Browser
+    details: Edit configs, upload files, syntax highlighting. No external tools needed.
 
   - icon: 💾
     title: Backups
@@ -80,7 +80,6 @@ Go to http://localhost:3000
 - **Backend**: [NestJS](https://nestjs.com/)
 - **Minecraft Servers**: [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
 - **Backups**: [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup)
-- **File Browser**: [Filebrowser](https://filebrowser.org/)
 
 ## What's next
 

@@ -164,7 +164,6 @@ Edit `.env` file or `docker-compose.yml`:
 ```bash
 FRONTEND_PORT=3000
 BACKEND_PORT=8091
-FILEBROWSER_PORT=8080
 ```
 
 **→ Full guide:** [Configuration Reference](/configuration)
@@ -311,7 +310,6 @@ Yes! Configure backup frequency, retention, and method per server.
 
 Yes! Use the built-in file browser or edit directly in the UI (coming soon).
 
-**→ File management:** [FileBrowser](/administration)
 
 ## 💻 Development
 

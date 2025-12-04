@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { executeServerCommand } from "@/services/docker/fetchs";
 import { useLanguage } from "./useLanguage";
 
@@ -11,11 +11,11 @@ export function useServerCommands(serverId: string, rconPort: string, rconPasswo
 
   const executeCommand = async (commandToExecute: string = command) => {
     if (!commandToExecute.trim()) {
-      toast.error(t("enterACommandToExecute"));
+      mcToast.error(t("enterACommandToExecute"));
       return false;
     }
     if (!rconPort) {
-      toast.error(t("rconPortNotConfigured"));
+      mcToast.error(t("rconPortNotConfigured"));
       return false;
     }
 
@@ -30,17 +30,17 @@ export function useServerCommands(serverId: string, rconPort: string, rconPasswo
       const result = await executeServerCommand(serverId, body);
       if (result.success) {
         setResponse(result.output);
-        toast.success(t("commandExecutedSuccessfully"));
+        mcToast.success(t("commandExecutedSuccessfully"));
         setCommand("");
         return true;
       } else {
         setResponse(result.output);
-        toast.error(t("errorExecutingCommand"));
+        mcToast.error(t("errorExecutingCommand"));
         return false;
       }
     } catch (error) {
       console.error("Error executing command:", error);
-      toast.error(t("errorExecutingCommand"));
+      mcToast.error(t("errorExecutingCommand"));
       return false;
     } finally {
       setExecuting(false);

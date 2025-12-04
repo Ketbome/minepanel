@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getSettings, updateSettings, testDiscordWebhook, UserSettings } from "@/services/settings/settings.service";
 import { changePassword } from "@/services/users/users.service";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { LanguageSelector } from "@/components/ui/language-selector";
 
 export default function SettingsPage() {
@@ -55,7 +55,7 @@ export default function SettingsPage() {
         form.reset(settings);
       } catch (error) {
         console.error("Error loading settings:", error);
-        toast.error(t("errorLoadingServerInfo"));
+        mcToast.error(t("errorLoadingServerInfo"));
       } finally {
         setIsLoading(false);
       }
@@ -69,10 +69,10 @@ export default function SettingsPage() {
     try {
       data.language = localStorage.getItem("language") as "en" | "es";
       await updateSettings(data);
-      toast.success(t("settingsSaved"));
+      mcToast.success(t("settingsSaved"));
     } catch (error) {
       console.error("Error saving settings:", error);
-      toast.error(t("settingsSaveFailed"));
+      mcToast.error(t("settingsSaveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -83,13 +83,13 @@ export default function SettingsPage() {
     try {
       const result = await testDiscordWebhook();
       if (result.success) {
-        toast.success(t("webhookTestSuccess"));
+        mcToast.success(t("webhookTestSuccess"));
       } else {
-        toast.error(result.message);
+        mcToast.error(result.message);
       }
     } catch (error) {
       console.error("Error testing webhook:", error);
-      toast.error(t("webhookTestFailed"));
+      mcToast.error(t("webhookTestFailed"));
     } finally {
       setIsTesting(false);
     }
@@ -97,12 +97,12 @@ export default function SettingsPage() {
 
   const handleChangePassword = async () => {
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      toast.error(t("allPasswordFieldsRequired"));
+      mcToast.error(t("allPasswordFieldsRequired"));
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error(t("passwordsMustMatch"));
+      mcToast.error(t("passwordsMustMatch"));
       return;
     }
 
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         newPassword: passwordData.newPassword,
       });
 
-      toast.success(t("passwordChangedSuccessfully"));
+      mcToast.success(t("passwordChangedSuccessfully"));
 
       setPasswordData({
         currentPassword: "",
@@ -126,9 +126,9 @@ export default function SettingsPage() {
       // Handle specific error messages
       const err = error as { response?: { status?: number } };
       if (err.response?.status === 401) {
-        toast.error(t("incorrectCurrentPassword"));
+        mcToast.error(t("incorrectCurrentPassword"));
       } else {
-        toast.error(t("passwordChangeFailed"));
+        mcToast.error(t("passwordChangeFailed"));
       }
     } finally {
       setIsChangingPassword(false);

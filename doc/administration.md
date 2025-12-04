@@ -94,42 +94,6 @@ const hash = bcrypt.hashSync('your_new_password', 10);
 console.log(hash);
 ```
 
-### FileBrowser Password
-
-FileBrowser has its own authentication system, separate from Minepanel.
-
-**Default credentials:**
-- Username: `admin`
-- Password: `admin`
-
-**To change:**
-
-1. Access FileBrowser at `http://your-ip:8080`
-2. Log in with admin/admin
-3. Click on "Settings" (gear icon)
-4. Go to "User Management"
-5. Edit the admin user
-6. Change password
-7. Save
-
-**To reset FileBrowser password:**
-
-```bash
-docker compose exec filebrowser filebrowser users update admin --password your_new_password
-```
-
-Or reset by removing the Docker volume (this resets FileBrowser to defaults):
-
-```bash
-docker compose down
-docker volume rm minepanel_filebrowser-db
-docker compose up -d
-```
-
-::: tip
-The volume name depends on your project folder. If your folder is called `minepanel`, the volume will be `minepanel_filebrowser-db`. Check with `docker volume ls` if unsure.
-:::
-
 ## Database Management
 
 ### Database Location
@@ -275,7 +239,7 @@ From the Minepanel UI:
 1. Go to server details
 2. Click "Backup Now"
 3. Wait for completion
-4. Download from FileBrowser
+4. Download from the Files tab
 
 Or manually:
 
@@ -480,9 +444,6 @@ curl http://localhost:8091/api/health
 
 # Test frontend
 curl http://localhost:3000
-
-# Test FileBrowser
-curl http://localhost:8080
 ```
 
 ## Best Practices
@@ -500,4 +461,3 @@ curl http://localhost:8080
 - Configure [Networking & Remote Access](/networking)
 - Set up [Server Types](/server-types)
 - Review [Troubleshooting Guide](/troubleshooting)
-

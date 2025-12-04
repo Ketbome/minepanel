@@ -19,7 +19,6 @@ environment:
 
   # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091
-  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080
 ```
 
 ### 2. Using a Domain Name
@@ -33,7 +32,6 @@ environment:
 
   # Frontend
   - NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=https://files.yourdomain.com
 ```
 
 ### 3. Restart Services
@@ -132,7 +130,6 @@ If you don't configure `HOST_LAN_IP`, only the public IP will be shown. This is 
 |---------|------|-------------|
 | Frontend | 3000 | Web interface |
 | Backend | 8091 | API server |
-| FileBrowser | 8080 | File management |
 | Minecraft Servers | 25565+ | Game servers |
 
 ### Changing Ports
@@ -142,7 +139,6 @@ Edit your `.env` file or `docker-compose.yml`:
 ```bash
 BACKEND_PORT=8091
 FRONTEND_PORT=3000
-FILEBROWSER_PORT=8080
 ```
 
 ### Port Conflicts
@@ -165,7 +161,6 @@ FRONTEND_PORT=3001
 # UFW (Ubuntu/Debian)
 sudo ufw allow 3000/tcp   # Frontend
 sudo ufw allow 8091/tcp   # Backend
-sudo ufw allow 8080/tcp   # FileBrowser
 sudo ufw allow 25565/tcp  # Minecraft (default)
 
 # firewalld (CentOS/RHEL)
@@ -261,7 +256,6 @@ environment:
 
   # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=https://files.your-domain.com
 ```
 
 ## Custom Network

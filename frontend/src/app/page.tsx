@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAuthenticated, login } from "@/services/auth/auth.service";
 import { healthService } from "@/services/health.service";
@@ -56,17 +56,17 @@ export default function Home() {
       const result = await login(username, password);
 
       if (result.success) {
-        toast.success(t("loginSuccess"));
+        mcToast.success(t("loginSuccess"));
         router.push("/dashboard/home");
       } else {
         const errorKey = result.error as string;
         const hasTranslation = errorKey && ["NO_ACCESS_TOKEN", "LOGIN_ERROR", "invalidCredentials"].includes(errorKey);
         const errorMessage = hasTranslation ? t(errorKey as "NO_ACCESS_TOKEN" | "LOGIN_ERROR" | "invalidCredentials") : t("invalidCredentials");
-        toast.error(errorMessage);
+        mcToast.error(errorMessage);
       }
     } catch (error) {
       console.error("Error en login:", error);
-      toast.error(t("connectionError"));
+      mcToast.error(t("connectionError"));
     } finally {
       setIsLoading(false);
     }
