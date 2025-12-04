@@ -96,7 +96,7 @@ console.log(hash);
 
 ### FileBrowser Password
 
-FileBrowser has its own authentication system.
+FileBrowser has its own authentication system, separate from Minepanel.
 
 **Default credentials:**
 - Username: `admin`
@@ -118,13 +118,17 @@ FileBrowser has its own authentication system.
 docker compose exec filebrowser filebrowser users update admin --password your_new_password
 ```
 
-Or recreate the FileBrowser database:
+Or reset by removing the Docker volume (this resets FileBrowser to defaults):
 
 ```bash
 docker compose down
-rm -f data/filebrowser.db
+docker volume rm minepanel_filebrowser-db
 docker compose up -d
 ```
+
+::: tip
+The volume name depends on your project folder. If your folder is called `minepanel`, the volume will be `minepanel_filebrowser-db`. Check with `docker volume ls` if unsure.
+:::
 
 ## Database Management
 
