@@ -391,10 +391,8 @@ ls -ld servers/your-server/mc-data
 df -h
 ```
 
-3. **Check FileBrowser logs:**
 
 ```bash
-docker compose logs filebrowser
 ```
 
 ### Can't Edit Files

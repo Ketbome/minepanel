@@ -22,24 +22,8 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:9090}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     depends_on:
       - backend
     restart: always
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    ports:
-      - "${FILEBROWSER_PORT:-8080}:80"
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
-    name: filebrowser-db

@@ -26,10 +26,11 @@ I got tired of managing Minecraft servers through terminal and tried several pan
 - Handles multiple servers in separate containers
 - Real-time logs with error detection
 - Resource monitoring (CPU, RAM)
-- Built-in file editor
+- Built-in file browser with drag & drop upload
+- Code editor with syntax highlighting
 - Automatic backups
 - Supports all server types: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
-- CurseForge modpack installation
+- CurseForge & Modrinth mod auto-download
 - Multi-language (English/Spanish/Dutch)
 
 ## Requirements
@@ -61,7 +62,6 @@ services:
       # - HOST_LAN_IP=${HOST_LAN_IP} # Optional: Your LAN IP for local network play
 
       # Frontend Configuration
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
@@ -69,19 +69,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${BASE_DIR:-$PWD}/data:/app/data
     restart: always
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    ports:
-      - "${FILEBROWSER_PORT:-8080}:80"
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
 ```
 
 Then:
@@ -111,9 +98,8 @@ docker compose -f docker-compose.split.yml up -d
 
 This setup exposes:
 
-- Backend on `9090`
+- Backend on `8091`
 - Frontend on `3000`
-- Filebrowser on `8080`
 
 #### Example with nginx-proxy + Let's Encrypt
 
@@ -122,7 +108,7 @@ Add these to each service in `docker-compose.split.yml`:
 ```yaml
 networks:
   default:
-    name: ngnix
+    name: nginx
     external: true
 
 services:
@@ -147,17 +133,6 @@ services:
       - LETSENCRYPT_HOST=api.yourdomain.com
       - LETSENCRYPT_EMAIL=your-email@example.com
     # ... rest of config
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    expose:
-      - 80
-    environment:
-      - VIRTUAL_HOST=files.yourdomain.com
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=files.yourdomain.com
-      - LETSENCRYPT_EMAIL=your-email@example.com
-    # ... rest of config
 ```
 
 Put all services on the same network as nginx-proxy.
@@ -165,7 +140,6 @@ Put all services on the same network as nginx-proxy.
 ### Access
 
 - **Web Panel**: http://localhost:3000
-- **Filebrowser**: http://localhost:8080
 
 **Default login:** `admin` / `admin` (change this after first login)
 
@@ -174,7 +148,6 @@ Put all services on the same network as nginx-proxy.
 If you want to access the panel from outside your local network, you'll need to use your server's public IP address or DNS name. Always use the protocol prefix:
 
 - **Web Panel**: `http://your-server-ip:3000` or `https://your-domain.com`
-- **Filebrowser**: `http://your-server-ip:8080` or `https://files.your-domain.com`
 
 **Important - Update environment variables:**
 
@@ -187,7 +160,6 @@ environment:
 
   # Frontend - Must point to your server's address
   - NEXT_PUBLIC_BACKEND_URL=http://your-server-ip:8091 # or https://api.your-domain.com
-  - NEXT_PUBLIC_FILEBROWSER_URL=http://your-server-ip:8080 # or https://files.your-domain.com
 ```
 
 **Notes:**
@@ -238,27 +210,6 @@ Now when a Minecraft server is running, the panel will show both:
 - **Public IP**: For external players (obtained automatically via ipify.org)
 - **LAN IP**: For local network players (the IP you configured)
 
-### Filebrowser setup
-
-Default credentials:
-
-- Username: `admin`
-- Password: `admin`
-
-**Important:** Change the password after first login!
-
-1. Login to http://localhost:8080
-2. Go to Settings (gear icon) → User Management
-3. Click on admin user and change the password
-
-**Reset password:** If you forget it, delete the database and restart:
-
-```bash
-docker compose down
-docker volume rm minepanel_filebrowser-db  # Remove filebrowser volume
-docker compose up -d
-```
-
 ## Database
 
 Minepanel uses SQLite for data persistence. The database file is stored at `./data/minepanel.db`.
@@ -289,7 +240,7 @@ Minepanel runs in a single container with:
 - Backend (NestJS) on port 8091
 - Frontend (Next.js) on port 3000
 - SQLite database for data persistence
-- Filebrowser for file management
+- Built-in file browser (no external dependencies)
 
 The backend talks to Docker through the socket to create and manage server containers. Each Minecraft server runs in its own isolated container.
 
@@ -363,7 +314,6 @@ docker buildx build --platform linux/amd64,linux/arm64 -t username/minepanel:lat
 - Better log viewer with filtering and search
 - Edit server.properties from the UI
 - Reverse proxy config helper
-- CurseForge modpack browser
 
 ### Planned
 

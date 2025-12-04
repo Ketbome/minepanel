@@ -138,11 +138,9 @@ GET    /servers/:id/stats   # Get resource stats
 GET    /servers/:id/players # Get online players
 ```
 
-### 3. Filebrowser
 
 **Technology:**
 
-- [Filebrowser](https://filebrowser.org/) - File management
 
 **Responsibilities:**
 
@@ -444,7 +442,6 @@ services:
 │        Docker Network: bridge        │
 │                                      │
 │  ┌──────────┐    ┌──────────┐      │
-│  │ Minepanel│←──→│Filebrowser│      │
 │  └──────────┘    └──────────┘      │
 │                                      │
 │  ┌──────────┐    ┌──────────┐      │
@@ -488,7 +485,6 @@ minepanel/
 │       ├── server-1/
 │       └── server-2/
 └── Docker volumes:
-    └── filebrowser-db/         # Filebrowser database (managed by Docker)
 ```
 
 ### Volume Strategy
@@ -548,7 +544,6 @@ services:
 **Split services across machines (advanced):**
 
 ```
-Machine 1: Minepanel + Filebrowser
     ↓
 Machine 2: Docker Engine → Minecraft Servers
 ```

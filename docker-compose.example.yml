@@ -24,7 +24,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     ports:
@@ -32,17 +31,3 @@ services:
     restart: always
     depends_on:
       - backend
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    ports:
-      - "${FILEBROWSER_PORT:-8080}:80"
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
-    name: filebrowser-db

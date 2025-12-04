@@ -41,7 +41,6 @@ services:
       - BASE_DIR=${BASE_DIR:-$PWD}
 
       # Frontend Configuration
-      - NEXT_PUBLIC_FILEBROWSER_URL=${NEXT_PUBLIC_FILEBROWSER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     volumes:
@@ -49,24 +48,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${BASE_DIR:-$PWD}/data:/app/data
     restart: always
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    ports:
-      - "${FILEBROWSER_PORT:-8080}:80"
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
 ```
-
-::: info Automatic Database Creation
-Filebrowser automatically creates its database file on first startup. The `command` parameter ensures the database is created in the correct location within the Docker volume.
-:::
 
 ### Step 2: Launch
 
@@ -143,9 +125,8 @@ docker compose -f docker-compose.split.yml up -d
 
 This exposes:
 
-- **Backend**: Port 9090
+- **Backend**: Port 8091
 - **Frontend**: Port 3000
-- **Filebrowser**: Port 8080
 
 ### With nginx-proxy + Let's Encrypt
 
@@ -216,7 +197,6 @@ services:
       - LETSENCRYPT_HOST=minepanel.yourdomain.com
       - LETSENCRYPT_EMAIL=your-email@example.com
       - NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
-      - NEXT_PUBLIC_FILEBROWSER_URL=https://files.yourdomain.com
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=en
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -242,24 +222,6 @@ services:
       - ${BASE_DIR:-$PWD}/data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
-
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    command: --database /database/filebrowser.db
-    expose:
-      - 80
-    environment:
-      - VIRTUAL_HOST=files.yourdomain.com
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=files.yourdomain.com
-      - LETSENCRYPT_EMAIL=your-email@example.com
-    volumes:
-      - ${BASE_DIR:-$PWD}/servers:/srv
-      - filebrowser-db:/database
-    restart: always
-
-volumes:
-  filebrowser-db:
 ```
 
 ::: warning DNS Configuration
@@ -267,7 +229,6 @@ Make sure your domains point to your server's IP address before starting:
 
 - minepanel.yourdomain.com → Your server IP
 - api.yourdomain.com → Your server IP
-- files.yourdomain.com → Your server IP
   :::
 
 ```bash
@@ -318,22 +279,10 @@ cd frontend
 npm run dev
 ```
 
-**Terminal 3 - Filebrowser (optional):**
-
-```bash
-docker run -d \
-  --name filebrowser \
-  -p 8080:80 \
-  -v $(pwd)/servers:/srv \
-  -v filebrowser-db:/database \
-  filebrowser/filebrowser:latest --database /database/filebrowser.db
-```
-
 Now you can access:
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8091
-- Filebrowser: http://localhost:8080
 
 ### Build Custom Docker Image
 
@@ -419,11 +368,9 @@ docker compose down
 
 # Remove all data (WARNING: This deletes everything!)
 rm -rf servers/ data/
-docker volume rm minepanel_filebrowser-db
 
 # Remove Docker images
 docker rmi ketbom/minepanel:latest
-docker rmi filebrowser/filebrowser:latest
 ```
 
 To keep your server data but stop the panel:
