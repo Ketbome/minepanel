@@ -7,6 +7,7 @@ import { AlertCircle, RefreshCw, WifiOff, Server, ExternalLink } from "lucide-re
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
+import { LINK_DOCUMENTATION } from "@/lib/providers/constants";
 
 interface ConnectionErrorDialogProps {
   readonly isOpen: boolean;
@@ -96,7 +97,7 @@ export function ConnectionErrorDialog({ isOpen, onRetry }: ConnectionErrorDialog
                 <h4 className="text-sm font-semibold text-blue-400">{t("needMoreHelp")}</h4>
                 <p className="text-xs text-gray-400 mt-0.5">{t("needMoreHelpDesc")}</p>
               </div>
-              <Button onClick={() => window.open("https://minepanel.ketbome.lat/configuration.html", "_blank")} variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-600/20">
+              <Button onClick={() => window.open(LINK_DOCUMENTATION, "_blank")} variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-600/20">
                 <ExternalLink className="w-4 h-4" />
               </Button>
             </div>
