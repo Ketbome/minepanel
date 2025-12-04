@@ -40,9 +40,9 @@
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
     "passport-local": "1.0.0",
-    "sql.js": "1.12.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "sql.js": "1.12.0",
     "typeorm": "0.3.27"
   },
   "devDependencies": {
@@ -54,6 +54,7 @@
     "@types/fs-extra": "11.0.4",
     "@types/jest": "30.0.0",
     "@types/js-yaml": "4.0.9",
+    "@types/multer": "^2.0.0",
     "@types/node": "24.9.1",
     "@types/passport-jwt": "4.0.1",
     "@types/passport-local": "1.0.38",
