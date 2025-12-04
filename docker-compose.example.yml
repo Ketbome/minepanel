@@ -45,3 +45,4 @@ services:
 
 volumes:
   filebrowser-db:
+    name: filebrowser-db

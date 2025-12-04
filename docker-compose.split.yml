@@ -16,8 +16,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${BASE_DIR:-$PWD}/data:/app/data
     restart: always
-    networks:
-      - minepanel-network
 
   frontend:
     image: ketbom/minepanel-frontend:latest
@@ -31,8 +29,6 @@ services:
     depends_on:
       - backend
     restart: always
-    networks:
-      - minepanel-network
 
   filebrowser:
     image: filebrowser/filebrowser:latest
@@ -43,12 +39,7 @@ services:
       - ${BASE_DIR:-$PWD}/servers:/srv
       - filebrowser-db:/database
     restart: always
-    networks:
-      - minepanel-network
 
 volumes:
   filebrowser-db:
-
-networks:
-  minepanel-network:
-    driver: bridge
+    name: filebrowser-db
