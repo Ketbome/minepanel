@@ -38,7 +38,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.2",
     "fs-extra": "11.3.2",
-    "js-yaml": "4.1.0",
+    "js-yaml": "4.1.1",
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
     "passport-local": "1.0.0",
@@ -48,7 +48,7 @@
     "typeorm": "0.3.27"
   },
   "devDependencies": {
-    "@nestjs/cli": "11.0.10",
+    "@nestjs/cli": "11.0.14",
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "11.1.7",
     "@types/bcrypt": "6.0.0",
@@ -56,7 +56,7 @@
     "@types/fs-extra": "11.0.4",
     "@types/jest": "30.0.0",
     "@types/js-yaml": "4.0.9",
-    "@types/multer": "^2.0.0",
+    "@types/multer": "2.0.0",
     "@types/node": "24.9.1",
     "@types/passport-jwt": "4.0.1",
     "@types/passport-local": "1.0.38",
