@@ -9,6 +9,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
+      - BASE_DIR=${BASE_DIR:-$PWD}
       # - HOST_LAN_IP=${HOST_LAN_IP}
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
