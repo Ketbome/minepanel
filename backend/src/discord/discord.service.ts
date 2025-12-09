@@ -75,13 +75,7 @@ export class DiscordService {
     return formats[style];
   }
 
-  async sendServerNotification(
-    webhookUrl: string,
-    type: ServerEventType,
-    serverName: string,
-    lang: SupportedLanguage = 'es',
-    details?: ServerNotificationDetails,
-  ): Promise<void> {
+  async sendServerNotification(webhookUrl: string, type: ServerEventType, serverName: string, lang: SupportedLanguage = 'en', details?: ServerNotificationDetails): Promise<void> {
     if (!webhookUrl) return;
 
     try {
@@ -119,13 +113,7 @@ export class DiscordService {
     }
   }
 
-  async sendCustomMessage(
-    webhookUrl: string,
-    title: string,
-    description: string,
-    color: keyof typeof this.COLORS = 'info',
-    fields?: Array<{ name: string; value: string; inline?: boolean }>,
-  ): Promise<void> {
+  async sendCustomMessage(webhookUrl: string, title: string, description: string, color: keyof typeof this.COLORS = 'info', fields?: Array<{ name: string; value: string; inline?: boolean }>): Promise<void> {
     if (!webhookUrl) return;
 
     try {
