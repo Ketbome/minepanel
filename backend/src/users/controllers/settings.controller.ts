@@ -3,7 +3,7 @@ import { SettingsService } from '../services/settings.service';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
-import { DiscordService } from 'src/discord/discord.service';
+import { DiscordService, SupportedLanguage } from 'src/discord/discord.service';
 
 @Controller('settings')
 @UseGuards(JwtAuthGuard)
@@ -31,10 +31,11 @@ export class SettingsController {
     const settings = await this.settingsService.getSettings(user.userId);
 
     if (!settings?.discordWebhook) {
-      const errorMsg = { es: 'No hay webhook configurado', en: 'No Discord webhook configured' };
-      return { success: false, message: errorMsg[settings?.language as 'en' | 'es'] || errorMsg.es };
+      const errorMsg = { es: 'No hay webhook configurado', en: 'No Discord webhook configured', nl: 'Geen Discord webhook geconfigureerd' };
+      const lang = (settings?.language as SupportedLanguage) || 'es';
+      return { success: false, message: errorMsg[lang] };
     }
 
-    return this.discordService.testWebhook(settings.discordWebhook, settings.language as 'en' | 'es');
+    return this.discordService.testWebhook(settings.discordWebhook, (settings.language as SupportedLanguage) || 'es');
   }
 }
