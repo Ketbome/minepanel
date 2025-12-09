@@ -4,161 +4,288 @@ export type ServerEventType = 'created' | 'deleted' | 'started' | 'stopped' | 'r
 
 interface EventTranslation {
   titles: string[];
+  descriptions: string[];
   status: string;
+  emoji: string;
 }
 
 interface DiscordTranslations {
   events: Record<ServerEventType, EventTranslation>;
-  fields: {
-    server: string;
-    status: string;
-    port: string;
-    version: string;
-    details: string;
-    events: string;
-  };
   test: {
     title: string;
     description: string;
+    features: string[];
     success: string;
   };
+  footer: string[];
 }
+
+const pickRandom = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 export const discordTranslations: Record<SupportedLanguage, DiscordTranslations> = {
   en: {
     events: {
       created: {
-        titles: ['New server ready', 'Server deployed', 'Fresh server incoming', 'World created'],
-        status: 'READY',
+        titles: ['New World Unlocked', 'Server Ready', 'A New Adventure Begins', 'World Generated'],
+        descriptions: [
+          'Your new server is ready to rock 🎸',
+          'Fresh world, fresh adventures await',
+          'Time to build something awesome',
+          'The server awaits its first players',
+        ],
+        status: 'CREATED',
+        emoji: '🌍',
       },
       deleted: {
-        titles: ['Server removed', 'Gone but not forgotten', 'Server wiped', 'Farewell server'],
+        titles: ['World Deleted', 'Server Removed', 'The End', 'Farewell'],
+        descriptions: [
+          'This world has been archived to the void',
+          'Server removed successfully',
+          "Gone, but the memories remain",
+          'Another chapter closes',
+        ],
         status: 'DELETED',
+        emoji: '🗑️',
       },
       started: {
-        titles: ['Server is up!', 'We\'re live', 'Server online', 'Ready to play'],
+        titles: ["We're Live!", 'Server Online', 'Game On', 'Powered Up'],
+        descriptions: [
+          'Server is up and running! Jump in 🎮',
+          'The portal is open, players welcome',
+          'All systems go, time to play',
+          'Server started successfully',
+        ],
         status: 'ONLINE',
+        emoji: '🟢',
       },
       stopped: {
-        titles: ['Server down', 'Taking a break', 'Server offline', 'Lights out'],
+        titles: ['Server Offline', 'Taking a Break', 'Powered Down', 'See You Soon'],
+        descriptions: [
+          'Server is taking a nap 😴',
+          'Shutting down gracefully',
+          'Server stopped, worlds saved',
+          'The server rests... for now',
+        ],
         status: 'OFFLINE',
+        emoji: '🔴',
       },
       restarted: {
-        titles: ['Quick restart', 'Back in a sec', 'Server rebooting', 'Fresh start'],
-        status: 'RESTARTING',
+        titles: ['Quick Restart', 'Rebooting', 'Be Right Back', 'Refreshing'],
+        descriptions: [
+          'Server is stretching its legs 🏃',
+          'Quick restart in progress',
+          'Clearing the cobwebs...',
+          'Back online in a moment',
+        ],
+        status: 'RESTART',
+        emoji: '🔄',
       },
       error: {
-        titles: ['Houston, we have a problem', 'Something broke', 'Server error', 'Uh oh...'],
+        titles: ['Uh Oh', 'Something Broke', 'Error Detected', 'Houston...'],
+        descriptions: [
+          'Something went wrong, checking logs...',
+          'The server ran into trouble',
+          'An error occurred, investigating',
+          'Creeper blew up something important',
+        ],
         status: 'ERROR',
+        emoji: '💥',
       },
       warning: {
-        titles: ['Heads up', 'Watch out', 'Warning', 'Attention needed'],
+        titles: ['Heads Up', 'Warning', 'Attention', 'Watch Out'],
+        descriptions: [
+          'Something needs your attention',
+          'Warning detected, check it out',
+          'The server is trying to tell you something',
+          'Minor issue detected',
+        ],
         status: 'WARNING',
+        emoji: '⚠️',
       },
     },
-    fields: {
-      server: '📦 Server',
-      status: '📊 Status',
-      port: '🔌 Port',
-      version: '🎮 Version',
-      details: '💬 Details',
-      events: '📋 Events',
-    },
     test: {
-      title: '👋 Hey there!',
-      description: 'Webhook connected successfully.\nYou\'ll get notified about your servers here.',
+      title: '🎮 Connection Test',
+      description: "Everything's connected! You'll receive notifications here.",
+      features: ['Server start/stop', 'Errors & warnings', 'Server creation'],
       success: 'Test successful',
     },
+    footer: ['MinePanel', 'Powered by MinePanel', '⛏️ MinePanel'],
   },
   es: {
     events: {
       created: {
-        titles: ['Nuevo server listo', 'Server desplegado', 'Mundo creado', 'Server armado'],
-        status: 'LISTO',
+        titles: ['Nuevo Mundo', 'Server Listo', 'Nueva Aventura', 'Mundo Generado'],
+        descriptions: [
+          'Tu nuevo server está listo para la acción 🎸',
+          'Mundo nuevo, aventuras nuevas',
+          'Hora de construir algo épico',
+          'El server espera a sus primeros jugadores',
+        ],
+        status: 'CREADO',
+        emoji: '🌍',
       },
       deleted: {
-        titles: ['Server eliminado', 'Adiós server', 'Server borrado', 'RIP server'],
+        titles: ['Mundo Eliminado', 'Server Borrado', 'The End', 'Adiós'],
+        descriptions: [
+          'Este mundo fue archivado al void',
+          'Server eliminado correctamente',
+          'Se fue, pero los recuerdos quedan',
+          'Otro capítulo se cierra',
+        ],
         status: 'ELIMINADO',
+        emoji: '🗑️',
       },
       started: {
-        titles: ['Server arriba!', 'Estamos online', 'Server encendido', 'A jugar!'],
+        titles: ['Estamos Online!', 'Server Arriba', 'A Jugar', 'Encendido'],
+        descriptions: [
+          'Server andando, entren! 🎮',
+          'El portal está abierto',
+          'Todo listo, hora de jugar',
+          'Server iniciado correctamente',
+        ],
         status: 'ONLINE',
+        emoji: '🟢',
       },
       stopped: {
-        titles: ['Server apagado', 'Descansando...', 'Server offline', 'Se apagó'],
+        titles: ['Server Offline', 'Descansando', 'Apagado', 'Hasta Pronto'],
+        descriptions: [
+          'El server se fue a dormir 😴',
+          'Apagando tranquilamente',
+          'Server detenido, mundos guardados',
+          'El server descansa... por ahora',
+        ],
         status: 'OFFLINE',
+        emoji: '🔴',
       },
       restarted: {
-        titles: ['Reinicio rápido', 'Ya volvemos', 'Server reiniciando', 'Reset completo'],
-        status: 'REINICIANDO',
+        titles: ['Reinicio Rápido', 'Reiniciando', 'Ya Volvemos', 'Refrescando'],
+        descriptions: [
+          'El server está estirando las piernas 🏃',
+          'Reinicio rápido en progreso',
+          'Limpiando telarañas...',
+          'De vuelta en un momento',
+        ],
+        status: 'REINICIO',
+        emoji: '🔄',
       },
       error: {
-        titles: ['Algo salió mal', 'Se rompió algo', 'Error en el server', 'Ups...'],
+        titles: ['Ups', 'Algo Se Rompió', 'Error Detectado', 'Houston...'],
+        descriptions: [
+          'Algo salió mal, revisando logs...',
+          'El server tuvo un problema',
+          'Ocurrió un error, investigando',
+          'Un creeper explotó algo importante',
+        ],
         status: 'ERROR',
+        emoji: '💥',
       },
       warning: {
-        titles: ['Ojo con esto', 'Cuidado', 'Advertencia', 'Atención'],
+        titles: ['Ojo', 'Advertencia', 'Atención', 'Cuidado'],
+        descriptions: [
+          'Algo necesita tu atención',
+          'Advertencia detectada, revísala',
+          'El server intenta decirte algo',
+          'Problema menor detectado',
+        ],
         status: 'ALERTA',
+        emoji: '⚠️',
       },
     },
-    fields: {
-      server: '📦 Servidor',
-      status: '📊 Estado',
-      port: '🔌 Puerto',
-      version: '🎮 Versión',
-      details: '💬 Detalle',
-      events: '📋 Eventos',
-    },
     test: {
-      title: '👋 Hola!',
-      description: 'Webhook conectado correctamente.\nTe llegarán las notificaciones de tus servers acá.',
-      success: 'Prueba exitosa',
+      title: '🎮 Test de Conexión',
+      description: 'Todo conectado! Recibirás notificaciones acá.',
+      features: ['Inicio/parada', 'Errores y alertas', 'Creación de servers'],
+      success: 'Test exitoso',
     },
+    footer: ['MinePanel', 'Powered by MinePanel', '⛏️ MinePanel'],
   },
   nl: {
     events: {
       created: {
-        titles: ['Nieuwe server klaar', 'Server gedeployed', 'Wereld aangemaakt', 'Server gebouwd'],
-        status: 'KLAAR',
+        titles: ['Nieuwe Wereld', 'Server Klaar', 'Nieuw Avontuur', 'Wereld Gegenereerd'],
+        descriptions: [
+          'Je nieuwe server is klaar voor actie 🎸',
+          'Nieuwe wereld, nieuwe avonturen',
+          'Tijd om iets geweldigs te bouwen',
+          'De server wacht op zijn eerste spelers',
+        ],
+        status: 'AANGEMAAKT',
+        emoji: '🌍',
       },
       deleted: {
-        titles: ['Server verwijderd', 'Tot ziens server', 'Server gewist', 'RIP server'],
+        titles: ['Wereld Verwijderd', 'Server Weg', 'The End', 'Vaarwel'],
+        descriptions: [
+          'Deze wereld is naar de void gestuurd',
+          'Server succesvol verwijderd',
+          'Weg, maar de herinneringen blijven',
+          'Nog een hoofdstuk sluit',
+        ],
         status: 'VERWIJDERD',
+        emoji: '🗑️',
       },
       started: {
-        titles: ['Server is up!', 'We zijn live', 'Server online', 'Klaar om te spelen'],
+        titles: ['We Zijn Live!', 'Server Online', 'Game On', 'Opgestart'],
+        descriptions: [
+          'Server draait, spring erin! 🎮',
+          'De portal is open',
+          'Alles klaar, tijd om te spelen',
+          'Server succesvol gestart',
+        ],
         status: 'ONLINE',
+        emoji: '🟢',
       },
       stopped: {
-        titles: ['Server uit', 'Even pauze', 'Server offline', 'Lichten uit'],
+        titles: ['Server Offline', 'Pauze', 'Uitgeschakeld', 'Tot Snel'],
+        descriptions: [
+          'Server is aan het slapen 😴',
+          'Netjes aan het afsluiten',
+          'Server gestopt, werelden opgeslagen',
+          'De server rust... voor nu',
+        ],
         status: 'OFFLINE',
+        emoji: '🔴',
       },
       restarted: {
-        titles: ['Snelle herstart', 'Zo terug', 'Server herstart', 'Verse start'],
+        titles: ['Snelle Herstart', 'Herstarten', 'Zo Terug', 'Verfrissen'],
+        descriptions: [
+          'Server strekt zijn benen 🏃',
+          'Snelle herstart bezig',
+          'Spinnenwebben opruimen...',
+          'Zo weer online',
+        ],
         status: 'HERSTART',
+        emoji: '🔄',
       },
       error: {
-        titles: ['Er ging iets mis', 'Iets is kapot', 'Server fout', 'Oeps...'],
+        titles: ['Oeps', 'Iets Kapot', 'Fout Gedetecteerd', 'Houston...'],
+        descriptions: [
+          'Er ging iets mis, logs bekijken...',
+          'De server heeft een probleem',
+          'Er is een fout opgetreden',
+          'Een creeper blies iets belangrijks op',
+        ],
         status: 'FOUT',
+        emoji: '💥',
       },
       warning: {
-        titles: ['Let op', 'Pas op', 'Waarschuwing', 'Aandacht nodig'],
+        titles: ['Let Op', 'Waarschuwing', 'Attentie', 'Pas Op'],
+        descriptions: [
+          'Iets heeft je aandacht nodig',
+          'Waarschuwing gedetecteerd',
+          'De server probeert je iets te vertellen',
+          'Klein probleem gedetecteerd',
+        ],
         status: 'WAARSCHUWING',
+        emoji: '⚠️',
       },
     },
-    fields: {
-      server: '📦 Server',
-      status: '📊 Status',
-      port: '🔌 Poort',
-      version: '🎮 Versie',
-      details: '💬 Details',
-      events: '📋 Gebeurtenissen',
-    },
     test: {
-      title: '👋 Hallo!',
-      description: 'Webhook succesvol verbonden.\nJe krijgt hier meldingen over je servers.',
+      title: '🎮 Verbindingstest',
+      description: 'Alles verbonden! Je krijgt hier meldingen.',
+      features: ['Server start/stop', 'Fouten & waarschuwingen', 'Server creatie'],
       success: 'Test geslaagd',
     },
+    footer: ['MinePanel', 'Powered by MinePanel', '⛏️ MinePanel'],
   },
 };
 
@@ -166,8 +293,14 @@ export const getTranslation = (lang: SupportedLanguage): DiscordTranslations => 
   return discordTranslations[lang] || discordTranslations.en;
 };
 
-export const getRandomTitle = (lang: SupportedLanguage, type: ServerEventType): string => {
+export const getRandomEvent = (lang: SupportedLanguage, type: ServerEventType) => {
   const t = getTranslation(lang);
-  const titles = t.events[type].titles;
-  return titles[Math.floor(Math.random() * titles.length)];
+  const event = t.events[type];
+  return {
+    title: pickRandom(event.titles),
+    description: pickRandom(event.descriptions),
+    status: event.status,
+    emoji: event.emoji,
+    footer: pickRandom(t.footer),
+  };
 };
