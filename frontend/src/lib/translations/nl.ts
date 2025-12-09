@@ -886,6 +886,7 @@ export const nl: Record<TranslationKey, string> = {
   // CurseForge Auto Configuration
   importantInfo: "Belangrijke informatie",
   cfApiKeyRequired: "Om CurseForge functionaliteit correct te gebruiken, is een API key vereist. De API key is nodig om privé of beperkte modpacks te downloaden.",
+  cfApiKeyConfigured: "CurseForge API key geconfigureerd. Klaar om server aan te maken.",
   installationMethod: "Installatiemethode",
   installationMethodHelp: "Selecteer hoe je het modpack wilt verkrijgen:",
   methodUrl: "URL",
