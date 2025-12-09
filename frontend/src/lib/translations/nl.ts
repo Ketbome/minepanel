@@ -866,6 +866,12 @@ export const nl: Record<TranslationKey, string> = {
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
   browseMods: "Blader Mods",
+  browseModpacks: "Blader Modpacks",
+  browseModpacksDesc: "Zoek en selecteer een modpack van CurseForge templates",
+  browse: "Bladeren",
+  modpackSelected: "Modpack geselecteerd",
+  searchOrBrowsePopular: "Zoek een modpack of blader door populaire",
+  searchModpacks: "Zoek modpacks...",
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",

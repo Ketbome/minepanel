@@ -6,7 +6,7 @@ import * as fs from 'fs-extra';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
-import { DiscordService } from 'src/discord/discord.service';
+import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 
 const execAsync = promisify(exec);
@@ -92,7 +92,7 @@ export class ServerManagementService {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
-  private async getUserSettings(): Promise<{ webhook: string | null; lang: 'en' | 'es' }> {
+  private async getUserSettings(): Promise<{ webhook: string | null; lang: SupportedLanguage }> {
     try {
       const settings = await this.settingsRepo.findOne({
         where: { discordWebhook: Not(IsNull()) },
@@ -100,7 +100,7 @@ export class ServerManagementService {
       });
       return {
         webhook: settings?.discordWebhook || null,
-        lang: settings?.language as 'en' | 'es',
+        lang: (settings?.language as SupportedLanguage) || 'es',
       };
     } catch (error) {
       this.logger.warn('Failed to get user settings', error);
@@ -108,7 +108,7 @@ export class ServerManagementService {
     }
   }
 
-  private async sendDiscordNotification(type: 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning', serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
+  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
       const { webhook, lang } = await this.getUserSettings();
       if (webhook) {

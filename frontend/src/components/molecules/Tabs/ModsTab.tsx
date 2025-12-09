@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Info, HelpCircle, Eye, EyeOff, Download, BookOpen } from "lucide-react";
+import { Info, HelpCircle, Eye, EyeOff, Download, BookOpen, Search } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +15,8 @@ import Image from "next/image";
 import { getSettings } from "@/services/settings/settings.service";
 import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
 import { mcToast } from "@/lib/utils/minecraft-toast";
+import { ModpackBrowser } from "@/components/molecules/modpacks/ModpackBrowser";
+import { CurseForgeModpack } from "@/services/curseforge/curseforge.service";
 
 interface ModsTabProps {
   config: ServerConfig;
@@ -26,10 +28,23 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const [showApiKeyManual, setShowApiKeyManual] = useState(false);
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [showModpackBrowser, setShowModpackBrowser] = useState(false);
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isForge = config.serverType === "FORGE";
   const isFabric = config.serverType === "FABRIC";
+
+  const handleModpackSelect = (modpack: CurseForgeModpack) => {
+    if (config.cfMethod === "url") {
+      updateConfig("cfUrl", modpack.links.websiteUrl);
+    } else if (config.cfMethod === "slug") {
+      updateConfig("cfSlug", modpack.slug);
+      if (modpack.latestFiles?.[0]?.id) {
+        updateConfig("cfFile", modpack.latestFiles[0].id.toString());
+      }
+    }
+    mcToast.success(`${t("modpackSelected")}: ${modpack.name}`);
+  };
 
   const handleImportApiKey = async () => {
     setIsImporting(true);
@@ -279,6 +294,19 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <p className="font-minecraft text-sm text-gray-200">{t("methodFile")}</p>
                   <p className="text-xs text-gray-400 mt-1">{t("useLocalFile")}</p>
                 </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-md bg-gradient-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-minecraft text-sm text-emerald-400">{t("browseModpacks")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("browseModpacksDesc")}</p>
+                </div>
+                <Button onClick={() => setShowModpackBrowser(true)} className="bg-emerald-600 hover:bg-emerald-500 gap-2">
+                  <Search className="h-4 w-4" />
+                  {t("browse")}
+                </Button>
               </div>
             </div>
 
@@ -692,6 +720,8 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           </>
         )}
       </CardContent>
+
+      <ModpackBrowser open={showModpackBrowser} onClose={() => setShowModpackBrowser(false)} onSelect={handleModpackSelect} />
     </Card>
   );
 };

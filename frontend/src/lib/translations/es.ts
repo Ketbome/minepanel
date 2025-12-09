@@ -852,6 +852,12 @@ export const es: Record<TranslationKey, string> = {
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
   browseMods: "Explorar Mods",
+  browseModpacks: "Explorar Modpacks",
+  browseModpacksDesc: "Busca y selecciona un modpack de los templates de CurseForge",
+  browse: "Explorar",
+  modpackSelected: "Modpack seleccionado",
+  searchOrBrowsePopular: "Busca un modpack o explora los populares",
+  searchModpacks: "Buscar modpacks...",
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",

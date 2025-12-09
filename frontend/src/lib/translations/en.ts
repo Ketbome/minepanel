@@ -850,6 +850,12 @@ export const en = {
   versionBeta: "Beta (+ Release)",
   versionAlpha: "Alpha (+ Beta + Release)",
   browseMods: "Browse Mods",
+  browseModpacks: "Browse Modpacks",
+  browseModpacksDesc: "Search and select a modpack from CurseForge templates",
+  browse: "Browse",
+  modpackSelected: "Modpack selected",
+  searchOrBrowsePopular: "Search for a modpack or browse popular ones",
+  searchModpacks: "Search modpacks...",
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Deprecated Feature",
