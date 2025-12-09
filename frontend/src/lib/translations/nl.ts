@@ -871,7 +871,6 @@ export const nl: Record<TranslationKey, string> = {
   browse: "Bladeren",
   modpackSelected: "Modpack geselecteerd",
   searchOrBrowsePopular: "Zoek een modpack of blader door populaire",
-  searchModpacks: "Zoek modpacks...",
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: "Verouderde functie",

@@ -952,7 +952,6 @@ export const en = {
   templates: "Templates",
   modpackTemplates: "Modpack Templates",
   modpackTemplatesDescription: "Discover and install modpacks from CurseForge",
-  searchModpacks: "Search modpacks...",
   loadingModpacks: "Loading modpacks...",
   errorLoadingModpacks: "Error loading modpacks",
   errorSearchingModpacks: "Error searching modpacks",

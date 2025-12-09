@@ -857,7 +857,6 @@ export const es: Record<TranslationKey, string> = {
   browse: "Explorar",
   modpackSelected: "Modpack seleccionado",
   searchOrBrowsePopular: "Busca un modpack o explora los populares",
-  searchModpacks: "Buscar modpacks...",
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: "Función obsoleta (Deprecated)",
