@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { UpdateServerConfigDto } from './dto/server-config.model';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
+import { SettingsService } from 'src/users/services/settings.service';
+import { PayloadToken } from 'src/auth/models/token.model';
 
 @Controller('servers')
 @UseGuards(JwtAuthGuard)
@@ -11,6 +13,7 @@ export class ServerManagementController {
   constructor(
     private readonly dockerComposeService: DockerComposeService,
     private readonly managementService: ServerManagementService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   @Get()
@@ -35,12 +38,20 @@ export class ServerManagementController {
   }
 
   @Post()
-  async createServer(@Body(new ValidationPipe()) data: UpdateServerConfigDto) {
+  async createServer(@Request() req, @Body(new ValidationPipe()) data: UpdateServerConfigDto) {
     try {
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
+      }
+
+      if (data.serverType === 'AUTO_CURSEFORGE' && !data.cfApiKey) {
+        const user = req.user as PayloadToken;
+        const settings = await this.settingsService.getSettings(user.userId);
+        if (settings.cfApiKey) {
+          data.cfApiKey = settings.cfApiKey;
+        }
       }
 
       const serverConfig = await this.dockerComposeService.createServer(id, data);

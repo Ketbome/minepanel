@@ -872,6 +872,7 @@ export const es: Record<TranslationKey, string> = {
   // Configuración Auto de CurseForge
   importantInfo: "Información importante",
   cfApiKeyRequired: "Para utilizar correctamente la funcionalidad de CurseForge, se requiere una API Key. La API key es necesaria para descargar modpacks privados o con restricciones.",
+  cfApiKeyConfigured: "API Key de CurseForge configurada. Listo para crear servidor.",
   installationMethod: "Método de Instalación",
   installationMethodHelp: "Selecciona cómo quieres obtener el modpack:",
   methodUrl: "URL",

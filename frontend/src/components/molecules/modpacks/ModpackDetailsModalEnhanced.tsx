@@ -89,15 +89,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
       <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto bg-gray-900 border border-gray-700 text-white scrollbar-hide p-0">
         <div className="sticky top-0 z-10 border-b border-gray-700 bg-gray-900/95 backdrop-blur-sm px-6 py-4">
           <div className="flex items-center gap-4">
-            {modpack.logo && (
-              <Image
-                src={modpack.logo.url}
-                alt={modpack.name}
-                width={60}
-                height={60}
-                className="rounded-lg border border-gray-700"
-              />
-            )}
+            {modpack.logo && <Image src={modpack.logo.url} alt={modpack.name} width={60} height={60} className="rounded-lg border border-gray-700" />}
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold font-minecraft text-white">{modpack.name}</DialogTitle>
               <DialogDescription className="text-sm text-gray-400">{modpack.summary}</DialogDescription>
@@ -215,10 +207,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
             </div>
 
             <div className="flex gap-2 border-t border-gray-700 pt-4">
-              <Button
-                onClick={() => window.open(modpack.links.websiteUrl, "_blank")}
-                className="flex-1 bg-blue-600 font-minecraft hover:bg-blue-700"
-              >
+              <Button onClick={() => window.open(modpack.links.websiteUrl, "_blank")} className="flex-1 bg-blue-600 font-minecraft hover:bg-blue-700">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 {t("viewOnCurseForge")}
               </Button>
@@ -231,9 +220,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
           <TabsContent value="create" className="mt-4 px-6 pb-6">
             <div className="space-y-4 rounded-lg border border-emerald-600/40 bg-emerald-900/10 p-6">
               <div>
-                <h3 className="font-minecraft text-xl font-bold text-emerald-400">
-                  {t("createServer")}
-                </h3>
+                <h3 className="font-minecraft text-xl font-bold text-emerald-400">{t("createServer")}</h3>
                 <p className="text-sm text-gray-400">{t("createServerFromModpack") || "Create a new server using this modpack"}</p>
               </div>
 
@@ -243,23 +230,13 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                     <Label className="text-sm font-semibold text-white">
                       {t("serverId")} <span className="text-red-400">*</span>
                     </Label>
-                    <Input
-                      value={serverId}
-                      onChange={(e) => setServerId(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-_]/g, ""))}
-                      placeholder="my-modpack-server"
-                      className="mt-1 bg-gray-800 border-gray-700 text-white"
-                    />
+                    <Input value={serverId} onChange={(e) => setServerId(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-_]/g, ""))} placeholder="my-modpack-server" className="mt-1 bg-gray-800 border-gray-700 text-white" />
                     <p className="mt-1 text-xs text-gray-500">{t("serverIdDescription")}</p>
                   </div>
 
                   <div>
                     <Label className="text-sm font-semibold text-white">{t("serverName")}</Label>
-                    <Input
-                      value={serverName}
-                      onChange={(e) => setServerName(e.target.value)}
-                      placeholder={modpack.name}
-                      className="mt-1 bg-gray-800 border-gray-700 text-white"
-                    />
+                    <Input value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder={modpack.name} className="mt-1 bg-gray-800 border-gray-700 text-white" />
                   </div>
                 </div>
 
@@ -267,22 +244,10 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                   <div>
                     <Label className="text-sm font-semibold text-white">{t("installationMethod")}</Label>
                     <div className="mt-1 grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={installMethod === "url" ? "default" : "outline"}
-                        onClick={() => setInstallMethod("url")}
-                        className={installMethod === "url" ? "bg-emerald-600 hover:bg-emerald-500" : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-emerald-400 hover:border-emerald-500"}
-                      >
+                      <Button type="button" size="sm" variant={installMethod === "url" ? "default" : "outline"} onClick={() => setInstallMethod("url")} className={installMethod === "url" ? "bg-emerald-600 hover:bg-emerald-500" : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-emerald-400 hover:border-emerald-500"}>
                         URL
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={installMethod === "slug" ? "default" : "outline"}
-                        onClick={() => setInstallMethod("slug")}
-                        className={installMethod === "slug" ? "bg-emerald-600 hover:bg-emerald-500" : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-emerald-400 hover:border-emerald-500"}
-                      >
+                      <Button type="button" size="sm" variant={installMethod === "slug" ? "default" : "outline"} onClick={() => setInstallMethod("slug")} className={installMethod === "slug" ? "bg-emerald-600 hover:bg-emerald-500" : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-emerald-400 hover:border-emerald-500"}>
                         Slug
                       </Button>
                     </div>
@@ -292,17 +257,8 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                     <div>
                       <Label className="text-sm font-semibold text-white">{t("modpackUrl")}</Label>
                       <div className="mt-1 flex gap-2">
-                        <Input
-                          value={modpack.links.websiteUrl}
-                          readOnly
-                          className="bg-gray-800 border-gray-700 text-white"
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => copyToClipboard(modpack.links.websiteUrl, "URL")}
-                          className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/20 hover:text-emerald-300 hover:border-emerald-500"
-                        >
+                        <Input value={modpack.links.websiteUrl} readOnly className="bg-gray-800 border-gray-700 text-white" />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(modpack.links.websiteUrl, "URL")} className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/20 hover:text-emerald-300 hover:border-emerald-500">
                           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
@@ -313,12 +269,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                         <Label className="text-sm font-semibold text-white">{t("modpackSlug")}</Label>
                         <div className="mt-1 flex gap-2">
                           <Input value={modpack.slug} readOnly className="bg-gray-800 border-gray-700 text-white" />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => copyToClipboard(modpack.slug, "Slug")}
-                            className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/20 hover:text-emerald-300 hover:border-emerald-500"
-                          >
+                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(modpack.slug, "Slug")} className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/20 hover:text-emerald-300 hover:border-emerald-500">
                             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                           </Button>
                         </div>
@@ -328,11 +279,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                           {t("fileId")} <span className="text-xs text-gray-500">({t("optional")})</span>
                         </Label>
                         {modpack.latestFiles && modpack.latestFiles.length > 0 ? (
-                          <select
-                            value={fileId}
-                            onChange={(e) => setFileId(e.target.value)}
-                            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          >
+                          <select value={fileId} onChange={(e) => setFileId(e.target.value)} className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="">{t("latestVersion")} (Auto)</option>
                             {modpack.latestFiles.slice(0, 10).map((file) => (
                               <option key={file.id} value={file.id}>
@@ -341,12 +288,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                             ))}
                           </select>
                         ) : (
-                          <Input
-                            value={fileId}
-                            onChange={(e) => setFileId(e.target.value)}
-                            placeholder={latestFile?.id.toString() || ""}
-                            className="mt-1 bg-gray-800 border-gray-700 text-white"
-                          />
+                          <Input value={fileId} onChange={(e) => setFileId(e.target.value)} placeholder={latestFile?.id.toString() || ""} className="mt-1 bg-gray-800 border-gray-700 text-white" />
                         )}
                         <p className="mt-1 text-xs text-gray-500">{t("fileIdDesc")}</p>
                       </div>
@@ -356,16 +298,10 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
               </div>
 
               <div className="rounded-lg border border-blue-600/30 bg-blue-900/20 p-3">
-                <p className="text-sm text-blue-300">
-                  {t("cfApiKeyRequired")}
-                </p>
+                <p className="text-sm text-blue-300">{t("cfApiKeyRequired")}</p>
               </div>
 
-              <Button
-                onClick={handleCreateServer}
-                disabled={isCreating || !serverId.trim()}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 font-minecraft hover:from-emerald-500 hover:to-emerald-600"
-              >
+              <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 font-minecraft hover:from-emerald-500 hover:to-emerald-600">
                 <Rocket className="mr-2 h-4 w-4" />
                 {isCreating ? t("creating") : t("createServer")}
               </Button>
@@ -376,4 +312,3 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
     </Dialog>
   );
 }
-

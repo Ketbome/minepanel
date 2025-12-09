@@ -870,6 +870,7 @@ export const en = {
   // CurseForge Auto Configuration
   importantInfo: "Important Information",
   cfApiKeyRequired: "To properly use CurseForge functionality, an API Key is required. The API key is necessary to download private or restricted modpacks.",
+  cfApiKeyConfigured: "CurseForge API Key configured. Ready to create server.",
   installationMethod: "Installation Method",
   installationMethodHelp: "Select how you want to obtain the modpack:",
   methodUrl: "URL",
