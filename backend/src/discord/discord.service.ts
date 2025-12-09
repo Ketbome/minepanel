@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as https from 'node:https';
-import { ServerEventType, SupportedLanguage, getTranslation } from './discord.translations';
+import { ServerEventType, SupportedLanguage, getTranslation, getRandomTitle } from './discord.translations';
 
 interface DiscordEmbed {
   title?: string;
@@ -81,6 +81,7 @@ export class DiscordService {
     try {
       const t = getTranslation(lang);
       const event = t.events[type];
+      const title = getRandomTitle(lang, type);
 
       const fields: Array<{ name: string; value: string; inline?: boolean }> = [
         { name: t.fields.server, value: `\`${serverName}\``, inline: true },
@@ -100,7 +101,7 @@ export class DiscordService {
       }
 
       const embed: DiscordEmbed = {
-        title: `${this.EMOJIS[type]} ${event.title}`,
+        title: `${this.EMOJIS[type]} ${title}`,
         color: this.getColor(type),
         fields,
         timestamp: new Date().toISOString(),
