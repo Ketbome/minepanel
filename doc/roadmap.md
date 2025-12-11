@@ -23,16 +23,16 @@ What's planned for MinePanel.
 
 ### ✅ Fabric Support
 
-- Full Fabric server type support
-- Loader and launcher version configuration
-- Compatible with mod management features
+- ~~Full Fabric server type support~~
+- ~~Loader and launcher version configuration~~
+- ~~Compatible with mod management features~~
 
 ### ✅ Modrinth Integration
 
-- Auto-download mods from Modrinth
-- Support for Fabric, Forge, and modded servers
-- Dependency resolution (required/optional)
-- Multiple project reference formats
+- ~~Auto-download mods from Modrinth~~
+- ~~Support for Fabric, Forge, and modded servers~~
+- ~~Dependency resolution (required/optional)~~
+- ~~Multiple project reference formats~~
 
 ### ✅ CurseForge Files
 
@@ -43,7 +43,7 @@ What's planned for MinePanel.
 
 ### ✅ Discord webhooks
 
-- Server start/stop notifications
+- ~~Server start/stop notifications~~
 - Error alerts
 - Custom events
 
