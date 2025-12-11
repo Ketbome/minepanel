@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "Minepanel"
-  text: "Minecraft Server Management"
-  tagline: Manage multiple Minecraft servers with Docker
+  text: "Minecraft Server Manager"
+  tagline: Free self-hosted alternative to Aternos and Pterodactyl. Manage your Minecraft servers with Docker.
   image:
     src: /cubo.webp
     alt: Minepanel Dashboard

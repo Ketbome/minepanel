@@ -2,31 +2,75 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Minepanel Documentation",
+  title: "Minepanel - Minecraft Server Manager",
   description:
-    "Modern Minecraft Server Management Panel - Complete documentation and guides",
+    "Free open source Minecraft server management panel with Docker. Self-hosted alternative to Pterodactyl and Aternos. Web UI for Paper, Forge, Fabric, Spigot servers.",
 
   head: [
     ["link", { rel: "icon", href: "/favicon.ico" }],
+    ["link", { rel: "canonical", href: "https://minepanel.ketbome.lat" }],
     ["meta", { name: "theme-color", content: "#3eaf7c" }],
-    ["meta", { name: "og:type", content: "website" }],
-    ["meta", { name: "og:locale", content: "en" }],
     [
       "meta",
       {
-        name: "og:title",
-        content: "Minepanel | Modern Minecraft Server Management",
-      },
-    ],
-    [
-      "meta",
-      {
-        name: "og:description",
+        name: "keywords",
         content:
-          "Manage multiple Minecraft servers with a beautiful web interface using Docker",
+          "minecraft server manager, minecraft server panel, minecraft docker, minecraft control panel, pterodactyl alternative, aternos alternative, self hosted minecraft, minecraft web panel, paper server manager, forge server manager, fabric server manager, free minecraft server hosting, minecraft dashboard",
       },
     ],
-    ["meta", { name: "og:site_name", content: "Minepanel" }],
+    ["meta", { name: "author", content: "Ketbome" }],
+    ["meta", { name: "robots", content: "index, follow" }],
+    // Open Graph
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:locale", content: "en" }],
+    ["meta", { property: "og:url", content: "https://minepanel.ketbome.lat" }],
+    [
+      "meta",
+      {
+        property: "og:title",
+        content: "Minepanel - Free Minecraft Server Manager with Docker",
+      },
+    ],
+    [
+      "meta",
+      {
+        property: "og:description",
+        content:
+          "Open source web panel to manage multiple Minecraft servers. Self-hosted, Docker-based, supports Paper/Forge/Fabric/Spigot. Alternative to Pterodactyl and Aternos.",
+      },
+    ],
+    ["meta", { property: "og:site_name", content: "Minepanel" }],
+    [
+      "meta",
+      {
+        property: "og:image",
+        content: "https://minepanel.ketbome.lat/cubo.webp",
+      },
+    ],
+    // Twitter
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    [
+      "meta",
+      {
+        name: "twitter:title",
+        content: "Minepanel - Minecraft Server Manager",
+      },
+    ],
+    [
+      "meta",
+      {
+        name: "twitter:description",
+        content:
+          "Free open source Minecraft server panel with Docker. Self-hosted alternative to Pterodactyl and Aternos.",
+      },
+    ],
+    [
+      "meta",
+      {
+        name: "twitter:image",
+        content: "https://minepanel.ketbome.lat/cubo.webp",
+      },
+    ],
   ],
 
   themeConfig: {
@@ -170,4 +214,8 @@ export default defineConfig({
     /^http:\/\/127\.0\.0\.1/,
     /^http:\/\/192\.168\./,
   ],
+
+  sitemap: {
+    hostname: "https://minepanel.ketbome.lat",
+  },
 });
