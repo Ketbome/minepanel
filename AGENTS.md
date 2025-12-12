@@ -27,11 +27,13 @@ Web panel for managing Minecraft servers with Docker. Create, configure, start/s
 minepanel/
 ├── backend/                 # NestJS API (see backend/AGENTS.md)
 ├── frontend/                # Next.js App (see frontend/AGENTS.md)
-├── doc/                     # VitePress documentation
+├── doc/                     # VitePress docs (see doc/AGENTS.md)
 ├── servers/                 # MC server data (gitignored)
 ├── data/                    # SQLite database (gitignored)
 └── docker-compose.yml       # Main deployment
 ```
+
+**Important:** When adding features or changing behavior, update the corresponding documentation in `doc/`. See `doc/AGENTS.md` for guidelines.
 
 ---
 
