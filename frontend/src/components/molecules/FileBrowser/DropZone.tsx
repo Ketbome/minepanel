@@ -82,8 +82,8 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
 
       // Usar webkitGetAsEntry para detectar carpetas
       const entries: FileSystemEntry[] = [];
-      for (let i = 0; i < items.length; i++) {
-        const entry = items[i].webkitGetAsEntry?.();
+      for (const element of items) {
+        const entry = element.webkitGetAsEntry?.();
         if (entry) {
           entries.push(entry);
         }
