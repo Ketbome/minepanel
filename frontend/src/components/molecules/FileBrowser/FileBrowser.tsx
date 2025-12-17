@@ -194,13 +194,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
     [serverId, currentPath, loadFiles, t]
   );
 
-  const handleMultipleUpload = useCallback(
-    async (files: File[]) => {
-      await handleUploadFiles(files);
-    },
-    [handleUploadFiles]
-  );
-
   const handleRename = useCallback(
     async (file: FileItem, newName: string) => {
       try {
@@ -272,7 +265,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   }
 
   return (
-    <DropZone onFilesDropped={handleMultipleUpload} className="h-[600px]">
+    <DropZone onFilesDropped={handleUploadFiles} className="h-[600px]">
       <div className="flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
         <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
 
