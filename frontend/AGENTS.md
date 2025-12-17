@@ -4,8 +4,7 @@
 
 Next.js 15 app with App Router, React 19, TailwindCSS 4, shadcn/ui components, and Zustand for state.
 
-**Port:** 3000  
-**Also:** Electron wrapper for desktop builds
+**Port:** 3000
 
 ---
 
@@ -62,15 +61,16 @@ export default async function ServersPage() {
 }
 
 // ✅ Client Component: Only when needed
-'use client';
+("use client");
 
 export function ServerControls() {
-  const [status, setStatus] = useState('stopped');
+  const [status, setStatus] = useState("stopped");
   // Interactive logic here
 }
 ```
 
 Use `"use client"` only for:
+
 - useState, useEffect, useRef
 - Event handlers (onClick, onChange)
 - Browser APIs (localStorage, window)
@@ -104,13 +104,12 @@ export const useServerStore = create<ServerStore>((set) => ({
 const API = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export const serverService = {
-  getAll: () => 
-    fetch(`${API}/servers`, { credentials: 'include' }).then(r => r.json()),
-  
+  getAll: () => fetch(`${API}/servers`, { credentials: "include" }).then((r) => r.json()),
+
   start: (id: string) =>
-    fetch(`${API}/servers/${id}/start`, { 
-      method: 'POST',
-      credentials: 'include' 
+    fetch(`${API}/servers/${id}/start`, {
+      method: "POST",
+      credentials: "include",
     }),
 };
 ```
@@ -142,7 +141,10 @@ Use react-hook-form + zod:
 
 ```tsx
 const schema = z.object({
-  name: z.string().min(1).regex(/^[a-zA-Z0-9_-]+$/),
+  name: z
+    .string()
+    .min(1)
+    .regex(/^[a-zA-Z0-9_-]+$/),
   port: z.number().min(1024).max(65535),
 });
 
@@ -153,9 +155,7 @@ export function CreateServerForm() {
 
   return (
     <Form {...form}>
-      <FormField name="name" render={({ field }) => (
-        <Input {...field} />
-      )} />
+      <FormField name="name" render={({ field }) => <Input {...field} />} />
     </Form>
   );
 }
@@ -169,7 +169,7 @@ Files: `lib/translations/{en,es,nl}.ts`
 
 ```typescript
 // Usage
-import { useTranslation } from '@/lib/hooks/useTranslation';
+import { useTranslation } from "@/lib/hooks/useTranslation";
 
 function Component() {
   const { t } = useTranslation();
@@ -178,6 +178,7 @@ function Component() {
 ```
 
 Add new language:
+
 1. Copy `en.ts` to `{lang}.ts`
 2. Translate all strings
 3. Register in `translations/index.ts`
@@ -237,4 +238,3 @@ npx shadcn@latest add {component}
 1. Add to `lib/translations/en.ts`
 2. Add same key to `es.ts` and `nl.ts`
 3. Use via `t.section.key`
-

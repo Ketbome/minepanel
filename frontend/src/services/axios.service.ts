@@ -12,11 +12,6 @@ const api = axios.create({
   },
 });
 
-// Update baseURL if it changes (for Electron)
-export function updateApiBaseUrl(url: string) {
-  api.defaults.baseURL = url;
-}
-
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
