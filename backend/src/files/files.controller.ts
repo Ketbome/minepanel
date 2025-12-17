@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
 import * as fs from 'fs-extra';
@@ -80,15 +80,55 @@ export class FilesController {
 
   @Post(':serverId/upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@Param('serverId') serverId: string, @Query('path') dirPath: string = '', @UploadedFile() file: Express.Multer.File): Promise<{ success: boolean; path: string }> {
+  async uploadFile(
+    @Param('serverId') serverId: string,
+    @Query('path') dirPath: string = '',
+    @Query('relativePath') relativePath: string = '',
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ success: boolean; path: string }> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
-    const filePath = path.join(dirPath, file.originalname);
-    await this.filesService.writeFile(serverId, filePath, file.buffer.toString());
+    // Si viene relativePath, usarlo para preservar estructura de carpetas
+    const fileName = relativePath || file.originalname;
+    const filePath = path.join(dirPath, fileName);
+    await this.filesService.writeFileBuffer(serverId, filePath, file.buffer);
 
     return { success: true, path: filePath };
+  }
+
+  @Post(':serverId/upload-multiple')
+  @UseInterceptors(FilesInterceptor('files', 100))
+  async uploadMultipleFiles(
+    @Param('serverId') serverId: string,
+    @Query('path') dirPath: string = '',
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() body: { relativePaths?: string },
+  ): Promise<{ success: boolean; uploaded: number; errors: number }> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one file is required');
+    }
+
+    // relativePaths viene como JSON string desde FormData
+    const relativePaths: string[] = body.relativePaths ? JSON.parse(body.relativePaths) : [];
+
+    let uploaded = 0;
+    let errors = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const file = files[i];
+        const fileName = relativePaths[i] || file.originalname;
+        const filePath = path.join(dirPath, fileName);
+        await this.filesService.writeFileBuffer(serverId, filePath, file.buffer);
+        uploaded++;
+      } catch {
+        errors++;
+      }
+    }
+
+    return { success: true, uploaded, errors };
   }
 
   @Put(':serverId/rename')

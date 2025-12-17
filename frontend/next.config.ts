@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: process.env.BUILD_ELECTRON ? "export" : "standalone",
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -8,11 +8,7 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-    unoptimized: process.env.BUILD_ELECTRON === "true",
   },
-  ...(process.env.BUILD_ELECTRON && {
-    trailingSlash: true,
-  }),
 };
 
 module.exports = nextConfig;

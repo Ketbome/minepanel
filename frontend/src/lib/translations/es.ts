@@ -742,6 +742,8 @@ export const es: Record<TranslationKey, string> = {
   newFolder: "Nueva Carpeta",
   folderName: "Nombre de carpeta",
   upload: "Subir",
+  uploadFiles: "Subir Archivos",
+  uploadFolder: "Subir Carpeta",
   download: "Descargar",
   rename: "Renombrar",
   newName: "Nuevo nombre",

@@ -111,6 +111,12 @@ export class FilesService {
     await fs.writeFile(fullPath, content, 'utf-8');
   }
 
+  async writeFileBuffer(serverId: string, filePath: string, buffer: Buffer): Promise<void> {
+    const fullPath = this.validatePath(serverId, filePath);
+    await fs.ensureDir(path.dirname(fullPath));
+    await fs.writeFile(fullPath, buffer);
+  }
+
   async deleteFile(serverId: string, filePath: string): Promise<void> {
     const fullPath = this.validatePath(serverId, filePath);
 

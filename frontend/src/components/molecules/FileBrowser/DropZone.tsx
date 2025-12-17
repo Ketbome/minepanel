@@ -6,9 +6,36 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
 interface DropZoneProps {
-  onFilesDropped: (files: File[]) => void;
+  onFilesDropped: (files: File[], relativePaths?: string[]) => void;
   children: React.ReactNode;
   className?: string;
+}
+
+// Recorre recursivamente un directorio usando la File System API
+async function traverseDirectory(entry: FileSystemEntry, basePath: string = ""): Promise<{ file: File; path: string }[]> {
+  const results: { file: File; path: string }[] = [];
+
+  if (entry.isFile) {
+    const fileEntry = entry as FileSystemFileEntry;
+    const file = await new Promise<File>((resolve, reject) => {
+      fileEntry.file(resolve, reject);
+    });
+    const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+    results.push({ file, path: relativePath });
+  } else if (entry.isDirectory) {
+    const dirEntry = entry as FileSystemDirectoryEntry;
+    const reader = dirEntry.createReader();
+    const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+      reader.readEntries(resolve, reject);
+    });
+    const newBasePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+    for (const childEntry of entries) {
+      const childResults = await traverseDirectory(childEntry, newBasePath);
+      results.push(...childResults);
+    }
+  }
+
+  return results;
 }
 
 export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, className }) => {
@@ -43,15 +70,41 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
   }, []);
 
   const handleDrop = useCallback(
-    (e: DragEvent) => {
+    async (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
       setDragCounter(0);
 
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        onFilesDropped(files);
+      const items = e.dataTransfer.items;
+      const allFiles: File[] = [];
+      const allPaths: string[] = [];
+
+      // Usar webkitGetAsEntry para detectar carpetas
+      const entries: FileSystemEntry[] = [];
+      for (const element of items) {
+        const entry = element.webkitGetAsEntry?.();
+        if (entry) {
+          entries.push(entry);
+        }
+      }
+
+      if (entries.length > 0) {
+        for (const entry of entries) {
+          const results = await traverseDirectory(entry);
+          for (const { file, path } of results) {
+            allFiles.push(file);
+            allPaths.push(path);
+          }
+        }
+      } else {
+        // Fallback para navegadores sin soporte
+        const files = Array.from(e.dataTransfer.files);
+        allFiles.push(...files);
+      }
+
+      if (allFiles.length > 0) {
+        onFilesDropped(allFiles, allPaths.length > 0 ? allPaths : undefined);
       }
     },
     [onFilesDropped]

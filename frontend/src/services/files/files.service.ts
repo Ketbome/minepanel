@@ -42,13 +42,31 @@ export const filesService = {
     await api.put(`/files/${serverId}/rename`, { path, newName });
   },
 
-  async uploadFile(serverId: string, path: string, file: File): Promise<void> {
+  async uploadFile(serverId: string, path: string, file: File, relativePath?: string): Promise<void> {
     const formData = new FormData();
     formData.append("file", file);
     await api.post(`/files/${serverId}/upload`, formData, {
+      params: { path, relativePath },
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  async uploadMultipleFiles(
+    serverId: string,
+    path: string,
+    files: File[],
+    relativePaths?: string[]
+  ): Promise<{ uploaded: number; errors: number }> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    if (relativePaths) {
+      formData.append("relativePaths", JSON.stringify(relativePaths));
+    }
+    const { data } = await api.post(`/files/${serverId}/upload-multiple`, formData, {
       params: { path },
       headers: { "Content-Type": "multipart/form-data" },
     });
+    return data;
   },
 
   getDownloadUrl(serverId: string, path: string): string {
