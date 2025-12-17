@@ -740,6 +740,8 @@ export const en = {
   newFolder: "New Folder",
   folderName: "Folder name",
   upload: "Upload",
+  uploadFiles: "Upload Files",
+  uploadFolder: "Upload Folder",
   download: "Download",
   rename: "Rename",
   newName: "New name",

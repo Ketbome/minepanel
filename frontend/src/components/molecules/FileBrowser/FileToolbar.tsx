@@ -16,7 +16,7 @@ import { FolderPlus, Upload, RefreshCw, Trash2, Download, Pencil, Loader2 } from
 
 interface FileToolbarProps {
   onCreateFolder: (name: string) => void;
-  onUpload: (file: File) => void;
+  onUploadFiles: (files: File[], relativePaths?: string[]) => void;
   onRefresh: () => void;
   selectedFile: FileItem | null;
   onDelete: (file: FileItem) => void;
@@ -27,7 +27,7 @@ interface FileToolbarProps {
 
 export const FileToolbar: FC<FileToolbarProps> = ({
   onCreateFolder,
-  onUpload,
+  onUploadFiles,
   onRefresh,
   selectedFile,
   onDelete,
@@ -37,6 +37,7 @@ export const FileToolbar: FC<FileToolbarProps> = ({
 }) => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -67,9 +68,20 @@ export const FileToolbar: FC<FileToolbarProps> = ({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onUpload(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      onUploadFiles(Array.from(files));
+      e.target.value = "";
+    }
+  };
+
+  const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
+      // webkitRelativePath contiene la ruta relativa desde la carpeta seleccionada
+      const relativePaths = fileList.map((f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name);
+      onUploadFiles(fileList, relativePaths);
       e.target.value = "";
     }
   };
@@ -102,7 +114,18 @@ export const FileToolbar: FC<FileToolbarProps> = ({
           disabled={isUploading}
         >
           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-          {isUploading ? t("uploading") : t("upload")}
+          {isUploading ? t("uploading") : t("uploadFiles")}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 text-gray-300 hover:text-white hover:bg-gray-700/50"
+          onClick={() => folderInputRef.current?.click()}
+          disabled={isUploading}
+        >
+          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderPlus className="h-4 w-4" />}
+          {t("uploadFolder")}
         </Button>
 
         <input
@@ -110,6 +133,14 @@ export const FileToolbar: FC<FileToolbarProps> = ({
           type="file"
           className="hidden"
           onChange={handleFileSelect}
+          multiple
+        />
+        <input
+          ref={folderInputRef}
+          type="file"
+          className="hidden"
+          onChange={handleFolderSelect}
+          {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
         />
 
         <div className="flex-1" />

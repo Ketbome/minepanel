@@ -158,15 +158,34 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
     [serverId, currentPath, loadFiles, t]
   );
 
-  const handleUpload = useCallback(
-    async (file: File) => {
+  const handleUploadFiles = useCallback(
+    async (files: File[], relativePaths?: string[]) => {
       setIsUploading(true);
       try {
-        await filesService.uploadFile(serverId, currentPath, file);
-        mcToast.success(t("fileUploaded"));
+        if (relativePaths && relativePaths.length > 0) {
+          // Upload con estructura de carpetas
+          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files, relativePaths);
+          if (result.uploaded > 0) {
+            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
+          }
+          if (result.errors > 0) {
+            mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
+          }
+        } else if (files.length === 1) {
+          await filesService.uploadFile(serverId, currentPath, files[0]);
+          mcToast.success(t("fileUploaded"));
+        } else {
+          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files);
+          if (result.uploaded > 0) {
+            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
+          }
+          if (result.errors > 0) {
+            mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
+          }
+        }
         loadFiles(currentPath);
       } catch (error) {
-        console.error("Error uploading file:", error);
+        console.error("Error uploading files:", error);
         mcToast.error(t("errorUploadingFile"));
       } finally {
         setIsUploading(false);
@@ -177,30 +196,9 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
   const handleMultipleUpload = useCallback(
     async (files: File[]) => {
-      setIsUploading(true);
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const file of files) {
-        try {
-          await filesService.uploadFile(serverId, currentPath, file);
-          successCount++;
-        } catch {
-          errorCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        mcToast.success(t("filesUploaded").replace("{count}", successCount.toString()));
-      }
-      if (errorCount > 0) {
-        mcToast.error(t("filesUploadFailed").replace("{count}", errorCount.toString()));
-      }
-
-      loadFiles(currentPath);
-      setIsUploading(false);
+      await handleUploadFiles(files);
     },
-    [serverId, currentPath, loadFiles, t]
+    [handleUploadFiles]
   );
 
   const handleRename = useCallback(
@@ -276,7 +274,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   return (
     <DropZone onFilesDropped={handleMultipleUpload} className="h-[600px]">
       <div className="flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
-        <FileToolbar onCreateFolder={handleCreateFolder} onUpload={handleUpload} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
+        <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
 
         <Breadcrumbs path={currentPath} onNavigate={navigateToFolder} onNavigateUp={navigateUp} />
 

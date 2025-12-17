@@ -756,6 +756,8 @@ export const nl: Record<TranslationKey, string> = {
   newFolder: "Nieuwe Map",
   folderName: "Mapnaam",
   upload: "Uploaden",
+  uploadFiles: "Bestanden Uploaden",
+  uploadFolder: "Map Uploaden",
   download: "Downloaden",
   rename: "Hernoemen",
   newName: "Nieuwe naam",
