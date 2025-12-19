@@ -64,4 +64,3 @@ export const getStatusIcon = (status: string): string => {
       return "/images/barrier.webp";
   }
 };
-
