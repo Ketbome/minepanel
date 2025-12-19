@@ -8,7 +8,6 @@ import { HelpCircle, RefreshCw, Sparkles } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ServerConfig } from "@/lib/types/types";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useMinecraftVersions } from "@/lib/hooks/useMinecraftVersions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,7 +170,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
         <div className="border-t border-gray-700/50 pt-4">
           <h3 className="text-sm font-minecraft text-gray-300 mb-4">{t("selectType")}</h3>
           <RadioGroup value={config.serverType} onValueChange={(value: ServerConfig["serverType"]) => updateConfig("serverType", value)} className="space-y-4">
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "VANILLA" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "VANILLA" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/grass.webp" alt="Vanilla" width={24} height={24} />
               </div>
@@ -184,9 +183,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverVanilla")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "FORGE" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "FORGE" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/anvil.webp" alt="Forge" width={24} height={24} />
               </div>
@@ -199,9 +198,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverForge")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "FABRIC" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "FABRIC" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/crafting-table.webp" alt="Fabric" width={24} height={24} />
               </div>
@@ -214,9 +213,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverFabric")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "AUTO_CURSEFORGE" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "AUTO_CURSEFORGE" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/enchanted-book.webp" alt="CurseForge" width={24} height={24} />
               </div>
@@ -229,9 +228,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverCurseForge")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "CURSEFORGE" ? "bg-amber-600/10 border border-amber-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "CURSEFORGE" ? "bg-amber-600/10 border border-amber-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/book.webp" alt="CurseForge Manual" width={24} height={24} />
                 <div className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs px-1 rounded text-[8px] font-bold">LEGACY</div>
@@ -245,9 +244,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverCurseForgeManual")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "SPIGOT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "SPIGOT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/redstone.webp" alt="Spigot" width={24} height={24} />
               </div>
@@ -260,9 +259,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverSpigot")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "PAPER" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "PAPER" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/paper.webp" alt="Paper" width={24} height={24} />
               </div>
@@ -275,9 +274,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverPaper")}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className={`flex items-start space-x-4 rounded-md p-4 ${config.serverType === "BUKKIT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
+            <div className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === "BUKKIT" ? "bg-emerald-600/10 border border-emerald-600/30" : "bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60"}`}>
               <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 flex-shrink-0">
                 <Image src="/images/emerald.webp" alt="Bukkit" width={24} height={24} />
               </div>
@@ -290,7 +289,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
                 <p className="text-sm text-gray-300 mt-1">{t("serverBukkit")}</p>
               </div>
-            </motion.div>
+            </div>
           </RadioGroup>
         </div>
       </CardContent>

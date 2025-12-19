@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { motion } from "framer-motion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
@@ -94,9 +93,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
         <Badge variant="outline" className={`px-3 py-1 ${getStatusBadgeClass(serverStatus)}`}>
           {serverStatus === "starting" ? (
             <span className="flex items-center gap-1">
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="h-3 w-3">
-                <RefreshCw className="h-3 w-3" />
-              </motion.div>
+              <RefreshCw className="h-3 w-3 animate-spin" />
               {getStatusText(serverStatus)}
             </span>
           ) : (
@@ -170,9 +167,9 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
       </div>
 
       {serverStatus === "running" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}>
+        <div className="animate-fade-in-up">
           <ServerConnectionInfo port={serverPort} serverId={serverId} />
-        </motion.div>
+        </div>
       )}
 
       <div className="text-xs text-gray-300 px-2">

@@ -267,3 +267,33 @@
   animation: float 3s ease-in-out infinite 1s;
   will-change: transform;
 }
+
+/* Loading animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-bar {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
+.animate-loading-bar {
+  animation: loading-bar 2.5s ease-in-out infinite;
+}
