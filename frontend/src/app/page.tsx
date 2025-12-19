@@ -146,7 +146,7 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
             <Link href="/" className="flex items-center gap-3 font-bold group">
               <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
-                <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" />
+                <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" priority />
               </motion.div>
               <span className="text-xl bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft group-hover:from-emerald-400 group-hover:to-green-500 transition-all">Minepanel</span>
             </Link>

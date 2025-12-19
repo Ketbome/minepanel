@@ -11,6 +11,7 @@ import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { getStatusColor, getStatusBadgeClassCompact } from "@/lib/utils/server-status";
 
 type ServerInfo = {
   id: string;
@@ -57,36 +58,6 @@ export function Sidebar() {
       );
     } catch (error) {
       console.error("Error updating server statuses:", error);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "running":
-        return "bg-emerald-500";
-      case "starting":
-        return "bg-orange-500";
-      case "stopped":
-        return "bg-yellow-500";
-      case "not_found":
-        return "bg-red-500";
-      case "loading":
-        return "bg-blue-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "running":
-        return "border-emerald-600/30 text-emerald-400";
-      case "stopped":
-        return "border-yellow-600/30 text-yellow-400";
-      case "starting":
-        return "border-orange-600/30 text-orange-400";
-      default:
-        return "border-red-600/30 text-red-400";
     }
   };
 
@@ -284,7 +255,7 @@ export function Sidebar() {
                   )}>
                     <p className="font-minecraft text-sm font-medium text-white truncate">{server.id}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className={cn("text-xs px-2 py-0", getStatusBadgeClass(server.status))}>
+                      <Badge variant="outline" className={cn("text-xs px-2 py-0", getStatusBadgeClassCompact(server.status))}>
                         {getStatusText(server.status)}
                       </Badge>
                     </div>

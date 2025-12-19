@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
 
 type ServerInfo = {
   id: string;
@@ -163,23 +164,6 @@ export default function Dashboard() {
     }
   };
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "running":
-        return "bg-green-600/20 text-green-400 border-green-600/30";
-      case "starting":
-        return "bg-orange-600/20 text-orange-400 border-orange-600/30";
-      case "stopped":
-        return "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
-      case "not_found":
-        return "bg-red-600/20 text-red-400 border-red-600/30";
-      case "loading":
-        return "bg-blue-600/20 text-blue-400 border-blue-600/30";
-      default:
-        return "bg-gray-600/20 text-gray-400 border-gray-600/30";
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case "running":
@@ -194,36 +178,6 @@ export default function Dashboard() {
         return t("loading");
       default:
         return t("unknown");
-    }
-  };
-
-  const getServerStatusColor = (status: string) => {
-    switch (status) {
-      case "running":
-        return "bg-emerald-500";
-      case "starting":
-        return "bg-orange-500";
-      case "stopped":
-        return "bg-yellow-500";
-      default:
-        return "bg-red-500";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "running":
-        return "/images/emerald.webp";
-      case "starting":
-        return "/images/gold.webp";
-      case "stopped":
-        return "/images/redstone.webp";
-      case "not_found":
-        return "/images/barrier.webp";
-      case "loading":
-        return "/images/lapis.webp";
-      default:
-        return "/images/barrier.webp";
     }
   };
 
@@ -303,14 +257,14 @@ export default function Dashboard() {
             {servers.map((server: ServerInfo, index: number) => (
               <div key={server.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}>
                 <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-emerald-600/30 group">
-                  <div className={`h-2 ${getServerStatusColor(server.status)}`}></div>
+                  <div className={`h-2 ${getStatusColor(server.status)}`}></div>
 
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="relative">
                           <Image src={getStatusIcon(server.status)} alt="Server Status" width={48} height={48} className="object-contain" />
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-900 ${getServerStatusColor(server.status)}`} />
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-900 ${getStatusColor(server.status)}`} />
                         </div>
                         <div>
                           <CardTitle className="text-white font-minecraft text-lg group-hover:text-emerald-400 transition-colors">{server.id}</CardTitle>
