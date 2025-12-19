@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import ModpackCard from "@/components/molecules/modpacks/ModpackCard";
@@ -154,16 +153,16 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <div className="animate-fade-in-up">
         <div className="flex items-center gap-3 mb-2">
           <Image src="/images/bookshelf.webp" alt="Templates" width={40} height={40} />
           <h1 className="text-3xl font-bold text-white font-minecraft">{t("modpackTemplates")}</h1>
         </div>
         <p className="text-gray-400">{t("modpackTemplatesDescription")}</p>
-      </motion.div>
+      </div>
 
       {error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <div className="animate-fade-in">
           <Alert className="border-2 border-red-600/40 bg-red-900/20">
             <AlertCircle className="h-4 w-4 text-red-400" />
             <AlertTitle className="text-red-400">{t("error")}</AlertTitle>
@@ -176,14 +175,14 @@ export default function TemplatesPage() {
               )}
             </AlertDescription>
           </Alert>
-        </motion.div>
+        </div>
       )}
 
       {!error && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          <div className="animate-fade-in-up stagger-1">
             <ModpackSearch onSearch={handleSearch} isLoading={isSearching} />
-          </motion.div>
+          </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="bg-gray-800 border border-gray-700">
@@ -283,15 +282,15 @@ export default function TemplatesPage() {
       <ModpackDetailsModalEnhanced modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
 
       <div className="flex justify-center gap-8 pt-8">
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
+        <div className="animate-float">
           <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-1">
           <Image src="/images/bookshelf.webp" alt="Bookshelf" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 1, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-2">
           <Image src="/images/emerald.webp" alt="Emerald" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Save, User, Key, Bell, Globe, AlertTriangle, Loader2, Lock, Eye, EyeOff } from "lucide-react";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getSettings, updateSettings, testDiscordWebhook, UserSettings } from "@/services/settings/settings.service";
 import { changePassword } from "@/services/users/users.service";
@@ -138,17 +137,17 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <div className="animate-fade-in-up">
         <div className="flex items-center gap-3 mb-2">
           <Image src="/images/anvil.webp" alt="Settings" width={40} height={40} />
           <h1 className="text-3xl font-bold text-white font-minecraft">{t("settingsTitle")}</h1>
         </div>
         <p className="text-gray-400">{t("settingsDescription")}</p>
-      </motion.div>
+      </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          <div className="animate-fade-in-up stagger-1">
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -171,9 +170,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
+          <div className="animate-fade-in-up stagger-2">
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -238,9 +237,9 @@ export default function SettingsPage() {
                 </Button>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
+          <div className="animate-fade-in-up stagger-3">
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -298,9 +297,9 @@ export default function SettingsPage() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
+          <div className="animate-fade-in-up stagger-4">
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -323,9 +322,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}>
+          <div className="animate-fade-in-up stagger-5">
             <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -350,9 +349,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}>
+          <div className="animate-fade-in-up stagger-6">
             <Card className="border-2 border-red-600/40 bg-red-900/10 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -372,9 +371,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.6 }} className="flex justify-end">
+          <div className="flex justify-end animate-fade-in">
             <Button type="submit" disabled={isSaving || isLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-8">
               {isSaving ? (
                 <>
@@ -388,20 +387,20 @@ export default function SettingsPage() {
                 </>
               )}
             </Button>
-          </motion.div>
+          </div>
         </form>
       </Form>
 
       <div className="flex justify-center gap-8 pt-4">
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
+        <div className="animate-float">
           <Image src="/images/redstone.webp" alt="Redstone" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-1">
           <Image src="/images/lapis.webp" alt="Lapis" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 1, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-2">
           <Image src="/images/anvil.webp" alt="Anvil" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
+        </div>
       </div>
     </div>
   );

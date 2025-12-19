@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/organisms/Sidebar";
 import { DashboardHeader } from "@/components/organisms/DashboardHeader";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useAuthStore, useUIStore } from "@/lib/store";
-import { motion } from "framer-motion";
 
 interface DashboardShellProps {
   readonly children: React.ReactNode;
@@ -54,9 +53,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
         <DashboardHeader />
 
         <main className="flex-1 p-6 overflow-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto animate-fade-in">
             {children}
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>
