@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { Download, Calendar, ExternalLink, Star, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -28,7 +27,7 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} transition={{ duration: 0.2 }} className="h-full">
+    <div className="h-full animate-fade-in-up transition-transform duration-200 hover:-translate-y-1">
       <Card className="group relative h-full overflow-hidden border border-gray-700 bg-gray-900 transition-all hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/20">
         <div className="relative h-40 w-full overflow-hidden bg-gray-800">
           {modpack.logo?.url ? (
@@ -75,7 +74,7 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
           </div>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

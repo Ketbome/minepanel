@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { motion } from "framer-motion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
+import { getStatusIcon, getStatusBadgeClass } from "@/lib/utils/server-status";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
@@ -36,37 +36,6 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "running":
-        return "/images/emerald.webp";
-      case "starting":
-        return "/images/gold.webp";
-      case "stopped":
-        return "/images/redstone.webp";
-      case "not_found":
-        return "/images/barrier.webp";
-      default:
-        return "/images/barrier.webp";
-    }
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "running":
-        return "bg-green-600/20 text-green-500 border-green-600/30";
-      case "starting":
-        return "bg-orange-600/20 text-orange-500 border-orange-600/30";
-      case "stopped":
-        return "bg-yellow-600/20 text-yellow-500 border-yellow-600/30";
-      case "not_found":
-        return "bg-red-600/20 text-red-500 border-red-600/30";
-      default:
-        return "bg-gray-600/20 text-gray-500 border-gray-600/30";
-    }
-  };
-
-  // Function to get status text
   const getStatusText = (status: string) => {
     switch (status) {
       case "running":
@@ -94,9 +63,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
         <Badge variant="outline" className={`px-3 py-1 ${getStatusBadgeClass(serverStatus)}`}>
           {serverStatus === "starting" ? (
             <span className="flex items-center gap-1">
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="h-3 w-3">
-                <RefreshCw className="h-3 w-3" />
-              </motion.div>
+              <RefreshCw className="h-3 w-3 animate-spin" />
               {getStatusText(serverStatus)}
             </span>
           ) : (
@@ -170,9 +137,9 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
       </div>
 
       {serverStatus === "running" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}>
+        <div className="animate-fade-in-up">
           <ServerConnectionInfo port={serverPort} serverId={serverId} />
-        </motion.div>
+        </div>
       )}
 
       <div className="text-xs text-gray-300 px-2">

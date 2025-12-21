@@ -8,7 +8,6 @@ import { useServerConfig } from "@/lib/hooks/useServerConfig";
 import { ServerPageHeader } from "@/components/organisms/ServerPageHeader";
 import { ServerConfigTabs } from "@/components/organisms/ServerConfigTabs";
 import { ServerLoadingSkeleton } from "@/components/organisms/ServerLoadingSkeleton";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
@@ -34,30 +33,30 @@ export default function ServerConfig() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <div className="animate-fade-in-up">
         <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={clearServerData} />
-      </motion.div>
+      </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+      <div className="animate-fade-in-up stagger-1">
         <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} />
-      </motion.div>
+      </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }} className="flex justify-center gap-8 pt-8">
-        <motion.div animate={{ y: [-4, 4, -4], rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="opacity-40 hover:opacity-70 transition-opacity">
+      <div className="flex justify-center gap-8 pt-8 animate-fade-in stagger-2">
+        <div className="animate-float opacity-40 hover:opacity-70 transition-opacity">
           <Image src="/images/ender-pearl.webp" alt="Ender Pearl" width={32} height={32} className="drop-shadow-md" />
-        </motion.div>
-        <motion.div animate={{ y: [-4, 4, -4], rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4, delay: 1, ease: "easeInOut" }} className="opacity-40 hover:opacity-70 transition-opacity">
+        </div>
+        <div className="animate-float-delay-1 opacity-40 hover:opacity-70 transition-opacity">
           <Image src="/images/enchanted-book.webp" alt="Enchanted Book" width={32} height={32} className="drop-shadow-md" />
-        </motion.div>
-        <motion.div animate={{ y: [-4, 4, -4], rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 4, delay: 2, ease: "easeInOut" }} className="opacity-40 hover:opacity-70 transition-opacity">
+        </div>
+        <div className="animate-float-delay-2 opacity-40 hover:opacity-70 transition-opacity">
           <Image src="/images/iron-pick.webp" alt="Iron Pickaxe" width={32} height={32} className="drop-shadow-md" />
-        </motion.div>
-        <motion.div animate={{ y: [-4, 4, -4], rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4, delay: 3, ease: "easeInOut" }} className="opacity-40 hover:opacity-70 transition-opacity">
+        </div>
+        <div className="animate-float opacity-40 hover:opacity-70 transition-opacity">
           <Image src="/images/diamond-pickaxe.webp" alt="Diamond Pickaxe" width={32} height={32} className="drop-shadow-md" />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }} className="bg-gray-900/60 backdrop-blur-md rounded-lg border border-gray-700/40 p-6">
+      <div className="bg-gray-900/60 backdrop-blur-md rounded-lg border border-gray-700/40 p-6 animate-fade-in-up stagger-3">
         <div className="flex items-center gap-3 mb-4">
           <Image src="/images/command-block.webp" alt="Command Block" width={24} height={24} />
           <h3 className="text-lg font-minecraft text-white">{t("serverInformation")}</h3>
@@ -79,7 +78,7 @@ export default function ServerConfig() {
             <p className="text-white font-medium">{config.port || "25565"}</p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

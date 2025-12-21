@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Server, Activity, HardDrive, Cpu, Play, Square, ArrowRight } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { getSystemStats, formatBytes, SystemStats } from "@/services/system/system.service";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 type ServerInfo = {
@@ -141,7 +140,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <div className="animate-fade-in-up">
         <div className="flex items-center gap-3 mb-2">
           <Image src="/images/grass.webp" alt="Home" width={40} height={40} />
           <h1 className="text-3xl font-bold text-white font-minecraft">{t("homeTitle")}</h1>
@@ -149,12 +148,13 @@ export default function HomePage() {
         <p className="text-gray-400">
           {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
         </p>
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}>
+      </div>
+
+      <div>
         <h2 className="text-xl font-minecraft text-white mb-4">{t("quickStats")}</h2>
         <div className="grid gap-6 md:grid-cols-3">
           {stats.map((stat, index) => (
-            <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}>
+            <div key={stat.title} className={`animate-fade-in-up stagger-${index + 1}`}>
               <Card className={`border-2 ${stat.borderColor} bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -168,11 +168,11 @@ export default function HomePage() {
                   <div className={`text-4xl font-bold ${stat.color}`}>{isLoading ? "..." : stat.value}</div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
+      </div>
+      <div className="animate-fade-in-up stagger-4">
         <h2 className="text-xl font-minecraft text-white mb-4">{t("systemStatus")}</h2>
         <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
           <CardHeader>
@@ -197,7 +197,10 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${systemStats.cpu.usage}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-gradient-to-r from-blue-600 to-blue-400" />
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-700" 
+                        style={{ width: `${systemStats.cpu.usage}%` }} 
+                      />
                     </div>
                     <span className="text-sm text-blue-400 font-semibold">{Math.round(systemStats.cpu.usage)}%</span>
                   </div>
@@ -210,7 +213,10 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${systemStats.memory.usagePercentage}%` }} transition={{ duration: 1, delay: 0.6 }} className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400" />
+                      <div 
+                        className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700" 
+                        style={{ width: `${systemStats.memory.usagePercentage}%` }} 
+                      />
                     </div>
                     <span className="text-sm text-emerald-400 font-semibold">{systemStats.memory.usagePercentage}%</span>
                   </div>
@@ -225,7 +231,10 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${systemStats.disk.usagePercentage}%` }} transition={{ duration: 1, delay: 0.7 }} className="h-full bg-gradient-to-r from-purple-600 to-purple-400" />
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-700" 
+                        style={{ width: `${systemStats.disk.usagePercentage}%` }} 
+                      />
                     </div>
                     <span className="text-sm text-purple-400 font-semibold">{systemStats.disk.usagePercentage}%</span>
                   </div>
@@ -241,35 +250,35 @@ export default function HomePage() {
             )}
           </CardContent>
         </Card>
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}>
+      </div>
+
+      <div className="animate-fade-in-up stagger-5">
         <h2 className="text-xl font-minecraft text-white mb-4">{t("quickActions")}</h2>
         <div className="grid gap-6 md:grid-cols-2">
-          {quickActions.map((action, index) => (
-            <motion.div key={action.title} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}>
-              <Link href={action.href}>
-                <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-emerald-600/30 group cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-lg bg-${action.color}-600/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                          <action.icon className={`w-6 h-6 text-${action.color}-400`} />
-                        </div>
-                        <div>
-                          <CardTitle className="text-white font-minecraft group-hover:text-emerald-400 transition-colors">{action.title}</CardTitle>
-                          <CardDescription className="text-gray-400 text-sm">{action.description}</CardDescription>
-                        </div>
+          {quickActions.map((action) => (
+            <Link key={action.title} href={action.href}>
+              <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-emerald-600/30 group cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-lg bg-${action.color}-600/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                        <action.icon className={`w-6 h-6 text-${action.color}-400`} />
                       </div>
-                      <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                      <div>
+                        <CardTitle className="text-white font-minecraft group-hover:text-emerald-400 transition-colors">{action.title}</CardTitle>
+                        <CardDescription className="text-gray-400 text-sm">{action.description}</CardDescription>
+                      </div>
                     </div>
-                  </CardHeader>
-                </Card>
-              </Link>
-            </motion.div>
+                    <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
           ))}
         </div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}>
+      </div>
+
+      <div className="animate-fade-in-up stagger-6">
         <h2 className="text-xl font-minecraft text-white mb-4">{t("recentActivity")}</h2>
         <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
           <CardContent className="pt-6">
@@ -279,17 +288,19 @@ export default function HomePage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
+
+      {/* Decorative floating icons - CSS animations instead of framer-motion */}
       <div className="flex justify-center gap-8 pt-4">
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
+        <div className="animate-float">
           <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-1">
           <Image src="/images/emerald.webp" alt="Emerald" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
-        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 3, delay: 1, ease: "easeInOut" }}>
+        </div>
+        <div className="animate-float-delay-2">
           <Image src="/images/command-block.webp" alt="Command Block" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </motion.div>
+        </div>
       </div>
     </div>
   );
