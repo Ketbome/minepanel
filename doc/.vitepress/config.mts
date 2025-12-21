@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Minepanel - Minecraft Server Manager",
+  title: "Minepanel",
   description:
     "Free open source Minecraft server management panel with Docker. Self-hosted alternative to Pterodactyl and Aternos. Web UI for Paper, Forge, Fabric, Spigot servers.",
 
