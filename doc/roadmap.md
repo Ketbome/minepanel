@@ -2,12 +2,14 @@
 
 What's planned for MinePanel.
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   v1.x      │────▶│   v2.x      │────▶│   v3.x      │
-│  Stable     │     │  Multi-node │     │  Complete   │
-│  (current)  │     │  (Swarm)    │     │  (Pro)      │
-└─────────────┘     └─────────────┘     └─────────────┘
+```mermaid
+flowchart LR
+    A["🟢 v1.x<br/>Stable<br/>(current)"] --> B["🔵 v2.x<br/>Multi-node<br/>(Swarm)"]
+    B --> C["🟣 v3.x<br/>Complete<br/>(Pro)"]
+
+    style A fill:#065f46,stroke:#10b981,color:#fff
+    style B fill:#1e40af,stroke:#3b82f6,color:#fff
+    style C fill:#581c87,stroke:#a855f7,color:#fff
 ```
 
 ---
@@ -110,18 +112,20 @@ What's planned for MinePanel.
 
 ### Dual operation mode
 
-```
-MinePanel auto-detects:
+MinePanel auto-detects the environment:
 
-┌─────────────────────┐     ┌─────────────────────┐
-│   Standalone Mode   │     │    Swarm Mode       │
-│   (Docker Compose)  │     │   (Multi-node)      │
-│                     │     │                     │
-│   • Single server   │     │   • Multiple VPS    │
-│   • Current setup   │     │   • Worker nodes    │
-│   • No changes      │     │   • Auto balancing  │
-└─────────────────────┘     └─────────────────────┘
+```mermaid
+flowchart LR
+    A["📦 Standalone<br/>Docker Compose<br/>Single VPS"] -.->|"auto-detect"| B["🌐 Swarm<br/>Multi-node<br/>Multiple VPS"]
+
+    style A fill:#065f46,stroke:#22c55e,color:#fff
+    style B fill:#1e40af,stroke:#3b82f6,color:#fff
 ```
+
+| Mode           | Description                   | Use case                         |
+| -------------- | ----------------------------- | -------------------------------- |
+| **Standalone** | Docker Compose, single server | Current setup, no changes needed |
+| **Swarm**      | Multi-node cluster            | Multiple VPS, auto balancing     |
 
 ### Node management
 
@@ -250,23 +254,32 @@ Better console with autocomplete
 
 ## Timeline
 
+```mermaid
+gantt
+    title MinePanel Roadmap 2026
+    dateFormat YYYY-MM-DD
+
+    section Stable
+    v1.7-1.9 Dashboard & UX    :a1, 2026-01-01, 90d
+
+    section Scale
+    v2.0-2.2 Multi-node Swarm  :a2, 2026-04-01, 90d
+
+    section Pro
+    v2.3-2.5 Pro Features      :a3, 2026-07-01, 90d
+
+    section Ecosystem
+    v3.0+ Marketplace & API    :a4, 2026-10-01, 90d
 ```
-2025 Q1          2025 Q2          2025 Q3          2025 Q4
-   │                │                │                │
-   │    v1.7-1.9    │    v2.0-2.2    │    v2.3-2.5    │
-   │                │                │                │
-   ├────────────────┼────────────────┼────────────────┤
-   │                │                │                │
-   │  • Dashboard   │  • Swarm Mode  │  • Cloud backup│
-   │  • Wizard      │  • Multi-node  │  • Metrics     │
-   │  • Scheduler   │  • Node UI     │  • Alerts      │
-   │  • Players     │  • Docs        │  • Multi-user  │
-   │  • Plugins     │                │  • Velocity    │
-   │  • Refactor    │                │                │
-   │                │                │                │
-   └────────────────┴────────────────┴────────────────┘
-        STABLE          SCALE            PRO
-```
+
+**2026 Milestones:**
+
+| Quarter | Version  | Focus         | Key Features                                        |
+| ------- | -------- | ------------- | --------------------------------------------------- |
+| Q1      | v1.7-1.9 | **Stable**    | Dashboard, Wizard, Scheduler, Players, Plugins      |
+| Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                     |
+| Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity |
+| Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins              |
 
 ---
 

@@ -2,7 +2,7 @@
 
 This guide covers different installation methods for Minepanel, from simple to advanced setups.
 
-![Installation](/public/img/installation.png)
+![Installation](/img/installation.png)
 
 ## Installation Methods
 

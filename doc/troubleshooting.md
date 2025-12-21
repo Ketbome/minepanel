@@ -2,7 +2,7 @@
 
 Common issues and how to solve them.
 
-![Troubleshooting](/public/img/troubleshooting.png)
+![Troubleshooting](/img/troubleshooting.png)
 
 ## Quick Checks
 

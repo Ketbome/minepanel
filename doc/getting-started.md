@@ -2,7 +2,7 @@
 
 Get Minepanel running in about 2 minutes.
 
-![Minepanel Dashboard](/public/img/Animation.gif)
+![Minepanel Dashboard](/img/Animation.gif)
 
 ## What you need
 
@@ -16,6 +16,16 @@ Get Minepanel running in about 2 minutes.
 :::
 
 ## Installation
+
+```mermaid
+flowchart LR
+    A["1️⃣ Create<br/>docker-compose.yml"] --> B["2️⃣ Run<br/>docker compose up"]
+    B --> C["3️⃣ Access<br/>localhost:3000"]
+
+    style A fill:#1f2937,stroke:#6b7280,color:#fff
+    style B fill:#1e40af,stroke:#3b82f6,color:#fff
+    style C fill:#065f46,stroke:#22c55e,color:#fff
+```
 
 ::: tip Cross-Platform
 This configuration works on all operating systems (Linux, macOS, Windows). The `:-` syntax provides sensible defaults that work everywhere.
@@ -102,6 +112,20 @@ Change the password after first login. See [Configuration](/configuration#change
 :::
 
 ## Create your first server
+
+```mermaid
+flowchart LR
+    A["1️⃣ Click<br/>New Server"] --> B["2️⃣ Fill form<br/>Name, Type, Version"]
+    B --> C["3️⃣ Click<br/>Create"]
+    C --> D["4️⃣ Wait<br/>Download & Start"]
+    D --> E["✅ Play!"]
+    
+    style A fill:#1f2937,stroke:#6b7280,color:#fff
+    style B fill:#1f2937,stroke:#3b82f6,color:#fff
+    style C fill:#1f2937,stroke:#22c55e,color:#fff
+    style D fill:#1f2937,stroke:#f59e0b,color:#fff
+    style E fill:#065f46,stroke:#22c55e,color:#fff
+```
 
 1. Click "New Server"
 2. Fill in:

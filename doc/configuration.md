@@ -2,7 +2,7 @@
 
 How to configure Minepanel.
 
-![Configuration](/public/img/configuration.png)
+![Configuration](/img/configuration.png)
 
 ## Environment Variables
 

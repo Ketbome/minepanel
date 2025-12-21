@@ -2,7 +2,39 @@
 
 Automatically download and manage mods and plugins for your Minecraft servers.
 
-![Mods Tab](/public/img/mods-tab.png)
+![Mods Tab](/img/mods-tab.png)
+
+## Overview
+
+Minepanel integrates with popular mod platforms to auto-download mods, plugins, and datapacks at server startup.
+
+```mermaid
+flowchart LR
+    MP["🎮 Minepanel"] --> MR["🟢 Modrinth"]
+    MP --> CF["🟠 CurseForge"]
+    MP --> SP["🔵 Spiget"]
+
+    MR --> Mods["Mods & Datapacks"]
+    CF --> Modpacks["Modpacks & Mods"]
+    SP --> Plugins["Spigot Plugins"]
+
+    style MP fill:#1f2937,stroke:#22c55e,color:#fff
+    style MR fill:#065f46,stroke:#22c55e,color:#fff
+    style CF fill:#7c2d12,stroke:#f97316,color:#fff
+    style SP fill:#1e40af,stroke:#3b82f6,color:#fff
+```
+
+| Platform       | Best For                 | API Key Required |
+| -------------- | ------------------------ | ---------------- |
+| **Modrinth**   | Mods, datapacks, plugins | ❌ No            |
+| **CurseForge** | Modpacks, mods           | ✅ Yes           |
+| **Spiget**     | Spigot/Paper plugins     | ❌ No            |
+
+::: tip Learn More
+For advanced options and all environment variables, see the [docker-minecraft-server mods documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/).
+:::
+
+---
 
 ## Modrinth
 

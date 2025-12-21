@@ -2,7 +2,38 @@
 
 Configure remote access, LAN connectivity, SSL/HTTPS, and port management.
 
-![Server Connection](/public/img/server-connection.png)
+![Server Connection](/img/server-connection.png)
+
+## Network Overview
+
+```mermaid
+flowchart TB
+    subgraph internet["🌍 Internet"]
+        Player1["👤 Remote Player"]
+        Admin["👨‍💻 Admin"]
+    end
+    
+    subgraph lan["🏠 Local Network"]
+        Player2["👤 LAN Player"]
+        
+        subgraph server["🖥️ Your Server"]
+            FE["Frontend :3000"]
+            BE["Backend :8091"]
+            MC["🎮 Minecraft :25565"]
+        end
+    end
+    
+    Admin -->|"http://your-ip:3000"| FE
+    FE <-->|"API calls"| BE
+    BE -->|"Docker"| MC
+    
+    Player1 -->|"your-ip:25565"| MC
+    Player2 -->|"192.168.x.x:25565"| MC
+    
+    style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style lan fill:#1f2937,stroke:#22c55e,color:#fff
+    style server fill:#0f172a,stroke:#6b7280,color:#fff
+```
 
 ## Remote Access Configuration
 
@@ -174,6 +205,21 @@ sudo firewall-cmd --reload
 ## SSL/HTTPS
 
 For production deployments, use HTTPS with a reverse proxy.
+
+```mermaid
+flowchart LR
+    User["👤 User"] -->|"HTTPS :443"| Proxy["🔒 Reverse Proxy<br/>Nginx/Caddy"]
+    Proxy -->|":3000"| FE["Frontend"]
+    Proxy -->|":8091"| BE["Backend"]
+    
+    subgraph docker["Docker"]
+        FE
+        BE
+    end
+    
+    style Proxy fill:#065f46,stroke:#22c55e,color:#fff
+    style docker fill:#1f2937,stroke:#6b7280,color:#fff
+```
 
 ### Using Nginx
 

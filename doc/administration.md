@@ -2,7 +2,7 @@
 
 Manage passwords, database, backups, updates, and system maintenance.
 
-![Administration](/public/img/administration.png)
+![Administration](/img/administration.png)
 
 ## Password Management
 

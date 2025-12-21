@@ -2,7 +2,29 @@
 
 Learn about different Minecraft server types and how to configure them.
 
-![Server Types](/public/img/server-types.png)
+![Server Types](/img/server-types.png)
+
+## How It Works
+
+Minepanel uses [itzg/docker-minecraft-server](https://docker-minecraft-server.readthedocs.io/) under the hood. When you create a server in Minepanel, it generates the appropriate Docker configuration automatically.
+
+```mermaid
+flowchart LR
+    A["🎮 Minepanel UI"] -->|"generates"| B["📄 docker-compose.yml"]
+    B -->|"runs"| C["🐳 itzg/minecraft-server"]
+    C -->|"creates"| D["⛏️ Minecraft Server"]
+
+    style A fill:#065f46,stroke:#22c55e,color:#fff
+    style B fill:#1f2937,stroke:#6b7280,color:#fff
+    style C fill:#1e40af,stroke:#3b82f6,color:#fff
+    style D fill:#7c2d12,stroke:#f97316,color:#fff
+```
+
+::: tip Learn More
+For advanced configuration options, environment variables, and troubleshooting, see the [official docker-minecraft-server documentation](https://docker-minecraft-server.readthedocs.io/).
+:::
+
+---
 
 ## Vanilla
 
@@ -212,8 +234,37 @@ environment:
 | Force Include | `CF_FORCE_INCLUDE_MODS` | Force download specific mods | - |
 | Exclude Mods | `CF_EXCLUDE_MODS` | Exclude specific mods | - |
 
+## Server Type Categories
+
+```mermaid
+flowchart LR
+    V["🟢 Vanilla"] ~~~ M["🔵 Mods<br/>Forge, Fabric"]
+    M ~~~ P["🟣 Plugins<br/>Paper, Spigot"]
+    P ~~~ MP["🟠 Modpacks<br/>CurseForge"]
+
+    style V fill:#065f46,stroke:#22c55e,color:#fff
+    style M fill:#1e40af,stroke:#3b82f6,color:#fff
+    style P fill:#581c87,stroke:#a855f7,color:#fff
+    style MP fill:#7c2d12,stroke:#f97316,color:#fff
+```
+
+| Category | Types | Use Case |
+|----------|-------|----------|
+| **🟢 Vanilla** | VANILLA | Pure Minecraft, no modifications |
+| **🔵 Mod Loaders** | Forge, Fabric | Client-side mods required |
+| **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients |
+| **🟠 Modpacks** | AUTO_CURSEFORGE | Pre-configured mod collections |
+
+---
+
 ## Next Steps
 
 - Learn about [Mods & Plugins Management](/mods-plugins)
 - See all [Configuration Options](/configuration)
+
+## External Resources
+
+- [docker-minecraft-server Docs](https://docker-minecraft-server.readthedocs.io/) - Full environment variables reference
+- [Server Types Reference](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/) - All supported server types
+- [Mod Platforms](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/) - Modrinth, CurseForge, Spiget integration
 

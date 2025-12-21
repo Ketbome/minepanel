@@ -2,7 +2,24 @@
 
 What Minepanel can do.
 
-![Server Management](/public/img/modes.png)
+![Server Management](/img/modes.png)
+
+```mermaid
+flowchart LR
+    MP["🎮 Minepanel"]
+    MP --> SM["⚙️ Server<br/>Management"]
+    MP --> MM["📦 Mod<br/>Management"]
+    MP --> FM["📁 File<br/>Manager"]
+    MP --> BK["💾 Backups"]
+
+    style MP fill:#1f2937,stroke:#22c55e,color:#fff
+    style SM fill:#065f46,stroke:#22c55e,color:#fff
+    style MM fill:#1e40af,stroke:#3b82f6,color:#fff
+    style FM fill:#581c87,stroke:#a855f7,color:#fff
+    style BK fill:#7c2d12,stroke:#f97316,color:#fff
+```
+
+---
 
 ## Server Management
 

@@ -6,7 +6,27 @@ Understanding how Minepanel works under the hood.
 
 Minepanel is a web-based Minecraft server management panel built with modern technologies. It uses a **microservices architecture** where each component is containerized and communicates through well-defined interfaces.
 
-![Minepanel](/img/server.png)
+```mermaid
+flowchart TB
+    User["👤 User"] --> Browser["🌐 Browser"]
+    Browser --> Frontend["⚛️ Frontend<br/>Next.js :3000"]
+    Frontend <-->|REST API| Backend["🔧 Backend<br/>NestJS :8091"]
+    Backend <-->|Docker Socket| Docker["🐳 Docker Engine"]
+
+    subgraph containers["Minecraft Servers"]
+        MC1["🎮 Server 1<br/>:25565"]
+        MC2["🎮 Server 2<br/>:25566"]
+        MC3["🎮 Server 3<br/>:25567"]
+    end
+
+    Docker --> containers
+    Backend <-->|SQLite| DB["💾 Database"]
+
+    style Frontend fill:#0f172a,stroke:#3b82f6,color:#fff
+    style Backend fill:#0f172a,stroke:#22c55e,color:#fff
+    style Docker fill:#0f172a,stroke:#0ea5e9,color:#fff
+    style containers fill:#1f2937,stroke:#6b7280,color:#fff
+```
 
 ## Components
 
@@ -138,9 +158,7 @@ GET    /servers/:id/stats   # Get resource stats
 GET    /servers/:id/players # Get online players
 ```
 
-
 **Technology:**
-
 
 **Responsibilities:**
 
@@ -189,41 +207,46 @@ This allows Minepanel to:
 When Minepanel (running in a container) creates Minecraft server containers via the Docker socket, volume paths are **interpreted from the host's perspective**, not from Minepanel's container.
 
 **Example:**
+
 ```
 Minepanel container internal path: /app/servers/my-server
 Host machine actual path:          /Users/username/minepanel/servers/my-server
 ```
 
 **Without BASE_DIR (doesn't work):**
+
 ```yaml
 # Minepanel generates this docker-compose.yml for a Minecraft server:
 services:
   mc:
     volumes:
-      - ./mc-data:/data  # ❌ Docker looks for ./mc-data on the HOST
+      - ./mc-data:/data # ❌ Docker looks for ./mc-data on the HOST
 ```
 
 When Docker tries to mount `./mc-data`, it looks for it **relative to where `docker compose up` runs**, not inside Minepanel's container. This fails with:
+
 ```
 Error: path ./mc-data is not shared from the host
 ```
 
 **With BASE_DIR (works correctly):**
+
 ```yaml
 # Minepanel knows the host path via BASE_DIR environment variable
 environment:
-  - BASE_DIR=/Users/username/minepanel  # Host path
+  - BASE_DIR=/Users/username/minepanel # Host path
 
 # Generates docker-compose.yml with absolute paths:
 services:
   mc:
     volumes:
-      - /Users/username/minepanel/servers/my-server/mc-data:/data  # ✅ Absolute host path
+      - /Users/username/minepanel/servers/my-server/mc-data:/data # ✅ Absolute host path
 ```
 
 Now Docker correctly finds the directory on the host machine.
 
 **Implementation:**
+
 ```typescript
 // backend/src/docker-compose/docker-compose.service.ts
 private parseVolumes(config: ServerConfig): string[] {
@@ -249,17 +272,19 @@ private parseVolumes(config: ServerConfig): string[] {
 ```
 
 **Configuration:**
+
 ```yaml
 services:
   minepanel:
     environment:
-      - BASE_DIR=${BASE_DIR:-$PWD}  # Defaults to current directory
+      - BASE_DIR=${BASE_DIR:-$PWD} # Defaults to current directory
     volumes:
-      - ${BASE_DIR:-$PWD}/servers:/app/servers  # Mount with same BASE_DIR
+      - ${BASE_DIR:-$PWD}/servers:/app/servers # Mount with same BASE_DIR
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 **Key Points:**
+
 - ✅ `BASE_DIR` is set to the host's working directory (typically where docker-compose.yml is located)
 - ✅ Minepanel mounts `${BASE_DIR}/servers` to `/app/servers` internally
 - ✅ When creating server containers, Minepanel uses `${BASE_DIR}/servers/server-name` for volumes
@@ -274,43 +299,49 @@ This pattern is the same used by **Portainer**, **Yacht**, and other Docker mana
 
 ### Creating a Server
 
-```
-User                Frontend              Backend              Docker
-  │                    │                     │                   │
-  │  Fill form         │                     │                   │
-  ├──────────────────→ │                     │                   │
-  │                    │  POST /servers      │                   │
-  │                    ├────────────────────→│                   │
-  │                    │                     │  Validate input   │
-  │                    │                     │  Create config    │
-  │                    │                     │  Build compose    │
-  │                    │                     │  docker compose   │
-  │                    │                     ├──────────────────→│
-  │                    │                     │                   │ Pull image
-  │                    │                     │                   │ Create container
-  │                    │                     │                   │ Start container
-  │                    │                     │◄──────────────────┤
-  │                    │◄────────────────────┤                   │
-  │◄─────────────────────                    │                   │
-  │  Server created!   │                     │                   │
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant Docker
+
+    User->>Frontend: Fill form
+    Frontend->>Backend: POST /servers
+
+    Note over Backend: Validate input
+    Note over Backend: Create config
+    Note over Backend: Build compose
+
+    Backend->>Docker: docker compose up
+
+    Note over Docker: Pull image
+    Note over Docker: Create container
+    Note over Docker: Start container
+
+    Docker-->>Backend: Container ready
+    Backend-->>Frontend: 201 Created
+    Frontend-->>User: ✅ Server created!
 ```
 
 ### Viewing Logs
 
-```
-User                Frontend              Backend              Docker
-  │                    │                     │                   │
-  │  View logs         │                     │                   │
-  ├──────────────────→ │                     │                   │
-  │                    │  GET /logs          │                   │
-  │                    ├────────────────────→│                   │
-  │                    │                     │  docker logs -f   │
-  │                    │                     ├──────────────────→│
-  │                    │                     │◄──────────────────┤
-  │                    │  WebSocket stream   │  Stream logs      │
-  │                    │◄────────────────────┤                   │
-  │◄──────────────────────                   │                   │
-  │  Real-time logs    │                     │                   │
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant Docker
+
+    User->>Frontend: View logs
+    Frontend->>Backend: GET /logs/:id
+    Backend->>Docker: docker logs -f
+
+    loop Real-time streaming
+        Docker-->>Backend: Log lines
+        Backend-->>Frontend: WebSocket stream
+        Frontend-->>User: Display logs
+    end
 ```
 
 ---
@@ -318,6 +349,10 @@ User                Frontend              Backend              Docker
 ## Server Container Structure
 
 Each Minecraft server runs in its own Docker container using [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server).
+
+::: info External Docs
+For all available environment variables and advanced container configuration, see the [docker-minecraft-server documentation](https://docker-minecraft-server.readthedocs.io/).
+:::
 
 ### Container Configuration
 
@@ -352,18 +387,22 @@ services:
 
 ### Volume Mapping
 
+```mermaid
+flowchart LR
+    H["🖥️ Host<br/>servers/my-server/"] -->|"bind mount"| C["📦 Container<br/>/data"]
+
+    style H fill:#065f46,stroke:#22c55e,color:#fff
+    style C fill:#1e40af,stroke:#3b82f6,color:#fff
 ```
-Host                          Container
-├── servers/
-│   ├── my-server/           → /data
-│   │   ├── world/              World files
-│   │   ├── plugins/            Plugins (Paper/Spigot)
-│   │   ├── mods/               Mods (Forge/Fabric)
-│   │   ├── server.properties   Config
-│   │   ├── ops.json            Operators
-│   │   └── logs/               Server logs
-│   └── another-server/
-```
+
+| Host Path               | Container        | Description           |
+| ----------------------- | ---------------- | --------------------- |
+| `servers/{id}/`         | `/data`          | Server root directory |
+| `servers/{id}/world/`   | `/data/world/`   | World save files      |
+| `servers/{id}/plugins/` | `/data/plugins/` | Paper/Spigot plugins  |
+| `servers/{id}/mods/`    | `/data/mods/`    | Forge/Fabric mods     |
+| `servers/{id}/logs/`    | `/data/logs/`    | Server logs           |
+| `server.properties`     | Config           | Server configuration  |
 
 ### Labels
 
@@ -384,16 +423,24 @@ labels:
 
 ### Authentication Flow
 
-```
-User → Frontend → Backend
-                    ↓
-              [Validate credentials]
-                    ↓
-            [Generate JWT token]
-                    ↓
-              [Return token]
-                    ↓
-        [Store in httpOnly cookie]
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant Cookie
+
+    User->>Frontend: Enter credentials
+    Frontend->>Backend: POST /auth/login
+
+    Note over Backend: Validate with bcrypt
+    Note over Backend: Generate JWT token
+
+    Backend->>Cookie: Set httpOnly cookie
+    Backend-->>Frontend: 200 OK + user data
+    Frontend-->>User: ✅ Logged in!
+
+    Note over User,Cookie: Subsequent requests include cookie automatically
 ```
 
 **Security Measures:**
@@ -437,18 +484,17 @@ services:
 
 ### Network Isolation
 
-```
-┌─────────────────────────────────────┐
-│        Docker Network: bridge        │
-│                                      │
-│  ┌──────────┐    ┌──────────┐      │
-│  └──────────┘    └──────────┘      │
-│                                      │
-│  ┌──────────┐    ┌──────────┐      │
-│  │Server 1  │    │Server 2  │      │
-│  │(isolated)│    │(isolated)│      │
-│  └──────────┘    └──────────┘      │
-└─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    Internet["🌍 Internet"] --> Bridge["🌐 Docker Bridge"]
+    Bridge --> S1["🎮 Server 1<br/>:25565"]
+    Bridge --> S2["🎮 Server 2<br/>:25566"]
+    Bridge --> S3["🎮 Server 3<br/>:25567"]
+
+    style Bridge fill:#1f2937,stroke:#6b7280,color:#fff
+    style S1 fill:#065f46,stroke:#22c55e,color:#fff
+    style S2 fill:#1e40af,stroke:#3b82f6,color:#fff
+    style S3 fill:#7c2d12,stroke:#f97316,color:#fff
 ```
 
 Each server runs in isolation:
@@ -464,27 +510,32 @@ Each server runs in isolation:
 
 ### Directory Structure
 
+```mermaid
+flowchart LR
+    Root["📁 minepanel/"] --> Servers["📁 servers/"]
+    Root --> Data["📁 data/"]
+    Servers --> S1["📁 server-1/"]
+    Servers --> S2["📁 server-2/"]
+    Servers --> Backups["💾 backups/"]
+
+    style Root fill:#1f2937,stroke:#6b7280,color:#fff
+    style Servers fill:#065f46,stroke:#22c55e,color:#fff
+    style Backups fill:#7c2d12,stroke:#f97316,color:#fff
+```
+
 ```
 minepanel/
-├── docker-compose.yml          # Main compose file
-├── .env                        # Environment variables
-├── servers/                    # All server data
+├── docker-compose.yml      # Main compose file
+├── .env                    # Environment variables
+├── data/                   # SQLite database
+├── servers/
 │   ├── server-1/
-│   │   ├── world/              # World save
-│   │   ├── world_nether/
-│   │   ├── world_the_end/
-│   │   ├── plugins/            # Plugins (if applicable)
-│   │   ├── mods/               # Mods (if applicable)
-│   │   ├── config/             # Plugin/mod configs
-│   │   ├── logs/               # Server logs
-│   │   ├── server.properties
-│   │   ├── server.jar
-│   │   └── ...
+│   │   ├── world/          # World save
+│   │   ├── plugins/        # Paper/Spigot plugins
+│   │   ├── mods/           # Forge/Fabric mods
+│   │   └── logs/           # Server logs
 │   ├── server-2/
-│   └── backups/                # Backup storage
-│       ├── server-1/
-│       └── server-2/
-└── Docker volumes:
+│   └── backups/            # Automatic backups
 ```
 
 ### Volume Strategy
