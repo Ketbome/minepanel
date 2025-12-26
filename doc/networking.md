@@ -304,6 +304,70 @@ environment:
   - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
 ```
 
+## Subdirectory Routing
+
+If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), use the `BASE_PATH` environment variables.
+
+### Configuration
+
+```yaml
+environment:
+  # Backend API prefix
+  - BASE_PATH=/api
+
+  # Frontend base path
+  - NEXT_PUBLIC_BASE_PATH=/minepanel
+
+  # URLs must include the base paths
+  - FRONTEND_URL=https://mydomain.com/minepanel
+  - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
+```
+
+### Nginx Example (Subdirectory)
+
+```nginx
+# /etc/nginx/sites-available/mysite
+server {
+    listen 80;
+    server_name mydomain.com;
+
+    # Frontend on /minepanel
+    location /minepanel {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API on /api
+    location /api {
+        proxy_pass http://localhost:8091;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+### Caddy Example (Subdirectory)
+
+```caddyfile
+mydomain.com {
+    handle_path /minepanel/* {
+        reverse_proxy localhost:3000
+    }
+    
+    handle_path /api/* {
+        reverse_proxy localhost:8091
+    }
+}
+```
+
+::: tip
+When using subdirectory routing, make sure your `NEXT_PUBLIC_BACKEND_URL` includes the full path including the `BASE_PATH` prefix.
+:::
+
 ## Custom Network
 
 If you need a custom Docker network:
