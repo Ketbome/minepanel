@@ -14,6 +14,11 @@ async function bootstrap() {
     },
   });
 
+  const basePath = process.env.BASE_PATH || '';
+  if (basePath) {
+    app.setGlobalPrefix(basePath);
+  }
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

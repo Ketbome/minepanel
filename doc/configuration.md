@@ -45,6 +45,17 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 | `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)          |
 | `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play |
 
+#### Subdirectory Routing
+
+For reverse proxy setups with directory-based routing (e.g., `mydomain.com/minepanel`):
+
+| Variable                 | Default | Description                                      |
+| ------------------------ | ------- | ------------------------------------------------ |
+| `BASE_PATH`              | -       | Backend API prefix (e.g., `/api`)                |
+| `NEXT_PUBLIC_BASE_PATH`  | -       | Frontend base path (e.g., `/minepanel`)          |
+
+See [Subdirectory Routing](#subdirectory-routing) for detailed setup instructions.
+
 ### Using Environment Variables
 
 #### Option 1: .env File (Recommended)

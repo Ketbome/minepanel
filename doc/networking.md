@@ -12,24 +12,24 @@ flowchart TB
         Player1["👤 Remote Player"]
         Admin["👨‍💻 Admin"]
     end
-    
+
     subgraph lan["🏠 Local Network"]
         Player2["👤 LAN Player"]
-        
+
         subgraph server["🖥️ Your Server"]
             FE["Frontend :3000"]
             BE["Backend :8091"]
             MC["🎮 Minecraft :25565"]
         end
     end
-    
+
     Admin -->|"http://your-ip:3000"| FE
     FE <-->|"API calls"| BE
     BE -->|"Docker"| MC
-    
+
     Player1 -->|"your-ip:25565"| MC
     Player2 -->|"192.168.x.x:25565"| MC
-    
+
     style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
     style lan fill:#1f2937,stroke:#22c55e,color:#fff
     style server fill:#0f172a,stroke:#6b7280,color:#fff
@@ -72,11 +72,12 @@ docker compose restart
 ```
 
 ::: warning Security
+
 - Always use HTTPS for production deployments
 - See [SSL/HTTPS](#ssl-https) section below for setup
 - Make sure your firewall allows the required ports
 - Don't expose ports publicly without proper authentication
-:::
+  :::
 
 ## LAN Network Configuration
 
@@ -157,11 +158,11 @@ If you don't configure `HOST_LAN_IP`, only the public IP will be shown. This is 
 
 ### Default Ports
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Frontend | 3000 | Web interface |
-| Backend | 8091 | API server |
-| Minecraft Servers | 25565+ | Game servers |
+| Service           | Port   | Description   |
+| ----------------- | ------ | ------------- |
+| Frontend          | 3000   | Web interface |
+| Backend           | 8091   | API server    |
+| Minecraft Servers | 25565+ | Game servers  |
 
 ### Changing Ports
 
@@ -211,12 +212,12 @@ flowchart LR
     User["👤 User"] -->|"HTTPS :443"| Proxy["🔒 Reverse Proxy<br/>Nginx/Caddy"]
     Proxy -->|":3000"| FE["Frontend"]
     Proxy -->|":8091"| BE["Backend"]
-    
+
     subgraph docker["Docker"]
         FE
         BE
     end
-    
+
     style Proxy fill:#065f46,stroke:#22c55e,color:#fff
     style docker fill:#1f2937,stroke:#6b7280,color:#fff
 ```
@@ -280,7 +281,7 @@ Caddy automatically handles SSL certificates:
 # Caddyfile
 minepanel.yourdomain.com {
     reverse_proxy localhost:3000
-    
+
     handle /api/* {
         reverse_proxy localhost:8091
     }
@@ -303,6 +304,70 @@ environment:
   # Frontend - API endpoints
   - NEXT_PUBLIC_BACKEND_URL=https://api.your-domain.com
 ```
+
+## Subdirectory Routing
+
+If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), use the `BASE_PATH` environment variables.
+
+### Configuration
+
+```yaml
+environment:
+  # Backend API prefix
+  - BASE_PATH=/api
+
+  # Frontend base path
+  - NEXT_PUBLIC_BASE_PATH=/minepanel
+
+  # URLs must include the base paths
+  - FRONTEND_URL=https://mydomain.com/minepanel
+  - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
+```
+
+### Nginx Example (Subdirectory)
+
+```nginx
+# /etc/nginx/sites-available/mysite
+server {
+    listen 80;
+    server_name mydomain.com;
+
+    # Frontend on /minepanel
+    location /minepanel {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API on /api
+    location /api {
+        proxy_pass http://localhost:8091;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+### Caddy Example (Subdirectory)
+
+```caddyfile
+mydomain.com {
+    handle_path /minepanel/* {
+        reverse_proxy localhost:3000
+    }
+
+    handle_path /api/* {
+        reverse_proxy localhost:8091
+    }
+}
+```
+
+::: tip
+When using subdirectory routing, make sure your `NEXT_PUBLIC_BACKEND_URL` includes the full path including the `BASE_PATH` prefix.
+:::
 
 ## Custom Network
 
@@ -352,4 +417,3 @@ Always restart after changing: `docker compose restart`
 - Configure [Administration Settings](/administration)
 - Set up [Server Types](/server-types)
 - Review [Troubleshooting Guide](/troubleshooting)
-
