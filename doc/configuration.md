@@ -49,12 +49,14 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 For reverse proxy setups with directory-based routing (e.g., `mydomain.com/minepanel`):
 
-| Variable                 | Default | Description                                      |
-| ------------------------ | ------- | ------------------------------------------------ |
-| `BASE_PATH`              | -       | Backend API prefix (e.g., `/api`)                |
-| `NEXT_PUBLIC_BASE_PATH`  | -       | Frontend base path (e.g., `/minepanel`)          |
+| Variable                 | Default | Type       | Description                             |
+| ------------------------ | ------- | ---------- | --------------------------------------- |
+| `BASE_PATH`              | -       | Runtime    | Backend API prefix (e.g., `/api`)       |
+| `NEXT_PUBLIC_BASE_PATH`  | -       | Build-time | Frontend base path (e.g., `/minepanel`) |
 
-See [Subdirectory Routing](#subdirectory-routing) for detailed setup instructions.
+::: warning
+`NEXT_PUBLIC_BASE_PATH` must be set during Docker build, not at runtime. See [Subdirectory Routing](/networking#subdirectory-routing) for setup instructions.
+:::
 
 ### Using Environment Variables
 
