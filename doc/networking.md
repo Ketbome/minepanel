@@ -307,42 +307,46 @@ environment:
 
 ## Subdirectory Routing
 
-If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), you need to configure both frontend and backend.
+If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), you need to build the images yourself.
 
 ::: warning Build-time Configuration
 The frontend `NEXT_PUBLIC_BASE_PATH` must be set at **build time**, not runtime. This is a Next.js limitation - the basePath affects how assets are generated during compilation.
 :::
 
-### Frontend: Build with basePath
+### Using docker-compose.example.yml (Recommended)
 
-You must rebuild the frontend image with the basePath:
+The easiest way is to use `docker-compose.example.yml` which builds both frontend and backend:
 
-```bash
-# Build with subdirectory path
-docker build --build-arg NEXT_PUBLIC_BASE_PATH=/minepanel -t minepanel-frontend ./frontend
-```
-
-Or in docker-compose:
+1. Clone the repository
+2. Edit `docker-compose.example.yml`:
 
 ```yaml
 frontend:
   build:
     context: ./frontend
     args:
-      - NEXT_PUBLIC_BASE_PATH=/minepanel
+      - NEXT_PUBLIC_BASE_PATH=/minepanel  # Your subdirectory
   environment:
     - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
-```
 
-### Backend: Runtime Configuration
-
-The backend supports runtime configuration:
-
-```yaml
 backend:
   environment:
     - BASE_PATH=/api
     - FRONTEND_URL=https://mydomain.com/minepanel
+```
+
+3. Build and run:
+
+```bash
+docker compose -f docker-compose.example.yml up --build -d
+```
+
+### Manual Build
+
+Alternatively, build the frontend image manually:
+
+```bash
+docker build --build-arg NEXT_PUBLIC_BASE_PATH=/minepanel -t minepanel-frontend ./frontend
 ```
 
 ### Nginx Example (Subdirectory)
