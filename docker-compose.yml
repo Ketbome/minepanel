@@ -16,6 +16,10 @@ services:
       # Frontend Configuration (loaded at runtime)
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
+
+      # Subdirectory Routing (optional, for reverse proxy setups like mydomain.com/minepanel)
+      # - BASE_PATH=${BASE_PATH}                         # Backend API prefix (e.g., /api)
+      # - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH} # Frontend base path (e.g., /minepanel)
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock

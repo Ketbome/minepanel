@@ -11,6 +11,7 @@ services:
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - BASE_DIR=${BASE_DIR:-$PWD}
       # - HOST_LAN_IP=${HOST_LAN_IP}
+      # - BASE_PATH=${BASE_PATH}  # Subdirectory routing (e.g., /api)
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -24,6 +25,7 @@ services:
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:9090}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
+      # - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}  # Subdirectory routing (e.g., /minepanel)
     depends_on:
       - backend
     restart: always
