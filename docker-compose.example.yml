@@ -24,10 +24,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # Subdirectory routing (build-time): uncomment and set path
+      # args:
+      #   - NEXT_PUBLIC_BASE_PATH=/minepanel
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
-      # - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}  # Subdirectory routing (e.g., /minepanel)
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     restart: always

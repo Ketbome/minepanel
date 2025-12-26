@@ -307,21 +307,42 @@ environment:
 
 ## Subdirectory Routing
 
-If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), use the `BASE_PATH` environment variables.
+If you want to host Minepanel on a subdirectory instead of a subdomain (e.g., `mydomain.com/minepanel` instead of `minepanel.mydomain.com`), you need to configure both frontend and backend.
 
-### Configuration
+::: warning Build-time Configuration
+The frontend `NEXT_PUBLIC_BASE_PATH` must be set at **build time**, not runtime. This is a Next.js limitation - the basePath affects how assets are generated during compilation.
+:::
+
+### Frontend: Build with basePath
+
+You must rebuild the frontend image with the basePath:
+
+```bash
+# Build with subdirectory path
+docker build --build-arg NEXT_PUBLIC_BASE_PATH=/minepanel -t minepanel-frontend ./frontend
+```
+
+Or in docker-compose:
 
 ```yaml
-environment:
-  # Backend API prefix
-  - BASE_PATH=/api
+frontend:
+  build:
+    context: ./frontend
+    args:
+      - NEXT_PUBLIC_BASE_PATH=/minepanel
+  environment:
+    - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
+```
 
-  # Frontend base path
-  - NEXT_PUBLIC_BASE_PATH=/minepanel
+### Backend: Runtime Configuration
 
-  # URLs must include the base paths
-  - FRONTEND_URL=https://mydomain.com/minepanel
-  - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
+The backend supports runtime configuration:
+
+```yaml
+backend:
+  environment:
+    - BASE_PATH=/api
+    - FRONTEND_URL=https://mydomain.com/minepanel
 ```
 
 ### Nginx Example (Subdirectory)
