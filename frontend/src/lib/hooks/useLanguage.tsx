@@ -13,7 +13,14 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const defaultLanguage = (env("NEXT_PUBLIC_DEFAULT_LANGUAGE") as Language) || "en";
+  const envLang = env("NEXT_PUBLIC_DEFAULT_LANGUAGE");
+  const isValidLang = envLang && envLang in translations;
+
+  if (envLang && !isValidLang) {
+    console.warn(`[Minepanel] Language "${envLang}" is not available. Available: ${Object.keys(translations).join(", ")}. Falling back to "en".`);
+  }
+
+  const defaultLanguage = isValidLang ? (envLang as Language) : "en";
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
@@ -29,14 +36,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("language", lang);
   }, []);
 
-  const t = useCallback((key: TranslationKey): string => {
-    return translations[language][key] || key;
-  }, [language]);
-
-  const value = useMemo(
-    () => ({ language, setLanguage, t }),
-    [language, setLanguage, t]
+  const t = useCallback(
+    (key: TranslationKey): string => {
+      return translations[language][key] || key;
+    },
+    [language]
   );
+
+  const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
