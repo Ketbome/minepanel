@@ -298,6 +298,7 @@ export const en = {
   spanish: "Spanish",
   english: "English",
   dutch: "Dutch",
+  german: "German",
   changeLanguage: "Change language",
 
   // ===========================
