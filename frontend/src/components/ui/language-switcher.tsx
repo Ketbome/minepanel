@@ -11,7 +11,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="bg-gradient-to-br from-emerald-700/80 to-gray-900/90 border-emerald-600/70 text-emerald-300 hover:from-emerald-600 hover:to-gray-800 hover:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-md">
+        <Button variant="outline" size="icon" className="bg-linear-to-br from-emerald-700/80 to-gray-900/90 border-emerald-600/70 text-emerald-300 hover:from-emerald-600 hover:to-gray-800 hover:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-md">
           <Globe className="h-[1.2rem] w-[1.2rem] text-emerald-300 group-hover:text-white transition-colors" />
           <span className="sr-only">{t("language")}</span>
         </Button>

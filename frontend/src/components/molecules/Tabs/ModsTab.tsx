@@ -114,34 +114,6 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <p className="text-xs text-gray-400">{t("forgeBuildDesc")}</p>
             </div>
 
-            <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cfFilesForge" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
-                  <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
-                  {t("curseforgeFiles")}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
-                    {t("browseMods")}
-                  </a>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
-                          <HelpCircle className="h-4 w-4 text-emerald-400" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
-                        <p>{t("curseforgeFilesHelp")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-              <Textarea id="cfFilesForge" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
-            </div>
-
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-1">
@@ -175,32 +147,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               </div>
               <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
             </div>
-          </>
-        )}
-
-        {isFabric && (
-          <>
-            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-              <Label htmlFor="fabricLoaderVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                <Image src="/images/crafting-table.webp" alt="Fabric Loader" width={16} height={16} />
-                {t("fabricLoaderVersion")}
-              </Label>
-              <Input id="fabricLoaderVersion" value={config.fabricLoaderVersion || ""} onChange={(e) => updateConfig("fabricLoaderVersion", e.target.value)} placeholder="0.13.1" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">{t("fabricLoaderDesc")}</p>
-            </div>
-
-            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-              <Label htmlFor="fabricLauncherVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                <Image src="/images/compass.webp" alt="Fabric Launcher" width={16} height={16} />
-                {t("fabricLauncherVersion")}
-              </Label>
-              <Input id="fabricLauncherVersion" value={config.fabricLauncherVersion || ""} onChange={(e) => updateConfig("fabricLauncherVersion", e.target.value)} placeholder="0.10.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">{t("fabricLauncherDesc")}</p>
-            </div>
 
             <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
               <div className="flex items-center justify-between">
-                <Label htmlFor="cfFilesFabric" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                <Label htmlFor="cfFilesForge" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
                   {t("curseforgeFiles")}
                 </Label>
@@ -222,8 +172,30 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   </TooltipProvider>
                 </div>
               </div>
-              <Textarea id="cfFilesFabric" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <Textarea id="cfFilesForge" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
+          </>
+        )}
+
+        {isFabric && (
+          <>
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <Label htmlFor="fabricLoaderVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/crafting-table.webp" alt="Fabric Loader" width={16} height={16} />
+                {t("fabricLoaderVersion")}
+              </Label>
+              <Input id="fabricLoaderVersion" value={config.fabricLoaderVersion || ""} onChange={(e) => updateConfig("fabricLoaderVersion", e.target.value)} placeholder="0.13.1" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("fabricLoaderDesc")}</p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <Label htmlFor="fabricLauncherVersion" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/compass.webp" alt="Fabric Launcher" width={16} height={16} />
+                {t("fabricLauncherVersion")}
+              </Label>
+              <Input id="fabricLauncherVersion" value={config.fabricLauncherVersion || ""} onChange={(e) => updateConfig("fabricLauncherVersion", e.target.value)} placeholder="0.10.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("fabricLauncherDesc")}</p>
             </div>
 
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -259,6 +231,34 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               </div>
               <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
             </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cfFilesFabric" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
+                  {t("curseforgeFiles")}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
+                    {t("browseMods")}
+                  </a>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
+                          <HelpCircle className="h-4 w-4 text-emerald-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("curseforgeFilesHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <Textarea id="cfFilesFabric" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
           </>
         )}
 
@@ -266,7 +266,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           <>
             <div className="bg-amber-900/30 border border-amber-700/30 rounded-md p-4 mb-6">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-amber-300 font-minecraft">{t("deprecatedFeature")}</p>
                   <p className="text-xs text-amber-200/80 mt-1">{t("manualCurseForgeDeprecated")}</p>
@@ -369,7 +369,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           <>
             <div className="bg-amber-900/30 border border-amber-700/30 rounded-md p-4 mb-6">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-amber-300 font-minecraft">{t("importantInfo")}</p>
                   <p className="text-xs text-amber-200/80 mt-1">{t("cfApiKeyRequired")}</p>
@@ -423,7 +423,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-md bg-gradient-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
+            <div className="p-4 rounded-md bg-linear-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-minecraft text-sm text-emerald-400">{t("browseModpacks")}</p>
