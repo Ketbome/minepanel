@@ -53,13 +53,7 @@ export const filesService = {
     await api.put(`/files/${serverId}/rename`, { path, newName });
   },
 
-  async uploadFile(
-    serverId: string,
-    path: string,
-    file: File,
-    relativePath?: string,
-    options?: UploadOptions
-  ): Promise<void> {
+  async uploadFile(serverId: string, path: string, file: File, relativePath?: string, options?: UploadOptions): Promise<void> {
     const formData = new FormData();
     formData.append("file", file);
     await api.post(`/files/${serverId}/upload`, formData, {
@@ -78,13 +72,7 @@ export const filesService = {
     });
   },
 
-  async uploadMultipleFiles(
-    serverId: string,
-    path: string,
-    files: File[],
-    relativePaths?: string[],
-    options?: UploadOptions
-  ): Promise<{ uploaded: number; errors: number }> {
+  async uploadMultipleFiles(serverId: string, path: string, files: File[], relativePaths?: string[], options?: UploadOptions): Promise<{ uploaded: number; errors: number }> {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     if (relativePaths) {
@@ -115,4 +103,3 @@ export const filesService = {
     return `${api.defaults.baseURL}/files/${serverId}/download-zip?path=${encodeURIComponent(path)}`;
   },
 };
-

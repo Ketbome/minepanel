@@ -19,17 +19,41 @@ interface FileBrowserProps {
 // Extensiones que se pueden editar como texto
 const TEXT_EXTENSIONS = [
   // Config
-  "txt", "json", "yml", "yaml", "properties", "cfg", "conf", "xml", "toml", "ini",
+  "txt",
+  "json",
+  "yml",
+  "yaml",
+  "properties",
+  "cfg",
+  "conf",
+  "xml",
+  "toml",
+  "ini",
   // Scripts
-  "sh", "bat", "ps1", "cmd",
+  "sh",
+  "bat",
+  "ps1",
+  "cmd",
   // Docs
-  "md", "log", "csv",
+  "md",
+  "log",
+  "csv",
   // Minecraft
-  "mcmeta", "lang", "nbt",
+  "mcmeta",
+  "lang",
+  "nbt",
   // Code
-  "java", "js", "ts", "py", "lua", "sk",
+  "java",
+  "js",
+  "ts",
+  "py",
+  "lua",
+  "sk",
   // Data
-  "html", "css", "scss", "sql",
+  "html",
+  "css",
+  "scss",
+  "sql",
 ];
 
 const isEditableFile = (file: FileItem): boolean => {
@@ -198,31 +222,20 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
       let errorCount = 0;
 
-      const uploadBatch = async (
-        batchFiles: File[],
-        batchPaths: string[] | undefined,
-        batchIds: string[],
-        retryCount = 0
-      ): Promise<boolean> => {
+      const uploadBatch = async (batchFiles: File[], batchPaths: string[] | undefined, batchIds: string[], retryCount = 0): Promise<boolean> => {
         if (abortControllerRef.current?.signal.aborted) return false;
 
         const batchTotalSize = batchFiles.reduce((acc, f) => acc + f.size, 0);
 
         // Marcar lote como uploading
-        setUploads((prev) =>
-          prev.map((u) =>
-            batchIds.includes(u.id) ? { ...u, status: "uploading" as const, loaded: 0 } : u
-          )
-        );
+        setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) ? { ...u, status: "uploading" as const, loaded: 0 } : u)));
 
         try {
           if (batchFiles.length === 1 && !batchPaths) {
             await filesService.uploadFile(serverId, currentPath, batchFiles[0], undefined, {
               signal: abortControllerRef.current!.signal,
               onProgress: (progress) => {
-                setUploads((prev) =>
-                  prev.map((u) => (u.id === batchIds[0] ? { ...u, loaded: progress.loaded } : u))
-                );
+                setUploads((prev) => prev.map((u) => (u.id === batchIds[0] ? { ...u, loaded: progress.loaded } : u)));
               },
             });
           } else {
@@ -241,11 +254,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           }
 
           // Éxito
-          setUploads((prev) =>
-            prev.map((u) =>
-              batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u
-            )
-          );
+          setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u)));
           return true;
         } catch (err) {
           if ((err as Error).name === "CanceledError" || (err as Error).name === "AbortError") {
@@ -260,13 +269,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           }
 
           // Marcar como error
-          setUploads((prev) =>
-            prev.map((u) =>
-              batchIds.includes(u.id) && u.status !== "completed"
-                ? { ...u, status: "error" as const }
-                : u
-            )
-          );
+          setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) && u.status !== "completed" ? { ...u, status: "error" as const } : u)));
           return false;
         }
       };
@@ -293,18 +296,10 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
         loadFiles(currentPath);
       } catch (error) {
         if ((error as Error).name === "CanceledError" || (error as Error).name === "AbortError") {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.status === "uploading" || u.status === "pending"
-                ? { ...u, status: "error" as const, error: "Cancelled" }
-                : u
-            )
-          );
+          setUploads((prev) => prev.map((u) => (u.status === "uploading" || u.status === "pending" ? { ...u, status: "error" as const, error: "Cancelled" } : u)));
         } else {
           console.error("Error uploading files:", error);
-          setUploads((prev) =>
-            prev.map((u) => (u.status !== "completed" ? { ...u, status: "error" as const } : u))
-          );
+          setUploads((prev) => prev.map((u) => (u.status !== "completed" ? { ...u, status: "error" as const } : u)));
           mcToast.error(t("errorUploadingFile"));
         }
       } finally {
@@ -409,11 +404,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           />
         )}
 
-        <UploadProgress
-          uploads={uploads}
-          onCancel={handleCancelUpload}
-          onClose={handleCloseUploadProgress}
-        />
+        <UploadProgress uploads={uploads} onCancel={handleCancelUpload} onClose={handleCloseUploadProgress} />
       </div>
     </DropZone>
   );
