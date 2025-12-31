@@ -206,7 +206,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       setIsUploading(true);
       abortControllerRef.current = new AbortController();
 
-      // Crear items de upload
       const uploadItems: UploadItem[] = filesToUpload.map((file, index) => ({
         id: `${Date.now()}-${index}`,
         name: relativePaths?.[index] || file.name,
@@ -253,7 +252,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             });
           }
 
-          // Éxito
           setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u)));
           return true;
         } catch (err) {
@@ -261,21 +259,18 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             throw err;
           }
 
-          // Reintentar si no hemos agotado los intentos
           if (retryCount < MAX_RETRIES) {
             console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} for batch`);
             await new Promise((r) => setTimeout(r, 1000 * (retryCount + 1))); // Backoff
             return uploadBatch(batchFiles, batchPaths, batchIds, retryCount + 1);
           }
 
-          // Marcar como error
           setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) && u.status !== "completed" ? { ...u, status: "error" as const } : u)));
           return false;
         }
       };
 
       try {
-        // Dividir en lotes y procesar
         for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
           if (abortControllerRef.current?.signal.aborted) break;
 
@@ -336,7 +331,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const handleDownload = useCallback(
     (file: FileItem) => {
       const token = localStorage.getItem("token");
-      // Use direct download with token in query param (supports large files)
       const url = `${filesService.getDownloadUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
       const a = document.createElement("a");
@@ -354,7 +348,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       if (!file.isDirectory) return;
 
       const token = localStorage.getItem("token");
-      // Use direct download with token in query param (supports large files)
       const url = `${filesService.getDownloadZipUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
       mcToast.success(t("zipDownloaded"));

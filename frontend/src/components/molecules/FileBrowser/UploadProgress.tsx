@@ -51,7 +51,6 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
   const isFinished = completedCount + errorCount === uploads.length;
   const hasErrors = errorCount > 0;
 
-  // Calcular velocidad y ETA
   useEffect(() => {
     if (isFinished || uploads.length === 0) {
       setSpeed(0);
@@ -60,11 +59,11 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
     }
 
     const now = Date.now();
-    const timeDiff = (now - lastTimeRef.current) / 1000; // segundos
+    const timeDiff = (now - lastTimeRef.current) / 1000;
     const bytesDiff = totalLoaded - lastLoadedRef.current;
 
-    if (timeDiff >= 0.5) { // Actualizar cada 500ms
-      const currentSpeed = bytesDiff / timeDiff; // bytes/segundo
+    if (timeDiff >= 0.5) {
+      const currentSpeed = bytesDiff / timeDiff;
       setSpeed(currentSpeed);
 
       const remaining = totalSize - totalLoaded;
@@ -77,7 +76,6 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
     }
   }, [totalLoaded, totalSize, isFinished, uploads.length]);
 
-  // Reset refs cuando cambian los uploads
   useEffect(() => {
     lastLoadedRef.current = 0;
     lastTimeRef.current = Date.now();
