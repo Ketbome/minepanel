@@ -29,12 +29,29 @@ export class FilesController {
     }
 
     const fullPath = this.filesService.getFullPath(serverId, filePath);
+
+    // Verificar que el archivo existe
+    if (!await fs.pathExists(fullPath)) {
+      throw new BadRequestException('File not found');
+    }
+
+    const stat = await fs.stat(fullPath);
+    if (stat.isDirectory()) {
+      throw new BadRequestException('Cannot download a directory');
+    }
+
     const fileName = path.basename(filePath);
 
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', stat.size);
 
     const stream = fs.createReadStream(fullPath);
+    stream.on('error', (err) => {
+      if (!res.headersSent) {
+        res.status(500).send('Error reading file');
+      }
+    });
     stream.pipe(res);
   }
 

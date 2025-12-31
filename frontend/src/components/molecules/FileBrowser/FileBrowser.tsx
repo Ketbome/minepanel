@@ -15,10 +15,26 @@ interface FileBrowserProps {
   serverId: string;
 }
 
+// Extensiones que se pueden editar como texto
+const TEXT_EXTENSIONS = [
+  // Config
+  "txt", "json", "yml", "yaml", "properties", "cfg", "conf", "xml", "toml", "ini",
+  // Scripts
+  "sh", "bat", "ps1", "cmd",
+  // Docs
+  "md", "log", "csv",
+  // Minecraft
+  "mcmeta", "lang", "nbt",
+  // Code
+  "java", "js", "ts", "py", "lua", "sk",
+  // Data
+  "html", "css", "scss", "sql",
+];
+
 const isEditableFile = (file: FileItem): boolean => {
   if (file.isDirectory) return false;
-  const textExtensions = ["txt", "json", "yml", "yaml", "properties", "cfg", "conf", "xml", "md", "log", "sh", "bat", "toml", "ini", "mcmeta", "lang"];
-  return file.extension ? textExtensions.includes(file.extension.toLowerCase()) : false;
+  if (!file.extension) return false;
+  return TEXT_EXTENSIONS.includes(file.extension.toLowerCase());
 };
 
 export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
@@ -210,28 +226,38 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   const handleDownload = useCallback(
-    (file: FileItem) => {
+    async (file: FileItem) => {
       const url = filesService.getDownloadUrl(serverId, file.path);
       const token = localStorage.getItem("token");
 
-      fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.blob())
-        .then((blob) => {
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = file.name;
-          a.click();
-          URL.revokeObjectURL(a.href);
-        })
-        .catch(() => mcToast.error(t("errorDownloadingFile")));
+      try {
+        const res = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        console.error("Download error:", err);
+        mcToast.error(t("errorDownloadingFile"));
+      }
     },
     [serverId, t]
   );
 
   const handleDownloadZip = useCallback(
-    (file: FileItem) => {
+    async (file: FileItem) => {
       if (!file.isDirectory) return;
 
       const url = filesService.getDownloadZipUrl(serverId, file.path);
@@ -239,23 +265,31 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
       mcToast.loading(t("creatingZip"));
 
-      fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.blob())
-        .then((blob) => {
-          mcToast.dismiss();
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = `${file.name}.zip`;
-          a.click();
-          URL.revokeObjectURL(a.href);
-          mcToast.success(t("zipDownloaded"));
-        })
-        .catch(() => {
-          mcToast.dismiss();
-          mcToast.error(t("errorDownloadingZip"));
+      try {
+        const res = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
         });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        mcToast.dismiss();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${file.name}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        mcToast.success(t("zipDownloaded"));
+      } catch (err) {
+        console.error("Download zip error:", err);
+        mcToast.dismiss();
+        mcToast.error(t("errorDownloadingZip"));
+      }
     },
     [serverId, t]
   );
