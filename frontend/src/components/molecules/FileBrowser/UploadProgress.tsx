@@ -1,7 +1,7 @@
 "use client";
 
-import { FC } from "react";
-import { X, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { FC, useEffect, useRef, useState } from "react";
+import { X, Upload, CheckCircle, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -29,10 +29,18 @@ const formatBytes = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
 
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
+
 export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onClose }) => {
   const { t } = useLanguage();
-
-  if (uploads.length === 0) return null;
+  const [speed, setSpeed] = useState(0);
+  const [eta, setEta] = useState<number | null>(null);
+  const lastLoadedRef = useRef(0);
+  const lastTimeRef = useRef(Date.now());
 
   const totalSize = uploads.reduce((acc, u) => acc + u.size, 0);
   const totalLoaded = uploads.reduce((acc, u) => acc + u.loaded, 0);
@@ -42,6 +50,40 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
   const errorCount = uploads.filter((u) => u.status === "error").length;
   const isFinished = completedCount + errorCount === uploads.length;
   const hasErrors = errorCount > 0;
+
+  // Calcular velocidad y ETA
+  useEffect(() => {
+    if (isFinished || uploads.length === 0) {
+      setSpeed(0);
+      setEta(null);
+      return;
+    }
+
+    const now = Date.now();
+    const timeDiff = (now - lastTimeRef.current) / 1000; // segundos
+    const bytesDiff = totalLoaded - lastLoadedRef.current;
+
+    if (timeDiff >= 0.5) { // Actualizar cada 500ms
+      const currentSpeed = bytesDiff / timeDiff; // bytes/segundo
+      setSpeed(currentSpeed);
+
+      const remaining = totalSize - totalLoaded;
+      if (currentSpeed > 0) {
+        setEta(remaining / currentSpeed);
+      }
+
+      lastLoadedRef.current = totalLoaded;
+      lastTimeRef.current = now;
+    }
+  }, [totalLoaded, totalSize, isFinished, uploads.length]);
+
+  // Reset refs cuando cambian los uploads
+  useEffect(() => {
+    lastLoadedRef.current = 0;
+    lastTimeRef.current = Date.now();
+  }, [uploads.length]);
+
+  if (uploads.length === 0) return null;
 
   return (
     <div className="absolute bottom-4 right-4 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
@@ -94,8 +136,16 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
         <Progress value={overallProgress} className="h-2" />
         <div className="flex items-center justify-between mt-1">
           <span className="text-xs text-gray-500">{overallProgress}%</span>
-          {!isFinished && (
-            <span className="text-xs text-gray-500">{t("uploading")}...</span>
+          {!isFinished && speed > 0 && (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="flex items-center gap-1">
+                <Zap className="h-3 w-3 text-amber-400" />
+                {formatBytes(speed)}/s
+              </span>
+              {eta !== null && eta > 0 && (
+                <span className="text-gray-600">• {formatTime(eta)}</span>
+              )}
+            </div>
           )}
         </div>
       </div>
