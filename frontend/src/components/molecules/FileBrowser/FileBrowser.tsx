@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback } from "react";
+import { FC, useState, useEffect, useCallback, useRef } from "react";
 import { filesService, FileItem } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
@@ -9,6 +9,7 @@ import { Breadcrumbs } from "./Breadcrumbs";
 import { FileToolbar } from "./FileToolbar";
 import { FileEditor } from "./FileEditor";
 import { DropZone } from "./DropZone";
+import { UploadProgress, UploadItem } from "./UploadProgress";
 import { Loader2 } from "lucide-react";
 
 interface FileBrowserProps {
@@ -45,6 +46,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadFiles = useCallback(
     async (path: string = "") => {
@@ -175,40 +178,146 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   const handleUploadFiles = useCallback(
-    async (files: File[], relativePaths?: string[]) => {
+    async (filesToUpload: File[], relativePaths?: string[]) => {
       setIsUploading(true);
+      abortControllerRef.current = new AbortController();
+
+      // Crear items de upload
+      const uploadItems: UploadItem[] = filesToUpload.map((file, index) => ({
+        id: `${Date.now()}-${index}`,
+        name: relativePaths?.[index] || file.name,
+        size: file.size,
+        loaded: 0,
+        status: "pending" as const,
+      }));
+      setUploads(uploadItems);
+
+      const totalSize = filesToUpload.reduce((acc, f) => acc + f.size, 0);
+      let totalLoaded = 0;
+
       try {
         if (relativePaths && relativePaths.length > 0) {
           // Upload con estructura de carpetas
-          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files, relativePaths);
-          if (result.uploaded > 0) {
-            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
-          }
+          setUploads((prev) => prev.map((u) => ({ ...u, status: "uploading" as const })));
+          
+          const result = await filesService.uploadMultipleFiles(
+            serverId,
+            currentPath,
+            filesToUpload,
+            relativePaths,
+            {
+              signal: abortControllerRef.current.signal,
+              onProgress: (progress) => {
+                totalLoaded = progress.loaded;
+                // Distribuir progreso proporcionalmente
+                setUploads((prev) =>
+                  prev.map((u) => ({
+                    ...u,
+                    loaded: Math.round((u.size / totalSize) * totalLoaded),
+                  }))
+                );
+              },
+            }
+          );
+          
+          setUploads((prev) =>
+            prev.map((u) => ({
+              ...u,
+              loaded: u.size,
+              status: "completed" as const,
+            }))
+          );
+          
           if (result.errors > 0) {
             mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
           }
-        } else if (files.length === 1) {
-          await filesService.uploadFile(serverId, currentPath, files[0]);
-          mcToast.success(t("fileUploaded"));
+        } else if (filesToUpload.length === 1) {
+          // Single file upload
+          setUploads((prev) => prev.map((u) => ({ ...u, status: "uploading" as const })));
+          
+          await filesService.uploadFile(serverId, currentPath, filesToUpload[0], undefined, {
+            signal: abortControllerRef.current.signal,
+            onProgress: (progress) => {
+              setUploads((prev) =>
+                prev.map((u) => ({
+                  ...u,
+                  loaded: progress.loaded,
+                }))
+              );
+            },
+          });
+          
+          setUploads((prev) =>
+            prev.map((u) => ({
+              ...u,
+              loaded: u.size,
+              status: "completed" as const,
+            }))
+          );
         } else {
-          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files);
-          if (result.uploaded > 0) {
-            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
-          }
+          // Multiple files without relative paths
+          setUploads((prev) => prev.map((u) => ({ ...u, status: "uploading" as const })));
+          
+          const result = await filesService.uploadMultipleFiles(
+            serverId,
+            currentPath,
+            filesToUpload,
+            undefined,
+            {
+              signal: abortControllerRef.current.signal,
+              onProgress: (progress) => {
+                totalLoaded = progress.loaded;
+                setUploads((prev) =>
+                  prev.map((u) => ({
+                    ...u,
+                    loaded: Math.round((u.size / totalSize) * totalLoaded),
+                  }))
+                );
+              },
+            }
+          );
+          
+          setUploads((prev) =>
+            prev.map((u) => ({
+              ...u,
+              loaded: u.size,
+              status: "completed" as const,
+            }))
+          );
+          
           if (result.errors > 0) {
             mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
           }
         }
+        
         loadFiles(currentPath);
       } catch (error) {
-        console.error("Error uploading files:", error);
-        mcToast.error(t("errorUploadingFile"));
+        if ((error as Error).name === "CanceledError" || (error as Error).name === "AbortError") {
+          setUploads((prev) =>
+            prev.map((u) => (u.status === "uploading" ? { ...u, status: "error" as const, error: "Cancelled" } : u))
+          );
+        } else {
+          console.error("Error uploading files:", error);
+          setUploads((prev) =>
+            prev.map((u) => (u.status !== "completed" ? { ...u, status: "error" as const } : u))
+          );
+          mcToast.error(t("errorUploadingFile"));
+        }
       } finally {
         setIsUploading(false);
+        abortControllerRef.current = null;
       }
     },
     [serverId, currentPath, loadFiles, t]
   );
+
+  const handleCancelUpload = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
+  const handleCloseUploadProgress = useCallback(() => {
+    setUploads([]);
+  }, []);
 
   const handleRename = useCallback(
     async (file: FileItem, newName: string) => {
@@ -267,7 +376,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
   return (
     <DropZone onFilesDropped={handleUploadFiles} className="h-[600px]">
-      <div className="flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
+      <div className="relative flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
         <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
 
         <Breadcrumbs path={currentPath} onNavigate={navigateToFolder} onNavigateUp={navigateUp} />
@@ -295,6 +404,12 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             }}
           />
         )}
+
+        <UploadProgress
+          uploads={uploads}
+          onCancel={handleCancelUpload}
+          onClose={handleCloseUploadProgress}
+        />
       </div>
     </DropZone>
   );
