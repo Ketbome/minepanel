@@ -226,70 +226,37 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   const handleDownload = useCallback(
-    async (file: FileItem) => {
-      const url = filesService.getDownloadUrl(serverId, file.path);
+    (file: FileItem) => {
       const token = localStorage.getItem("token");
+      // Use direct download with token in query param (supports large files)
+      const url = `${filesService.getDownloadUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
-      try {
-        const res = await fetch(url, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const blob = await res.blob();
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-      } catch (err) {
-        console.error("Download error:", err);
-        mcToast.error(t("errorDownloadingFile"));
-      }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     },
-    [serverId, t]
+    [serverId]
   );
 
   const handleDownloadZip = useCallback(
-    async (file: FileItem) => {
+    (file: FileItem) => {
       if (!file.isDirectory) return;
 
-      const url = filesService.getDownloadZipUrl(serverId, file.path);
       const token = localStorage.getItem("token");
+      // Use direct download with token in query param (supports large files)
+      const url = `${filesService.getDownloadZipUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
-      mcToast.loading(t("creatingZip"));
+      mcToast.success(t("zipDownloaded"));
 
-      try {
-        const res = await fetch(url, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const blob = await res.blob();
-        mcToast.dismiss();
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${file.name}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-        mcToast.success(t("zipDownloaded"));
-      } catch (err) {
-        console.error("Download zip error:", err);
-        mcToast.dismiss();
-        mcToast.error(t("errorDownloadingZip"));
-      }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${file.name}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     },
     [serverId, t]
   );
