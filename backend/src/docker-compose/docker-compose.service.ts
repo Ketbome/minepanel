@@ -238,26 +238,26 @@ export class DockerComposeService {
         serverConfig.cfSlug = env.CF_SLUG ?? '';
         serverConfig.cfFile = env.CF_FILE_ID ?? '';
         serverConfig.cfSync = env.CF_FORCE_SYNCHRONIZE === 'true';
-        serverConfig.cfFiles = env.CURSEFORGE_FILES ?? '';
         serverConfig.cfForceInclude = env.CF_FORCE_INCLUDE_MODS ?? '';
         serverConfig.cfExclude = env.CF_EXCLUDE_MODS ?? '';
         serverConfig.cfFilenameMatcher = env.CF_FILENAME_MATCHER ?? '';
         serverConfig.cfParallelDownloads = env.CF_PARALLEL_DOWNLOADS ?? '4';
         serverConfig.cfOverridesSkipExisting = env.CF_OVERRIDES_SKIP_EXISTING === 'true';
         serverConfig.cfSetLevelFrom = env.CF_SET_LEVEL_FROM ?? '';
-        serverConfig.cfApiKey = env.CF_API_KEY.split('$$').join('$') ?? '';
       },
       CURSEFORGE: () => {
         serverConfig.cfServerMod = env.CF_SERVER_MOD ?? '';
         serverConfig.cfBaseDir = env.CF_BASE_DIR ?? '/data';
         serverConfig.useModpackStartScript = env.USE_MODPACK_START_SCRIPT !== 'false';
         serverConfig.ftbLegacyJavaFixer = env.FTB_LEGACYJAVAFIXER === 'true';
-        serverConfig.cfApiKey = env.CF_API_KEY ?? '';
       },
     };
 
     // Parse Modrinth config for compatible server types
     this.parseModrinthConfig(serverConfig, env);
+
+    // Parse CurseForge files config for mod-compatible server types
+    this.parseCurseForgeFilesConfig(serverConfig, env);
 
     const pluginServers = ['SPIGOT', 'PAPER', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'];
     if (pluginServers.includes(serverConfig.serverType)) {
@@ -266,6 +266,15 @@ export class DockerComposeService {
       const handler = typeHandlers[serverConfig.serverType];
       if (handler) handler();
     }
+  }
+
+  private parseCurseForgeFilesConfig(serverConfig: ServerConfig, env: any): void {
+    const compatibleTypes = ['FORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    if (!compatibleTypes.includes(serverConfig.serverType)) return;
+
+    serverConfig.cfFiles = env.CURSEFORGE_FILES ?? '';
+    const apiKey = env.CF_API_KEY;
+    serverConfig.cfApiKey = apiKey ? apiKey.split('$$').join('$') : '';
   }
 
   private parseModrinthConfig(serverConfig: ServerConfig, env: any): void {
@@ -696,8 +705,8 @@ export class DockerComposeService {
     // Add Modrinth config for compatible server types
     this.addModrinthConfig(env, config);
 
-    const apiKey = config.cfApiKey;
-    if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
+    // Add CurseForge files config for mod-compatible server types (FORGE, FABRIC, QUILT, AUTO_CURSEFORGE)
+    this.addCurseForgeFilesConfig(env, config);
 
     const serverTypeHandlers = {
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
@@ -733,6 +742,16 @@ export class DockerComposeService {
     if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
   }
 
+  private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
+    // CURSEFORGE_FILES works with FORGE, FABRIC, QUILT, AUTO_CURSEFORGE, and NeoForge
+    const compatibleTypes = ['FORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    if (!compatibleTypes.includes(config.serverType)) return;
+
+    const apiKey = config.cfApiKey;
+    if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
+    if (config.cfFiles) env['CURSEFORGE_FILES'] = config.cfFiles;
+  }
+
   private addAutoCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
     if (config.cfMethod === 'url' && config.cfUrl) {
       env['CF_PAGE_URL'] = config.cfUrl;
@@ -747,7 +766,7 @@ export class DockerComposeService {
     }
 
     if (config.cfSync) env['CF_FORCE_SYNCHRONIZE'] = 'true';
-    if (config.cfFiles) env['CURSEFORGE_FILES'] = config.cfFiles;
+    // cfFiles and cfApiKey are handled by addCurseForgeFilesConfig
     if (config.cfForceInclude) env['CF_FORCE_INCLUDE_MODS'] = config.cfForceInclude;
     if (config.cfExclude) env['CF_EXCLUDE_MODS'] = config.cfExclude;
     if (config.cfParallelDownloads) env['CF_PARALLEL_DOWNLOADS'] = config.cfParallelDownloads;

@@ -104,14 +104,78 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
 
       <CardContent className="space-y-6">
         {isForge && (
-          <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-            <Label htmlFor="forgeBuild" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/anvil.webp" alt="Forge" width={16} height={16} />
-              {t("forgeVersion")}
-            </Label>
-            <Input id="forgeBuild" value={config.forgeBuild} onChange={(e) => updateConfig("forgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-            <p className="text-xs text-gray-400">{t("forgeBuildDesc")}</p>
-          </div>
+          <>
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <Label htmlFor="forgeBuild" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                <Image src="/images/anvil.webp" alt="Forge" width={16} height={16} />
+                {t("forgeVersion")}
+              </Label>
+              <Input id="forgeBuild" value={config.forgeBuild} onChange={(e) => updateConfig("forgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("forgeBuildDesc")}</p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
+                  <Label htmlFor="cfApiKeyForge" className="text-gray-200 font-minecraft text-sm">
+                    {t("cfApiKey")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("cfApiKeyHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleImportApiKey} disabled={isImporting} className="bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-emerald-400 text-xs">
+                  <Download className="h-3 w-3 mr-1" />
+                  {t("importFromSettings")}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input id="cfApiKeyForge" value={config.cfApiKey || ""} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyAuto ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowApiKeyAuto(!showApiKeyAuto)}>
+                  {showApiKeyAuto ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cfFilesForge" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
+                  {t("curseforgeFiles")}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
+                    {t("browseMods")}
+                  </a>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
+                          <HelpCircle className="h-4 w-4 text-emerald-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("curseforgeFilesHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <Textarea id="cfFilesForge" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
+          </>
         )}
 
         {isFabric && (
@@ -133,6 +197,68 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <Input id="fabricLauncherVersion" value={config.fabricLauncherVersion || ""} onChange={(e) => updateConfig("fabricLauncherVersion", e.target.value)} placeholder="0.10.2" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("fabricLauncherDesc")}</p>
             </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
+                  <Label htmlFor="cfApiKeyFabric" className="text-gray-200 font-minecraft text-sm">
+                    {t("cfApiKey")}
+                  </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("cfApiKeyHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleImportApiKey} disabled={isImporting} className="bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-emerald-400 text-xs">
+                  <Download className="h-3 w-3 mr-1" />
+                  {t("importFromSettings")}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input id="cfApiKeyFabric" value={config.cfApiKey || ""} onChange={(e) => updateConfig("cfApiKey", e.target.value)} placeholder="$2a$10$Iao..." type={showApiKeyAuto ? "text" : "password"} className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowApiKeyAuto(!showApiKeyAuto)}>
+                  {showApiKeyAuto ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400">{t("cfApiKeyOptional")}</p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cfFilesFabric" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
+                  {t("curseforgeFiles")}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
+                    {t("browseMods")}
+                  </a>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30">
+                          <HelpCircle className="h-4 w-4 text-emerald-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                        <p>{t("curseforgeFilesHelp")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <Textarea id="cfFilesFabric" value={config.cfFiles || ""} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
           </>
         )}
 
@@ -140,7 +266,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           <>
             <div className="bg-amber-900/30 border border-amber-700/30 rounded-md p-4 mb-6">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-amber-300 font-minecraft">{t("deprecatedFeature")}</p>
                   <p className="text-xs text-amber-200/80 mt-1">{t("manualCurseForgeDeprecated")}</p>
@@ -243,7 +369,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           <>
             <div className="bg-amber-900/30 border border-amber-700/30 rounded-md p-4 mb-6">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-amber-300 font-minecraft">{t("importantInfo")}</p>
                   <p className="text-xs text-amber-200/80 mt-1">{t("cfApiKeyRequired")}</p>
@@ -297,7 +423,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-md bg-gradient-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
+            <div className="p-4 rounded-md bg-linear-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-minecraft text-sm text-emerald-400">{t("browseModpacks")}</p>
