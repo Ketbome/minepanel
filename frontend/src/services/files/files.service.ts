@@ -9,6 +9,17 @@ export interface FileItem {
   extension?: string;
 }
 
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface UploadOptions {
+  onProgress?: (progress: UploadProgress) => void;
+  signal?: AbortSignal;
+}
+
 export const filesService = {
   async listFiles(serverId: string, path: string = ""): Promise<FileItem[]> {
     const { data } = await api.get(`/files/${serverId}/list`, {
@@ -42,12 +53,28 @@ export const filesService = {
     await api.put(`/files/${serverId}/rename`, { path, newName });
   },
 
-  async uploadFile(serverId: string, path: string, file: File, relativePath?: string): Promise<void> {
+  async uploadFile(
+    serverId: string,
+    path: string,
+    file: File,
+    relativePath?: string,
+    options?: UploadOptions
+  ): Promise<void> {
     const formData = new FormData();
     formData.append("file", file);
     await api.post(`/files/${serverId}/upload`, formData, {
       params: { path, relativePath },
       headers: { "Content-Type": "multipart/form-data" },
+      signal: options?.signal,
+      onUploadProgress: (progressEvent) => {
+        if (options?.onProgress && progressEvent.total) {
+          options.onProgress({
+            loaded: progressEvent.loaded,
+            total: progressEvent.total,
+            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+          });
+        }
+      },
     });
   },
 
@@ -55,7 +82,8 @@ export const filesService = {
     serverId: string,
     path: string,
     files: File[],
-    relativePaths?: string[]
+    relativePaths?: string[],
+    options?: UploadOptions
   ): Promise<{ uploaded: number; errors: number }> {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
@@ -65,6 +93,16 @@ export const filesService = {
     const { data } = await api.post(`/files/${serverId}/upload-multiple`, formData, {
       params: { path },
       headers: { "Content-Type": "multipart/form-data" },
+      signal: options?.signal,
+      onUploadProgress: (progressEvent) => {
+        if (options?.onProgress && progressEvent.total) {
+          options.onProgress({
+            loaded: progressEvent.loaded,
+            total: progressEvent.total,
+            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+          });
+        }
+      },
     });
     return data;
   },
