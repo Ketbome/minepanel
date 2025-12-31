@@ -192,12 +192,87 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       }));
       setUploads(uploadItems);
 
-      const BATCH_SIZE = 10; // Subir en lotes de 10 archivos para evitar timeout
-      let completedCount = 0;
+      const avgFileSize = filesToUpload.reduce((acc, f) => acc + f.size, 0) / filesToUpload.length;
+      const BATCH_SIZE = avgFileSize < 1024 * 1024 ? 20 : avgFileSize < 10 * 1024 * 1024 ? 10 : 5;
+      const MAX_RETRIES = 2;
+
       let errorCount = 0;
 
+      const uploadBatch = async (
+        batchFiles: File[],
+        batchPaths: string[] | undefined,
+        batchIds: string[],
+        retryCount = 0
+      ): Promise<boolean> => {
+        if (abortControllerRef.current?.signal.aborted) return false;
+
+        const batchTotalSize = batchFiles.reduce((acc, f) => acc + f.size, 0);
+
+        // Marcar lote como uploading
+        setUploads((prev) =>
+          prev.map((u) =>
+            batchIds.includes(u.id) ? { ...u, status: "uploading" as const, loaded: 0 } : u
+          )
+        );
+
+        try {
+          if (batchFiles.length === 1 && !batchPaths) {
+            await filesService.uploadFile(serverId, currentPath, batchFiles[0], undefined, {
+              signal: abortControllerRef.current!.signal,
+              onProgress: (progress) => {
+                setUploads((prev) =>
+                  prev.map((u) => (u.id === batchIds[0] ? { ...u, loaded: progress.loaded } : u))
+                );
+              },
+            });
+          } else {
+            await filesService.uploadMultipleFiles(serverId, currentPath, batchFiles, batchPaths, {
+              signal: abortControllerRef.current!.signal,
+              onProgress: (progress) => {
+                setUploads((prev) =>
+                  prev.map((u) => {
+                    if (!batchIds.includes(u.id)) return u;
+                    const fileRatio = u.size / batchTotalSize;
+                    return { ...u, loaded: Math.round(fileRatio * progress.loaded) };
+                  })
+                );
+              },
+            });
+          }
+
+          // Éxito
+          setUploads((prev) =>
+            prev.map((u) =>
+              batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u
+            )
+          );
+          return true;
+        } catch (err) {
+          if ((err as Error).name === "CanceledError" || (err as Error).name === "AbortError") {
+            throw err;
+          }
+
+          // Reintentar si no hemos agotado los intentos
+          if (retryCount < MAX_RETRIES) {
+            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} for batch`);
+            await new Promise((r) => setTimeout(r, 1000 * (retryCount + 1))); // Backoff
+            return uploadBatch(batchFiles, batchPaths, batchIds, retryCount + 1);
+          }
+
+          // Marcar como error
+          setUploads((prev) =>
+            prev.map((u) =>
+              batchIds.includes(u.id) && u.status !== "completed"
+                ? { ...u, status: "error" as const }
+                : u
+            )
+          );
+          return false;
+        }
+      };
+
       try {
-        // Dividir en lotes
+        // Dividir en lotes y procesar
         for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
           if (abortControllerRef.current?.signal.aborted) break;
 
@@ -205,70 +280,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           const batchPaths = relativePaths?.slice(i, i + BATCH_SIZE);
           const batchIds = uploadItems.slice(i, i + BATCH_SIZE).map((u) => u.id);
 
-          // Marcar lote actual como uploading
-          setUploads((prev) =>
-            prev.map((u) =>
-              batchIds.includes(u.id) ? { ...u, status: "uploading" as const } : u
-            )
-          );
-
-          const batchTotalSize = batchFiles.reduce((acc, f) => acc + f.size, 0);
-
-          try {
-            if (batchFiles.length === 1 && !batchPaths) {
-              // Single file
-              await filesService.uploadFile(serverId, currentPath, batchFiles[0], undefined, {
-                signal: abortControllerRef.current.signal,
-                onProgress: (progress) => {
-                  setUploads((prev) =>
-                    prev.map((u) =>
-                      u.id === batchIds[0] ? { ...u, loaded: progress.loaded } : u
-                    )
-                  );
-                },
-              });
-            } else {
-              // Multiple files in batch
-              await filesService.uploadMultipleFiles(
-                serverId,
-                currentPath,
-                batchFiles,
-                batchPaths,
-                {
-                  signal: abortControllerRef.current.signal,
-                  onProgress: (progress) => {
-                    // Distribuir progreso proporcionalmente en el lote
-                    setUploads((prev) =>
-                      prev.map((u) => {
-                        if (!batchIds.includes(u.id)) return u;
-                        const fileRatio = u.size / batchTotalSize;
-                        return { ...u, loaded: Math.round(fileRatio * progress.loaded) };
-                      })
-                    );
-                  },
-                }
-              );
-            }
-
-            // Marcar lote como completado
-            setUploads((prev) =>
-              prev.map((u) =>
-                batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u
-              )
-            );
-            completedCount += batchFiles.length;
-          } catch (batchError) {
-            if ((batchError as Error).name === "CanceledError" || (batchError as Error).name === "AbortError") {
-              throw batchError; // Re-throw para manejar cancelación
-            }
-            // Marcar lote con error pero continuar con el siguiente
-            setUploads((prev) =>
-              prev.map((u) =>
-                batchIds.includes(u.id) && u.status !== "completed"
-                  ? { ...u, status: "error" as const }
-                  : u
-              )
-            );
+          const success = await uploadBatch(batchFiles, batchPaths, batchIds);
+          if (!success) {
             errorCount += batchFiles.length;
           }
         }
