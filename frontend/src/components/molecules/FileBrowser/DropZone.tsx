@@ -11,7 +11,6 @@ interface DropZoneProps {
   className?: string;
 }
 
-// Recorre recursivamente un directorio usando la File System API
 async function traverseDirectory(entry: FileSystemEntry, basePath: string = ""): Promise<{ file: File; path: string }[]> {
   const results: { file: File; path: string }[] = [];
 
@@ -80,7 +79,6 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
       const allFiles: File[] = [];
       const allPaths: string[] = [];
 
-      // Usar webkitGetAsEntry para detectar carpetas
       const entries: FileSystemEntry[] = [];
       for (const element of items) {
         const entry = element.webkitGetAsEntry?.();
@@ -98,7 +96,6 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
           }
         }
       } else {
-        // Fallback para navegadores sin soporte
         const files = Array.from(e.dataTransfer.files);
         allFiles.push(...files);
       }

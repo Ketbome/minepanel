@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback } from "react";
+import { FC, useState, useEffect, useCallback, useRef } from "react";
 import { filesService, FileItem } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
@@ -9,6 +9,7 @@ import { Breadcrumbs } from "./Breadcrumbs";
 import { FileToolbar } from "./FileToolbar";
 import { FileEditor } from "./FileEditor";
 import { DropZone } from "./DropZone";
+import { UploadProgress, UploadItem } from "./UploadProgress";
 import { Loader2 } from "lucide-react";
 
 interface FileBrowserProps {
@@ -18,17 +19,41 @@ interface FileBrowserProps {
 // Extensiones que se pueden editar como texto
 const TEXT_EXTENSIONS = [
   // Config
-  "txt", "json", "yml", "yaml", "properties", "cfg", "conf", "xml", "toml", "ini",
+  "txt",
+  "json",
+  "yml",
+  "yaml",
+  "properties",
+  "cfg",
+  "conf",
+  "xml",
+  "toml",
+  "ini",
   // Scripts
-  "sh", "bat", "ps1", "cmd",
+  "sh",
+  "bat",
+  "ps1",
+  "cmd",
   // Docs
-  "md", "log", "csv",
+  "md",
+  "log",
+  "csv",
   // Minecraft
-  "mcmeta", "lang", "nbt",
+  "mcmeta",
+  "lang",
+  "nbt",
   // Code
-  "java", "js", "ts", "py", "lua", "sk",
+  "java",
+  "js",
+  "ts",
+  "py",
+  "lua",
+  "sk",
   // Data
-  "html", "css", "scss", "sql",
+  "html",
+  "css",
+  "scss",
+  "sql",
 ];
 
 const isEditableFile = (file: FileItem): boolean => {
@@ -45,6 +70,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadFiles = useCallback(
     async (path: string = "") => {
@@ -175,40 +202,116 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   const handleUploadFiles = useCallback(
-    async (files: File[], relativePaths?: string[]) => {
+    async (filesToUpload: File[], relativePaths?: string[]) => {
       setIsUploading(true);
+      abortControllerRef.current = new AbortController();
+
+      const uploadItems: UploadItem[] = filesToUpload.map((file, index) => ({
+        id: `${Date.now()}-${index}`,
+        name: relativePaths?.[index] || file.name,
+        size: file.size,
+        loaded: 0,
+        status: "pending" as const,
+      }));
+      setUploads(uploadItems);
+
+      const avgFileSize = filesToUpload.reduce((acc, f) => acc + f.size, 0) / filesToUpload.length;
+      const BATCH_SIZE = avgFileSize < 1024 * 1024 ? 20 : avgFileSize < 10 * 1024 * 1024 ? 10 : 5;
+      const MAX_RETRIES = 2;
+
+      let errorCount = 0;
+
+      const uploadBatch = async (batchFiles: File[], batchPaths: string[] | undefined, batchIds: string[], retryCount = 0): Promise<boolean> => {
+        if (abortControllerRef.current?.signal.aborted) return false;
+
+        const batchTotalSize = batchFiles.reduce((acc, f) => acc + f.size, 0);
+
+        // Marcar lote como uploading
+        setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) ? { ...u, status: "uploading" as const, loaded: 0 } : u)));
+
+        try {
+          if (batchFiles.length === 1 && !batchPaths) {
+            await filesService.uploadFile(serverId, currentPath, batchFiles[0], undefined, {
+              signal: abortControllerRef.current!.signal,
+              onProgress: (progress) => {
+                setUploads((prev) => prev.map((u) => (u.id === batchIds[0] ? { ...u, loaded: progress.loaded } : u)));
+              },
+            });
+          } else {
+            await filesService.uploadMultipleFiles(serverId, currentPath, batchFiles, batchPaths, {
+              signal: abortControllerRef.current!.signal,
+              onProgress: (progress) => {
+                setUploads((prev) =>
+                  prev.map((u) => {
+                    if (!batchIds.includes(u.id)) return u;
+                    const fileRatio = u.size / batchTotalSize;
+                    return { ...u, loaded: Math.round(fileRatio * progress.loaded) };
+                  })
+                );
+              },
+            });
+          }
+
+          setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) ? { ...u, loaded: u.size, status: "completed" as const } : u)));
+          return true;
+        } catch (err) {
+          if ((err as Error).name === "CanceledError" || (err as Error).name === "AbortError") {
+            throw err;
+          }
+
+          if (retryCount < MAX_RETRIES) {
+            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} for batch`);
+            await new Promise((r) => setTimeout(r, 1000 * (retryCount + 1))); // Backoff
+            return uploadBatch(batchFiles, batchPaths, batchIds, retryCount + 1);
+          }
+
+          setUploads((prev) => prev.map((u) => (batchIds.includes(u.id) && u.status !== "completed" ? { ...u, status: "error" as const } : u)));
+          return false;
+        }
+      };
+
       try {
-        if (relativePaths && relativePaths.length > 0) {
-          // Upload con estructura de carpetas
-          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files, relativePaths);
-          if (result.uploaded > 0) {
-            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
-          }
-          if (result.errors > 0) {
-            mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
-          }
-        } else if (files.length === 1) {
-          await filesService.uploadFile(serverId, currentPath, files[0]);
-          mcToast.success(t("fileUploaded"));
-        } else {
-          const result = await filesService.uploadMultipleFiles(serverId, currentPath, files);
-          if (result.uploaded > 0) {
-            mcToast.success(t("filesUploaded").replace("{count}", result.uploaded.toString()));
-          }
-          if (result.errors > 0) {
-            mcToast.error(t("filesUploadFailed").replace("{count}", result.errors.toString()));
+        for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
+          if (abortControllerRef.current?.signal.aborted) break;
+
+          const batchFiles = filesToUpload.slice(i, i + BATCH_SIZE);
+          const batchPaths = relativePaths?.slice(i, i + BATCH_SIZE);
+          const batchIds = uploadItems.slice(i, i + BATCH_SIZE).map((u) => u.id);
+
+          const success = await uploadBatch(batchFiles, batchPaths, batchIds);
+          if (!success) {
+            errorCount += batchFiles.length;
           }
         }
+
+        if (errorCount > 0) {
+          mcToast.error(t("filesUploadFailed").replace("{count}", errorCount.toString()));
+        }
+
         loadFiles(currentPath);
       } catch (error) {
-        console.error("Error uploading files:", error);
-        mcToast.error(t("errorUploadingFile"));
+        if ((error as Error).name === "CanceledError" || (error as Error).name === "AbortError") {
+          setUploads((prev) => prev.map((u) => (u.status === "uploading" || u.status === "pending" ? { ...u, status: "error" as const, error: "Cancelled" } : u)));
+        } else {
+          console.error("Error uploading files:", error);
+          setUploads((prev) => prev.map((u) => (u.status !== "completed" ? { ...u, status: "error" as const } : u)));
+          mcToast.error(t("errorUploadingFile"));
+        }
       } finally {
         setIsUploading(false);
+        abortControllerRef.current = null;
       }
     },
     [serverId, currentPath, loadFiles, t]
   );
+
+  const handleCancelUpload = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
+  const handleCloseUploadProgress = useCallback(() => {
+    setUploads([]);
+  }, []);
 
   const handleRename = useCallback(
     async (file: FileItem, newName: string) => {
@@ -228,7 +331,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const handleDownload = useCallback(
     (file: FileItem) => {
       const token = localStorage.getItem("token");
-      // Use direct download with token in query param (supports large files)
       const url = `${filesService.getDownloadUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
       const a = document.createElement("a");
@@ -246,7 +348,6 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       if (!file.isDirectory) return;
 
       const token = localStorage.getItem("token");
-      // Use direct download with token in query param (supports large files)
       const url = `${filesService.getDownloadZipUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
 
       mcToast.success(t("zipDownloaded"));
@@ -267,7 +368,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
   return (
     <DropZone onFilesDropped={handleUploadFiles} className="h-[600px]">
-      <div className="flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
+      <div className="relative flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
         <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
 
         <Breadcrumbs path={currentPath} onNavigate={navigateToFolder} onNavigateUp={navigateUp} />
@@ -295,6 +396,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             }}
           />
         )}
+
+        <UploadProgress uploads={uploads} onCancel={handleCancelUpload} onClose={handleCloseUploadProgress} />
       </div>
     </DropZone>
   );
