@@ -1,9 +1,9 @@
 import api from "./axios.service";
 
-
 export interface NetworkInfo {
   hostname: string;
   localIPs: string[];
+  publicIP: string | null;
 }
 
 export interface PublicIPResponse {
@@ -44,15 +44,21 @@ export async function getAllIPs(): Promise<{
   hostname: string;
 }> {
   try {
-    const [publicIPResult, networkInfo] = await Promise.allSettled([
-      getPublicIP(),
-      getServerNetworkInfo(),
-    ]);
+    const networkInfo = await getServerNetworkInfo();
+
+    let publicIP: string | null = networkInfo.publicIP;
+    if (!publicIP) {
+      try {
+        publicIP = await getPublicIP();
+      } catch {
+        publicIP = null;
+      }
+    }
 
     return {
-      publicIP: publicIPResult.status === "fulfilled" ? publicIPResult.value : null,
-      localIPs: networkInfo.status === "fulfilled" ? networkInfo.value.localIPs : [],
-      hostname: networkInfo.status === "fulfilled" ? networkInfo.value.hostname : "",
+      publicIP,
+      localIPs: networkInfo.localIPs,
+      hostname: networkInfo.hostname,
     };
   } catch (error) {
     console.error("Error fetching all IPs:", error);
@@ -63,4 +69,3 @@ export async function getAllIPs(): Promise<{
     };
   }
 }
-

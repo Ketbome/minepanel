@@ -79,9 +79,35 @@ docker compose restart
 - Don't expose ports publicly without proper authentication
   :::
 
+## Public IP Configuration
+
+When deploying MinePanel on a VPS or remote server, the auto-detected public IP (via ipify.org) may show the client's IP instead of the server's IP. To fix this, set `HOST_PUBLIC_IP` to your server's public IP or domain.
+
+### Configuration
+
+Add to your `docker-compose.yml`:
+
+```yaml
+services:
+  minepanel:
+    environment:
+      # ... other variables
+      - HOST_PUBLIC_IP=123.45.67.89  # Or use a domain: play.example.com
+```
+
+Or in your `.env` file:
+
+```bash
+HOST_PUBLIC_IP=play.example.com
+```
+
+::: tip
+If `HOST_PUBLIC_IP` is not set, MinePanel falls back to client-side IP detection (ipify.org). This works for local deployments but shows incorrect IPs when accessing remotely.
+:::
+
 ## LAN Network Configuration
 
-When you create a Minecraft server, Minepanel automatically shows the connection information to share with players. By default, it shows your **public IP** (obtained automatically via ipify.org). However, if you want players on your **local network (LAN)** to see your local IP address, you need to configure it manually.
+When you create a Minecraft server, Minepanel automatically shows the connection information to share with players. By default, it shows your **public IP** (configured via `HOST_PUBLIC_IP` or auto-detected via ipify.org). However, if you want players on your **local network (LAN)** to see your local IP address, you need to configure it manually.
 
 ### Why Configure LAN IP?
 
