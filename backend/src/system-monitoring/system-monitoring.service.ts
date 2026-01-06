@@ -198,17 +198,21 @@ export class SystemMonitoringService {
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
-  getNetworkInfo(): { hostname: string; localIPs: string[] } {
+  getNetworkInfo(): { hostname: string; localIPs: string[]; publicIP: string | null } {
     const localIPs: string[] = [];
 
-    const configuredIP = this.configService.get<string>('hostLanIP');
-    if (configuredIP && this.isValidIP(configuredIP)) {
-      localIPs.push(configuredIP);
+    const configuredLanIP = this.configService.get<string>('hostLanIP');
+    if (configuredLanIP && this.isValidIP(configuredLanIP)) {
+      localIPs.push(configuredLanIP);
     }
+
+    // HOST_PUBLIC_IP can be an IP or domain (e.g., play.example.com)
+    const publicIP = this.configService.get<string>('hostPublicIP') || null;
 
     return {
       hostname: os.hostname(),
       localIPs,
+      publicIP,
     };
   }
 
