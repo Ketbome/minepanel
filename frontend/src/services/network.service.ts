@@ -1,6 +1,5 @@
 import api from "./axios.service";
 
-
 export interface NetworkInfo {
   hostname: string;
   localIPs: string[];
@@ -46,7 +45,7 @@ export async function getAllIPs(): Promise<{
 }> {
   try {
     const networkInfo = await getServerNetworkInfo();
-    
+
     let publicIP: string | null = networkInfo.publicIP;
     if (!publicIP) {
       try {
@@ -70,4 +69,3 @@ export async function getAllIPs(): Promise<{
     };
   }
 }
-
