@@ -40,10 +40,11 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Other
 
-| Variable                       | Default | Description                                  |
-| ------------------------------ | ------- | -------------------------------------------- |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)          |
-| `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play |
+| Variable                       | Default | Description                                            |
+| ------------------------------ | ------- | ------------------------------------------------------ |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)                    |
+| `HOST_PUBLIC_IP`               | -       | Optional: Server's public IP or domain for remote play |
+| `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play           |
 
 #### Subdirectory Routing
 
@@ -85,7 +86,8 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en
 
 # Network (optional)
-# HOST_LAN_IP=192.168.1.100  # Your LAN IP for local network play
+# HOST_PUBLIC_IP=play.example.com  # Your server's public IP or domain
+# HOST_LAN_IP=192.168.1.100        # Your LAN IP for local network play
 ```
 
 Then run:

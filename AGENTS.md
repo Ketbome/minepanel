@@ -132,6 +132,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 
 # Optional
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
+HOST_PUBLIC_IP=                  # For public IP/domain display (VPS deployments)
 HOST_LAN_IP=                     # For LAN IP display
 ```
 

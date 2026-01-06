@@ -207,8 +207,10 @@ docker compose up -d
 
 Now when a Minecraft server is running, the panel will show both:
 
-- **Public IP**: For external players (obtained automatically via ipify.org)
+- **Public IP**: For external players (uses `HOST_PUBLIC_IP` if set, otherwise auto-detects via ipify.org)
 - **LAN IP**: For local network players (the IP you configured)
+
+> **Note for VPS deployments:** If you're hosting on a remote server (AWS, Oracle Cloud, etc.), set `HOST_PUBLIC_IP` to your server's public IP or domain. Without it, the dashboard shows the client's IP instead of the server's IP.
 
 ## Database
 
