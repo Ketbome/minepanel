@@ -29,17 +29,22 @@ function parsePercentage(value: string): number {
 
 function parseMemoryToPercent(usage: string, limit: string): number {
   if (usage === "N/A" || limit === "N/A") return 0;
-  
+
   const parseSize = (str: string): number => {
     const match = str.match(/([\d.]+)\s*([KMGT]?i?B)/i);
     if (!match) return 0;
     const value = parseFloat(match[1]);
     const unit = match[2].toUpperCase();
     const multipliers: Record<string, number> = {
-      "B": 1, "KB": 1024, "KIB": 1024,
-      "MB": 1024 ** 2, "MIB": 1024 ** 2,
-      "GB": 1024 ** 3, "GIB": 1024 ** 3,
-      "TB": 1024 ** 4, "TIB": 1024 ** 4,
+      B: 1,
+      KB: 1024,
+      KIB: 1024,
+      MB: 1024 ** 2,
+      MIB: 1024 ** 2,
+      GB: 1024 ** 3,
+      GIB: 1024 ** 3,
+      TB: 1024 ** 4,
+      TIB: 1024 ** 4,
     };
     return value * (multipliers[unit] || 1);
   };
@@ -63,7 +68,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
 
     try {
       const resources = await getAllServersResources();
-      
+
       const data: ServerWithResources[] = servers.map((server) => {
         const res: ServerResourceInfo = resources[server.id] || {
           status: "not_found",
@@ -99,10 +104,14 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "running": return "bg-emerald-600/20 text-emerald-400 border-emerald-600/30";
-      case "starting": return "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
-      case "stopped": return "bg-gray-600/20 text-gray-400 border-gray-600/30";
-      default: return "bg-red-600/20 text-red-400 border-red-600/30";
+      case "running":
+        return "bg-emerald-600/20 text-emerald-400 border-emerald-600/30";
+      case "starting":
+        return "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
+      case "stopped":
+        return "bg-gray-600/20 text-gray-400 border-gray-600/30";
+      default:
+        return "bg-red-600/20 text-red-400 border-red-600/30";
     }
   };
 
@@ -112,8 +121,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
     return "from-emerald-600 to-emerald-400";
   };
 
-  const hasHighUsage = (server: ServerWithResources) => 
-    server.status === "running" && (server.cpuUsage >= 80 || server.memoryPercent >= 80);
+  const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuUsage >= 80 || server.memoryPercent >= 80);
 
   if (servers.length === 0) return null;
 
@@ -125,10 +133,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
             <Server className="w-5 h-5 text-blue-400" />
             {t("serversOverview")}
           </CardTitle>
-          <Link 
-            href="/dashboard/servers" 
-            className="text-sm text-gray-400 hover:text-emerald-400 flex items-center gap-1 transition-colors"
-          >
+          <Link href="/dashboard/servers" className="text-sm text-gray-400 hover:text-emerald-400 flex items-center gap-1 transition-colors">
             {t("viewAll")}
             <ArrowRight className="w-4 h-4" />
           </Link>
@@ -142,26 +147,18 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
         ) : (
           <div className="space-y-3">
             {serversData.map((server) => (
-              <Link 
-                key={server.id} 
-                href={`/dashboard/servers/${server.id}`}
-                className="block"
-              >
+              <Link key={server.id} href={`/dashboard/servers/${server.id}`} className="block">
                 <div className="p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-gray-600/50 transition-all group">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-white group-hover:text-emerald-400 transition-colors truncate max-w-[200px]">
-                        {server.name}
-                      </span>
-                      {hasHighUsage(server) && (
-                        <AlertTriangle className="w-4 h-4 text-yellow-400 animate-pulse" />
-                      )}
+                      <span className="font-medium text-white group-hover:text-emerald-400 transition-colors truncate max-w-[200px]">{server.name}</span>
+                      {hasHighUsage(server) && <AlertTriangle className="w-4 h-4 text-yellow-400 animate-pulse" />}
                     </div>
                     <Badge variant="outline" className={getStatusColor(server.status)}>
                       {t(server.status)}
                     </Badge>
                   </div>
-                  
+
                   {server.status === "running" && (
                     <div className="grid grid-cols-2 gap-3 mt-2">
                       <div className="space-y-1">
@@ -171,10 +168,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                           <span className="ml-auto font-mono">{server.cpuUsage.toFixed(1)}%</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full bg-gradient-to-r ${getUsageColor(server.cpuUsage)} transition-all duration-500`}
-                            style={{ width: `${Math.min(server.cpuUsage, 100)}%` }}
-                          />
+                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.cpuUsage)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuUsage, 100)}%` }} />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -184,10 +178,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                           <span className="ml-auto font-mono">{server.memoryUsage}</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full bg-gradient-to-r ${getUsageColor(server.memoryPercent)} transition-all duration-500`}
-                            style={{ width: `${Math.min(server.memoryPercent, 100)}%` }}
-                          />
+                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
                         </div>
                       </div>
                     </div>
