@@ -175,6 +175,8 @@ export const en = {
   noRecentActivity: "No recent activity",
   quickActions: "Quick Actions",
   viewAllServers: "View All Servers",
+  serversOverview: "Servers Overview",
+  viewAll: "View All",
   systemHealth: "System Health",
   healthy: "Healthy",
 

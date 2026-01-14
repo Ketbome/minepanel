@@ -177,6 +177,8 @@ export const es: Record<TranslationKey, string> = {
   noRecentActivity: "Sin actividad reciente",
   quickActions: "Acciones Rápidas",
   viewAllServers: "Ver Todos los Servidores",
+  serversOverview: "Vista de Servidores",
+  viewAll: "Ver Todos",
   systemHealth: "Salud del Sistema",
   healthy: "Saludable",
 

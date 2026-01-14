@@ -179,6 +179,8 @@ export const nl: Record<TranslationKey, string> = {
   noRecentActivity: "Geen recente activiteit",
   quickActions: "Snelle Acties",
   viewAllServers: "Bekijk Alle Servers",
+  serversOverview: "Serveroverzicht",
+  viewAll: "Bekijk Alles",
   systemHealth: "Systeemgezondheid",
   healthy: "Gezond",
 
