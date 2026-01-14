@@ -31,7 +31,10 @@ I got tired of managing Minecraft servers through terminal and tried several pan
 - Automatic backups
 - Supports all server types: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, etc.
 - CurseForge & Modrinth mod auto-download
-- Multi-language (English/Spanish/Dutch)
+- Multi-language (English/Spanish/Dutch/German)
+- Server templates (Survival, Creative, SkyBlock, PvP, etc.)
+- Player management (whitelist, ops, bans)
+- Discord webhooks
 
 ## Requirements
 
@@ -311,30 +314,28 @@ docker buildx build --platform linux/amd64,linux/arm64 -t username/minepanel:lat
 
 ## Roadmap
 
-### Coming soon
+### Recently Added (v1.7)
+
+- ✅ Server templates (8 built-in presets)
+- ✅ Player management (whitelist, ops, bans, kick)
+- ✅ Dashboard with quick server view
+- ✅ Quick admin actions (save, broadcast, time/weather)
+- ✅ CurseForge & Modrinth integration
+- ✅ Discord webhooks
+
+### Coming Soon
 
 - Better log viewer with filtering and search
 - Edit server.properties from the UI
-- Reverse proxy config helper
+- Scheduled tasks (auto restart, commands)
+- Plugin browser from panel
 
 ### Planned
 
 - User roles and permissions
-- Server templates
-- Better metrics/graphs
-- Discord webhooks
-- Scheduled tasks
-- Plugin manager
-- World uploader/switcher
-- Whitelist/banlist editor
-
-### Maybe
-
-- Multi-server commands
-- Resource limits config
-- RCON console
-- Server comparison
-- Config export/import
+- Historical metrics/graphs
+- Multi-node support (Docker Swarm)
+- Cloud backups (S3, GCS)
 
 ## Contributing
 

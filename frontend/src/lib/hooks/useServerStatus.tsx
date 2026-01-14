@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useServersStore, ServerStatus } from "@/lib/store";
 
 export function useServerStatus(serverId: string) {
   const { t } = useLanguage();
   const [status, setStatus] = useState<string>("unknown");
   const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const setServerStatus = useServersStore((state) => state.setServerStatus);
 
   const translateMessage = (message: string): string => {
     const knownKeys = ["serverStarted", "serverStopped", "connectionError", "unexpectedError", "SERVER_START_ERROR", "SERVER_STOP_ERROR"];
@@ -20,12 +22,13 @@ export function useServerStatus(serverId: string) {
     try {
       const data = await apiGetServerStatus(serverId);
       setStatus(data.status);
+      setServerStatus(serverId, data.status as ServerStatus); // Sync global store
       return data.status;
     } catch (error) {
       console.error("Error fetching server status:", error);
       return "error";
     }
-  }, [serverId]);
+  }, [serverId, setServerStatus]);
 
   useEffect(() => {
     fetchStatus();

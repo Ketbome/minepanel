@@ -28,6 +28,11 @@ export class ServerManagementController {
     return allStatus;
   }
 
+  @Get('all-resources')
+  async getAllServersResources() {
+    return this.managementService.getAllServersResources();
+  }
+
   @Get(':id')
   async getServer(@Param('id') id: string) {
     const config = await this.dockerComposeService.getServerConfig(id);
@@ -203,5 +208,25 @@ export class ServerManagementController {
       success: result,
       message: result ? 'Server stopped successfully' : 'Failed to stop server',
     };
+  }
+
+  @Post(':id/players/online')
+  async getOnlinePlayers(@Param('id') id: string, @Body() body: { rconPort: string; rconPassword?: string }) {
+    return this.managementService.getOnlinePlayers(id, body.rconPort, body.rconPassword);
+  }
+
+  @Get(':id/players/whitelist')
+  async getWhitelist(@Param('id') id: string) {
+    return this.managementService.getWhitelist(id);
+  }
+
+  @Get(':id/players/ops')
+  async getOps(@Param('id') id: string) {
+    return this.managementService.getOps(id);
+  }
+
+  @Get(':id/players/banned')
+  async getBannedPlayers(@Param('id') id: string) {
+    return this.managementService.getBannedPlayers(id);
   }
 }

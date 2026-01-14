@@ -9,6 +9,8 @@ import { Server, Activity, HardDrive, Cpu, Play, Square, ArrowRight } from "luci
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { getSystemStats, formatBytes, SystemStats } from "@/services/system/system.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
+import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
 
 type ServerInfo = {
   id: string;
@@ -150,6 +152,8 @@ export default function HomePage() {
         </p>
       </div>
 
+      {servers.length > 0 && <SystemAlerts servers={servers} />}
+
       <div>
         <h2 className="text-xl font-minecraft text-white mb-4">{t("quickStats")}</h2>
         <div className="grid gap-6 md:grid-cols-3">
@@ -278,17 +282,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="animate-fade-in-up stagger-6">
-        <h2 className="text-xl font-minecraft text-white mb-4">{t("recentActivity")}</h2>
-        <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <Image src="/images/chest.webp" alt="No activity" width={64} height={64} className="mx-auto mb-4 opacity-60" />
-              <p className="text-gray-400">{t("noRecentActivity")}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {servers.length > 0 && (
+        <div className="animate-fade-in-up stagger-6">
+          <h2 className="text-xl font-minecraft text-white mb-4">{t("serversOverview")}</h2>
+          <ServerQuickView servers={servers} />
+        </div>
+      )}
 
       {/* Decorative floating icons - CSS animations instead of framer-motion */}
       <div className="flex justify-center gap-8 pt-4">

@@ -1,4 +1,4 @@
-import type { TranslationKey } from './en';
+import type { TranslationKey } from "./en";
 
 export const de: Record<TranslationKey, string> = {
   // ===========================
@@ -177,8 +177,13 @@ export const de: Record<TranslationKey, string> = {
   noRecentActivity: "Keine aktuellen Aktivitäten",
   quickActions: "Schnellaktionen",
   viewAllServers: "Alle Server anzeigen",
+  serversOverview: "Serverübersicht",
+  viewAll: "Alle anzeigen",
   systemHealth: "Systemzustand",
   healthy: "Gesund",
+  alertServerDown: "Server '{server}' ist offline",
+  alertHighCPU: "Hohe CPU-Auslastung auf '{server}': {value}%",
+  alertHighMemory: "Hohe Speicherauslastung auf '{server}': {value}%",
 
   // Settings Page
   settingsTitle: "Einstellungen",
@@ -1009,5 +1014,78 @@ export const de: Record<TranslationKey, string> = {
   createServerFromModpack: "Einen neuen Server mit diesem Modpack erstellen",
   serverIdRequired: "Server-ID ist erforderlich",
   optional: "optional",
-};
 
+  // ===========================
+  // PLAYER MANAGEMENT
+  // ===========================
+  playerManagement: "Spielerverwaltung",
+  onlinePlayers: "Online Spieler",
+  noPlayersOnline: "Keine Spieler online",
+  whitelist: "Whitelist",
+  whitelistEmpty: "Whitelist ist leer",
+  operators: "Operatoren",
+  noOperators: "Keine Operatoren",
+  bannedPlayers: "Gebannte Spieler",
+  noBannedPlayers: "Keine gebannten Spieler",
+  playerName: "Spielername",
+  kick: "Kicken",
+  ban: "Bannen",
+  unban: "Entbannen",
+  remove: "Entfernen",
+  demote: "Degradieren",
+  promoteToOp: "Zum OP befördern",
+  playerAddedToWhitelist: "Spieler zur Whitelist hinzugefügt",
+  playerRemovedFromWhitelist: "Spieler von der Whitelist entfernt",
+  playerPromotedToOp: "Spieler zum Operator befördert",
+  playerDemotedFromOp: "Spieler vom Operator degradiert",
+  playerKicked: "Spieler gekickt",
+  playerBanned: "Spieler gebannt",
+  playerUnbanned: "Spieler entbannt",
+  saveWorld: "Welt Speichern",
+  whitelistOn: "Whitelist AN",
+  whitelistOff: "Whitelist AUS",
+  timeWeather: "Zeit/Wetter",
+  setDay: "Tag Setzen",
+  setNight: "Nacht Setzen",
+  weatherClear: "Klares Wetter",
+  weatherRain: "Regen",
+  broadcast: "Ankündigen",
+  broadcastPlaceholder: "Nachricht an alle Spieler...",
+  heal: "Heilen",
+  gamemodeChanged: "Spielmodus geändert",
+  playerTeleported: "Spieler teleportiert",
+  playerHealed: "Spieler geheilt",
+  itemsGiven: "Items gegeben",
+  worldSaved: "Welt gespeichert",
+  whitelistEnabled: "Whitelist aktiviert",
+  whitelistDisabled: "Whitelist deaktiviert",
+  messageBroadcast: "Nachricht gesendet",
+  timeChanged: "Zeit geändert",
+  weatherChanged: "Wetter geändert",
+
+  // ===========================
+  // SERVER TEMPLATES
+  // ===========================
+  chooseCreationMethod: "Wählen Sie, wie Sie Ihren Server erstellen möchten",
+  quickCreate: "Schnell Erstellen",
+  fromTemplate: "Von Vorlage",
+  selectTemplate: "Wählen Sie eine Vorlage, um schnell zu starten",
+  quickCreateDesc: "Erstellen Sie einen leeren Server mit Standardeinstellungen. Sie können alles später konfigurieren.",
+  templateSelected: "Vorlage ausgewählt",
+  vanillaSurvival: "Vanilla Überleben",
+  vanillaSurvivalDesc: "Das klassische Minecraft-Erlebnis. Überlebensmodus mit normalem Schwierigkeitsgrad.",
+  vanillaCreative: "Vanilla Kreativ",
+  vanillaCreativeDesc: "Unbegrenzte Kreativität. Bauen Sie frei mit allen Blöcken und ohne Monster.",
+  vanillaHardcore: "Vanilla Hardcore",
+  vanillaHardcoreDesc: "Nur ein Leben. Schwerer Schwierigkeitsgrad, keine zweiten Chancen.",
+  paperPerformance: "Paper Leistung",
+  paperPerformanceDesc: "Optimierter Paper-Server mit Aikar-Flags. Ideal für öffentliche Server.",
+  skyblock: "SkyBlock",
+  skyblockDesc: "Starten Sie auf einer schwebenden Insel. Flache Welt ohne Strukturen.",
+  pvpArena: "PvP Arena",
+  pvpArenaDesc: "Kampforientierter Server. Abenteuermodus, keine Mobs, PvP aktiviert.",
+  peacefulParadise: "Friedliches Paradies",
+  peacefulParadiseDesc: "Entspannendes Überleben ohne feindliche Mobs. Perfekt für Gelegenheitsspieler.",
+  amplifiedWorld: "Verstärkte Welt",
+  amplifiedWorldDesc: "Extreme Terrain-Generierung. Erfordert mehr RAM für flüssiges Spielen.",
+};
