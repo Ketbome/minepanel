@@ -1,4 +1,4 @@
-import type { TranslationKey } from './en';
+import type { TranslationKey } from "./en";
 
 export const de: Record<TranslationKey, string> = {
   // ===========================
@@ -1014,5 +1014,52 @@ export const de: Record<TranslationKey, string> = {
   createServerFromModpack: "Einen neuen Server mit diesem Modpack erstellen",
   serverIdRequired: "Server-ID ist erforderlich",
   optional: "optional",
-};
 
+  // ===========================
+  // PLAYER MANAGEMENT
+  // ===========================
+  playerManagement: "Spielerverwaltung",
+  onlinePlayers: "Online Spieler",
+  noPlayersOnline: "Keine Spieler online",
+  whitelist: "Whitelist",
+  whitelistEmpty: "Whitelist ist leer",
+  operators: "Operatoren",
+  noOperators: "Keine Operatoren",
+  bannedPlayers: "Gebannte Spieler",
+  noBannedPlayers: "Keine gebannten Spieler",
+  playerName: "Spielername",
+  kick: "Kicken",
+  ban: "Bannen",
+  unban: "Entbannen",
+  remove: "Entfernen",
+  demote: "Degradieren",
+  promoteToOp: "Zum OP befördern",
+  playerAddedToWhitelist: "Spieler zur Whitelist hinzugefügt",
+  playerRemovedFromWhitelist: "Spieler von der Whitelist entfernt",
+  playerPromotedToOp: "Spieler zum Operator befördert",
+  playerDemotedFromOp: "Spieler vom Operator degradiert",
+  playerKicked: "Spieler gekickt",
+  playerBanned: "Spieler gebannt",
+  playerUnbanned: "Spieler entbannt",
+  saveWorld: "Welt Speichern",
+  whitelistOn: "Whitelist AN",
+  whitelistOff: "Whitelist AUS",
+  timeWeather: "Zeit/Wetter",
+  setDay: "Tag Setzen",
+  setNight: "Nacht Setzen",
+  weatherClear: "Klares Wetter",
+  weatherRain: "Regen",
+  broadcast: "Ankündigen",
+  broadcastPlaceholder: "Nachricht an alle Spieler...",
+  heal: "Heilen",
+  gamemodeChanged: "Spielmodus geändert",
+  playerTeleported: "Spieler teleportiert",
+  playerHealed: "Spieler geheilt",
+  itemsGiven: "Items gegeben",
+  worldSaved: "Welt gespeichert",
+  whitelistEnabled: "Whitelist aktiviert",
+  whitelistDisabled: "Whitelist deaktiviert",
+  messageBroadcast: "Nachricht gesendet",
+  timeChanged: "Zeit geändert",
+  weatherChanged: "Wetter geändert",
+};

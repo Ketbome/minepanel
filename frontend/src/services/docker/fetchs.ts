@@ -202,3 +202,51 @@ export const stopServer = async (
     };
   }
 };
+
+// ==================== PLAYER MANAGEMENT ====================
+
+export interface OnlinePlayersResponse {
+  online: number;
+  max: number;
+  players: string[];
+}
+
+export interface WhitelistPlayer {
+  uuid: string;
+  name: string;
+}
+
+export interface OpPlayer {
+  uuid: string;
+  name: string;
+  level: number;
+  bypassesPlayerLimit: boolean;
+}
+
+export interface BannedPlayer {
+  uuid: string;
+  name: string;
+  created: string;
+  source: string;
+  reason: string;
+}
+
+export const getOnlinePlayers = async (serverId: string, rconPort: string, rconPassword?: string): Promise<OnlinePlayersResponse> => {
+  const response = await api.post(`/servers/${serverId}/players/online`, { rconPort, rconPassword });
+  return response.data;
+};
+
+export const getWhitelist = async (serverId: string): Promise<WhitelistPlayer[]> => {
+  const response = await api.get(`/servers/${serverId}/players/whitelist`);
+  return response.data;
+};
+
+export const getOps = async (serverId: string): Promise<OpPlayer[]> => {
+  const response = await api.get(`/servers/${serverId}/players/ops`);
+  return response.data;
+};
+
+export const getBannedPlayers = async (serverId: string): Promise<BannedPlayer[]> => {
+  const response = await api.get(`/servers/${serverId}/players/banned`);
+  return response.data;
+};

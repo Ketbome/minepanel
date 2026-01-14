@@ -3,7 +3,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as path from 'node:path';
 import * as fs from 'fs-extra';
-import * as yaml from 'yaml';
+import yaml from 'yaml';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
@@ -409,12 +409,12 @@ export class ServerManagementService {
       if (!(await fs.pathExists(composePath))) {
         return { cpuLimit: '1', memoryLimit: '4G' };
       }
-      
+
       const content = await fs.readFile(composePath, 'utf-8');
       const parsed = yaml.parse(content);
       const mcService = parsed?.services?.mc;
       const limits = mcService?.deploy?.resources?.limits;
-      
+
       return {
         cpuLimit: limits?.cpus || '1',
         memoryLimit: limits?.memory || '4G',
@@ -425,14 +425,19 @@ export class ServerManagementService {
     }
   }
 
-  async getAllServersResources(): Promise<Record<string, {
-    status: ServerStatus;
-    cpuUsage: string;
-    memoryUsage: string;
-    memoryLimit: string;
-    cpuLimit: string;
-    memoryConfigLimit: string;
-  }>> {
+  async getAllServersResources(): Promise<
+    Record<
+      string,
+      {
+        status: ServerStatus;
+        cpuUsage: string;
+        memoryUsage: string;
+        memoryLimit: string;
+        cpuLimit: string;
+        memoryConfigLimit: string;
+      }
+    >
+  > {
     try {
       const directories = await fs.readdir(this.SERVERS_DIR);
       const serverDirectories = await Promise.all(
@@ -445,18 +450,18 @@ export class ServerManagementService {
       );
 
       const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
-      
+
       const resourcePromises = validServers.map(async (serverId) => {
         const status = await this.getServerStatus(serverId);
         const limits = await this.getServerLimits(serverId);
-        
+
         if (status !== 'running') {
           return {
             serverId,
-            data: { 
-              status, 
-              cpuUsage: 'N/A', 
-              memoryUsage: 'N/A', 
+            data: {
+              status,
+              cpuUsage: 'N/A',
+              memoryUsage: 'N/A',
               memoryLimit: 'N/A',
               cpuLimit: limits.cpuLimit,
               memoryConfigLimit: limits.memoryLimit,
@@ -467,8 +472,8 @@ export class ServerManagementService {
         const resources = await this.getServerResources(serverId);
         return {
           serverId,
-          data: { 
-            status, 
+          data: {
+            status,
             ...resources,
             cpuLimit: limits.cpuLimit,
             memoryConfigLimit: limits.memoryLimit,
@@ -477,10 +482,13 @@ export class ServerManagementService {
       });
 
       const results = await Promise.all(resourcePromises);
-      return results.reduce((acc, { serverId, data }) => {
-        acc[serverId] = data;
-        return acc;
-      }, {} as Record<string, { status: ServerStatus; cpuUsage: string; memoryUsage: string; memoryLimit: string; cpuLimit: string; memoryConfigLimit: string }>);
+      return results.reduce(
+        (acc, { serverId, data }) => {
+          acc[serverId] = data;
+          return acc;
+        },
+        {} as Record<string, { status: ServerStatus; cpuUsage: string; memoryUsage: string; memoryLimit: string; cpuLimit: string; memoryConfigLimit: string }>,
+      );
     } catch (error) {
       this.logger.error('Error obtaining all servers resources', error);
       return {};
@@ -825,6 +833,80 @@ export class ServerManagementService {
       this.logger.error(`Failed to stop server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
+    }
+  }
+
+  // ==================== PLAYER MANAGEMENT ====================
+  // Las acciones (whitelist add/remove, op/deop, kick, ban, pardon) usan executeCommand directamente
+
+  async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[] }> {
+    try {
+      const result = await this.executeCommand(serverId, 'list', rconPort, rconPassword);
+      if (!result.success) {
+        return { online: 0, max: 0, players: [] };
+      }
+
+      // Parse "There are X of a max of Y players online: player1, player2"
+      const match = result.output.match(/There are (\d+) of a max of (\d+) players online[:\s]*(.*)?/i);
+      if (match) {
+        const online = parseInt(match[1], 10);
+        const max = parseInt(match[2], 10);
+        const playerList = match[3]?.trim();
+        const players = playerList
+          ? playerList
+              .split(',')
+              .map((p) => p.trim())
+              .filter((p) => p)
+          : [];
+        return { online, max, players };
+      }
+
+      return { online: 0, max: 0, players: [] };
+    } catch (error) {
+      this.logger.error(`Failed to get online players for ${serverId}`, error);
+      return { online: 0, max: 0, players: [] };
+    }
+  }
+
+  async getWhitelist(serverId: string): Promise<Array<{ uuid: string; name: string }>> {
+    try {
+      const whitelistPath = path.join(this.getMcDataPath(serverId), 'whitelist.json');
+      if (!(await fs.pathExists(whitelistPath))) {
+        return [];
+      }
+      const content = await fs.readFile(whitelistPath, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      this.logger.error(`Failed to read whitelist for ${serverId}`, error);
+      return [];
+    }
+  }
+
+  async getOps(serverId: string): Promise<Array<{ uuid: string; name: string; level: number; bypassesPlayerLimit: boolean }>> {
+    try {
+      const opsPath = path.join(this.getMcDataPath(serverId), 'ops.json');
+      if (!(await fs.pathExists(opsPath))) {
+        return [];
+      }
+      const content = await fs.readFile(opsPath, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      this.logger.error(`Failed to read ops for ${serverId}`, error);
+      return [];
+    }
+  }
+
+  async getBannedPlayers(serverId: string): Promise<Array<{ uuid: string; name: string; created: string; source: string; reason: string }>> {
+    try {
+      const bannedPath = path.join(this.getMcDataPath(serverId), 'banned-players.json');
+      if (!(await fs.pathExists(bannedPath))) {
+        return [];
+      }
+      const content = await fs.readFile(bannedPath, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      this.logger.error(`Failed to read banned players for ${serverId}`, error);
+      return [];
     }
   }
 }

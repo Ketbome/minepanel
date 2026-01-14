@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, Settings as SettingsIcon } from "lucide-react";
+import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check } from "lucide-react";
 import { fetchServerList, createServer, getAllServersStatus, deleteServer } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
 import { useServersStore } from "@/lib/store";
+import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
 
 type ServerInfo = {
   id: string;
@@ -35,6 +36,8 @@ export default function Dashboard() {
   const [isCreatingServer, setIsCreatingServer] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeletingServer, setIsDeletingServer] = useState<string | null>(null);
+  const [createMode, setCreateMode] = useState<"quick" | "template">("quick");
+  const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
 
   const form = useForm<{ id: string }>({
     defaultValues: {
@@ -149,11 +152,14 @@ export default function Dashboard() {
   const handleCreateServer = async (values: { id: string }) => {
     setIsCreatingServer(true);
     try {
-      const response = await createServer({ id: values.id });
+      const serverData = selectedTemplate ? { id: values.id, ...selectedTemplate.config } : { id: values.id };
+      const response = await createServer(serverData);
       if (response.success) {
         mcToast.success(`${t("serverCreatedSuccess")} "${values.id}"`);
         setIsDialogOpen(false);
         form.reset();
+        setSelectedTemplate(null);
+        setCreateMode("quick");
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await fetchServersFromBackend();
         refreshGlobalServers();
@@ -197,20 +203,70 @@ export default function Dashboard() {
           <p className="text-gray-400 mt-2">{t("dashboardDescription")}</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setSelectedTemplate(null); setCreateMode("quick"); } }}>
           <DialogTrigger asChild>
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
               <Plus className="h-4 w-4 mr-2" />
               {t("createServer")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-700 text-white">
+          <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700 text-white max-h-[85vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="font-minecraft">{t("createNewServer")}</DialogTitle>
-              <DialogDescription className="text-gray-400">{t("enterServerName")}</DialogDescription>
+              <DialogDescription className="text-gray-400">{t("chooseCreationMethod")}</DialogDescription>
             </DialogHeader>
+
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-gray-700 pb-2">
+              <Button type="button" variant={createMode === "quick" ? "default" : "ghost"} size="sm" onClick={() => { setCreateMode("quick"); setSelectedTemplate(null); }} className={createMode === "quick" ? "bg-emerald-600" : "text-gray-400"}>
+                <Zap className="h-4 w-4 mr-1" /> {t("quickCreate")}
+              </Button>
+              <Button type="button" variant={createMode === "template" ? "default" : "ghost"} size="sm" onClick={() => setCreateMode("template")} className={createMode === "template" ? "bg-emerald-600" : "text-gray-400"}>
+                <LayoutTemplate className="h-4 w-4 mr-1" /> {t("fromTemplate")}
+              </Button>
+            </div>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleCreateServer)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(handleCreateServer)} className="space-y-4 flex-1 overflow-hidden flex flex-col">
+                {createMode === "template" && (
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+                    <p className="text-sm text-gray-400 mb-2">{t("selectTemplate")}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {serverTemplates.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => setSelectedTemplate(template)}
+                          className={`p-3 rounded-lg border text-left transition-all ${
+                            selectedTemplate?.id === template.id
+                              ? "border-emerald-500 bg-emerald-900/30"
+                              : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Image src={`/images/${template.icon}.webp`} alt={template.name} width={24} height={24} className="mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-minecraft text-sm text-white">{t(template.name)}</span>
+                                {selectedTemplate?.id === template.id && <Check className="h-4 w-4 text-emerald-400" />}
+                              </div>
+                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t(template.description)}</p>
+                              <div className="flex gap-1 mt-1">
+                                <Badge variant="outline" className="text-[10px] px-1 py-0">{template.config.serverType}</Badge>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0">{template.config.gameMode}</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {createMode === "quick" && (
+                  <p className="text-sm text-gray-400">{t("quickCreateDesc")}</p>
+                )}
+
                 <FormField
                   control={form.control}
                   name="id"
@@ -225,11 +281,19 @@ export default function Dashboard() {
                     </FormItem>
                   )}
                 />
-                <DialogFooter className="gap-3 sm:gap-0">
+
+                {selectedTemplate && (
+                  <div className="p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg">
+                    <p className="text-sm text-emerald-400 font-minecraft">{t("templateSelected")}: {t(selectedTemplate.name)}</p>
+                    <p className="text-xs text-gray-400 mt-1">{t(selectedTemplate.description)}</p>
+                  </div>
+                )}
+
+                <DialogFooter className="gap-3 sm:gap-0 pt-2">
                   <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)} className="bg-gray-700 hover:bg-gray-600">
                     {t("cancel")}
                   </Button>
-                  <Button type="submit" disabled={isCreatingServer} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Button type="submit" disabled={isCreatingServer || (createMode === "template" && !selectedTemplate)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                     {isCreatingServer ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
