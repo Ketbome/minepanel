@@ -1076,4 +1076,30 @@ export const nl: Record<TranslationKey, string> = {
   messageBroadcast: "Bericht verzonden",
   timeChanged: "Tijd gewijzigd",
   weatherChanged: "Weer gewijzigd",
+
+  // ===========================
+  // SERVER TEMPLATES
+  // ===========================
+  chooseCreationMethod: "Kies hoe je je server wilt maken",
+  quickCreate: "Snel Maken",
+  fromTemplate: "Van Sjabloon",
+  selectTemplate: "Selecteer een sjabloon om snel te starten",
+  quickCreateDesc: "Maak een lege server met standaardinstellingen. Je kunt alles later configureren.",
+  templateSelected: "Sjabloon geselecteerd",
+  vanillaSurvival: "Vanilla Survival",
+  vanillaSurvivalDesc: "De klassieke Minecraft-ervaring. Overlevingsmodus met normale moeilijkheid.",
+  vanillaCreative: "Vanilla Creative",
+  vanillaCreativeDesc: "Onbeperkte creativiteit. Bouw vrij met alle blokken en geen monsters.",
+  vanillaHardcore: "Vanilla Hardcore",
+  vanillaHardcoreDesc: "Slechts één leven. Moeilijke moeilijkheidsgraad, geen tweede kansen.",
+  paperPerformance: "Paper Prestatie",
+  paperPerformanceDesc: "Geoptimaliseerde Paper-server met Aikar-vlaggen. Ideaal voor openbare servers.",
+  skyblock: "SkyBlock",
+  skyblockDesc: "Begin op een zwevend eiland. Vlakke wereld zonder structuren.",
+  pvpArena: "PvP Arena",
+  pvpArenaDesc: "Gevechtsgerichte server. Avontuurmodus, geen mobs, PvP ingeschakeld.",
+  peacefulParadise: "Vredige Paradise",
+  peacefulParadiseDesc: "Ontspannende survival zonder vijandige mobs. Perfect voor casual spelen.",
+  amplifiedWorld: "Versterkte Wereld",
+  amplifiedWorldDesc: "Extreme terrein generatie. Vereist meer RAM voor soepel spel.",
 };

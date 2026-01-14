@@ -1062,4 +1062,30 @@ export const de: Record<TranslationKey, string> = {
   messageBroadcast: "Nachricht gesendet",
   timeChanged: "Zeit geändert",
   weatherChanged: "Wetter geändert",
+
+  // ===========================
+  // SERVER TEMPLATES
+  // ===========================
+  chooseCreationMethod: "Wählen Sie, wie Sie Ihren Server erstellen möchten",
+  quickCreate: "Schnell Erstellen",
+  fromTemplate: "Von Vorlage",
+  selectTemplate: "Wählen Sie eine Vorlage, um schnell zu starten",
+  quickCreateDesc: "Erstellen Sie einen leeren Server mit Standardeinstellungen. Sie können alles später konfigurieren.",
+  templateSelected: "Vorlage ausgewählt",
+  vanillaSurvival: "Vanilla Überleben",
+  vanillaSurvivalDesc: "Das klassische Minecraft-Erlebnis. Überlebensmodus mit normalem Schwierigkeitsgrad.",
+  vanillaCreative: "Vanilla Kreativ",
+  vanillaCreativeDesc: "Unbegrenzte Kreativität. Bauen Sie frei mit allen Blöcken und ohne Monster.",
+  vanillaHardcore: "Vanilla Hardcore",
+  vanillaHardcoreDesc: "Nur ein Leben. Schwerer Schwierigkeitsgrad, keine zweiten Chancen.",
+  paperPerformance: "Paper Leistung",
+  paperPerformanceDesc: "Optimierter Paper-Server mit Aikar-Flags. Ideal für öffentliche Server.",
+  skyblock: "SkyBlock",
+  skyblockDesc: "Starten Sie auf einer schwebenden Insel. Flache Welt ohne Strukturen.",
+  pvpArena: "PvP Arena",
+  pvpArenaDesc: "Kampforientierter Server. Abenteuermodus, keine Mobs, PvP aktiviert.",
+  peacefulParadise: "Friedliches Paradies",
+  peacefulParadiseDesc: "Entspannendes Überleben ohne feindliche Mobs. Perfekt für Gelegenheitsspieler.",
+  amplifiedWorld: "Verstärkte Welt",
+  amplifiedWorldDesc: "Extreme Terrain-Generierung. Erfordert mehr RAM für flüssiges Spielen.",
 };

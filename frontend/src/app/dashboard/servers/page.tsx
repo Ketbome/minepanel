@@ -18,6 +18,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
 import { useServersStore } from "@/lib/store";
 import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
+import { TranslationKey } from "@/lib/translations";
 
 type ServerInfo = {
   id: string;
@@ -203,7 +204,16 @@ export default function Dashboard() {
           <p className="text-gray-400 mt-2">{t("dashboardDescription")}</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setSelectedTemplate(null); setCreateMode("quick"); } }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setSelectedTemplate(null);
+              setCreateMode("quick");
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
               <Plus className="h-4 w-4 mr-2" />
@@ -218,7 +228,16 @@ export default function Dashboard() {
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-gray-700 pb-2">
-              <Button type="button" variant={createMode === "quick" ? "default" : "ghost"} size="sm" onClick={() => { setCreateMode("quick"); setSelectedTemplate(null); }} className={createMode === "quick" ? "bg-emerald-600" : "text-gray-400"}>
+              <Button
+                type="button"
+                variant={createMode === "quick" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setCreateMode("quick");
+                  setSelectedTemplate(null);
+                }}
+                className={createMode === "quick" ? "bg-emerald-600" : "text-gray-400"}
+              >
                 <Zap className="h-4 w-4 mr-1" /> {t("quickCreate")}
               </Button>
               <Button type="button" variant={createMode === "template" ? "default" : "ghost"} size="sm" onClick={() => setCreateMode("template")} className={createMode === "template" ? "bg-emerald-600" : "text-gray-400"}>
@@ -233,27 +252,22 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400 mb-2">{t("selectTemplate")}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {serverTemplates.map((template) => (
-                        <button
-                          key={template.id}
-                          type="button"
-                          onClick={() => setSelectedTemplate(template)}
-                          className={`p-3 rounded-lg border text-left transition-all ${
-                            selectedTemplate?.id === template.id
-                              ? "border-emerald-500 bg-emerald-900/30"
-                              : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                          }`}
-                        >
+                        <button key={template.id} type="button" onClick={() => setSelectedTemplate(template)} className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate?.id === template.id ? "border-emerald-500 bg-emerald-900/30" : "border-gray-700 bg-gray-800/50 hover:border-gray-600"}`}>
                           <div className="flex items-start gap-2">
                             <Image src={`/images/${template.icon}.webp`} alt={template.name} width={24} height={24} className="mt-0.5" />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-minecraft text-sm text-white">{t(template.name)}</span>
+                                <span className="font-minecraft text-sm text-white">{t(template.name as TranslationKey)}</span>
                                 {selectedTemplate?.id === template.id && <Check className="h-4 w-4 text-emerald-400" />}
                               </div>
-                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t(template.description)}</p>
+                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t(template.description as TranslationKey)}</p>
                               <div className="flex gap-1 mt-1">
-                                <Badge variant="outline" className="text-[10px] px-1 py-0">{template.config.serverType}</Badge>
-                                <Badge variant="outline" className="text-[10px] px-1 py-0">{template.config.gameMode}</Badge>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                  {template.config.serverType}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                  {template.config.gameMode}
+                                </Badge>
                               </div>
                             </div>
                           </div>
@@ -263,9 +277,7 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {createMode === "quick" && (
-                  <p className="text-sm text-gray-400">{t("quickCreateDesc")}</p>
-                )}
+                {createMode === "quick" && <p className="text-sm text-gray-400">{t("quickCreateDesc")}</p>}
 
                 <FormField
                   control={form.control}
@@ -284,8 +296,10 @@ export default function Dashboard() {
 
                 {selectedTemplate && (
                   <div className="p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg">
-                    <p className="text-sm text-emerald-400 font-minecraft">{t("templateSelected")}: {t(selectedTemplate.name)}</p>
-                    <p className="text-xs text-gray-400 mt-1">{t(selectedTemplate.description)}</p>
+                    <p className="text-sm text-emerald-400 font-minecraft">
+                      {t("templateSelected")}: {t(selectedTemplate.name as TranslationKey)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">{t(selectedTemplate.description as TranslationKey)}</p>
                   </div>
                 )}
 
