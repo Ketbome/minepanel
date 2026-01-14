@@ -49,28 +49,31 @@ flowchart LR
 - Error alerts
 - Custom events
 
+### ✅ Dashboard improvements (v1.7)
+
+- ~~Quick view of all servers (status, players, resources)~~
+- ~~Visual alerts (high CPU/RAM usage)~~
+- ~~Real-time sidebar sync~~
+- Usage graphs (CPU/RAM last 24h) - _pending, requires historical data_
+
+### ✅ Server creation wizard (v1.7)
+
+- ~~"Quick create" for advanced users~~
+- ~~Predefined templates (Survival, Creative, SkyBlock, PvP, etc.)~~
+- ~~8 built-in templates with pre-configured settings~~
+
+### ✅ Player management (v1.7)
+
+- ~~View online players~~
+- ~~Whitelist management from panel~~
+- ~~Ops management from panel~~
+- ~~Ban/kick from panel~~
+- ~~Quick actions per player (gamemode, tp, heal, give items)~~
+- ~~Server admin actions (save, whitelist toggle, time/weather, broadcast)~~
+
 ---
 
-## Phase 1: Stabilization & UX (v1.7 - v1.9)
-
-### Dashboard improvements
-
-- Quick view of all servers (status, players, resources)
-- Usage graphs (CPU/RAM last 24h)
-- Visual alerts (server down, high resource usage)
-
-### Server creation wizard
-
-- Step-by-step wizard for beginners
-- "Quick create" for advanced users
-- Predefined templates (Survival, Creative, SkyBlock, etc.)
-
-### Player management
-
-- View online players
-- Whitelist from panel
-- Ops management from panel
-- Ban/kick from panel
+## Phase 1: Stabilization & UX (v1.8 - v1.9)
 
 ### Plugin/Mod browser
 
@@ -276,7 +279,8 @@ gantt
 
 | Quarter | Version  | Focus         | Key Features                                        |
 | ------- | -------- | ------------- | --------------------------------------------------- |
-| Q1      | v1.7-1.9 | **Stable**    | Dashboard, Wizard, Scheduler, Players, Plugins      |
+| Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management             |
+| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs              |
 | Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                     |
 | Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity |
 | Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins              |

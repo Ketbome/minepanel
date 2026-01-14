@@ -50,7 +50,7 @@ features:
 
   - icon: 🌍
     title: Multi-language
-    details: English and Spanish. More coming.
+    details: English, Spanish, Dutch, and German.
 
   - icon: 🔄
     title: Multi-arch
@@ -83,21 +83,28 @@ Go to http://localhost:3000
 
 ## What's next
 
-### Coming soon
+### Recently Added (v1.7)
+
+- ✅ Server templates (Survival, Creative, SkyBlock, etc.)
+- ✅ Player management (whitelist, ops, bans, kick)
+- ✅ Dashboard with server quick view
+- ✅ Quick admin actions (save, broadcast, time/weather)
+- ✅ CurseForge modpack browser
+- ✅ Discord webhooks
+
+### Coming Soon
 
 - Better log viewer with search and filtering
 - Edit server.properties from the UI
-- Reverse proxy helper
-- CurseForge modpack browser
+- Scheduled tasks (auto restart, commands)
+- Plugin browser from panel
 
 ### Planned
 
 - User roles and permissions
-- Server templates
-- Better graphs and metrics
-- Discord webhooks
-- Plugin manager
-- World uploader/switcher
+- Historical metrics and graphs
+- Multi-node support (Docker Swarm)
+- Cloud backups
 
 Want to help? Check the [Contributing Guide](/development#contributing)
 

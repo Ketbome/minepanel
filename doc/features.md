@@ -46,9 +46,25 @@ From 1.8 to latest. Snapshots too.
 3. Wait
 4. Done
 
+### Server Templates
+
+Create servers quickly with predefined configurations:
+
+| Template          | Type    | Description                           |
+| ----------------- | ------- | ------------------------------------- |
+| Vanilla Survival  | VANILLA | Classic experience, normal difficulty |
+| Vanilla Creative  | VANILLA | Unlimited creativity, no monsters     |
+| Vanilla Hardcore  | VANILLA | One life, hard difficulty             |
+| Paper Performance | PAPER   | Optimized with Aikar flags            |
+| SkyBlock          | PAPER   | Flat world, no structures             |
+| PvP Arena         | PAPER   | Adventure mode, combat-focused        |
+| Peaceful Paradise | VANILLA | No hostile mobs                       |
+| Amplified World   | VANILLA | Extreme terrain generation            |
+
 ### Mod Management
 
 **Modrinth Integration:**
+
 - Auto-download mods from Modrinth
 - Support for Fabric, Forge, and modded servers
 - Automatic dependency resolution
@@ -56,23 +72,34 @@ From 1.8 to latest. Snapshots too.
 - Multiple reference formats (slug, version, project ID)
 
 **CurseForge Files:**
+
 - Download individual mods from CurseForge
 - Multiple reference formats (URL, slug, file ID)
 - Auto-select latest compatible versions
 - Works alongside Modrinth
 
 **Combined Support:**
+
 - Use both Modrinth and CurseForge simultaneously
 - Automatic cleanup of removed mods
 - File listing support for easier management
 
 ## Monitoring
 
+### Dashboard
+
+Quick overview of all servers:
+
+- Server status cards (Running/Stopped/Starting)
+- Resource usage per server (CPU/RAM percentages)
+- Visual alerts for high resource usage
+- Real-time sidebar synchronization
+
 ### Status at a glance
 
 - Running/Stopped/Starting
 - Player count
-- CPU/RAM usage
+- CPU/RAM usage with configured limits
 - Uptime
 
 ### Live logs
@@ -110,6 +137,46 @@ Send commands directly:
 /op PlayerName
 /whitelist add PlayerName
 ```
+
+### Player Management
+
+Full player control from the panel:
+
+**Online Players:**
+
+- View current players
+- Quick actions per player:
+  - Change gamemode (Survival/Creative/Spectator)
+  - Teleport to spawn
+  - Heal player
+  - Give items
+  - Kick/Ban
+
+**Whitelist:**
+
+- Add/remove players
+- Visual list with OP indicators
+
+**Operators:**
+
+- Manage OPs from panel
+- Promote players from whitelist
+- View permission levels
+
+**Banned Players:**
+
+- View ban list with reasons
+- Unban players easily
+
+### Quick Admin Actions
+
+One-click server administration:
+
+- 💾 Save World
+- 🛡️ Whitelist ON/OFF toggle
+- ☀️ Set Day/Night
+- 🌧️ Set Weather (Clear/Rain)
+- 📢 Broadcast message to all players
 
 ## Backups
 
@@ -153,7 +220,8 @@ Edit from the UI:
 
 - English
 - Spanish
-- More coming
+- Dutch
+- German
 
 ## Multi-architecture
 
