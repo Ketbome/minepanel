@@ -18,39 +18,41 @@ type Alert = {
   value?: number;
 };
 
-const CPU_WARNING_THRESHOLD = 150;
-const MEMORY_WARNING_THRESHOLD = 85;
+// Alert when usage exceeds 80% of configured limit
+const WARNING_THRESHOLD = 80;
 
 function parsePercentage(value: string): number {
   const match = value.match(/[\d.]+/);
   return match ? parseFloat(match[0]) : 0;
 }
 
-function parseMemoryToPercent(usage: string, limit: string): number {
-  if (usage === "N/A" || limit === "N/A") return 0;
+function parseCpuLimit(limit: string): number {
+  const value = parseFloat(limit);
+  return isNaN(value) ? 1 : value;
+}
 
-  const parseSize = (str: string): number => {
-    const match = str.match(/([\d.]+)\s*([KMGT]?i?B)/i);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2].toUpperCase();
-    const multipliers: Record<string, number> = {
-      B: 1,
-      KB: 1024,
-      KIB: 1024,
-      MB: 1024 ** 2,
-      MIB: 1024 ** 2,
-      GB: 1024 ** 3,
-      GIB: 1024 ** 3,
-      TB: 1024 ** 4,
-      TIB: 1024 ** 4,
-    };
-    return value * (multipliers[unit] || 1);
+function parseMemorySize(str: string): number {
+  const match = str.match(/([\d.]+)\s*([KMGT]?i?B?)/i);
+  if (!match) return 0;
+  const value = parseFloat(match[1]);
+  const unit = match[2].toUpperCase();
+  const multipliers: Record<string, number> = {
+    "": 1,
+    B: 1,
+    K: 1024,
+    KB: 1024,
+    KIB: 1024,
+    M: 1024 ** 2,
+    MB: 1024 ** 2,
+    MIB: 1024 ** 2,
+    G: 1024 ** 3,
+    GB: 1024 ** 3,
+    GIB: 1024 ** 3,
+    T: 1024 ** 4,
+    TB: 1024 ** 4,
+    TIB: 1024 ** 4,
   };
-
-  const usedBytes = parseSize(usage);
-  const limitBytes = parseSize(limit);
-  return limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0;
+  return value * (multipliers[unit] || 1);
 }
 
 export function SystemAlerts({ servers }: SystemAlertsProps) {
@@ -74,28 +76,32 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
           cpuUsage: "N/A",
           memoryUsage: "N/A",
           memoryLimit: "N/A",
+          cpuLimit: "1",
+          memoryConfigLimit: "4G",
         };
 
         const serverName = server.serverName || server.id;
 
-        // Only check alerts for running servers (stopped servers are intentional)
         if (res.status === "running") {
           const cpuUsage = parsePercentage(res.cpuUsage);
-          const memoryPercent = parseMemoryToPercent(res.memoryUsage, res.memoryLimit);
+          const cpuLimit = parseCpuLimit(res.cpuLimit);
+          const cpuPercent = cpuLimit > 0 ? (cpuUsage / (cpuLimit * 100)) * 100 : 0;
 
-          // High CPU alert
-          if (cpuUsage >= CPU_WARNING_THRESHOLD) {
+          const memoryUsed = parseMemorySize(res.memoryUsage);
+          const memoryLimit = parseMemorySize(res.memoryConfigLimit);
+          const memoryPercent = memoryLimit > 0 ? (memoryUsed / memoryLimit) * 100 : 0;
+
+          if (cpuPercent >= WARNING_THRESHOLD) {
             newAlerts.push({
               id: `cpu-${server.id}`,
               type: "high_cpu",
               serverId: server.id,
               serverName,
-              value: cpuUsage,
+              value: cpuPercent,
             });
           }
 
-          // High memory alert
-          if (memoryPercent >= MEMORY_WARNING_THRESHOLD) {
+          if (memoryPercent >= WARNING_THRESHOLD) {
             newAlerts.push({
               id: `mem-${server.id}`,
               type: "high_memory",
@@ -137,7 +143,7 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
           textColor: "text-yellow-400",
           message: t("alertHighCPU")
             .replace("{server}", alert.serverName)
-            .replace("{value}", alert.value?.toFixed(1) || "0"),
+            .replace("{value}", alert.value?.toFixed(0) || "0"),
         };
       case "high_memory":
         return {
@@ -147,7 +153,7 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
           textColor: "text-orange-400",
           message: t("alertHighMemory")
             .replace("{server}", alert.serverName)
-            .replace("{value}", alert.value?.toFixed(1) || "0"),
+            .replace("{value}", alert.value?.toFixed(0) || "0"),
         };
     }
   };

@@ -3,6 +3,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as path from 'node:path';
 import * as fs from 'fs-extra';
+import * as yaml from 'yaml';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
@@ -402,11 +403,35 @@ export class ServerManagementService {
     }
   }
 
+  private async getServerLimits(serverId: string): Promise<{ cpuLimit: string; memoryLimit: string }> {
+    try {
+      const composePath = this.getDockerComposePath(serverId);
+      if (!(await fs.pathExists(composePath))) {
+        return { cpuLimit: '1', memoryLimit: '4G' };
+      }
+      
+      const content = await fs.readFile(composePath, 'utf-8');
+      const parsed = yaml.parse(content);
+      const mcService = parsed?.services?.mc;
+      const limits = mcService?.deploy?.resources?.limits;
+      
+      return {
+        cpuLimit: limits?.cpus || '1',
+        memoryLimit: limits?.memory || '4G',
+      };
+    } catch (error) {
+      this.logger.warn(`Failed to read limits for ${serverId}:`, error);
+      return { cpuLimit: '1', memoryLimit: '4G' };
+    }
+  }
+
   async getAllServersResources(): Promise<Record<string, {
     status: ServerStatus;
     cpuUsage: string;
     memoryUsage: string;
     memoryLimit: string;
+    cpuLimit: string;
+    memoryConfigLimit: string;
   }>> {
     try {
       const directories = await fs.readdir(this.SERVERS_DIR);
@@ -423,18 +448,31 @@ export class ServerManagementService {
       
       const resourcePromises = validServers.map(async (serverId) => {
         const status = await this.getServerStatus(serverId);
+        const limits = await this.getServerLimits(serverId);
         
         if (status !== 'running') {
           return {
             serverId,
-            data: { status, cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },
+            data: { 
+              status, 
+              cpuUsage: 'N/A', 
+              memoryUsage: 'N/A', 
+              memoryLimit: 'N/A',
+              cpuLimit: limits.cpuLimit,
+              memoryConfigLimit: limits.memoryLimit,
+            },
           };
         }
 
         const resources = await this.getServerResources(serverId);
         return {
           serverId,
-          data: { status, ...resources },
+          data: { 
+            status, 
+            ...resources,
+            cpuLimit: limits.cpuLimit,
+            memoryConfigLimit: limits.memoryLimit,
+          },
         };
       });
 
@@ -442,7 +480,7 @@ export class ServerManagementService {
       return results.reduce((acc, { serverId, data }) => {
         acc[serverId] = data;
         return acc;
-      }, {} as Record<string, { status: ServerStatus; cpuUsage: string; memoryUsage: string; memoryLimit: string }>);
+      }, {} as Record<string, { status: ServerStatus; cpuUsage: string; memoryUsage: string; memoryLimit: string; cpuLimit: string; memoryConfigLimit: string }>);
     } catch (error) {
       this.logger.error('Error obtaining all servers resources', error);
       return {};

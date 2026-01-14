@@ -17,8 +17,9 @@ type ServerWithResources = {
   name: string;
   status: "running" | "stopped" | "starting" | "not_found";
   cpuUsage: number;
+  cpuLimit: number;
+  cpuPercent: number;
   memoryUsage: string;
-  memoryLimit: string;
   memoryPercent: number;
 };
 
@@ -27,30 +28,39 @@ function parsePercentage(value: string): number {
   return match ? parseFloat(match[0]) : 0;
 }
 
-function parseMemoryToPercent(usage: string, limit: string): number {
-  if (usage === "N/A" || limit === "N/A") return 0;
+function parseCpuLimit(limit: string): number {
+  const value = parseFloat(limit);
+  return isNaN(value) ? 1 : value;
+}
 
-  const parseSize = (str: string): number => {
-    const match = str.match(/([\d.]+)\s*([KMGT]?i?B)/i);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2].toUpperCase();
-    const multipliers: Record<string, number> = {
-      B: 1,
-      KB: 1024,
-      KIB: 1024,
-      MB: 1024 ** 2,
-      MIB: 1024 ** 2,
-      GB: 1024 ** 3,
-      GIB: 1024 ** 3,
-      TB: 1024 ** 4,
-      TIB: 1024 ** 4,
-    };
-    return value * (multipliers[unit] || 1);
+function parseMemorySize(str: string): number {
+  const match = str.match(/([\d.]+)\s*([KMGT]?i?B?)/i);
+  if (!match) return 0;
+  const value = parseFloat(match[1]);
+  const unit = match[2].toUpperCase();
+  const multipliers: Record<string, number> = {
+    "": 1,
+    B: 1,
+    K: 1024,
+    KB: 1024,
+    KIB: 1024,
+    M: 1024 ** 2,
+    MB: 1024 ** 2,
+    MIB: 1024 ** 2,
+    G: 1024 ** 3,
+    GB: 1024 ** 3,
+    GIB: 1024 ** 3,
+    T: 1024 ** 4,
+    TB: 1024 ** 4,
+    TIB: 1024 ** 4,
   };
+  return value * (multipliers[unit] || 1);
+}
 
-  const usedBytes = parseSize(usage);
-  const limitBytes = parseSize(limit);
+function parseMemoryToPercent(usage: string, configLimit: string): number {
+  if (usage === "N/A" || !configLimit) return 0;
+  const usedBytes = parseMemorySize(usage);
+  const limitBytes = parseMemorySize(configLimit);
   return limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0;
 }
 
@@ -75,16 +85,25 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
           cpuUsage: "N/A",
           memoryUsage: "N/A",
           memoryLimit: "N/A",
+          cpuLimit: "1",
+          memoryConfigLimit: "4G",
         };
+
+        const cpuUsage = parsePercentage(res.cpuUsage);
+        const cpuLimit = parseCpuLimit(res.cpuLimit);
+        // CPU usage is relative to system, limit is number of cores
+        // 100% per core, so cpuLimit=2 means max 200%
+        const cpuPercent = cpuLimit > 0 ? (cpuUsage / (cpuLimit * 100)) * 100 : 0;
 
         return {
           id: server.id,
           name: server.serverName || server.id,
           status: res.status,
-          cpuUsage: parsePercentage(res.cpuUsage),
+          cpuUsage,
+          cpuLimit,
+          cpuPercent,
           memoryUsage: res.memoryUsage,
-          memoryLimit: res.memoryLimit,
-          memoryPercent: parseMemoryToPercent(res.memoryUsage, res.memoryLimit),
+          memoryPercent: parseMemoryToPercent(res.memoryUsage, res.memoryConfigLimit),
         };
       });
 
@@ -115,20 +134,14 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
     }
   };
 
-  // CPU can exceed 100% with multiple cores (200% = 2 cores at 100%)
-  const getCpuColor = (percent: number) => {
-    if (percent >= 150) return "from-red-600 to-red-400";
-    if (percent >= 100) return "from-yellow-600 to-yellow-400";
-    return "from-emerald-600 to-emerald-400";
-  };
-
-  const getMemoryColor = (percent: number) => {
+  // Colors based on percentage of configured limit
+  const getUsageColor = (percent: number) => {
     if (percent >= 90) return "from-red-600 to-red-400";
     if (percent >= 70) return "from-yellow-600 to-yellow-400";
     return "from-emerald-600 to-emerald-400";
   };
 
-  const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuUsage >= 150 || server.memoryPercent >= 85);
+  const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuPercent >= 80 || server.memoryPercent >= 80);
 
   if (servers.length === 0) return null;
 
@@ -172,20 +185,20 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <Cpu className="w-3 h-3" />
                           <span>CPU</span>
-                          <span className="ml-auto font-mono">{server.cpuUsage.toFixed(1)}%</span>
+                          <span className="ml-auto font-mono">{server.cpuPercent.toFixed(0)}%</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getCpuColor(server.cpuUsage)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuUsage / 2, 100)}%` }} />
+                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.cpuPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuPercent, 100)}%` }} />
                         </div>
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <Activity className="w-3 h-3" />
                           <span>RAM</span>
-                          <span className="ml-auto font-mono">{server.memoryUsage}</span>
+                          <span className="ml-auto font-mono">{server.memoryPercent.toFixed(0)}%</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getMemoryColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
+                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
                         </div>
                       </div>
                     </div>

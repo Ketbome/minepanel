@@ -153,6 +153,8 @@ export type ServerResourceInfo = {
   cpuUsage: string;
   memoryUsage: string;
   memoryLimit: string;
+  cpuLimit: string;
+  memoryConfigLimit: string;
 };
 
 export const getAllServersResources = async (): Promise<Record<string, ServerResourceInfo>> => {
