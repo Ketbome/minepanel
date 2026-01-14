@@ -115,13 +115,20 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
     }
   };
 
-  const getUsageColor = (percent: number) => {
+  // CPU can exceed 100% with multiple cores (200% = 2 cores at 100%)
+  const getCpuColor = (percent: number) => {
+    if (percent >= 150) return "from-red-600 to-red-400";
+    if (percent >= 100) return "from-yellow-600 to-yellow-400";
+    return "from-emerald-600 to-emerald-400";
+  };
+
+  const getMemoryColor = (percent: number) => {
     if (percent >= 90) return "from-red-600 to-red-400";
     if (percent >= 70) return "from-yellow-600 to-yellow-400";
     return "from-emerald-600 to-emerald-400";
   };
 
-  const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuUsage >= 80 || server.memoryPercent >= 80);
+  const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuUsage >= 150 || server.memoryPercent >= 85);
 
   if (servers.length === 0) return null;
 
@@ -168,7 +175,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                           <span className="ml-auto font-mono">{server.cpuUsage.toFixed(1)}%</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.cpuUsage)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuUsage, 100)}%` }} />
+                          <div className={`h-full bg-linear-to-r ${getCpuColor(server.cpuUsage)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuUsage / 2, 100)}%` }} />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -178,7 +185,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                           <span className="ml-auto font-mono">{server.memoryUsage}</span>
                         </div>
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
+                          <div className={`h-full bg-linear-to-r ${getMemoryColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
                         </div>
                       </div>
                     </div>

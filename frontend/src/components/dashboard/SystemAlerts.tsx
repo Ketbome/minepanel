@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, Server, Cpu, Activity, X } from "lucide-react";
+import { AlertTriangle, Cpu, Activity, X } from "lucide-react";
 import { getAllServersResources, ServerResourceInfo } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -12,13 +12,13 @@ interface SystemAlertsProps {
 
 type Alert = {
   id: string;
-  type: "server_down" | "high_cpu" | "high_memory";
+  type: "high_cpu" | "high_memory";
   serverId: string;
   serverName: string;
   value?: number;
 };
 
-const CPU_WARNING_THRESHOLD = 80;
+const CPU_WARNING_THRESHOLD = 150;
 const MEMORY_WARNING_THRESHOLD = 85;
 
 function parsePercentage(value: string): number {
@@ -28,17 +28,22 @@ function parsePercentage(value: string): number {
 
 function parseMemoryToPercent(usage: string, limit: string): number {
   if (usage === "N/A" || limit === "N/A") return 0;
-  
+
   const parseSize = (str: string): number => {
     const match = str.match(/([\d.]+)\s*([KMGT]?i?B)/i);
     if (!match) return 0;
     const value = parseFloat(match[1]);
     const unit = match[2].toUpperCase();
     const multipliers: Record<string, number> = {
-      "B": 1, "KB": 1024, "KIB": 1024,
-      "MB": 1024 ** 2, "MIB": 1024 ** 2,
-      "GB": 1024 ** 3, "GIB": 1024 ** 3,
-      "TB": 1024 ** 4, "TIB": 1024 ** 4,
+      B: 1,
+      KB: 1024,
+      KIB: 1024,
+      MB: 1024 ** 2,
+      MIB: 1024 ** 2,
+      GB: 1024 ** 3,
+      GIB: 1024 ** 3,
+      TB: 1024 ** 4,
+      TIB: 1024 ** 4,
     };
     return value * (multipliers[unit] || 1);
   };
@@ -73,16 +78,7 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
 
         const serverName = server.serverName || server.id;
 
-        // Server down alert
-        if (res.status === "stopped" || res.status === "not_found") {
-          newAlerts.push({
-            id: `down-${server.id}`,
-            type: "server_down",
-            serverId: server.id,
-            serverName,
-          });
-        }
-
+        // Only check alerts for running servers (stopped servers are intentional)
         if (res.status === "running") {
           const cpuUsage = parsePercentage(res.cpuUsage);
           const memoryPercent = parseMemoryToPercent(res.memoryUsage, res.memoryLimit);
@@ -133,14 +129,6 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
 
   const getAlertConfig = (alert: Alert) => {
     switch (alert.type) {
-      case "server_down":
-        return {
-          icon: Server,
-          bgColor: "bg-red-900/30",
-          borderColor: "border-red-600/50",
-          textColor: "text-red-400",
-          message: t("alertServerDown").replace("{server}", alert.serverName),
-        };
       case "high_cpu":
         return {
           icon: Cpu,
@@ -169,19 +157,13 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
       {visibleAlerts.map((alert) => {
         const config = getAlertConfig(alert);
         const Icon = config.icon;
-        
+
         return (
-          <Link 
-            key={alert.id} 
-            href={`/dashboard/servers/${alert.serverId}`}
-            className="block"
-          >
+          <Link key={alert.id} href={`/dashboard/servers/${alert.serverId}`} className="block">
             <div className={`flex items-center gap-3 p-3 rounded-lg ${config.bgColor} border ${config.borderColor} group hover:opacity-90 transition-opacity`}>
               <AlertTriangle className={`w-5 h-5 ${config.textColor} shrink-0`} />
               <Icon className={`w-4 h-4 ${config.textColor} shrink-0`} />
-              <span className={`text-sm ${config.textColor} flex-1`}>
-                {config.message}
-              </span>
+              <span className={`text-sm ${config.textColor} flex-1`}>{config.message}</span>
               <button
                 onClick={(e) => {
                   e.preventDefault();
