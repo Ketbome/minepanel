@@ -18,7 +18,6 @@ type Alert = {
   value?: number;
 };
 
-// Alert when usage exceeds 80% of configured limit
 const WARNING_THRESHOLD = 80;
 
 function parsePercentage(value: string): number {
