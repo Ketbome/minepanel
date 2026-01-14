@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Link from "next/link";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
+import { useServersStore } from "@/lib/store";
 
 type ServerInfo = {
   id: string;
@@ -112,6 +113,8 @@ export default function Dashboard() {
     }
   }, [t, processServerStatuses]);
 
+  const refreshGlobalServers = useServersStore((state) => state.refreshAll);
+
   const handleDeleteServer = async (serverId: string) => {
     setIsDeletingServer(serverId);
     try {
@@ -119,6 +122,7 @@ export default function Dashboard() {
       if (response.success) {
         mcToast.success(`${t("serverDeletedSuccess")} "${serverId}"`);
         await fetchServersFromBackend();
+        refreshGlobalServers();
       } else {
         mcToast.error(`${t("errorDeletingServer")}: ${response.message}`);
       }
@@ -152,6 +156,7 @@ export default function Dashboard() {
         form.reset();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await fetchServersFromBackend();
+        refreshGlobalServers();
       } else {
         mcToast.error(`${t("errorCreatingServer")}: ${response.message}`);
       }
