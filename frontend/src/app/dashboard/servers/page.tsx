@@ -236,11 +236,11 @@ export default function Dashboard() {
                   setCreateMode("quick");
                   setSelectedTemplate(null);
                 }}
-                className={createMode === "quick" ? "bg-emerald-600" : "text-gray-400"}
+                className={createMode === "quick" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}
               >
                 <Zap className="h-4 w-4 mr-1" /> {t("quickCreate")}
               </Button>
-              <Button type="button" variant={createMode === "template" ? "default" : "ghost"} size="sm" onClick={() => setCreateMode("template")} className={createMode === "template" ? "bg-emerald-600" : "text-gray-400"}>
+              <Button type="button" variant={createMode === "template" ? "default" : "ghost"} size="sm" onClick={() => setCreateMode("template")} className={createMode === "template" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
                 <LayoutTemplate className="h-4 w-4 mr-1" /> {t("fromTemplate")}
               </Button>
             </div>
@@ -262,10 +262,10 @@ export default function Dashboard() {
                               </div>
                               <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t(template.description as TranslationKey)}</p>
                               <div className="flex gap-1 mt-1">
-                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50">
                                   {template.config.serverType}
                                 </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50">
                                   {template.config.gameMode}
                                 </Badge>
                               </div>

@@ -189,7 +189,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
             <Terminal className="h-4 w-4 mr-1" />
             {t("commands")}
           </Button>
-          <Button type="button" variant={activeSection === "players" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("players")} disabled={!isServerRunning} className={activeSection === "players" ? "bg-emerald-600 hover:bg-emerald-700" : "text-gray-400 hover:text-white"}>
+          <Button type="button" variant={activeSection === "players" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("players")} disabled={!isServerRunning} className={activeSection === "players" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Users className="h-4 w-4 mr-1" />
             {t("players")}
           </Button>
@@ -287,18 +287,18 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
                 <span className="font-minecraft text-sm text-gray-200">{t("quickActions")}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                <Button type="button" variant="outline" size="sm" onClick={handleSaveWorld} className="text-xs gap-1">
+                <Button type="button" variant="outline" size="sm" onClick={handleSaveWorld} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
                   <Save className="h-3 w-3" /> {t("saveWorld")}
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => handleWhitelistToggle(true)} className="text-xs gap-1">
+                <Button type="button" variant="outline" size="sm" onClick={() => handleWhitelistToggle(true)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
                   <ShieldCheck className="h-3 w-3" /> {t("whitelistOn")}
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => handleWhitelistToggle(false)} className="text-xs gap-1">
+                <Button type="button" variant="outline" size="sm" onClick={() => handleWhitelistToggle(false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
                   <ShieldOff className="h-3 w-3" /> {t("whitelistOff")}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="outline" size="sm" className="text-xs gap-1">
+                    <Button type="button" variant="outline" size="sm" className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
                       <Sun className="h-3 w-3" /> {t("timeWeather")}
                     </Button>
                   </DropdownMenuTrigger>
@@ -321,7 +321,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               </div>
               {/* Broadcast */}
               <div className="flex gap-2">
-                <Input value={broadcastMsg} onChange={(e) => setBroadcastMsg(e.target.value)} placeholder={t("broadcastPlaceholder")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50" onKeyDown={(e) => e.key === "Enter" && handleBroadcast()} />
+                <Input value={broadcastMsg} onChange={(e) => setBroadcastMsg(e.target.value)} placeholder={t("broadcastPlaceholder")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200 placeholder:text-gray-500" onKeyDown={(e) => e.key === "Enter" && handleBroadcast()} />
                 <Button type="button" size="sm" onClick={handleBroadcast} disabled={!broadcastMsg.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1">
                   <MessageSquare className="h-3 w-3" /> {t("broadcast")}
                 </Button>
@@ -333,7 +333,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4 text-green-400" />
                 <span className="font-minecraft text-sm text-gray-200">{t("onlinePlayers")}</span>
-                <Badge variant="outline" className="ml-auto text-xs">
+                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
                   {onlinePlayers.online}/{onlinePlayers.max}
                 </Badge>
               </div>
@@ -390,12 +390,12 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="h-4 w-4 text-blue-400" />
                 <span className="font-minecraft text-sm text-gray-200">{t("whitelist")}</span>
-                <Badge variant="outline" className="ml-auto text-xs">
+                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
                   {whitelist.length}
                 </Badge>
               </div>
               <div className="flex gap-2 mb-2">
-                <Input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder={t("playerName")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50" onKeyDown={(e) => e.key === "Enter" && handleAddWhitelist()} />
+                <Input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder={t("playerName")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200 placeholder:text-gray-500" onKeyDown={(e) => e.key === "Enter" && handleAddWhitelist()} />
                 <Button type="button" size="sm" onClick={handleAddWhitelist} disabled={!newPlayerName.trim()} className="bg-blue-600 hover:bg-blue-700">
                   <UserPlus className="h-4 w-4" />
                 </Button>
@@ -426,7 +426,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               <div className="flex items-center gap-2 mb-2">
                 <Crown className="h-4 w-4 text-amber-400" />
                 <span className="font-minecraft text-sm text-gray-200">{t("operators")}</span>
-                <Badge variant="outline" className="ml-auto text-xs">
+                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
                   {ops.length}
                 </Badge>
               </div>
@@ -454,7 +454,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
                       .filter((p) => !ops.some((op) => op.uuid === p.uuid))
                       .slice(0, 5)
                       .map((p) => (
-                        <Button key={p.uuid} type="button" variant="outline" size="sm" className="text-xs h-6" onClick={() => handleAddOp(p.name)}>
+                        <Button key={p.uuid} type="button" variant="outline" size="sm" className="text-xs h-6 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-amber-600/20 hover:border-amber-500 hover:text-amber-400" onClick={() => handleAddOp(p.name)}>
                           {p.name}
                         </Button>
                       ))}
@@ -468,7 +468,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               <div className="flex items-center gap-2 mb-2">
                 <Ban className="h-4 w-4 text-red-400" />
                 <span className="font-minecraft text-sm text-gray-200">{t("bannedPlayers")}</span>
-                <Badge variant="outline" className="ml-auto text-xs">
+                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
                   {banned.length}
                 </Badge>
               </div>

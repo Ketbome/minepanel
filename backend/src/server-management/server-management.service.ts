@@ -3,7 +3,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as path from 'node:path';
 import * as fs from 'fs-extra';
-import yaml from 'yaml';
+import * as yaml from 'js-yaml';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
@@ -411,7 +411,8 @@ export class ServerManagementService {
       }
 
       const content = await fs.readFile(composePath, 'utf-8');
-      const parsed = yaml.parse(content);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parsed = yaml.load(content) as any;
       const mcService = parsed?.services?.mc;
       const limits = mcService?.deploy?.resources?.limits;
 

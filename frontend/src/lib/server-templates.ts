@@ -14,7 +14,7 @@ export const serverTemplates: ServerTemplate[] = [
     id: "vanilla-survival",
     name: "vanillaSurvival",
     description: "vanillaSurvivalDesc",
-    icon: "grass-block",
+    icon: "grass",
     color: "emerald",
     config: {
       serverType: "VANILLA",
@@ -62,7 +62,7 @@ export const serverTemplates: ServerTemplate[] = [
     id: "vanilla-hardcore",
     name: "vanillaHardcore",
     description: "vanillaHardcoreDesc",
-    icon: "wither-skeleton-skull",
+    icon: "spawner",
     color: "red",
     config: {
       serverType: "VANILLA",
@@ -113,7 +113,7 @@ export const serverTemplates: ServerTemplate[] = [
     id: "skyblock",
     name: "skyblock",
     description: "skyblockDesc",
-    icon: "oak-sapling",
+    icon: "chest",
     color: "green",
     config: {
       serverType: "PAPER",
@@ -137,7 +137,7 @@ export const serverTemplates: ServerTemplate[] = [
     id: "pvp-arena",
     name: "pvpArena",
     description: "pvpArenaDesc",
-    icon: "diamond-sword",
+    icon: "diamond-pickaxe",
     color: "orange",
     config: {
       serverType: "PAPER",
@@ -161,7 +161,7 @@ export const serverTemplates: ServerTemplate[] = [
     id: "peaceful-paradise",
     name: "peacefulParadise",
     description: "peacefulParadiseDesc",
-    icon: "sunflower",
+    icon: "golden-apple",
     color: "yellow",
     config: {
       serverType: "VANILLA",

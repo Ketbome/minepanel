@@ -181,7 +181,6 @@ export function Sidebar() {
               </div>
             </Link>
           ))}
-          shrink-0
           {servers.length === 0 && !isLoading && <div className={cn("text-center py-4 text-gray-500 text-sm", isCollapsed && "hidden")}>{t("noServers")}</div>}
         </div>
       </div>
