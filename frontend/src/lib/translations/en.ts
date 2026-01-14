@@ -179,6 +179,9 @@ export const en = {
   viewAll: "View All",
   systemHealth: "System Health",
   healthy: "Healthy",
+  alertServerDown: "Server '{server}' is down",
+  alertHighCPU: "High CPU usage on '{server}': {value}%",
+  alertHighMemory: "High memory usage on '{server}': {value}%",
 
   // Settings Page
   settingsTitle: "Settings",

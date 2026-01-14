@@ -10,6 +10,7 @@ import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { getSystemStats, formatBytes, SystemStats } from "@/services/system/system.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
+import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
 
 type ServerInfo = {
   id: string;
@@ -150,6 +151,8 @@ export default function HomePage() {
           {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
         </p>
       </div>
+
+      {servers.length > 0 && <SystemAlerts servers={servers} />}
 
       <div>
         <h2 className="text-xl font-minecraft text-white mb-4">{t("quickStats")}</h2>

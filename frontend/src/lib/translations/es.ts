@@ -181,6 +181,9 @@ export const es: Record<TranslationKey, string> = {
   viewAll: "Ver Todos",
   systemHealth: "Salud del Sistema",
   healthy: "Saludable",
+  alertServerDown: "El servidor '{server}' está caído",
+  alertHighCPU: "Alto uso de CPU en '{server}': {value}%",
+  alertHighMemory: "Alto uso de memoria en '{server}': {value}%",
 
   // Página de Configuración
   settingsTitle: "Configuración",

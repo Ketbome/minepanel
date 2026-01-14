@@ -181,6 +181,9 @@ export const de: Record<TranslationKey, string> = {
   viewAll: "Alle anzeigen",
   systemHealth: "Systemzustand",
   healthy: "Gesund",
+  alertServerDown: "Server '{server}' ist offline",
+  alertHighCPU: "Hohe CPU-Auslastung auf '{server}': {value}%",
+  alertHighMemory: "Hohe Speicherauslastung auf '{server}': {value}%",
 
   // Settings Page
   settingsTitle: "Einstellungen",

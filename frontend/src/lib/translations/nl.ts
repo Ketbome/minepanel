@@ -183,6 +183,9 @@ export const nl: Record<TranslationKey, string> = {
   viewAll: "Bekijk Alles",
   systemHealth: "Systeemgezondheid",
   healthy: "Gezond",
+  alertServerDown: "Server '{server}' is offline",
+  alertHighCPU: "Hoog CPU-gebruik op '{server}': {value}%",
+  alertHighMemory: "Hoog geheugengebruik op '{server}': {value}%",
 
   // Settings Page
   settingsTitle: "Instellingen",
