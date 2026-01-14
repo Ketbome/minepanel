@@ -28,6 +28,11 @@ export class ServerManagementController {
     return allStatus;
   }
 
+  @Get('all-resources')
+  async getAllServersResources() {
+    return this.managementService.getAllServersResources();
+  }
+
   @Get(':id')
   async getServer(@Param('id') id: string) {
     const config = await this.dockerComposeService.getServerConfig(id);

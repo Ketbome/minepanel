@@ -148,6 +148,18 @@ export const getResources = async (serverId: string): Promise<{ cpuUsage: string
   return response.data;
 };
 
+export type ServerResourceInfo = {
+  status: "running" | "stopped" | "starting" | "not_found";
+  cpuUsage: string;
+  memoryUsage: string;
+  memoryLimit: string;
+};
+
+export const getAllServersResources = async (): Promise<Record<string, ServerResourceInfo>> => {
+  const response = await api.get(`/servers/all-resources`);
+  return response.data;
+};
+
 export const executeServerCommand = async (serverId: string, body: { command: string; rconPort: string; rconPassword: string }): Promise<{ success: boolean; output: string }> => {
   const response = await api.post(`/servers/${serverId}/command`, body);
   return response.data;

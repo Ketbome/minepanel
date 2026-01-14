@@ -402,6 +402,53 @@ export class ServerManagementService {
     }
   }
 
+  async getAllServersResources(): Promise<Record<string, {
+    status: ServerStatus;
+    cpuUsage: string;
+    memoryUsage: string;
+    memoryLimit: string;
+  }>> {
+    try {
+      const directories = await fs.readdir(this.SERVERS_DIR);
+      const serverDirectories = await Promise.all(
+        directories.map(async (dir) => {
+          const fullPath = path.join(this.SERVERS_DIR, dir);
+          const isDirectory = (await fs.stat(fullPath)).isDirectory();
+          const hasDockerCompose = await fs.pathExists(this.getDockerComposePath(dir));
+          return isDirectory && hasDockerCompose ? dir : null;
+        }),
+      );
+
+      const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
+      
+      const resourcePromises = validServers.map(async (serverId) => {
+        const status = await this.getServerStatus(serverId);
+        
+        if (status !== 'running') {
+          return {
+            serverId,
+            data: { status, cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },
+          };
+        }
+
+        const resources = await this.getServerResources(serverId);
+        return {
+          serverId,
+          data: { status, ...resources },
+        };
+      });
+
+      const results = await Promise.all(resourcePromises);
+      return results.reduce((acc, { serverId, data }) => {
+        acc[serverId] = data;
+        return acc;
+      }, {} as Record<string, { status: ServerStatus; cpuUsage: string; memoryUsage: string; memoryLimit: string }>);
+    } catch (error) {
+      this.logger.error('Error obtaining all servers resources', error);
+      return {};
+    }
+  }
+
   private formatBytes(bytes: number, decimals = 2): string {
     if (bytes === 0) return '0 Bytes';
 
