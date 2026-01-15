@@ -729,8 +729,6 @@ export const es: Record<TranslationKey, string> = {
   // Gestión del mundo
   world: "Mundo",
   worldManagement: "Gestión del Mundo",
-  worldSettings: "Configuración del Mundo",
-  difficulty: "Dificultad",
   time: "Tiempo",
   weather: "Clima",
   weatherThunder: "Tormenta",

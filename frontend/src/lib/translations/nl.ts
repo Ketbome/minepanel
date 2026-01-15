@@ -743,8 +743,6 @@ export const nl: Record<TranslationKey, string> = {
   // Wereld beheer
   world: "Wereld",
   worldManagement: "Wereld Beheer",
-  worldSettings: "Wereld Instellingen",
-  difficulty: "Moeilijkheid",
   time: "Tijd",
   weather: "Weer",
   weatherThunder: "Onweer",

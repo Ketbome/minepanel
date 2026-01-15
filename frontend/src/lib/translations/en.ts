@@ -727,8 +727,6 @@ export const en = {
   // World management
   world: "World",
   worldManagement: "World Management",
-  worldSettings: "World Settings",
-  difficulty: "Difficulty",
   time: "Time",
   weather: "Weather",
   weatherThunder: "Thunder",

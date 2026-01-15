@@ -729,8 +729,6 @@ export const de: Record<TranslationKey, string> = {
   // Welt-Verwaltung
   world: "Welt",
   worldManagement: "Welt-Verwaltung",
-  worldSettings: "Welt-Einstellungen",
-  difficulty: "Schwierigkeit",
   time: "Zeit",
   weather: "Wetter",
   weatherThunder: "Gewitter",
