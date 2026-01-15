@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Send, Trash, Terminal, AlertTriangle, Users, Shield, Ban, RefreshCw, UserPlus, UserMinus, Crown, Gavel, MoreVertical, Gamepad2, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain } from "lucide-react";
+import { Send, Trash, Terminal, AlertTriangle, Users, Shield, Ban, RefreshCw, UserPlus, UserMinus, Crown, Gavel, MoreVertical, Gamepad2, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
 import { useServerCommands } from "@/lib/hooks/useServerCommands";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getOnlinePlayers, getWhitelist, getOps, getBannedPlayers, executeServerCommand, WhitelistPlayer, OpPlayer, BannedPlayer } from "@/services/docker/fetchs";
@@ -33,7 +33,9 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
   const [banned, setBanned] = useState<BannedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
-  const [activeSection, setActiveSection] = useState<"commands" | "players">("commands");
+  const [activeSection, setActiveSection] = useState<"commands" | "players" | "world">("commands");
+  const [tpCoords, setTpCoords] = useState({ x: "0", y: "100", z: "0" });
+  const [borderSize, setBorderSize] = useState("1000");
 
   const isServerRunning = serverStatus === "running";
 
@@ -95,8 +97,24 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
   const handleSetTime = (time: string) => runCommand(`time set ${time}`, t("timeChanged"));
   const handleSetWeather = (weather: string) => runCommand(`weather ${weather}`, t("weatherChanged"));
 
+  // World management
+  const handleSetDifficulty = (diff: string) => runCommand(`difficulty ${diff}`, t("difficultyChanged"));
+  const handleGamerule = (rule: string, value: boolean) => runCommand(`gamerule ${rule} ${value}`, t("gameruleChanged"));
+  const handleKillEntities = (type: string) => runCommand(`kill @e[type=${type}]`, t("entitiesKilled"));
+  const handleKillAllMobs = () => runCommand("kill @e[type=!player]", t("entitiesKilled"));
+  const handleClearDroppedItems = () => runCommand("kill @e[type=item]", t("itemsCleared"));
+  const handleWorldBorder = (size: string) => runCommand(`worldborder set ${size}`, t("worldBorderSet"));
+  const handleSetWorldSpawn = () => runCommand("setworldspawn", t("worldSpawnSet"));
+  const handleSummon = (entity: string) => runCommand(`summon minecraft:${entity}`, t("entitySummoned"));
+  const handleClearInventory = (name: string) => runCommand(`clear ${name}`, t("inventoryCleared"));
+  const handleEnchant = (name: string, enchant: string, level: number) => runCommand(`enchant ${name} minecraft:${enchant} ${level}`, t("itemEnchanted"));
+  const handleClearEffects = (name: string) => runCommand(`effect clear ${name}`, t("effectsCleared"));
+  const handleTpToCoords = (name: string) => runCommand(`tp ${name} ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, t("playerTeleported"));
+  const handleGiveEffect = (name: string, effect: string, duration: number, level: number) => runCommand(`effect give ${name} minecraft:${effect} ${duration} ${level}`, t("effectGiven"));
+
   const allCommands = useMemo(
     () => [
+      // Players
       { label: t("cmdListPlayers"), command: "list", category: "players" },
       { label: t("cmdTeleportPlayer"), command: "tp @p ~ ~ ~", category: "players" },
       { label: t("cmdGiveXP"), command: "xp add @p 100 levels", category: "players" },
@@ -105,8 +123,13 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
       { label: t("cmdSurvivalMode"), command: "gamemode survival @p", category: "players" },
       { label: t("cmdAdventureMode"), command: "gamemode adventure @p", category: "players" },
       { label: t("cmdSpectatorMode"), command: "gamemode spectator @p", category: "players" },
+      { label: t("cmdClearInventory"), command: "clear @p", category: "players" },
+      { label: t("cmdClearEffects"), command: "effect clear @p", category: "players" },
+      // World
       { label: t("cmdDayTime"), command: "time set day", category: "world" },
       { label: t("cmdNightTime"), command: "time set night", category: "world" },
+      { label: t("cmdNoonTime"), command: "time set noon", category: "world" },
+      { label: t("cmdMidnightTime"), command: "time set midnight", category: "world" },
       { label: t("cmdClearWeather"), command: "weather clear", category: "world" },
       { label: t("cmdRainWeather"), command: "weather rain", category: "world" },
       { label: t("cmdThunderWeather"), command: "weather thunder", category: "world" },
@@ -114,16 +137,34 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
       { label: t("cmdEasyDifficulty"), command: "difficulty easy", category: "world" },
       { label: t("cmdNormalDifficulty"), command: "difficulty normal", category: "world" },
       { label: t("cmdHardDifficulty"), command: "difficulty hard", category: "world" },
+      { label: t("cmdKillHostileMobs"), command: "kill @e[type=!player,type=!item,type=!xp_orb]", category: "world" },
+      { label: t("cmdClearDroppedItems"), command: "kill @e[type=item]", category: "world" },
+      { label: t("cmdSetWorldSpawn"), command: "setworldspawn", category: "world" },
+      // Items
       { label: t("cmdGiveDiamonds"), command: "give @p minecraft:diamond 64", category: "items" },
       { label: t("cmdGiveDiamondSword"), command: "give @p minecraft:diamond_sword", category: "items" },
       { label: t("cmdGiveGoldenApples"), command: "give @p minecraft:golden_apple 16", category: "items" },
       { label: t("cmdGiveCommandBlock"), command: "give @p minecraft:command_block", category: "items" },
+      { label: t("cmdGiveNetherite"), command: "give @p minecraft:netherite_ingot 64", category: "items" },
+      { label: t("cmdGiveElytra"), command: "give @p minecraft:elytra", category: "items" },
+      { label: t("cmdGiveTotem"), command: "give @p minecraft:totem_of_undying", category: "items" },
+      { label: t("cmdGiveEnchantedBook"), command: "give @p minecraft:enchanted_book", category: "items" },
+      // Summon
+      { label: t("cmdSummonZombie"), command: "summon minecraft:zombie", category: "summon" },
+      { label: t("cmdSummonSkeleton"), command: "summon minecraft:skeleton", category: "summon" },
+      { label: t("cmdSummonCreeper"), command: "summon minecraft:creeper", category: "summon" },
+      { label: t("cmdSummonEnderman"), command: "summon minecraft:enderman", category: "summon" },
+      { label: t("cmdSummonWither"), command: "summon minecraft:wither", category: "summon" },
+      { label: t("cmdSummonDragon"), command: "summon minecraft:ender_dragon", category: "summon" },
+      // Admin
       { label: t("cmdSeedWorld"), command: "seed", category: "admin" },
       { label: t("cmdSaveWorld"), command: "save-all", category: "admin" },
-      { label: t("cmdKickPlayer"), command: "kick <jugador>", category: "admin" },
-      { label: t("cmdBanPlayer"), command: "ban <jugador>", category: "admin" },
+      { label: t("cmdKickPlayer"), command: "kick <player>", category: "admin" },
+      { label: t("cmdBanPlayer"), command: "ban <player>", category: "admin" },
       { label: t("cmdViewTPS"), command: "forge tps", category: "admin" },
       { label: t("cmdSpigotTimings"), command: "timings on", category: "admin" },
+      { label: t("cmdStopServer"), command: "stop", category: "admin" },
+      { label: t("cmdReloadServer"), command: "reload", category: "admin" },
     ],
     [t]
   );
@@ -183,15 +224,18 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
           </div>
         )}
 
-        {/* Toggle entre Commands y Players */}
         <div className="flex gap-2 border-b border-gray-700/50 pb-2">
-          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-emerald-600 hover:bg-emerald-700" : "text-gray-400 hover:text-white"}>
+          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Terminal className="h-4 w-4 mr-1" />
             {t("commands")}
           </Button>
           <Button type="button" variant={activeSection === "players" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("players")} disabled={!isServerRunning} className={activeSection === "players" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Users className="h-4 w-4 mr-1" />
             {t("players")}
+          </Button>
+          <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
+            <Globe className="h-4 w-4 mr-1" />
+            {t("world")}
           </Button>
         </div>
 
@@ -491,6 +535,227 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               ) : (
                 <p className="text-gray-500 text-sm">{t("noBannedPlayers")}</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeSection === "world" && (
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center gap-2 text-gray-300">
+              <Globe className="h-5 w-5 text-emerald-400" />
+              <span className="font-minecraft">{t("worldManagement")}</span>
+            </div>
+
+            {/* Difficulty & Time/Weather */}
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-emerald-700/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Mountain className="h-4 w-4 text-emerald-400" />
+                <span className="font-minecraft text-sm text-gray-200">{t("worldSettings")}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                      <Swords className="h-3 w-3" /> {t("difficulty")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                    <DropdownMenuItem onClick={() => handleSetDifficulty("peaceful")} className="text-gray-200 hover:bg-gray-700">
+                      <Sunrise className="h-3 w-3 mr-2 text-green-400" /> Peaceful
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetDifficulty("easy")} className="text-gray-200 hover:bg-gray-700">
+                      <Sun className="h-3 w-3 mr-2 text-yellow-400" /> Easy
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetDifficulty("normal")} className="text-gray-200 hover:bg-gray-700">
+                      <Target className="h-3 w-3 mr-2 text-orange-400" /> Normal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetDifficulty("hard")} className="text-gray-200 hover:bg-gray-700">
+                      <Skull className="h-3 w-3 mr-2 text-red-400" /> Hard
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                      <Sun className="h-3 w-3" /> {t("time")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                    <DropdownMenuItem onClick={() => handleSetTime("day")} className="text-gray-200 hover:bg-gray-700">
+                      <Sun className="h-3 w-3 mr-2 text-yellow-400" /> Day (1000)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetTime("noon")} className="text-gray-200 hover:bg-gray-700">
+                      <Sun className="h-3 w-3 mr-2 text-orange-400" /> Noon (6000)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetTime("night")} className="text-gray-200 hover:bg-gray-700">
+                      <Moon className="h-3 w-3 mr-2 text-blue-400" /> Night (13000)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetTime("midnight")} className="text-gray-200 hover:bg-gray-700">
+                      <Moon className="h-3 w-3 mr-2 text-purple-400" /> Midnight (18000)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                      <CloudRain className="h-3 w-3" /> {t("weather")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                    <DropdownMenuItem onClick={() => handleSetWeather("clear")} className="text-gray-200 hover:bg-gray-700">
+                      <Sun className="h-3 w-3 mr-2 text-yellow-400" /> {t("weatherClear")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetWeather("rain")} className="text-gray-200 hover:bg-gray-700">
+                      <CloudRain className="h-3 w-3 mr-2 text-blue-400" /> {t("weatherRain")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSetWeather("thunder")} className="text-gray-200 hover:bg-gray-700">
+                      <Zap className="h-3 w-3 mr-2 text-yellow-400" /> {t("weatherThunder")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button type="button" variant="outline" size="sm" onClick={handleSetWorldSpawn} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  <MapPin className="h-3 w-3" /> {t("setSpawn")}
+                </Button>
+              </div>
+              {/* World Border */}
+              <div className="flex gap-2">
+                <Input value={borderSize} onChange={(e) => setBorderSize(e.target.value)} placeholder="1000" className="w-24 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
+                <Button type="button" size="sm" onClick={() => handleWorldBorder(borderSize)} className="bg-blue-600 hover:bg-blue-700 gap-1 text-xs">
+                  <Target className="h-3 w-3" /> {t("setWorldBorder")}
+                </Button>
+              </div>
+            </div>
+
+            {/* Gamerules */}
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-purple-400" />
+                <span className="font-minecraft text-sm text-gray-200">{t("gamerules")}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("keepInventory", true)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-green-600/20 hover:border-green-500 hover:text-green-400">
+                  <Package className="h-3 w-3" /> keepInventory ON
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("keepInventory", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-red-600/20 hover:border-red-500 hover:text-red-400">
+                  <Package className="h-3 w-3" /> keepInventory OFF
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("mobGriefing", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-green-600/20 hover:border-green-500 hover:text-green-400">
+                  <Bug className="h-3 w-3" /> mobGriefing OFF
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("doDaylightCycle", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-blue-600/20 hover:border-blue-500 hover:text-blue-400">
+                  <EyeOff className="h-3 w-3" /> {t("freezeTime")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("doDaylightCycle", true)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-yellow-600/20 hover:border-yellow-500 hover:text-yellow-400">
+                  <Eye className="h-3 w-3" /> {t("unfreezeTime")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("doFireTick", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-orange-600/20 hover:border-orange-500 hover:text-orange-400">
+                  <Flame className="h-3 w-3" /> {t("disableFire")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("pvp", true)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-red-600/20 hover:border-red-500 hover:text-red-400">
+                  <Swords className="h-3 w-3" /> PvP ON
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("pvp", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-green-600/20 hover:border-green-500 hover:text-green-400">
+                  <Shield className="h-3 w-3" /> PvP OFF
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleGamerule("doWeatherCycle", false)} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-cyan-600/20 hover:border-cyan-500 hover:text-cyan-400">
+                  <Wind className="h-3 w-3" /> {t("freezeWeather")}
+                </Button>
+              </div>
+            </div>
+
+            {/* Entity Management */}
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Skull className="h-4 w-4 text-red-400" />
+                <span className="font-minecraft text-sm text-gray-200">{t("entityManagement")}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <Button type="button" variant="outline" size="sm" onClick={handleKillAllMobs} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-red-600/20 hover:border-red-500 hover:text-red-400">
+                  <Skull className="h-3 w-3" /> {t("killAllMobs")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleKillEntities("minecraft:zombie")} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  <Bug className="h-3 w-3" /> {t("killZombies")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleClearDroppedItems} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  <Eraser className="h-3 w-3" /> {t("clearItems")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleKillEntities("minecraft:experience_orb")} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  <Sparkles className="h-3 w-3" /> {t("clearXPOrbs")}
+                </Button>
+              </div>
+              {/* Summon Entities */}
+              <p className="text-xs text-gray-400 mb-2">{t("summonEntities")}:</p>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("zombie")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  Zombie
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("skeleton")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  Skeleton
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("creeper")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  Creeper
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("enderman")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  Enderman
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("wither")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-red-600/20 hover:border-red-500 hover:text-red-400">
+                  <Bomb className="h-3 w-3 mr-1" /> Wither
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleSummon("ender_dragon")} className="text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-purple-600/20 hover:border-purple-500 hover:text-purple-400">
+                  <Bomb className="h-3 w-3 mr-1" /> Dragon
+                </Button>
+              </div>
+            </div>
+
+            {/* Player Actions (TP, Items, Effects) */}
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Gift className="h-4 w-4 text-cyan-400" />
+                <span className="font-minecraft text-sm text-gray-200">{t("giveItemsEffects")}</span>
+              </div>
+              {/* Give Items */}
+              <p className="text-xs text-gray-400 mb-2">{t("giveToAllPlayers")}:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("give @a minecraft:diamond 64", t("itemsGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-cyan-600/20 hover:border-cyan-500 hover:text-cyan-400">
+                  <Diamond className="h-3 w-3" /> 64 💎
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("give @a minecraft:netherite_ingot 16", t("itemsGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  16 Netherite
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("give @a minecraft:golden_apple 16", t("itemsGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-yellow-600/20 hover:border-yellow-500 hover:text-yellow-400">
+                  16 🍎
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("give @a minecraft:totem_of_undying", t("itemsGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-green-600/20 hover:border-green-500 hover:text-green-400">
+                  Totem
+                </Button>
+              </div>
+              {/* Effects to all */}
+              <p className="text-xs text-gray-400 mb-2">{t("effectsToAllPlayers")}:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("effect give @a minecraft:speed 300 2", t("effectGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-blue-600/20 hover:border-blue-500 hover:text-blue-400">
+                  <Zap className="h-3 w-3" /> Speed III
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("effect give @a minecraft:regeneration 300 2", t("effectGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-pink-600/20 hover:border-pink-500 hover:text-pink-400">
+                  <Heart className="h-3 w-3" /> Regen III
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("effect give @a minecraft:strength 300 2", t("effectGiven"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-red-600/20 hover:border-red-500 hover:text-red-400">
+                  <Swords className="h-3 w-3" /> Strength III
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runCommand("effect clear @a", t("effectsCleared"))} className="text-xs gap-1 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white">
+                  <Eraser className="h-3 w-3" /> {t("clearAll")}
+                </Button>
+              </div>
+              {/* TP to coords */}
+              <p className="text-xs text-gray-400 mb-2">{t("tpAllToCoords")}:</p>
+              <div className="flex gap-2 flex-wrap">
+                <Input value={tpCoords.x} onChange={(e) => setTpCoords((p) => ({ ...p, x: e.target.value }))} placeholder="X" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
+                <Input value={tpCoords.y} onChange={(e) => setTpCoords((p) => ({ ...p, y: e.target.value }))} placeholder="Y" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
+                <Input value={tpCoords.z} onChange={(e) => setTpCoords((p) => ({ ...p, z: e.target.value }))} placeholder="Z" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
+                <Button type="button" size="sm" onClick={() => runCommand(`tp @a ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, t("playerTeleported"))} className="bg-blue-600 hover:bg-blue-700 gap-1 text-xs">
+                  <Navigation className="h-3 w-3" /> TP All
+                </Button>
+              </div>
             </div>
           </div>
         )}

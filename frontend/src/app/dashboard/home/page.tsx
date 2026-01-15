@@ -5,12 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Server, Activity, HardDrive, Cpu, Play, Square, ArrowRight } from "lucide-react";
+import { Server, Activity, HardDrive, Cpu, Play, Square, ArrowRight, Plus, Terminal, FolderOpen } from "lucide-react";
 import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
 import { getSystemStats, formatBytes, SystemStats } from "@/services/system/system.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
 import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
+import { Button } from "@/components/ui/button";
 
 type ServerInfo = {
   id: string;
@@ -123,182 +124,177 @@ export default function HomePage() {
     },
   ];
 
-  const quickActions = [
-    {
-      title: t("createServer"),
-      description: t("createNewServer"),
-      icon: Server,
-      href: "/dashboard/servers",
-      color: "emerald",
-    },
-    {
-      title: t("viewAllServers"),
-      description: t("manageServer"),
-      icon: Activity,
-      href: "/dashboard/servers",
-      color: "blue",
-    },
-  ];
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header with quick stats inline */}
       <div className="animate-fade-in-up">
-        <div className="flex items-center gap-3 mb-2">
-          <Image src="/images/grass.webp" alt="Home" width={40} height={40} />
-          <h1 className="text-3xl font-bold text-white font-minecraft">{t("homeTitle")}</h1>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Image src="/images/grass.webp" alt="Home" width={40} height={40} />
+            <div>
+              <h1 className="text-2xl font-bold text-white font-minecraft">{t("homeTitle")}</h1>
+              <p className="text-gray-400 text-sm">
+                {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Inline Stats */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {stats.map((stat) => (
+              <div key={stat.title} className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${stat.borderColor} ${stat.bgColor}`}>
+                <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                <span className={`text-lg font-bold ${stat.color}`}>{isLoading ? "..." : stat.value}</span>
+                <span className="text-xs text-gray-400 hidden sm:inline">{stat.title}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="text-gray-400">
-          {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
-        </p>
       </div>
 
       {servers.length > 0 && <SystemAlerts servers={servers} />}
 
-      <div>
-        <h2 className="text-xl font-minecraft text-white mb-4">{t("quickStats")}</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {stats.map((stat, index) => (
-            <div key={stat.title} className={`animate-fade-in-up stagger-${index + 1}`}>
-              <Card className={`border-2 ${stat.borderColor} bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-gray-300">{stat.title}</CardTitle>
-                    <div className={`w-10 h-10 rounded-full ${stat.bgColor} flex items-center justify-center`}>
-                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-4xl font-bold ${stat.color}`}>{isLoading ? "..." : stat.value}</div>
-                </CardContent>
-              </Card>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="animate-fade-in-up stagger-4">
-        <h2 className="text-xl font-minecraft text-white mb-4">{t("systemStatus")}</h2>
+      {/* Main Grid: System + Servers side by side */}
+      <div className="grid gap-6 lg:grid-cols-2 animate-fade-in-up stagger-2">
+        {/* System Health - Compact */}
         <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white font-minecraft">{t("systemHealth")}</CardTitle>
-                <CardDescription className="text-gray-400">{t("systemActive")}</CardDescription>
-              </div>
-              <Badge variant="outline" className="bg-emerald-600/20 text-emerald-400 border-emerald-600/30 px-3 py-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 mr-2"></div>
+              <CardTitle className="text-white font-minecraft text-base flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-blue-400" />
+                {t("systemHealth")}
+              </CardTitle>
+              <Badge variant="outline" className="bg-emerald-600/20 text-emerald-400 border-emerald-600/30 text-xs">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></div>
                 {t("healthy")}
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             {systemStats ? (
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-300">
-                    <Cpu className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm">{t("cpuUsage")}</span>
+              <>
+                {/* CPU */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <Cpu className="w-3 h-3 text-blue-400" /> CPU
+                    </span>
+                    <span className="text-blue-400 font-mono">{Math.round(systemStats.cpu.usage)}%</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-700" 
-                        style={{ width: `${systemStats.cpu.usage}%` }} 
-                      />
-                    </div>
-                    <span className="text-sm text-blue-400 font-semibold">{Math.round(systemStats.cpu.usage)}%</span>
+                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-700" style={{ width: `${systemStats.cpu.usage}%` }} />
                   </div>
-                  <p className="text-xs text-gray-500">{systemStats.cpu.cores} cores</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-300">
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm">{t("memoryUsage")}</span>
+                {/* RAM */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <Activity className="w-3 h-3 text-emerald-400" /> RAM
+                    </span>
+                    <span className="text-emerald-400 font-mono">
+                      {formatBytes(systemStats.memory.used)} / {formatBytes(systemStats.memory.total)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700" 
-                        style={{ width: `${systemStats.memory.usagePercentage}%` }} 
-                      />
-                    </div>
-                    <span className="text-sm text-emerald-400 font-semibold">{systemStats.memory.usagePercentage}%</span>
+                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700" style={{ width: `${systemStats.memory.usagePercentage}%` }} />
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {formatBytes(systemStats.memory.used)} / {formatBytes(systemStats.memory.total)}
-                  </p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-300">
-                    <HardDrive className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm">{t("diskUsage")}</span>
+                {/* Disk */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <HardDrive className="w-3 h-3 text-purple-400" /> Disk
+                    </span>
+                    <span className="text-purple-400 font-mono">
+                      {formatBytes(systemStats.disk.used)} / {formatBytes(systemStats.disk.total)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-700" 
-                        style={{ width: `${systemStats.disk.usagePercentage}%` }} 
-                      />
-                    </div>
-                    <span className="text-sm text-purple-400 font-semibold">{systemStats.disk.usagePercentage}%</span>
+                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-700" style={{ width: `${systemStats.disk.usagePercentage}%` }} />
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {formatBytes(systemStats.disk.used)} / {formatBytes(systemStats.disk.total)}
-                  </p>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-400">{t("loading")}</div>
+              <div className="flex items-center justify-center py-6">
+                <div className="text-gray-400 text-sm">{t("loading")}</div>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Quick Actions - Compact Grid */}
+        <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-white font-minecraft text-base flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-emerald-400" />
+              {t("quickActions")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/dashboard/servers">
+                <Button variant="outline" className="w-full h-auto py-3 flex flex-col gap-1 bg-emerald-600/10 border-emerald-600/30 hover:bg-emerald-600/20 hover:border-emerald-500 group">
+                  <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs text-gray-300">{t("createServer")}</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/servers">
+                <Button variant="outline" className="w-full h-auto py-3 flex flex-col gap-1 bg-blue-600/10 border-blue-600/30 hover:bg-blue-600/20 hover:border-blue-500 group">
+                  <Server className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs text-gray-300">{t("viewAllServers")}</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/files">
+                <Button variant="outline" className="w-full h-auto py-3 flex flex-col gap-1 bg-purple-600/10 border-purple-600/30 hover:bg-purple-600/20 hover:border-purple-500 group">
+                  <FolderOpen className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs text-gray-300">{t("files")}</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/settings">
+                <Button variant="outline" className="w-full h-auto py-3 flex flex-col gap-1 bg-gray-600/10 border-gray-600/30 hover:bg-gray-600/20 hover:border-gray-500 group">
+                  <Activity className="w-5 h-5 text-gray-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs text-gray-300">{t("settings")}</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="animate-fade-in-up stagger-5">
-        <h2 className="text-xl font-minecraft text-white mb-4">{t("quickActions")}</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {quickActions.map((action) => (
-            <Link key={action.title} href={action.href}>
-              <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-emerald-600/30 group cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-lg bg-${action.color}-600/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                        <action.icon className={`w-6 h-6 text-${action.color}-400`} />
-                      </div>
-                      <div>
-                        <CardTitle className="text-white font-minecraft group-hover:text-emerald-400 transition-colors">{action.title}</CardTitle>
-                        <CardDescription className="text-gray-400 text-sm">{action.description}</CardDescription>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
-                  </div>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
-
+      {/* Servers Overview - Full Width */}
       {servers.length > 0 && (
-        <div className="animate-fade-in-up stagger-6">
-          <h2 className="text-xl font-minecraft text-white mb-4">{t("serversOverview")}</h2>
+        <div className="animate-fade-in-up stagger-3">
           <ServerQuickView servers={servers} />
         </div>
       )}
 
-      {/* Decorative floating icons - CSS animations instead of framer-motion */}
-      <div className="flex justify-center gap-8 pt-4">
+      {/* Empty State */}
+      {servers.length === 0 && !isLoading && (
+        <Card className="border-2 border-dashed border-gray-700/60 bg-gray-900/40">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Image src="/images/chest.webp" alt="Empty" width={64} height={64} className="opacity-50 mb-4" />
+            <h3 className="text-lg font-minecraft text-gray-300 mb-2">{t("noServersAvailable")}</h3>
+            <p className="text-gray-500 text-sm mb-4">{t("noServersAvailableDesc")}</p>
+            <Link href="/dashboard/servers">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 font-minecraft">
+                <Plus className="w-4 h-4 mr-2" />
+                {t("createFirstServer")}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Decorative */}
+      <div className="flex justify-center gap-8 pt-2">
         <div className="animate-float">
-          <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+          <Image src="/images/diamond.webp" alt="Diamond" width={24} height={24} className="opacity-40 hover:opacity-70 transition-opacity" />
         </div>
         <div className="animate-float-delay-1">
-          <Image src="/images/emerald.webp" alt="Emerald" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+          <Image src="/images/emerald.webp" alt="Emerald" width={24} height={24} className="opacity-40 hover:opacity-70 transition-opacity" />
         </div>
         <div className="animate-float-delay-2">
-          <Image src="/images/command-block.webp" alt="Command Block" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+          <Image src="/images/command-block.webp" alt="Command Block" width={24} height={24} className="opacity-40 hover:opacity-70 transition-opacity" />
         </div>
       </div>
     </div>
