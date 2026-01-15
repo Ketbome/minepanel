@@ -20,6 +20,8 @@ const DOCKER_COMMANDS = {
   INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
+  // Single command to get all running containers stats at once (much faster)
+  STATS_ALL: 'docker stats --no-stream --format "{{.Name}}\\t{{.CPUPerc}}\\t{{.MemUsage}}"',
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
   LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
@@ -452,11 +454,17 @@ export class ServerManagementService {
 
       const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
 
-      const resourcePromises = validServers.map(async (serverId) => {
-        const status = await this.getServerStatus(serverId);
-        const limits = await this.getServerLimits(serverId);
+      // Get all stats in ONE docker command (much faster than individual calls)
+      const allStats = await this.getAllContainersStats();
 
-        if (status !== 'running') {
+      // Get statuses and limits in parallel
+      const serverDataPromises = validServers.map(async (serverId) => {
+        const [status, limits] = await Promise.all([this.getServerStatus(serverId), this.getServerLimits(serverId)]);
+
+        // Match container name - could be serverId or serverId-minecraft-1
+        const stats = allStats[serverId] || allStats[`${serverId}-minecraft-1`] || allStats[`${serverId}_minecraft_1`];
+
+        if (status !== 'running' || !stats) {
           return {
             serverId,
             data: {
@@ -470,19 +478,20 @@ export class ServerManagementService {
           };
         }
 
-        const resources = await this.getServerResources(serverId);
         return {
           serverId,
           data: {
             status,
-            ...resources,
+            cpuUsage: stats.cpuUsage,
+            memoryUsage: stats.memoryUsage,
+            memoryLimit: stats.memoryLimit,
             cpuLimit: limits.cpuLimit,
             memoryConfigLimit: limits.memoryLimit,
           },
         };
       });
 
-      const results = await Promise.all(resourcePromises);
+      const results = await Promise.all(serverDataPromises);
       return results.reduce(
         (acc, { serverId, data }) => {
           acc[serverId] = data;
@@ -492,6 +501,36 @@ export class ServerManagementService {
       );
     } catch (error) {
       this.logger.error('Error obtaining all servers resources', error);
+      return {};
+    }
+  }
+
+  // Get stats for ALL running containers in a single docker command
+  private async getAllContainersStats(): Promise<Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }>> {
+    try {
+      const { stdout } = await execAsync(DOCKER_COMMANDS.STATS_ALL);
+      const stats: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
+
+      const lines = stdout.trim().split('\n').filter((line) => line.trim());
+      for (const line of lines) {
+        const parts = line.split('\t');
+        if (parts.length >= 3) {
+          const name = parts[0].trim();
+          const cpuUsage = parts[1].trim();
+          const memUsage = parts[2].trim();
+          const memoryParts = memUsage.split(' / ');
+
+          stats[name] = {
+            cpuUsage,
+            memoryUsage: memoryParts[0] || 'N/A',
+            memoryLimit: memoryParts[1] || 'N/A',
+          };
+        }
+      }
+
+      return stats;
+    } catch (error) {
+      this.logger.warn('Failed to get all containers stats:', error);
       return {};
     }
   }
