@@ -1000,7 +1000,29 @@ export class DockerComposeService {
       await this.addBackupService(dockerComposeConfig, config, serverDir);
     }
 
-    const yamlContent = yaml.dump(dockerComposeConfig);
+    let yamlContent = yaml.dump(dockerComposeConfig);
+
+    // Wrap label values in single quotes to handle special characters (backticks, etc.)
+    yamlContent = yamlContent.replace(
+      /^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm,
+      (match, labelsHeader, labelsBlock) => {
+        const quotedLabels = labelsBlock.replace(
+          /^(\s+-\s+)(.+)$/gm,
+          (_, prefix, value) => {
+            // Skip if already quoted
+            if ((value.startsWith("'") && value.endsWith("'")) ||
+                (value.startsWith('"') && value.endsWith('"'))) {
+              return `${prefix}${value}`;
+            }
+            // Escape single quotes in value and wrap
+            const escaped = value.replace(/'/g, "''");
+            return `${prefix}'${escaped}'`;
+          }
+        );
+        return labelsHeader + quotedLabels;
+      }
+    );
+
     await fs.writeFile(this.getDockerComposePath(config.id), yamlContent);
   }
 }
