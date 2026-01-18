@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings, Package, FolderOpen } from "lucide-react";
+import { Home, Plus, ChevronLeft, ChevronRight, RefreshCw, Loader2, LayoutDashboard, Settings, Package, FolderOpen, Gamepad2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useUIStore, useServersStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -70,6 +70,12 @@ export function Sidebar() {
       icon: LayoutDashboard,
       href: "/dashboard/servers",
       isActive: pathname === "/dashboard/servers",
+    },
+    {
+      label: t("hytaleServers"),
+      icon: Gamepad2,
+      href: "/dashboard/hytale",
+      isActive: pathname?.startsWith("/dashboard/hytale"),
     },
     {
       label: t("files"),

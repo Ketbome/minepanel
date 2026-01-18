@@ -33,6 +33,7 @@ export const de: Record<TranslationKey, string> = {
   dashboard: "Dashboard",
   servers: "Server",
   settings: "Einstellungen",
+  manage: "Verwalten",
   home: "Startseite",
   navigation: "Navigation",
 
@@ -44,6 +45,7 @@ export const de: Record<TranslationKey, string> = {
   cancel: "Abbrechen",
   confirm: "Bestätigen",
   loading: "Laden...",
+  loadingServers: "Server werden geladen...",
   error: "Fehler",
   success: "Erfolg",
   welcome: "Willkommen",
@@ -231,6 +233,7 @@ export const de: Record<TranslationKey, string> = {
 
   // Server Deletion
   deleteServer: "Server löschen",
+  deleteServerConfirmation: "Sind Sie sicher, dass Sie den Server löschen möchten",
   deleteServerTitle: "Server löschen",
   deleteServerConfirm: "Sind Sie sicher, dass Sie diesen Server löschen möchten?",
   deleteServerDesc: "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch werden der Server und alle seine Daten dauerhaft gelöscht.",
@@ -326,6 +329,7 @@ export const de: Record<TranslationKey, string> = {
   // GENERAL SETTINGS TAB
   // ===========================
   general: "Allgemein",
+  serverConfiguration: "Server Konfiguration",
   generalSettings: "Allgemeine Einstellungen",
   generalSettingsDesc: "Allgemeine Einstellungen für Ihren Minecraft-Server",
   basicSettings: "Grundeinstellungen",
@@ -1073,6 +1077,7 @@ export const de: Record<TranslationKey, string> = {
   goToSettings: "Zu Einstellungen gehen",
   createServerFromModpack: "Einen neuen Server mit diesem Modpack erstellen",
   serverIdRequired: "Server-ID ist erforderlich",
+  serverIdPattern: "Server-ID darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten",
   optional: "optional",
 
   // ===========================
@@ -1148,4 +1153,38 @@ export const de: Record<TranslationKey, string> = {
   peacefulParadiseDesc: "Entspannendes Überleben ohne feindliche Mobs. Perfekt für Gelegenheitsspieler.",
   amplifiedWorld: "Verstärkte Welt",
   amplifiedWorldDesc: "Extreme Terrain-Generierung. Erfordert mehr RAM für flüssiges Spielen.",
+
+  // ===========================
+  // HYTALE
+  // ===========================
+  hytaleServers: "Hytale Server",
+  hytaleServersDescription: "Verwalten Sie Ihre Hytale Dedicated Server",
+  newHytaleServer: "Neuer Hytale Server",
+  createHytaleServer: "Hytale Server Erstellen",
+  createHytaleServerDescription: "Richten Sie einen neuen Hytale Dedicated Server ein",
+  hytalePortDescription: "Standard UDP-Port für Hytale ist 5520",
+  noHytaleServers: "Keine Hytale Server",
+  noHytaleServersDescription: "Sie haben noch keine Hytale Server erstellt. Erstellen Sie Ihren ersten!",
+  createFirstHytaleServer: "Ersten Server Erstellen",
+  memorySettings: "Speichereinstellungen",
+  minMemory: "Min Speicher",
+  maxMemory: "Max Speicher",
+  useG1gc: "G1 Garbage Collector verwenden",
+  useG1gcDescription: "Empfohlen für bessere Leistung",
+  dockerSettings: "Docker Einstellungen",
+  bindAddress: "Bind-Adresse",
+  autoDownload: "Automatischer Download",
+  autoDownloadDescription: "Spieldateien beim ersten Start automatisch herunterladen",
+  customEnvVars: "Benutzerdefinierte Umgebungsvariablen",
+  envVarsDescription: "Eine pro Zeile im KEY=Wert Format",
+  interactiveConsole: "Interaktive Konsole",
+  connect: "Verbinden",
+  disconnect: "Trennen",
+  connected: "Verbunden",
+  connecting: "Verbinde...",
+  waitingForOutput: "Warte auf Ausgabe...",
+  connectToSeeOutput: "Verbinden Sie sich, um die Konsolenausgabe zu sehen",
+  typeCommand: "Befehl eingeben...",
+  noLogs: "Keine Logs verfügbar",
+  autoRefresh: "Automatisch aktualisieren",
 };

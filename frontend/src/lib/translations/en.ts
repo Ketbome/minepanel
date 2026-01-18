@@ -31,6 +31,7 @@ export const en = {
   dashboard: "Dashboard",
   servers: "Servers",
   settings: "Settings",
+  manage: "Manage",
   home: "Home",
   navigation: "Navigation",
 
@@ -42,6 +43,7 @@ export const en = {
   cancel: "Cancel",
   confirm: "Confirm",
   loading: "Loading...",
+  loadingServers: "Loading servers...",
   error: "Error",
   success: "Success",
   welcome: "Welcome",
@@ -229,6 +231,7 @@ export const en = {
 
   // Server Deletion
   deleteServer: "Delete Server",
+  deleteServerConfirmation: "Are you sure you want to delete server",
   deleteServerTitle: "Delete Server",
   deleteServerConfirm: "Are you sure you want to delete this server?",
   deleteServerDesc: "This action cannot be undone. This will permanently delete the server and all its data.",
@@ -324,6 +327,7 @@ export const en = {
   // GENERAL SETTINGS TAB
   // ===========================
   general: "General",
+  serverConfiguration: "Server Configuration",
   generalSettings: "General Settings",
   generalSettingsDesc: "General settings for your Minecraft server",
   basicSettings: "Basic Settings",
@@ -1071,6 +1075,7 @@ export const en = {
   goToSettings: "Go to Settings",
   createServerFromModpack: "Create a new server using this modpack",
   serverIdRequired: "Server ID is required",
+  serverIdPattern: "Server ID can only contain letters, numbers, hyphens and underscores",
   optional: "optional",
 
   // ===========================
@@ -1146,6 +1151,40 @@ export const en = {
   peacefulParadiseDesc: "Relaxing survival without hostile mobs. Perfect for casual play.",
   amplifiedWorld: "Amplified World",
   amplifiedWorldDesc: "Extreme terrain generation. Requires more RAM for smooth play.",
+
+  // ===========================
+  // HYTALE
+  // ===========================
+  hytaleServers: "Hytale Servers",
+  hytaleServersDescription: "Manage your Hytale dedicated servers",
+  newHytaleServer: "New Hytale Server",
+  createHytaleServer: "Create Hytale Server",
+  createHytaleServerDescription: "Set up a new Hytale dedicated server",
+  hytalePortDescription: "Default UDP port for Hytale is 5520",
+  noHytaleServers: "No Hytale Servers",
+  noHytaleServersDescription: "You haven't created any Hytale servers yet. Create your first one!",
+  createFirstHytaleServer: "Create First Server",
+  memorySettings: "Memory Settings",
+  minMemory: "Min Memory",
+  maxMemory: "Max Memory",
+  useG1gc: "Use G1 Garbage Collector",
+  useG1gcDescription: "Recommended for better performance",
+  dockerSettings: "Docker Settings",
+  bindAddress: "Bind Address",
+  autoDownload: "Auto Download",
+  autoDownloadDescription: "Automatically download game files on first start",
+  customEnvVars: "Custom Environment Variables",
+  envVarsDescription: "One per line in KEY=value format",
+  interactiveConsole: "Interactive Console",
+  connect: "Connect",
+  disconnect: "Disconnect",
+  connected: "Connected",
+  connecting: "Connecting...",
+  waitingForOutput: "Waiting for output...",
+  connectToSeeOutput: "Connect to see console output",
+  typeCommand: "Type a command...",
+  noLogs: "No logs available",
+  autoRefresh: "Auto-refresh",
 };
 
 export type TranslationKey = keyof typeof en;

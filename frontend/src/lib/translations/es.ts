@@ -33,6 +33,7 @@ export const es: Record<TranslationKey, string> = {
   dashboard: "Panel de Control",
   servers: "Servidores",
   settings: "Configuración",
+  manage: "Administrar",
   home: "Inicio",
   navigation: "Navegación",
 
@@ -44,6 +45,7 @@ export const es: Record<TranslationKey, string> = {
   cancel: "Cancelar",
   confirm: "Confirmar",
   loading: "Cargando...",
+  loadingServers: "Cargando servidores...",
   error: "Error",
   success: "Éxito",
   welcome: "Bienvenido",
@@ -231,6 +233,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Eliminación de Servidor
   deleteServer: "Eliminar Servidor",
+  deleteServerConfirmation: "¿Estás seguro de que deseas eliminar el servidor",
   deleteServerTitle: "Eliminar Servidor",
   deleteServerConfirm: "¿Estás seguro de que quieres eliminar este servidor?",
   deleteServerDesc: "Esta acción no se puede deshacer. Se eliminará permanentemente el servidor y todos sus datos.",
@@ -326,6 +329,7 @@ export const es: Record<TranslationKey, string> = {
   // PESTAÑA DE CONFIGURACIÓN GENERAL
   // ===========================
   general: "General",
+  serverConfiguration: "Configuración del Servidor",
   generalSettings: "Configuración General",
   generalSettingsDesc: "Ajustes generales de tu servidor de Minecraft",
   basicSettings: "Ajustes Básicos",
@@ -1073,6 +1077,7 @@ export const es: Record<TranslationKey, string> = {
   goToSettings: "Ir a Configuración",
   createServerFromModpack: "Crear un nuevo servidor usando este modpack",
   serverIdRequired: "El ID del servidor es requerido",
+  serverIdPattern: "El ID del servidor solo puede contener letras, números, guiones y guiones bajos",
   optional: "opcional",
 
   // ===========================
@@ -1148,4 +1153,38 @@ export const es: Record<TranslationKey, string> = {
   peacefulParadiseDesc: "Supervivencia relajada sin mobs hostiles. Perfecto para juego casual.",
   amplifiedWorld: "Mundo Amplificado",
   amplifiedWorldDesc: "Generación de terreno extrema. Requiere más RAM para jugar fluido.",
+
+  // ===========================
+  // HYTALE
+  // ===========================
+  hytaleServers: "Servidores Hytale",
+  hytaleServersDescription: "Administra tus servidores dedicados de Hytale",
+  newHytaleServer: "Nuevo Servidor Hytale",
+  createHytaleServer: "Crear Servidor Hytale",
+  createHytaleServerDescription: "Configura un nuevo servidor dedicado de Hytale",
+  hytalePortDescription: "El puerto UDP por defecto para Hytale es 5520",
+  noHytaleServers: "Sin Servidores Hytale",
+  noHytaleServersDescription: "Aún no has creado ningún servidor Hytale. ¡Crea el primero!",
+  createFirstHytaleServer: "Crear Primer Servidor",
+  memorySettings: "Configuración de Memoria",
+  minMemory: "Memoria Mínima",
+  maxMemory: "Memoria Máxima",
+  useG1gc: "Usar G1 Garbage Collector",
+  useG1gcDescription: "Recomendado para mejor rendimiento",
+  dockerSettings: "Configuración de Docker",
+  bindAddress: "Dirección de Enlace",
+  autoDownload: "Descarga Automática",
+  autoDownloadDescription: "Descargar archivos del juego automáticamente al iniciar",
+  customEnvVars: "Variables de Entorno Personalizadas",
+  envVarsDescription: "Una por línea en formato CLAVE=valor",
+  interactiveConsole: "Consola Interactiva",
+  connect: "Conectar",
+  disconnect: "Desconectar",
+  connected: "Conectado",
+  connecting: "Conectando...",
+  waitingForOutput: "Esperando salida...",
+  connectToSeeOutput: "Conecta para ver la salida de la consola",
+  typeCommand: "Escribe un comando...",
+  noLogs: "No hay logs disponibles",
+  autoRefresh: "Auto-actualizar",
 };

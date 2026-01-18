@@ -33,6 +33,7 @@ export const nl: Record<TranslationKey, string> = {
   dashboard: "Dashboard",
   servers: "Servers",
   settings: "Instellingen",
+  manage: "Beheren",
   home: "Thuis",
   navigation: "Navigatie",
 
@@ -44,6 +45,7 @@ export const nl: Record<TranslationKey, string> = {
   cancel: "Annuleren",
   confirm: "Bevestigen",
   loading: "Laden...",
+  loadingServers: "Servers laden...",
   error: "Fout",
   success: "Succes",
   welcome: "Welkom",
@@ -233,6 +235,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Server Deletion
   deleteServer: "Server verwijderen",
+  deleteServerConfirmation: "Weet je zeker dat je server wilt verwijderen",
   deleteServerTitle: "Server verwijderen",
   deleteServerConfirm: "Weet je zeker dat je deze server wilt verwijderen?",
   deleteServerDesc: "Deze actie kan niet ongedaan worden gemaakt. Dit zal de server en alle bijbehorende gegevens permanent verwijderen.",
@@ -328,6 +331,7 @@ export const nl: Record<TranslationKey, string> = {
   // ALGEMENE INSTELLINGEN TAB
   // ===========================
   general: "Algemeen",
+  serverConfiguration: "Server Configuratie",
   generalSettings: "Algemene instellingen",
   generalSettingsDesc: "Algemene instellingen voor je Minecraft server",
   basicSettings: "Basisinstellingen",
@@ -1087,6 +1091,7 @@ export const nl: Record<TranslationKey, string> = {
   goToSettings: "Ga naar Instellingen",
   createServerFromModpack: "Maak een nieuwe server met dit modpack",
   serverIdRequired: "Server ID is vereist",
+  serverIdPattern: "Server ID kan alleen letters, cijfers, streepjes en underscores bevatten",
   optional: "optioneel",
 
   // ===========================
@@ -1162,4 +1167,38 @@ export const nl: Record<TranslationKey, string> = {
   peacefulParadiseDesc: "Ontspannende survival zonder vijandige mobs. Perfect voor casual spelen.",
   amplifiedWorld: "Versterkte Wereld",
   amplifiedWorldDesc: "Extreme terrein generatie. Vereist meer RAM voor soepel spel.",
+
+  // ===========================
+  // HYTALE
+  // ===========================
+  hytaleServers: "Hytale Servers",
+  hytaleServersDescription: "Beheer je Hytale dedicated servers",
+  newHytaleServer: "Nieuwe Hytale Server",
+  createHytaleServer: "Hytale Server Aanmaken",
+  createHytaleServerDescription: "Stel een nieuwe Hytale dedicated server in",
+  hytalePortDescription: "Standaard UDP-poort voor Hytale is 5520",
+  noHytaleServers: "Geen Hytale Servers",
+  noHytaleServersDescription: "Je hebt nog geen Hytale servers aangemaakt. Maak je eerste!",
+  createFirstHytaleServer: "Eerste Server Aanmaken",
+  memorySettings: "Geheugeninstellingen",
+  minMemory: "Min Geheugen",
+  maxMemory: "Max Geheugen",
+  useG1gc: "Gebruik G1 Garbage Collector",
+  useG1gcDescription: "Aanbevolen voor betere prestaties",
+  dockerSettings: "Docker Instellingen",
+  bindAddress: "Bind Adres",
+  autoDownload: "Automatisch Downloaden",
+  autoDownloadDescription: "Download gamebestanden automatisch bij eerste start",
+  customEnvVars: "Aangepaste Omgevingsvariabelen",
+  envVarsDescription: "Eén per regel in KEY=waarde formaat",
+  interactiveConsole: "Interactieve Console",
+  connect: "Verbinden",
+  disconnect: "Verbreken",
+  connected: "Verbonden",
+  connecting: "Verbinden...",
+  waitingForOutput: "Wachten op uitvoer...",
+  connectToSeeOutput: "Verbind om console-uitvoer te zien",
+  typeCommand: "Typ een commando...",
+  noLogs: "Geen logs beschikbaar",
+  autoRefresh: "Automatisch vernieuwen",
 };

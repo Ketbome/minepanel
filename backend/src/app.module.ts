@@ -11,6 +11,8 @@ import { SystemMonitoringModule } from './system-monitoring/system-monitoring.mo
 import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
+import { SharedModule } from './shared/shared.module';
+import { HytaleServersModule } from './hytale-servers/hytale-servers.module';
 
 @Module({
   imports: [
@@ -19,8 +21,10 @@ import { FilesModule } from './files/files.module';
       isGlobal: true,
     }),
     DatabaseModule,
+    SharedModule,
     UsersModule,
     ServerManagementModule,
+    HytaleServersModule,
     AuthModule,
     SystemMonitoringModule,
     DiscordModule,
