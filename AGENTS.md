@@ -25,6 +25,11 @@ Web panel for managing Minecraft servers with Docker. Create, configure, start/s
 
 ```
 minepanel/
+├── .github/
+│   ├── workflows/           # CI/CD pipelines
+│   ├── dependabot.yml       # Dependency updates
+│   ├── CODEOWNERS           # Auto-assign reviewers
+│   └── labeler.yml          # PR auto-labeling
 ├── backend/                 # NestJS API (see backend/AGENTS.md)
 ├── frontend/                # Next.js App (see frontend/AGENTS.md)
 ├── doc/                     # VitePress docs (see doc/AGENTS.md)
@@ -86,6 +91,45 @@ feat(server): add Purpur support
 fix(ui): button alignment on mobile
 refactor(auth): simplify JWT validation
 ```
+
+---
+
+## CI/CD
+
+### GitHub Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `ci.yml` | PRs, push to main | Lint, build, test (backend + frontend) |
+| `docker-publish.yml` | Push to main, tags | Build and push Docker images |
+| `auto-merge.yml` | Dependabot PRs | Auto-approve minor, auto-merge patches |
+| `pr-labeler.yml` | PRs | Auto-labels by files changed + size |
+| `stale.yml` | Daily | Closes inactive issues/PRs |
+| `deploy-docs.yml` | Changes in `doc/` | Deploy VitePress to GitHub Pages |
+| `sonarcloud.yml` | PRs, push to main | Code quality analysis |
+
+### Dependabot
+
+Configured for weekly updates:
+- `backend/` — npm packages (grouped: nestjs, typescript, testing)
+- `frontend/` — npm packages (grouped: react, nextjs, radix, tailwind)
+- `doc/` — npm packages (monthly)
+- GitHub Actions — workflow dependencies
+
+### Branch Protection (Recommended)
+
+Configure in **Settings → Branches → Add rule** for `main`:
+- ☑️ Require status checks: `ci-status`
+- ☑️ Require review from CODEOWNERS
+- ☑️ Require branches be up to date
+
+### PR Process
+
+1. Create branch: `feat/`, `fix/`, `refactor/`, `docs/`
+2. Push and create PR → CI runs automatically
+3. Labels assigned automatically (backend, frontend, size/S, etc.)
+4. Coverage report posted as comment
+5. Merge when checks pass + approved
 
 ---
 
