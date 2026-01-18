@@ -378,12 +378,16 @@ services:
     volumes:
       - ./servers/my-server:/data
     labels:
-      - "minepanel.server=true"
-      - "minepanel.name=my-server"
-      - "minepanel.type=PAPER"
-      - "minepanel.version=1.20.1"
+      - 'minepanel.server=true'
+      - 'minepanel.name=my-server'
+      - 'minepanel.type=PAPER'
+      - 'minepanel.version=1.20.1'
     restart: unless-stopped
 ```
+
+::: tip
+Labels use the list format (`- 'key=value'`) instead of the object format (`key: value`) to avoid escaping issues with special characters in values.
+:::
 
 ### Volume Mapping
 
@@ -406,15 +410,23 @@ flowchart LR
 
 ### Labels
 
-Minepanel uses Docker labels to track servers:
+Minepanel uses Docker labels to track servers. Labels use the list format to avoid escaping issues:
 
 ```yaml
 labels:
-  minepanel.server: "true" # Identifies as managed server
-  minepanel.name: "my-server" # Server identifier
-  minepanel.type: "PAPER" # Server type
-  minepanel.version: "1.20.1" # Minecraft version
-  minepanel.created: "2024-10-24" # Creation date
+  - 'minepanel.server=true'      # Identifies as managed server
+  - 'minepanel.name=my-server'   # Server identifier
+  - 'minepanel.type=PAPER'       # Server type
+  - 'minepanel.version=1.20.1'   # Minecraft version
+  - 'minepanel.created=2024-10-24' # Creation date
+```
+
+Custom labels can be added via the UI. Use `key=value` format, one per line:
+
+```
+traefik.enable=true
+traefik.http.routers.mc.rule=Host(`mc.example.com`)
+my.custom.label=value with spaces
 ```
 
 ---
