@@ -61,13 +61,22 @@ jobs:
       - name: Test
         run: npm run test -- --ci --coverage --maxWorkers=2
 
-      - name: Upload coverage
-        if: github.event_name == 'pull_request'
+      - name: Upload coverage artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage/
           retention-days: 7
+
+      - name: Coverage Report in PR
+        if: github.event_name == 'pull_request'
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: backend
+          test-script: npm test -- --ci --coverage
+          skip-step: install
+        continue-on-error: true
 
   # Frontend: Lint, Build
   frontend:
