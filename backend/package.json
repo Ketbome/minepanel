@@ -52,7 +52,7 @@
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "11.1.12",
     "@types/bcrypt": "6.0.0",
-    "@types/express": "5.0.4",
+    "@types/express": "5.0.6",
     "@types/fs-extra": "11.0.4",
     "@types/jest": "30.0.0",
     "@types/js-yaml": "4.0.9",
