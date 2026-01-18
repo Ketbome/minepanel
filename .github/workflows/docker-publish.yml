@@ -140,7 +140,7 @@ jobs:
           (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
           (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
           github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
