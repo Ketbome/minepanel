@@ -47,7 +47,7 @@ export class FilesController {
     res.setHeader('Content-Length', stat.size);
 
     const stream = fs.createReadStream(fullPath);
-    stream.on('error', (err) => {
+    stream.on('error', (_err) => {
       if (!res.headersSent) {
         res.status(500).send('Error reading file');
       }

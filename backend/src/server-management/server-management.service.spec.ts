@@ -240,7 +240,7 @@ describe('ServerManagementService', () => {
       ];
 
       (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (fs.readFile as any).mockResolvedValue(JSON.stringify(mockWhitelist));
 
       const result = await service.getWhitelist('myserver');

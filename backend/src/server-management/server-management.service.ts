@@ -413,7 +413,7 @@ export class ServerManagementService {
       }
 
       const content = await fs.readFile(composePath, 'utf-8');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const parsed = yaml.load(content) as any;
       const mcService = parsed?.services?.mc;
       const limits = mcService?.deploy?.resources?.limits;
