@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Detect changes to optimize CI
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  # Backend: Lint, Build, Test
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test -- --ci --coverage --maxWorkers=2
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+          retention-days: 7
+
+      - name: Coverage Report in PR
+        if: github.event_name == 'pull_request'
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: backend
+          test-script: npm test -- --ci --coverage
+          skip-step: install
+        continue-on-error: true
+
+  # Frontend: Lint, Build
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Check TypeScript
+        run: npx tsc --noEmit
+
+  # Version Check (only on PRs)
+  version-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version was bumped
+        run: |
+          # Get version from main branch
+          git fetch origin main
+          VERSION_MAIN=$(git show origin/main:config.json | jq -r '.version')
+          VERSION_PR=$(jq -r '.version' config.json)
+          
+          echo "Version on main: $VERSION_MAIN"
+          echo "Version in PR:   $VERSION_PR"
+          
+          if [ "$VERSION_MAIN" == "$VERSION_PR" ]; then
+            echo ""
+            echo "❌ ERROR: Version in config.json was not updated!"
+            echo ""
+            echo "Please bump the version before merging:"
+            echo "  - feat: increment minor (x.Y.0)"
+            echo "  - fix: increment patch (x.y.Z)"
+            echo "  - breaking: increment major (X.0.0)"
+            echo ""
+            exit 1
+          fi
+          
+          # Validate version format
+          if ! [[ "$VERSION_PR" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ ERROR: Invalid version format. Use semver (X.Y.Z)"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ Version bumped: $VERSION_MAIN → $VERSION_PR"
+
+  # PR Status Check
+  ci-status:
+    if: always()
+    needs: [backend, frontend, version-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI Status
+        run: |
+          if [[ "${{ needs.backend.result }}" == "failure" ]] || [[ "${{ needs.frontend.result }}" == "failure" ]]; then
+            echo "❌ CI failed"
+            exit 1
+          fi
+          if [[ "${{ needs.version-check.result }}" == "failure" ]]; then
+            echo "❌ Version check failed - please bump version in config.json"
+            exit 1
+          fi
+          echo "✅ CI passed"

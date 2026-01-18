@@ -1,0 +1,16 @@
+# Default owner - all files
+* @Ketbome
+
+# Backend
+/backend/ @Ketbome
+
+# Frontend
+/frontend/ @Ketbome
+
+# CI/CD and configuration
+/.github/ @Ketbome
+/docker-compose*.yml @Ketbome
+/Dockerfile @Ketbome
+
+# Documentation
+/doc/ @Ketbome
