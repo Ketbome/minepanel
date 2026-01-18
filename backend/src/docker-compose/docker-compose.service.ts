@@ -237,7 +237,23 @@ export class DockerComposeService {
     const labels = labelsString
       .split('\n')
       .filter((line) => line.trim())
-      .map((line) => line.trim())
+      .map((line) => {
+        let trimmed = line.trim();
+        // Strip surrounding quotes (user might copy from other compose files)
+        if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+            (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+          trimmed = trimmed.slice(1, -1);
+        }
+        // Also handle - 'label=value' format from compose files
+        if (trimmed.startsWith('- ')) {
+          trimmed = trimmed.slice(2).trim();
+          if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+              (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+            trimmed = trimmed.slice(1, -1);
+          }
+        }
+        return trimmed;
+      })
       .filter((line) => line.includes('='));
 
     return labels.length > 0 ? labels : undefined;
