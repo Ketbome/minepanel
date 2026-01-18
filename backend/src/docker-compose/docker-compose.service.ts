@@ -178,6 +178,7 @@ export class DockerComposeService {
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
         execDirectly: env.EXEC_DIRECTLY === 'true',
         envVars: this.extractCustomEnvVars(env),
+        dockerLabels: this.extractDockerLabels(mcService.labels),
         extraPorts: extraPorts,
         forgeBuild: '',
         fabricLoaderVersion: '',
@@ -210,6 +211,33 @@ export class DockerComposeService {
     }
 
     return customVars.join('\n');
+  }
+
+  private extractDockerLabels(labels: Record<string, string> | undefined): string {
+    if (!labels || typeof labels !== 'object') return '';
+
+    return Object.entries(labels)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+  }
+
+  private parseDockerLabels(labelsString: string): Record<string, string> | undefined {
+    if (!labelsString?.trim()) return undefined;
+
+    const labels: Record<string, string> = {};
+    labelsString
+      .split('\n')
+      .filter((line) => line.trim())
+      .forEach((line) => {
+        const eqIndex = line.indexOf('=');
+        if (eqIndex > 0) {
+          const key = line.substring(0, eqIndex).trim();
+          const value = line.substring(eqIndex + 1).trim();
+          if (key) labels[key] = value;
+        }
+      });
+
+    return Object.keys(labels).length > 0 ? labels : undefined;
   }
 
   private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
@@ -414,6 +442,7 @@ export class DockerComposeService {
       stopDelay: '60',
       execDirectly: true,
       envVars: '',
+      dockerLabels: '',
       extraPorts: [],
 
       cfMethod: 'url',
@@ -866,25 +895,30 @@ export class DockerComposeService {
   }
 
   private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string): any {
-    return {
-      services: {
-        mc: {
-          image: `itzg/minecraft-server:${config.dockerImage}`,
-          tty: true,
-          stdin_open: true,
-          container_name: config.id,
-          ports: [`${port}:25565`, ...(config.extraPorts || [])],
-          environment,
-          volumes,
-          restart: config.restartPolicy,
-          deploy: {
-            resources: {
-              limits: { cpus: config.cpuLimit, memory: config.maxMemory },
-              reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
-            },
-          },
+    const mcService: any = {
+      image: `itzg/minecraft-server:${config.dockerImage}`,
+      tty: true,
+      stdin_open: true,
+      container_name: config.id,
+      ports: [`${port}:25565`, ...(config.extraPorts || [])],
+      environment,
+      volumes,
+      restart: config.restartPolicy,
+      deploy: {
+        resources: {
+          limits: { cpus: config.cpuLimit, memory: config.maxMemory },
+          reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
         },
       },
+    };
+
+    const labels = this.parseDockerLabels(config.dockerLabels);
+    if (labels) {
+      mcService.labels = labels;
+    }
+
+    return {
+      services: { mc: mcService },
       volumes: { 'mc-data': {} },
     };
   }

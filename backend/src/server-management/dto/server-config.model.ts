@@ -287,6 +287,10 @@ export class ServerConfigDto {
   @IsOptional()
   envVars?: string;
 
+  @IsString()
+  @IsOptional()
+  dockerLabels?: string;
+
   // Backup includes/excludes
   @IsString()
   @IsOptional()

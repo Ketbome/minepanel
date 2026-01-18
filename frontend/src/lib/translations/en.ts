@@ -506,6 +506,11 @@ export const en = {
   variableName: "Variable name",
   variableValue: "Value",
 
+  // Docker Labels
+  dockerLabels: "Docker Labels",
+  dockerLabelsDesc: "Custom labels for the container, useful for reverse proxies like Traefik or Caddy",
+  dockerLabelsHelp: "Container labels (one per line, format: key=value). Useful for Traefik, Caddy, nginx-proxy, etc.",
+
   // Backup Configuration
   backupConfig: "Backup Configuration",
   enableBackup: "Enable Backups",
