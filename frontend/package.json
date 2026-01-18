@@ -43,7 +43,7 @@
     "axios": "1.13.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "framer-motion": "12.23.26",
+    "framer-motion": "12.26.2",
     "lucide-react": "0.561.0",
     "next": "15.5.9",
     "next-runtime-env": "3.3.0",
