@@ -100,8 +100,7 @@ refactor(auth): simplify JWT validation
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
-| `ci.yml` | PRs, push to main | Lint, build, test (backend + frontend) |
-| `version-bump.yml` | PR merged to main | Auto-increment version in config.json |
+| `ci.yml` | PRs, push to main | Lint, build, test + version check |
 | `docker-publish.yml` | Push to main, tags | Build and push Docker images |
 | `auto-merge.yml` | Dependabot PRs | Auto-approve minor, auto-merge patches |
 | `pr-labeler.yml` | PRs | Auto-labels by files changed + size |
@@ -111,14 +110,14 @@ refactor(auth): simplify JWT validation
 
 ### Version Bumping
 
-Version is stored in `config.json` and auto-incremented on PR merge:
+Version is stored in `config.json`. **PRs must update the version** or CI will fail.
 
-| PR Title Prefix | Version Bump | Example |
-|-----------------|--------------|---------|
-| `feat:` or `feat(scope):` | Minor | `1.7.0` → `1.8.0` |
-| `fix:` or `fix(scope):` | Patch | `1.7.0` → `1.7.1` |
-| `!:` (breaking) | Major | `1.7.0` → `2.0.0` |
-| Other | Minor | `1.7.0` → `1.8.0` |
+```bash
+# Before creating PR, update config.json:
+# feat: bump minor (1.7.0 → 1.8.0)
+# fix: bump patch (1.7.0 → 1.7.1)
+# breaking: bump major (1.7.0 → 2.0.0)
+```
 
 ### Dependabot
 
