@@ -544,6 +544,37 @@ MAX_TICK_TIME=60000"
           />
           <p className="text-xs text-gray-400">{t("environmentVarsHelp")}</p>
         </div>
+
+        <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="dockerLabels" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+              <Image src="/images/name_tag.webp" alt="Labels" width={16} height={16} />
+              {t("dockerLabels")}
+            </Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                    <HelpCircle className="h-4 w-4 text-gray-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                  <p>{t("dockerLabelsDesc")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <Textarea
+            id="dockerLabels"
+            value={config.dockerLabels || ""}
+            onChange={(e) => updateConfig("dockerLabels", e.target.value)}
+            placeholder="traefik.enable=true
+traefik.tcp.routers.mc.rule=HostSNI(`*`)
+traefik.tcp.routers.mc.entrypoints=minecraft"
+            className="min-h-20 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono text-sm"
+          />
+          <p className="text-xs text-gray-400">{t("dockerLabelsHelp")}</p>
+        </div>
       </CardContent>
     </Card>
   );

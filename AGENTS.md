@@ -25,6 +25,9 @@ Web panel for managing Minecraft servers with Docker. Create, configure, start/s
 
 ```
 minepanel/
+├── .github/
+│   ├── workflows/           # CI/CD pipelines
+│   └── CODEOWNERS           # Auto-assign reviewers
 ├── backend/                 # NestJS API (see backend/AGENTS.md)
 ├── frontend/                # Next.js App (see frontend/AGENTS.md)
 ├── doc/                     # VitePress docs (see doc/AGENTS.md)
@@ -86,6 +89,35 @@ feat(server): add Purpur support
 fix(ui): button alignment on mobile
 refactor(auth): simplify JWT validation
 ```
+
+---
+
+## CI/CD
+
+### GitHub Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `ci.yml` | PRs, push to main | Lint, build, test |
+| `docker-publish.yml` | Push to main | Build Docker images + create release |
+| `deploy-docs.yml` | Changes in `doc/` | Deploy VitePress to GitHub Pages |
+| `stale.yml` | Daily | Closes inactive issues/PRs |
+
+### Version Bumping
+
+Version is stored in `config.json`. When version changes on main, a new tag and release are created automatically.
+
+### Branch Protection (Recommended)
+
+Configure in **Settings → Branches → Add rule** for `main`:
+- ☑️ Require status checks: `ci-status`
+- ☑️ Require branches be up to date
+
+### PR Process
+
+1. Create branch: `feat/`, `fix/`, `refactor/`, `docs/`
+2. Push and create PR → CI runs automatically
+3. Merge when checks pass
 
 ---
 

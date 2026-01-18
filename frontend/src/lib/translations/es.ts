@@ -508,6 +508,11 @@ export const es: Record<TranslationKey, string> = {
   variableName: "Nombre de variable",
   variableValue: "Valor",
 
+  // Docker Labels
+  dockerLabels: "Etiquetas Docker",
+  dockerLabelsDesc: "Etiquetas personalizadas para el contenedor, útiles para proxies reversos como Traefik o Caddy",
+  dockerLabelsHelp: "Etiquetas del contenedor (una por línea, formato: clave=valor). Útiles para Traefik, Caddy, nginx-proxy, etc.",
+
   // Configuración de Backups
   backupConfig: "Configuración de Copias de Seguridad",
   enableBackup: "Activar Backups",

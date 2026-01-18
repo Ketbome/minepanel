@@ -522,6 +522,11 @@ export const nl: Record<TranslationKey, string> = {
   variableName: "Variabele naam",
   variableValue: "Waarde",
 
+  // Docker Labels
+  dockerLabels: "Docker Labels",
+  dockerLabelsDesc: "Aangepaste labels voor de container, handig voor reverse proxies zoals Traefik of Caddy",
+  dockerLabelsHelp: "Container labels (één per regel, formaat: sleutel=waarde). Handig voor Traefik, Caddy, nginx-proxy, etc.",
+
   // Backup Configuration
   backupConfig: "Back-up configuratie",
   enableBackup: "Back-ups inschakelen",

@@ -146,9 +146,109 @@ npm run test:cov      # Coverage
 npm run test:e2e      # e2e tests
 ```
 
+### Test Structure
+
 - Unit tests: `*.spec.ts` next to source files
 - e2e tests: `test/` directory
 - Mock external dependencies (Docker, filesystem)
+
+### Writing Service Tests
+
+```typescript
+// ✅ GOOD - Mock dependencies properly
+describe('AuthService', () => {
+  let service: AuthService;
+  let jwtService: jest.Mocked<JwtService>;
+
+  beforeEach(async () => {
+    const mockJwtService = {
+      sign: jest.fn(),
+    };
+
+    const module = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        { provide: JwtService, useValue: mockJwtService },
+      ],
+    }).compile();
+
+    service = module.get(AuthService);
+    jwtService = module.get(JwtService);
+  });
+
+  it('should generate JWT token', async () => {
+    jwtService.sign.mockReturnValue('token');
+    const result = await service.generateJwt({ userId: 1 });
+    expect(result.access_token).toBe('token');
+  });
+});
+```
+
+### Mocking fs-extra
+
+```typescript
+// Mock at top level (Jest hoists this)
+jest.mock('fs-extra', () => ({
+  pathExists: jest.fn(),
+  readFile: jest.fn(),
+  ensureDirSync: jest.fn(),
+}));
+
+import * as fs from 'fs-extra';
+
+// Use in tests
+(fs.pathExists as jest.Mock).mockResolvedValue(true);
+```
+
+### Mocking child_process
+
+```typescript
+jest.mock('node:child_process', () => ({ exec: jest.fn() }));
+jest.mock('node:util', () => ({
+  ...jest.requireActual('node:util'),
+  promisify: () => jest.fn(), // Returns mock for execAsync
+}));
+
+const mockExec = jest.requireMock('node:util').promisify();
+mockExec.mockResolvedValue({ stdout: 'output' });
+```
+
+### Controller Tests
+
+```typescript
+describe('ServerController', () => {
+  let controller: ServerController;
+  let service: jest.Mocked<ServerService>;
+
+  beforeEach(async () => {
+    const mockService = {
+      startServer: jest.fn(),
+      stopServer: jest.fn(),
+    };
+
+    const module = await Test.createTestingModule({
+      controllers: [ServerController],
+      providers: [{ provide: ServerService, useValue: mockService }],
+    }).compile();
+
+    controller = module.get(ServerController);
+    service = module.get(ServerService);
+  });
+
+  it('should start server', async () => {
+    service.startServer.mockResolvedValue(true);
+    const result = await controller.startServer('myserver');
+    expect(result.success).toBe(true);
+  });
+});
+```
+
+### Test Coverage
+
+CI runs tests with coverage. Aim for:
+- Services: >80% coverage
+- Controllers: >70% coverage
+- Critical paths (auth, server ops): >90%
 
 ---
 
