@@ -59,7 +59,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
     "@tailwindcss/postcss": "4.1.18",
-    "@types/node": "20.19.27",
+    "@types/node": "25.0.9",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "eslint": "9.38.0",
