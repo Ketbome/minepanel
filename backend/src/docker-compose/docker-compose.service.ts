@@ -237,7 +237,23 @@ export class DockerComposeService {
     const labels = labelsString
       .split('\n')
       .filter((line) => line.trim())
-      .map((line) => line.trim())
+      .map((line) => {
+        let trimmed = line.trim();
+        // Strip surrounding quotes (user might copy from other compose files)
+        if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+            (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+          trimmed = trimmed.slice(1, -1);
+        }
+        // Also handle - 'label=value' format from compose files
+        if (trimmed.startsWith('- ')) {
+          trimmed = trimmed.slice(2).trim();
+          if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+              (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+            trimmed = trimmed.slice(1, -1);
+          }
+        }
+        return trimmed;
+      })
       .filter((line) => line.includes('='));
 
     return labels.length > 0 ? labels : undefined;
@@ -984,7 +1000,29 @@ export class DockerComposeService {
       await this.addBackupService(dockerComposeConfig, config, serverDir);
     }
 
-    const yamlContent = yaml.dump(dockerComposeConfig);
+    let yamlContent = yaml.dump(dockerComposeConfig);
+
+    // Wrap label values in single quotes to handle special characters (backticks, etc.)
+    yamlContent = yamlContent.replace(
+      /^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm,
+      (match, labelsHeader, labelsBlock) => {
+        const quotedLabels = labelsBlock.replace(
+          /^(\s+-\s+)(.+)$/gm,
+          (_, prefix, value) => {
+            // Skip if already quoted
+            if ((value.startsWith("'") && value.endsWith("'")) ||
+                (value.startsWith('"') && value.endsWith('"'))) {
+              return `${prefix}${value}`;
+            }
+            // Escape single quotes in value and wrap
+            const escaped = value.replace(/'/g, "''");
+            return `${prefix}'${escaped}'`;
+          }
+        );
+        return labelsHeader + quotedLabels;
+      }
+    );
+
     await fs.writeFile(this.getDockerComposePath(config.id), yamlContent);
   }
 }
