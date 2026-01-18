@@ -19,7 +19,7 @@
   "license": "MIT",
   "devDependencies": {
     "mermaid": "11.12.2",
-    "vitepress": "2.0.0-alpha.12",
+    "vitepress": "2.0.0-alpha.15",
     "vitepress-plugin-mermaid": "2.0.17"
   }
 }
