@@ -2,18 +2,15 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Detect changes to optimize CI
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -30,7 +27,6 @@ jobs:
             frontend:
               - 'frontend/**'
 
-  # Backend: Lint, Build, Test
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
@@ -38,30 +34,20 @@ jobs:
     defaults:
       run:
         working-directory: backend
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run test -- --ci --coverage --maxWorkers=2
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Test
-        run: npm run test -- --ci --coverage --maxWorkers=2
-
-      - name: Upload coverage artifact
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -69,16 +55,6 @@ jobs:
           path: backend/coverage/
           retention-days: 7
 
-      - name: Coverage Report in PR
-        if: github.event_name == 'pull_request'
-        uses: ArtiomTr/jest-coverage-report-action@v2
-        with:
-          working-directory: backend
-          test-script: npm test -- --ci --coverage
-          skip-step: install
-        continue-on-error: true
-
-  # Frontend: Lint, Build
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
@@ -86,30 +62,19 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npx tsc --noEmit
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Check TypeScript
-        run: npx tsc --noEmit
-
-  # PR Status Check
   ci-status:
     if: always()
     needs: [backend, frontend]

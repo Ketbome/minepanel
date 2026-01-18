@@ -2,10 +2,8 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - "v*.*.*"
+    branches: [main]
+    tags: ["v*.*.*"]
   workflow_dispatch:
 
 env:
@@ -18,357 +16,170 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for changes
-        uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             backend:
               - 'backend/**'
-              - '.github/workflows/**'
             frontend:
               - 'frontend/**'
-              - '.github/workflows/**'
             root:
               - 'Dockerfile'
               - 'config.json'
               - 'frontend/**'
               - 'backend/**'
-              - '.github/workflows/**'
-
-  build-and-push:
-    needs: changes
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: minepanel
-            dockerfile: ./Dockerfile
-            context: .
-            image: minepanel
-            condition: root
-          - name: minepanel-backend
-            dockerfile: ./backend/Dockerfile
-            context: ./backend
-            image: minepanel-backend
-            condition: backend
-          - name: minepanel-frontend
-            dockerfile: ./frontend/Dockerfile
-            context: ./frontend
-            image: minepanel-frontend
-            condition: frontend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-
-      - name: Read version from config.json
+      - name: Read version
         id: version
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        run: |
-          VERSION=$(jq -r '.version' config.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version detected: $VERSION"
+        run: echo "version=$(jq -r '.version' config.json)" >> $GITHUB_OUTPUT
 
-      - name: Set up QEMU
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: |
-          github.event_name != 'pull_request' && (
-            (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-            (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-            (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-            github.event_name == 'workflow_dispatch'
-          )
-        uses: docker/login-action@v3
+  # Imagen principal (fullstack)
+  build-main:
+    needs: changes
+    if: needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - uses: docker/metadata-action@v5
         id: meta
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ steps.version.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
 
-      - name: Build and push Docker image
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: ${{ github.event_name != 'pull_request' }}
+          context: .
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-      - name: Image digest
-        if: |
-          (matrix.condition == 'backend' && needs.changes.outputs.backend == 'true') ||
-          (matrix.condition == 'frontend' && needs.changes.outputs.frontend == 'true') ||
-          (matrix.condition == 'root' && needs.changes.outputs.root == 'true') ||
-          github.event_name == 'workflow_dispatch'
-        run: |
-          echo "Image ${{ matrix.image }} built successfully"
-          echo "Version: ${{ steps.version.outputs.version }}"
-          echo " Platforms: linux/amd64, linux/arm64"
-          echo "Tags: ${{ steps.meta.outputs.tags }}"
-
-  create-release-tag:
-    needs: build-and-push
+  # Backend independiente
+  build-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Read version from config.json
-        id: version
-        run: |
-          VERSION=$(jq -r '.version' config.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Current version in config.json: $VERSION"
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
 
-      - name: Get last tag version
-        id: last_tag
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
-          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
-          echo "🏷️  Last tag: $LAST_TAG"
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
 
-      - name: Check if version changed
-        id: version_changed
-        run: |
-          CURRENT_VERSION="v${{ steps.version.outputs.version }}"
-          LAST_TAG="${{ steps.last_tag.outputs.tag }}"
-
-          if [ "$LAST_TAG" = "none" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "✨ No previous tags found - first release"
-          elif [ "$CURRENT_VERSION" = "$LAST_TAG" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "⏭️  Version unchanged ($CURRENT_VERSION = $LAST_TAG) - skipping tag"
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "🆕 Version changed: $LAST_TAG → $CURRENT_VERSION"
-          fi
-
-      - name: Check if tag exists
-        id: check_tag
-        if: steps.version_changed.outputs.changed == 'true'
-        run: |
-          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "⚠️  Tag v${{ steps.version.outputs.version }} already exists"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "✅ Tag v${{ steps.version.outputs.version }} does not exist - will create"
-          fi
-
-      - name: Verify changes were built
-        id: verify_changes
-        if: steps.version_changed.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
-        run: |
-          if [ "${{ needs.build-and-push.result }}" = "success" ]; then
-            echo "should_create=true" >> $GITHUB_OUTPUT
-            echo "✅ Docker images built successfully - proceeding with tag"
-          else
-            echo "should_create=false" >> $GITHUB_OUTPUT
-            echo "⏭️  No Docker builds ran - skipping tag"
-          fi
-
-      - name: Create and push tag
-        if: |
-          steps.version_changed.outputs.changed == 'true' && 
-          steps.check_tag.outputs.exists == 'false' && 
-          steps.verify_changes.outputs.should_create == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
-
-      - name: Tag created
-        if: |
-          steps.version_changed.outputs.changed == 'true' && 
-          steps.check_tag.outputs.exists == 'false' && 
-          steps.verify_changes.outputs.should_create == 'true'
-        run: |
-          echo "✅ Tag v${{ steps.version.outputs.version }} created successfully"
-          echo "🚀 GitHub Release will be created automatically"
-
-      - name: Skip reason
-        if: |
-          steps.version_changed.outputs.changed == 'false' || 
-          steps.check_tag.outputs.exists == 'true' || 
-          steps.verify_changes.outputs.should_create == 'false'
-        run: |
-          echo "ℹ️  Tag creation skipped"
-          if [ "${{ steps.version_changed.outputs.changed }}" = "false" ]; then
-            echo "   Reason: Version in config.json hasn't changed"
-          elif [ "${{ steps.check_tag.outputs.exists }}" = "true" ]; then
-            echo "   Reason: Tag already exists"
-          else
-            echo "   Reason: No significant changes to build"
-          fi
-
-  create-github-release:
-    name: Create GitHub Release
-    needs: create-release-tag
+  # Frontend independiente
+  build-frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # Crear tag y release solo si cambió la versión
+  release:
+    needs: [changes, build-main]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Read version from config.json
-        id: version
+      - name: Check if tag exists
+        id: check
         run: |
-          VERSION=$(jq -r '.version' config.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
-
-      - name: Get last tag version
-        id: last_tag
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
-          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
-
-      - name: Check if should create release
-        id: should_release
-        run: |
-          CURRENT_VERSION="v${{ steps.version.outputs.version }}"
-          LAST_TAG="${{ steps.last_tag.outputs.tag }}"
-
-          if [ "$LAST_TAG" = "none" ] || [ "$CURRENT_VERSION" != "$LAST_TAG" ]; then
-            if git rev-parse "$CURRENT_VERSION" >/dev/null 2>&1; then
-              echo "create=true" >> $GITHUB_OUTPUT
-              echo "✅ Will create release for $CURRENT_VERSION"
-            else
-              echo "create=false" >> $GITHUB_OUTPUT
-              echo "⏭️  Tag $CURRENT_VERSION doesn't exist yet - skipping release"
-            fi
+          if git rev-parse "v${{ needs.changes.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "create=false" >> $GITHUB_OUTPUT
-            echo "⏭️  No new version - skipping release"
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Create tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ needs.changes.outputs.version }}" -m "Release v${{ needs.changes.outputs.version }}"
+          git push origin "v${{ needs.changes.outputs.version }}"
+
       - name: Create Release
-        if: steps.should_release.outputs.create == 'true'
+        if: steps.check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Minepanel v${{ steps.version.outputs.version }}
+          tag_name: v${{ needs.changes.outputs.version }}
+          name: Minepanel v${{ needs.changes.outputs.version }}
+          generate_release_notes: true
           body: |
-            ## 🎮 Minepanel v${{ steps.version.outputs.version }}
+            ## 🐳 Docker Images
 
-            ### 🐳 Docker Images
-
-            Docker images are available for multiple architectures (amd64, arm64):
-
-            **Full Stack (Recommended)**:
             ```bash
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:${{ steps.version.outputs.version }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:${{ needs.changes.outputs.version }}
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:latest
             ```
 
-            **Backend Only**:
-            ```bash
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend:${{ steps.version.outputs.version }}
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend:latest
-            ```
-
-            **Frontend Only**:
-            ```bash
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend:${{ steps.version.outputs.version }}
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend:latest
-            ```
-
-            ### 🚀 Quick Start
-
-            ```bash
-            docker run -d \
-              -p 3000:3000 \
-              -p 8080:8080 \
-              --name minepanel \
-              ${{ secrets.DOCKERHUB_USERNAME }}/minepanel:${{ steps.version.outputs.version }}
-            ```
-
-            ### 📦 What's Included
-
-            - Multi-language support (English, Spanish, Dutch)
-            - Easy server connection management
-            - Real-time server monitoring
-            - Modern and responsive UI
-            - Multi-architecture support (amd64, arm64)
-
-            ### 🔗 Links
-
-            - [Documentation](https://github.com/${{ github.repository }})
-            - [Report Issues](https://github.com/${{ github.repository }}/issues)
-            - [Source Code](https://github.com/${{ github.repository }})
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+            Platforms: `linux/amd64`, `linux/arm64`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release created
-        if: steps.should_release.outputs.create == 'true'
-        run: |
-          echo "✅ Release v${{ steps.version.outputs.version }} created successfully!"
-          echo "🐳 Docker images are now available"
-          echo "📦 Supports linux/amd64 and linux/arm64"
