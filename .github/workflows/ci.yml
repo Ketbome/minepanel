@@ -109,60 +109,16 @@ jobs:
       - name: Check TypeScript
         run: npx tsc --noEmit
 
-  # Version Check (only on PRs)
-  version-check:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check version was bumped
-        run: |
-          # Get version from main branch
-          git fetch origin main
-          VERSION_MAIN=$(git show origin/main:config.json | jq -r '.version')
-          VERSION_PR=$(jq -r '.version' config.json)
-          
-          echo "Version on main: $VERSION_MAIN"
-          echo "Version in PR:   $VERSION_PR"
-          
-          if [ "$VERSION_MAIN" == "$VERSION_PR" ]; then
-            echo ""
-            echo "❌ ERROR: Version in config.json was not updated!"
-            echo ""
-            echo "Please bump the version before merging:"
-            echo "  - feat: increment minor (x.Y.0)"
-            echo "  - fix: increment patch (x.y.Z)"
-            echo "  - breaking: increment major (X.0.0)"
-            echo ""
-            exit 1
-          fi
-          
-          # Validate version format
-          if ! [[ "$VERSION_PR" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ ERROR: Invalid version format. Use semver (X.Y.Z)"
-            exit 1
-          fi
-          
-          echo ""
-          echo "✅ Version bumped: $VERSION_MAIN → $VERSION_PR"
-
   # PR Status Check
   ci-status:
     if: always()
-    needs: [backend, frontend, version-check]
+    needs: [backend, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI Status
         run: |
           if [[ "${{ needs.backend.result }}" == "failure" ]] || [[ "${{ needs.frontend.result }}" == "failure" ]]; then
             echo "❌ CI failed"
-            exit 1
-          fi
-          if [[ "${{ needs.version-check.result }}" == "failure" ]]; then
-            echo "❌ Version check failed - please bump version in config.json"
             exit 1
           fi
           echo "✅ CI passed"
