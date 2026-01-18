@@ -1,4 +1,4 @@
-# Dependabot configuration
+﻿# Dependabot configuration
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
 
 version: 2
@@ -39,6 +39,8 @@ updates:
         patterns:
           - "eslint*"
           - "prettier"
+    ignore:
+      - dependency-name: "@types/node"
 
   # Frontend (Next.js)
   - package-ecosystem: "npm"
@@ -75,6 +77,8 @@ updates:
           - "clsx"
           - "class-variance-authority"
           - "tailwind-merge"
+    ignore:
+      - dependency-name: "@types/node"
 
   # Documentation (VitePress)
   - package-ecosystem: "npm"
@@ -97,3 +101,5 @@ updates:
     labels:
       - "ci"
       - "dependencies"
+    ignore:
+      - dependency-name: "actions/setup-node"
