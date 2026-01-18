@@ -213,31 +213,34 @@ export class DockerComposeService {
     return customVars.join('\n');
   }
 
-  private extractDockerLabels(labels: Record<string, string> | undefined): string {
-    if (!labels || typeof labels !== 'object') return '';
+  private extractDockerLabels(labels: Record<string, string> | string[] | undefined): string {
+    if (!labels) return '';
 
-    return Object.entries(labels)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
+    // Handle array format: ['key=value', ...]
+    if (Array.isArray(labels)) {
+      return labels.join('\n');
+    }
+
+    // Handle object format: { key: value, ... } (legacy compose files)
+    if (typeof labels === 'object') {
+      return Object.entries(labels)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+    }
+
+    return '';
   }
 
-  private parseDockerLabels(labelsString: string): Record<string, string> | undefined {
+  private parseDockerLabels(labelsString: string): string[] | undefined {
     if (!labelsString?.trim()) return undefined;
 
-    const labels: Record<string, string> = {};
-    labelsString
+    const labels = labelsString
       .split('\n')
       .filter((line) => line.trim())
-      .forEach((line) => {
-        const eqIndex = line.indexOf('=');
-        if (eqIndex > 0) {
-          const key = line.substring(0, eqIndex).trim();
-          const value = line.substring(eqIndex + 1).trim();
-          if (key) labels[key] = value;
-        }
-      });
+      .map((line) => line.trim())
+      .filter((line) => line.includes('='));
 
-    return Object.keys(labels).length > 0 ? labels : undefined;
+    return labels.length > 0 ? labels : undefined;
   }
 
   private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
