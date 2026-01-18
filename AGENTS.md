@@ -101,12 +101,24 @@ refactor(auth): simplify JWT validation
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
 | `ci.yml` | PRs, push to main | Lint, build, test (backend + frontend) |
+| `version-bump.yml` | PR merged to main | Auto-increment version in config.json |
 | `docker-publish.yml` | Push to main, tags | Build and push Docker images |
 | `auto-merge.yml` | Dependabot PRs | Auto-approve minor, auto-merge patches |
 | `pr-labeler.yml` | PRs | Auto-labels by files changed + size |
 | `stale.yml` | Daily | Closes inactive issues/PRs |
 | `deploy-docs.yml` | Changes in `doc/` | Deploy VitePress to GitHub Pages |
 | `sonarcloud.yml` | PRs, push to main | Code quality analysis |
+
+### Version Bumping
+
+Version is stored in `config.json` and auto-incremented on PR merge:
+
+| PR Title Prefix | Version Bump | Example |
+|-----------------|--------------|---------|
+| `feat:` or `feat(scope):` | Minor | `1.7.0` → `1.8.0` |
+| `fix:` or `fix(scope):` | Patch | `1.7.0` → `1.7.1` |
+| `!:` (breaking) | Major | `1.7.0` → `2.0.0` |
+| Other | Minor | `1.7.0` → `1.8.0` |
 
 ### Dependabot
 
