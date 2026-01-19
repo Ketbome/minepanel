@@ -10,7 +10,7 @@ export default withMermaid(
 
     head: [
       ["link", { rel: "icon", href: "/favicon.ico" }],
-      ["link", { rel: "canonical", href: "https://minepanel.ketbome.lat" }],
+      ["link", { rel: "canonical", href: "https://minepanel.ketbome.com" }],
       ["meta", { name: "theme-color", content: "#3eaf7c" }],
       [
         "meta",
@@ -27,7 +27,7 @@ export default withMermaid(
       ["meta", { property: "og:locale", content: "en" }],
       [
         "meta",
-        { property: "og:url", content: "https://minepanel.ketbome.lat" },
+        { property: "og:url", content: "https://minepanel.ketbome.com" },
       ],
       [
         "meta",
@@ -49,7 +49,7 @@ export default withMermaid(
         "meta",
         {
           property: "og:image",
-          content: "https://minepanel.ketbome.lat/cubo.webp",
+          content: "https://minepanel.ketbome.com/cubo.webp",
         },
       ],
       // Twitter
@@ -73,7 +73,7 @@ export default withMermaid(
         "meta",
         {
           name: "twitter:image",
-          content: "https://minepanel.ketbome.lat/cubo.webp",
+          content: "https://minepanel.ketbome.com/cubo.webp",
         },
       ],
     ],
@@ -221,7 +221,7 @@ export default withMermaid(
     ],
 
     sitemap: {
-      hostname: "https://minepanel.ketbome.lat",
+      hostname: "https://minepanel.ketbome.com",
     },
 
     // Mermaid configuration

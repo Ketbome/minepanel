@@ -198,7 +198,7 @@ HOST_LAN_IP=                     # For LAN IP display
 
 ## Links
 
-- **Docs:** https://minepanel.ketbome.lat
+- **Docs:** https://minepanel.ketbome.com
 - **Docker Hub:** https://hub.docker.com/r/ketbom/minepanel
 - **Issues:** https://github.com/Ketbome/minepanel/issues
 - **itzg/docker-minecraft-server:** https://github.com/itzg/docker-minecraft-server

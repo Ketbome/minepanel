@@ -2,7 +2,7 @@
 
 Want to help? Cool! Here's how.
 
-Check the [documentation](https://minepanel.ketbome.lat) first if you're new to the project.
+Check the [documentation](https://minepanel.ketbome.com) first if you're new to the project.
 
 ## Code of Conduct
 
@@ -282,7 +282,7 @@ Want to add a new language?
 
 ## Documentation
 
-Docs are at [minepanel.ketbome.lat](https://minepanel.ketbome.lat) and built with VitePress (in `doc/`).
+Docs are at [minepanel.ketbome.com](https://minepanel.ketbome.com) and built with VitePress (in `doc/`).
 
 Types of docs needed:
 
@@ -302,7 +302,7 @@ Keep it:
 
 - [GitHub Discussions](https://github.com/Ketbome/minepanel/discussions)
 - Open an issue
-- Check the [FAQ](https://minepanel.ketbome.lat/faq)
+- Check the [FAQ](https://minepanel.ketbome.com/faq)
 
 ---
 

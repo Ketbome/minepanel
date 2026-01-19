@@ -2,7 +2,7 @@
 
 ## Overview
 
-Public documentation site built with VitePress. Hosted at https://minepanel.ketbome.lat
+Public documentation site built with VitePress. Hosted at https://minepanel.ketbome.com
 
 **Port:** 5173 (dev)
 

@@ -8,7 +8,7 @@
 
 Web panel for managing Minecraft servers with Docker.
 
-**Documentation:** [minepanel.ketbome.lat](https://minepanel.ketbome.lat)  
+**Documentation:** [minepanel.ketbome.com](https://minepanel.ketbome.com)  
 **Docker Hub:** [ketbom/minepanel](https://hub.docker.com/r/ketbom/minepanel)
 
 Uses [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) and [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup) under the hood.
@@ -274,16 +274,16 @@ docker compose exec minepanel sh
 
 ## Documentation
 
-Full docs at: [minepanel.ketbome.lat](https://minepanel.ketbome.lat)
+Full docs at: [minepanel.ketbome.com](https://minepanel.ketbome.com)
 
-- [Getting Started](https://minepanel.ketbome.lat/getting-started)
-- [Installation](https://minepanel.ketbome.lat/installation)
-- [Configuration](https://minepanel.ketbome.lat/configuration)
-- [Features](https://minepanel.ketbome.lat/features)
-- [Architecture](https://minepanel.ketbome.lat/architecture)
-- [API Reference](https://minepanel.ketbome.lat/api)
-- [Development](https://minepanel.ketbome.lat/development)
-- [FAQ](https://minepanel.ketbome.lat/faq)
+- [Getting Started](https://minepanel.ketbome.com/getting-started)
+- [Installation](https://minepanel.ketbome.com/installation)
+- [Configuration](https://minepanel.ketbome.com/configuration)
+- [Features](https://minepanel.ketbome.com/features)
+- [Architecture](https://minepanel.ketbome.com/architecture)
+- [API Reference](https://minepanel.ketbome.com/api)
+- [Development](https://minepanel.ketbome.com/development)
+- [FAQ](https://minepanel.ketbome.com/faq)
 
 ### Run docs locally
 

@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://minepanel.ketbome.lat/sitemap.xml
+Sitemap: https://minepanel.ketbome.com/sitemap.xml
 
