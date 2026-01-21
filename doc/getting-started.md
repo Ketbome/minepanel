@@ -1,3 +1,15 @@
+---
+title: Getting Started - Minepanel
+description: Get Minepanel running in about 2 minutes. Quick start guide for the free open source Minecraft server management panel with Docker.
+head:
+  - - meta
+    - property: og:title
+      content: Getting Started with Minepanel
+  - - meta
+    - property: og:description
+      content: Quick start guide to install and run Minepanel. Manage Minecraft servers with Docker in minutes.
+---
+
 # Getting Started
 
 Get Minepanel running in about 2 minutes.

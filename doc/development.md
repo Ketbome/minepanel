@@ -1,3 +1,15 @@
+---
+title: Development Guide - Minepanel
+description: Contribute to Minepanel. Local development setup, project structure, tech stack, testing, and contribution guidelines.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Development Guide
+  - - meta
+    - property: og:description
+      content: Set up local development environment for Minepanel. NestJS backend, Next.js frontend, and Docker.
+---
+
 # Development
 
 Want to contribute or run locally? Here's how.

@@ -1,3 +1,15 @@
+---
+title: Troubleshooting - Minepanel
+description: Fix common Minepanel issues. Docker errors, connection problems, server management, mods not downloading, and performance optimization.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Troubleshooting Guide
+  - - meta
+    - property: og:description
+      content: Solutions for common Minepanel problems. CORS errors, Docker issues, authentication, and server startup failures.
+---
+
 # Troubleshooting
 
 Common issues and how to solve them.

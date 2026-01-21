@@ -1,3 +1,15 @@
+---
+title: Administration Guide - Minepanel
+description: Minepanel administration guide. Password management, database backups, server updates, resource monitoring, and maintenance procedures.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Administration
+  - - meta
+    - property: og:description
+      content: Admin tasks for Minepanel. Manage passwords, backup database, update servers, monitor resources.
+---
+
 # Administration
 
 Manage passwords, database, backups, updates, and system maintenance.

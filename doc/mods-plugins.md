@@ -1,3 +1,15 @@
+---
+title: Mods & Plugins - Minepanel
+description: Automatic mod and plugin management for Minecraft servers. Modrinth, CurseForge, and Spiget integration with auto-download and updates.
+head:
+  - - meta
+    - property: og:title
+      content: Mods & Plugins Management - Minepanel
+  - - meta
+    - property: og:description
+      content: Install mods from Modrinth and CurseForge. Auto-download, dependency resolution, and version management.
+---
+
 # Mods & Plugins Management
 
 Automatically download and manage mods and plugins for your Minecraft servers.

@@ -1,4 +1,13 @@
 ---
+title: Minepanel - Free Minecraft Server Manager
+description: Free open source Minecraft server management panel with Docker. Self-hosted alternative to Pterodactyl and Aternos. Web UI for Paper, Forge, Fabric, Spigot servers.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel - Free Minecraft Server Manager with Docker
+  - - meta
+    - property: og:description
+      content: Open source web panel to manage multiple Minecraft servers. Self-hosted, Docker-based, supports Paper/Forge/Fabric/Spigot.
 layout: home
 
 hero:

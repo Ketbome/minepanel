@@ -1,3 +1,15 @@
+---
+title: Roadmap - Minepanel
+description: Minepanel development roadmap. Planned features including multi-node support, cloud backups, user roles, plugin browser, and scheduled tasks.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Roadmap
+  - - meta
+    - property: og:description
+      content: Future features for Minepanel. Multi-node Swarm, cloud backups, metrics, user roles, and more.
+---
+
 # Roadmap
 
 What's planned for MinePanel.

@@ -1,3 +1,15 @@
+---
+title: Configuration Guide - Minepanel
+description: Complete environment variables reference for Minepanel. Configure ports, authentication, URLs, language, and advanced Docker settings.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Configuration Reference
+  - - meta
+    - property: og:description
+      content: All environment variables and configuration options for Minepanel. JWT, CORS, ports, directories and more.
+---
+
 # Configuration
 
 How to configure Minepanel.

@@ -1,3 +1,15 @@
+---
+title: Installation Guide - Minepanel
+description: Complete installation guide for Minepanel. Docker Compose setup, source installation, SSL configuration, and reverse proxy setup for Minecraft server management.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Installation Guide
+  - - meta
+    - property: og:description
+      content: Install Minepanel with Docker. Quick install, from source, split services, and development setup options.
+---
+
 # Installation Guide
 
 This guide covers different installation methods for Minepanel, from simple to advanced setups.

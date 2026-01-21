@@ -1,3 +1,15 @@
+---
+title: Networking Guide - Minepanel
+description: Configure remote access, SSL/HTTPS, reverse proxy, LAN connectivity, and port management for Minepanel and Minecraft servers.
+head:
+  - - meta
+    - property: og:title
+      content: Networking & Remote Access - Minepanel
+  - - meta
+    - property: og:description
+      content: Set up remote access, HTTPS with Nginx/Caddy, firewall ports, and LAN configuration for Minepanel.
+---
+
 # Networking & Remote Access
 
 Configure remote access, LAN connectivity, SSL/HTTPS, and port management.

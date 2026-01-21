@@ -1,3 +1,15 @@
+---
+title: Server Types - Minepanel
+description: Supported Minecraft server types in Minepanel. Vanilla, Paper, Spigot, Forge, Fabric, Purpur, Folia, and CurseForge modpacks configuration.
+head:
+  - - meta
+    - property: og:title
+      content: Minecraft Server Types - Minepanel
+  - - meta
+    - property: og:description
+      content: Configure Vanilla, Paper, Forge, Fabric, Purpur, and CurseForge modpack servers with Minepanel.
+---
+
 # Server Types
 
 Learn about different Minecraft server types and how to configure them.

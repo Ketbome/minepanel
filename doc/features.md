@@ -1,3 +1,15 @@
+---
+title: Features - Minepanel
+description: Minepanel features overview. Server management, monitoring, file browser, backups, player management, mod integration, and multi-language support.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel Features
+  - - meta
+    - property: og:description
+      content: Complete feature list of Minepanel. Dashboard, server control, mods, backups, monitoring, and more.
+---
+
 # Features
 
 What Minepanel can do.

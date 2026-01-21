@@ -1,3 +1,15 @@
+---
+title: FAQ - Minepanel
+description: Frequently asked questions about Minepanel. Installation, server management, networking, security, performance, and troubleshooting answers.
+head:
+  - - meta
+    - property: og:title
+      content: Minepanel FAQ
+  - - meta
+    - property: og:description
+      content: Common questions about Minepanel. Requirements, supported servers, mods, remote access, and more.
+---
+
 # FAQ - Frequently Asked Questions
 
 Quick answers to common questions. For detailed guides, see the linked documentation.

@@ -1,5 +1,7 @@
-import { defineConfig } from "vitepress";
+import { defineConfig, HeadConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+
+const hostname = "https://minepanel.ketbome.com";
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid(
@@ -10,7 +12,6 @@ export default withMermaid(
 
     head: [
       ["link", { rel: "icon", href: "/favicon.ico" }],
-      ["link", { rel: "canonical", href: "https://minepanel.ketbome.com" }],
       ["meta", { name: "theme-color", content: "#3eaf7c" }],
       [
         "meta",
@@ -22,61 +23,50 @@ export default withMermaid(
       ],
       ["meta", { name: "author", content: "Ketbome" }],
       ["meta", { name: "robots", content: "index, follow" }],
-      // Open Graph
+      // Open Graph defaults (overridden per page via frontmatter)
       ["meta", { property: "og:type", content: "website" }],
       ["meta", { property: "og:locale", content: "en" }],
-      [
-        "meta",
-        { property: "og:url", content: "https://minepanel.ketbome.com" },
-      ],
-      [
-        "meta",
-        {
-          property: "og:title",
-          content: "Minepanel - Free Minecraft Server Manager with Docker",
-        },
-      ],
-      [
-        "meta",
-        {
-          property: "og:description",
-          content:
-            "Open source web panel to manage multiple Minecraft servers. Self-hosted, Docker-based, supports Paper/Forge/Fabric/Spigot. Alternative to Pterodactyl and Aternos.",
-        },
-      ],
       ["meta", { property: "og:site_name", content: "Minepanel" }],
       [
         "meta",
         {
           property: "og:image",
-          content: "https://minepanel.ketbome.com/cubo.webp",
+          content: `${hostname}/cubo.webp`,
         },
       ],
-      // Twitter
+      ["meta", { property: "og:image:width", content: "512" }],
+      ["meta", { property: "og:image:height", content: "512" }],
+      ["meta", { property: "og:image:alt", content: "Minepanel Logo" }],
+      // Twitter defaults
       ["meta", { name: "twitter:card", content: "summary_large_image" }],
       [
         "meta",
         {
-          name: "twitter:title",
-          content: "Minepanel - Minecraft Server Manager",
-        },
-      ],
-      [
-        "meta",
-        {
-          name: "twitter:description",
-          content:
-            "Free open source Minecraft server panel with Docker. Self-hosted alternative to Pterodactyl and Aternos.",
-        },
-      ],
-      [
-        "meta",
-        {
           name: "twitter:image",
-          content: "https://minepanel.ketbome.com/cubo.webp",
+          content: `${hostname}/cubo.webp`,
         },
       ],
     ],
+
+    // Generate dynamic canonical URLs and merge page-specific meta
+    transformHead({ pageData }) {
+      const head: HeadConfig[] = [];
+      const pagePath = pageData.relativePath.replace(/\.md$/, "").replace(/index$/, "");
+      const canonicalUrl = `${hostname}/${pagePath}`;
+
+      head.push(["link", { rel: "canonical", href: canonicalUrl }]);
+      head.push(["meta", { property: "og:url", content: canonicalUrl }]);
+
+      // Use page title/description for Twitter if not set in frontmatter
+      if (pageData.frontmatter.title) {
+        head.push(["meta", { name: "twitter:title", content: pageData.frontmatter.title }]);
+      }
+      if (pageData.frontmatter.description) {
+        head.push(["meta", { name: "twitter:description", content: pageData.frontmatter.description }]);
+      }
+
+      return head;
+    },
 
     themeConfig: {
       // https://vitepress.dev/reference/default-theme-config
