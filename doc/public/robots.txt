@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
 
+# Block crawlers from internal assets
+Disallow: /assets/
+Disallow: /hashmap.json
+
 Sitemap: https://minepanel.ketbome.com/sitemap.xml
 
+# Crawl-delay for politeness (optional)
+Crawl-delay: 1

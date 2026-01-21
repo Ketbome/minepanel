@@ -1,0 +1,21 @@
+{
+  "name": "Minepanel Documentation",
+  "short_name": "Minepanel",
+  "description": "Free open source Minecraft server management panel with Docker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#3eaf7c",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/cubo.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
