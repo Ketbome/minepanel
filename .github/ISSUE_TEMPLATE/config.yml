@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://minepanel.ketbome.com
+    about: Check the documentation first
+  - name: FAQ
+    url: https://minepanel.ketbome.com/faq
+    about: Frequently asked questions
+  - name: Discussions
+    url: https://github.com/Ketbome/minepanel/discussions
+    about: Ask questions or share ideas with the community

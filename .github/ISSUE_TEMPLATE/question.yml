@@ -1,0 +1,51 @@
+name: Question
+description: Ask a question about Minepanel
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking, please check:
+        - [Documentation](https://minepanel.ketbome.com)
+        - [FAQ](https://minepanel.ketbome.com/faq)
+        - [Troubleshooting](https://minepanel.ketbome.com/troubleshooting)
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any relevant context about your setup or what you're trying to achieve
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Installation
+        - Configuration
+        - Server Management
+        - Mods & Plugins
+        - Networking / Remote Access
+        - Docker
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked the [FAQ](https://minepanel.ketbome.com/faq)
+          required: true
+        - label: I have searched existing issues
+          required: true
