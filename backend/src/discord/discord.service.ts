@@ -19,6 +19,8 @@ interface DiscordWebhookPayload {
 
 interface ServerNotificationDetails {
   port?: string;
+  ip?: string;
+  lanIp?: string;
   players?: string;
   version?: string;
   reason?: string;
@@ -64,6 +66,20 @@ export class DiscordService {
       }
 
       fields.push({ name: '🎮 Server', value: serverInfo, inline: false });
+
+      // Connection info with IP:port
+      if (details?.ip || details?.lanIp) {
+        const connections: string[] = [];
+        if (details.ip && details.port) {
+          connections.push(`🌐 Public: \`${details.ip}:${details.port}\``);
+        }
+        if (details.lanIp && details.port) {
+          connections.push(`🏠 LAN: \`${details.lanIp}:${details.port}\``);
+        }
+        if (connections.length > 0) {
+          fields.push({ name: '📡 Connection', value: connections.join('\n'), inline: false });
+        }
+      }
 
       // Version if available
       if (details?.version) {
