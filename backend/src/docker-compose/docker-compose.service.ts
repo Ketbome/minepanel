@@ -149,6 +149,8 @@ export class DockerComposeService {
         backupIncludes: backupEnv.INCLUDES ?? '.',
         backupExcludes: backupEnv.EXCLUDES ?? '*.jar,cache,logs,*.tmp',
         tarCompressMethod: backupEnv.TAR_COMPRESS_METHOD ?? 'gzip',
+        enableSaveAll: backupEnv.ENABLE_SAVE_ALL !== 'false',
+        enableSync: backupEnv.ENABLE_SYNC !== 'false',
 
         initMemory: env.INIT_MEMORY ?? '6G',
         maxMemory: env.MAX_MEMORY ?? '10G',
@@ -240,15 +242,13 @@ export class DockerComposeService {
       .map((line) => {
         let trimmed = line.trim();
         // Strip surrounding quotes (user might copy from other compose files)
-        if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-            (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
           trimmed = trimmed.slice(1, -1);
         }
         // Also handle - 'label=value' format from compose files
         if (trimmed.startsWith('- ')) {
           trimmed = trimmed.slice(2).trim();
-          if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-              (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+          if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
             trimmed = trimmed.slice(1, -1);
           }
         }
@@ -432,6 +432,8 @@ export class DockerComposeService {
       backupIncludes: '.',
       backupExcludes: '*.jar,cache,logs,*.tmp',
       tarCompressMethod: 'gzip',
+      enableSaveAll: true,
+      enableSync: true,
 
       initMemory: '6G',
       maxMemory: '10G',
@@ -963,6 +965,8 @@ export class DockerComposeService {
     if (config.backupIncludes) backupEnv.INCLUDES = config.backupIncludes;
     if (config.backupExcludes) backupEnv.EXCLUDES = config.backupExcludes;
     if (config.tarCompressMethod && config.backupMethod === 'tar') backupEnv.TAR_COMPRESS_METHOD = config.tarCompressMethod;
+    if (config.enableSaveAll === false) backupEnv.ENABLE_SAVE_ALL = 'false';
+    if (config.enableSync === false) backupEnv.ENABLE_SYNC = 'false';
 
     const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');
     const backupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
@@ -1003,25 +1007,18 @@ export class DockerComposeService {
     let yamlContent = yaml.dump(dockerComposeConfig);
 
     // Wrap label values in single quotes to handle special characters (backticks, etc.)
-    yamlContent = yamlContent.replace(
-      /^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm,
-      (match, labelsHeader, labelsBlock) => {
-        const quotedLabels = labelsBlock.replace(
-          /^(\s+-\s+)(.+)$/gm,
-          (_, prefix, value) => {
-            // Skip if already quoted
-            if ((value.startsWith("'") && value.endsWith("'")) ||
-                (value.startsWith('"') && value.endsWith('"'))) {
-              return `${prefix}${value}`;
-            }
-            // Escape single quotes in value and wrap
-            const escaped = value.replace(/'/g, "''");
-            return `${prefix}'${escaped}'`;
-          }
-        );
-        return labelsHeader + quotedLabels;
-      }
-    );
+    yamlContent = yamlContent.replace(/^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm, (match, labelsHeader, labelsBlock) => {
+      const quotedLabels = labelsBlock.replace(/^(\s+-\s+)(.+)$/gm, (_, prefix, value) => {
+        // Skip if already quoted
+        if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
+          return `${prefix}${value}`;
+        }
+        // Escape single quotes in value and wrap
+        const escaped = value.replace(/'/g, "''");
+        return `${prefix}'${escaped}'`;
+      });
+      return labelsHeader + quotedLabels;
+    });
 
     await fs.writeFile(this.getDockerComposePath(config.id), yamlContent);
   }

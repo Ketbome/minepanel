@@ -14,7 +14,7 @@
     "lint-staged": "15.5.0"
   },
   "lint-staged": {
-    "backend/**/*.ts": "npm run lint:backend",
-    "frontend/**/*.{ts,tsx}": "npm run lint:frontend"
+    "backend/**/*.ts": "npm run lint:backend --",
+    "frontend/**/*.{ts,tsx}": "npm run lint:frontend --"
   }
 }

@@ -21,7 +21,7 @@
     "build": "next build",
     "build:turbopack": "next build --turbopack",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint --dir src"
   },
   "dependencies": {
     "@hookform/resolvers": "5.2.2",

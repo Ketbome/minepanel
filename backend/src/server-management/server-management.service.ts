@@ -111,11 +111,39 @@ export class ServerManagementService {
     }
   }
 
-  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; players?: string; version?: string; reason?: string }): Promise<void> {
+  private async getServerPort(serverId: string): Promise<string | undefined> {
+    try {
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (await fs.pathExists(dockerComposePath)) {
+        const content = await fs.readFile(dockerComposePath, 'utf8');
+        const config = yaml.load(content) as any;
+        const ports = config?.services?.mc?.ports;
+        if (Array.isArray(ports) && ports.length > 0) {
+          return ports[0].split(':')[0];
+        }
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get port for server ${serverId}`, error);
+    }
+    return undefined;
+  }
+
+  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
       const { webhook, lang } = await this.getUserSettings();
       if (webhook) {
-        await this.discordService.sendServerNotification(webhook, type, serverName, lang, details);
+        // Enrich details with IP info if not provided
+        const enrichedDetails = { ...details };
+        if (!enrichedDetails.port) {
+          enrichedDetails.port = await this.getServerPort(serverName);
+        }
+        if (!enrichedDetails.ip) {
+          enrichedDetails.ip = this.configService.get<string>('hostPublicIP') || undefined;
+        }
+        if (!enrichedDetails.lanIp) {
+          enrichedDetails.lanIp = this.configService.get<string>('hostLanIP') || undefined;
+        }
+        await this.discordService.sendServerNotification(webhook, type, serverName, lang, enrichedDetails);
       }
     } catch (error) {
       this.logger.error('Discord notification error', error);
@@ -413,7 +441,7 @@ export class ServerManagementService {
       }
 
       const content = await fs.readFile(composePath, 'utf-8');
-       
+
       const parsed = yaml.load(content) as any;
       const mcService = parsed?.services?.mc;
       const limits = mcService?.deploy?.resources?.limits;
@@ -511,7 +539,10 @@ export class ServerManagementService {
       const { stdout } = await execAsync(DOCKER_COMMANDS.STATS_ALL);
       const stats: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
 
-      const lines = stdout.trim().split('\n').filter((line) => line.trim());
+      const lines = stdout
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim());
       for (const line of lines) {
         const parts = line.split('\t');
         if (parts.length >= 3) {

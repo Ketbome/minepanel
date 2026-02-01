@@ -7,7 +7,21 @@ export interface ServerListItem {
   serverName: string;
   motd: string;
   port: string;
-  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT" | "BUKKIT" | "PUFFERFISH" | "PURPUR" | "LEAF" | "FOLIA";
+  serverType:
+    | 'VANILLA'
+    | 'FORGE'
+    | 'AUTO_CURSEFORGE'
+    | 'CURSEFORGE'
+    | 'SPIGOT'
+    | 'FABRIC'
+    | 'MAGMA'
+    | 'PAPER'
+    | 'QUILT'
+    | 'BUKKIT'
+    | 'PUFFERFISH'
+    | 'PURPUR'
+    | 'LEAF'
+    | 'FOLIA';
   active: boolean;
 }
 
@@ -18,22 +32,41 @@ export interface ServerListItem {
 export interface ServerConfig {
   id: string;
   active: boolean;
-  serverType: "VANILLA" | "FORGE" | "AUTO_CURSEFORGE" | "CURSEFORGE" | "SPIGOT" | "FABRIC" | "MAGMA" | "PAPER" | "QUILT" | "BUKKIT" | "PUFFERFISH" | "PURPUR" | "LEAF" | "FOLIA";
+  serverType:
+    | 'VANILLA'
+    | 'FORGE'
+    | 'AUTO_CURSEFORGE'
+    | 'CURSEFORGE'
+    | 'SPIGOT'
+    | 'FABRIC'
+    | 'MAGMA'
+    | 'PAPER'
+    | 'QUILT'
+    | 'BUKKIT'
+    | 'PUFFERFISH'
+    | 'PURPUR'
+    | 'LEAF'
+    | 'FOLIA';
 
   // General configuration
   serverName: string;
   motd: string;
   port: string;
-  difficulty: "peaceful" | "easy" | "normal" | "hard";
+  difficulty: 'peaceful' | 'easy' | 'normal' | 'hard';
   maxPlayers: string;
   ops: string;
   onlineMode: boolean;
   pvp: boolean;
   commandBlock: boolean;
   allowFlight: boolean;
-  gameMode: "survival" | "creative" | "adventure" | "spectator";
+  gameMode: 'survival' | 'creative' | 'adventure' | 'spectator';
   seed?: string;
-  levelType: "minecraft:default" | "minecraft:flat" | "minecraft:large_biomes" | "minecraft:amplified" | "minecraft:single_biome_surface";
+  levelType:
+    | 'minecraft:default'
+    | 'minecraft:flat'
+    | 'minecraft:large_biomes'
+    | 'minecraft:amplified'
+    | 'minecraft:single_biome_surface';
   hardcore: boolean;
   spawnAnimals: boolean;
   spawnMonsters: boolean;
@@ -75,7 +108,7 @@ export interface ServerConfig {
   // Backup configuration
   enableBackup: boolean;
   backupInterval: string;
-  backupMethod: "tar" | "rsync" | "restic" | "rclone";
+  backupMethod: 'tar' | 'rsync' | 'restic' | 'rclone';
   backupInitialDelay: string;
   backupPruneDays: string;
   backupDestDir: string;
@@ -87,7 +120,9 @@ export interface ServerConfig {
   rconRetryInterval: string;
   backupIncludes: string;
   backupExcludes: string;
-  tarCompressMethod: "gzip" | "bzip2" | "zstd";
+  tarCompressMethod: 'gzip' | 'bzip2' | 'zstd';
+  enableSaveAll: boolean;
+  enableSync: boolean;
 
   useAikarFlags: boolean;
   enableJmx: boolean;
@@ -104,7 +139,7 @@ export interface ServerConfig {
   dockerImage: string;
   minecraftVersion: string;
   dockerVolumes?: string;
-  restartPolicy: "no" | "always" | "on-failure" | "unless-stopped";
+  restartPolicy: 'no' | 'always' | 'on-failure' | 'unless-stopped';
   stopDelay: string;
   execDirectly: boolean;
   envVars: string;
@@ -123,12 +158,12 @@ export interface ServerConfig {
 
   // Modrinth specific
   modrinthProjects?: string;
-  modrinthDownloadDependencies?: "none" | "required" | "optional";
-  modrinthDefaultVersionType?: "release" | "beta" | "alpha";
+  modrinthDownloadDependencies?: 'none' | 'required' | 'optional';
+  modrinthDefaultVersionType?: 'release' | 'beta' | 'alpha';
   modrinthLoader?: string;
 
   // CurseForge specific
-  cfMethod?: "url" | "slug" | "file";
+  cfMethod?: 'url' | 'slug' | 'file';
   cfUrl?: string;
   cfSlug?: string;
   cfFile?: string;
