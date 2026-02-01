@@ -324,6 +324,14 @@ export class ServerConfigDto {
   @IsOptional()
   rconRetryInterval?: string;
 
+  @IsBoolean()
+  @IsOptional()
+  enableSaveAll?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  enableSync?: boolean;
+
   // Forge specific
   @IsString()
   @IsOptional()

@@ -546,6 +546,13 @@ export const es: Record<TranslationKey, string> = {
   backupOnStartupDesc: "Realizar un backup inmediatamente después de iniciar el servidor",
   pauseIfNoPlayers: "Pausar backups cuando no hay jugadores",
   pauseIfNoPlayersDesc: "No realizar backups automáticos cuando no hay jugadores conectados",
+  playersOnlineCheckInterval: "Intervalo de verificación de jugadores",
+  playersOnlineCheckIntervalDesc: "Cada cuánto tiempo verificar si hay jugadores online cuando los backups están pausados (ej: 5m, 1m)",
+  enableSaveAll: "Habilitar Save All",
+  enableSaveAllDesc: "Ejecutar comando 'save-all' antes del backup. Desactiva si tu servidor crashea durante save-all (común en mundos grandes).",
+  enableSaveAllWarning: "Advertencia: Con save-all desactivado, asegúrate de que tu servidor tenga autoguardado habilitado o podrías perder cambios recientes.",
+  enableSync: "Habilitar Sync del Sistema",
+  enableSyncDesc: "Vaciar buffers del sistema de archivos después de save-all. Solo desactivar en entornos de cluster con problemas conocidos.",
 
   // ===========================
   // PESTAÑA DE RECURSOS
