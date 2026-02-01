@@ -337,6 +337,9 @@ export const nl: Record<TranslationKey, string> = {
   terms: 'Voorwaarden',
   documentation: 'Documentatie',
   github: 'GitHub',
+  reportBug: 'Bug Melden',
+  links: 'Links',
+  sourceCode: 'Broncode',
   withLove: 'Gemaakt met',
 
   // ===========================

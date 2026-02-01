@@ -332,6 +332,9 @@ export const de: Record<TranslationKey, string> = {
   terms: 'Nutzungsbedingungen',
   documentation: 'Dokumentation',
   github: 'GitHub',
+  reportBug: 'Bug Melden',
+  links: 'Links',
+  sourceCode: 'Quellcode',
   withLove: 'Mit Liebe gemacht',
 
   // ===========================

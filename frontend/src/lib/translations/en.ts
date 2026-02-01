@@ -330,6 +330,9 @@ export const en = {
   terms: 'Terms',
   documentation: 'Documentation',
   github: 'GitHub',
+  reportBug: 'Report Bug',
+  links: 'Links',
+  sourceCode: 'Source Code',
   withLove: 'Made with',
 
   // ===========================
