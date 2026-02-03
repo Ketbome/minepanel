@@ -11,8 +11,10 @@ export interface ProxyMapping {
   backend: string;
 }
 
+// mc-router routes config format: { "mappings": { "hostname": "backend:port" } }
 interface ProxyRoutesConfig {
-  mappings: ProxyMapping[];
+  'default-server'?: string;
+  mappings: Record<string, string>;
 }
 
 interface ServerProxyInfo {
@@ -32,8 +34,8 @@ export class ProxyService {
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
   ) {
-    const baseDir = this.configService.get<string>('baseDir') || '/app';
-    this.PROXY_DIR = path.join(baseDir, 'data', 'proxy');
+    // Use /app/data for files written by backend (not BASE_DIR which is for host paths)
+    this.PROXY_DIR = '/app/data/proxy';
     this.ROUTES_FILE = path.join(this.PROXY_DIR, 'routes.json');
   }
 
@@ -76,30 +78,32 @@ export class ProxyService {
   async generateRoutesFile(servers: ServerProxyInfo[], baseDomain: string): Promise<void> {
     await fs.ensureDir(this.PROXY_DIR);
 
-    const mappings: ProxyMapping[] = servers
+    const mappings: Record<string, string> = {};
+    servers
       .filter((s) => s.useProxy)
-      .map((server) => ({
-        host: this.generateHostname(server.id, baseDomain, server.hostname),
-        backend: `${server.id}:25565`,
-      }));
+      .forEach((server) => {
+        const hostname = this.generateHostname(server.id, baseDomain, server.hostname);
+        mappings[hostname] = `${server.id}:25565`;
+      });
 
     const config: ProxyRoutesConfig = { mappings };
 
     await fs.writeJson(this.ROUTES_FILE, config, { spaces: 2 });
-    this.logger.log(`Generated routes.json with ${mappings.length} mappings`);
+    this.logger.log(`Generated routes.json with ${Object.keys(mappings).length} mappings`);
   }
 
   async addServerToProxy(serverId: string, baseDomain: string, customHostname?: string): Promise<void> {
     const config = await this.loadRoutesConfig();
     const hostname = this.generateHostname(serverId, baseDomain, customHostname);
 
-    // Evitar duplicados
-    const existing = config.mappings.findIndex((m) => m.backend === `${serverId}:25565`);
-    if (existing >= 0) {
-      config.mappings[existing].host = hostname;
-    } else {
-      config.mappings.push({ host: hostname, backend: `${serverId}:25565` });
+    // Remove old mapping for this server if exists (different hostname)
+    for (const [host, backend] of Object.entries(config.mappings)) {
+      if (backend === `${serverId}:25565` && host !== hostname) {
+        delete config.mappings[host];
+      }
     }
+
+    config.mappings[hostname] = `${serverId}:25565`;
 
     await this.saveRoutesConfig(config);
     this.logger.log(`Added/updated server ${serverId} to proxy with hostname ${hostname}`);
@@ -107,7 +111,13 @@ export class ProxyService {
 
   async removeServerFromProxy(serverId: string): Promise<void> {
     const config = await this.loadRoutesConfig();
-    config.mappings = config.mappings.filter((m) => m.backend !== `${serverId}:25565`);
+    const backend = `${serverId}:25565`;
+
+    for (const [host, b] of Object.entries(config.mappings)) {
+      if (b === backend) {
+        delete config.mappings[host];
+      }
+    }
 
     await this.saveRoutesConfig(config);
     this.logger.log(`Removed server ${serverId} from proxy`);
@@ -115,9 +125,13 @@ export class ProxyService {
 
   async getServerHostname(serverId: string): Promise<string | null> {
     const config = await this.loadRoutesConfig();
-    const mapping = config.mappings.find((m) => m.backend === `${serverId}:25565`);
-    if (mapping) {
-      return mapping.host;
+    const backend = `${serverId}:25565`;
+
+    // Find hostname by backend
+    for (const [host, b] of Object.entries(config.mappings)) {
+      if (b === backend) {
+        return host;
+      }
     }
 
     const proxySettings = await this.getProxySettings();
@@ -130,19 +144,28 @@ export class ProxyService {
 
   async getAllMappings(): Promise<ProxyMapping[]> {
     const config = await this.loadRoutesConfig();
-    return config.mappings;
+    return Object.entries(config.mappings).map(([host, backend]) => ({ host, backend }));
   }
 
   private async loadRoutesConfig(): Promise<ProxyRoutesConfig> {
     try {
       if (await fs.pathExists(this.ROUTES_FILE)) {
-        return await fs.readJson(this.ROUTES_FILE);
+        const data = await fs.readJson(this.ROUTES_FILE);
+        // Handle migration from old array format
+        if (Array.isArray(data.mappings)) {
+          const mappings: Record<string, string> = {};
+          for (const m of data.mappings) {
+            mappings[m.host] = m.backend;
+          }
+          return { mappings };
+        }
+        return data;
       }
     } catch (error) {
       this.logger.warn('Error loading routes.json, creating new one');
       this.logger.error(error);
     }
-    return { mappings: [] };
+    return { mappings: {} };
   }
 
   private async saveRoutesConfig(config: ProxyRoutesConfig): Promise<void> {
@@ -152,11 +175,10 @@ export class ProxyService {
 
   async getProxyStatus(): Promise<{ running: boolean; routesCount: number }> {
     const config = await this.loadRoutesConfig();
-    // mc-router se considera running si el archivo routes.json existe y tiene mappings
     const routesExist = await fs.pathExists(this.ROUTES_FILE);
     return {
       running: routesExist,
-      routesCount: config.mappings.length,
+      routesCount: Object.keys(config.mappings).length,
     };
   }
 }

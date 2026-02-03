@@ -37,7 +37,7 @@ services:
   # Enable with: docker compose --profile proxy up -d
   # Requires DNS wildcard: *.mc.yourdomain.com -> server IP
   mc-router:
-    image: itzg/mc-router:latest
+    image: itzg/mc-router:1.39.1
     container_name: mc-router
     profiles:
       - proxy

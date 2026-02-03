@@ -63,6 +63,8 @@ export class DiscordService {
       let connectionValue: string;
       if (details?.ip && details?.port) {
         connectionValue = `${details.ip}:${details.port}`;
+      } else if (details?.ip) {
+        connectionValue = details.ip;
       } else if (details?.lanIp && details?.port) {
         connectionValue = `${details.lanIp}:${details.port}`;
       } else if (details?.port) {

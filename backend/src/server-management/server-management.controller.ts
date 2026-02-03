@@ -6,6 +6,7 @@ import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
+import { ProxyService } from 'src/proxy/proxy.service';
 
 @Controller('servers')
 @UseGuards(JwtAuthGuard)
@@ -14,6 +15,7 @@ export class ServerManagementController {
     private readonly dockerComposeService: DockerComposeService,
     private readonly managementService: ServerManagementService,
     private readonly settingsService: SettingsService,
+    private readonly proxyService: ProxyService,
   ) {}
 
   @Get()
@@ -61,7 +63,23 @@ export class ServerManagementController {
       }
 
       const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+      const baseDomain = settings.preferences?.proxyBaseDomain;
+
       const serverConfig = await this.dockerComposeService.createServer(id, data, proxyEnabled);
+
+      // Regenerate routes.json if proxy is enabled
+      if (proxyEnabled && baseDomain) {
+        const servers = await this.dockerComposeService.getAllServerConfigs();
+        const proxyServers = servers
+          .filter((s) => s.useProxy !== false)
+          .map((s) => ({
+            id: s.id,
+            hostname: s.proxyHostname,
+            useProxy: true,
+          }));
+        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+      }
+
       return {
         success: true,
         message: `Server "${id}" created successfully`,
@@ -78,8 +96,23 @@ export class ServerManagementController {
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    const baseDomain = settings.preferences?.proxyBaseDomain;
 
     const result = await this.dockerComposeService.regenerateAllDockerCompose(proxyEnabled);
+
+    // Generate routes.json for mc-router if proxy is enabled
+    if (proxyEnabled && baseDomain) {
+      const servers = await this.dockerComposeService.getAllServerConfigs();
+      const proxyServers = servers
+        .filter((s) => s.useProxy !== false)
+        .map((s) => ({
+          id: s.id,
+          hostname: s.proxyHostname,
+          useProxy: true,
+        }));
+      await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+    }
+
     return {
       success: true,
       message: `Regenerated ${result.updated.length} servers`,
@@ -88,13 +121,34 @@ export class ServerManagementController {
   }
 
   @Delete(':id')
-  async deleteServer(@Param('id') id: string) {
+  async deleteServer(@Request() req, @Param('id') id: string) {
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
     const result = await this.managementService.deleteServer(id);
+
+    // Regenerate routes.json to remove deleted server
+    if (result) {
+      const user = req.user as PayloadToken;
+      const settings = await this.settingsService.getSettings(user.userId);
+      const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+      const baseDomain = settings.preferences?.proxyBaseDomain;
+
+      if (proxyEnabled && baseDomain) {
+        const servers = await this.dockerComposeService.getAllServerConfigs();
+        const proxyServers = servers
+          .filter((s) => s.useProxy !== false)
+          .map((s) => ({
+            id: s.id,
+            hostname: s.proxyHostname,
+            useProxy: true,
+          }));
+        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+      }
+    }
+
     return {
       success: result,
       message: result ? `Server "${id}" deleted successfully` : `Failed to delete server "${id}"`,
@@ -135,11 +189,26 @@ export class ServerManagementController {
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    const baseDomain = settings.preferences?.proxyBaseDomain;
 
     const updatedConfig = await this.dockerComposeService.updateServerConfig(id, config, proxyEnabled);
     if (!updatedConfig) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
+
+    // Regenerate routes.json if proxy settings changed
+    if (proxyEnabled && baseDomain && (config.proxyHostname !== undefined || config.useProxy !== undefined)) {
+      const servers = await this.dockerComposeService.getAllServerConfigs();
+      const proxyServers = servers
+        .filter((s) => s.useProxy !== false)
+        .map((s) => ({
+          id: s.id,
+          hostname: s.proxyHostname,
+          useProxy: true,
+        }));
+      await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+    }
+
     return updatedConfig;
   }
 

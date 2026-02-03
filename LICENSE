@@ -1,16 +1,56 @@
-MIT License
+Minepanel Community License
 
 Copyright (c) 2024-2026 Ketbome
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## Grant of Rights
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Permission is hereby granted, free of charge, to any person or organization
+obtaining a copy of this software and associated documentation files (the
+"Software"), to use, copy, modify, merge, and distribute the Software, subject
+to the following conditions:
+
+## Conditions
+
+1. **Attribution Required**: The above copyright notice and this permission
+   notice shall be included in all copies or substantial portions of the
+   Software.
+
+2. **Non-Commercial Use**: The Software may not be used by individuals or
+   organizations for commercial purposes without explicit written permission
+   from the copyright holder. Commercial purposes include, but are not limited
+   to:
+   - Selling the Software or any derivative works
+   - Offering the Software as a paid service (SaaS, hosting, etc.)
+   - Using the Software as part of a commercial product or service
+   - Charging fees for support, installation, or maintenance of the Software
+
+3. **No Competing Products**: You may not use this Software to create or
+   offer a competing product or service that replicates the core functionality
+   of Minepanel.
+
+4. **Personal & Educational Use**: Personal use, educational use, internal
+   business use (non-revenue generating), and non-profit use are explicitly
+   permitted without restriction.
+
+5. **Contributions**: Any contributions to this repository are licensed under
+   the same terms as this license.
+
+## Exceptions
+
+The following uses are always permitted:
+
+- Running Minepanel for personal Minecraft server management
+- Using Minepanel within an organization for internal purposes
+- Modifying the Software for personal use
+- Educational and research purposes
+- Non-profit organizations
+
+## Commercial Licensing
+
+For commercial use, please contact: [pablo.moraga.san@gmail.com
+]
+
+## Disclaimer
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

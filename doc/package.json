@@ -16,7 +16,7 @@
     "documentation"
   ],
   "author": "Ketbome",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "mermaid": "11.12.2",
     "vitepress": "2.0.0-alpha.12",

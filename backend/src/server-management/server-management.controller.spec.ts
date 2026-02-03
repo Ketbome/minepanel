@@ -4,6 +4,7 @@ import { ServerManagementController } from './server-management.controller';
 import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { SettingsService } from '../users/services/settings.service';
+import { ProxyService } from '../proxy/proxy.service';
 
 describe('ServerManagementController', () => {
   let controller: ServerManagementController;
@@ -35,10 +36,17 @@ describe('ServerManagementController', () => {
       getServerConfig: jest.fn(),
       updateServerConfig: jest.fn(),
       getAllServerConfigs: jest.fn(),
+      regenerateAllDockerCompose: jest.fn(),
     };
 
     const mockSettingsService = {
       getSettings: jest.fn(),
+    };
+
+    const mockProxyService = {
+      generateRoutesFile: jest.fn(),
+      getProxySettings: jest.fn(),
+      getServerHostname: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -47,6 +55,7 @@ describe('ServerManagementController', () => {
         { provide: ServerManagementService, useValue: mockServerService },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: ProxyService, useValue: mockProxyService },
       ],
     }).compile();
 
@@ -117,17 +126,19 @@ describe('ServerManagementController', () => {
   });
 
   describe('deleteServer', () => {
+    const mockReq = { user: { userId: 1 } };
+
     it('should throw NotFoundException when server does not exist', async () => {
       dockerComposeService.getServerConfig.mockResolvedValue(null);
 
-      await expect(controller.deleteServer('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(controller.deleteServer(mockReq, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should delete server when it exists', async () => {
       dockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver' } as any);
       serverService.deleteServer.mockResolvedValue(true);
 
-      const result = await controller.deleteServer('myserver');
+      const result = await controller.deleteServer(mockReq, 'myserver');
 
       expect(result.success).toBe(true);
     });

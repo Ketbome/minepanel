@@ -4,7 +4,7 @@
 
 **Manage Minecraft servers with Docker — Simple, Fast, Beautiful**
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Community-blue.svg)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker&color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 [![Docker Size](https://img.shields.io/docker/image-size/ketbom/minepanel/latest?color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 
@@ -20,56 +20,46 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Clone and start
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
 export JWT_SECRET=$(openssl rand -base64 32)
 docker compose up -d
 ```
 
-🎮 **Open** http://localhost:3000 → **Login:** `admin` / `admin`
+Open http://localhost:3000 — Login: `admin` / `admin`
 
 ---
 
-## ✨ Features
+## Features
 
-<table>
-<tr>
-<td width="50%">
-
-🎛️ Multi-server management<br>
-📊 Real-time monitoring<br>
-📁 Built-in file browser<br>
-💾 Automatic backups
-
-</td>
-<td width="50%">
-
-🔧 All server types (Paper, Forge, Fabric...)<br>
-📦 CurseForge & Modrinth support<br>
-🌍 Multi-language (EN/ES/NL/DE)<br>
-🔔 Discord webhooks
-
-</td>
-</tr>
-</table>
+- **Multi-server** — Create and manage multiple servers from one panel
+- **Real-time monitoring** — CPU, RAM, players, and logs
+- **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
+- **Modpacks** — CurseForge & Modrinth integration
+- **Automatic backups** — Scheduled backups with retention policies
+- **Proxy support** — mc-router for single-port multi-server
+- **Discord webhooks** — Server events notifications
+- **Multi-language** — English, Spanish, Dutch, German
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-|                                                               |                                                                 |
-| :-----------------------------------------------------------: | :-------------------------------------------------------------: |
-| [📥 Installation](https://minepanel.ketbome.com/installation) | [⚙️ Configuration](https://minepanel.ketbome.com/configuration) |
-|   [🌐 Networking](https://minepanel.ketbome.com/networking)   |      [🎯 Features](https://minepanel.ketbome.com/features)      |
-|          [❓ FAQ](https://minepanel.ketbome.com/faq)          |           [🔌 API](https://minepanel.ketbome.com/api)           |
+Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
+
+- [Installation](https://minepanel.ketbome.com/installation) — Docker setup guide
+- [Configuration](https://minepanel.ketbome.com/configuration) — Environment variables & settings
+- [Networking](https://minepanel.ketbome.com/networking) — Ports, DNS, and proxy setup
+- [Features](https://minepanel.ketbome.com/features) — Full feature documentation
+- [FAQ](https://minepanel.ketbome.com/faq) — Common questions
+- [API](https://minepanel.ketbome.com/api) — REST API reference
 
 ---
 
-## 🤝 Contributors
+## Contributors
 
 <a href="https://github.com/Ketbome/minepanel/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Ketbome/minepanel" />
@@ -78,11 +68,9 @@ docker compose up -d
 ---
 
 <div align="center">
-
 **[⭐ Star this repo](https://github.com/Ketbome/minepanel)** if you find it useful!
 
 Made with ❤️ by [@Ketbome](https://github.com/Ketbome)
-
-<sub>MIT License</sub>
+Made by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
 
 </div>

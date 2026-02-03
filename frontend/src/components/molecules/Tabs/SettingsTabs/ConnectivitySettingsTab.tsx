@@ -38,14 +38,8 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({
 
   useEffect(() => {
     getProxyStatus()
-      .then((status) => {
-        console.log('Proxy status:', status);
-        setProxyEnabled(status.enabled);
-      })
-      .catch((err) => {
-        console.error('Error fetching proxy status:', err);
-        setProxyEnabled(false);
-      });
+      .then((status) => setProxyEnabled(status.enabled))
+      .catch(() => setProxyEnabled(false));
   }, []);
 
   const serverUsesProxy = proxyEnabled && config.useProxy !== false;
