@@ -431,6 +431,8 @@ export const es: Record<TranslationKey, string> = {
   serverPortDesc: 'Puerto en el que escuchará el servidor. El puerto por defecto es 25565.',
   serverPortWarning:
     '⚠️ Este puerto debe ser distinto al de otros servidores en ejecución para evitar conflictos.',
+  serverPortProxyInfo:
+    'El puerto es gestionado por el proxy. Todos los servidores usan el puerto interno 25565 y se conectan via hostname.',
   playerIdleTimeout: 'Tiempo de Inactividad de Jugadores (minutos)',
   playerIdleTimeoutDesc:
     'Tiempo en minutos antes de expulsar a jugadores inactivos (0 para desactivar)',
@@ -1133,6 +1135,8 @@ export const es: Record<TranslationKey, string> = {
   connectionTip: 'Comparte esta dirección con los jugadores para que se unan a tu servidor',
   playingLAN: '¿Jugando en LAN?',
   learnHow: 'Aprende cómo configurarlo',
+  proxyConnectionTip:
+    'Los jugadores se conectan usando este hostname en el puerto por defecto (25565)',
   forgotPassword: '¿Olvidaste tu contraseña?',
   fileBrowserPasswordTip: '¿No sabes la contraseña de FileBrowser?',
   learnHowToGetIt: 'Aprende cómo obtenerla',

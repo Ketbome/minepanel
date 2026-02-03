@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -19,9 +19,10 @@ import {
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertCircle, HelpCircle, Network } from 'lucide-react';
+import { AlertCircle, HelpCircle, Network, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { getProxyStatus } from '@/services/network.service';
 
 interface ConnectivitySettingsTabProps {
   config: ServerConfig;
@@ -33,6 +34,22 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({
   updateConfig,
 }) => {
   const { t } = useLanguage();
+  const [proxyEnabled, setProxyEnabled] = useState(false);
+
+  useEffect(() => {
+    getProxyStatus()
+      .then((status) => {
+        console.log('Proxy status:', status);
+        setProxyEnabled(status.enabled);
+      })
+      .catch((err) => {
+        console.error('Error fetching proxy status:', err);
+        setProxyEnabled(false);
+      });
+  }, []);
+
+  const serverUsesProxy = proxyEnabled && config.useProxy !== false;
+
   return (
     <>
       <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -49,16 +66,24 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({
             <Input
               id="serverPort"
               type="number"
-              value={config.port || 25565}
+              value={serverUsesProxy ? 25565 : config.port || 25565}
               onChange={(e) => updateConfig('port', String(e.target.value))}
               placeholder="25565"
-              className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+              disabled={serverUsesProxy}
+              className={`bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 ${serverUsesProxy ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             <p className="text-xs text-gray-400">{t('serverPortDesc')}</p>
-            <Alert className="bg-amber-900/30 border-amber-800 text-amber-200 mt-2 py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{t('serverPortWarning')}</AlertDescription>
-            </Alert>
+            {serverUsesProxy ? (
+              <Alert className="bg-cyan-900/30 border-cyan-800 text-cyan-200 mt-2 py-2">
+                <Info className="h-4 w-4" />
+                <AlertDescription>{t('serverPortProxyInfo')}</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="bg-amber-900/30 border-amber-800 text-amber-200 mt-2 py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{t('serverPortWarning')}</AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-2">

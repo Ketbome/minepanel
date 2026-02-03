@@ -1,17 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Body, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { ProxyService } from './proxy.service';
-
-interface AuthenticatedRequest {
-  user: { userId: number };
-}
 
 @Controller('proxy')
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
   @Get('status')
-  async getStatus(@Req() req: AuthenticatedRequest) {
-    const [proxyStatus, settings] = await Promise.all([this.proxyService.getProxyStatus(), this.proxyService.getProxySettings(req.user.userId)]);
+  async getStatus() {
+    const [proxyStatus, settings] = await Promise.all([this.proxyService.getProxyStatus(), this.proxyService.getProxySettings()]);
 
     return {
       available: !!settings.baseDomain,

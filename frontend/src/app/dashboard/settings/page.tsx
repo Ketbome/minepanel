@@ -43,6 +43,7 @@ import {
 import { changePassword } from '@/services/users/users.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { regenerateAllDockerCompose } from '@/services/network.service';
 
 export default function SettingsPage() {
   const { t } = useLanguage();
@@ -67,6 +68,8 @@ export default function SettingsPage() {
     available: false,
   });
   const [proxyBaseDomain, setProxyBaseDomain] = useState('');
+  const [initialProxyEnabled, setInitialProxyEnabled] = useState(false);
+  const [initialProxyDomain, setInitialProxyDomain] = useState('');
 
   const [networkSettings, setNetworkSettings] = useState<NetworkSettings>({
     publicIp: null,
@@ -98,6 +101,8 @@ export default function SettingsPage() {
         if (settings.proxy) {
           setProxySettings(settings.proxy);
           setProxyBaseDomain(settings.proxy.baseDomain || '');
+          setInitialProxyEnabled(settings.proxy.enabled);
+          setInitialProxyDomain(settings.proxy.baseDomain || '');
         }
         if (settings.network) {
           setNetworkSettings(settings.network);
@@ -118,8 +123,10 @@ export default function SettingsPage() {
   const onSubmit = async (data: UserSettings) => {
     setIsSaving(true);
     try {
+      // Only send fields that the DTO accepts
       const updateData = {
-        ...data,
+        cfApiKey: data.cfApiKey,
+        discordWebhook: data.discordWebhook,
         language: localStorage.getItem('language') as 'en' | 'es',
         proxy: {
           proxyEnabled: proxySettings.enabled,
@@ -131,6 +138,16 @@ export default function SettingsPage() {
         },
       };
       await updateSettings(updateData);
+
+      // Regenerate docker-compose files only if proxy settings changed
+      const proxyChanged =
+        proxySettings.enabled !== initialProxyEnabled || proxyBaseDomain !== initialProxyDomain;
+      if (proxyChanged) {
+        await regenerateAllDockerCompose();
+        setInitialProxyEnabled(proxySettings.enabled);
+        setInitialProxyDomain(proxyBaseDomain);
+      }
+
       mcToast.success(t('settingsSaved'));
     } catch (error) {
       console.error('Error saving settings:', error);

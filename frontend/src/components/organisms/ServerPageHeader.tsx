@@ -77,7 +77,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
 
       <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-lg border border-gray-700/40 bg-gray-800/30 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 relative">
+          <div className="shrink-0 w-12 h-12 relative">
             <Image src={getStatusIcon(serverStatus)} alt="Server Status" width={48} height={48} className="object-contain" />
           </div>
           <div>

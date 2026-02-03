@@ -431,6 +431,8 @@ export const de: Record<TranslationKey, string> = {
   serverPortDesc: 'Port, auf dem der Server lauscht. Der Standardport ist 25565.',
   serverPortWarning:
     'Dieser Port muss sich von anderen laufenden Servern unterscheiden, um Konflikte zu vermeiden.',
+  serverPortProxyInfo:
+    'Port wird vom Proxy verwaltet. Alle Server verwenden den internen Port 25565 und verbinden sich über Hostname.',
   playerIdleTimeout: 'Spieler-Leerlauf-Timeout (Minuten)',
   playerIdleTimeoutDesc: 'Zeit vor dem Kick inaktiver Spieler (0 zum Deaktivieren)',
   onlineMode: 'Online-Modus',
@@ -1139,6 +1141,7 @@ export const de: Record<TranslationKey, string> = {
   connectionTip: 'Teilen Sie diese Adresse mit Spielern, um Ihrem Server beizutreten',
   playingLAN: 'Im LAN spielen?',
   learnHow: 'Erfahren Sie, wie Sie es konfigurieren',
+  proxyConnectionTip: 'Spieler verbinden sich über diesen Hostnamen am Standard-Port (25565)',
   forgotPassword: 'Passwort vergessen?',
   fileBrowserPasswordTip: 'Kennen Sie das FileBrowser-Passwort nicht?',
   learnHowToGetIt: 'Erfahren Sie, wie Sie es erhalten',

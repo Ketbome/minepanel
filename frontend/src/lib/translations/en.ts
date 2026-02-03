@@ -428,6 +428,8 @@ export const en = {
   serverPort: 'Server Port',
   serverPortDesc: 'Port on which the server will listen. The default port is 25565.',
   serverPortWarning: 'This port must be different from other running servers to avoid conflicts.',
+  serverPortProxyInfo:
+    'Port is managed by the proxy. All servers use internal port 25565 and connect via hostname.',
   playerIdleTimeout: 'Player Idle Timeout (minutes)',
   playerIdleTimeoutDesc: 'Time before kicking inactive players (0 to disable)',
   onlineMode: 'Online Mode',
@@ -1120,6 +1122,7 @@ export const en = {
   connectionTip: 'Share this address with players to join your server',
   playingLAN: 'Playing on LAN?',
   learnHow: 'Learn how to configure it',
+  proxyConnectionTip: 'Players connect using this hostname on default port (25565)',
   forgotPassword: 'Forgot your password?',
   fileBrowserPasswordTip: "Don't know the FileBrowser password?",
   learnHowToGetIt: 'Learn how to get it',

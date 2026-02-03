@@ -444,6 +444,8 @@ export const nl: Record<TranslationKey, string> = {
   serverPortDesc: 'Poort waarop de server luistert. De standaardpoort is 25565.',
   serverPortWarning:
     'Deze poort moet anders zijn dan andere actieve servers om conflicten te voorkomen.',
+  serverPortProxyInfo:
+    'Poort wordt beheerd door de proxy. Alle servers gebruiken interne poort 25565 en verbinden via hostnaam.',
   playerIdleTimeout: 'Speler inactief timeout (minuten)',
   playerIdleTimeoutDesc: 'Tijd voordat inactieve spelers worden verwijderd (0 om uit te schakelen)',
   onlineMode: 'Online modus',
@@ -1147,6 +1149,7 @@ export const nl: Record<TranslationKey, string> = {
   connectionTip: 'Deel dit adres met spelers om lid te worden van je server',
   playingLAN: 'Speel je op LAN?',
   learnHow: 'Leer hoe je het configureert',
+  proxyConnectionTip: 'Spelers verbinden via deze hostnaam op de standaard poort (25565)',
   forgotPassword: 'Wachtwoord vergeten?',
   fileBrowserPasswordTip: 'Weet je het FileBrowser-wachtwoord niet?',
   learnHowToGetIt: 'Leer hoe je het kunt krijgen',

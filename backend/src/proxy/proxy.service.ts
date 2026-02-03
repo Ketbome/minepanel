@@ -6,7 +6,7 @@ import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import { Settings } from 'src/users/entities/settings.entity';
 
-interface ProxyMapping {
+export interface ProxyMapping {
   host: string;
   backend: string;
 }
@@ -37,20 +37,26 @@ export class ProxyService {
     this.ROUTES_FILE = path.join(this.PROXY_DIR, 'routes.json');
   }
 
-  async getProxySettings(userId: number): Promise<{ enabled: boolean; baseDomain: string | null }> {
-    const settings = await this.settingsRepo.findOne({ where: { userId } });
+  async getProxySettings(userId?: number): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    let settings;
+    if (userId) {
+      settings = await this.settingsRepo.findOne({ where: { userId } });
+    } else {
+      const [first] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
+      settings = first;
+    }
     return {
       enabled: settings?.preferences?.proxyEnabled ?? false,
       baseDomain: settings?.preferences?.proxyBaseDomain ?? null,
     };
   }
 
-  async isProxyAvailable(userId: number): Promise<boolean> {
+  async isProxyAvailable(userId?: number): Promise<boolean> {
     const { baseDomain } = await this.getProxySettings(userId);
     return !!baseDomain;
   }
 
-  async isProxyEnabled(userId: number): Promise<boolean> {
+  async isProxyEnabled(userId?: number): Promise<boolean> {
     const { enabled, baseDomain } = await this.getProxySettings(userId);
     return enabled && !!baseDomain;
   }
@@ -110,7 +116,16 @@ export class ProxyService {
   async getServerHostname(serverId: string): Promise<string | null> {
     const config = await this.loadRoutesConfig();
     const mapping = config.mappings.find((m) => m.backend === `${serverId}:25565`);
-    return mapping?.host ?? null;
+    if (mapping) {
+      return mapping.host;
+    }
+
+    const proxySettings = await this.getProxySettings();
+    if (proxySettings.enabled && proxySettings.baseDomain) {
+      return this.generateHostname(serverId, proxySettings.baseDomain);
+    }
+
+    return null;
   }
 
   async getAllMappings(): Promise<ProxyMapping[]> {
@@ -124,7 +139,8 @@ export class ProxyService {
         return await fs.readJson(this.ROUTES_FILE);
       }
     } catch (error) {
-      this.logger.warn('Error loading routes.json, creating new one', error);
+      this.logger.warn('Error loading routes.json, creating new one');
+      this.logger.error(error);
     }
     return { mappings: [] };
   }

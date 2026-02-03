@@ -607,13 +607,35 @@ export class DockerComposeService {
     return this.loadServerConfigFromDockerCompose(id);
   }
 
-  async saveServerConfigs(configs: ServerConfig[]): Promise<void> {
+  async saveServerConfigs(configs: ServerConfig[], proxyEnabled = false): Promise<void> {
     for (const config of configs) {
-      await this.generateDockerComposeFile(config);
+      await this.generateDockerComposeFile(config, proxyEnabled);
     }
   }
 
-  async createServer(id: string, config: UpdateServerConfig = {}): Promise<ServerConfig> {
+  async regenerateAllDockerCompose(proxyEnabled: boolean): Promise<{ updated: string[]; errors: string[] }> {
+    const serverIds = await this.getAllServerIds();
+    const updated: string[] = [];
+    const errors: string[] = [];
+
+    for (const id of serverIds) {
+      try {
+        const config = await this.loadServerConfigFromDockerCompose(id);
+        if (config) {
+          await this.generateDockerComposeFile(config, proxyEnabled);
+          updated.push(id);
+          this.logger.log(`Regenerated docker-compose for ${id}`);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to regenerate docker-compose for ${id}`, error);
+        errors.push(id);
+      }
+    }
+
+    return { updated, errors };
+  }
+
+  async createServer(id: string, config: UpdateServerConfig = {}, proxyEnabled = false): Promise<ServerConfig> {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       throw new Error('El ID del servidor solo puede contener letras, números, guiones y guiones bajos');
     }
@@ -640,7 +662,7 @@ export class DockerComposeService {
     const defaultConfig = this.createDefaultConfig(id);
     const serverConfig = { ...defaultConfig, ...config };
 
-    await this.generateDockerComposeFile(serverConfig);
+    await this.generateDockerComposeFile(serverConfig, proxyEnabled);
     return serverConfig;
   }
 
@@ -683,11 +705,11 @@ export class DockerComposeService {
     }
   }
 
-  async updateServerConfig(id: string, config: Partial<ServerConfig>): Promise<ServerConfig | null> {
+  async updateServerConfig(id: string, config: Partial<ServerConfig>, proxyEnabled = false): Promise<ServerConfig | null> {
     const currentConfig = await this.loadServerConfigFromDockerCompose(id);
     const updatedConfig = { ...currentConfig, ...config };
 
-    await this.generateDockerComposeFile(updatedConfig);
+    await this.generateDockerComposeFile(updatedConfig, proxyEnabled);
     return updatedConfig;
   }
 
@@ -1068,7 +1090,9 @@ export class DockerComposeService {
     this.addServerTypeConfig(environment, config);
     this.addCustomEnvVars(environment, config);
 
-    const availablePort = await this.ensurePortAvailable(config);
+    // When proxy is enabled, servers don't expose ports to host, so no need to find available port
+    const useProxy = proxyEnabled && config.useProxy !== false;
+    const availablePort = useProxy ? '25565' : await this.ensurePortAvailable(config);
     const volumes = this.parseVolumes(config);
     const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort, proxyEnabled);
 

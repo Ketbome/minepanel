@@ -87,6 +87,7 @@ export class SettingsService {
 
   // Get first user's settings (for system-wide operations like Discord notifications)
   async getFirstUserSettings(): Promise<Settings | null> {
-    return this.settingsRepo.findOne({ order: { id: 'ASC' } });
+    const [first] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
+    return first ?? null;
   }
 }
