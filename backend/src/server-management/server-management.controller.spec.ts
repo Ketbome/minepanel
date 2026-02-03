@@ -10,6 +10,7 @@ describe('ServerManagementController', () => {
   let controller: ServerManagementController;
   let serverService: jest.Mocked<ServerManagementService>;
   let dockerComposeService: jest.Mocked<DockerComposeService>;
+  let settingsService: jest.Mocked<SettingsService>;
 
   beforeEach(async () => {
     const mockServerService = {
@@ -62,6 +63,7 @@ describe('ServerManagementController', () => {
     controller = module.get<ServerManagementController>(ServerManagementController);
     serverService = module.get(ServerManagementService);
     dockerComposeService = module.get(DockerComposeService);
+    settingsService = module.get(SettingsService);
   });
 
   it('should be defined', () => {
@@ -137,6 +139,7 @@ describe('ServerManagementController', () => {
     it('should delete server when it exists', async () => {
       dockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver' } as any);
       serverService.deleteServer.mockResolvedValue(true);
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
 
       const result = await controller.deleteServer(mockReq, 'myserver');
 
