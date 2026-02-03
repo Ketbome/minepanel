@@ -59,27 +59,19 @@ export class DiscordService {
 
       const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
 
-      // Server info in a nice box
-      let serverInfo = `\`\`\`\n${serverName}\n\`\`\``;
-      if (details?.port) {
-        serverInfo = `\`\`\`\n${serverName}  •  Port ${details.port}\n\`\`\``;
+      // Server con IP:puerto copiable
+      let connectionValue: string;
+      if (details?.ip && details?.port) {
+        connectionValue = `${details.ip}:${details.port}`;
+      } else if (details?.lanIp && details?.port) {
+        connectionValue = `${details.lanIp}:${details.port}`;
+      } else if (details?.port) {
+        connectionValue = `Port ${details.port}`;
+      } else {
+        connectionValue = serverName;
       }
 
-      fields.push({ name: '🎮 Server', value: serverInfo, inline: false });
-
-      // Connection info with IP:port
-      if (details?.ip || details?.lanIp) {
-        const connections: string[] = [];
-        if (details.ip && details.port) {
-          connections.push(`🌐 Public: \`${details.ip}:${details.port}\``);
-        }
-        if (details.lanIp && details.port) {
-          connections.push(`🏠 LAN: \`${details.lanIp}:${details.port}\``);
-        }
-        if (connections.length > 0) {
-          fields.push({ name: '📡 Connection', value: connections.join('\n'), inline: false });
-        }
-      }
+      fields.push({ name: `🎮 ${serverName}`, value: `\`\`\`\n${connectionValue}\n\`\`\``, inline: false });
 
       // Version if available
       if (details?.version) {
