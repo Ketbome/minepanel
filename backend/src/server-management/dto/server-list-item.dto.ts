@@ -12,7 +12,7 @@ export class ServerListItemDto {
     return {
       id: config.id,
       serverName: config.serverName || config.id,
-      motd: config.motd || 'Un servidor de Minecraft increíble',
+      motd: config.motd || 'A Minecraft server',
       port: config.port || '25565',
       serverType: config.serverType || 'VANILLA',
       active: config.active ?? false,
