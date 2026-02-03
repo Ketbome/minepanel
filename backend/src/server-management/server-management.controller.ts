@@ -51,15 +51,17 @@ export class ServerManagementController {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
 
+      const user = req.user as PayloadToken;
+      const settings = await this.settingsService.getSettings(user.userId);
+
       if (data.serverType === 'AUTO_CURSEFORGE' && !data.cfApiKey) {
-        const user = req.user as PayloadToken;
-        const settings = await this.settingsService.getSettings(user.userId);
         if (settings.cfApiKey) {
           data.cfApiKey = settings.cfApiKey;
         }
       }
 
-      const serverConfig = await this.dockerComposeService.createServer(id, data);
+      const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+      const serverConfig = await this.dockerComposeService.createServer(id, data, proxyEnabled);
       return {
         success: true,
         message: `Server "${id}" created successfully`,
@@ -69,6 +71,20 @@ export class ServerManagementController {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(error.message || 'Failed to create server');
     }
+  }
+
+  @Post('regenerate-all')
+  async regenerateAllDockerCompose(@Request() req) {
+    const user = req.user as PayloadToken;
+    const settings = await this.settingsService.getSettings(user.userId);
+    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+
+    const result = await this.dockerComposeService.regenerateAllDockerCompose(proxyEnabled);
+    return {
+      success: true,
+      message: `Regenerated ${result.updated.length} servers`,
+      ...result,
+    };
   }
 
   @Delete(':id')
@@ -115,8 +131,12 @@ export class ServerManagementController {
   }
 
   @Put(':id')
-  async updateServer(@Param('id') id: string, @Body(new ValidationPipe()) config: UpdateServerConfigDto) {
-    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, config);
+  async updateServer(@Request() req, @Param('id') id: string, @Body(new ValidationPipe()) config: UpdateServerConfigDto) {
+    const user = req.user as PayloadToken;
+    const settings = await this.settingsService.getSettings(user.userId);
+    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+
+    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, config, proxyEnabled);
     if (!updatedConfig) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }

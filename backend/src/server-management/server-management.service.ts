@@ -95,7 +95,14 @@ export class ServerManagementService {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
-  private async getUserSettings(): Promise<{ webhook: string | null; lang: SupportedLanguage }> {
+  private async getUserSettings(): Promise<{
+    webhook: string | null;
+    lang: SupportedLanguage;
+    publicIp: string | null;
+    lanIp: string | null;
+    proxyEnabled: boolean;
+    proxyBaseDomain: string | null;
+  }> {
     try {
       const settings = await this.settingsRepo.findOne({
         where: { discordWebhook: Not(IsNull()) },
@@ -104,10 +111,14 @@ export class ServerManagementService {
       return {
         webhook: settings?.discordWebhook || null,
         lang: (settings?.language as SupportedLanguage) || 'es',
+        publicIp: settings?.preferences?.publicIp || null,
+        lanIp: settings?.preferences?.lanIp || null,
+        proxyEnabled: settings?.preferences?.proxyEnabled || false,
+        proxyBaseDomain: settings?.preferences?.proxyBaseDomain || null,
       };
     } catch (error) {
       this.logger.warn('Failed to get user settings', error);
-      return { webhook: null, lang: 'es' };
+      return { webhook: null, lang: 'es', publicIp: null, lanIp: null, proxyEnabled: false, proxyBaseDomain: null };
     }
   }
 
@@ -130,23 +141,70 @@ export class ServerManagementService {
 
   private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
-      const { webhook, lang } = await this.getUserSettings();
-      if (webhook) {
-        // Enrich details with IP info if not provided
-        const enrichedDetails = { ...details };
-        if (!enrichedDetails.port) {
-          enrichedDetails.port = await this.getServerPort(serverName);
+      const userSettings = await this.getUserSettings();
+      if (!userSettings.webhook) return;
+
+      const enrichedDetails = { ...details };
+
+      // Get port if not provided
+      if (!enrichedDetails.port) {
+        enrichedDetails.port = await this.getServerPort(serverName);
+      }
+
+      // Priority: 1. Proxy hostname, 2. Settings IP, 3. ENV, 4. undefined
+      if (userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
+        // When proxy is active, use hostname instead of IP:port
+        const proxyHostname = await this.getServerProxyHostname(serverName, userSettings.proxyBaseDomain);
+        if (proxyHostname) {
+          enrichedDetails.ip = proxyHostname;
+          enrichedDetails.port = undefined; // Don't show port with proxy hostname
+          enrichedDetails.lanIp = undefined; // LAN IP not relevant with proxy
         }
+      } else {
+        // No proxy - use IP:port from settings
         if (!enrichedDetails.ip) {
-          enrichedDetails.ip = this.configService.get<string>('hostPublicIP') || undefined;
+          enrichedDetails.ip = userSettings.publicIp || undefined;
         }
         if (!enrichedDetails.lanIp) {
-          enrichedDetails.lanIp = this.configService.get<string>('hostLanIP') || undefined;
+          enrichedDetails.lanIp = userSettings.lanIp || undefined;
         }
-        await this.discordService.sendServerNotification(webhook, type, serverName, lang, enrichedDetails);
       }
+
+      await this.discordService.sendServerNotification(userSettings.webhook, type, serverName, userSettings.lang, enrichedDetails);
     } catch (error) {
       this.logger.error('Discord notification error', error);
+    }
+  }
+
+  private async getServerProxyHostname(serverId: string, baseDomain: string): Promise<string | null> {
+    try {
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (await fs.pathExists(dockerComposePath)) {
+        const content = await fs.readFile(dockerComposePath, 'utf8');
+        const config = yaml.load(content) as any;
+        const labels = config?.services?.mc?.labels;
+
+        // Check if server has custom proxy hostname
+        if (Array.isArray(labels)) {
+          const hostnameLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.hostname='));
+          if (hostnameLabel) {
+            return hostnameLabel.split('=')[1];
+          }
+        }
+
+        // Check if server has proxy disabled
+        if (Array.isArray(labels)) {
+          const enabledLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.enabled='));
+          if (enabledLabel && enabledLabel.split('=')[1] === 'false') {
+            return null; // Server has proxy disabled
+          }
+        }
+      }
+      // Default: generate hostname from serverId
+      return `${serverId}.${baseDomain}`;
+    } catch (error) {
+      this.logger.warn(`Failed to get proxy hostname for ${serverId}`, error);
+      return `${serverId}.${baseDomain}`;
     }
   }
 

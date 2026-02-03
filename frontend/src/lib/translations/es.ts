@@ -431,6 +431,8 @@ export const es: Record<TranslationKey, string> = {
   serverPortDesc: 'Puerto en el que escuchará el servidor. El puerto por defecto es 25565.',
   serverPortWarning:
     '⚠️ Este puerto debe ser distinto al de otros servidores en ejecución para evitar conflictos.',
+  serverPortProxyInfo:
+    'El puerto es gestionado por el proxy. Todos los servidores usan el puerto interno 25565 y se conectan via hostname.',
   playerIdleTimeout: 'Tiempo de Inactividad de Jugadores (minutos)',
   playerIdleTimeoutDesc:
     'Tiempo en minutos antes de expulsar a jugadores inactivos (0 para desactivar)',
@@ -1133,6 +1135,8 @@ export const es: Record<TranslationKey, string> = {
   connectionTip: 'Comparte esta dirección con los jugadores para que se unan a tu servidor',
   playingLAN: '¿Jugando en LAN?',
   learnHow: 'Aprende cómo configurarlo',
+  proxyConnectionTip:
+    'Los jugadores se conectan usando este hostname en el puerto por defecto (25565)',
   forgotPassword: '¿Olvidaste tu contraseña?',
   fileBrowserPasswordTip: '¿No sabes la contraseña de FileBrowser?',
   learnHowToGetIt: 'Aprende cómo obtenerla',
@@ -1233,4 +1237,37 @@ export const es: Record<TranslationKey, string> = {
   peacefulParadiseDesc: 'Supervivencia relajada sin mobs hostiles. Perfecto para juego casual.',
   amplifiedWorld: 'Mundo Amplificado',
   amplifiedWorldDesc: 'Generación de terreno extrema. Requiere más RAM para jugar fluido.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Configuración de Proxy',
+  proxySettingsDesc: 'Configura mc-router para usar un solo puerto para todos los servidores',
+  proxyBaseDomain: 'Dominio Base',
+  proxyBaseDomainDesc:
+    'El dominio que se usará para los subdominios de servidores (ej: mc.example.com)',
+  enableProxy: 'Habilitar Proxy',
+  enableProxyDesc: 'Enrutar todo el tráfico de Minecraft a través de mc-router en el puerto 25565',
+  proxyRequiresDomain: 'Configura un dominio base para habilitar la función de proxy',
+  proxyDnsInfo: 'Configura un registro DNS wildcard apuntando a tu servidor:',
+  proxyHostname: 'Hostname Personalizado',
+  proxyHostnameDesc:
+    'Hostname personalizado opcional para este servidor. Deja vacío para auto-generar desde el ID',
+  useProxy: 'Usar Proxy',
+  useProxyDesc:
+    'Habilitar enrutamiento por proxy para este servidor. Si está deshabilitado, usa acceso directo por puerto',
+  proxySettingsServerDesc: 'Configura cómo este servidor se conecta a través del proxy mc-router',
+  proxyServerInfo:
+    'La configuración de proxy solo tiene efecto cuando el proxy global está habilitado en Ajustes',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Configuración de Red',
+  networkSettingsDesc: 'Configura las direcciones IP para conexiones y notificaciones de Discord',
+  publicIp: 'IP Pública / Dominio',
+  publicIpDesc:
+    'Tu IP pública o dominio del servidor. Para conexiones de jugadores externos y notificaciones',
+  lanIp: 'IP LAN',
+  lanIpDesc: 'Tu IP de red local. Para jugadores en la misma red',
+  networkProxyNote:
+    'Cuando el proxy está habilitado, se usará el hostname del proxy en lugar de IP:puerto en las notificaciones',
 };

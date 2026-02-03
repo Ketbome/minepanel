@@ -1,4 +1,4 @@
-import { FlatCompat } from "@eslint/eslintrc";
+import { FlatCompat } from '@eslint/eslintrc';
 
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
@@ -6,10 +6,10 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: ["next"],
+    extends: ['next'],
     settings: {
       next: {
-        rootDir: "packages/my-app/",
+        rootDir: './',
       },
     },
   }),

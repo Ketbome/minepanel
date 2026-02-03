@@ -14,9 +14,19 @@ export class SettingsController {
   ) {}
 
   @Get()
-  getSettings(@Request() req) {
+  async getSettings(@Request() req) {
     const user = req.user as PayloadToken;
-    return this.settingsService.getSettings(user.userId);
+    const [settings, proxy, network] = await Promise.all([
+      this.settingsService.getSettings(user.userId),
+      this.settingsService.getProxySettings(user.userId),
+      this.settingsService.getNetworkSettings(user.userId),
+    ]);
+
+    return {
+      ...settings,
+      proxy,
+      network,
+    };
   }
 
   @Patch()

@@ -431,6 +431,8 @@ export const de: Record<TranslationKey, string> = {
   serverPortDesc: 'Port, auf dem der Server lauscht. Der Standardport ist 25565.',
   serverPortWarning:
     'Dieser Port muss sich von anderen laufenden Servern unterscheiden, um Konflikte zu vermeiden.',
+  serverPortProxyInfo:
+    'Port wird vom Proxy verwaltet. Alle Server verwenden den internen Port 25565 und verbinden sich über Hostname.',
   playerIdleTimeout: 'Spieler-Leerlauf-Timeout (Minuten)',
   playerIdleTimeoutDesc: 'Zeit vor dem Kick inaktiver Spieler (0 zum Deaktivieren)',
   onlineMode: 'Online-Modus',
@@ -1139,6 +1141,7 @@ export const de: Record<TranslationKey, string> = {
   connectionTip: 'Teilen Sie diese Adresse mit Spielern, um Ihrem Server beizutreten',
   playingLAN: 'Im LAN spielen?',
   learnHow: 'Erfahren Sie, wie Sie es konfigurieren',
+  proxyConnectionTip: 'Spieler verbinden sich über diesen Hostnamen am Standard-Port (25565)',
   forgotPassword: 'Passwort vergessen?',
   fileBrowserPasswordTip: 'Kennen Sie das FileBrowser-Passwort nicht?',
   learnHowToGetIt: 'Erfahren Sie, wie Sie es erhalten',
@@ -1239,4 +1242,37 @@ export const de: Record<TranslationKey, string> = {
     'Entspannendes Überleben ohne feindliche Mobs. Perfekt für Gelegenheitsspieler.',
   amplifiedWorld: 'Verstärkte Welt',
   amplifiedWorldDesc: 'Extreme Terrain-Generierung. Erfordert mehr RAM für flüssiges Spielen.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Proxy-Einstellungen',
+  proxySettingsDesc: 'Konfiguriere mc-router, um einen einzelnen Port für alle Server zu verwenden',
+  proxyBaseDomain: 'Basis-Domain',
+  proxyBaseDomainDesc: 'Die Domain, die für Server-Subdomains verwendet wird (z.B. mc.example.com)',
+  enableProxy: 'Proxy Aktivieren',
+  enableProxyDesc: 'Leite den gesamten Minecraft-Verkehr über mc-router auf Port 25565',
+  proxyRequiresDomain: 'Konfiguriere eine Basis-Domain, um die Proxy-Funktion zu aktivieren',
+  proxyDnsInfo: 'Konfiguriere einen Wildcard-DNS-Eintrag, der auf deinen Server zeigt:',
+  proxyHostname: 'Benutzerdefinierter Hostname',
+  proxyHostnameDesc:
+    'Optionaler benutzerdefinierter Hostname für diesen Server. Leer lassen für automatische Generierung',
+  useProxy: 'Proxy Verwenden',
+  useProxyDesc:
+    'Proxy-Routing für diesen Server aktivieren. Bei Deaktivierung wird direkter Port-Zugang verwendet',
+  proxySettingsServerDesc: 'Konfiguriere, wie dieser Server über den mc-router Proxy verbindet',
+  proxyServerInfo:
+    'Proxy-Einstellungen gelten nur, wenn der globale Proxy in den Einstellungen aktiviert ist',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Netzwerk-Einstellungen',
+  networkSettingsDesc:
+    'Konfiguriere IP-Adressen für Serververbindungen und Discord-Benachrichtigungen',
+  publicIp: 'Öffentliche IP / Domain',
+  publicIpDesc:
+    'Deine Server öffentliche IP oder Domain. Für externe Spielerverbindungen und Benachrichtigungen',
+  lanIp: 'LAN IP',
+  lanIpDesc: 'Deine lokale Netzwerk-IP. Für Spieler im gleichen Netzwerk',
+  networkProxyNote:
+    'Wenn Proxy aktiviert ist, wird der Proxy-Hostname anstelle von IP:Port in Benachrichtigungen verwendet',
 };

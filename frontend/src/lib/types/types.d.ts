@@ -214,4 +214,8 @@ export interface ServerConfig {
 
   // General Paper/Bukkit/Spigot config
   skipDownloadDefaults?: boolean;
+
+  // Proxy configuration
+  proxyHostname?: string;
+  useProxy?: boolean;
 }

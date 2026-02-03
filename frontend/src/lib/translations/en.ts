@@ -428,6 +428,8 @@ export const en = {
   serverPort: 'Server Port',
   serverPortDesc: 'Port on which the server will listen. The default port is 25565.',
   serverPortWarning: 'This port must be different from other running servers to avoid conflicts.',
+  serverPortProxyInfo:
+    'Port is managed by the proxy. All servers use internal port 25565 and connect via hostname.',
   playerIdleTimeout: 'Player Idle Timeout (minutes)',
   playerIdleTimeoutDesc: 'Time before kicking inactive players (0 to disable)',
   onlineMode: 'Online Mode',
@@ -1120,6 +1122,7 @@ export const en = {
   connectionTip: 'Share this address with players to join your server',
   playingLAN: 'Playing on LAN?',
   learnHow: 'Learn how to configure it',
+  proxyConnectionTip: 'Players connect using this hostname on default port (25565)',
   forgotPassword: 'Forgot your password?',
   fileBrowserPasswordTip: "Don't know the FileBrowser password?",
   learnHowToGetIt: 'Learn how to get it',
@@ -1217,6 +1220,36 @@ export const en = {
   peacefulParadiseDesc: 'Relaxing survival without hostile mobs. Perfect for casual play.',
   amplifiedWorld: 'Amplified World',
   amplifiedWorldDesc: 'Extreme terrain generation. Requires more RAM for smooth play.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Proxy Settings',
+  proxySettingsDesc: 'Configure mc-router to use a single port for all servers',
+  proxyBaseDomain: 'Base Domain',
+  proxyBaseDomainDesc: 'The domain that will be used for server subdomains (e.g., mc.example.com)',
+  enableProxy: 'Enable Proxy',
+  enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
+  proxyRequiresDomain: 'Configure a base domain to enable the proxy feature',
+  proxyDnsInfo: 'Configure a wildcard DNS record pointing to your server:',
+  proxyHostname: 'Custom Hostname',
+  proxyHostnameDesc:
+    'Optional custom hostname for this server. Leave empty to auto-generate from server ID',
+  useProxy: 'Use Proxy',
+  useProxyDesc: 'Enable proxy routing for this server. If disabled, uses direct port access',
+  proxySettingsServerDesc: 'Configure how this server connects through the mc-router proxy',
+  proxyServerInfo: 'Proxy settings only take effect when the global proxy is enabled in Settings',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Network Settings',
+  networkSettingsDesc: 'Configure IP addresses for server connections and Discord notifications',
+  publicIp: 'Public IP / Domain',
+  publicIpDesc:
+    'Your server public IP or domain. Used for external player connections and notifications',
+  lanIp: 'LAN IP',
+  lanIpDesc: 'Your local network IP. For players on the same network',
+  networkProxyNote:
+    'When proxy is enabled, the proxy hostname will be used instead of IP:port in notifications',
 };
 
 export type TranslationKey = keyof typeof en;

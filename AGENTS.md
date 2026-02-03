@@ -96,12 +96,12 @@ refactor(auth): simplify JWT validation
 
 ### GitHub Workflows
 
-| Workflow | Trigger | Description |
-|----------|---------|-------------|
-| `ci.yml` | PRs, push to main | Lint, build, test |
-| `docker-publish.yml` | Push to main | Build Docker images + create release |
-| `deploy-docs.yml` | Changes in `doc/` | Deploy VitePress to GitHub Pages |
-| `stale.yml` | Daily | Closes inactive issues/PRs |
+| Workflow             | Trigger           | Description                          |
+| -------------------- | ----------------- | ------------------------------------ |
+| `ci.yml`             | PRs, push to main | Lint, build, test                    |
+| `docker-publish.yml` | Push to main      | Build Docker images + create release |
+| `deploy-docs.yml`    | Changes in `doc/` | Deploy VitePress to GitHub Pages     |
+| `stale.yml`          | Daily             | Closes inactive issues/PRs           |
 
 ### Version Bumping
 
@@ -110,6 +110,7 @@ Version is stored in `config.json`. When version changes on main, a new tag and 
 ### Branch Protection (Recommended)
 
 Configure in **Settings → Branches → Add rule** for `main`:
+
 - ☑️ Require status checks: `ci-status`
 - ☑️ Require branches be up to date
 
@@ -164,8 +165,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 
 # Optional
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
-HOST_PUBLIC_IP=                  # For public IP/domain display (VPS deployments)
-HOST_LAN_IP=                     # For LAN IP display
+# Network settings (Public IP, LAN IP, Proxy) configured via web UI
 ```
 
 ---

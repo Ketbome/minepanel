@@ -42,7 +42,52 @@ export class SettingsService {
     if (!settings) {
       throw new NotFoundException('Settings not found');
     }
+
+    // Handle proxy settings
+    if (dto.proxy) {
+      settings.preferences = {
+        ...settings.preferences,
+        proxyEnabled: dto.proxy.proxyEnabled ?? settings.preferences?.proxyEnabled ?? false,
+        proxyBaseDomain: dto.proxy.proxyBaseDomain ?? settings.preferences?.proxyBaseDomain ?? null,
+      };
+      delete (dto as any).proxy;
+    }
+
+    // Handle network settings
+    if (dto.network) {
+      settings.preferences = {
+        ...settings.preferences,
+        publicIp: dto.network.publicIp ?? settings.preferences?.publicIp ?? null,
+        lanIp: dto.network.lanIp ?? settings.preferences?.lanIp ?? null,
+      };
+      delete (dto as any).network;
+    }
+
     Object.assign(settings, dto);
     return this.settingsRepo.save(settings);
+  }
+
+  async getProxySettings(userId: number): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean }> {
+    const settings = await this.getSettings(userId);
+    const baseDomain = settings.preferences?.proxyBaseDomain ?? null;
+    return {
+      enabled: settings.preferences?.proxyEnabled ?? false,
+      baseDomain,
+      available: !!baseDomain,
+    };
+  }
+
+  async getNetworkSettings(userId: number): Promise<{ publicIp: string | null; lanIp: string | null }> {
+    const settings = await this.getSettings(userId);
+    return {
+      publicIp: settings.preferences?.publicIp ?? null,
+      lanIp: settings.preferences?.lanIp ?? null,
+    };
+  }
+
+  // Get first user's settings (for system-wide operations like Discord notifications)
+  async getFirstUserSettings(): Promise<Settings | null> {
+    const [first] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
+    return first ?? null;
   }
 }
