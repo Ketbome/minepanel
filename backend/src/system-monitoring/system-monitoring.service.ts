@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as os from 'node:os';
+import { Settings } from 'src/users/entities/settings.entity';
 
 const execAsync = promisify(exec);
 
@@ -32,7 +35,11 @@ export interface SystemStats {
 export class SystemMonitoringService {
   private previousCpuInfo: { idle: number; total: number } | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(Settings)
+    private readonly settingsRepo: Repository<Settings>,
+  ) {}
 
   async getSystemStats(): Promise<SystemStats> {
     const cpuUsage = await this.getCpuUsage();
@@ -198,21 +205,28 @@ export class SystemMonitoringService {
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
-  getNetworkInfo(): { hostname: string; localIPs: string[]; publicIP: string | null } {
+  async getNetworkInfo(): Promise<{ hostname: string; localIPs: string[]; publicIP: string | null }> {
     const localIPs: string[] = [];
 
-    const configuredLanIP = this.configService.get<string>('hostLanIP');
-    if (configuredLanIP && this.isValidIP(configuredLanIP)) {
-      localIPs.push(configuredLanIP);
+    // Get IPs from settings
+    let publicIp: string | null = null;
+    let lanIp: string | null = null;
+    try {
+      const settings = await this.settingsRepo.findOne({ order: { id: 'ASC' } });
+      publicIp = settings?.preferences?.publicIp || null;
+      lanIp = settings?.preferences?.lanIp || null;
+    } catch {
+      // Ignore errors
     }
 
-    // HOST_PUBLIC_IP can be an IP or domain (e.g., play.example.com)
-    const publicIP = this.configService.get<string>('hostPublicIP') || null;
+    if (lanIp && this.isValidIP(lanIp)) {
+      localIPs.push(lanIp);
+    }
 
     return {
       hostname: os.hostname(),
       localIPs,
-      publicIP,
+      publicIP: publicIp,
     };
   }
 
@@ -220,7 +234,7 @@ export class SystemMonitoringService {
     const parts = ip.split('.');
     if (parts.length !== 4) return false;
 
-    return parts.every(part => {
+    return parts.every((part) => {
       const num = Number.parseInt(part, 10);
       return !Number.isNaN(num) && num >= 0 && num <= 255;
     });

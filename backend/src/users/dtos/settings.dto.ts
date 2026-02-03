@@ -11,6 +11,16 @@ export class ProxySettingsDto {
   proxyBaseDomain?: string;
 }
 
+export class NetworkSettingsDto {
+  @IsOptional()
+  @IsString()
+  publicIp?: string;
+
+  @IsOptional()
+  @IsString()
+  lanIp?: string;
+}
+
 export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
@@ -31,6 +41,11 @@ export class UpdateSettingsDto {
   @ValidateNested()
   @Type(() => ProxySettingsDto)
   proxy?: ProxySettingsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NetworkSettingsDto)
+  network?: NetworkSettingsDto;
 }
 
 export class SettingsResponseDto {
@@ -42,5 +57,9 @@ export class SettingsResponseDto {
     enabled: boolean;
     baseDomain: string | null;
     available: boolean;
+  };
+  network?: {
+    publicIp: string | null;
+    lanIp: string | null;
   };
 }

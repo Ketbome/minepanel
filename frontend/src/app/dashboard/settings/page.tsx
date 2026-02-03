@@ -38,6 +38,7 @@ import {
   testDiscordWebhook,
   UserSettings,
   ProxySettings,
+  NetworkSettings,
 } from '@/services/settings/settings.service';
 import { changePassword } from '@/services/users/users.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
@@ -67,6 +68,13 @@ export default function SettingsPage() {
   });
   const [proxyBaseDomain, setProxyBaseDomain] = useState('');
 
+  const [networkSettings, setNetworkSettings] = useState<NetworkSettings>({
+    publicIp: null,
+    lanIp: null,
+  });
+  const [publicIp, setPublicIp] = useState('');
+  const [lanIp, setLanIp] = useState('');
+
   const form = useForm<UserSettings>({
     defaultValues: {
       cfApiKey: '',
@@ -91,6 +99,11 @@ export default function SettingsPage() {
           setProxySettings(settings.proxy);
           setProxyBaseDomain(settings.proxy.baseDomain || '');
         }
+        if (settings.network) {
+          setNetworkSettings(settings.network);
+          setPublicIp(settings.network.publicIp || '');
+          setLanIp(settings.network.lanIp || '');
+        }
       } catch (error) {
         console.error('Error loading settings:', error);
         mcToast.error(t('errorLoadingServerInfo'));
@@ -111,6 +124,10 @@ export default function SettingsPage() {
         proxy: {
           proxyEnabled: proxySettings.enabled,
           proxyBaseDomain: proxyBaseDomain || undefined,
+        },
+        network: {
+          publicIp: publicIp || undefined,
+          lanIp: lanIp || undefined,
         },
       };
       await updateSettings(updateData);
@@ -568,6 +585,62 @@ export default function SettingsPage() {
           </div>
 
           <div className="animate-fade-in-up stagger-7">
+            <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white font-minecraft">
+                      {t('networkSettings')}
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      {t('networkSettingsDesc')}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="publicIp" className="text-gray-200">
+                    {t('publicIp')}
+                  </Label>
+                  <Input
+                    id="publicIp"
+                    value={publicIp}
+                    onChange={(e) => setPublicIp(e.target.value)}
+                    placeholder="123.45.67.89 or play.example.com"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500">{t('publicIpDesc')}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lanIp" className="text-gray-200">
+                    {t('lanIp')}
+                  </Label>
+                  <Input
+                    id="lanIp"
+                    value={lanIp}
+                    onChange={(e) => setLanIp(e.target.value)}
+                    placeholder="192.168.1.100"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500">{t('lanIpDesc')}</p>
+                </div>
+
+                {proxySettings.enabled && (
+                  <div className="flex items-start gap-2 p-3 bg-cyan-900/20 border border-cyan-600/30 rounded-lg">
+                    <Info className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-cyan-300">{t('networkProxyNote')}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="animate-fade-in-up stagger-8">
             <Card className="border-2 border-red-600/40 bg-red-900/10 backdrop-blur-md shadow-xl">
               <CardHeader>
                 <div className="flex items-center gap-3">

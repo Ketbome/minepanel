@@ -4,8 +4,6 @@ export default () => ({
   clientPassword: process.env.CLIENT_PASSWORD,
   frontendUrl: process.env.FRONTEND_URL,
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
-  hostLanIP: process.env.HOST_LAN_IP,
-  hostPublicIP: process.env.HOST_PUBLIC_IP,
   serversDir: '/app/servers',
   baseDir: process.env.BASE_DIR || '/app',
   database: {

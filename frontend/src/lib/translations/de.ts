@@ -1260,4 +1260,16 @@ export const de: Record<TranslationKey, string> = {
   proxySettingsServerDesc: 'Konfiguriere, wie dieser Server über den mc-router Proxy verbindet',
   proxyServerInfo:
     'Proxy-Einstellungen gelten nur, wenn der globale Proxy in den Einstellungen aktiviert ist',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Netzwerk-Einstellungen',
+  networkSettingsDesc:
+    'Konfiguriere IP-Adressen für Serververbindungen und Discord-Benachrichtigungen',
+  publicIp: 'Öffentliche IP / Domain',
+  publicIpDesc:
+    'Deine Server öffentliche IP oder Domain. Für externe Spielerverbindungen und Benachrichtigungen',
+  lanIp: 'LAN IP',
+  lanIpDesc: 'Deine lokale Netzwerk-IP. Für Spieler im gleichen Netzwerk',
+  networkProxyNote:
+    'Wenn Proxy aktiviert ist, wird der Proxy-Hostname anstelle von IP:Port in Benachrichtigungen verwendet',
 };

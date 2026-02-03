@@ -6,11 +6,17 @@ export interface ProxySettings {
   available: boolean;
 }
 
+export interface NetworkSettings {
+  publicIp: string | null;
+  lanIp: string | null;
+}
+
 export interface UserSettings {
   cfApiKey?: string;
   discordWebhook?: string;
   language?: 'en' | 'es';
   proxy?: ProxySettings;
+  network?: NetworkSettings;
 }
 
 export interface UpdateUserSettings {
@@ -20,6 +26,10 @@ export interface UpdateUserSettings {
   proxy?: {
     proxyEnabled?: boolean;
     proxyBaseDomain?: string;
+  };
+  network?: {
+    publicIp?: string;
+    lanIp?: string;
   };
 }
 

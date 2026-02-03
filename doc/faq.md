@@ -115,9 +115,9 @@ Yes! Configure your DNS, set up a reverse proxy, and update environment variable
 
 ### How do I configure LAN access?
 
-Set `HOST_LAN_IP` to your local IP address to show LAN connection info to players.
+Configure your LAN IP through the web UI at **Settings → Network Settings** to show LAN connection info to players.
 
-**→ Details:** [LAN Configuration](/networking#lan-network-configuration)
+**→ Details:** [Network Settings](/networking#network-settings)
 
 ### What ports does it use?
 
@@ -321,7 +321,6 @@ Yes! Configure backup frequency, retention, and method per server.
 ### Can I edit server.properties?
 
 Yes! Use the built-in file browser or edit directly in the UI (coming soon).
-
 
 ## 💻 Development
 

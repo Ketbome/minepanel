@@ -1255,4 +1255,15 @@ export const es: Record<TranslationKey, string> = {
   proxySettingsServerDesc: 'Configura cómo este servidor se conecta a través del proxy mc-router',
   proxyServerInfo:
     'La configuración de proxy solo tiene efecto cuando el proxy global está habilitado en Ajustes',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Configuración de Red',
+  networkSettingsDesc: 'Configura las direcciones IP para conexiones y notificaciones de Discord',
+  publicIp: 'IP Pública / Dominio',
+  publicIpDesc:
+    'Tu IP pública o dominio del servidor. Para conexiones de jugadores externos y notificaciones',
+  lanIp: 'IP LAN',
+  lanIpDesc: 'Tu IP de red local. Para jugadores en la misma red',
+  networkProxyNote:
+    'Cuando el proxy está habilitado, se usará el hostname del proxy en lugar de IP:puerto en las notificaciones',
 };

@@ -43,6 +43,7 @@ export class SettingsService {
       throw new NotFoundException('Settings not found');
     }
 
+    // Handle proxy settings
     if (dto.proxy) {
       settings.preferences = {
         ...settings.preferences,
@@ -50,6 +51,16 @@ export class SettingsService {
         proxyBaseDomain: dto.proxy.proxyBaseDomain ?? settings.preferences?.proxyBaseDomain ?? null,
       };
       delete (dto as any).proxy;
+    }
+
+    // Handle network settings
+    if (dto.network) {
+      settings.preferences = {
+        ...settings.preferences,
+        publicIp: dto.network.publicIp ?? settings.preferences?.publicIp ?? null,
+        lanIp: dto.network.lanIp ?? settings.preferences?.lanIp ?? null,
+      };
+      delete (dto as any).network;
     }
 
     Object.assign(settings, dto);
@@ -64,5 +75,18 @@ export class SettingsService {
       baseDomain,
       available: !!baseDomain,
     };
+  }
+
+  async getNetworkSettings(userId: number): Promise<{ publicIp: string | null; lanIp: string | null }> {
+    const settings = await this.getSettings(userId);
+    return {
+      publicIp: settings.preferences?.publicIp ?? null,
+      lanIp: settings.preferences?.lanIp ?? null,
+    };
+  }
+
+  // Get first user's settings (for system-wide operations like Discord notifications)
+  async getFirstUserSettings(): Promise<Settings | null> {
+    return this.settingsRepo.findOne({ order: { id: 'ASC' } });
   }
 }

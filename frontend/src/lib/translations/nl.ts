@@ -1268,4 +1268,14 @@ export const nl: Record<TranslationKey, string> = {
   proxySettingsServerDesc: 'Configureer hoe deze server verbinding maakt via de mc-router proxy',
   proxyServerInfo:
     'Proxy instellingen werken alleen wanneer de globale proxy is ingeschakeld in Instellingen',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Netwerk Instellingen',
+  networkSettingsDesc: 'Configureer IP-adressen voor serververbindingen en Discord meldingen',
+  publicIp: 'Publiek IP / Domein',
+  publicIpDesc: 'Je server publieke IP of domein. Voor externe speler verbindingen en meldingen',
+  lanIp: 'LAN IP',
+  lanIpDesc: 'Je lokale netwerk IP. Voor spelers op hetzelfde netwerk',
+  networkProxyNote:
+    'Wanneer proxy is ingeschakeld, wordt de proxy hostnaam gebruikt in plaats van IP:poort in meldingen',
 };

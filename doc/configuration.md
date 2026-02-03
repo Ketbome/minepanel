@@ -24,10 +24,10 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### Ports
 
-| Variable           | Default | Description                 |
-| ------------------ | ------- | --------------------------- |
-| `BACKEND_PORT`     | `8091`  | Backend API port            |
-| `FRONTEND_PORT`    | `3000`  | Frontend web interface port |
+| Variable        | Default | Description                 |
+| --------------- | ------- | --------------------------- |
+| `BACKEND_PORT`  | `8091`  | Backend API port            |
+| `FRONTEND_PORT` | `3000`  | Frontend web interface port |
 
 #### Directories
 
@@ -45,27 +45,29 @@ All environment variables can be set in a `.env` file or directly in `docker-com
 
 #### URLs
 
-| Variable                      | Default                 | Description                  |
-| ----------------------------- | ----------------------- | ---------------------------- |
-| `FRONTEND_URL`                | `http://localhost:3000` | Frontend URL (controls CORS) |
-| `NEXT_PUBLIC_BACKEND_URL`     | `http://localhost:8091` | Backend API URL              |
+| Variable                  | Default                 | Description                  |
+| ------------------------- | ----------------------- | ---------------------------- |
+| `FRONTEND_URL`            | `http://localhost:3000` | Frontend URL (controls CORS) |
+| `NEXT_PUBLIC_BACKEND_URL` | `http://localhost:8091` | Backend API URL              |
 
 #### Other
 
-| Variable                       | Default | Description                                            |
-| ------------------------------ | ------- | ------------------------------------------------------ |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`)                    |
-| `HOST_PUBLIC_IP`               | -       | Optional: Server's public IP or domain for remote play |
-| `HOST_LAN_IP`                  | -       | Optional: Your LAN IP for local network play           |
+| Variable                       | Default | Description                         |
+| ------------------------------ | ------- | ----------------------------------- |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`    | Default language (`en`, `es`, `nl`) |
+
+::: info Network Settings
+Public IP, LAN IP, and Proxy settings are configured through the web UI at **Settings → Network Settings** and **Settings → Proxy Settings**.
+:::
 
 #### Subdirectory Routing
 
 For reverse proxy setups with directory-based routing (e.g., `mydomain.com/minepanel`):
 
-| Variable                 | Default | Type       | Description                             |
-| ------------------------ | ------- | ---------- | --------------------------------------- |
-| `BASE_PATH`              | -       | Runtime    | Backend API prefix (e.g., `/api`)       |
-| `NEXT_PUBLIC_BASE_PATH`  | -       | Build-time | Frontend base path (e.g., `/minepanel`) |
+| Variable                | Default | Type       | Description                             |
+| ----------------------- | ------- | ---------- | --------------------------------------- |
+| `BASE_PATH`             | -       | Runtime    | Backend API prefix (e.g., `/api`)       |
+| `NEXT_PUBLIC_BASE_PATH` | -       | Build-time | Frontend base path (e.g., `/minepanel`) |
 
 ::: warning
 `NEXT_PUBLIC_BASE_PATH` must be set during Docker build, not at runtime. See [Subdirectory Routing](/networking#subdirectory-routing) for setup instructions.
@@ -96,10 +98,6 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 
 # Language
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en
-
-# Network (optional)
-# HOST_PUBLIC_IP=play.example.com  # Your server's public IP or domain
-# HOST_LAN_IP=192.168.1.100        # Your LAN IP for local network play
 ```
 
 Then run:

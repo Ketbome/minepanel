@@ -91,39 +91,26 @@ docker compose restart
 - Don't expose ports publicly without proper authentication
   :::
 
-## Public IP Configuration
+## Network Settings
 
-When deploying MinePanel on a VPS or remote server, the auto-detected public IP (via ipify.org) may show the client's IP instead of the server's IP. To fix this, set `HOST_PUBLIC_IP` to your server's public IP or domain.
+Configure your server's IP addresses through the web UI at **Settings → Network Settings**.
 
-### Configuration
+### Public IP / Domain
 
-Add to your `docker-compose.yml`:
+Your server's public IP or domain (e.g., `play.example.com` or `123.45.67.89`). Used for:
 
-```yaml
-services:
-  minepanel:
-    environment:
-      # ... other variables
-      - HOST_PUBLIC_IP=123.45.67.89 # Or use a domain: play.example.com
-```
+- Discord notifications
+- Displayed to external players for connection
 
-Or in your `.env` file:
-
-```bash
-HOST_PUBLIC_IP=play.example.com
-```
-
-::: tip
-If `HOST_PUBLIC_IP` is not set, MinePanel falls back to client-side IP detection (ipify.org). This works for local deployments but shows incorrect IPs when accessing remotely.
+::: tip VPS Deployments
+If you're hosting on a remote server (AWS, Oracle Cloud, etc.), set your Public IP to your server's public IP or domain. Without it, the dashboard may show incorrect IPs when accessing remotely.
 :::
 
-## LAN Network Configuration
+### LAN IP
 
-When you create a Minecraft server, Minepanel automatically shows the connection information to share with players. By default, it shows your **public IP** (configured via `HOST_PUBLIC_IP` or auto-detected via ipify.org). However, if you want players on your **local network (LAN)** to see your local IP address, you need to configure it manually.
+Your local network IP (e.g., `192.168.1.100`). Benefits:
 
-### Why Configure LAN IP?
-
-- **Better performance**: Players on your local network will connect directly without going through your router
+- **Better performance**: Players on your local network connect directly without going through your router
 - **No port forwarding needed**: For LAN players, you don't need to configure port forwarding
 - **Both options**: The panel will show both public IP (for internet players) and LAN IP (for local players)
 
@@ -154,31 +141,6 @@ hostname -I | awk '{print $1}'
 Your LAN IP typically starts with `192.168.x.x` or `10.x.x.x`
 :::
 
-### Configuration
-
-Add the `HOST_LAN_IP` variable to your `docker-compose.yml`:
-
-```yaml
-services:
-  minepanel:
-    environment:
-      # ... other variables
-      - HOST_LAN_IP=192.168.3.208 # Replace with your actual LAN IP
-```
-
-Or in your `.env` file:
-
-```bash
-HOST_LAN_IP=192.168.3.208
-```
-
-### Restart Services
-
-```bash
-docker compose down
-docker compose up -d
-```
-
 ### How It Works
 
 When a Minecraft server is running, the panel will show a **Server Connection** section with:
@@ -189,7 +151,7 @@ When a Minecraft server is running, the panel will show a **Server Connection** 
 Both addresses are easily copyable with one click.
 
 ::: info
-If you don't configure `HOST_LAN_IP`, only the public IP will be shown. This is fine if all your players are connecting from the internet.
+If you don't configure a LAN IP, only the public IP will be shown. This is fine if all your players are connecting from the internet.
 :::
 
 ## Port Configuration

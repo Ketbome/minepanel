@@ -1236,6 +1236,17 @@ export const en = {
   useProxyDesc: 'Enable proxy routing for this server. If disabled, uses direct port access',
   proxySettingsServerDesc: 'Configure how this server connects through the mc-router proxy',
   proxyServerInfo: 'Proxy settings only take effect when the global proxy is enabled in Settings',
+
+  // NETWORK SETTINGS
+  networkSettings: 'Network Settings',
+  networkSettingsDesc: 'Configure IP addresses for server connections and Discord notifications',
+  publicIp: 'Public IP / Domain',
+  publicIpDesc:
+    'Your server public IP or domain. Used for external player connections and notifications',
+  lanIp: 'LAN IP',
+  lanIpDesc: 'Your local network IP. For players on the same network',
+  networkProxyNote:
+    'When proxy is enabled, the proxy hostname will be used instead of IP:port in notifications',
 };
 
 export type TranslationKey = keyof typeof en;
