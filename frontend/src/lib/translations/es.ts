@@ -1233,4 +1233,26 @@ export const es: Record<TranslationKey, string> = {
   peacefulParadiseDesc: 'Supervivencia relajada sin mobs hostiles. Perfecto para juego casual.',
   amplifiedWorld: 'Mundo Amplificado',
   amplifiedWorldDesc: 'Generación de terreno extrema. Requiere más RAM para jugar fluido.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Configuración de Proxy',
+  proxySettingsDesc: 'Configura mc-router para usar un solo puerto para todos los servidores',
+  proxyBaseDomain: 'Dominio Base',
+  proxyBaseDomainDesc:
+    'El dominio que se usará para los subdominios de servidores (ej: mc.example.com)',
+  enableProxy: 'Habilitar Proxy',
+  enableProxyDesc: 'Enrutar todo el tráfico de Minecraft a través de mc-router en el puerto 25565',
+  proxyRequiresDomain: 'Configura un dominio base para habilitar la función de proxy',
+  proxyDnsInfo: 'Configura un registro DNS wildcard apuntando a tu servidor:',
+  proxyHostname: 'Hostname Personalizado',
+  proxyHostnameDesc:
+    'Hostname personalizado opcional para este servidor. Deja vacío para auto-generar desde el ID',
+  useProxy: 'Usar Proxy',
+  useProxyDesc:
+    'Habilitar enrutamiento por proxy para este servidor. Si está deshabilitado, usa acceso directo por puerto',
+  proxySettingsServerDesc: 'Configura cómo este servidor se conecta a través del proxy mc-router',
+  proxyServerInfo:
+    'La configuración de proxy solo tiene efecto cuando el proxy global está habilitado en Ajustes',
 };

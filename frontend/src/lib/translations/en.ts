@@ -1217,6 +1217,25 @@ export const en = {
   peacefulParadiseDesc: 'Relaxing survival without hostile mobs. Perfect for casual play.',
   amplifiedWorld: 'Amplified World',
   amplifiedWorldDesc: 'Extreme terrain generation. Requires more RAM for smooth play.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Proxy Settings',
+  proxySettingsDesc: 'Configure mc-router to use a single port for all servers',
+  proxyBaseDomain: 'Base Domain',
+  proxyBaseDomainDesc: 'The domain that will be used for server subdomains (e.g., mc.example.com)',
+  enableProxy: 'Enable Proxy',
+  enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
+  proxyRequiresDomain: 'Configure a base domain to enable the proxy feature',
+  proxyDnsInfo: 'Configure a wildcard DNS record pointing to your server:',
+  proxyHostname: 'Custom Hostname',
+  proxyHostnameDesc:
+    'Optional custom hostname for this server. Leave empty to auto-generate from server ID',
+  useProxy: 'Use Proxy',
+  useProxyDesc: 'Enable proxy routing for this server. If disabled, uses direct port access',
+  proxySettingsServerDesc: 'Configure how this server connects through the mc-router proxy',
+  proxyServerInfo: 'Proxy settings only take effect when the global proxy is enabled in Settings',
 };
 
 export type TranslationKey = keyof typeof en;

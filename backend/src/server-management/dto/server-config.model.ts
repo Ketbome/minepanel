@@ -521,6 +521,15 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   skipDownloadDefaults?: boolean;
+
+  // Proxy configuration
+  @IsString()
+  @IsOptional()
+  proxyHostname?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  useProxy?: boolean;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

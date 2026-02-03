@@ -1,4 +1,15 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class ProxySettingsDto {
+  @IsOptional()
+  @IsBoolean()
+  proxyEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  proxyBaseDomain?: string;
+}
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -15,6 +26,11 @@ export class UpdateSettingsDto {
 
   @IsOptional()
   preferences?: Record<string, any>;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProxySettingsDto)
+  proxy?: ProxySettingsDto;
 }
 
 export class SettingsResponseDto {
@@ -22,4 +38,9 @@ export class SettingsResponseDto {
   discordWebhook?: string;
   language: string;
   preferences?: Record<string, any>;
+  proxy?: {
+    enabled: boolean;
+    baseDomain: string | null;
+    available: boolean;
+  };
 }

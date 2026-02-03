@@ -11,6 +11,7 @@ import { SystemMonitoringModule } from './system-monitoring/system-monitoring.mo
 import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
+import { ProxyModule } from './proxy/proxy.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { FilesModule } from './files/files.module';
     DiscordModule,
     CurseforgeModule,
     FilesModule,
+    ProxyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

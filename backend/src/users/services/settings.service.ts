@@ -42,7 +42,27 @@ export class SettingsService {
     if (!settings) {
       throw new NotFoundException('Settings not found');
     }
+
+    if (dto.proxy) {
+      settings.preferences = {
+        ...settings.preferences,
+        proxyEnabled: dto.proxy.proxyEnabled ?? settings.preferences?.proxyEnabled ?? false,
+        proxyBaseDomain: dto.proxy.proxyBaseDomain ?? settings.preferences?.proxyBaseDomain ?? null,
+      };
+      delete (dto as any).proxy;
+    }
+
     Object.assign(settings, dto);
     return this.settingsRepo.save(settings);
+  }
+
+  async getProxySettings(userId: number): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean }> {
+    const settings = await this.getSettings(userId);
+    const baseDomain = settings.preferences?.proxyBaseDomain ?? null;
+    return {
+      enabled: settings.preferences?.proxyEnabled ?? false,
+      baseDomain,
+      available: !!baseDomain,
+    };
   }
 }

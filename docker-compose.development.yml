@@ -18,6 +18,8 @@ services:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
       - ${BASE_DIR:-$PWD}/data:/app/data
+    networks:
+      - minepanel-network
     restart: always
     working_dir: /app
 
@@ -33,6 +35,31 @@ services:
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - minepanel-network
     restart: always
     depends_on:
       - backend
+
+  # MC Proxy Router - Routes Minecraft traffic by hostname (optional)
+  # Enable with: docker compose -f docker-compose.development.yml --profile proxy up -d --build
+  # Requires DNS wildcard: *.mc.yourdomain.com -> server IP
+  mc-router:
+    image: itzg/mc-router:latest
+    container_name: mc-router
+    profiles:
+      - proxy
+    ports:
+      - "${MC_PROXY_PORT:-25565}:25565"
+    environment:
+      - MAPPING_FILE=/data/routes.json
+    volumes:
+      - ${BASE_DIR:-$PWD}/data/proxy:/data
+    networks:
+      - minepanel-network
+    restart: unless-stopped
+
+networks:
+  minepanel-network:
+    name: minepanel-network
+    driver: bridge

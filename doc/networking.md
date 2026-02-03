@@ -104,7 +104,7 @@ services:
   minepanel:
     environment:
       # ... other variables
-      - HOST_PUBLIC_IP=123.45.67.89  # Or use a domain: play.example.com
+      - HOST_PUBLIC_IP=123.45.67.89 # Or use a domain: play.example.com
 ```
 
 Or in your `.env` file:
@@ -363,7 +363,7 @@ frontend:
   build:
     context: ./frontend
     args:
-      - NEXT_PUBLIC_BASE_PATH=/minepanel  # Your subdirectory
+      - NEXT_PUBLIC_BASE_PATH=/minepanel # Your subdirectory
   environment:
     - NEXT_PUBLIC_BACKEND_URL=https://mydomain.com/api
 
@@ -449,6 +449,125 @@ services:
     networks:
       - minepanel
 ```
+
+## MC Proxy Router
+
+Use a single port (25565) for all your Minecraft servers by routing traffic based on hostname. This requires a domain with wildcard DNS.
+
+```mermaid
+flowchart TB
+    subgraph internet["🌍 Internet"]
+        P1["👤 Player 1"]
+        P2["👤 Player 2"]
+    end
+
+    subgraph docker["🐳 Docker Network"]
+        Router["mc-router:25565"]
+        MC1["survival:25565"]
+        MC2["creative:25565"]
+        MC3["modded:25565"]
+    end
+
+    P1 -->|"survival.mc.example.com:25565"| Router
+    P2 -->|"creative.mc.example.com:25565"| Router
+    Router -->|"route by hostname"| MC1
+    Router -->|"route by hostname"| MC2
+    Router -->|"route by hostname"| MC3
+
+    style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style docker fill:#1f2937,stroke:#22c55e,color:#fff
+```
+
+### How It Works
+
+1. Players connect to `servername.mc.yourdomain.com:25565`
+2. The Minecraft client sends the hostname in the handshake packet
+3. mc-router reads the hostname and routes to the correct internal server
+4. All servers share port 25565 - no need to remember different ports
+
+### Requirements
+
+- A domain name (e.g., `example.com`)
+- DNS access to create wildcard records
+- Proxy enabled in Minepanel Settings
+
+### DNS Configuration
+
+Create a wildcard DNS A record pointing to your server's IP:
+
+```
+*.mc.example.com  →  203.0.113.50
+```
+
+Or create individual records per server:
+
+```
+survival.mc.example.com  →  203.0.113.50
+creative.mc.example.com  →  203.0.113.50
+```
+
+::: tip
+Most DNS providers support wildcard records. Check your provider's documentation for the exact syntax.
+:::
+
+### Enable the Proxy
+
+1. **Configure base domain** in Settings → Proxy Settings:
+   - Set your base domain (e.g., `mc.example.com`)
+   - Enable the proxy toggle
+
+2. **Start mc-router** with the proxy profile:
+
+```bash
+docker compose --profile proxy up -d
+```
+
+3. **Per-server settings** (optional):
+   - Custom hostname: Override the auto-generated hostname
+   - Use Proxy toggle: Exclude specific servers from proxy routing
+
+### Server Hostnames
+
+By default, servers get a hostname based on their ID:
+
+| Server ID | Auto-generated Hostname    |
+| --------- | -------------------------- |
+| survival  | `survival.mc.example.com`  |
+| creative  | `creative.mc.example.com`  |
+| my-modded | `my-modded.mc.example.com` |
+
+You can override this with a custom hostname in each server's Connectivity settings.
+
+### Architecture
+
+When proxy is enabled:
+
+- **mc-router** listens on port 25565
+- **Minecraft servers** don't expose ports to host - they communicate internally via Docker network
+- **Routes** are stored in `data/proxy/routes.json` and updated automatically
+
+When proxy is disabled:
+
+- Servers expose their individual ports (25565, 25566, etc.) as before
+- Players connect using `your-ip:port`
+
+### Troubleshooting
+
+**Players can't connect:**
+
+- Verify DNS is resolving correctly: `nslookup survival.mc.example.com`
+- Check mc-router is running: `docker ps | grep mc-router`
+- Check routes.json exists: `cat data/proxy/routes.json`
+
+**Wrong server:**
+
+- Verify the hostname in routes.json matches what players are using
+- Check for typos in custom hostnames
+
+**Connection timeout:**
+
+- Ensure port 25565 is open in your firewall
+- Verify mc-router container is on the same network as Minecraft servers
 
 ## Troubleshooting Network Issues
 

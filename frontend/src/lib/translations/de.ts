@@ -1239,4 +1239,25 @@ export const de: Record<TranslationKey, string> = {
     'Entspannendes Überleben ohne feindliche Mobs. Perfekt für Gelegenheitsspieler.',
   amplifiedWorld: 'Verstärkte Welt',
   amplifiedWorldDesc: 'Extreme Terrain-Generierung. Erfordert mehr RAM für flüssiges Spielen.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Proxy-Einstellungen',
+  proxySettingsDesc: 'Konfiguriere mc-router, um einen einzelnen Port für alle Server zu verwenden',
+  proxyBaseDomain: 'Basis-Domain',
+  proxyBaseDomainDesc: 'Die Domain, die für Server-Subdomains verwendet wird (z.B. mc.example.com)',
+  enableProxy: 'Proxy Aktivieren',
+  enableProxyDesc: 'Leite den gesamten Minecraft-Verkehr über mc-router auf Port 25565',
+  proxyRequiresDomain: 'Konfiguriere eine Basis-Domain, um die Proxy-Funktion zu aktivieren',
+  proxyDnsInfo: 'Konfiguriere einen Wildcard-DNS-Eintrag, der auf deinen Server zeigt:',
+  proxyHostname: 'Benutzerdefinierter Hostname',
+  proxyHostnameDesc:
+    'Optionaler benutzerdefinierter Hostname für diesen Server. Leer lassen für automatische Generierung',
+  useProxy: 'Proxy Verwenden',
+  useProxyDesc:
+    'Proxy-Routing für diesen Server aktivieren. Bei Deaktivierung wird direkter Port-Zugang verwendet',
+  proxySettingsServerDesc: 'Konfiguriere, wie dieser Server über den mc-router Proxy verbindet',
+  proxyServerInfo:
+    'Proxy-Einstellungen gelten nur, wenn der globale Proxy in den Einstellungen aktiviert ist',
 };

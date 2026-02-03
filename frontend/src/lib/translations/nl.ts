@@ -1246,4 +1246,26 @@ export const nl: Record<TranslationKey, string> = {
   peacefulParadiseDesc: 'Ontspannende survival zonder vijandige mobs. Perfect voor casual spelen.',
   amplifiedWorld: 'Versterkte Wereld',
   amplifiedWorldDesc: 'Extreme terrein generatie. Vereist meer RAM voor soepel spel.',
+
+  // ===========================
+  // PROXY SETTINGS
+  // ===========================
+  proxySettings: 'Proxy Instellingen',
+  proxySettingsDesc: 'Configureer mc-router om een enkele poort te gebruiken voor alle servers',
+  proxyBaseDomain: 'Basis Domein',
+  proxyBaseDomainDesc:
+    'Het domein dat wordt gebruikt voor server subdomeinen (bijv. mc.example.com)',
+  enableProxy: 'Proxy Inschakelen',
+  enableProxyDesc: 'Routeer al het Minecraft verkeer via mc-router op poort 25565',
+  proxyRequiresDomain: 'Configureer een basisdomein om de proxyfunctie in te schakelen',
+  proxyDnsInfo: 'Configureer een wildcard DNS record dat naar je server wijst:',
+  proxyHostname: 'Aangepaste Hostnaam',
+  proxyHostnameDesc:
+    'Optionele aangepaste hostnaam voor deze server. Laat leeg om automatisch te genereren',
+  useProxy: 'Proxy Gebruiken',
+  useProxyDesc:
+    'Schakel proxy routing in voor deze server. Indien uitgeschakeld, wordt directe poort toegang gebruikt',
+  proxySettingsServerDesc: 'Configureer hoe deze server verbinding maakt via de mc-router proxy',
+  proxyServerInfo:
+    'Proxy instellingen werken alleen wanneer de globale proxy is ingeschakeld in Instellingen',
 };

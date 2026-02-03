@@ -192,6 +192,10 @@ export class DockerComposeService {
         modrinthDownloadDependencies: 'none',
         modrinthDefaultVersionType: 'release',
         modrinthLoader: '',
+
+        // Proxy config from labels or env
+        proxyHostname: this.extractProxyHostname(mcService.labels),
+        useProxy: this.extractUseProxy(mcService.labels),
       };
 
       this.parseServerTypeSpecificConfig(serverConfig, env);
@@ -220,17 +224,48 @@ export class DockerComposeService {
 
     // Handle array format: ['key=value', ...]
     if (Array.isArray(labels)) {
-      return labels.join('\n');
+      return labels.filter((l) => !l.startsWith('minepanel.')).join('\n');
     }
 
     // Handle object format: { key: value, ... } (legacy compose files)
     if (typeof labels === 'object') {
       return Object.entries(labels)
+        .filter(([key]) => !key.startsWith('minepanel.'))
         .map(([key, value]) => `${key}=${value}`)
         .join('\n');
     }
 
     return '';
+  }
+
+  private extractProxyHostname(labels: Record<string, string> | string[] | undefined): string | undefined {
+    if (!labels) return undefined;
+
+    if (Array.isArray(labels)) {
+      const label = labels.find((l) => l.startsWith('minepanel.proxy.hostname='));
+      return label?.split('=')[1];
+    }
+
+    if (typeof labels === 'object') {
+      return labels['minepanel.proxy.hostname'];
+    }
+
+    return undefined;
+  }
+
+  private extractUseProxy(labels: Record<string, string> | string[] | undefined): boolean {
+    if (!labels) return true; // Default to true when proxy is enabled globally
+
+    if (Array.isArray(labels)) {
+      const label = labels.find((l) => l.startsWith('minepanel.proxy.enabled='));
+      if (label) return label.split('=')[1] === 'true';
+    }
+
+    if (typeof labels === 'object' && 'minepanel.proxy.enabled' in labels) {
+      return labels['minepanel.proxy.enabled'] === 'true';
+    }
+
+    return true;
   }
 
   private parseDockerLabels(labelsString: string): string[] | undefined {
@@ -521,6 +556,9 @@ export class DockerComposeService {
       modrinthDownloadDependencies: 'none',
       modrinthDefaultVersionType: 'release',
       modrinthLoader: '',
+
+      proxyHostname: undefined,
+      useProxy: true,
     };
   }
 
@@ -915,13 +953,14 @@ export class DockerComposeService {
     return config.port;
   }
 
-  private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string): any {
+  private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string, proxyEnabled: boolean): any {
+    const useProxy = proxyEnabled && config.useProxy !== false;
+
     const mcService: any = {
       image: `itzg/minecraft-server:${config.dockerImage}`,
       tty: true,
       stdin_open: true,
       container_name: config.id,
-      ports: [`${port}:25565`, ...(config.extraPorts || [])],
       environment,
       volumes,
       restart: config.restartPolicy,
@@ -933,15 +972,48 @@ export class DockerComposeService {
       },
     };
 
-    const labels = this.parseDockerLabels(config.dockerLabels);
-    if (labels) {
-      mcService.labels = labels;
+    // Si usa proxy, no exponer puerto al host; si no, exponer como siempre
+    if (useProxy) {
+      mcService.expose = ['25565'];
+      mcService.networks = ['minepanel-network'];
+      if (config.extraPorts?.length) {
+        mcService.ports = config.extraPorts;
+      }
+    } else {
+      mcService.ports = [`${port}:25565`, ...(config.extraPorts || [])];
     }
 
-    return {
+    // Build labels
+    const userLabels = this.parseDockerLabels(config.dockerLabels) || [];
+    const proxyLabels: string[] = [];
+
+    if (config.useProxy !== undefined) {
+      proxyLabels.push(`minepanel.proxy.enabled=${config.useProxy}`);
+    }
+    if (config.proxyHostname) {
+      proxyLabels.push(`minepanel.proxy.hostname=${config.proxyHostname}`);
+    }
+
+    const allLabels = [...userLabels, ...proxyLabels];
+    if (allLabels.length > 0) {
+      mcService.labels = allLabels;
+    }
+
+    const result: any = {
       services: { mc: mcService },
       volumes: { 'mc-data': {} },
     };
+
+    // Add network definition if using proxy
+    if (useProxy) {
+      result.networks = {
+        'minepanel-network': {
+          external: true,
+        },
+      };
+    }
+
+    return result;
   }
 
   private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
@@ -984,7 +1056,7 @@ export class DockerComposeService {
     await fs.ensureDir(path.join(serverDir, 'backups'));
   }
 
-  private async generateDockerComposeFile(config: ServerConfig): Promise<void> {
+  async generateDockerComposeFile(config: ServerConfig, proxyEnabled: boolean = false): Promise<void> {
     const serverDir = path.join(this.SERVERS_DIR, config.id);
     await fs.ensureDir(serverDir);
 
@@ -998,7 +1070,7 @@ export class DockerComposeService {
 
     const availablePort = await this.ensurePortAvailable(config);
     const volumes = this.parseVolumes(config);
-    const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort);
+    const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort, proxyEnabled);
 
     if (config.enableBackup) {
       await this.addBackupService(dockerComposeConfig, config, serverDir);
