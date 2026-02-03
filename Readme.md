@@ -4,7 +4,7 @@
 
 **Manage Minecraft servers with Docker — Simple, Fast, Beautiful**
 
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker&color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 [![Docker Size](https://img.shields.io/docker/image-size/ketbom/minepanel/latest?color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 
@@ -23,10 +23,11 @@
 ## 🚀 Quick Start
 
 ```bash
-# Generate JWT secret and start
+# Clone and start
+git clone https://github.com/Ketbome/minepanel.git
+cd minepanel
 export JWT_SECRET=$(openssl rand -base64 32)
-curl -O https://raw.githubusercontent.com/Ketbome/minepanel/main/docker-compose.single.yml
-docker compose -f docker-compose.single.yml up -d
+docker compose up -d
 ```
 
 🎮 **Open** http://localhost:3000 → **Login:** `admin` / `admin`
@@ -82,6 +83,6 @@ docker compose -f docker-compose.single.yml up -d
 
 Made with ❤️ by [@Ketbome](https://github.com/Ketbome)
 
-<sub>License: CC BY-NC-SA 4.0 — Free for non-commercial use</sub>
+<sub>MIT License</sub>
 
 </div>
