@@ -50,7 +50,8 @@ services:
     ports:
       - "${MC_PROXY_PORT:-25565}:25565"
     environment:
-      - MAPPING_FILE=/data/routes.json
+      - ROUTES_CONFIG=/data/routes.json
+      - ROUTES_CONFIG_WATCH=true
     volumes:
       - ${BASE_DIR:-$PWD}/data/proxy:/data
     networks:
