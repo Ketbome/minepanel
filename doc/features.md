@@ -21,6 +21,7 @@ flowchart LR
 
 | Feature          | Description                                                |
 | ---------------- | ---------------------------------------------------------- |
+| Java & Bedrock   | Both Minecraft editions supported                          |
 | Multiple servers | Run as many as hardware allows, isolated containers        |
 | All server types | Vanilla, Paper, Forge, Fabric, Purpur, CurseForge modpacks |
 | Any version      | 1.8 to latest, snapshots included                          |
@@ -40,7 +41,7 @@ flowchart LR
 | Feature        | Description                                               |
 | -------------- | --------------------------------------------------------- |
 | Basic controls | Start, Stop, Restart, Delete                              |
-| RCON console   | Send commands directly                                    |
+| Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
 
 ## Player Management
@@ -91,12 +92,27 @@ Edit from UI:
 
 ## Other
 
-| Feature          | Description                              |
-| ---------------- | ---------------------------------------- |
-| Multi-language   | EN, ES, NL, DE                           |
-| Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)        |
-| Discord webhooks | Server event notifications               |
-| MC Proxy Router  | Single port for all servers via hostname |
+| Feature          | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| Multi-language   | EN, ES, NL, DE                                      |
+| Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)                   |
+| Discord webhooks | Server event notifications                          |
+| MC Proxy Router  | Single port for Java servers via hostname           |
+
+## Edition Comparison
+
+| Feature         | Java Edition              | Bedrock Edition           |
+| --------------- | ------------------------- | ------------------------- |
+| Server Types    | Vanilla, Paper, Forge, etc. | Vanilla only            |
+| Default Port    | 25565 (TCP)               | 19132 (UDP)               |
+| Commands        | RCON console              | send-command (via logs)   |
+| Proxy Support   | Yes (mc-router)           | No                        |
+| Mods/Plugins    | Full support              | Addons/Behavior Packs     |
+| Backups         | Full support              | Full support              |
+
+::: tip Bedrock Commands
+Bedrock servers use `send-command` instead of RCON. Command output appears in server logs rather than returning directly.
+:::
 
 ## Coming Soon
 

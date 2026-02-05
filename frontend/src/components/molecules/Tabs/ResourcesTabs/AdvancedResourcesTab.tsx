@@ -17,6 +17,7 @@ interface AdvancedResourcesTabProps {
 
 export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
+  const isJava = config.edition !== 'BEDROCK';
 
   const handleAutoStopChange = (checked: boolean) => {
     updateConfig("enableAutoStop", checked);
@@ -58,6 +59,8 @@ export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, up
         <p className="text-xs text-gray-400">{t("timezoneDesc")}</p>
       </div>
 
+      {/* AutoStop - Java only */}
+      {isJava && (
       <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -102,7 +105,10 @@ export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, up
           </div>
         )}
       </div>
+      )}
 
+      {/* AutoPause - Java only */}
+      {isJava && (
       <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -170,6 +176,7 @@ export const AdvancedResourcesTab: FC<AdvancedResourcesTabProps> = ({ config, up
           </div>
         )}
       </div>
+      )}
 
       <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
         <div className="flex items-center justify-between">

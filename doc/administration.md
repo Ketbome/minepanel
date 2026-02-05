@@ -206,6 +206,50 @@ docker compose up -d
 
 After reset, log in with default credentials (admin/admin).
 
+## Server Commands
+
+### Java Edition (RCON)
+
+Java servers use RCON for command execution. Commands are sent and responses are returned directly:
+
+```bash
+# From Minepanel UI: Commands tab
+/say Hello World
+/gamemode creative player1
+/time set day
+```
+
+### Bedrock Edition (send-command)
+
+Bedrock servers use the `send-command` script. Command output appears in server logs:
+
+```bash
+# Manual execution
+docker exec CONTAINER_NAME send-command gamerule dofiretick false
+docker exec CONTAINER_NAME send-command say Hello World
+```
+
+::: warning Bedrock Command Output
+Unlike RCON, Bedrock commands don't return output directly. Check the Logs tab to see command results.
+:::
+
+### Common Commands
+
+| Command | Java | Bedrock | Description |
+| ------- | ---- | ------- | ----------- |
+| `/list` | ✅ | ✅ | Show online players |
+| `/say` | ✅ | ✅ | Broadcast message |
+| `/gamemode` | ✅ | ✅ | Change player gamemode |
+| `/time` | ✅ | ✅ | Set world time |
+| `/weather` | ✅ | ✅ | Set weather |
+| `/gamerule` | ✅ | ✅ | Modify game rules |
+| `/op` | ✅ | ✅* | Make player operator |
+| `/whitelist` | ✅ | ✅ | Manage whitelist |
+
+*Bedrock uses XUIDs instead of player names for permissions.
+
+---
+
 ## Server Backups
 
 ### Automatic Backups

@@ -1250,6 +1250,52 @@ export const en = {
   lanIpDesc: 'Your local network IP. For players on the same network',
   networkProxyNote:
     'When proxy is enabled, the proxy hostname will be used instead of IP:port in notifications',
+
+  // ===========================
+  // BEDROCK EDITION
+  // ===========================
+  serverEdition: 'Server Edition',
+  javaEditionDesc: 'PC/Mac version with mods support',
+  bedrockEditionDesc: 'Cross-platform (mobile, console, Win10)',
+  editionLocked: 'Cannot change after server creation',
+  bedrockVersion: 'Bedrock Version',
+  bedrockVersionDesc: 'Select the Bedrock version. LATEST auto-updates to the newest release.',
+  autoUpdate: 'Auto Update',
+  preview: 'Preview',
+  bedrockInfo: 'Bedrock Edition Server',
+  bedrockInfoDesc: 'Bedrock servers support cross-play between mobile, console, and Windows 10/11 players. Note: RCON commands are not supported.',
+  bedrock: 'Bedrock',
+  bedrockSettings: 'Bedrock Settings',
+  bedrockSettingsDesc: 'Configure Bedrock-specific server options',
+  permissions: 'Permissions',
+  allowCheats: 'Allow Cheats',
+  allowCheatsDesc: 'Enable commands for all players when not an operator',
+  defaultPermissionLevel: 'Default Permission Level',
+  defaultPermissionLevelDesc: 'Permission level for new players',
+  visitor: 'Visitor',
+  member: 'Member',
+  operator: 'Operator',
+  performance: 'Performance',
+  tickDistance: 'Tick Distance',
+  tickDistanceDesc: 'World tick simulation distance (4-12). Lower = better performance.',
+  maxThreads: 'Max Threads',
+  maxThreadsDesc: 'Maximum threads for server operations',
+  playerSettings: 'Player Settings',
+  texturepackRequired: 'Texturepack Required',
+  texturepackRequiredDesc: 'Force players to download server resource pack',
+  whiteList: 'Whitelist',
+  whiteListDesc: 'Only allow players on the whitelist to join',
+  serverPortV6: 'IPv6 Port',
+  serverPortV6Desc: 'Port for IPv6 connections. Leave empty to disable.',
+  serverPortV6Help: 'Optional. Set if your server supports IPv6 connections.',
+
+  // BEDROCK TEMPLATES
+  bedrockSurvival: 'Bedrock Survival',
+  bedrockSurvivalDesc: 'Classic survival for mobile and console players.',
+  bedrockCreative: 'Bedrock Creative',
+  bedrockCreativeDesc: 'Creative mode with cheats enabled for all players.',
+  bedrockFamily: 'Bedrock Family',
+  bedrockFamilyDesc: 'Private LAN server for family play with whitelist.',
 };
 
 export type TranslationKey = keyof typeof en;

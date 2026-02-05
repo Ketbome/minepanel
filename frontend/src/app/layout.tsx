@@ -1,16 +1,16 @@
-import type React from "react";
-import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/sonner";
-import { LanguageProvider } from "@/lib/hooks/useLanguage";
-import { MotionProvider } from "@/lib/providers/motion-provider";
-import { PublicEnvScript } from "next-runtime-env";
-import "./globals.css";
+import type React from 'react';
+import type { Metadata } from 'next';
+import { Toaster } from '@/components/ui/sonner';
+import { LanguageProvider } from '@/lib/hooks/useLanguage';
+import { MotionProvider } from '@/lib/providers/motion-provider';
+import { PublicEnvScript } from 'next-runtime-env';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Minepanel",
-  description: "Minecraft Server Management Panel",
+  title: 'Minepanel',
+  description: 'Minecraft Server Management Panel',
   icons: {
-    icon: "/favicon.ico",
+    icon: '/favicon.ico',
   },
 };
 

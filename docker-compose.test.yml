@@ -1,17 +1,25 @@
+# Docker Compose for testing pre-release images
+# Images are built from non-main branches and published to separate test repositories
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#
+# This uses test images from Docker Hub:
+#   - ketbom/minepanel-backend-test:latest
+#   - ketbom/minepanel-frontend-test:latest
+
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ketbom/minepanel-backend-test:latest
     ports:
       - "${BACKEND_PORT:-8091}:8091"
     environment:
+      - NODE_ENV=production
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET} # Required. Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - BASE_DIR=${BASE_DIR:-$PWD}
-      # - BASE_PATH=${BASE_PATH}  # Subdirectory routing (e.g., /api)
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -19,30 +27,23 @@ services:
     networks:
       - minepanel-network
     restart: always
-    working_dir: /app
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      # Subdirectory routing (build-time): uncomment and set path
-      # args:
-      #   - NEXT_PUBLIC_BASE_PATH=/minepanel
+    image: ketbom/minepanel-frontend-test:latest
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
     networks:
       - minepanel-network
     restart: always
-    depends_on:
-      - backend
 
-  # MC Proxy Router - Routes Minecraft Java Edition traffic by hostname (optional)
-  # Note: Only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
-  # Enable with: docker compose -f docker-compose.development.yml --profile proxy up -d --build
-  # Requires DNS wildcard: *.mc.yourdomain.com -> server IP
+  # MC Proxy Router - Routes Minecraft Java traffic by hostname (optional)
+  # Note: mc-router only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
+  # Enable with: docker compose -f docker-compose.test.yml --profile proxy up -d
   mc-router:
     image: itzg/mc-router:1.39.1
     container_name: mc-router

@@ -208,25 +208,31 @@ export class SystemMonitoringService {
   async getNetworkInfo(): Promise<{ hostname: string; localIPs: string[]; publicIP: string | null }> {
     const localIPs: string[] = [];
 
-    // Get IPs from settings
+    // Get IPs from settings (first user's settings)
     let publicIp: string | null = null;
     let lanIp: string | null = null;
     try {
-      const settings = await this.settingsRepo.findOne({ order: { id: 'ASC' } });
-      publicIp = settings?.preferences?.publicIp || null;
-      lanIp = settings?.preferences?.lanIp || null;
-    } catch {
-      // Ignore errors
+      const [settings] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
+      if (settings?.preferences) {
+        publicIp = settings.preferences.publicIp ?? null;
+        lanIp = settings.preferences.lanIp ?? null;
+      }
+    } catch (error) {
+      console.error('Error fetching network settings:', error);
     }
 
-    if (lanIp && this.isValidIP(lanIp)) {
+    // Add LAN IP if valid
+    if (lanIp && lanIp.trim() && this.isValidIP(lanIp)) {
       localIPs.push(lanIp);
     }
+
+    // Public IP can be a domain or IP, so no validation needed
+    const validPublicIp = publicIp && publicIp.trim() ? publicIp.trim() : null;
 
     return {
       hostname: os.hostname(),
       localIPs,
-      publicIP: publicIp,
+      publicIP: validPublicIp,
     };
   }
 

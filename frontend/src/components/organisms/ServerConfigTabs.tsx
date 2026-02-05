@@ -9,9 +9,10 @@ import { PluginsTab } from "../molecules/Tabs/PluginsTab";
 import { ResourcesTab } from "../molecules/Tabs/ResourcesTab";
 import { GeneralSettingsTab } from "../molecules/Tabs/GeneralSettingsTab";
 import { ServerTypeTab } from "../molecules/Tabs/ServerTypeTab";
+import { BedrockSettingsTab } from "../molecules/Tabs/BedrockSettingsTab";
 import { FilesTab } from "../molecules/Tabs/FilesTab";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface ServerConfigTabsProps {
@@ -26,22 +27,39 @@ interface ServerConfigTabsProps {
 export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving }) => {
   const { t } = useLanguage();
 
-  const showModsTab = config.serverType === "FORGE" || config.serverType === "FABRIC" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE";
-  const showPluginsTab = config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA";
+  const isJava = config.edition !== "BEDROCK";
+  const isBedrock = config.edition === "BEDROCK";
+
+  // Java-only tabs
+  const showModsTab = isJava && (config.serverType === "FORGE" || config.serverType === "FABRIC" || config.serverType === "AUTO_CURSEFORGE" || config.serverType === "CURSEFORGE");
+  const showPluginsTab = isJava && (config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA");
+  const showResourcesTab = isJava; // JVM settings only apply to Java
+  const showCommandsTab = isJava; // RCON only works with Java
 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "logs", "commands", "files"];
+    const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
     return validTabs.includes(hash) ? hash : "type";
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
-  const [savedConfig, setSavedConfig] = useState(config);
+  const [savedConfig, setSavedConfig] = useState<ServerConfig | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Initialize savedConfig when config loads from server
+  useEffect(() => {
+    if (config.id && !savedConfig) {
+      setSavedConfig(config);
+    }
+  }, [config, savedConfig]);
 
   // Detect unsaved changes
   useEffect(() => {
+    if (!savedConfig) {
+      setHasUnsavedChanges(false);
+      return;
+    }
     const configChanged = JSON.stringify(config) !== JSON.stringify(savedConfig);
     setHasUnsavedChanges(configChanged);
   }, [config, savedConfig]);
@@ -55,7 +73,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "logs", "commands", "files"];
+      const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -126,10 +144,19 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <span className="hidden md:inline">{t("general")}</span>
                   </TabsTrigger>
 
-                  <TabsTrigger value="resources" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Cpu className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("resources")}</span>
-                  </TabsTrigger>
+                  {showResourcesTab && (
+                    <TabsTrigger value="resources" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      <Cpu className="h-4 w-4 shrink-0" />
+                      <span className="hidden md:inline">{t("resources")}</span>
+                    </TabsTrigger>
+                  )}
+
+                  {isBedrock && (
+                    <TabsTrigger value="bedrock" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      <Smartphone className="h-4 w-4 shrink-0" />
+                      <span className="hidden md:inline">{t("bedrock")}</span>
+                    </TabsTrigger>
+                  )}
 
                   {showModsTab && (
                     <TabsTrigger value="mods" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
@@ -155,10 +182,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <span className="hidden md:inline">{t("logs")}</span>
                   </TabsTrigger>
 
-                  <TabsTrigger value="commands" disabled={!isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
-                    <Terminal className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("commands")}</span>
-                  </TabsTrigger>
+                  {showCommandsTab && (
+                    <TabsTrigger value="commands" disabled={!isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                      <Terminal className="h-4 w-4 shrink-0" />
+                      <span className="hidden md:inline">{t("commands")}</span>
+                    </TabsTrigger>
+                  )}
 
                   <TabsTrigger value="files" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <FolderOpen className="h-4 w-4 shrink-0" />
@@ -179,9 +208,17 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 <GeneralSettingsTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
-              <TabsContent value="resources" className="space-y-4 mt-0">
-                <ResourcesTab config={config} updateConfig={updateConfig} />
-              </TabsContent>
+              {showResourcesTab && (
+                <TabsContent value="resources" className="space-y-4 mt-0">
+                  <ResourcesTab config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
+
+              {isBedrock && (
+                <TabsContent value="bedrock" className="space-y-4 mt-0">
+                  <BedrockSettingsTab config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
 
               {showModsTab && (
                 <TabsContent value="mods" className="space-y-4 mt-0">
@@ -203,9 +240,11 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 <LogsTab serverId={serverId} rconPort={config.rconPort} rconPassword={config.rconPassword} serverStatus={serverStatus} />
               </TabsContent>
 
-              <TabsContent value="commands" className="space-y-4 mt-0">
-                <CommandsTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
-              </TabsContent>
+              {showCommandsTab && (
+                <TabsContent value="commands" className="space-y-4 mt-0">
+                  <CommandsTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
+                </TabsContent>
+              )}
 
               <TabsContent value="files" className="space-y-4 mt-0">
                 <FilesTab serverId={serverId} />

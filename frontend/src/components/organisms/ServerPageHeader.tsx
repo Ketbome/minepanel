@@ -8,12 +8,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState } from "react";
 import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
 import { getStatusIcon, getStatusBadgeClass } from "@/lib/utils/server-status";
+import { ServerEdition } from "@/lib/types/types";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
   readonly serverName: string;
   readonly serverStatus: string;
   readonly serverPort: string;
+  readonly serverEdition?: ServerEdition;
   readonly isProcessing: boolean;
   readonly onStartServer: () => Promise<boolean>;
   readonly onStopServer: () => Promise<boolean>;
@@ -22,7 +24,7 @@ interface ServerPageHeaderProps {
   readonly onOpenFiles?: () => void;
 }
 
-export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
+export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, serverEdition, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
@@ -138,7 +140,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
 
       {serverStatus === "running" && (
         <div className="animate-fade-in-up">
-          <ServerConnectionInfo port={serverPort} serverId={serverId} />
+          <ServerConnectionInfo port={serverPort} serverId={serverId} edition={serverEdition} />
         </div>
       )}
 

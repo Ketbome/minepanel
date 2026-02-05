@@ -9,6 +9,7 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
+import { ServerEdition } from './dto/server-config.model';
 
 const execAsync = promisify(exec);
 
@@ -21,12 +22,20 @@ const DOCKER_COMMANDS = {
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
-  STATS_ALL: 'docker stats --no-stream --format "{{.Name}}\\t{{.CPUPerc}}\\t{{.MemUsage}}"',
+  STATS_ALL: String.raw`docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
   LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
     const passwordArg = password ? ' --password ' + password : '';
     return `docker exec -i ${containerId} rcon-cli --port ${port}${passwordArg} "${command}"`;
+  },
+  // Bedrock: TODO - commands disabled due to TTY/permission issues with send-command
+  EXEC_BEDROCK: (_containerId: string, _command: string) => {
+    return `echo "Commands not supported for Bedrock servers yet"`;
+  },
+  // Fix permissions for Bedrock (needs UID/GID 1000)
+  FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
+    return `docker run --rm -v "${hostPath}:/data" alpine chown -R ${uid}:${gid} /data`;
   },
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
@@ -68,6 +77,7 @@ export interface CommandExecutionResponse {
 export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
+  private readonly BASE_DIR: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -76,6 +86,7 @@ export class ServerManagementService {
     private readonly discordService: DiscordService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
+    this.BASE_DIR = this.configService.get('baseDir');
     fs.ensureDirSync(this.SERVERS_DIR);
   }
 
@@ -139,6 +150,21 @@ export class ServerManagementService {
     return undefined;
   }
 
+  private async getServerEdition(serverId: string): Promise<ServerEdition> {
+    try {
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (await fs.pathExists(dockerComposePath)) {
+        const content = await fs.readFile(dockerComposePath, 'utf8');
+        const config = yaml.load(content) as any;
+        const image = config?.services?.mc?.image ?? '';
+        return image.includes('bedrock') ? 'BEDROCK' : 'JAVA';
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get edition for server ${serverId}`, error);
+    }
+    return 'JAVA';
+  }
+
   private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
       const userSettings = await this.getUserSettings();
@@ -151,8 +177,12 @@ export class ServerManagementService {
         enrichedDetails.port = await this.getServerPort(serverName);
       }
 
-      // Priority: 1. Proxy hostname, 2. Settings IP, 3. ENV, 4. undefined
-      if (userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
+      // Get server edition - proxy only works with Java
+      const edition = await this.getServerEdition(serverName);
+      const supportsProxy = edition === 'JAVA';
+
+      // Priority: 1. Proxy hostname (Java only), 2. Settings IP, 3. ENV, 4. undefined
+      if (supportsProxy && userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
         // When proxy is active, use hostname instead of IP:port
         const proxyHostname = await this.getServerProxyHostname(serverName, userSettings.proxyBaseDomain);
         if (proxyHostname) {
@@ -161,7 +191,7 @@ export class ServerManagementService {
           enrichedDetails.lanIp = undefined; // LAN IP not relevant with proxy
         }
       } else {
-        // No proxy - use IP:port from settings
+        // No proxy or Bedrock - use IP:port from settings
         if (!enrichedDetails.ip) {
           enrichedDetails.ip = userSettings.publicIp || undefined;
         }
@@ -195,7 +225,7 @@ export class ServerManagementService {
         // Check if server has proxy disabled
         if (Array.isArray(labels)) {
           const enabledLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.enabled='));
-          if (enabledLabel && enabledLabel.split('=')[1] === 'false') {
+          if (enabledLabel?.split('=')[1] === 'false') {
             return null; // Server has proxy disabled
           }
         }
@@ -778,7 +808,7 @@ export class ServerManagementService {
         const lines = logs.split('\n').filter((line) => line.trim());
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
-          const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
+          const timestampMatch = RegExp(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/).exec(lastLine);
           if (timestampMatch) {
             const timestamp = new Date(timestampMatch[1]);
             timestamp.setMilliseconds(timestamp.getMilliseconds() + 1);
@@ -883,6 +913,23 @@ export class ServerManagementService {
         return { success: false, output: 'Container not found or not running' };
       }
 
+      const edition = await this.getServerEdition(serverId);
+
+      // Use different command execution based on edition
+      if (edition === 'BEDROCK') {
+        // Bedrock uses send-command script (output only visible in container logs)
+        const { stderr } = await execAsync(DOCKER_COMMANDS.EXEC_BEDROCK(containerId, command));
+
+        if (stderr) {
+          this.logger.warn(`Command execution error on ${serverId}: ${stderr}`);
+          return { success: false, output: `Error executing command: ${stderr}` };
+        }
+
+        this.logger.log(`Bedrock command executed on ${serverId}: ${command}`);
+        return { success: true, output: 'Command sent (output visible in server logs)' };
+      }
+
+      // Java uses RCON
       const { stdout, stderr } = await execAsync(DOCKER_COMMANDS.EXEC_RCON(containerId, rconPort, rconPassword || '', command));
 
       if (stderr) {
@@ -919,6 +966,12 @@ export class ServerManagementService {
         }
       }
 
+      // Fix permissions for Bedrock servers (they require UID/GID 1000)
+      const edition = await this.getServerEdition(serverId);
+      if (edition === 'BEDROCK') {
+        await this.fixBedrockPermissions(serverId);
+      }
+
       const composeDir = path.dirname(dockerComposePath);
 
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
@@ -935,6 +988,40 @@ export class ServerManagementService {
       this.logger.error(`Failed to start server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
+    }
+  }
+
+  private async fixBedrockPermissions(serverId: string): Promise<void> {
+    try {
+      const mcDataPath = this.getMcDataPath(serverId);
+      if (!(await fs.pathExists(mcDataPath))) {
+        return;
+      }
+
+      // Use host path for docker volume mount (BASE_DIR resolves to host path)
+      const hostMcDataPath = path.join(this.BASE_DIR, 'servers', serverId, 'mc-data');
+
+      // Read UID/GID from docker-compose if available, default to 1000
+      let uid = '1000';
+      let gid = '1000';
+      try {
+        const composePath = this.getDockerComposePath(serverId);
+        if (await fs.pathExists(composePath)) {
+          const content = await fs.readFile(composePath, 'utf-8');
+          const compose = yaml.load(content) as any;
+          uid = compose?.services?.mc?.environment?.UID || '1000';
+          gid = compose?.services?.mc?.environment?.GID || '1000';
+        }
+      } catch {
+        // Use defaults
+      }
+
+      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${uid}:${gid})...`);
+      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(hostMcDataPath, uid, gid));
+      this.logger.log(`Permissions fixed for ${serverId}`);
+    } catch (error) {
+      this.logger.warn(`Could not fix permissions for ${serverId}: ${error.message}`);
+      // Continue anyway - might work if permissions are already correct
     }
   }
 
@@ -968,32 +1055,78 @@ export class ServerManagementService {
   // ==================== PLAYER MANAGEMENT ====================
   // Las acciones (whitelist add/remove, op/deop, kick, ban, pardon) usan executeCommand directamente
 
-  async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[] }> {
+  async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[]; supportsRcon: boolean }> {
     try {
+      const edition = await this.getServerEdition(serverId);
+
+      if (edition === 'BEDROCK') {
+        // Bedrock: send 'list' and parse response from logs
+        return await this.getBedrockOnlinePlayers(serverId);
+      }
+
+      // Java: use RCON
       const result = await this.executeCommand(serverId, 'list', rconPort, rconPassword);
       if (!result.success) {
-        return { online: 0, max: 0, players: [] };
+        return { online: 0, max: 0, players: [], supportsRcon: true };
       }
 
       // Parse "There are X of a max of Y players online: player1, player2"
-      const match = result.output.match(/There are (\d+) of a max of (\d+) players online[:\s]*(.*)?/i);
+      const match = /There are (\d+) of a max of (\d+) players online[:\s]*(.*)/i.exec(result.output);
       if (match) {
-        const online = parseInt(match[1], 10);
-        const max = parseInt(match[2], 10);
+        const online = Number.parseInt(match[1], 10);
+        const max = Number.parseInt(match[2], 10);
         const playerList = match[3]?.trim();
         const players = playerList
           ? playerList
               .split(',')
               .map((p) => p.trim())
-              .filter((p) => p)
+              .filter(Boolean)
           : [];
-        return { online, max, players };
+        return { online, max, players, supportsRcon: true };
       }
 
-      return { online: 0, max: 0, players: [] };
+      return { online: 0, max: 0, players: [], supportsRcon: true };
     } catch (error) {
       this.logger.error(`Failed to get online players for ${serverId}`, error);
-      return { online: 0, max: 0, players: [] };
+      return { online: 0, max: 0, players: [], supportsRcon: true };
+    }
+  }
+
+  private async getBedrockOnlinePlayers(serverId: string): Promise<{ online: number; max: number; players: string[]; supportsRcon: boolean }> {
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) {
+        return { online: 0, max: 0, players: [], supportsRcon: false };
+      }
+
+      // Send list command
+      await execAsync(DOCKER_COMMANDS.EXEC_BEDROCK(containerId, 'list'));
+
+      // Wait for command to process
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Read recent logs to find the response
+      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, 20));
+
+      // Bedrock format: "There are X/Y players online:"
+      const match = /There are (\d+)\/(\d+) players online[:\s]*(.*)/i.exec(logs);
+      if (match) {
+        const online = Number.parseInt(match[1], 10);
+        const max = Number.parseInt(match[2], 10);
+        const playerList = match[3]?.trim();
+        const players = playerList
+          ? playerList
+              .split(',')
+              .map((p) => p.trim())
+              .filter(Boolean)
+          : [];
+        return { online, max, players, supportsRcon: false };
+      }
+
+      return { online: 0, max: 0, players: [], supportsRcon: false };
+    } catch (error) {
+      this.logger.error(`Failed to get Bedrock online players for ${serverId}`, error);
+      return { online: 0, max: 0, players: [], supportsRcon: false };
     }
   }
 

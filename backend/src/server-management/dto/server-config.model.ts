@@ -1,6 +1,8 @@
 import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
+export type ServerEdition = 'JAVA' | 'BEDROCK';
+
 export class ServerConfigDto {
   @IsString()
   @IsNotEmpty()
@@ -9,6 +11,14 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  serverExists?: boolean;
+
+  @IsEnum(['JAVA', 'BEDROCK'])
+  @IsOptional()
+  edition?: ServerEdition;
 
   @IsEnum(['VANILLA', 'FORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
   @IsOptional()
@@ -530,6 +540,35 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   useProxy?: boolean;
+
+  // Bedrock-specific configuration
+  @IsBoolean()
+  @IsOptional()
+  allowCheats?: boolean;
+
+  @IsString()
+  @IsOptional()
+  tickDistance?: string;
+
+  @IsString()
+  @IsOptional()
+  maxThreads?: string;
+
+  @IsEnum(['visitor', 'member', 'operator'])
+  @IsOptional()
+  defaultPlayerPermissionLevel?: 'visitor' | 'member' | 'operator';
+
+  @IsBoolean()
+  @IsOptional()
+  texturepackRequired?: boolean;
+
+  @IsString()
+  @IsOptional()
+  serverPortV6?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  whiteList?: boolean;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

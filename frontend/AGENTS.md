@@ -18,15 +18,36 @@ src/
 │   └── layout.tsx        # Root layout
 ├── components/
 │   ├── ui/               # shadcn/ui primitives (don't modify)
+│   ├── molecules/Tabs/   # Server config tabs (Java/Bedrock specific)
 │   └── {feature}/        # Feature-specific components
 ├── lib/
 │   ├── hooks/            # Custom React hooks
 │   ├── store/            # Zustand stores
-│   ├── translations/     # i18n (en, es, nl)
+│   ├── translations/     # i18n (en, es, nl, de)
+│   ├── server-templates.ts # Pre-configured server templates
 │   └── utils/            # Helpers (cn, etc.)
 ├── services/             # API client functions
-└── types/                # TypeScript interfaces
+└── types/                # TypeScript interfaces (includes ServerEdition)
 ```
+
+### Server Edition Handling
+
+Components conditionally render based on `ServerEdition` (`JAVA` | `BEDROCK`):
+
+```tsx
+// Conditional rendering example
+const isJava = config.edition === 'JAVA';
+const isBedrock = config.edition === 'BEDROCK';
+
+{isJava && <RconSettings />}
+{isBedrock && <BedrockSettingsTab />}
+```
+
+Key edition-aware components:
+- `ServerTypeTab.tsx` - Edition selector
+- `BedrockSettingsTab.tsx` - Bedrock-specific settings
+- `ConnectivitySettingsTab.tsx` - Hides proxy/RCON for Bedrock
+- `ServerConnectionInfo.tsx` - Shows direct IP for Bedrock
 
 ---
 
@@ -165,7 +186,7 @@ export function CreateServerForm() {
 
 ## i18n (Translations)
 
-Files: `lib/translations/{en,es,nl}.ts`
+Files: `lib/translations/{en,es,nl,de}.ts`
 
 ```typescript
 // Usage
@@ -182,6 +203,17 @@ Add new language:
 1. Copy `en.ts` to `{lang}.ts`
 2. Translate all strings
 3. Register in `translations/index.ts`
+
+### Server Edition Translations
+
+Bedrock-specific keys are prefixed with `bedrock*`:
+
+```typescript
+t.bedrockInfo        // Edition info text
+t.bedrockSurvival    // Bedrock template names
+t.allowCheats        // Bedrock-specific settings
+t.tickDistance       // Bedrock-specific settings
+```
 
 ---
 

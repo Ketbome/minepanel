@@ -1,4 +1,28 @@
 /**
+ * Server edition type - Java or Bedrock
+ */
+export type ServerEdition = 'JAVA' | 'BEDROCK';
+
+/**
+ * Server type - different server software variants
+ */
+export type ServerType =
+  | 'VANILLA'
+  | 'FORGE'
+  | 'AUTO_CURSEFORGE'
+  | 'CURSEFORGE'
+  | 'SPIGOT'
+  | 'FABRIC'
+  | 'MAGMA'
+  | 'PAPER'
+  | 'QUILT'
+  | 'BUKKIT'
+  | 'PUFFERFISH'
+  | 'PURPUR'
+  | 'LEAF'
+  | 'FOLIA';
+
+/**
  * Simplified server list item returned by GET /servers
  * Contains only essential information for display in lists
  */
@@ -7,21 +31,8 @@ export interface ServerListItem {
   serverName: string;
   motd: string;
   port: string;
-  serverType:
-    | 'VANILLA'
-    | 'FORGE'
-    | 'AUTO_CURSEFORGE'
-    | 'CURSEFORGE'
-    | 'SPIGOT'
-    | 'FABRIC'
-    | 'MAGMA'
-    | 'PAPER'
-    | 'QUILT'
-    | 'BUKKIT'
-    | 'PUFFERFISH'
-    | 'PURPUR'
-    | 'LEAF'
-    | 'FOLIA';
+  edition?: ServerEdition;
+  serverType: ServerType;
   active: boolean;
 }
 
@@ -32,21 +43,9 @@ export interface ServerListItem {
 export interface ServerConfig {
   id: string;
   active: boolean;
-  serverType:
-    | 'VANILLA'
-    | 'FORGE'
-    | 'AUTO_CURSEFORGE'
-    | 'CURSEFORGE'
-    | 'SPIGOT'
-    | 'FABRIC'
-    | 'MAGMA'
-    | 'PAPER'
-    | 'QUILT'
-    | 'BUKKIT'
-    | 'PUFFERFISH'
-    | 'PURPUR'
-    | 'LEAF'
-    | 'FOLIA';
+  serverExists?: boolean;
+  edition?: ServerEdition;
+  serverType: ServerType;
 
   // General configuration
   serverName: string;
@@ -218,4 +217,13 @@ export interface ServerConfig {
   // Proxy configuration
   proxyHostname?: string;
   useProxy?: boolean;
+
+  // Bedrock-specific configuration
+  allowCheats?: boolean;
+  tickDistance?: string;
+  maxThreads?: string;
+  defaultPlayerPermissionLevel?: 'visitor' | 'member' | 'operator';
+  texturepackRequired?: boolean;
+  serverPortV6?: string;
+  whiteList?: boolean;
 }

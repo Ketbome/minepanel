@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check } from "lucide-react";
+import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check, Coffee, Smartphone } from "lucide-react";
 import { fetchServerList, createServer, getAllServersStatus, deleteServer } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,6 +18,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
 import { useServersStore } from "@/lib/store";
 import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
+import { ServerEdition } from "@/lib/types/types";
 import { TranslationKey } from "@/lib/translations";
 
 type ServerInfo = {
@@ -39,6 +40,7 @@ export default function Dashboard() {
   const [isDeletingServer, setIsDeletingServer] = useState<string | null>(null);
   const [createMode, setCreateMode] = useState<"quick" | "template">("quick");
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
+  const [selectedEdition, setSelectedEdition] = useState<ServerEdition>("JAVA");
 
   const form = useForm<{ id: string }>({
     defaultValues: {
@@ -153,7 +155,14 @@ export default function Dashboard() {
   const handleCreateServer = async (values: { id: string }) => {
     setIsCreatingServer(true);
     try {
-      const serverData = selectedTemplate ? { id: values.id, ...selectedTemplate.config } : { id: values.id };
+      const baseConfig = {
+        id: values.id,
+        edition: selectedEdition,
+        port: selectedEdition === "BEDROCK" ? "19132" : "25565",
+        enableRcon: selectedEdition !== "BEDROCK",
+        minecraftVersion: selectedEdition === "BEDROCK" ? "LATEST" : undefined,
+      };
+      const serverData = selectedTemplate ? { ...baseConfig, ...selectedTemplate.config } : baseConfig;
       const response = await createServer(serverData);
       if (response.success) {
         mcToast.success(`${t("serverCreatedSuccess")} "${values.id}"`);
@@ -211,6 +220,7 @@ export default function Dashboard() {
             if (!open) {
               setSelectedTemplate(null);
               setCreateMode("quick");
+              setSelectedEdition("JAVA");
             }
           }}
         >
@@ -278,6 +288,45 @@ export default function Dashboard() {
                 )}
 
                 {createMode === "quick" && <p className="text-sm text-gray-400">{t("quickCreateDesc")}</p>}
+
+                {/* Edition Selector */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-200">{t("serverEdition")}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEdition("JAVA")}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        selectedEdition === "JAVA"
+                          ? "border-emerald-500 bg-emerald-900/30"
+                          : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                      }`}
+                    >
+                      <Coffee className="h-5 w-5 text-orange-400" />
+                      <div className="text-left">
+                        <span className="text-sm font-minecraft text-white">Java Edition</span>
+                        <p className="text-xs text-gray-400">{t("javaEditionDesc")}</p>
+                      </div>
+                      {selectedEdition === "JAVA" && <Check className="h-4 w-4 text-emerald-400 ml-auto" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEdition("BEDROCK")}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        selectedEdition === "BEDROCK"
+                          ? "border-emerald-500 bg-emerald-900/30"
+                          : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                      }`}
+                    >
+                      <Smartphone className="h-5 w-5 text-green-400" />
+                      <div className="text-left">
+                        <span className="text-sm font-minecraft text-white">Bedrock</span>
+                        <p className="text-xs text-gray-400">{t("bedrockEditionDesc")}</p>
+                      </div>
+                      {selectedEdition === "BEDROCK" && <Check className="h-4 w-4 text-emerald-400 ml-auto" />}
+                    </button>
+                  </div>
+                </div>
 
                 <FormField
                   control={form.control}

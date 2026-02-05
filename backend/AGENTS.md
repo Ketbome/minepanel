@@ -15,13 +15,36 @@ NestJS 11 API handling server management, authentication, file operations, and D
 src/
 ├── auth/                 # JWT auth, guards, strategies
 ├── server-management/    # Core CRUD, start/stop, logs
+│   └── strategies/       # Edition-specific behavior (Java/Bedrock)
 ├── docker-compose/       # Compose file generation
 ├── files/                # File browser, editor, upload/download
 ├── users/                # User entity and settings
 ├── curseforge/           # CurseForge mod API integration
 ├── discord/              # Webhook notifications
 ├── system-monitoring/    # Host metrics (CPU, RAM, disk)
+├── proxy/                # mc-router proxy configuration
 └── database/             # TypeORM + SQLite config
+```
+
+### Server Edition Strategies
+
+Edition-specific logic (Docker image, ports, commands) is encapsulated via Strategy Pattern:
+
+```
+src/server-management/strategies/
+├── server-strategy.interface.ts   # IServerStrategy interface
+├── java-server.strategy.ts        # Java Edition (RCON, TCP, mods)
+├── bedrock-server.strategy.ts     # Bedrock Edition (send-command, UDP)
+├── server-strategy.factory.ts     # Factory for creating strategies
+└── index.ts                       # Exports
+```
+
+**Usage:**
+```typescript
+const strategy = ServerStrategyFactory.create(edition);
+const dockerImage = strategy.getDockerImage();
+const defaultPort = strategy.getDefaultPort();
+const envVars = strategy.getEnvironmentVariables(config);
 ```
 
 ---
@@ -131,6 +154,12 @@ execSync(`docker inspect ${containerId} --format '{{.State.Status}}'`);
 
 // Logs
 execSync(`docker logs ${containerId} --tail 100`);
+
+// Commands: Java (RCON)
+execSync(`docker exec ${containerId} rcon-cli --port ${rconPort} --password ${pass} ${cmd}`);
+
+// Commands: Bedrock (send-command)
+execSync(`docker exec ${containerId} send-command ${cmd}`);
 ```
 
 **Security:** Always validate `serverId` against `/^[a-zA-Z0-9_-]+$/` before using in shell commands.

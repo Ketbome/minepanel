@@ -67,11 +67,11 @@ export class ServerManagementController {
 
       const serverConfig = await this.dockerComposeService.createServer(id, data, proxyEnabled);
 
-      // Regenerate routes.json if proxy is enabled
+      // Regenerate routes.json if proxy is enabled (Java only, mc-router doesn't support Bedrock)
       if (proxyEnabled && baseDomain) {
         const servers = await this.dockerComposeService.getAllServerConfigs();
         const proxyServers = servers
-          .filter((s) => s.useProxy !== false)
+          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
           .map((s) => ({
             id: s.id,
             hostname: s.proxyHostname,
@@ -100,11 +100,11 @@ export class ServerManagementController {
 
     const result = await this.dockerComposeService.regenerateAllDockerCompose(proxyEnabled);
 
-    // Generate routes.json for mc-router if proxy is enabled
+    // Generate routes.json for mc-router if proxy is enabled (Java only)
     if (proxyEnabled && baseDomain) {
       const servers = await this.dockerComposeService.getAllServerConfigs();
       const proxyServers = servers
-        .filter((s) => s.useProxy !== false)
+        .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
         .map((s) => ({
           id: s.id,
           hostname: s.proxyHostname,
@@ -138,8 +138,9 @@ export class ServerManagementController {
 
       if (proxyEnabled && baseDomain) {
         const servers = await this.dockerComposeService.getAllServerConfigs();
+        
         const proxyServers = servers
-          .filter((s) => s.useProxy !== false)
+          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
           .map((s) => ({
             id: s.id,
             hostname: s.proxyHostname,
@@ -196,11 +197,11 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    // Regenerate routes.json if proxy settings changed
+    // Regenerate routes.json if proxy settings changed (Java only)
     if (proxyEnabled && baseDomain && (config.proxyHostname !== undefined || config.useProxy !== undefined)) {
       const servers = await this.dockerComposeService.getAllServerConfigs();
       const proxyServers = servers
-        .filter((s) => s.useProxy !== false)
+        .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
         .map((s) => ({
           id: s.id,
           hostname: s.proxyHostname,

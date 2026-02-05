@@ -27,6 +27,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [newPort, setNewPort] = useState('');
 
+  const isJava = config.edition !== 'BEDROCK';
   const isCurseForge =
     config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE';
 
@@ -72,6 +73,8 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Backup section - Java only (mc-backup requires RCON) */}
+        {isJava && (
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -567,6 +570,8 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
             </div>
           )}
         </div>
+        )}
+
         <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-emerald-400" />

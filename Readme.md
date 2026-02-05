@@ -2,7 +2,9 @@
 
 # Minepanel
 
-**Manage Minecraft servers with Docker — Simple, Fast, Beautiful**
+**Minecraft Server Manager for Java & Bedrock Edition**
+
+Web panel to manage Minecraft servers with Docker — Create, configure, and monitor Java and Bedrock servers from a modern UI.
 
 [![License](https://img.shields.io/badge/License-Community-blue.svg)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker&color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
@@ -35,12 +37,13 @@ Open http://localhost:3000 — Login: `admin` / `admin`
 
 ## Features
 
+- **Java & Bedrock** — Support for both Minecraft editions
 - **Multi-server** — Create and manage multiple servers from one panel
 - **Real-time monitoring** — CPU, RAM, players, and logs
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies
-- **Proxy support** — mc-router for single-port multi-server
+- **Proxy support** — mc-router for single-port multi-server (Java)
 - **Discord webhooks** — Server events notifications
 - **Multi-language** — English, Spanish, Dutch, German
 
@@ -59,6 +62,21 @@ Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
 
 ---
 
+## Powered By
+
+Minepanel is built on top of amazing open source projects by [itzg](https://github.com/itzg):
+
+| Project | Description |
+|---------|-------------|
+| [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) | Docker image for Java Edition servers |
+| [itzg/docker-minecraft-bedrock-server](https://github.com/itzg/docker-minecraft-bedrock-server) | Docker image for Bedrock Edition servers |
+| [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup) | Automatic backup sidecar container |
+| [itzg/mc-router](https://github.com/itzg/mc-router) | Minecraft proxy for routing by hostname |
+
+Thank you itzg for making Minecraft server hosting accessible to everyone!
+
+---
+
 ## Contributors
 
 <a href="https://github.com/Ketbome/minepanel/graphs/contributors">
@@ -68,9 +86,9 @@ Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
 ---
 
 <div align="center">
+
 **[⭐ Star this repo](https://github.com/Ketbome/minepanel)** if you find it useful!
 
-Made with ❤️ by [@Ketbome](https://github.com/Ketbome)
-Made by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
+Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
 
 </div>

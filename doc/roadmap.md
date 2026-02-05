@@ -85,6 +85,18 @@ flowchart LR
 
 ---
 
+## Recently Added
+
+### ✅ Bedrock Edition Support
+
+- Full Bedrock server support
+- Bedrock-specific settings (tick distance, allow cheats, etc.)
+- Command execution via send-command
+- UDP port management
+- Bedrock templates
+
+---
+
 ## Phase 1: Stabilization & UX (v1.8 - v1.9)
 
 ### Plugin/Mod browser
@@ -92,6 +104,13 @@ flowchart LR
 - Search Modrinth/CurseForge from panel
 - One-click install
 - Update plugins
+
+### Bedrock Addon Manager
+
+- Upload .mcaddon/.mcpack files
+- Auto-extract and install
+- Auto-generate world_behavior_packs.json
+- Browse addon sources (MCPEDL integration)
 
 ### Scheduled tasks
 
@@ -289,13 +308,13 @@ gantt
 
 **2026 Milestones:**
 
-| Quarter | Version  | Focus         | Key Features                                        |
-| ------- | -------- | ------------- | --------------------------------------------------- |
-| Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management             |
-| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs              |
-| Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                     |
-| Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity |
-| Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins              |
+| Quarter | Version  | Focus         | Key Features                                              |
+| ------- | -------- | ------------- | --------------------------------------------------------- |
+| Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management, Bedrock Support  |
+| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs, Bedrock Addons    |
+| Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                           |
+| Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity       |
+| Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins                    |
 
 ---
 

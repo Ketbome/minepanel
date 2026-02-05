@@ -19,7 +19,7 @@ export interface LogEntry {
   id: string;
   content: string;
   timestamp: Date;
-  level: "info" | "warn" | "error" | "debug" | "unknown";
+  level: "info" | "warn" | "error" | "debug";
 }
 
 export interface LogsError {

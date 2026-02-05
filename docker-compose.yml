@@ -33,7 +33,8 @@ services:
       - minepanel-network
     restart: always
 
-  # MC Proxy Router - Routes Minecraft traffic by hostname (optional)
+  # MC Proxy Router - Routes Minecraft Java Edition traffic by hostname (optional)
+  # Note: Only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
   # Enable with: docker compose --profile proxy up -d
   # Requires DNS wildcard: *.mc.yourdomain.com -> server IP
   mc-router:
