@@ -168,8 +168,12 @@ export class ServerManagementService {
         enrichedDetails.port = await this.getServerPort(serverName);
       }
 
-      // Priority: 1. Proxy hostname, 2. Settings IP, 3. ENV, 4. undefined
-      if (userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
+      // Get server edition - proxy only works with Java
+      const edition = await this.getServerEdition(serverName);
+      const supportsProxy = edition === 'JAVA';
+
+      // Priority: 1. Proxy hostname (Java only), 2. Settings IP, 3. ENV, 4. undefined
+      if (supportsProxy && userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
         // When proxy is active, use hostname instead of IP:port
         const proxyHostname = await this.getServerProxyHostname(serverName, userSettings.proxyBaseDomain);
         if (proxyHostname) {
@@ -178,7 +182,7 @@ export class ServerManagementService {
           enrichedDetails.lanIp = undefined; // LAN IP not relevant with proxy
         }
       } else {
-        // No proxy - use IP:port from settings
+        // No proxy or Bedrock - use IP:port from settings
         if (!enrichedDetails.ip) {
           enrichedDetails.ip = userSettings.publicIp || undefined;
         }

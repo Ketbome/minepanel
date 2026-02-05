@@ -34,7 +34,7 @@ export default function ServerConfig() {
   return (
     <div className="space-y-8">
       <div className="animate-fade-in-up">
-        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={clearServerData} />
+        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={clearServerData} />
       </div>
 
       <div className="animate-fade-in-up stagger-1">
