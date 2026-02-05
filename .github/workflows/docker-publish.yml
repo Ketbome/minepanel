@@ -40,7 +40,7 @@ jobs:
         id: branch
         run: echo "name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
-  # Imagen principal (fullstack) - Solo en main
+  # Main image (fullstack) - Only on main branch
   build-main:
     needs: changes
     if: github.ref == 'refs/heads/main' && (needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch')
@@ -74,10 +74,12 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # Backend independiente
+  # Standalone backend - Publishes :test tag on non-main branches
   build-backend:
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      (github.ref == 'refs/heads/main' && (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch')) ||
+      (github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -93,9 +95,8 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ needs.changes.outputs.version }},enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=test,enable=${{ github.ref != 'refs/heads/main' }}
 
       - uses: docker/build-push-action@v5
@@ -108,10 +109,12 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # Frontend independiente
+  # Standalone frontend - Publishes :test tag on non-main branches
   build-frontend:
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      (github.ref == 'refs/heads/main' && (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')) ||
+      (github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -127,9 +130,8 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ needs.changes.outputs.version }},enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=test,enable=${{ github.ref != 'refs/heads/main' }}
 
       - uses: docker/build-push-action@v5
@@ -142,7 +144,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # Crear tag y release solo si cambió la versión
+  # Create tag and release only if version changed
   release:
     needs: [changes, build-main]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
