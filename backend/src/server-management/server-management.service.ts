@@ -30,8 +30,9 @@ const DOCKER_COMMANDS = {
     return `docker exec -i ${containerId} rcon-cli --port ${port}${passwordArg} "${command}"`;
   },
   // Bedrock uses send-command script instead of RCON
+  // --user root needed because send-command searches /proc/*/exe which requires elevated permissions
   EXEC_BEDROCK: (containerId: string, command: string) => {
-    return `docker exec ${containerId} send-command ${command}`;
+    return `docker exec --user root ${containerId} send-command ${command}`;
   },
   // Fix permissions for Bedrock (needs UID/GID 1000)
   FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
