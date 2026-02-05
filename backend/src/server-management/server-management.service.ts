@@ -9,6 +9,8 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
+import { ServerEdition } from './dto/server-config.model';
+import { ServerStrategyFactory } from './strategies';
 
 const execAsync = promisify(exec);
 
@@ -21,7 +23,7 @@ const DOCKER_COMMANDS = {
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
-  STATS_ALL: 'docker stats --no-stream --format "{{.Name}}\\t{{.CPUPerc}}\\t{{.MemUsage}}"',
+  STATS_ALL: String.raw`docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
   LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
@@ -139,6 +141,21 @@ export class ServerManagementService {
     return undefined;
   }
 
+  private async getServerEdition(serverId: string): Promise<ServerEdition> {
+    try {
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (await fs.pathExists(dockerComposePath)) {
+        const content = await fs.readFile(dockerComposePath, 'utf8');
+        const config = yaml.load(content) as any;
+        const image = config?.services?.mc?.image ?? '';
+        return image.includes('bedrock') ? 'BEDROCK' : 'JAVA';
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get edition for server ${serverId}`, error);
+    }
+    return 'JAVA';
+  }
+
   private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; reason?: string }): Promise<void> {
     try {
       const userSettings = await this.getUserSettings();
@@ -195,7 +212,7 @@ export class ServerManagementService {
         // Check if server has proxy disabled
         if (Array.isArray(labels)) {
           const enabledLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.enabled='));
-          if (enabledLabel && enabledLabel.split('=')[1] === 'false') {
+          if (enabledLabel?.split('=')[1] === 'false') {
             return null; // Server has proxy disabled
           }
         }
@@ -878,6 +895,13 @@ export class ServerManagementService {
         return { success: false, output: 'Server not found' };
       }
 
+      // Check if server edition supports RCON
+      const edition = await this.getServerEdition(serverId);
+      const strategy = ServerStrategyFactory.create(edition);
+      if (!strategy.supportsRcon()) {
+        return { success: false, output: 'Bedrock servers do not support RCON commands' };
+      }
+
       const containerId = await this.findContainerId(serverId);
       if (!containerId) {
         return { success: false, output: 'Container not found or not running' };
@@ -968,32 +992,39 @@ export class ServerManagementService {
   // ==================== PLAYER MANAGEMENT ====================
   // Las acciones (whitelist add/remove, op/deop, kick, ban, pardon) usan executeCommand directamente
 
-  async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[] }> {
+  async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[]; supportsRcon: boolean }> {
     try {
+      // Check if server supports RCON
+      const edition = await this.getServerEdition(serverId);
+      const strategy = ServerStrategyFactory.create(edition);
+      if (!strategy.supportsRcon()) {
+        return { online: 0, max: 0, players: [], supportsRcon: false };
+      }
+
       const result = await this.executeCommand(serverId, 'list', rconPort, rconPassword);
       if (!result.success) {
-        return { online: 0, max: 0, players: [] };
+        return { online: 0, max: 0, players: [], supportsRcon: true };
       }
 
       // Parse "There are X of a max of Y players online: player1, player2"
-      const match = result.output.match(/There are (\d+) of a max of (\d+) players online[:\s]*(.*)?/i);
+      const match = /There are (\d+) of a max of (\d+) players online[:\s]*(.*)/i.exec(result.output);
       if (match) {
-        const online = parseInt(match[1], 10);
-        const max = parseInt(match[2], 10);
+        const online = Number.parseInt(match[1], 10);
+        const max = Number.parseInt(match[2], 10);
         const playerList = match[3]?.trim();
         const players = playerList
           ? playerList
               .split(',')
               .map((p) => p.trim())
-              .filter((p) => p)
+              .filter(Boolean)
           : [];
-        return { online, max, players };
+        return { online, max, players, supportsRcon: true };
       }
 
-      return { online: 0, max: 0, players: [] };
+      return { online: 0, max: 0, players: [], supportsRcon: true };
     } catch (error) {
       this.logger.error(`Failed to get online players for ${serverId}`, error);
-      return { online: 0, max: 0, players: [] };
+      return { online: 0, max: 0, players: [], supportsRcon: true };
     }
   }
 

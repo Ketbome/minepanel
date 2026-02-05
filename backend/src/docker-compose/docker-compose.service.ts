@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
-import { ServerConfig, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { ServerConfig, ServerEdition, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { ServerStrategyFactory } from 'src/server-management/strategies';
 
 interface DockerComposeConfig {
   services?: {
@@ -11,6 +12,8 @@ interface DockerComposeConfig {
     backup?: any;
   };
 }
+
+type DockerLabels = Record<string, string> | string[] | undefined;
 
 @Injectable()
 export class DockerComposeService {
@@ -87,12 +90,19 @@ export class DockerComposeService {
       const resources = mcService.deploy?.resources ?? {};
       const backupEnv = backupService?.environment ?? {};
 
-      const port = mcService.ports?.[0]?.split(':')[0] ?? '25565';
+      // Detect edition from docker image
+      const image = mcService.image ?? '';
+      const edition: ServerEdition = image.includes('bedrock') ? 'BEDROCK' : 'JAVA';
+      const strategy = ServerStrategyFactory.create(edition);
+
+      const defaultPort = strategy.getDefaultPort();
+      const port = mcService.ports?.[0]?.split(':')[0] ?? defaultPort;
       const extraPorts = mcService.ports?.slice(1) || [];
 
       const serverConfig: ServerConfig = {
         id: env.ID_MANAGER ?? serverId,
         active: fs.existsSync(this.getMcDataPath(serverId)),
+        edition,
         serverType: env.TYPE ?? 'VANILLA',
 
         serverName: env.SERVER_NAME ?? 'Minecraft Server',
@@ -196,9 +206,20 @@ export class DockerComposeService {
         // Proxy config from labels or env
         proxyHostname: this.extractProxyHostname(mcService.labels),
         useProxy: this.extractUseProxy(mcService.labels),
+
+        // Bedrock-specific
+        allowCheats: env.ALLOW_CHEATS === 'true',
+        tickDistance: env.TICK_DISTANCE ?? '4',
+        maxThreads: env.MAX_THREADS ?? '8',
+        defaultPlayerPermissionLevel: (env.DEFAULT_PLAYER_PERMISSION_LEVEL as 'visitor' | 'member' | 'operator') ?? 'member',
+        texturepackRequired: env.TEXTUREPACK_REQUIRED === 'true',
+        serverPortV6: env.SERVER_PORT_V6 ?? '',
+        whiteList: env.WHITE_LIST === 'true',
       };
 
-      this.parseServerTypeSpecificConfig(serverConfig, env);
+      if (edition === 'JAVA') {
+        this.parseServerTypeSpecificConfig(serverConfig, env);
+      }
       return serverConfig;
     } catch (error) {
       this.logger.error(`Error loading config for server ${serverId}`, error);
@@ -219,15 +240,13 @@ export class DockerComposeService {
     return customVars.join('\n');
   }
 
-  private extractDockerLabels(labels: Record<string, string> | string[] | undefined): string {
+  private extractDockerLabels(labels: DockerLabels): string {
     if (!labels) return '';
 
-    // Handle array format: ['key=value', ...]
     if (Array.isArray(labels)) {
       return labels.filter((l) => !l.startsWith('minepanel.')).join('\n');
     }
 
-    // Handle object format: { key: value, ... } (legacy compose files)
     if (typeof labels === 'object') {
       return Object.entries(labels)
         .filter(([key]) => !key.startsWith('minepanel.'))
@@ -238,7 +257,7 @@ export class DockerComposeService {
     return '';
   }
 
-  private extractProxyHostname(labels: Record<string, string> | string[] | undefined): string | undefined {
+  private extractProxyHostname(labels: DockerLabels): string | undefined {
     if (!labels) return undefined;
 
     if (Array.isArray(labels)) {
@@ -253,7 +272,7 @@ export class DockerComposeService {
     return undefined;
   }
 
-  private extractUseProxy(labels: Record<string, string> | string[] | undefined): boolean {
+  private extractUseProxy(labels: DockerLabels): boolean {
     if (!labels) return true; // Default to true when proxy is enabled globally
 
     if (Array.isArray(labels)) {
@@ -407,15 +426,19 @@ export class DockerComposeService {
     if (parser) parser();
   }
 
-  private createDefaultConfig(id: string): ServerConfig {
+  private createDefaultConfig(id: string, edition: ServerEdition = 'JAVA'): ServerConfig {
+    const strategy = ServerStrategyFactory.create(edition);
+    const strategyDefaults = strategy.getDefaultConfig(id);
+
     return {
       id,
       active: false,
+      edition,
       serverType: 'VANILLA',
 
       serverName: id,
       motd: 'Un servidor de Minecraft increíble',
-      port: '25565',
+      port: strategy.getDefaultPort(),
       difficulty: 'hard',
       maxPlayers: '10',
       ops: '',
@@ -559,6 +582,16 @@ export class DockerComposeService {
 
       proxyHostname: undefined,
       useProxy: true,
+
+      // Bedrock-specific defaults
+      allowCheats: false,
+      tickDistance: '4',
+      maxThreads: '8',
+      defaultPlayerPermissionLevel: 'member',
+      texturepackRequired: false,
+      serverPortV6: '',
+      whiteList: false,
+      ...strategyDefaults,
     };
   }
 
@@ -659,7 +692,8 @@ export class DockerComposeService {
       await this.detectAndMigrateMisplacedData(serverPath, mcDataPath);
     }
 
-    const defaultConfig = this.createDefaultConfig(id);
+    const edition = config.edition ?? 'JAVA';
+    const defaultConfig = this.createDefaultConfig(id, edition);
     const serverConfig = { ...defaultConfig, ...config };
 
     await this.generateDockerComposeFile(serverConfig, proxyEnabled);
@@ -967,7 +1001,9 @@ export class DockerComposeService {
   }
 
   private async ensurePortAvailable(config: ServerConfig): Promise<string> {
-    const requestedPort = Number.parseInt(config.port || '25565');
+    const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
+    const defaultPort = strategy.getDefaultPort();
+    const requestedPort = Number.parseInt(config.port || defaultPort);
     const availablePort = await this.findAvailablePort(requestedPort, config.id);
     if (availablePort !== requestedPort) {
       config.port = availablePort.toString();
@@ -975,45 +1011,65 @@ export class DockerComposeService {
     return config.port;
   }
 
-  private buildDockerComposeConfig(config: ServerConfig, environment: Record<string, string>, volumes: string[], port: string, proxyEnabled: boolean): any {
-    const useProxy = proxyEnabled && config.useProxy !== false;
+  private buildDockerComposeConfig(
+    config: ServerConfig,
+    environment: Record<string, string>,
+    volumes: string[],
+    port: string,
+    proxyEnabled: boolean,
+    strategy: import('src/server-management/strategies').IServerStrategy,
+  ): any {
+    const edition = config.edition ?? 'JAVA';
+    // Proxy only works with Java edition
+    const useProxy = proxyEnabled && config.useProxy !== false && edition === 'JAVA';
+
+    const internalPort = strategy.getInternalPort();
+    const protocol = strategy.getProtocol();
+    const portMapping = protocol === 'udp' ? `${port}:${internalPort}/udp` : `${port}:${internalPort}`;
 
     const mcService: any = {
-      image: `itzg/minecraft-server:${config.dockerImage}`,
+      image: strategy.getDockerImage(config.dockerImage),
       tty: true,
       stdin_open: true,
       container_name: config.id,
       environment,
       volumes,
       restart: config.restartPolicy,
-      deploy: {
+    };
+
+    // Only add resource limits for Java (Bedrock doesn't use JVM)
+    if (edition === 'JAVA') {
+      mcService.deploy = {
         resources: {
           limits: { cpus: config.cpuLimit, memory: config.maxMemory },
           reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
         },
-      },
-    };
+      };
+    }
 
     // Si usa proxy, no exponer puerto al host; si no, exponer como siempre
     if (useProxy) {
-      mcService.expose = ['25565'];
+      mcService.expose = [internalPort];
       mcService.networks = ['minepanel-network'];
       if (config.extraPorts?.length) {
         mcService.ports = config.extraPorts;
       }
     } else {
-      mcService.ports = [`${port}:25565`, ...(config.extraPorts || [])];
+      mcService.ports = [portMapping, ...(config.extraPorts || [])];
     }
 
     // Build labels
     const userLabels = this.parseDockerLabels(config.dockerLabels) || [];
     const proxyLabels: string[] = [];
 
-    if (config.useProxy !== undefined) {
-      proxyLabels.push(`minepanel.proxy.enabled=${config.useProxy}`);
-    }
-    if (config.proxyHostname) {
-      proxyLabels.push(`minepanel.proxy.hostname=${config.proxyHostname}`);
+    // Proxy labels only for Java (mc-router doesn't support Bedrock UDP)
+    if (edition === 'JAVA') {
+      if (config.useProxy !== undefined) {
+        proxyLabels.push(`minepanel.proxy.enabled=${config.useProxy}`);
+      }
+      if (config.proxyHostname) {
+        proxyLabels.push(`minepanel.proxy.hostname=${config.proxyHostname}`);
+      }
     }
 
     const allLabels = [...userLabels, ...proxyLabels];
@@ -1038,29 +1094,45 @@ export class DockerComposeService {
     return result;
   }
 
-  private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
-    const backupEnv: Record<string, string> = {
+  private buildBackupEnvironment(config: ServerConfig): Record<string, string> {
+    const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
+
+    const env: Record<string, string> = {
       BACKUP_METHOD: config.backupMethod || 'tar',
       BACKUP_NAME: config.backupName || 'world',
       BACKUP_INTERVAL: config.backupInterval || '24h',
       INITIAL_DELAY: config.backupInitialDelay || '2m',
-      RCON_HOST: 'mc',
-      RCON_PORT: config.rconPort || '25575',
       PRUNE_BACKUPS_DAYS: config.backupPruneDays || '7',
       DEST_DIR: config.backupDestDir || '/backups',
     };
 
-    if (config.rconPassword) backupEnv.RCON_PASSWORD = config.rconPassword;
-    if (config.pauseIfNoPlayers !== undefined) backupEnv.PAUSE_IF_NO_PLAYERS = String(config.pauseIfNoPlayers);
-    if (config.playersOnlineCheckInterval) backupEnv.PLAYERS_ONLINE_CHECK_INTERVAL = config.playersOnlineCheckInterval;
-    if (config.backupOnStartup !== undefined) backupEnv.BACKUP_ON_STARTUP = String(config.backupOnStartup);
-    if (config.rconRetries) backupEnv.RCON_RETRIES = config.rconRetries;
-    if (config.rconRetryInterval) backupEnv.RCON_RETRY_INTERVAL = config.rconRetryInterval;
-    if (config.backupIncludes) backupEnv.INCLUDES = config.backupIncludes;
-    if (config.backupExcludes) backupEnv.EXCLUDES = config.backupExcludes;
-    if (config.tarCompressMethod && config.backupMethod === 'tar') backupEnv.TAR_COMPRESS_METHOD = config.tarCompressMethod;
-    if (config.enableSaveAll === false) backupEnv.ENABLE_SAVE_ALL = 'false';
-    if (config.enableSync === false) backupEnv.ENABLE_SYNC = 'false';
+    if (strategy.supportsRcon()) {
+      env.RCON_HOST = 'mc';
+      env.RCON_PORT = config.rconPort || '25575';
+      if (config.rconPassword) env.RCON_PASSWORD = config.rconPassword;
+      if (config.rconRetries) env.RCON_RETRIES = config.rconRetries;
+      if (config.rconRetryInterval) env.RCON_RETRY_INTERVAL = config.rconRetryInterval;
+      if (config.enableSaveAll === false) env.ENABLE_SAVE_ALL = 'false';
+    } else {
+      env.ENABLE_SAVE_ALL = 'false';
+    }
+
+    return env;
+  }
+
+  private addOptionalBackupEnv(env: Record<string, string>, config: ServerConfig): void {
+    if (config.pauseIfNoPlayers !== undefined) env.PAUSE_IF_NO_PLAYERS = String(config.pauseIfNoPlayers);
+    if (config.playersOnlineCheckInterval) env.PLAYERS_ONLINE_CHECK_INTERVAL = config.playersOnlineCheckInterval;
+    if (config.backupOnStartup !== undefined) env.BACKUP_ON_STARTUP = String(config.backupOnStartup);
+    if (config.backupIncludes) env.INCLUDES = config.backupIncludes;
+    if (config.backupExcludes) env.EXCLUDES = config.backupExcludes;
+    if (config.tarCompressMethod && config.backupMethod === 'tar') env.TAR_COMPRESS_METHOD = config.tarCompressMethod;
+    if (config.enableSync === false) env.ENABLE_SYNC = 'false';
+  }
+
+  private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
+    const backupEnv = this.buildBackupEnvironment(config);
+    this.addOptionalBackupEnv(backupEnv, config);
 
     const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');
     const backupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
@@ -1082,19 +1154,18 @@ export class DockerComposeService {
     const serverDir = path.join(this.SERVERS_DIR, config.id);
     await fs.ensureDir(serverDir);
 
-    const environment = this.buildBaseEnvironment(config);
-    this.addJvmOptions(environment, config);
-    this.addAutomationOptions(environment, config);
-    this.addRconConfig(environment, config);
-    this.addConnectivityOptions(environment, config);
-    this.addServerTypeConfig(environment, config);
-    this.addCustomEnvVars(environment, config);
+    const edition = config.edition ?? 'JAVA';
+    const strategy = ServerStrategyFactory.create(edition);
+
+    // Use strategy to build environment
+    const environment = strategy.buildEnvironment(config);
 
     // When proxy is enabled, servers don't expose ports to host, so no need to find available port
-    const useProxy = proxyEnabled && config.useProxy !== false;
-    const availablePort = useProxy ? '25565' : await this.ensurePortAvailable(config);
+    // Note: Proxy only works with Java edition (mc-router doesn't support Bedrock)
+    const useProxy = proxyEnabled && config.useProxy !== false && edition === 'JAVA';
+    const availablePort = useProxy ? strategy.getInternalPort() : await this.ensurePortAvailable(config);
     const volumes = this.parseVolumes(config);
-    const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort, proxyEnabled);
+    const dockerComposeConfig = this.buildDockerComposeConfig(config, environment, volumes, availablePort, proxyEnabled, strategy);
 
     if (config.enableBackup) {
       await this.addBackupService(dockerComposeConfig, config, serverDir);
@@ -1103,14 +1174,14 @@ export class DockerComposeService {
     let yamlContent = yaml.dump(dockerComposeConfig);
 
     // Wrap label values in single quotes to handle special characters (backticks, etc.)
-    yamlContent = yamlContent.replace(/^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm, (match, labelsHeader, labelsBlock) => {
-      const quotedLabels = labelsBlock.replace(/^(\s+-\s+)(.+)$/gm, (_, prefix, value) => {
+    yamlContent = yamlContent.replaceAll(/^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm, (match, labelsHeader, labelsBlock) => {
+      const quotedLabels = labelsBlock.replaceAll(/^(\s+-\s+)(.+)$/gm, (_, prefix, value) => {
         // Skip if already quoted
         if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
           return `${prefix}${value}`;
         }
         // Escape single quotes in value and wrap
-        const escaped = value.replace(/'/g, "''");
+        const escaped = value.replaceAll('\'', "''");
         return `${prefix}'${escaped}'`;
       });
       return labelsHeader + quotedLabels;

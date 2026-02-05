@@ -1,4 +1,4 @@
-import { ServerConfig } from "./types/types.d";
+import { ServerConfig, ServerEdition } from "./types/types.d";
 
 export interface ServerTemplate {
   id: string;
@@ -6,6 +6,7 @@ export interface ServerTemplate {
   description: string;
   icon: string;
   color: string;
+  edition?: ServerEdition;
   config: Partial<ServerConfig>;
 }
 
@@ -208,6 +209,78 @@ export const serverTemplates: ServerTemplate[] = [
   },
 ];
 
+// Bedrock Edition Templates
+export const bedrockTemplates: ServerTemplate[] = [
+  {
+    id: "bedrock-survival",
+    name: "bedrockSurvival",
+    description: "bedrockSurvivalDesc",
+    icon: "grass",
+    color: "green",
+    edition: "BEDROCK",
+    config: {
+      edition: "BEDROCK",
+      serverType: "VANILLA",
+      gameMode: "survival",
+      difficulty: "normal",
+      maxPlayers: "10",
+      onlineMode: true,
+      allowCheats: false,
+      defaultPlayerPermissionLevel: "member",
+      port: "19132",
+    },
+  },
+  {
+    id: "bedrock-creative",
+    name: "bedrockCreative",
+    description: "bedrockCreativeDesc",
+    icon: "diamond",
+    color: "cyan",
+    edition: "BEDROCK",
+    config: {
+      edition: "BEDROCK",
+      serverType: "VANILLA",
+      gameMode: "creative",
+      difficulty: "peaceful",
+      maxPlayers: "10",
+      onlineMode: true,
+      allowCheats: true,
+      defaultPlayerPermissionLevel: "operator",
+      port: "19132",
+    },
+  },
+  {
+    id: "bedrock-family",
+    name: "bedrockFamily",
+    description: "bedrockFamilyDesc",
+    icon: "golden-apple",
+    color: "yellow",
+    edition: "BEDROCK",
+    config: {
+      edition: "BEDROCK",
+      serverType: "VANILLA",
+      gameMode: "survival",
+      difficulty: "easy",
+      maxPlayers: "8",
+      onlineMode: false,
+      allowCheats: true,
+      defaultPlayerPermissionLevel: "member",
+      whiteList: true,
+      port: "19132",
+    },
+  },
+];
+
+// Combined templates for UI
+export const allTemplates: ServerTemplate[] = [...serverTemplates, ...bedrockTemplates];
+
 export const getTemplateById = (id: string): ServerTemplate | undefined => {
-  return serverTemplates.find((t) => t.id === id);
+  return allTemplates.find((t) => t.id === id);
+};
+
+export const getTemplatesByEdition = (edition: ServerEdition): ServerTemplate[] => {
+  if (edition === "BEDROCK") {
+    return bedrockTemplates;
+  }
+  return serverTemplates;
 };

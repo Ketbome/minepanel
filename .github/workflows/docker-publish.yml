@@ -2,7 +2,7 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 env:
@@ -16,6 +16,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
       version: ${{ steps.version.outputs.version }}
+      is_main: ${{ github.ref == 'refs/heads/main' }}
+      branch_name: ${{ steps.branch.outputs.name }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -34,11 +36,14 @@ jobs:
       - name: Read version
         id: version
         run: echo "version=$(jq -r '.version' config.json)" >> $GITHUB_OUTPUT
+      - name: Get branch name
+        id: branch
+        run: echo "name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
-  # Imagen principal (fullstack)
+  # Imagen principal (fullstack) - Solo en main
   build-main:
     needs: changes
-    if: needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -91,6 +96,7 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=test,enable=${{ github.ref != 'refs/heads/main' }}
 
       - uses: docker/build-push-action@v5
         with:
@@ -124,6 +130,7 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ needs.changes.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=test,enable=${{ github.ref != 'refs/heads/main' }}
 
       - uses: docker/build-push-action@v5
         with:
