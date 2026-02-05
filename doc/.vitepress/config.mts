@@ -8,7 +8,7 @@ export default withMermaid(
   defineConfig({
     title: 'Minepanel',
     description:
-      'Free open source Minecraft server management panel with Docker. Self-hosted alternative to Pterodactyl and Aternos. Web UI for Paper, Forge, Fabric, Spigot servers.',
+      'Free open source Minecraft server management panel for Java and Bedrock Edition. Self-hosted Docker-based alternative to Pterodactyl and Aternos. Manage Paper, Forge, Fabric, Spigot, Purpur, and Bedrock servers from one web UI.',
 
     head: [
       ['link', { rel: 'icon', href: '/favicon.ico' }],
@@ -22,7 +22,7 @@ export default withMermaid(
         {
           name: 'keywords',
           content:
-            'minecraft server manager, minecraft server panel, minecraft docker, minecraft control panel, pterodactyl alternative, aternos alternative, self hosted minecraft, minecraft web panel, paper server manager, forge server manager, fabric server manager, free minecraft server hosting, minecraft dashboard',
+            'minecraft server manager, minecraft java server, minecraft bedrock server, minecraft server panel, minecraft docker, minecraft control panel, pterodactyl alternative, aternos alternative, self hosted minecraft, minecraft web panel, paper server manager, forge server manager, fabric server manager, purpur server, spigot server, minecraft bedrock docker, free minecraft server hosting, minecraft dashboard, minecraft server hosting panel, manage minecraft servers',
         },
       ],
       ['meta', { name: 'author', content: 'Ketbome' }],
