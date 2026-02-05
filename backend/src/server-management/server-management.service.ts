@@ -10,7 +10,6 @@ import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerEdition } from './dto/server-config.model';
-import { ServerStrategyFactory } from './strategies';
 
 const execAsync = promisify(exec);
 
@@ -29,6 +28,10 @@ const DOCKER_COMMANDS = {
   EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
     const passwordArg = password ? ' --password ' + password : '';
     return `docker exec -i ${containerId} rcon-cli --port ${port}${passwordArg} "${command}"`;
+  },
+  // Bedrock uses send-command script instead of RCON
+  EXEC_BEDROCK: (containerId: string, command: string) => {
+    return `docker exec ${containerId} send-command ${command}`;
   },
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
@@ -799,7 +802,7 @@ export class ServerManagementService {
         const lines = logs.split('\n').filter((line) => line.trim());
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
-          const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
+          const timestampMatch = RegExp(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/).exec(lastLine);
           if (timestampMatch) {
             const timestamp = new Date(timestampMatch[1]);
             timestamp.setMilliseconds(timestamp.getMilliseconds() + 1);
@@ -899,18 +902,28 @@ export class ServerManagementService {
         return { success: false, output: 'Server not found' };
       }
 
-      // Check if server edition supports RCON
-      const edition = await this.getServerEdition(serverId);
-      const strategy = ServerStrategyFactory.create(edition);
-      if (!strategy.supportsRcon()) {
-        return { success: false, output: 'Bedrock servers do not support RCON commands' };
-      }
-
       const containerId = await this.findContainerId(serverId);
       if (!containerId) {
         return { success: false, output: 'Container not found or not running' };
       }
 
+      const edition = await this.getServerEdition(serverId);
+
+      // Use different command execution based on edition
+      if (edition === 'BEDROCK') {
+        // Bedrock uses send-command script (output only visible in container logs)
+        const { stderr } = await execAsync(DOCKER_COMMANDS.EXEC_BEDROCK(containerId, command));
+
+        if (stderr) {
+          this.logger.warn(`Command execution error on ${serverId}: ${stderr}`);
+          return { success: false, output: `Error executing command: ${stderr}` };
+        }
+
+        this.logger.log(`Bedrock command executed on ${serverId}: ${command}`);
+        return { success: true, output: 'Command sent (output visible in server logs)' };
+      }
+
+      // Java uses RCON
       const { stdout, stderr } = await execAsync(DOCKER_COMMANDS.EXEC_RCON(containerId, rconPort, rconPassword || '', command));
 
       if (stderr) {
@@ -998,13 +1011,14 @@ export class ServerManagementService {
 
   async getOnlinePlayers(serverId: string, rconPort: string, rconPassword?: string): Promise<{ online: number; max: number; players: string[]; supportsRcon: boolean }> {
     try {
-      // Check if server supports RCON
       const edition = await this.getServerEdition(serverId);
-      const strategy = ServerStrategyFactory.create(edition);
-      if (!strategy.supportsRcon()) {
-        return { online: 0, max: 0, players: [], supportsRcon: false };
+
+      if (edition === 'BEDROCK') {
+        // Bedrock: send 'list' and parse response from logs
+        return await this.getBedrockOnlinePlayers(serverId);
       }
 
+      // Java: use RCON
       const result = await this.executeCommand(serverId, 'list', rconPort, rconPassword);
       if (!result.success) {
         return { online: 0, max: 0, players: [], supportsRcon: true };
@@ -1029,6 +1043,44 @@ export class ServerManagementService {
     } catch (error) {
       this.logger.error(`Failed to get online players for ${serverId}`, error);
       return { online: 0, max: 0, players: [], supportsRcon: true };
+    }
+  }
+
+  private async getBedrockOnlinePlayers(serverId: string): Promise<{ online: number; max: number; players: string[]; supportsRcon: boolean }> {
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) {
+        return { online: 0, max: 0, players: [], supportsRcon: false };
+      }
+
+      // Send list command
+      await execAsync(DOCKER_COMMANDS.EXEC_BEDROCK(containerId, 'list'));
+
+      // Wait for command to process
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Read recent logs to find the response
+      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, 20));
+
+      // Bedrock format: "There are X/Y players online:"
+      const match = /There are (\d+)\/(\d+) players online[:\s]*(.*)/i.exec(logs);
+      if (match) {
+        const online = Number.parseInt(match[1], 10);
+        const max = Number.parseInt(match[2], 10);
+        const playerList = match[3]?.trim();
+        const players = playerList
+          ? playerList
+              .split(',')
+              .map((p) => p.trim())
+              .filter(Boolean)
+          : [];
+        return { online, max, players, supportsRcon: false };
+      }
+
+      return { online: 0, max: 0, players: [], supportsRcon: false };
+    } catch (error) {
+      this.logger.error(`Failed to get Bedrock online players for ${serverId}`, error);
+      return { online: 0, max: 0, players: [], supportsRcon: false };
     }
   }
 
