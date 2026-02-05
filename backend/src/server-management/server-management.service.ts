@@ -77,6 +77,7 @@ export interface CommandExecutionResponse {
 export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
+  private readonly BASE_DIR: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -85,6 +86,7 @@ export class ServerManagementService {
     private readonly discordService: DiscordService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
+    this.BASE_DIR = this.configService.get('baseDir');
     fs.ensureDirSync(this.SERVERS_DIR);
   }
 
@@ -996,10 +998,26 @@ export class ServerManagementService {
         return;
       }
 
-      // Use Docker to fix permissions (works across platforms)
-      // Bedrock server runs as UID/GID 1000 by default
-      this.logger.log(`Fixing permissions for Bedrock server ${serverId}...`);
-      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(mcDataPath));
+      // Use host path for docker volume mount (BASE_DIR resolves to host path)
+      const hostMcDataPath = path.join(this.BASE_DIR, 'servers', serverId, 'mc-data');
+
+      // Read UID/GID from docker-compose if available, default to 1000
+      let uid = '1000';
+      let gid = '1000';
+      try {
+        const composePath = this.getDockerComposePath(serverId);
+        if (await fs.pathExists(composePath)) {
+          const content = await fs.readFile(composePath, 'utf-8');
+          const compose = yaml.load(content) as any;
+          uid = compose?.services?.mc?.environment?.UID || '1000';
+          gid = compose?.services?.mc?.environment?.GID || '1000';
+        }
+      } catch {
+        // Use defaults
+      }
+
+      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${uid}:${gid})...`);
+      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(hostMcDataPath, uid, gid));
       this.logger.log(`Permissions fixed for ${serverId}`);
     } catch (error) {
       this.logger.warn(`Could not fix permissions for ${serverId}: ${error.message}`);
