@@ -25,8 +25,25 @@ export class BedrockServerStrategy implements IServerStrategy {
   }
 
   supportsBackup(): boolean {
-    // mc-backup supports Bedrock but uses filesystem watch instead of RCON
-    return true;
+    // mc-backup requires RCON for save-off/save-all/save-on coordination
+    return false;
+  }
+
+  supportsAutoPause(): boolean {
+    return false;
+  }
+
+  supportsAutoStop(): boolean {
+    return false;
+  }
+
+  supportsJvmOptions(): boolean {
+    return false;
+  }
+
+  supportsProxy(): boolean {
+    // mc-router doesn't support UDP (Bedrock uses UDP)
+    return false;
   }
 
   getServerTypes(): string[] {

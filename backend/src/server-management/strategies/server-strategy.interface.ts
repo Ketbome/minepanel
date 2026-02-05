@@ -13,6 +13,10 @@ export interface IServerStrategy {
   buildEnvironment(config: ServerConfig): Record<string, string>;
   supportsRcon(): boolean;
   supportsBackup(): boolean;
+  supportsAutoPause(): boolean;
+  supportsAutoStop(): boolean;
+  supportsJvmOptions(): boolean;
+  supportsProxy(): boolean;
   getServerTypes(): string[];
   getDefaultConfig(id: string): Partial<ServerConfig>;
 }

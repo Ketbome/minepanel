@@ -28,6 +28,22 @@ export class JavaServerStrategy implements IServerStrategy {
     return true;
   }
 
+  supportsAutoPause(): boolean {
+    return true;
+  }
+
+  supportsAutoStop(): boolean {
+    return true;
+  }
+
+  supportsJvmOptions(): boolean {
+    return true;
+  }
+
+  supportsProxy(): boolean {
+    return true;
+  }
+
   getServerTypes(): string[] {
     return [
       'VANILLA',
