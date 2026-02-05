@@ -46,10 +46,8 @@ export class BedrockServerStrategy implements IServerStrategy {
       PLAYER_IDLE_TIMEOUT: config.playerIdleTimeout || '0',
     };
 
-    // Version handling
-    if (config.minecraftVersion) {
-      env['VERSION'] = config.minecraftVersion;
-    }
+    // Version handling - always include VERSION, default to LATEST
+    env['VERSION'] = config.minecraftVersion || 'LATEST';
 
     // Bedrock-specific options
     if (config.allowCheats !== undefined) {

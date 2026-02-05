@@ -98,6 +98,7 @@ export class DockerComposeService {
       const defaultPort = strategy.getDefaultPort();
       const port = mcService.ports?.[0]?.split(':')[0] ?? defaultPort;
       const extraPorts = mcService.ports?.slice(1) || [];
+      const defaultVersion = edition === 'BEDROCK' ? 'LATEST' : 'latest';
 
       const serverConfig: ServerConfig = {
         id: env.ID_MANAGER ?? serverId,
@@ -184,7 +185,7 @@ export class DockerComposeService {
         logTimestamp: env.LOG_TIMESTAMP === 'true',
 
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
-        minecraftVersion: String(env.VERSION),
+        minecraftVersion: env.VERSION ? String(env.VERSION) : defaultVersion,
         dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : undefined,
         restartPolicy: mcService.restart ?? 'unless-stopped',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
