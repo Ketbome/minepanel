@@ -12,7 +12,7 @@ interface LogEntry {
   id: string;
   content: string;
   timestamp: Date;
-  level: "info" | "warn" | "error" | "debug" | "unknown";
+  level: "info" | "warn" | "error" | "debug";
 }
 
 export function useServerLogs(serverId: string) {
@@ -32,7 +32,7 @@ export function useServerLogs(serverId: string) {
   const lastTimestampRef = useRef<string | null>(null);
   const isInitialLoadRef = useRef<boolean>(true);
 
-  const parseLogLevel = useCallback((content: string): "info" | "warn" | "error" | "debug" | "unknown" => {
+  const parseLogLevel = useCallback((content: string): "info" | "warn" | "error" | "debug" => {
     const upperContent = content.toUpperCase();
     if (upperContent.includes("[ERROR]") || upperContent.includes("ERROR") || upperContent.includes("SEVERE") || upperContent.includes("FATAL")) {
       return "error";
@@ -40,13 +40,10 @@ export function useServerLogs(serverId: string) {
     if (upperContent.includes("[WARN]") || upperContent.includes("WARNING") || upperContent.includes("WARN")) {
       return "warn";
     }
-    if (upperContent.includes("[DEBUG]") || upperContent.includes("DEBUG")) {
+    if (upperContent.includes("[DEBUG]") || upperContent.includes("DEBUG") || upperContent.includes("DEBU")) {
       return "debug";
     }
-    if (upperContent.includes("[INFO]") || upperContent.includes("INFO")) {
-      return "info";
-    }
-    return "unknown";
+    return "info";
   }, []);
 
   const cleanLogContent = useCallback((line: string): string => {
