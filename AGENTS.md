@@ -4,6 +4,11 @@
 
 Web panel for managing Minecraft servers with Docker. Create, configure, start/stop, and monitor multiple instances from a modern UI.
 
+**Supported Editions:**
+
+- **Java Edition** — Full support with RCON, proxy routing, mods/plugins
+- **Bedrock Edition** — Full support with send-command, direct connection (no proxy)
+
 **Stack:**
 
 - **Backend:** NestJS 11 + TypeORM + SQLite (sql.js)
@@ -14,7 +19,8 @@ Web panel for managing Minecraft servers with Docker. Create, configure, start/s
 
 **Key dependencies:**
 
-- `itzg/docker-minecraft-server` — MC server image
+- `itzg/docker-minecraft-server` — Java Edition server image
+- `itzg/minecraft-bedrock-server` — Bedrock Edition server image
 - `itzg/docker-mc-backup` — Automatic backups
 
 **Repo:** https://github.com/Ketbome/minepanel
@@ -50,8 +56,9 @@ cd backend && npm run start:dev     # Dev on :8091
 cd frontend && npm run dev          # Dev on :3000
 
 # Docker (full stack)
-docker compose up -d                # Production
-docker compose -f docker-compose.split.yml up --build  # Dev
+docker compose up -d                           # Production
+docker compose -f docker-compose.development.yml up --build  # Dev build
+docker compose -f docker-compose.test.yml up -d              # Test images
 ```
 
 ---
@@ -96,12 +103,21 @@ refactor(auth): simplify JWT validation
 
 ### GitHub Workflows
 
-| Workflow             | Trigger           | Description                          |
-| -------------------- | ----------------- | ------------------------------------ |
-| `ci.yml`             | PRs, push to main | Lint, build, test                    |
-| `docker-publish.yml` | Push to main      | Build Docker images + create release |
-| `deploy-docs.yml`    | Changes in `doc/` | Deploy VitePress to GitHub Pages     |
-| `stale.yml`          | Daily             | Closes inactive issues/PRs           |
+| Workflow             | Trigger           | Description                                           |
+| -------------------- | ----------------- | ----------------------------------------------------- |
+| `ci.yml`             | PRs, push to main | Lint, build, test                                     |
+| `docker-publish.yml` | Push to any branch| Build Docker images (test on branches, prod on main)  |
+| `deploy-docs.yml`    | Changes in `doc/` | Deploy VitePress to GitHub Pages                      |
+| `stale.yml`          | Daily             | Closes inactive issues/PRs                            |
+
+### Docker Image Publishing
+
+| Branch     | Images                                              | Tags    |
+| ---------- | --------------------------------------------------- | ------- |
+| `main`     | `ketbom/minepanel-backend`, `ketbom/minepanel-frontend` | `latest`, `vX.Y.Z` |
+| Other      | `ketbom/minepanel-backend-test`, `ketbom/minepanel-frontend-test` | `latest` |
+
+**Test images** are published to separate Docker Hub repositories for pre-release testing.
 
 ### Version Bumping
 
@@ -131,10 +147,33 @@ UI → POST /servers → Backend generates docker-compose.yml
                    → Backend executes `docker compose up -d`
                    → Status via `docker inspect`
                    → Logs via `docker logs`
-                   → Commands via RCON
+                   → Commands via RCON (Java) or send-command (Bedrock)
 ```
 
 **Important:** Minepanel accesses Docker socket (`/var/run/docker.sock`). Volume paths resolve from the **host**, not the container. That's why `BASE_DIR` exists.
+
+### Server Edition Strategy Pattern
+
+Edition-specific behavior is handled via Strategy Pattern:
+
+```
+backend/src/server-management/strategies/
+├── server-strategy.interface.ts   # IServerStrategy interface
+├── java-server.strategy.ts        # Java Edition implementation
+├── bedrock-server.strategy.ts     # Bedrock Edition implementation
+├── server-strategy.factory.ts     # Factory for strategy creation
+└── index.ts                       # Exports
+```
+
+**Key differences by edition:**
+
+| Feature        | Java Edition              | Bedrock Edition                 |
+| -------------- | ------------------------- | ------------------------------- |
+| Docker Image   | `itzg/minecraft-server`   | `itzg/minecraft-bedrock-server` |
+| Default Port   | 25565 (TCP)               | 19132 (UDP)                     |
+| Commands       | RCON                      | `docker exec send-command`      |
+| Proxy Support  | Yes (mc-router)           | No                              |
+| Mods/Plugins   | Forge, Fabric, Paper, etc.| Addons/Behavior Packs           |
 
 ### Persistence
 
@@ -200,5 +239,7 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
 
 - **Docs:** https://minepanel.ketbome.com
 - **Docker Hub:** https://hub.docker.com/r/ketbom/minepanel
+- **Docker Hub (Test):** https://hub.docker.com/r/ketbom/minepanel-backend-test
 - **Issues:** https://github.com/Ketbome/minepanel/issues
 - **itzg/docker-minecraft-server:** https://github.com/itzg/docker-minecraft-server
+- **itzg/minecraft-bedrock-server:** https://github.com/itzg/minecraft-bedrock-server

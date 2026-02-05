@@ -66,6 +66,18 @@ Build from source:
 docker compose -f docker-compose.development.yml up --build -d
 ```
 
+### Test Images (Pre-release)
+
+Test images are built from non-main branches for pre-release testing:
+
+```bash
+docker compose -f docker-compose.test.yml up -d
+```
+
+::: warning
+Test images may contain unstable features. Use for testing only, not production.
+:::
+
 ### With Reverse Proxy (SSL)
 
 For nginx-proxy/Traefik setups:

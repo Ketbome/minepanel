@@ -35,12 +35,13 @@ Open http://localhost:3000 — Login: `admin` / `admin`
 
 ## Features
 
+- **Java & Bedrock** — Support for both Minecraft editions
 - **Multi-server** — Create and manage multiple servers from one panel
 - **Real-time monitoring** — CPU, RAM, players, and logs
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies
-- **Proxy support** — mc-router for single-port multi-server
+- **Proxy support** — mc-router for single-port multi-server (Java)
 - **Discord webhooks** — Server events notifications
 - **Multi-language** — English, Spanish, Dutch, German
 

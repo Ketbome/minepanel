@@ -68,18 +68,29 @@ hostname -I | awk '{print $1}'
 
 ## Ports
 
-| Service   | Default | Description  |
-| --------- | ------- | ------------ |
-| Frontend  | 3000    | Web UI       |
-| Backend   | 8091    | API          |
-| Minecraft | 25565+  | Game servers |
+| Service        | Default | Protocol | Description         |
+| -------------- | ------- | -------- | ------------------- |
+| Frontend       | 3000    | TCP      | Web UI              |
+| Backend        | 8091    | TCP      | API                 |
+| Java Servers   | 25565+  | TCP      | Java Edition games  |
+| Bedrock Servers| 19132+  | UDP      | Bedrock Edition games |
+
+::: warning Bedrock UDP
+Bedrock uses UDP, not TCP. Make sure your firewall rules specify the correct protocol.
+:::
 
 **Open firewall:**
 
 ```bash
+# Minepanel
 sudo ufw allow 3000/tcp
 sudo ufw allow 8091/tcp
+
+# Java servers
 sudo ufw allow 25565/tcp
+
+# Bedrock servers
+sudo ufw allow 19132/udp
 ```
 
 ## SSL/HTTPS
@@ -132,16 +143,20 @@ api.yourdomain.com {
 }
 ```
 
-## MC Proxy Router
+## MC Proxy Router (Java Only)
 
-Single port (25565) for all servers via hostname routing.
+Single port (25565) for all Java servers via hostname routing.
+
+::: warning Java Edition Only
+mc-router only works with Java Edition (TCP protocol). Bedrock servers use UDP and cannot be proxied this way. Each Bedrock server needs its own port.
+:::
 
 ```mermaid
 flowchart LR
     P1["👤 survival.mc.example.com"] --> Router["mc-router:25565"]
     P2["👤 creative.mc.example.com"] --> Router
-    Router --> MC1["survival"]
-    Router --> MC2["creative"]
+    Router --> MC1["survival (Java)"]
+    Router --> MC2["creative (Java)"]
 ```
 
 ### Setup
@@ -156,7 +171,16 @@ flowchart LR
 docker compose --profile proxy up -d
 ```
 
-Servers auto-get hostnames: `{server-id}.mc.example.com`
+Java servers auto-get hostnames: `{server-id}.mc.example.com`
+
+### Bedrock Connection
+
+Bedrock servers connect directly via IP and port:
+
+```
+Server Address: your-ip
+Port: 19132 (or assigned port)
+```
 
 ## Troubleshooting
 

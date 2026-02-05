@@ -1,40 +1,52 @@
 ---
-title: Mods & Plugins - Minepanel
-description: Automatic mod and plugin management for Minecraft servers. Modrinth, CurseForge, and Spiget integration with auto-download and updates.
+title: Mods, Plugins & Addons - Minepanel
+description: Mod and addon management for Java and Bedrock Minecraft servers. Modrinth, CurseForge integration for Java. Manual addon installation for Bedrock.
 head:
   - - meta
     - property: og:title
-      content: Mods & Plugins Management - Minepanel
+      content: Mods, Plugins & Addons - Minepanel
   - - meta
     - property: og:description
-      content: Install mods from Modrinth and CurseForge. Auto-download, dependency resolution, and version management.
+      content: Install mods from Modrinth and CurseForge for Java. Bedrock addon installation guide.
 ---
 
-# Mods & Plugins Management
+# Mods, Plugins & Addons
 
-Automatically download and manage mods and plugins for your Minecraft servers.
+Manage mods for Java Edition (automatic) and addons for Bedrock Edition (manual).
 
 ![Mods Tab](/img/mods-tab.png)
 
 ## Overview
 
-Minepanel integrates with popular mod platforms to auto-download mods, plugins, and datapacks at server startup.
+| Edition | Platforms | Automation |
+| ------- | --------- | ---------- |
+| **Java** | Modrinth, CurseForge, Spiget | ✅ Automatic |
+| **Bedrock** | MCPEDL, BedrockTweaks | ❌ Manual (automation planned) |
 
 ```mermaid
 flowchart LR
-    MP["🎮 Minepanel"] --> MR["🟢 Modrinth"]
-    MP --> CF["🟠 CurseForge"]
-    MP --> SP["🔵 Spiget"]
+    subgraph Java["Java Edition"]
+        MR["🟢 Modrinth"]
+        CF["🟠 CurseForge"]
+        SP["🔵 Spiget"]
+    end
 
-    MR --> Mods["Mods & Datapacks"]
-    CF --> Modpacks["Modpacks & Mods"]
-    SP --> Plugins["Spigot Plugins"]
+    subgraph Bedrock["Bedrock Edition"]
+        BP["📦 Behavior Packs"]
+        RP["🎨 Resource Packs"]
+    end
+
+    MP["🎮 Minepanel"] --> Java
+    MP --> Bedrock
 
     style MP fill:#1f2937,stroke:#22c55e,color:#fff
-    style MR fill:#065f46,stroke:#22c55e,color:#fff
-    style CF fill:#7c2d12,stroke:#f97316,color:#fff
-    style SP fill:#1e40af,stroke:#3b82f6,color:#fff
+    style Java fill:#065f46,stroke:#22c55e,color:#fff
+    style Bedrock fill:#d97706,stroke:#fbbf24,color:#fff
 ```
+
+---
+
+## Java Edition Platforms
 
 | Platform       | Best For                 | API Key Required |
 | -------------- | ------------------------ | ---------------- |
@@ -370,7 +382,152 @@ environment:
 
 Where the numbers are Spigot resource IDs from [SpigotMC](https://www.spigotmc.org/resources/).
 
-## Best Practices
+## Bedrock Addons (Manual)
+
+Bedrock Edition uses **behavior packs** and **resource packs** instead of traditional mods. Currently, addon installation is manual.
+
+::: warning Manual Process
+Unlike Java Edition, Bedrock addon installation is not yet automated. This feature is on the [roadmap](/roadmap).
+:::
+
+### Understanding Bedrock Addons
+
+| Type | Extension | Purpose | Client Download |
+| ---- | --------- | ------- | --------------- |
+| Behavior Pack | `.mcaddon` | Changes game mechanics | No |
+| Resource Pack | `.mcpack` | Changes textures/sounds | Yes (prompted) |
+
+Both `.mcaddon` and `.mcpack` files are actually **renamed ZIP files**.
+
+### Installation Steps
+
+#### 1. Obtain the Addon Files
+
+Download addons from:
+- [MCPEDL](https://mcpedl.com/)
+- [BedrockTweaks](https://bedrocktweaks.net/)
+- Other Bedrock addon sites
+
+#### 2. Extract Addon Contents
+
+```bash
+# .mcaddon → behavior_packs
+unzip my-addon.mcaddon -d extracted/
+
+# .mcpack → resource_packs  
+unzip my-resource.mcpack -d extracted/
+```
+
+#### 3. Upload to Server
+
+Using Minepanel's **Files** tab:
+
+1. Navigate to your Bedrock server's files
+2. Go to `mc-data/behavior_packs/` or `mc-data/resource_packs/`
+3. Upload the extracted addon folder (not the zip)
+
+**Structure should look like:**
+```
+mc-data/
+├── behavior_packs/
+│   └── my-addon/
+│       ├── manifest.json
+│       └── ... (addon files)
+├── resource_packs/
+│   └── my-resource/
+│       ├── manifest.json
+│       └── ... (resource files)
+└── worlds/
+    └── Bedrock level/
+        └── world_behavior_packs.json  ← Create this
+```
+
+#### 4. Get UUID and Version from manifest.json
+
+Each addon has a `manifest.json`. Find the `uuid` and `version`:
+
+```json
+{
+  "header": {
+    "uuid": "5f51f7b7-85dc-44da-a3ef-a48d8414e4d5",
+    "version": [3, 0, 0]
+  }
+}
+```
+
+#### 5. Create Pack Configuration
+
+Create `world_behavior_packs.json` in `worlds/{level-name}/`:
+
+```json
+[
+  {
+    "pack_id": "5f51f7b7-85dc-44da-a3ef-a48d8414e4d5",
+    "version": [3, 0, 0]
+  }
+]
+```
+
+For resource packs, create `world_resource_packs.json` with the same format.
+
+::: tip
+You can put both behavior and resource packs in the same `world_behavior_packs.json` file.
+:::
+
+#### 6. Force Resource Packs (Optional)
+
+To require clients to download resource packs:
+
+```yaml
+environment:
+  TEXTUREPACK_REQUIRED: "true"
+```
+
+Or set in Minepanel's Bedrock settings tab.
+
+#### 7. Restart Server
+
+Restart the server to apply changes. Players will be prompted to download resource packs when connecting.
+
+### Example: Installing One Player Sleep
+
+```bash
+# 1. Download ops.mcaddon from MCPEDL
+
+# 2. Extract
+unzip ops.mcaddon -d ops-pack/
+
+# 3. Upload ops-pack/ folder to mc-data/behavior_packs/
+
+# 4. Check ops-pack/manifest.json for uuid and version
+
+# 5. Create worlds/Bedrock level/world_behavior_packs.json:
+[
+  {
+    "pack_id": "uuid-from-manifest",
+    "version": [1, 0, 0]
+  }
+]
+
+# 6. Restart server
+```
+
+### Troubleshooting Bedrock Addons
+
+| Issue | Solution |
+| ----- | -------- |
+| Addon not loading | Check `pack_id` matches manifest `uuid` exactly |
+| Version error | Ensure version format is `[major, minor, patch]` |
+| Resource pack not downloading | Set `TEXTUREPACK_REQUIRED: "true"` |
+| Pack conflicts | Check for duplicate UUIDs |
+
+### Future Automation
+
+Automated Bedrock addon management is planned. See [Roadmap](/roadmap) for timeline.
+
+---
+
+## Best Practices (Java Edition)
 
 1. **Use Modrinth when possible** - Generally faster and more reliable
 2. **Specify versions** for production servers to avoid unexpected updates

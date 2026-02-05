@@ -33,6 +33,10 @@ const DOCKER_COMMANDS = {
   EXEC_BEDROCK: (containerId: string, command: string) => {
     return `docker exec ${containerId} send-command ${command}`;
   },
+  // Fix permissions for Bedrock (needs UID/GID 1000)
+  FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
+    return `docker run --rm -v "${hostPath}:/data" alpine chown -R ${uid}:${gid} /data`;
+  },
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
   DU_SIZE: (worldPath: string) => `du -sb "${worldPath}" | cut -f1`,
@@ -960,6 +964,12 @@ export class ServerManagementService {
         }
       }
 
+      // Fix permissions for Bedrock servers (they require UID/GID 1000)
+      const edition = await this.getServerEdition(serverId);
+      if (edition === 'BEDROCK') {
+        await this.fixBedrockPermissions(serverId);
+      }
+
       const composeDir = path.dirname(dockerComposePath);
 
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
@@ -976,6 +986,24 @@ export class ServerManagementService {
       this.logger.error(`Failed to start server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
+    }
+  }
+
+  private async fixBedrockPermissions(serverId: string): Promise<void> {
+    try {
+      const mcDataPath = this.getMcDataPath(serverId);
+      if (!(await fs.pathExists(mcDataPath))) {
+        return;
+      }
+
+      // Use Docker to fix permissions (works across platforms)
+      // Bedrock server runs as UID/GID 1000 by default
+      this.logger.log(`Fixing permissions for Bedrock server ${serverId}...`);
+      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(mcDataPath));
+      this.logger.log(`Permissions fixed for ${serverId}`);
+    } catch (error) {
+      this.logger.warn(`Could not fix permissions for ${serverId}: ${error.message}`);
+      // Continue anyway - might work if permissions are already correct
     }
   }
 

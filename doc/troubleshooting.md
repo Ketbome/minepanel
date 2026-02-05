@@ -567,6 +567,86 @@ docker system prune -a
 docker pull ketbom/minepanel:latest
 ```
 
+## Bedrock-Specific Issues
+
+### Can't Connect to Bedrock Server
+
+**Symptoms:** Minecraft client shows "Unable to connect to world"
+
+**Solutions:**
+
+1. **Check UDP port is open:**
+
+```bash
+# Bedrock uses UDP, not TCP!
+sudo ufw allow 19132/udp
+
+# Check firewall
+sudo ufw status
+```
+
+2. **Port forwarding:**
+
+If accessing from internet, ensure router forwards UDP port.
+
+3. **LAN visibility:**
+
+```yaml
+environment:
+  ENABLE_LAN_VISIBILITY: "true"
+```
+
+4. **Online mode:**
+
+If using Xbox Live accounts, ensure `ONLINE_MODE=true`.
+
+### Bedrock Commands Not Working
+
+**Symptoms:** Commands sent but nothing happens
+
+**Solutions:**
+
+1. **Check server logs** - Bedrock command output goes to logs, not the console response:
+
+```bash
+docker logs <bedrock-server-name> --tail 50
+```
+
+2. **Verify command syntax:**
+
+```bash
+# Correct
+docker exec CONTAINER send-command say Hello
+
+# Not RCON - Bedrock doesn't support RCON
+```
+
+### Bedrock Server Stuck Starting
+
+**Solutions:**
+
+1. **EULA acceptance:**
+
+```yaml
+environment:
+  EULA: "TRUE"
+```
+
+2. **Version issues:**
+
+```yaml
+environment:
+  VERSION: LATEST  # or specific like "1.21.0.03"
+```
+
+3. **Check logs for specific error:**
+
+```bash
+docker logs <bedrock-server-name>
+```
+
+---
+
 ## Still Having Issues?
 
 ### Collect Debug Information
