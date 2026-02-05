@@ -138,6 +138,7 @@ export class ServerManagementController {
 
       if (proxyEnabled && baseDomain) {
         const servers = await this.dockerComposeService.getAllServerConfigs();
+        
         const proxyServers = servers
           .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
           .map((s) => ({
