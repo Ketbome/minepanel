@@ -1257,6 +1257,7 @@ export const en = {
   serverEdition: 'Server Edition',
   javaEditionDesc: 'PC/Mac version with mods support',
   bedrockEditionDesc: 'Cross-platform (mobile, console, Win10)',
+  editionLocked: 'Cannot change after server creation',
   bedrockVersion: 'Bedrock Version',
   bedrockVersionDesc: 'Select the Bedrock version. LATEST auto-updates to the newest release.',
   autoUpdate: 'Auto Update',

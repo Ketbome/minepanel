@@ -46,15 +46,20 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const otherVersions = versions.filter((v) => v.id !== latestRelease && !recommendedIds.has(v.id));
 
   const handleEditionChange = (newEdition: ServerEdition) => {
+    // Don't allow edition change if server already exists
+    if (config.serverExists) return;
+
     updateConfig('edition', newEdition);
     // Reset server type to VANILLA when switching to Bedrock
     if (newEdition === 'BEDROCK' && config.serverType !== 'VANILLA') {
       updateConfig('serverType', 'VANILLA');
     }
-    // Reset port to appropriate default
+    // Reset port and other settings to appropriate defaults
     if (newEdition === 'BEDROCK') {
       updateConfig('port', '19132');
       updateConfig('enableRcon', false);
+      updateConfig('levelType', 'minecraft:default');
+      updateConfig('minecraftVersion', 'LATEST');
     } else {
       updateConfig('port', '25565');
       updateConfig('enableRcon', true);
@@ -79,21 +84,27 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
 
       <CardContent className="space-y-6">
         {/* Edition Selector */}
-        <div className="space-y-3 p-4 rounded-md bg-blue-900/10 border-2 border-blue-500/30">
-          <Label className="text-blue-400 font-minecraft text-sm flex items-center gap-2">
-            <Image src="/images/grass.webp" alt="Edition" width={16} height={16} />
-            {t('serverEdition')}
-          </Label>
+        <div className={`space-y-3 p-4 rounded-md border-2 ${config.serverExists ? 'bg-gray-800/30 border-gray-600/30' : 'bg-blue-900/10 border-blue-500/30'}`}>
+          <div className="flex items-center justify-between">
+            <Label className={`font-minecraft text-sm flex items-center gap-2 ${config.serverExists ? 'text-gray-400' : 'text-blue-400'}`}>
+              <Image src="/images/grass.webp" alt="Edition" width={16} height={16} />
+              {t('serverEdition')}
+            </Label>
+            {config.serverExists && (
+              <span className="text-xs text-gray-500 italic">{t('editionLocked')}</span>
+            )}
+          </div>
           <RadioGroup
             value={edition}
             onValueChange={(value) => handleEditionChange(value as ServerEdition)}
             className="grid grid-cols-2 gap-4"
+            disabled={config.serverExists}
           >
             <div
-              className={`flex items-center space-x-3 rounded-md p-3 cursor-pointer transition-all ${edition === 'JAVA' ? 'bg-emerald-600/20 border border-emerald-600/50' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+              className={`flex items-center space-x-3 rounded-md p-3 transition-all ${config.serverExists ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${edition === 'JAVA' ? 'bg-emerald-600/20 border border-emerald-600/50' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
             >
-              <RadioGroupItem value="JAVA" id="java-edition" className="border-emerald-600/50" />
-              <Label htmlFor="java-edition" className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem value="JAVA" id="java-edition" className="border-emerald-600/50" disabled={config.serverExists} />
+              <Label htmlFor="java-edition" className={`flex items-center gap-2 ${config.serverExists ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <Coffee className="h-5 w-5 text-orange-400" />
                 <div>
                   <span className="text-gray-100 font-minecraft">Java Edition</span>
@@ -102,14 +113,15 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               </Label>
             </div>
             <div
-              className={`flex items-center space-x-3 rounded-md p-3 cursor-pointer transition-all ${edition === 'BEDROCK' ? 'bg-emerald-600/20 border border-emerald-600/50' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+              className={`flex items-center space-x-3 rounded-md p-3 transition-all ${config.serverExists ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${edition === 'BEDROCK' ? 'bg-emerald-600/20 border border-emerald-600/50' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
             >
               <RadioGroupItem
                 value="BEDROCK"
                 id="bedrock-edition"
                 className="border-emerald-600/50"
+                disabled={config.serverExists}
               />
-              <Label htmlFor="bedrock-edition" className="flex items-center gap-2 cursor-pointer">
+              <Label htmlFor="bedrock-edition" className={`flex items-center gap-2 ${config.serverExists ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <Smartphone className="h-5 w-5 text-green-400" />
                 <div>
                   <span className="text-gray-100 font-minecraft">Bedrock Edition</span>
@@ -302,65 +314,68 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
           </div>
         )}
 
-        <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-          <div className="flex items-center justify-between">
-            <Label
-              htmlFor="dockerImage"
-              className="text-gray-200 font-minecraft text-sm flex items-center gap-2"
-            >
-              <Image src="/images/barrier.webp" alt="Docker" width={16} height={16} />
-              {t('dockerImage')}
-            </Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
+        {/* Docker Image Tag - Only for Java Edition */}
+        {isJava && (
+          <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="dockerImage"
+                className="text-gray-200 font-minecraft text-sm flex items-center gap-2"
+              >
+                <Image src="/images/barrier.webp" alt="Docker" width={16} height={16} />
+                {t('dockerImage')}
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
+                    >
+                      <HelpCircle className="h-4 w-4 text-gray-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <p>{t('dockerImageDesc')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Input
+              id="dockerImage"
+              value={config.dockerImage}
+              onChange={(e) => updateConfig('dockerImage', e.target.value)}
+              placeholder="java17"
+              className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+            />
+            <div className="space-y-1">
+              <p className="text-xs text-gray-400">{t('dockerImageHelp')}</p>
+              <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
+                <div className="shrink-0">
+                  <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="text-xs text-blue-300">
+                  <span>{t('dockerImageHelpTags')}: </span>
+                  <a
+                    href="https://docker-minecraft-server.readthedocs.io/en/latest/versions/java/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
                   >
-                    <HelpCircle className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <p>{t('dockerImageDesc')}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input
-            id="dockerImage"
-            value={config.dockerImage}
-            onChange={(e) => updateConfig('dockerImage', e.target.value)}
-            placeholder="java17"
-            className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
-          />
-          <div className="space-y-1">
-            <p className="text-xs text-gray-400">{t('dockerImageHelp')}</p>
-            <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
-              <div className="shrink-0">
-                <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="text-xs text-blue-300">
-                <span>{t('dockerImageHelpTags')}: </span>
-                <a
-                  href="https://docker-minecraft-server.readthedocs.io/en/latest/versions/java/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 underline"
-                >
-                  {t('dockerImageHelpDocumentation')}
-                </a>
+                    {t('dockerImageHelpDocumentation')}
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Server Type Selector - Only for Java Edition */}
         {isJava && (

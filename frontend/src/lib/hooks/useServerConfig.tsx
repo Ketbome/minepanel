@@ -144,8 +144,12 @@ export function useServerConfig(serverId: string) {
         }
 
         if (!serverConfig.minecraftVersion) {
-          const latestRelease = await minecraftVersionsService.getLatestRelease();
-          serverConfig.minecraftVersion = latestRelease;
+          if (serverConfig.edition === 'BEDROCK') {
+            serverConfig.minecraftVersion = 'LATEST';
+          } else {
+            const latestRelease = await minecraftVersionsService.getLatestRelease();
+            serverConfig.minecraftVersion = latestRelease;
+          }
         }
 
         setConfig({

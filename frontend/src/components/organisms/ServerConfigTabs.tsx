@@ -44,11 +44,22 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
-  const [savedConfig, setSavedConfig] = useState(config);
+  const [savedConfig, setSavedConfig] = useState<ServerConfig | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Initialize savedConfig when config loads from server
+  useEffect(() => {
+    if (config.id && !savedConfig) {
+      setSavedConfig(config);
+    }
+  }, [config, savedConfig]);
 
   // Detect unsaved changes
   useEffect(() => {
+    if (!savedConfig) {
+      setHasUnsavedChanges(false);
+      return;
+    }
     const configChanged = JSON.stringify(config) !== JSON.stringify(savedConfig);
     setHasUnsavedChanges(configChanged);
   }, [config, savedConfig]);

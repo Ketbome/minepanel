@@ -12,6 +12,10 @@ export class ServerConfigDto {
   @IsOptional()
   active?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  serverExists?: boolean;
+
   @IsEnum(['JAVA', 'BEDROCK'])
   @IsOptional()
   edition?: ServerEdition;

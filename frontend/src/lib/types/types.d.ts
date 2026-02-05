@@ -43,6 +43,7 @@ export interface ServerListItem {
 export interface ServerConfig {
   id: string;
   active: boolean;
+  serverExists?: boolean;
   edition?: ServerEdition;
   serverType: ServerType;
 

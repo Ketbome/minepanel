@@ -1277,6 +1277,7 @@ export const es: Record<TranslationKey, string> = {
   serverEdition: 'Edición del Servidor',
   javaEditionDesc: 'Versión PC/Mac con soporte de mods',
   bedrockEditionDesc: 'Multiplataforma (móvil, consola, Win10)',
+  editionLocked: 'No se puede cambiar después de crear el servidor',
   bedrockVersion: 'Versión Bedrock',
   bedrockVersionDesc: 'Selecciona la versión Bedrock. LATEST se actualiza automáticamente.',
   autoUpdate: 'Auto Actualizar',

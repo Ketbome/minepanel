@@ -1288,6 +1288,7 @@ export const nl: Record<TranslationKey, string> = {
   serverEdition: 'Server Editie',
   javaEditionDesc: 'PC/Mac versie met mod ondersteuning',
   bedrockEditionDesc: 'Cross-platform (mobiel, console, Win10)',
+  editionLocked: 'Kan niet worden gewijzigd na het aanmaken van de server',
   bedrockVersion: 'Bedrock Versie',
   bedrockVersionDesc: 'Selecteer de Bedrock versie. LATEST werkt automatisch bij naar de nieuwste release.',
   autoUpdate: 'Auto Update',

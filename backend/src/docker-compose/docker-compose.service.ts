@@ -103,6 +103,7 @@ export class DockerComposeService {
       const serverConfig: ServerConfig = {
         id: env.ID_MANAGER ?? serverId,
         active: fs.existsSync(this.getMcDataPath(serverId)),
+        serverExists: true,
         edition,
         serverType: env.TYPE ?? 'VANILLA',
 
@@ -119,7 +120,7 @@ export class DockerComposeService {
         allowFlight: env.ALLOW_FLIGHT === 'true',
         gameMode: env.MODE ?? 'survival',
         seed: env.SEED,
-        levelType: env.LEVEL_TYPE ?? 'minecraft:default',
+        levelType: this.parseLevelType(env.LEVEL_TYPE, edition),
         hardcore: env.HARDCORE === 'true',
         spawnAnimals: env.SPAWN_ANIMALS !== 'false',
         spawnMonsters: env.SPAWN_MONSTERS !== 'false',
@@ -226,6 +227,31 @@ export class DockerComposeService {
       this.logger.error(`Error loading config for server ${serverId}`, error);
       return this.createDefaultConfig(serverId);
     }
+  }
+
+  private parseLevelType(
+    levelType: string | undefined,
+    edition: ServerEdition,
+  ): 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' {
+    const validTypes = ['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface'] as const;
+
+    if (!levelType) return 'minecraft:default';
+
+    // Bedrock uses uppercase values (DEFAULT, FLAT), map them back to minecraft: format
+    if (edition === 'BEDROCK') {
+      const bedrockMapping: Record<string, typeof validTypes[number]> = {
+        DEFAULT: 'minecraft:default',
+        FLAT: 'minecraft:flat',
+        LEGACY: 'minecraft:default',
+      };
+      return bedrockMapping[levelType] || 'minecraft:default';
+    }
+
+    // Java already uses minecraft: format, validate it
+    if (validTypes.includes(levelType as typeof validTypes[number])) {
+      return levelType as typeof validTypes[number];
+    }
+    return 'minecraft:default';
   }
 
   private extractCustomEnvVars(env: any): string {
@@ -434,6 +460,7 @@ export class DockerComposeService {
     return {
       id,
       active: false,
+      serverExists: false,
       edition,
       serverType: 'VANILLA',
 

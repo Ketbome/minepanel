@@ -13,6 +13,7 @@ interface PerformanceSettingsTabProps {
 
 export const PerformanceSettingsTab: FC<PerformanceSettingsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
+  const isJava = config.edition !== "BEDROCK";
 
   return (
     <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -35,29 +36,33 @@ export const PerformanceSettingsTab: FC<PerformanceSettingsTabProps> = ({ config
           <p className="text-xs text-gray-400">{t("viewDistanceDesc")}</p>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between mb-2">
-            <Label htmlFor="simulation-distance" className="text-gray-200 font-minecraft text-sm">
-              {t("simulationDistance")}
-            </Label>
-            <span className="bg-gray-800/90 px-2 py-1 rounded text-xs font-mono">
-              {config.simulationDistance || 10} {t("chunks")}
-            </span>
-          </div>
-          <Slider id="simulation-distance" min={2} max={32} step={1} value={[Number(config.simulationDistance || 10)]} onValueChange={(value: number[]) => updateConfig("simulationDistance", String(value[0]))} className="my-4" />
-          <p className="text-xs text-gray-400">{t("simulationDistanceDesc")}</p>
-        </div>
+        {isJava && (
+          <>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="simulation-distance" className="text-gray-200 font-minecraft text-sm">
+                  {t("simulationDistance")}
+                </Label>
+                <span className="bg-gray-800/90 px-2 py-1 rounded text-xs font-mono">
+                  {config.simulationDistance || 10} {t("chunks")}
+                </span>
+              </div>
+              <Slider id="simulation-distance" min={2} max={32} step={1} value={[Number(config.simulationDistance || 10)]} onValueChange={(value: number[]) => updateConfig("simulationDistance", String(value[0]))} className="my-4" />
+              <p className="text-xs text-gray-400">{t("simulationDistanceDesc")}</p>
+            </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="commandBlock" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-              <Image src="/images/command-block.webp" alt={t("enableCommandBlocks")} width={16} height={16} />
-              {t("enableCommandBlocks")}
-            </Label>
-            <Switch id="commandBlock" checked={config.commandBlock} onCheckedChange={(checked) => updateConfig("commandBlock", checked)} />
-          </div>
-          <p className="text-xs text-gray-400">{t("enableCommandBlocksDesc")}</p>
-        </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="commandBlock" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/command-block.webp" alt={t("enableCommandBlocks")} width={16} height={16} />
+                  {t("enableCommandBlocks")}
+                </Label>
+                <Switch id="commandBlock" checked={config.commandBlock} onCheckedChange={(checked) => updateConfig("commandBlock", checked)} />
+              </div>
+              <p className="text-xs text-gray-400">{t("enableCommandBlocksDesc")}</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

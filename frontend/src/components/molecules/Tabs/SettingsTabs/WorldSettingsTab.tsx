@@ -15,6 +15,7 @@ interface WorldSettingsTabProps {
 
 export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
+  const isJava = config.edition !== "BEDROCK";
 
   return (
     <div className="space-y-6">
@@ -33,9 +34,13 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
               <SelectItem value="minecraft:default">{t("normal")}</SelectItem>
               <SelectItem value="minecraft:flat">{t("flat")}</SelectItem>
-              <SelectItem value="minecraft:large_biomes">{t("largeBiomes")}</SelectItem>
-              <SelectItem value="minecraft:amplified">{t("amplified")}</SelectItem>
-              <SelectItem value="minecraft:single_biome_surface">{t("singleBiomeSurface")}</SelectItem>
+              {isJava && (
+                <>
+                  <SelectItem value="minecraft:large_biomes">{t("largeBiomes")}</SelectItem>
+                  <SelectItem value="minecraft:amplified">{t("amplified")}</SelectItem>
+                  <SelectItem value="minecraft:single_biome_surface">{t("singleBiomeSurface")}</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -106,28 +111,33 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
                   <span>{t("adventure")}</span>
                 </div>
               </SelectItem>
-              <SelectItem value="spectator">
-                <div className="flex items-center gap-2">
-                  <Image src="/images/ender-pearl.webp" alt={t("spectator")} width={16} height={16} />
-                  <span>{t("spectator")}</span>
-                </div>
-              </SelectItem>
+              {isJava && (
+                <SelectItem value="spectator">
+                  <div className="flex items-center gap-2">
+                    <Image src="/images/ender-pearl.webp" alt={t("spectator")} width={16} height={16} />
+                    <span>{t("spectator")}</span>
+                  </div>
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="hardcore" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-            <Image src="/images/hard.png" alt={t("hardcore")} width={16} height={16} />
-            {t("hardcore")}
-          </Label>
-          <Switch id="hardcore" checked={config.hardcore} onCheckedChange={(checked) => updateConfig("hardcore", checked)} className="data-[state=checked]:bg-red-500" />
+      {isJava && (
+        <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="hardcore" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+              <Image src="/images/hard.png" alt={t("hardcore")} width={16} height={16} />
+              {t("hardcore")}
+            </Label>
+            <Switch id="hardcore" checked={config.hardcore} onCheckedChange={(checked) => updateConfig("hardcore", checked)} className="data-[state=checked]:bg-red-500" />
+          </div>
+          <p className="text-xs text-gray-400">{t("hardcoreDescription")}</p>
         </div>
-        <p className="text-xs text-gray-400">{t("hardcoreDescription")}</p>
-      </div>
+      )}
 
+      {isJava && (
       <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">
         <AccordionItem value="spawning" className="border-b-0">
           <AccordionTrigger className="px-4 py-3 text-gray-200 font-minecraft text-sm hover:bg-gray-700/30 rounded-t-md flex items-center gap-2">
@@ -189,6 +199,7 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      )}
     </div>
   );
 };
