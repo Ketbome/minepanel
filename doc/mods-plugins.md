@@ -1,7 +1,10 @@
 ---
-title: Mods, Plugins & Addons - Minepanel
-description: Mod and addon management for Java and Bedrock Minecraft servers. Modrinth, CurseForge integration for Java. Manual addon installation for Bedrock.
+title: Mods, Plugins & Addons - Minepanel Guide
+description: Complete mod and addon management guide - Automatic installation from Modrinth and CurseForge for Java Edition. Behavior packs and resource packs for Bedrock Edition. Step-by-step tutorials.
 head:
+  - - meta
+    - name: keywords
+      content: minecraft mods, minecraft plugins, modrinth, curseforge, spiget, minecraft addons, behavior packs, resource packs, mod installation, plugin manager
   - - meta
     - property: og:title
       content: Mods, Plugins & Addons - Minepanel
@@ -18,10 +21,10 @@ Manage mods for Java Edition (automatic) and addons for Bedrock Edition (manual)
 
 ## Overview
 
-| Edition | Platforms | Automation |
-| ------- | --------- | ---------- |
-| **Java** | Modrinth, CurseForge, Spiget | ✅ Automatic |
-| **Bedrock** | MCPEDL, BedrockTweaks | ❌ Manual (automation planned) |
+| Edition     | Platforms                    | Automation                     |
+| ----------- | ---------------------------- | ------------------------------ |
+| **Java**    | Modrinth, CurseForge, Spiget | ✅ Automatic                   |
+| **Bedrock** | MCPEDL, BedrockTweaks        | ❌ Manual (automation planned) |
 
 ```mermaid
 flowchart LR
@@ -196,7 +199,7 @@ Then mount and reference:
 volumes:
   - ./mods-list:/extras:ro
 environment:
-  MODRINTH_PROJECTS: "@/extras/mods.txt"
+  MODRINTH_PROJECTS: '@/extras/mods.txt'
 ```
 
 </details>
@@ -335,7 +338,7 @@ environment:
 volumes:
   - ./cf-list:/extras:ro
 environment:
-  CURSEFORGE_FILES: "@/extras/cf-mods.txt"
+  CURSEFORGE_FILES: '@/extras/cf-mods.txt'
 ```
 
 </details>
@@ -392,10 +395,10 @@ Unlike Java Edition, Bedrock addon installation is not yet automated. This featu
 
 ### Understanding Bedrock Addons
 
-| Type | Extension | Purpose | Client Download |
-| ---- | --------- | ------- | --------------- |
-| Behavior Pack | `.mcaddon` | Changes game mechanics | No |
-| Resource Pack | `.mcpack` | Changes textures/sounds | Yes (prompted) |
+| Type          | Extension  | Purpose                 | Client Download |
+| ------------- | ---------- | ----------------------- | --------------- |
+| Behavior Pack | `.mcaddon` | Changes game mechanics  | No              |
+| Resource Pack | `.mcpack`  | Changes textures/sounds | Yes (prompted)  |
 
 Both `.mcaddon` and `.mcpack` files are actually **renamed ZIP files**.
 
@@ -404,6 +407,7 @@ Both `.mcaddon` and `.mcpack` files are actually **renamed ZIP files**.
 #### 1. Obtain the Addon Files
 
 Download addons from:
+
 - [MCPEDL](https://mcpedl.com/)
 - [BedrockTweaks](https://bedrocktweaks.net/)
 - Other Bedrock addon sites
@@ -414,7 +418,7 @@ Download addons from:
 # .mcaddon → behavior_packs
 unzip my-addon.mcaddon -d extracted/
 
-# .mcpack → resource_packs  
+# .mcpack → resource_packs
 unzip my-resource.mcpack -d extracted/
 ```
 
@@ -427,6 +431,7 @@ Using Minepanel's **Files** tab:
 3. Upload the extracted addon folder (not the zip)
 
 **Structure should look like:**
+
 ```
 mc-data/
 ├── behavior_packs/
@@ -480,7 +485,7 @@ To require clients to download resource packs:
 
 ```yaml
 environment:
-  TEXTUREPACK_REQUIRED: "true"
+  TEXTUREPACK_REQUIRED: 'true'
 ```
 
 Or set in Minepanel's Bedrock settings tab.
@@ -514,12 +519,12 @@ unzip ops.mcaddon -d ops-pack/
 
 ### Troubleshooting Bedrock Addons
 
-| Issue | Solution |
-| ----- | -------- |
-| Addon not loading | Check `pack_id` matches manifest `uuid` exactly |
-| Version error | Ensure version format is `[major, minor, patch]` |
-| Resource pack not downloading | Set `TEXTUREPACK_REQUIRED: "true"` |
-| Pack conflicts | Check for duplicate UUIDs |
+| Issue                         | Solution                                         |
+| ----------------------------- | ------------------------------------------------ |
+| Addon not loading             | Check `pack_id` matches manifest `uuid` exactly  |
+| Version error                 | Ensure version format is `[major, minor, patch]` |
+| Resource pack not downloading | Set `TEXTUREPACK_REQUIRED: "true"`               |
+| Pack conflicts                | Check for duplicate UUIDs                        |
 
 ### Future Automation
 

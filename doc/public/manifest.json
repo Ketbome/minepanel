@@ -1,21 +1,37 @@
 {
-  "name": "Minepanel Documentation",
+  "name": "Minepanel - Minecraft Server Manager",
   "short_name": "Minepanel",
-  "description": "Free open source Minecraft server management panel with Docker",
+  "description": "Free open source Minecraft server management panel for Java and Bedrock Edition with Docker",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#1a1a1a",
   "theme_color": "#3eaf7c",
+  "categories": ["games", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "48x48",
-      "type": "image/x-icon"
+      "type": "image/x-icon",
+      "purpose": "any"
     },
     {
       "src": "/cubo.webp",
       "sizes": "512x512",
-      "type": "image/webp"
+      "type": "image/webp",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/img/Animation.gif",
+      "sizes": "1920x1080",
+      "type": "image/gif",
+      "label": "Minepanel Dashboard"
+    }
+  ],
+  "prefer_related_applications": false
 }

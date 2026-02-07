@@ -1,6 +1,10 @@
 ---
-title: Architecture - Minepanel
-description: How Minepanel works under the hood.
+title: Architecture - Minepanel | Technical Documentation
+description: Technical architecture of Minepanel - Next.js frontend, NestJS backend, Docker integration, SQLite database, and real-time server management. Learn how it works under the hood.
+head:
+  - - meta
+    - name: keywords
+      content: minepanel architecture, docker architecture, nestjs api, nextjs frontend, minecraft server architecture, docker socket, system design
 ---
 
 # Architecture

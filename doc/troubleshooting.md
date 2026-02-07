@@ -1,7 +1,10 @@
 ---
-title: Troubleshooting - Minepanel
-description: Fix common Minepanel issues. Docker errors, connection problems, server management, mods not downloading, and performance optimization.
+title: Troubleshooting Guide - Minepanel
+description: Comprehensive troubleshooting guide for Minepanel - Fix Docker errors, CORS issues, connection problems, server startup failures, authentication errors, and performance optimization. Step-by-step solutions.
 head:
+  - - meta
+    - name: keywords
+      content: minepanel troubleshooting, docker errors, cors errors, connection issues, server not starting, authentication problems, debug guide, error solutions
   - - meta
     - property: og:title
       content: Minepanel Troubleshooting Guide
@@ -141,7 +144,7 @@ sudo ufw allow 3000/tcp
 
 ```yaml
 environment:
-  - FRONTEND_URL=http://YOUR_IP:3000  # Not localhost!
+  - FRONTEND_URL=http://YOUR_IP:3000 # Not localhost!
 ```
 
 2. **Firewall configuration:**
@@ -256,7 +259,7 @@ ls -l /var/run/docker.sock
 
 ```yaml
 environment:
-  - BASE_DIR=/absolute/path  # Must be absolute!
+  - BASE_DIR=/absolute/path # Must be absolute!
 ```
 
 3. **Check disk space:**
@@ -403,8 +406,8 @@ ls -ld servers/your-server/mc-data
 df -h
 ```
 
-
 ```bash
+
 ```
 
 ### Can't Edit Files
@@ -437,7 +440,7 @@ deploy:
 
 ```yaml
 environment:
-  USE_AIKAR_FLAGS: "true"
+  USE_AIKAR_FLAGS: 'true'
 ```
 
 3. **Reduce view distance:**
@@ -478,7 +481,7 @@ sudo swapon /swapfile
 
 ```yaml
 environment:
-  ENABLE_AUTOPAUSE: "true"
+  ENABLE_AUTOPAUSE: 'true'
   AUTOPAUSE_TIMEOUT_EST: 3600
 ```
 
@@ -593,7 +596,7 @@ If accessing from internet, ensure router forwards UDP port.
 
 ```yaml
 environment:
-  ENABLE_LAN_VISIBILITY: "true"
+  ENABLE_LAN_VISIBILITY: 'true'
 ```
 
 4. **Online mode:**
@@ -629,14 +632,14 @@ docker exec CONTAINER send-command say Hello
 
 ```yaml
 environment:
-  EULA: "TRUE"
+  EULA: 'TRUE'
 ```
 
 2. **Version issues:**
 
 ```yaml
 environment:
-  VERSION: LATEST  # or specific like "1.21.0.03"
+  VERSION: LATEST # or specific like "1.21.0.03"
 ```
 
 3. **Check logs for specific error:**
@@ -707,4 +710,3 @@ docker compose up -d
 - Review [Administration Guide](/administration)
 - Check [Configuration Reference](/configuration)
 - Join the community for support
-

@@ -1,11 +1,36 @@
+# Minepanel Documentation - Robots Configuration
+# Allow all compliant crawlers
+
 User-agent: *
 Allow: /
-
-# Block crawlers from internal assets
-Disallow: /assets/
+Disallow: /assets/chunks/
 Disallow: /hashmap.json
+Disallow: /_vitepress/
 
-Sitemap: https://minepanel.ketbome.com/sitemap.xml
+# Specific crawlers
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
 
-# Crawl-delay for politeness (optional)
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
 Crawl-delay: 1
+
+# Block AI scrapers that don't respect robots.txt properly
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+# Sitemap
+Sitemap: https://minepanel.ketbome.com/sitemap.xml

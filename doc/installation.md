@@ -1,6 +1,10 @@
 ---
-title: Installation - Minepanel
-description: Install Minepanel with Docker.
+title: Installation Methods - Minepanel
+description: Multiple installation methods for Minepanel - Docker Compose, single container, development build, and test images. Choose the best deployment option for your needs.
+head:
+  - - meta
+    - name: keywords
+      content: minepanel installation, docker compose install, minecraft server docker, self hosted minecraft, pterodactyl alternative install, docker deployment
 ---
 
 # Installation

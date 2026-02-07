@@ -1,6 +1,10 @@
 ---
-title: Configuration - Minepanel
-description: Environment variables and settings reference.
+title: Configuration Guide - Minepanel
+description: Complete configuration reference for Minepanel - Environment variables, JWT setup, port configuration, CORS settings, authentication, and deployment options for production environments.
+head:
+  - - meta
+    - name: keywords
+      content: minepanel configuration, environment variables, jwt secret, docker configuration, cors settings, production deployment, server setup
 ---
 
 # Configuration

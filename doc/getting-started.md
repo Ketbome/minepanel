@@ -1,6 +1,10 @@
 ---
-title: Getting Started - Minepanel
-description: Get Minepanel running in 2 minutes.
+title: Getting Started - Minepanel Quick Setup Guide
+description: Install and run Minepanel in 2 minutes - Docker-based Minecraft server manager. Step-by-step guide to create your first Java or Bedrock server. No technical experience required.
+head:
+  - - meta
+    - name: keywords
+      content: minepanel quickstart, install minepanel, docker minecraft setup, minecraft server tutorial, first server setup, quick installation
 ---
 
 # Getting Started

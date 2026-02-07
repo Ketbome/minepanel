@@ -1,6 +1,10 @@
 ---
-title: Features - Minepanel
-description: What Minepanel can do.
+title: Features - Minepanel | Minecraft Server Management Panel
+description: Complete feature list for Minepanel - Manage multiple Minecraft Java and Bedrock servers, real-time monitoring, file browser, automatic backups, proxy support, and more. Free and open source.
+head:
+  - - meta
+    - name: keywords
+      content: minepanel features, minecraft server features, server management tools, minecraft admin panel, server monitoring, file management, backup automation, proxy routing
 ---
 
 # Features
@@ -92,23 +96,23 @@ Edit from UI:
 
 ## Other
 
-| Feature          | Description                                         |
-| ---------------- | --------------------------------------------------- |
-| Multi-language   | EN, ES, NL, DE                                      |
-| Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)                   |
-| Discord webhooks | Server event notifications                          |
-| MC Proxy Router  | Single port for Java servers via hostname           |
+| Feature          | Description                               |
+| ---------------- | ----------------------------------------- |
+| Multi-language   | EN, ES, NL, DE                            |
+| Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
+| Discord webhooks | Server event notifications                |
+| MC Proxy Router  | Single port for Java servers via hostname |
 
 ## Edition Comparison
 
-| Feature         | Java Edition              | Bedrock Edition           |
-| --------------- | ------------------------- | ------------------------- |
-| Server Types    | Vanilla, Paper, Forge, etc. | Vanilla only            |
-| Default Port    | 25565 (TCP)               | 19132 (UDP)               |
-| Commands        | RCON console              | send-command (via logs)   |
-| Proxy Support   | Yes (mc-router)           | No                        |
-| Mods/Plugins    | Full support              | Addons/Behavior Packs     |
-| Backups         | Full support              | Full support              |
+| Feature       | Java Edition                | Bedrock Edition         |
+| ------------- | --------------------------- | ----------------------- |
+| Server Types  | Vanilla, Paper, Forge, etc. | Vanilla only            |
+| Default Port  | 25565 (TCP)                 | 19132 (UDP)             |
+| Commands      | RCON console                | send-command (via logs) |
+| Proxy Support | Yes (mc-router)             | No                      |
+| Mods/Plugins  | Full support                | Addons/Behavior Packs   |
+| Backups       | Full support                | Full support            |
 
 ::: tip Bedrock Commands
 Bedrock servers use `send-command` instead of RCON. Command output appears in server logs rather than returning directly.

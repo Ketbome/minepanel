@@ -1,7 +1,10 @@
 ---
-title: Server Types - Minepanel
-description: Supported Minecraft server types in Minepanel. Java Edition (Vanilla, Paper, Spigot, Forge, Fabric, Purpur, Folia, CurseForge) and Bedrock Edition configuration.
+title: Server Types - Minepanel | Java & Bedrock Edition Support
+description: Complete guide to Minecraft server types in Minepanel - Java Edition (Vanilla, Paper, Spigot, Forge, Fabric, Purpur, Folia, CurseForge modpacks) and Bedrock Edition servers with full configuration.
 head:
+  - - meta
+    - name: keywords
+      content: minecraft server types, paper server, forge server, fabric server, purpur server, bedrock server, vanilla server, spigot server, curseforge modpacks, minecraft editions
   - - meta
     - property: og:title
       content: Minecraft Server Types - Minepanel
@@ -18,10 +21,10 @@ Minepanel supports both **Java Edition** and **Bedrock Edition** servers.
 
 ## Server Editions
 
-| Edition | Image | Default Port | Protocol | Proxy Support |
-| ------- | ----- | ------------ | -------- | ------------- |
-| Java    | `itzg/minecraft-server` | 25565 | TCP | Yes (mc-router) |
-| Bedrock | `itzg/minecraft-bedrock-server` | 19132 | UDP | No |
+| Edition | Image                           | Default Port | Protocol | Proxy Support   |
+| ------- | ------------------------------- | ------------ | -------- | --------------- |
+| Java    | `itzg/minecraft-server`         | 25565        | TCP      | Yes (mc-router) |
+| Bedrock | `itzg/minecraft-bedrock-server` | 19132        | UDP      | No              |
 
 ## How It Works
 
@@ -40,9 +43,10 @@ flowchart LR
 ```
 
 ::: tip Documentation
+
 - **Java:** [docker-minecraft-server docs](https://docker-minecraft-server.readthedocs.io/)
 - **Bedrock:** [minecraft-bedrock-server docs](https://github.com/itzg/docker-minecraft-bedrock-server)
-:::
+  :::
 
 ---
 
@@ -58,30 +62,30 @@ Minecraft Bedrock Edition server for cross-platform play (Windows 10/11, Xbox, P
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Version | `VERSION` | Server version | `LATEST` |
-| Server Name | `SERVER_NAME` | Server display name | `Dedicated Server` |
-| Gamemode | `GAMEMODE` | survival, creative, adventure | `survival` |
-| Difficulty | `DIFFICULTY` | peaceful, easy, normal, hard | `easy` |
-| Allow Cheats | `ALLOW_CHEATS` | Enable cheats | `false` |
-| Max Players | `MAX_PLAYERS` | Maximum players | `10` |
-| View Distance | `VIEW_DISTANCE` | Render distance | `32` |
-| Tick Distance | `TICK_DISTANCE` | Simulation distance | `4` |
-| Online Mode | `ONLINE_MODE` | Xbox Live auth required | `true` |
-| White List | `WHITE_LIST` | Enable whitelist | `false` |
+| Option        | Variable        | Description                   | Default            |
+| ------------- | --------------- | ----------------------------- | ------------------ |
+| Version       | `VERSION`       | Server version                | `LATEST`           |
+| Server Name   | `SERVER_NAME`   | Server display name           | `Dedicated Server` |
+| Gamemode      | `GAMEMODE`      | survival, creative, adventure | `survival`         |
+| Difficulty    | `DIFFICULTY`    | peaceful, easy, normal, hard  | `easy`             |
+| Allow Cheats  | `ALLOW_CHEATS`  | Enable cheats                 | `false`            |
+| Max Players   | `MAX_PLAYERS`   | Maximum players               | `10`               |
+| View Distance | `VIEW_DISTANCE` | Render distance               | `32`               |
+| Tick Distance | `TICK_DISTANCE` | Simulation distance           | `4`                |
+| Online Mode   | `ONLINE_MODE`   | Xbox Live auth required       | `true`             |
+| White List    | `WHITE_LIST`    | Enable whitelist              | `false`            |
 
 ### Example Configuration
 
 ```yaml
 environment:
-  EULA: "TRUE"
+  EULA: 'TRUE'
   VERSION: LATEST
-  SERVER_NAME: "My Bedrock Server"
+  SERVER_NAME: 'My Bedrock Server'
   GAMEMODE: survival
   DIFFICULTY: normal
   MAX_PLAYERS: 20
-  ALLOW_CHEATS: "false"
+  ALLOW_CHEATS: 'false'
 ```
 
 ### Permissions (XUIDs)
@@ -149,13 +153,13 @@ A lightweight modding platform alternative to Forge.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Loader Version | `FABRIC_LOADER_VERSION` | Fabric loader version | Latest |
-| Launcher Version | `FABRIC_LAUNCHER_VERSION` | Fabric launcher version | Latest |
-| Custom Launcher | `FABRIC_LAUNCHER` | Path to custom launcher jar | - |
-| Launcher URL | `FABRIC_LAUNCHER_URL` | URL to custom launcher | - |
-| Force Reinstall | `FABRIC_FORCE_REINSTALL` | Re-install if corrupted | `false` |
+| Option           | Variable                  | Description                 | Default |
+| ---------------- | ------------------------- | --------------------------- | ------- |
+| Loader Version   | `FABRIC_LOADER_VERSION`   | Fabric loader version       | Latest  |
+| Launcher Version | `FABRIC_LAUNCHER_VERSION` | Fabric launcher version     | Latest  |
+| Custom Launcher  | `FABRIC_LAUNCHER`         | Path to custom launcher jar | -       |
+| Launcher URL     | `FABRIC_LAUNCHER_URL`     | URL to custom launcher      | -       |
+| Force Reinstall  | `FABRIC_FORCE_REINSTALL`  | Re-install if corrupted     | `false` |
 
 ### Example Configuration
 
@@ -177,8 +181,8 @@ The most popular mod loader with extensive mod compatibility.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
+| Option        | Variable        | Description        | Default            |
+| ------------- | --------------- | ------------------ | ------------------ |
 | Forge Version | `FORGE_VERSION` | Forge build number | Latest for version |
 
 ### Example
@@ -196,11 +200,11 @@ High-performance Spigot fork with plugins support.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Build | `PAPER_BUILD` | Specific Paper build | Latest |
-| Channel | `PAPER_CHANNEL` | Release channel | `default` |
-| Download URL | `PAPER_DOWNLOAD_URL` | Custom download URL | - |
+| Option       | Variable             | Description          | Default   |
+| ------------ | -------------------- | -------------------- | --------- |
+| Build        | `PAPER_BUILD`        | Specific Paper build | Latest    |
+| Channel      | `PAPER_CHANNEL`      | Release channel      | `default` |
+| Download URL | `PAPER_DOWNLOAD_URL` | Custom download URL  | -         |
 
 ### Example
 
@@ -217,10 +221,10 @@ Popular plugin-based server.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Download URL | `SPIGOT_DOWNLOAD_URL` | Custom download URL | - |
-| Build from Source | `BUILD_FROM_SOURCE` | Compile from source | `false` |
+| Option            | Variable              | Description         | Default |
+| ----------------- | --------------------- | ------------------- | ------- |
+| Download URL      | `SPIGOT_DOWNLOAD_URL` | Custom download URL | -       |
+| Build from Source | `BUILD_FROM_SOURCE`   | Compile from source | `false` |
 
 ### Example
 
@@ -236,10 +240,10 @@ The original plugin platform.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Download URL | `BUKKIT_DOWNLOAD_URL` | Custom download URL | - |
-| Build from Source | `BUILD_FROM_SOURCE` | Compile from source | `false` |
+| Option            | Variable              | Description         | Default |
+| ----------------- | --------------------- | ------------------- | ------- |
+| Download URL      | `BUKKIT_DOWNLOAD_URL` | Custom download URL | -       |
+| Build from Source | `BUILD_FROM_SOURCE`   | Compile from source | `false` |
 
 ## Purpur
 
@@ -247,11 +251,11 @@ Fork of Paper with additional features.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Build | `PURPUR_BUILD` | Specific Purpur build | Latest |
-| Download URL | `PURPUR_DOWNLOAD_URL` | Custom download URL | - |
-| Flare Flags | `USE_FLARE_FLAGS` | Use Flare performance flags | `false` |
+| Option       | Variable              | Description                 | Default |
+| ------------ | --------------------- | --------------------------- | ------- |
+| Build        | `PURPUR_BUILD`        | Specific Purpur build       | Latest  |
+| Download URL | `PURPUR_DOWNLOAD_URL` | Custom download URL         | -       |
+| Flare Flags  | `USE_FLARE_FLAGS`     | Use Flare performance flags | `false` |
 
 ## Pufferfish
 
@@ -259,10 +263,10 @@ Paper fork focused on performance.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Build | `PUFFERFISH_BUILD` | Specific build | Latest |
-| Flare Flags | `USE_FLARE_FLAGS` | Use Flare flags | `false` |
+| Option      | Variable           | Description     | Default |
+| ----------- | ------------------ | --------------- | ------- |
+| Build       | `PUFFERFISH_BUILD` | Specific build  | Latest  |
+| Flare Flags | `USE_FLARE_FLAGS`  | Use Flare flags | `false` |
 
 ## Folia
 
@@ -270,11 +274,11 @@ Experimental multi-threaded Paper fork.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Build | `FOLIA_BUILD` | Specific build | Latest |
-| Channel | `FOLIA_CHANNEL` | Release channel | `default` |
-| Download URL | `FOLIA_DOWNLOAD_URL` | Custom URL | - |
+| Option       | Variable             | Description     | Default   |
+| ------------ | -------------------- | --------------- | --------- |
+| Build        | `FOLIA_BUILD`        | Specific build  | Latest    |
+| Channel      | `FOLIA_CHANNEL`      | Release channel | `default` |
+| Download URL | `FOLIA_DOWNLOAD_URL` | Custom URL      | -         |
 
 ## Leaf
 
@@ -282,9 +286,9 @@ Another Paper fork with optimizations.
 
 ### Configuration Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Build | `LEAF_BUILD` | Specific build | Latest |
+| Option | Variable     | Description    | Default |
+| ------ | ------------ | -------------- | ------- |
+| Build  | `LEAF_BUILD` | Specific build | Latest  |
 
 ## CurseForge Modpacks
 
@@ -326,14 +330,14 @@ environment:
 
 ### Advanced Options
 
-| Option | Variable | Description | Default |
-|--------|----------|-------------|---------|
-| Force Sync | `CF_FORCE_SYNCHRONIZE` | Re-download even if exists | `false` |
-| Parallel Downloads | `CF_PARALLEL_DOWNLOADS` | Concurrent downloads | `4` |
-| Skip Existing | `CF_OVERRIDES_SKIP_EXISTING` | Don't overwrite files | `false` |
-| Set Level From | `CF_SET_LEVEL_FROM` | World source: `WORLD_FILE`, `OVERRIDES` | - |
-| Force Include | `CF_FORCE_INCLUDE_MODS` | Force download specific mods | - |
-| Exclude Mods | `CF_EXCLUDE_MODS` | Exclude specific mods | - |
+| Option             | Variable                     | Description                             | Default |
+| ------------------ | ---------------------------- | --------------------------------------- | ------- |
+| Force Sync         | `CF_FORCE_SYNCHRONIZE`       | Re-download even if exists              | `false` |
+| Parallel Downloads | `CF_PARALLEL_DOWNLOADS`      | Concurrent downloads                    | `4`     |
+| Skip Existing      | `CF_OVERRIDES_SKIP_EXISTING` | Don't overwrite files                   | `false` |
+| Set Level From     | `CF_SET_LEVEL_FROM`          | World source: `WORLD_FILE`, `OVERRIDES` | -       |
+| Force Include      | `CF_FORCE_INCLUDE_MODS`      | Force download specific mods            | -       |
+| Exclude Mods       | `CF_EXCLUDE_MODS`            | Exclude specific mods                   | -       |
 
 ## Server Type Categories
 
@@ -351,13 +355,13 @@ flowchart LR
     style MP fill:#7c2d12,stroke:#f97316,color:#fff
 ```
 
-| Category | Types | Use Case |
-|----------|-------|----------|
-| **🟡 Bedrock** | BEDROCK | Cross-platform (consoles, mobile, Windows 10/11) |
-| **🟢 Vanilla** | VANILLA | Pure Minecraft Java, no modifications |
-| **🔵 Mod Loaders** | Forge, Fabric | Client-side mods required |
-| **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients |
-| **🟠 Modpacks** | AUTO_CURSEFORGE | Pre-configured mod collections |
+| Category              | Types                                    | Use Case                                         |
+| --------------------- | ---------------------------------------- | ------------------------------------------------ |
+| **🟡 Bedrock**        | BEDROCK                                  | Cross-platform (consoles, mobile, Windows 10/11) |
+| **🟢 Vanilla**        | VANILLA                                  | Pure Minecraft Java, no modifications            |
+| **🔵 Mod Loaders**    | Forge, Fabric                            | Client-side mods required                        |
+| **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
+| **🟠 Modpacks**       | AUTO_CURSEFORGE                          | Pre-configured mod collections                   |
 
 ---
 
@@ -369,11 +373,12 @@ flowchart LR
 ## External Resources
 
 **Java Edition:**
+
 - [docker-minecraft-server Docs](https://docker-minecraft-server.readthedocs.io/) - Full environment variables reference
 - [Server Types Reference](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/) - All supported server types
 - [Mod Platforms](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/) - Modrinth, CurseForge, Spiget integration
 
 **Bedrock Edition:**
+
 - [minecraft-bedrock-server GitHub](https://github.com/itzg/docker-minecraft-bedrock-server) - Bedrock server image
 - [Bedrock Server Properties](https://minecraft.wiki/w/Server.properties#Bedrock_Edition) - All configuration options
-
