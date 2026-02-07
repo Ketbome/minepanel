@@ -124,10 +124,11 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       // Only send fields that the DTO accepts
+      // If local storage doesn't exist, default it to english so the backend doesn't receive an undefined value and returns an error
       const updateData = {
         cfApiKey: data.cfApiKey,
         discordWebhook: data.discordWebhook,
-        language: localStorage.getItem('language') as 'en' | 'es',
+        language: (localStorage.getItem('language') as 'en' | 'es') || 'en',
         proxy: {
           proxyEnabled: proxySettings.enabled,
           proxyBaseDomain: proxyBaseDomain || undefined,
