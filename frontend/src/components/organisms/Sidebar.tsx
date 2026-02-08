@@ -201,7 +201,7 @@ export function Sidebar() {
               <span
                 className={cn(
                   'font-minecraft text-sm transition-all duration-200 overflow-hidden whitespace-nowrap',
-                  isCollapsed ? 'opacity-0 w-0' : 'opacity-100',
+                  isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block',
                 )}
               >
                 {item.label}
