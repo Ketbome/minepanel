@@ -6,7 +6,7 @@ services:
       - "2022:2022"
     environment:
       - NODE_ENV=production
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3004}
       - JWT_SECRET=${JWT_SECRET} # Required. Generate with: openssl rand -base64 32
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
@@ -23,7 +23,7 @@ services:
   frontend:
     image: ketbom/minepanel-frontend:latest
     ports:
-      - "${FRONTEND_PORT:-3004}:3000"
+      - "${FRONTEND_PORT:-3004}:3004"
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
