@@ -1327,4 +1327,19 @@ export const nl: Record<TranslationKey, string> = {
   bedrockCreativeDesc: 'Creative modus met cheats ingeschakeld voor alle spelers.',
   bedrockFamily: 'Bedrock Familie',
   bedrockFamilyDesc: 'Privé LAN server voor familiespel met whitelist.',
+
+  // SFTP
+  sftp: 'SFTP',
+  enableSftp: 'SFTP Inschakelen',
+  disableSftp: 'SFTP Uitschakelen',
+  sftpDetails: 'SFTP Verbindingsdetails',
+  sftpHost: 'Host',
+  sftpPort: 'Poort',
+  sftpUsername: 'Gebruikersnaam',
+  sftpPassword: 'Wachtwoord',
+  sftpPasswordDesc: 'Gebruik je accountwachtwoord',
+  sftpStatus: 'SFTP Status',
+  sftpActive: 'Actief',
+  sftpInactive: 'Inactief',
+  sftpWarning: 'SFTP geeft directe toegang tot bestanden. Wees voorzichtig.',
 };
