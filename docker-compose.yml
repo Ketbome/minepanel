@@ -3,6 +3,7 @@ services:
     image: ketbom/minepanel-backend:latest
     ports:
       - "${BACKEND_PORT:-8091}:8091"
+      - "2022:2022"
     environment:
       - NODE_ENV=production
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
