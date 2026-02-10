@@ -12,5 +12,6 @@ import { Settings } from 'src/users/entities/settings.entity';
   imports: [TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule],
   controllers: [ServerManagementController],
   providers: [ServerManagementService, DockerComposeService],
+  exports: [ServerManagementService, DockerComposeService],
 })
-export class ServerManagementModule {}
+export class ServerManagementModule { }

@@ -94,7 +94,7 @@ export class ServerManagementService {
     return /^[a-zA-Z0-9_-]+$/.test(serverId);
   }
 
-  private async serverExists(serverId: string): Promise<boolean> {
+  public async serverExists(serverId: string): Promise<boolean> {
     return fs.pathExists(path.join(this.SERVERS_DIR, serverId));
   }
 
@@ -102,7 +102,7 @@ export class ServerManagementService {
     return path.join(this.SERVERS_DIR, serverId, 'docker-compose.yml');
   }
 
-  private getMcDataPath(serverId: string): string {
+  public getMcDataPath(serverId: string): string {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
@@ -1078,9 +1078,9 @@ export class ServerManagementService {
         const playerList = match[3]?.trim();
         const players = playerList
           ? playerList
-              .split(',')
-              .map((p) => p.trim())
-              .filter(Boolean)
+            .split(',')
+            .map((p) => p.trim())
+            .filter(Boolean)
           : [];
         return { online, max, players, supportsRcon: true };
       }
@@ -1116,9 +1116,9 @@ export class ServerManagementService {
         const playerList = match[3]?.trim();
         const players = playerList
           ? playerList
-              .split(',')
-              .map((p) => p.trim())
-              .filter(Boolean)
+            .split(',')
+            .map((p) => p.trim())
+            .filter(Boolean)
           : [];
         return { online, max, players, supportsRcon: false };
       }
