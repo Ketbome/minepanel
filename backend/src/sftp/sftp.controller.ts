@@ -1,7 +1,7 @@
 
 import { Controller, Get, Post, Param, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { SftpService } from './sftp.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 
 @Controller('server-management/servers/:id/sftp')

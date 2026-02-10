@@ -23,6 +23,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --only=production
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/host.key ./host.key
 
 EXPOSE 8091
 

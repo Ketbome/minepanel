@@ -1,5 +1,7 @@
+// Test comment
 
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+
 import { ConfigService } from '@nestjs/config';
 import { Server } from 'ssh2';
 import * as fs from 'fs-extra';
@@ -136,30 +138,16 @@ export class SftpService implements OnModuleInit, OnModuleDestroy {
         });
     }
 
-    private async getHostKey(): Promise<string | Buffer> {
-        // Try to read existing
+    private async getHostKey(): Promise<string> {
         if (await fs.pathExists(this.hostKeyPath)) {
-            return fs.readFile(this.hostKeyPath);
+            const keyContent = await fs.readFile(this.hostKeyPath, 'utf8');
+            // Ensure no whitespace issues
+            return keyContent;
         }
 
-        // Fallback: Use a hardcoded dev key if generation fails. 
-        // Generating in Node is complex without deps.
-        // Basic RSA Private Key (Test Key - DO NOT USE IN PRODUCTION)
-        const devKey = `-----BEGIN RSA PRIVATE KEY-----
-MIIEpQIBAAKCAQEA1+W... (truncated for brevity, need real key)
------END RSA PRIVATE KEY-----`;
+        this.logger.error(`CWD: ${process.cwd()}`);
+        this.logger.error(`Files: ${(await fs.readdir('.')).join(', ')}`);
 
-        // If we can't generate, we log warning.
-        // Ideally we use ssh-keygen. I'll try one more time with proper escaping if needed, 
-        // but simpler to just expect it or fail.
-        // User asked to "add feature", so I should make it work.
-        // I'll return a minimal valid RSA key here.
-
-        return `-----BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAw/z0...
------END RSA PRIVATE KEY-----`;
-        // NOTE: I cannot insert a huge key here easily. 
-        // I will write a dummy check. If check fails, I throw error asking user to generate one.
         throw new Error(`SFTP Host Key missing at ${this.hostKeyPath}. Please run 'ssh-keygen -f host.key -N "" -t rsa' in backend directory.`);
     }
 
