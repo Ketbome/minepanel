@@ -1321,4 +1321,19 @@ export const de: Record<TranslationKey, string> = {
   bedrockCreativeDesc: 'Kreativmodus mit aktivierten Cheats für alle Spieler.',
   bedrockFamily: 'Bedrock Familie',
   bedrockFamilyDesc: 'Privater LAN-Server für Familienspiel mit Whitelist.',
+
+  // SFTP
+  sftp: 'SFTP',
+  enableSftp: 'SFTP aktivieren',
+  disableSftp: 'SFTP deaktivieren',
+  sftpDetails: 'SFTP-Verbindungsdetails',
+  sftpHost: 'Host',
+  sftpPort: 'Port',
+  sftpUsername: 'Benutzername',
+  sftpPassword: 'Passwort',
+  sftpPasswordDesc: 'Verwenden Sie Ihr Kontopasswort',
+  sftpStatus: 'SFTP-Status',
+  sftpActive: 'Aktiv',
+  sftpInactive: 'Inaktiv',
+  sftpWarning: 'SFTP ermöglicht direkten Zugriff auf Dateien. Seien Sie vorsichtig.',
 };

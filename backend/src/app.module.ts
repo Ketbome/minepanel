@@ -12,6 +12,7 @@ import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
+import { SftpModule } from './sftp/sftp.module';
 
 @Module({
   imports: [
@@ -27,9 +28,11 @@ import { ProxyModule } from './proxy/proxy.module';
     DiscordModule,
     CurseforgeModule,
     FilesModule,
+    FilesModule,
     ProxyModule,
+    SftpModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
