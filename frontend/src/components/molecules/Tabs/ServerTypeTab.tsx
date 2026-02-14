@@ -437,7 +437,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'NEOFORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
               >
                 <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/fox.webp" alt="Neoforge" width={24} height={24} />
+                  <Image src="/images/neoforged.png" alt="Neoforge" width={24} height={24} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">

@@ -183,7 +183,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
           <>
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <Label htmlFor="neoforgeBuild" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                <Image src="/images/anvil.webp" alt="Forge" width={16} height={16} />
+                <Image src="/images/neoforged.png" alt="Forge" width={16} height={16} />
                 {t("neoforgeVersion")}
               </Label>
               <Input id="neoforgeBuild" value={config.neoforgeBuild} onChange={(e) => updateConfig("neoforgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
