@@ -131,6 +131,8 @@ export const en = {
     'Basic Minecraft server without mods or plugins. Ideal for playing in classic survival mode.',
   serverForge:
     'Server with support for mods using Forge. Requires configuration of the specific version of Forge to be used.',
+  serverNeoforge:
+    'Server with support for mods using Neoforge. Requires configuration of the specific version of Neoforge to be used.',
   serverCurseForge:
     "Automatically installs modpacks from CurseForge. Can be configured using the modpack's URL, or slug.",
   serverCurseForgeManual:
@@ -954,6 +956,10 @@ export const en = {
   // Forge Configuration
   forgeVersion: 'Forge Version',
   forgeBuildDesc: 'Forge build number for the selected Minecraft version',
+
+  // Neoforge Configuration
+  neoforgeVersion: 'Neoforge Version',
+  neoforgeBuildDesc: 'Neoforge build number for the selected Minecraft version',
 
   // Fabric Configuration
   serverFabric:

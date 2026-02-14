@@ -9,6 +9,7 @@ export type ServerEdition = 'JAVA' | 'BEDROCK';
 export type ServerType =
   | 'VANILLA'
   | 'FORGE'
+  | 'NEOFORGE'
   | 'AUTO_CURSEFORGE'
   | 'CURSEFORGE'
   | 'SPIGOT'
@@ -147,6 +148,9 @@ export interface ServerConfig {
 
   // Forge specific
   forgeBuild?: string;
+
+  // Neoforge specific
+  neoforgeBuild?: string;
 
   // Fabric specific
   fabricLoaderVersion?: string;

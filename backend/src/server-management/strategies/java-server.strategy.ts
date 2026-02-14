@@ -48,6 +48,7 @@ export class JavaServerStrategy implements IServerStrategy {
     return [
       'VANILLA',
       'FORGE',
+      'NEOFORGE',
       'AUTO_CURSEFORGE',
       'CURSEFORGE',
       'SPIGOT',
@@ -158,6 +159,10 @@ export class JavaServerStrategy implements IServerStrategy {
     if (config.forgeBuild) env['FORGE_VERSION'] = config.forgeBuild;
   }
 
+  private addNeoforgeConfig(env: Record<string, string>, config: ServerConfig): void {
+    if (config.neoforgeBuild) env['NEOFORGE_VERSION'] = config.neoforgeBuild;
+  }
+
   private addFabricConfig(env: Record<string, string>, config: ServerConfig): void {
     if (config.fabricLoaderVersion) env['FABRIC_LOADER_VERSION'] = config.fabricLoaderVersion;
     if (config.fabricLauncherVersion) env['FABRIC_LAUNCHER_VERSION'] = config.fabricLauncherVersion;
@@ -178,6 +183,7 @@ export class JavaServerStrategy implements IServerStrategy {
 
     const serverTypeHandlers: Record<string, () => void> = {
       FORGE: () => this.addForgeConfig(env, config),
+      NEOFORGE: () => this.addNeoforgeConfig(env, config),
       FABRIC: () => this.addFabricConfig(env, config),
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
       CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
@@ -199,7 +205,7 @@ export class JavaServerStrategy implements IServerStrategy {
   }
 
   private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
     if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
@@ -213,7 +219,7 @@ export class JavaServerStrategy implements IServerStrategy {
   }
 
   private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
     const apiKey = config.cfApiKey;
