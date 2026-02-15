@@ -186,7 +186,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                 <Image src="/images/neoforged.png" alt="Forge" width={16} height={16} />
                 {t("neoforgeVersion")}
               </Label>
-              <Input id="neoforgeBuild" value={config.neoforgeBuild} onChange={(e) => updateConfig("neoforgeBuild", e.target.value)} placeholder="43.2.0" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+              <Input id="neoforgeBuild" value={config.neoforgeBuild} onChange={(e) => updateConfig("neoforgeBuild", e.target.value)} placeholder="21.1.219" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("neoforgeBuildDesc")}</p>
             </div>
 
