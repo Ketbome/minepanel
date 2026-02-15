@@ -985,7 +985,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Forge Configuration
   neoforgeVersion: 'Neoforge versie',
-  neoforgeBuildDesc: 'Neoforge build nummer voor de geselecteerde Minecraft versie',
+  neoforgeBuildDesc: 'Neoforge buildnummer (de juiste Minecraft-versie wordt automatisch geselecteerd)',
 
   // Fabric Configuration
   serverFabric:

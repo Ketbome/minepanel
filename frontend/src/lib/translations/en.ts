@@ -959,7 +959,7 @@ export const en = {
 
   // Neoforge Configuration
   neoforgeVersion: 'Neoforge Version',
-  neoforgeBuildDesc: 'Neoforge build number for the selected Minecraft version',
+  neoforgeBuildDesc: 'Neoforge build number (will autoselected correct Minecraft version)',
 
   // Fabric Configuration
   serverFabric:

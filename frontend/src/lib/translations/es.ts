@@ -968,7 +968,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Configuración de Neoforge
   neoforgeVersion: 'Versión de Neoforge',
-  neoforgeBuildDesc: 'Número de build de Neoforge para la versión de Minecraft seleccionada',
+  neoforgeBuildDesc: 'Número de compilación de Neoforge (se seleccionará automáticamente la versión correcta de Minecraft)',
 
   // Configuración de Fabric
   serverFabric:
