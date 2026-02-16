@@ -6,8 +6,8 @@ on:
       - main
       - documentation
     paths:
-      - "doc/**"
-      - ".github/workflows/deploy-docs.yml"
+      - 'doc/**'
+      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
