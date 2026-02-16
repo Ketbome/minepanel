@@ -35,7 +35,7 @@ docker compose pull && docker compose up -d
 ## Servers
 
 **What server types work?**
-All: Vanilla, Paper, Forge, Fabric, Spigot, Purpur, CurseForge modpacks.
+All: Vanilla, Paper, Forge, Neoforge, Fabric, Spigot, Purpur, CurseForge modpacks.
 **→** [Server Types](/server-types)
 
 **Multiple servers?**

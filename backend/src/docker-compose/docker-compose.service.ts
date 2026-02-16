@@ -195,6 +195,7 @@ export class DockerComposeService {
         dockerLabels: this.extractDockerLabels(mcService.labels),
         extraPorts: extraPorts,
         forgeBuild: '',
+        neoforgeBuild: '',
         fabricLoaderVersion: '',
         fabricLauncherVersion: '',
         fabricLauncher: '',
@@ -255,7 +256,7 @@ export class DockerComposeService {
   }
 
   private extractCustomEnvVars(env: any): string {
-    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
+    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
 
     const customVars: string[] = [];
     for (const [key, value] of Object.entries(env)) {
@@ -347,6 +348,11 @@ export class DockerComposeService {
           serverConfig.forgeBuild = env.FORGE_VERSION;
         }
       },
+      NEOFORGE: () => {
+        if (env.NEOFORGE_VERSION) {
+          serverConfig.neoforgeBuild = env.NEOFORGE_VERSION;
+        }
+      },
       FABRIC: () => {
         serverConfig.fabricLoaderVersion = env.FABRIC_LOADER_VERSION ?? '';
         serverConfig.fabricLauncherVersion = env.FABRIC_LAUNCHER_VERSION ?? '';
@@ -397,7 +403,7 @@ export class DockerComposeService {
   }
 
   private parseCurseForgeFilesConfig(serverConfig: ServerConfig, env: any): void {
-    const compatibleTypes = ['FORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
     if (!compatibleTypes.includes(serverConfig.serverType)) return;
 
     serverConfig.cfFiles = env.CURSEFORGE_FILES ?? '';
@@ -596,6 +602,7 @@ export class DockerComposeService {
       skipDownloadDefaults: false,
 
       forgeBuild: '',
+      neoforgeBuild: '',
 
       fabricLoaderVersion: '',
       fabricLauncherVersion: '',
@@ -865,6 +872,10 @@ export class DockerComposeService {
       env['FORGE_VERSION'] = config.forgeBuild;
     }
 
+    if (config.serverType === 'NEOFORGE' && config.neoforgeBuild) {
+      env['NEOFORGE_VERSION'] = config.neoforgeBuild;
+    }
+
     if (config.serverType === 'FABRIC') {
       if (config.fabricLoaderVersion) env['FABRIC_LOADER_VERSION'] = config.fabricLoaderVersion;
       if (config.fabricLauncherVersion) env['FABRIC_LAUNCHER_VERSION'] = config.fabricLauncherVersion;
@@ -901,7 +912,7 @@ export class DockerComposeService {
   }
 
   private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
     if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
@@ -916,7 +927,7 @@ export class DockerComposeService {
 
   private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
     // CURSEFORGE_FILES works with FORGE, FABRIC, QUILT, AUTO_CURSEFORGE, and NeoForge
-    const compatibleTypes = ['FORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
     const apiKey = config.cfApiKey;

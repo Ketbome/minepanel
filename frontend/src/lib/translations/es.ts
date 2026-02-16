@@ -133,6 +133,8 @@ export const es: Record<TranslationKey, string> = {
     'Servidor básico de Minecraft sin mods ni plugins. Ideal para jugar en modo supervivencia clásico.',
   serverForge:
     'Servidor con soporte para mods usando Forge. Requiere configurar la versión de Forge específica a utilizar.',
+  serverNeoforge:
+    'Servidor con soporte para mods usando Neoforge. Requiere configurar la versión de Neoforge específica a utilizar.',
   serverCurseForge:
     'Instala automáticamente modpacks de CurseForge. Se puede configurar mediante URL, o Slug.',
   serverCurseForgeManual:
@@ -963,6 +965,10 @@ export const es: Record<TranslationKey, string> = {
   // Configuración de Forge
   forgeVersion: 'Versión de Forge',
   forgeBuildDesc: 'Número de build de Forge para la versión de Minecraft seleccionada',
+
+  // Configuración de Neoforge
+  neoforgeVersion: 'Versión de Neoforge',
+  neoforgeBuildDesc: 'Número de compilación de Neoforge (se seleccionará automáticamente la versión correcta de Minecraft)',
 
   // Configuración de Fabric
   serverFabric:

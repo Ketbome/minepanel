@@ -133,6 +133,8 @@ export const nl: Record<TranslationKey, string> = {
     'Standaard Vanilla Minecraft server (zonder mods of plugins). Ideaal voor het spelen in klassieke survival-modus.',
   serverForge:
     'Server met ondersteuning voor mods via Forge. Vereist configuratie van de specifieke Forge-versie die gebruikt moet worden.',
+  serverNeoforge:
+    'Server met ondersteuning voor mods via Neoforge. Vereist configuratie van de specifieke Neoforge-versie die gebruikt moet worden.',
   serverCurseForge:
     'Installeert automatisch modpacks van CurseForge. Kan geconfigureerd worden met de URL of slug van het modpack.',
   serverCurseForgeManual:
@@ -980,6 +982,10 @@ export const nl: Record<TranslationKey, string> = {
   // Forge Configuration
   forgeVersion: 'Forge versie',
   forgeBuildDesc: 'Forge build nummer voor de geselecteerde Minecraft versie',
+
+  // Forge Configuration
+  neoforgeVersion: 'Neoforge versie',
+  neoforgeBuildDesc: 'Neoforge buildnummer (de juiste Minecraft-versie wordt automatisch geselecteerd)',
 
   // Fabric Configuration
   serverFabric:

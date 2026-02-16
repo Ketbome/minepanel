@@ -27,7 +27,7 @@ flowchart LR
 | ---------------- | ---------------------------------------------------------- |
 | Java & Bedrock   | Both Minecraft editions supported                          |
 | Multiple servers | Run as many as hardware allows, isolated containers        |
-| All server types | Vanilla, Paper, Forge, Fabric, Purpur, CurseForge modpacks |
+| All server types | Vanilla, Paper, Forge, Neoforge, Fabric, Purpur, CurseForge modpacks |
 | Any version      | 1.8 to latest, snapshots included                          |
 | Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, etc.    |
 | Resource limits  | Set RAM, CPU per server                                    |

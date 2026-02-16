@@ -31,7 +31,7 @@ export default withMermaid(
         {
           name: 'keywords',
           content:
-            'minecraft server manager, minecraft java server, minecraft bedrock server, minecraft server panel, minecraft docker, minecraft control panel, pterodactyl alternative, aternos alternative, self hosted minecraft, minecraft web panel, paper server manager, forge server manager, fabric server manager, purpur server, spigot server, minecraft bedrock docker, free minecraft server hosting, minecraft dashboard, minecraft server hosting panel, manage minecraft servers',
+            'minecraft server manager, minecraft java server, minecraft bedrock server, minecraft server panel, minecraft docker, minecraft control panel, pterodactyl alternative, aternos alternative, self hosted minecraft, minecraft web panel, paper server manager, forge server manager, neoforge server manager, fabric server manager, purpur server, spigot server, minecraft bedrock docker, free minecraft server hosting, minecraft dashboard, minecraft server hosting panel, manage minecraft servers',
         },
       ],
       ['meta', { name: 'author', content: 'Ketbome' }],

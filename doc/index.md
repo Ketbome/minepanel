@@ -7,7 +7,7 @@ head:
       content: Minepanel - Minecraft Java & Bedrock Server Manager
   - - meta
     - property: og:description
-      content: Open source web panel to manage Minecraft Java and Bedrock servers. Self-hosted, Docker-based, supports Paper/Forge/Fabric/Spigot/Purpur/Bedrock.
+      content: Open source web panel to manage Minecraft Java and Bedrock servers. Self-hosted, Docker-based, supports Paper/Forge/Neoforge/Fabric/Spigot/Purpur/Bedrock.
   - - meta
     - name: keywords
       content: minecraft server manager, minecraft java server, minecraft bedrock server, minecraft server panel, minecraft docker, pterodactyl alternative, aternos alternative
@@ -43,7 +43,7 @@ features:
 
   - icon: 🔧
     title: All Server Types
-    details: Vanilla, Paper, Forge, Fabric, Purpur, CurseForge modpacks.
+    details: Vanilla, Paper, Forge, Neoforge, Fabric, Purpur, CurseForge modpacks.
 
   - icon: 📊
     title: Real-time Monitoring
