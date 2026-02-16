@@ -1,16 +1,16 @@
 ---
 title: Server Types - Minepanel | Java & Bedrock Edition Support
-description: Complete guide to Minecraft server types in Minepanel - Java Edition (Vanilla, Paper, Spigot, Forge, Fabric, Purpur, Folia, CurseForge modpacks) and Bedrock Edition servers with full configuration.
+description: Complete guide to Minecraft server types in Minepanel - Java Edition (Vanilla, Paper, Spigot, Forge, Neoforge, Fabric, Purpur, Folia, CurseForge modpacks) and Bedrock Edition servers with full configuration.
 head:
   - - meta
     - name: keywords
-      content: minecraft server types, paper server, forge server, fabric server, purpur server, bedrock server, vanilla server, spigot server, curseforge modpacks, minecraft editions
+      content: minecraft server types, paper server, forge server, neoforge server, fabric server, purpur server, bedrock server, vanilla server, spigot server, curseforge modpacks, minecraft editions
   - - meta
     - property: og:title
       content: Minecraft Server Types - Minepanel
   - - meta
     - property: og:description
-      content: Configure Java Edition (Vanilla, Paper, Forge, Fabric, Purpur) and Bedrock Edition servers with Minepanel.
+      content: Configure Java Edition (Vanilla, Paper, Forge, Neoforge, Fabric, Purpur) and Bedrock Edition servers with Minepanel.
 ---
 
 # Server Types
@@ -194,6 +194,25 @@ environment:
   FORGE_VERSION: 43.2.0
 ```
 
+## Neoforge
+
+A free, open-source, community-oriented modding API for Minecraft.
+
+### Configuration Options
+
+| Option           | Variable           | Description           | Default            |
+| ---------------- | ------------------ | --------------------- | ------------------ |
+| Neoforge Version | `NEOFORGE_VERSION` | Neoforge build number | Latest for version |
+
+### Example
+
+```yaml
+environment:
+  TYPE: NEOFORGE
+  VERSION: 1.21.1
+  NEOFORGE_VERSION: 21.1.219
+```
+
 ## Paper
 
 High-performance Spigot fork with plugins support.
@@ -344,7 +363,7 @@ environment:
 ```mermaid
 flowchart LR
     B["🟡 Bedrock"] ~~~ V["🟢 Vanilla"]
-    V ~~~ M["🔵 Mods<br/>Forge, Fabric"]
+    V ~~~ M["🔵 Mods<br/>Forge, Neoforge, Fabric"]
     M ~~~ P["🟣 Plugins<br/>Paper, Spigot"]
     P ~~~ MP["🟠 Modpacks<br/>CurseForge"]
 
@@ -359,7 +378,7 @@ flowchart LR
 | --------------------- | ---------------------------------------- | ------------------------------------------------ |
 | **🟡 Bedrock**        | BEDROCK                                  | Cross-platform (consoles, mobile, Windows 10/11) |
 | **🟢 Vanilla**        | VANILLA                                  | Pure Minecraft Java, no modifications            |
-| **🔵 Mod Loaders**    | Forge, Fabric                            | Client-side mods required                        |
+| **🔵 Mod Loaders**    | Forge, Neoforge, Fabric                  | Client-side mods required                        |
 | **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
 | **🟠 Modpacks**       | AUTO_CURSEFORGE                          | Pre-configured mod collections                   |
 

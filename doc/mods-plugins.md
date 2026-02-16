@@ -71,6 +71,7 @@ Automatically download and manage mods, plugins, and datapacks from [Modrinth](h
 
 - ✅ Fabric
 - ✅ Forge
+- ✅ Neoforge
 - ✅ CurseForge (AUTO_CURSEFORGE)
 
 ### How to Add Mods from Minepanel

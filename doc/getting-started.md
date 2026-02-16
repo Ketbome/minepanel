@@ -90,7 +90,7 @@ docker compose restart
 | Topic                           | What you'll learn                         |
 | ------------------------------- | ----------------------------------------- |
 | [Configuration](/configuration) | Environment variables, ports, directories |
-| [Server Types](/server-types)   | Paper, Forge, Fabric, modpacks            |
+| [Server Types](/server-types)   | Paper, Forge, Neoforge, Fabric, modpacks  |
 | [Networking](/networking)       | Remote access, SSL, proxy                 |
 | [Features](/features)           | Everything Minepanel can do               |
 

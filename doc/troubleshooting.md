@@ -383,7 +383,7 @@ docker exec <server-name> ping api.curseforge.com
 **Solutions:**
 
 1. **Check Minecraft version matches mods**
-2. **Verify loader version** (Fabric/Forge)
+2. **Verify loader version** (Fabric/Forge/Neoforge)
 3. **Check mod dependencies**
 4. **Remove conflicting mods** one by one
 
