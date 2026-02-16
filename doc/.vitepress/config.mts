@@ -315,13 +315,6 @@ export default withMermaid(
 
     vite: {
       build: {
-        rollupOptions: {
-          output: {
-            manualChunks: {
-              'vue-vendor': ['vue', 'vue-router'],
-            },
-          },
-        },
         minify: 'terser',
         terserOptions: {
           compress: {
@@ -332,7 +325,6 @@ export default withMermaid(
         cssCodeSplit: true,
         assetsInlineLimit: 4096,
       },
-      // Image optimization hints
       optimizeDeps: {
         exclude: ['@vueuse/core'],
       },
