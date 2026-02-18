@@ -207,7 +207,6 @@ export class JavaServerStrategy implements IServerStrategy {
   }
 
   private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
-    // 1️⃣ Optional extra mods, usable for any server type
     if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
     if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
       env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
@@ -217,7 +216,7 @@ export class JavaServerStrategy implements IServerStrategy {
     }
     if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
 
-    // 2️⃣ Only set MODPACK for pure MODRINTH server
+    // Only set MODPACK for pure MODRINTH server
     if (config.serverType === 'MODRINTH') {
       env['MODPACK_PLATFORM'] = 'MODRINTH';
       if (!config.modrinthModpack) {

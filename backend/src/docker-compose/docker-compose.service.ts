@@ -403,7 +403,7 @@ export class DockerComposeService {
   }
 
   private parseCurseForgeFilesConfig(serverConfig: ServerConfig, env: any): void {
-    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE', 'MODRINTH'];
     if (!compatibleTypes.includes(serverConfig.serverType)) return;
 
     serverConfig.cfFiles = env.CURSEFORGE_FILES ?? '';
@@ -895,7 +895,7 @@ export class DockerComposeService {
     const serverTypeHandlers = {
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
       CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
-      MODRINTH: () => this.addModrinthModpackConfig(env, config),
+      MODRINTH: () => this.addModrinthConfig(env, config),
       SPIGOT: () => this.addPluginServerConfig(env, config),
       PAPER: () => this.addPluginServerConfig(env, config),
       BUKKIT: () => this.addPluginServerConfig(env, config),
@@ -913,34 +913,32 @@ export class DockerComposeService {
     }
   }
 
-  private addModrinthModpackConfig(env: Record<string, string>, config: ServerConfig): void {
-    if (config.serverType !== 'MODRINTH') return;
-
-    // Require this field for MODRINTH servers
-    env['MODRINTH_MODPACK'] = config.modrinthModpack ?? '';
-
-    // Optional
-    if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
-      env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
-    }
-    if (config.modrinthDefaultVersionType && config.modrinthDefaultVersionType !== 'release') {
-      env['MODRINTH_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
-    }
-    if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
-  }
-
   private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
     const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'AUTO_CURSEFORGE', 'MODRINTH'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
-    if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
+    if (config.serverType === 'MODRINTH') {
+      env['MODRINTH_MODPACK'] = config.modrinthModpack ?? '';
+      if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
+    } else if (config.modrinthLoader) {
+      env['MODRINTH_LOADER'] = config.modrinthLoader;
+    }
+
     if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
       env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
     }
+
     if (config.modrinthDefaultVersionType && config.modrinthDefaultVersionType !== 'release') {
-      env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
+      if (config.serverType === 'MODRINTH') {
+        env['MODRINTH_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
+      } else {
+        env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
+      }
     }
-    if (config.modrinthLoader && config.serverType !== 'MODRINTH') env['MODRINTH_LOADER'] = config.modrinthLoader;
+
+    if (config.modrinthProjects) {
+      env['MODRINTH_PROJECTS'] = config.modrinthProjects;
+    }
   }
 
   private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
