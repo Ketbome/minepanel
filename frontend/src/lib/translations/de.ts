@@ -1011,6 +1011,8 @@ export const de: Record<TranslationKey, string> = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth-Modpack',
   modrinthModpackDesc: 'Gib den Slug oder die URL des Modrinth-Modpacks ein, das du verwenden möchtest.',
+  modrinthModpackTooltip: 'Gib den Modrinth-Projekt-Slug oder die URL ein. Du kannst auch eine spezifische Version angeben (z. B. https://modrinth.com/modpack/surface-living/version/1.2.1).',
+
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Veraltete Funktion',

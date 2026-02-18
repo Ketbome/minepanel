@@ -998,6 +998,7 @@ export const en = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth Modpack',
   modrinthModpackDesc: 'Enter the slug or URL of the Modrinth modpack you want to use.',
+  modrinthModpackTooltip: 'Enter the Modrinth project slug or URL. You can also include a specific version (e.g., https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Deprecated Feature',

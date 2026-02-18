@@ -685,17 +685,29 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <Image src="/images/modrinth.svg" alt="Modrinth" width={16} height={16} />
                   {t("modrinthModpack")}
                 </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t("modrinthModpackTooltip")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <Input
                 id="modrinthModpack"
                 value={config.modrinthModpack}
                 onChange={(e) => updateConfig("modrinthModpack", e.target.value)}
-                placeholder="modrinth-project-slug-or-url"
+                placeholder="surface-living"
                 className="mt-2 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30"
               />
               <p className="text-xs text-gray-400 mt-1">{t("modrinthModpackDesc")}</p>
             </div>
-
+            <h3 className="text-sm font-minecraft text-gray-300 mb-4">Additional mods</h3>
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-1">
@@ -733,7 +745,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
             <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
               <div className="flex items-center justify-between">
                 <Label htmlFor="cfFiles" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
-                  <Image src="/images/ender_chest.webp" alt="Incluir" width={16} height={16} />
+                  <Image src="/images/ender_chest.webp" alt="Incluid" width={16} height={16} />
                   {t("curseforgeFiles")}
                 </Label>
                 <div className="flex items-center gap-2">

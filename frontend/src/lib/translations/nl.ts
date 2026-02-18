@@ -1023,6 +1023,7 @@ export const nl: Record<TranslationKey, string> = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth Modpack',
   modrinthModpackDesc: 'Voer de slug of URL in van het Modrinth-modpack dat je wilt gebruiken.',
+  modrinthModpackTooltip: 'Voer de Modrinth-projectslug of URL in. Je kunt ook een specifieke versie opgeven (bijv. https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Verouderde functie',

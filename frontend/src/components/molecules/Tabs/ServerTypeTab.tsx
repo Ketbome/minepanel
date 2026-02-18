@@ -66,9 +66,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
     }
   };
 
-  console.log("Server type:", config.serverType);
-
-
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
       <CardHeader className="pb-3">
