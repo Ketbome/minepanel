@@ -51,6 +51,7 @@ export class JavaServerStrategy implements IServerStrategy {
       'NEOFORGE',
       'AUTO_CURSEFORGE',
       'CURSEFORGE',
+      'MODRINTH',
       'SPIGOT',
       'FABRIC',
       'MAGMA',
@@ -187,6 +188,7 @@ export class JavaServerStrategy implements IServerStrategy {
       FABRIC: () => this.addFabricConfig(env, config),
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
       CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
+      MODRINTH: () => this.addModrinthConfig(env, config),
       SPIGOT: () => this.addPluginServerConfig(env, config),
       PAPER: () => this.addPluginServerConfig(env, config),
       BUKKIT: () => this.addPluginServerConfig(env, config),
@@ -205,9 +207,6 @@ export class JavaServerStrategy implements IServerStrategy {
   }
 
   private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'AUTO_CURSEFORGE'];
-    if (!compatibleTypes.includes(config.serverType)) return;
-
     if (config.modrinthProjects) env['MODRINTH_PROJECTS'] = config.modrinthProjects;
     if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
       env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
@@ -216,10 +215,15 @@ export class JavaServerStrategy implements IServerStrategy {
       env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
     }
     if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
+
+    // Only set MODPACK for pure MODRINTH server
+    if (config.serverType === 'MODRINTH') {
+      env['MODRINTH_MODPACK'] = config.modrinthModpack;
+    }
   }
 
   private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE'];
+    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE', 'MODRINTH'];
     if (!compatibleTypes.includes(config.serverType)) return;
 
     const apiKey = config.cfApiKey;

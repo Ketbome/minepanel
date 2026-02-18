@@ -139,6 +139,8 @@ export const es: Record<TranslationKey, string> = {
     'Instala automáticamente modpacks de CurseForge. Se puede configurar mediante URL, o Slug.',
   serverCurseForgeManual:
     'Modo manual para modpacks de CurseForge. Utiliza archivos ZIP precargados. Función obsoleta, recomendamos usar CurseForge Modpack.',
+  serverModrinth:
+    'Instala automáticamente modpacks de Modrinth. Se puede configurar mediante URL, o Slug.',
   serverSpigot: 'Servidor optimizado compatible con plugins de Bukkit',
   serverPaper: 'Servidor de alto rendimiento basado en Spigot con optimizaciones adicionales',
   serverBukkit: 'Servidor clásico con soporte de plugins API estándar',
@@ -1000,6 +1002,11 @@ export const es: Record<TranslationKey, string> = {
   browse: 'Explorar',
   modpackSelected: 'Modpack seleccionado',
   searchOrBrowsePopular: 'Busca un modpack o explora los populares',
+
+  // Modrinth Modpack Configuration
+  modrinthModpack: 'Modpack de Modrinth',
+  modrinthModpackDesc: 'Introduce el slug o la URL del modpack de Modrinth que quieres usar.',
+  modrinthModpackTooltip: 'Introduce el slug o la URL del proyecto de Modrinth. También puedes incluir una versión específica (p. ej., https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: 'Función obsoleta (Deprecated)',

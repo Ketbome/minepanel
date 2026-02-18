@@ -11,6 +11,7 @@ export type ServerType =
   | 'FORGE'
   | 'NEOFORGE'
   | 'AUTO_CURSEFORGE'
+  | 'MODRINTH'
   | 'CURSEFORGE'
   | 'SPIGOT'
   | 'FABRIC'
@@ -164,6 +165,8 @@ export interface ServerConfig {
   modrinthDownloadDependencies?: 'none' | 'required' | 'optional';
   modrinthDefaultVersionType?: 'release' | 'beta' | 'alpha';
   modrinthLoader?: string;
+
+  modrinthModpack?: string;
 
   // CurseForge specific
   cfMethod?: 'url' | 'slug' | 'file';

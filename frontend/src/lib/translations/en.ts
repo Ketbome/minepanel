@@ -137,6 +137,8 @@ export const en = {
     "Automatically installs modpacks from CurseForge. Can be configured using the modpack's URL, or slug.",
   serverCurseForgeManual:
     'Manual mode for CurseForge modpacks. Uses preloaded ZIP files. Obsolete feature, we recommend using CurseForge Modpack.',
+  serverModrinth:
+    "Automatically installs modpacks from Modrinth. Can be configured using the modpack's URL, or slug.",
   serverSpigot: 'Optimized server compatible with Bukkit plugins',
   serverPaper: 'High-performance server based on Spigot with additional optimizations',
   serverBukkit: 'Classic server with standard plugin API support',
@@ -992,6 +994,11 @@ export const en = {
   modpackSelected: 'Modpack selected',
   searchOrBrowsePopular: 'Search for a modpack or browse popular ones',
   searchModpacks: 'Search modpacks...',
+
+  // Modrinth Modpack Configuration
+  modrinthModpack: 'Modrinth Modpack',
+  modrinthModpackDesc: 'Enter the slug or URL of the Modrinth modpack you want to use.',
+  modrinthModpackTooltip: 'Enter the Modrinth project slug or URL. You can also include a specific version (e.g., https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Deprecated Feature',

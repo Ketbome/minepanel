@@ -29,8 +29,8 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const edition = config.edition ?? 'JAVA';
   const isJava = edition === 'JAVA';
   const isBedrock = edition === 'BEDROCK';
-  const isCurseForge =
-    config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE';
+  const isModpack =
+    config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' || config.serverType === 'MODRINTH';
 
   const { versions, loading, latestRelease, refresh, getRecommended } = useMinecraftVersions({
     filterType: 'release',
@@ -65,9 +65,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
       updateConfig('enableRcon', true);
     }
   };
-
-  console.log("Server type:", config.serverType);
-
 
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
@@ -136,7 +133,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
         </div>
 
         {/* Java Version Selector */}
-        {!isCurseForge && isJava && (
+        {!isModpack && isJava && (
           <div className="space-y-3 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
             <div className="flex items-center justify-between">
               <Label
@@ -526,6 +523,35 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                     </Label>
                   </div>
                   <p className="text-sm text-gray-300 mt-1">{t('serverCurseForgeManual')}</p>
+                </div>
+              </div>
+
+              <div
+                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'MODRINTH' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+              >
+                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                  <Image
+                    src="/images/modrinth.svg"
+                    alt="CurseForge"
+                    width={24}
+                    height={24}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="MODRINTH"
+                      id="modrinth"
+                      className="border-emerald-600/50"
+                    />
+                    <Label
+                      htmlFor="modrinth"
+                      className="text-base font-medium text-gray-100 font-minecraft"
+                    >
+                      Modrinth Modpack
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-300 mt-1">{t('serverModrinth')}</p>
                 </div>
               </div>
 
