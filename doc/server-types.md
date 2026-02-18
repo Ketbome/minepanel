@@ -309,6 +309,36 @@ Another Paper fork with optimizations.
 | ------ | ------------ | -------------- | ------- |
 | Build  | `LEAF_BUILD` | Specific build | Latest  |
 
+## Modrinth Modpacks
+
+Install complete modpacks from Modrinth.
+
+### Installation Methods
+
+**1. Slug:**
+
+```yaml
+environment:
+  TYPE: MODRINTH
+  MODRINTH_MODPACK: surface-living
+```
+
+**2. URL:**
+
+```yaml
+environment:
+  TYPE: MODRINTH
+  MODRINTH_MODPACK: https://modrinth.com/modpack/surface-living
+```
+
+**2. URL (with version locking):**
+
+```yaml
+environment:
+  TYPE: MODRINTH
+  MODRINTH_MODPACK: https://modrinth.com/modpack/surface-living/version/1.2.1
+```
+
 ## CurseForge Modpacks
 
 Install complete modpacks from CurseForge.

@@ -73,6 +73,7 @@ Automatically download and manage mods, plugins, and datapacks from [Modrinth](h
 - ✅ Forge
 - ✅ Neoforge
 - ✅ CurseForge (AUTO_CURSEFORGE)
+- ✅ Modrinth Modpacks
 
 ### How to Add Mods from Minepanel
 
@@ -205,6 +206,35 @@ environment:
 
 </details>
 
+## Modrinth Modpacks {#modrinth-modpacks}
+
+Install complete modpacks from [Modrinth](https://modrinth.com) using the **MODRINTH_MODPACK** server type.
+
+### Installation Methods in Minepanel
+
+When creating/editing a server with type **MODRINTH_MODPACK**, there is one method which can be used in several ways.
+
+| Method                | Auto-updates? | Use case                                  |
+| --------------------- | ------------- | ----------------------------------------- |
+| **Slug**              | ✅ Yes         | Always gets the latest compatible version |
+| **URL**               | ✅ Yes         | Always gets the latest compatible version |
+| **URL with verison**  | ✅ No          | Locks to the specified version            |
+
+**Slug**
+
+1. Enter the modpack project slug (e.g., `surface-living`) into the Modrinth Modpack field
+3. On each server start, it downloads the **latest compatible version**
+
+**Url**
+
+1. Enter the modpack project URL (e.g., `https://modrinth.com/modpack/surface-living`)
+2. On each server start, it downloads the **latest compatible version**
+
+**Url (version locked)**
+
+1. Enter the modpack project URL for a specific version (e.g., `https://modrinth.com/modpack/surface-living/version/1.2.1`)
+2. On each server start, it will **ignore any updated version** of the modpack
+
 ## CurseForge Modpacks {#curseforge-modpacks}
 
 Install complete modpacks from [CurseForge](https://www.curseforge.com) using the **AUTO_CURSEFORGE** server type.
@@ -219,9 +249,9 @@ When creating/editing a server with type **AUTO_CURSEFORGE**, you can choose bet
 
 | Method   | Auto-updates? | Use case                                 |
 | -------- | ------------- | ---------------------------------------- |
-| **URL**  | ✅ Yes        | Always get the latest compatible version |
-| **Slug** | ❌ No         | Lock to a specific file version          |
-| **File** | ❌ No         | Use a local modpack zip file             |
+| **URL**  | ✅ Yes         | Always get the latest compatible version |
+| **Slug** | ❌ No          | Lock to a specific file version          |
+| **File** | ❌ No          | Use a local modpack zip file             |
 
 ### Method: URL (Recommended for auto-updates)
 
@@ -267,8 +297,6 @@ Useful for modpacks downloaded manually or custom modpacks.
 ### Browse Modpacks
 
 Minepanel includes a **Browse** button to search CurseForge modpacks directly from the UI. Click it to find and select modpacks without leaving the panel.
-
----
 
 ## CurseForge Files (Individual Mods) {#curseforge-files}
 
