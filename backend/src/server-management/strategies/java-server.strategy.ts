@@ -218,10 +218,6 @@ export class JavaServerStrategy implements IServerStrategy {
 
     // Only set MODPACK for pure MODRINTH server
     if (config.serverType === 'MODRINTH') {
-      env['MODPACK_PLATFORM'] = 'MODRINTH';
-      if (!config.modrinthModpack) {
-        throw new Error('MODRINTH_MODPACK must be set for MODRINTH server!');
-      }
       env['MODRINTH_MODPACK'] = config.modrinthModpack;
     }
   }
