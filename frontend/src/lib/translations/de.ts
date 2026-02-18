@@ -139,6 +139,8 @@ export const de: Record<TranslationKey, string> = {
     'Installiert automatisch Modpacks von CurseForge. Kann über URL oder Slug des Modpacks konfiguriert werden.',
   serverCurseForgeManual:
     'Manueller Modus für CurseForge-Modpacks. Verwendet vorgeladene ZIP-Dateien. Veraltete Funktion, wir empfehlen CurseForge Modpack.',
+  serverModrinth:
+    'Installiert automatisch Modpacks von Modrinth. Kann über URL oder Slug des Modpacks konfiguriert werden.',
   serverSpigot: 'Optimierter Server kompatibel mit Bukkit-Plugins',
   serverPaper: 'Hochleistungsserver basierend auf Spigot mit zusätzlichen Optimierungen',
   serverBukkit: 'Klassischer Server mit Standard-Plugin-API-Unterstützung',
@@ -1005,6 +1007,10 @@ export const de: Record<TranslationKey, string> = {
   modpackSelected: 'Modpack ausgewählt',
   searchOrBrowsePopular: 'Nach einem Modpack suchen oder beliebte durchstöbern',
   searchModpacks: 'Modpacks suchen...',
+
+  // Modrinth Modpack Configuration
+  modrinthModpack: 'Modrinth-Modpack',
+  modrinthModpackDesc: 'Gib den Slug oder die URL des Modrinth-Modpacks ein, das du verwenden möchtest.',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Veraltete Funktion',

@@ -139,6 +139,8 @@ export const nl: Record<TranslationKey, string> = {
     'Installeert automatisch modpacks van CurseForge. Kan geconfigureerd worden met de URL of slug van het modpack.',
   serverCurseForgeManual:
     'Handmatige modus voor CurseForge modpacks. (Gebruikt vooraf geladen ZIP-bestanden) (Verouderde functie, we raden aan CurseForge Modpack te gebruiken)',
+  serverModrinth:
+    'Installeert automatisch modpacks van Modrinth. Kan geconfigureerd worden met de URL of slug van het modpack.',
   serverSpigot: 'Geoptimaliseerde server compatibel met Bukkit plugins',
   serverPaper: 'Geoptimaliseerde server gebaseerd op Spigot met extra optimalisaties',
   serverBukkit: 'Klassieke server met plugin API ondersteuning',
@@ -1017,6 +1019,10 @@ export const nl: Record<TranslationKey, string> = {
   browse: 'Bladeren',
   modpackSelected: 'Modpack geselecteerd',
   searchOrBrowsePopular: 'Zoek een modpack of blader door populaire',
+
+  // Modrinth Modpack Configuration
+  modrinthModpack: 'Modrinth Modpack',
+  modrinthModpackDesc: 'Voer de slug of URL in van het Modrinth-modpack dat je wilt gebruiken.',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Verouderde functie',

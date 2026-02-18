@@ -20,9 +20,9 @@ export class ServerConfigDto {
   @IsOptional()
   edition?: ServerEdition;
 
-  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
+  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'MODRINTH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
+  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'MODRINTH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
 
   // General configuration
   @IsString()
@@ -389,6 +389,10 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   modrinthLoader?: string;
+
+  @IsString()
+  @IsOptional()
+  modrinthModpack?: string;
 
   // Ports
   @IsString({ each: true })
