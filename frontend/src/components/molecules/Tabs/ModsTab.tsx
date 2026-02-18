@@ -194,7 +194,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-1">
                   <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} />
-                  <Label htmlFor="cfApiKeyForge" className="text-gray-200 font-minecraft text-sm">
+                  <Label htmlFor="cfApiKeyNeoforge" className="text-gray-200 font-minecraft text-sm">
                     {t("cfApiKey")}
                   </Label>
                   <TooltipProvider>
@@ -226,7 +226,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
 
             <div className="space-y-2 p-4 rounded-md bg-emerald-900/10 border-2 border-emerald-500/30">
               <div className="flex items-center justify-between">
-                <Label htmlFor="cfFilesForge" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
+                <Label htmlFor="cfFilesNeoforge" className="text-emerald-400 font-minecraft text-sm flex items-center gap-2">
                   <Image src="/images/ender_chest.webp" alt="CurseForge" width={16} height={16} />
                   {t("curseforgeFiles")}
                 </Label>
