@@ -1,17 +1,27 @@
 import api from "../axios.service";
 
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
 export const login = async (username: string, password: string) => {
   try {
     const response = await api.post(`/auth/login`, { username, password }, { withCredentials: true });
 
-    if (response.data.access_token) {
-      localStorage.setItem("token", response.data.access_token);
+    if (response.data.username) {
       localStorage.setItem("username", response.data.username);
-      api.defaults.headers.common["Authorization"] = `Bearer ${response.data.access_token}`;
       return { success: true, data: response.data };
     }
 
-    return { success: false, error: "NO_ACCESS_TOKEN" };
+    return { success: false, error: "NO_USERNAME" };
   } catch (error) {
     console.error("Error in login:", error);
     const err = error as { response?: { data?: { message?: string } } };
@@ -22,21 +32,36 @@ export const login = async (username: string, password: string) => {
   }
 };
 
-export const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
-  delete api.defaults.headers.common["Authorization"];
-  if(typeof window !== "undefined" && window.location.pathname !== "/") {
-    window.location.href = "/";
+export const logout = async () => {
+  try {
+    await api.post("/auth/logout", {}, { withCredentials: true });
+  } catch (error) {
+    console.error("Error in logout:", error);
+  } finally {
+    localStorage.removeItem("username");
+    if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      window.location.href = "/";
+    }
   }
 };
 
-export const isAuthenticated = (): boolean => {
+export const refreshToken = async (): Promise<boolean> => {
+  try {
+    const response = await api.post("/auth/refresh", {}, { withCredentials: true });
+    return response.status === 200;
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    return false;
+  }
+};
+
+export const isAuthenticated = async (): Promise<boolean> => {
   if (typeof window === "undefined") return false;
 
   try {
-    const token = localStorage.getItem("token");
-    return !!token;
+    // Try to refresh token to verify session is valid
+    const isValid = await refreshToken();
+    return isValid;
   } catch (error) {
     console.error("Error checking authentication:", error);
     return false;
@@ -46,16 +71,40 @@ export const isAuthenticated = (): boolean => {
 export const setupAxiosInterceptors = () => {
   if (typeof window === "undefined") return;
 
-  const token = localStorage.getItem("token");
-  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
   api.interceptors.response.use(
     (response) => response,
-    (error) => {
-      if (error.response?.status === 401) logout();
+    async (error) => {
+      const originalRequest = error.config;
+
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            addRefreshSubscriber(() => {
+              resolve(api(originalRequest));
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        const refreshed = await refreshToken();
+
+        if (refreshed) {
+          isRefreshing = false;
+          onRefreshed("refreshed");
+          return api(originalRequest);
+        } else {
+          isRefreshing = false;
+          await logout();
+          return Promise.reject(error);
+        }
+      }
+
       return Promise.reject(error instanceof Error ? error : new Error(error.message || "Authentication error"));
     }
   );
 };
 
 if (globalThis.window !== undefined) setupAxiosInterceptors();
+
