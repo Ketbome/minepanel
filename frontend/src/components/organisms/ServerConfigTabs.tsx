@@ -1,19 +1,21 @@
 import { FormEvent, FC, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
-import { LogsTab } from "../molecules/Tabs/LogsTab";
-import { CommandsTab } from "../molecules/Tabs/CommandsTab";
-import { AdvancedTab } from "../molecules/Tabs/AdvancedTab";
-import { ModsTab } from "../molecules/Tabs/ModsTab";
-import { PluginsTab } from "../molecules/Tabs/PluginsTab";
-import { ResourcesTab } from "../molecules/Tabs/ResourcesTab";
-import { GeneralSettingsTab } from "../molecules/Tabs/GeneralSettingsTab";
-import { ServerTypeTab } from "../molecules/Tabs/ServerTypeTab";
-import { BedrockSettingsTab } from "../molecules/Tabs/BedrockSettingsTab";
-import { FilesTab } from "../molecules/Tabs/FilesTab";
 import { SaveModeControl } from "../molecules/SaveModeControl";
 import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+
+const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
+const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
+const AdvancedTab = dynamic(() => import("../molecules/Tabs/AdvancedTab").then(mod => mod.AdvancedTab));
+const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mod.ModsTab));
+const PluginsTab = dynamic(() => import("../molecules/Tabs/PluginsTab").then(mod => mod.PluginsTab));
+const ResourcesTab = dynamic(() => import("../molecules/Tabs/ResourcesTab").then(mod => mod.ResourcesTab));
+const GeneralSettingsTab = dynamic(() => import("../molecules/Tabs/GeneralSettingsTab").then(mod => mod.GeneralSettingsTab));
+const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").then(mod => mod.ServerTypeTab));
+const BedrockSettingsTab = dynamic(() => import("../molecules/Tabs/BedrockSettingsTab").then(mod => mod.BedrockSettingsTab));
+const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
 
 interface ServerConfigTabsProps {
   readonly serverId: string;
