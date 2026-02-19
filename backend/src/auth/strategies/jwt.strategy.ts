@@ -7,10 +7,16 @@ import { UsersService } from 'src/users/services/users.service';
 import { Request } from 'express';
 
 const extractJwtFromHeaderOrQuery = (req: Request): string | null => {
+  // Priority 1: Cookie (most secure)
+  if (req.cookies?.access_token) {
+    return req.cookies.access_token;
+  }
+  
+  // Priority 2: Authorization header (for API clients)
   const fromHeader = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
   if (fromHeader) return fromHeader;
 
-  // Fallback to query param for file downloads
+  // Priority 3: Query param (for file downloads only)
   const token = req.query?.token as string;
   return token || null;
 };
