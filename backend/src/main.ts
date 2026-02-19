@@ -2,6 +2,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { UsersService } from './users/services/users.service';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,6 +14,8 @@ async function bootstrap() {
       exposedHeaders: ['Authorization'],
     },
   });
+
+  app.use(cookieParser());
 
   const basePath = process.env.BASE_PATH || '';
   if (basePath) {
