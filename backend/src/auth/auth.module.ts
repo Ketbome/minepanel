@@ -20,7 +20,11 @@ import { RefreshToken } from './entities/refresh-token.entity';
       useFactory: async (configService: ConfigService) => {
         return {
           secret: configService.get('jwtSecret'),
-          signOptions: { expiresIn: '24h' },
+          signOptions: {
+            expiresIn: '15m',
+            issuer: configService.get('jwtIssuer'),
+            audience: configService.get('jwtAudience'),
+          },
         };
       },
     }),
