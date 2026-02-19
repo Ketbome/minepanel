@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Link from "next/link";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
-import { useServersStore } from "@/lib/store";
+import { useServersStore } from "@/lib/store/servers-store";
 import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
 import { ServerEdition } from "@/lib/types/types";
 import { TranslationKey } from "@/lib/translations";
