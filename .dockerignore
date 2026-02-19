@@ -4,6 +4,7 @@
 **/npm-debug.log*
 **/yarn-debug.log*
 **/yarn-error.log*
+**/pnpm-debug.log*
 
 # Build outputs
 backend/dist
@@ -11,17 +12,18 @@ frontend/.next
 frontend/out
 frontend/build
 
-# Testing
+# Testing (no excluir test/ de backend, lo necesita para e2e)
 **/coverage
 **/.nyc_output
-**/test
 
 # Environment files
 **/.env*.local
 **/.env
+!**/.env.example
 
 # TypeScript
 **/*.tsbuildinfo
+**/.tsc-cache
 
 # IDE
 .vscode
@@ -29,24 +31,41 @@ frontend/build
 **/*.swp
 **/*.swo
 **/*~
+.editorconfig
 
 # Git
 .git
 .gitignore
 .gitattributes
+.github
 
 # Docker
-**/Dockerfile
+**/Dockerfile*
 **/.dockerignore
+**/docker-compose*.yml
 
 # Documentation
-**/README.md
 doc/
 docs/
+**/*.md
+!backend/README.md
+!frontend/README.md
 
 # Misc
 **/.DS_Store
 **/*.pem
+**/.npmrc
+
+# CI/CD
+.husky
+.github
+
+# Data and servers (runtime volumes)
+data/
+servers/
+
+# Dist electron (frontend desktop build)
+frontend/dist-electron
 
 # Database data
 postgres_data/

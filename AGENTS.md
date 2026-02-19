@@ -103,19 +103,19 @@ refactor(auth): simplify JWT validation
 
 ### GitHub Workflows
 
-| Workflow             | Trigger           | Description                                           |
-| -------------------- | ----------------- | ----------------------------------------------------- |
-| `ci.yml`             | PRs, push to main | Lint, build, test                                     |
-| `docker-publish.yml` | Push to any branch| Build Docker images (test on branches, prod on main)  |
-| `deploy-docs.yml`    | Changes in `doc/` | Deploy VitePress to GitHub Pages                      |
-| `stale.yml`          | Daily             | Closes inactive issues/PRs                            |
+| Workflow             | Trigger            | Description                                          |
+| -------------------- | ------------------ | ---------------------------------------------------- |
+| `ci.yml`             | PRs, push to main  | Lint, build, test                                    |
+| `docker-publish.yml` | Push to any branch | Build Docker images (test on branches, prod on main) |
+| `deploy-docs.yml`    | Changes in `doc/`  | Deploy VitePress to GitHub Pages                     |
+| `stale.yml`          | Daily              | Closes inactive issues/PRs                           |
 
 ### Docker Image Publishing
 
-| Branch     | Images                                              | Tags    |
-| ---------- | --------------------------------------------------- | ------- |
-| `main`     | `ketbom/minepanel-backend`, `ketbom/minepanel-frontend` | `latest`, `vX.Y.Z` |
-| Other      | `ketbom/minepanel-backend-test`, `ketbom/minepanel-frontend-test` | `latest` |
+| Branch | Images                                                            | Tags               |
+| ------ | ----------------------------------------------------------------- | ------------------ |
+| `main` | `ketbom/minepanel-backend`, `ketbom/minepanel-frontend`           | `latest`, `vX.Y.Z` |
+| Other  | `ketbom/minepanel-backend-test`, `ketbom/minepanel-frontend-test` | `latest`           |
 
 **Test images** are published to separate Docker Hub repositories for pre-release testing.
 
@@ -150,7 +150,73 @@ UI → POST /servers → Backend generates docker-compose.yml
                    → Commands via RCON (Java) or send-command (Bedrock)
 ```
 
-**Important:** Minepanel accesses Docker socket (`/var/run/docker.sock`). Volume paths resolve from the **host**, not the container. That's why `BASE_DIR` exists.
+### BASE_DIR and Path Resolution
+
+**CRITICAL:** Minepanel works EXCLUSIVELY with host directory paths, not Docker named volumes.
+
+**Why BASE_DIR exists:**
+
+1. **Minepanel container** needs to access server files (read configs, upload worlds, etc.)
+2. **Generated server containers** need to mount their own data directories
+3. Both must reference the **same physical location** on the host
+
+**How it works:**
+
+```bash
+BASE_DIR=/home/user/minepanel   # Host absolute path
+
+# Minepanel container mounts:
+volumes:
+  - ${BASE_DIR}:/app/servers    # Maps host → /app/servers inside Minepanel
+
+# Generated docker-compose.yml for server "survival":
+volumes:
+  - ${BASE_DIR}/servers/survival/mc-data:/data   # Host path → server container
+```
+
+**Key points:**
+
+- `BASE_DIR` MUST be the **host absolute path** where Minepanel stores data
+- All generated docker-compose.yml files use `${BASE_DIR}` for volume mounts
+- Docker resolves paths from the **host**, not from inside containers
+- Server containers are siblings to Minepanel, not children
+
+**Current limitation:**
+
+- Only directory-based volumes are supported
+- Docker named volumes are **NOT** supported yet (roadmap item)
+- All paths must be resolvable from the host filesystem
+
+**Example structure:**
+
+```
+/home/user/minepanel/           ← BASE_DIR (host)
+├── servers/
+│   ├── survival/
+│   │   ├── docker-compose.yml  ← Generated with BASE_DIR paths
+│   │   └── mc-data/            ← Mounted to server container
+│   └── creative/
+│       ├── docker-compose.yml
+│       └── mc-data/
+└── data/
+    └── minepanel.db
+```
+
+**Why not volumes?**
+
+Named volumes would require:
+
+- Pre-creating volumes before starting servers
+- Complex volume lifecycle management
+- Loss of direct file access from Minepanel
+- Migration complexity
+
+Directory-based approach allows:
+
+- Direct file manipulation (upload worlds, edit configs)
+- Simple backups (just copy directories)
+- Easy debugging (inspect files directly)
+- Transparent data location
 
 ### Server Edition Strategy Pattern
 
@@ -167,13 +233,13 @@ backend/src/server-management/strategies/
 
 **Key differences by edition:**
 
-| Feature        | Java Edition              | Bedrock Edition                 |
-| -------------- | ------------------------- | ------------------------------- |
-| Docker Image   | `itzg/minecraft-server`   | `itzg/minecraft-bedrock-server` |
-| Default Port   | 25565 (TCP)               | 19132 (UDP)                     |
-| Commands       | RCON                      | `docker exec send-command`      |
-| Proxy Support  | Yes (mc-router)           | No                              |
-| Mods/Plugins   | Forge, Fabric, Paper, etc.| Addons/Behavior Packs           |
+| Feature       | Java Edition               | Bedrock Edition                 |
+| ------------- | -------------------------- | ------------------------------- |
+| Docker Image  | `itzg/minecraft-server`    | `itzg/minecraft-bedrock-server` |
+| Default Port  | 25565 (TCP)                | 19132 (UDP)                     |
+| Commands      | RCON                       | `docker exec send-command`      |
+| Proxy Support | Yes (mc-router)            | No                              |
+| Mods/Plugins  | Forge, Fabric, Paper, etc. | Addons/Behavior Packs           |
 
 ### Persistence
 
@@ -196,7 +262,7 @@ backend/src/server-management/strategies/
 JWT_SECRET=              # openssl rand -base64 32
 CLIENT_USERNAME=admin
 CLIENT_PASSWORD=admin
-BASE_DIR=$PWD            # Host absolute path
+BASE_DIR=$PWD            # Host absolute path (NOT container path)
 
 # URLs (CORS depends on this)
 FRONTEND_URL=http://localhost:3000
@@ -206,6 +272,13 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
 # Network settings (Public IP, LAN IP, Proxy) configured via web UI
 ```
+
+**About BASE_DIR:**
+
+- Must be an **absolute path on the host machine** (e.g., `/home/user/minepanel`, not `./minepanel`)
+- Used by both Minepanel container and generated server containers
+- All server docker-compose.yml files reference this path for volume mounts
+- If BASE_DIR is wrong, servers won't be able to mount their data directories
 
 ---
 
@@ -225,13 +298,16 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
 
 ## Common Issues
 
-| Symptom               | Cause                           | Solution                       |
-| --------------------- | ------------------------------- | ------------------------------ |
-| CORS errors           | `FRONTEND_URL` mismatch         | Include exact protocol         |
-| "Container not found" | Server ID ≠ container name      | Check naming                   |
-| Empty mc-data         | First start generates new world | Upload data before first start |
-| Windows paths broken  | Docker doesn't understand paths | Use WSL2                       |
-| Port in use           | Conflict 3000/8091/25565        | Change ports                   |
+| Symptom                   | Cause                              | Solution                                                  |
+| ------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| CORS errors               | `FRONTEND_URL` mismatch            | Include exact protocol                                    |
+| "Container not found"     | Server ID ≠ container name         | Check naming                                              |
+| Empty mc-data             | First start generates new world    | Upload data before first start                            |
+| "Volume path not found"   | `BASE_DIR` incorrect or relative   | Must be absolute host path (e.g., `/home/user/minepanel`) |
+| Server won't start        | BASE_DIR not accessible from host  | Verify path exists on host, not inside container          |
+| Windows paths broken      | Docker can't resolve Windows paths | Use WSL2 or Docker Desktop with proper mounting           |
+| Port in use               | Conflict 3000/8091/25565           | Change ports or stop conflicting services                 |
+| Named volumes not working | Not supported yet                  | Use directory paths only, volumes in roadmap              |
 
 ---
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, ChevronDown } from "lucide-react";
 import { LanguageSwitcher } from "../ui/language-switcher";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { cn } from "@/lib/utils";
 
 export function DashboardHeader() {

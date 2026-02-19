@@ -13,6 +13,16 @@ Get Minepanel running in about 2 minutes.
 
 ![Minepanel Dashboard](/img/Animation.gif)
 
+::: tip
+You can use Vue components directly in the documentation:
+:::
+
+<CounterButton />
+
+::: warning
+Remember to change your password after the first login.
+:::
+
 ## Requirements
 
 - Docker 20.10+ & Docker Compose v2.0+

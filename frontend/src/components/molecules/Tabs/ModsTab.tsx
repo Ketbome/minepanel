@@ -1,4 +1,5 @@
 import { FC, useState } from "react";
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,11 @@ import Image from "next/image";
 import { getSettings } from "@/services/settings/settings.service";
 import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
 import { mcToast } from "@/lib/utils/minecraft-toast";
-import { ModpackBrowser } from "@/components/molecules/modpacks/ModpackBrowser";
 import { CurseForgeModpack } from "@/services/curseforge/curseforge.service";
+
+const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
+  ssr: false,
+});
 
 interface ModsTabProps {
   config: ServerConfig;

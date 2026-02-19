@@ -182,6 +182,7 @@ export default withMermaid(
             { text: 'Introduction', link: '/getting-started' },
             { text: 'Installation', link: '/installation' },
             { text: 'Configuration', link: '/configuration' },
+            { text: 'Quick Start', link: '/' },
           ],
         },
         {
@@ -190,6 +191,9 @@ export default withMermaid(
           items: [
             { text: 'Server Types', link: '/server-types' },
             { text: 'Mods & Plugins', link: '/mods-plugins' },
+            { text: 'Features', link: '/features' },
+            { text: 'Backups', link: '/features#backups' },
+            { text: 'Player Management', link: '/features#player-management' },
           ],
         },
         {
@@ -199,20 +203,24 @@ export default withMermaid(
             { text: 'Networking', link: '/networking' },
             { text: 'Administration', link: '/administration' },
             { text: 'Troubleshooting', link: '/troubleshooting' },
-          ],
-        },
-        {
-          text: '📖 Resources',
-          collapsed: false,
-          items: [
-            { text: 'Features', link: '/features' },
-            { text: 'Roadmap', link: '/roadmap' },
-            { text: 'Architecture', link: '/architecture' },
-            { text: 'Development', link: '/development' },
             { text: 'FAQ', link: '/faq' },
           ],
         },
+        {
+          text: '🛠️ Development',
+          collapsed: false,
+          items: [
+            { text: 'Architecture', link: '/architecture' },
+            { text: 'Development', link: '/development' },
+            { text: 'Roadmap', link: '/roadmap' },
+          ],
+        },
       ],
+      // Sugerencia de internacionalización futura
+      // locales: {
+      //   root: { label: 'English', lang: 'en' },
+      //   es: { label: 'Español', lang: 'es' },
+      // },
 
       socialLinks: [
         { icon: 'github', link: 'https://github.com/Ketbome/minepanel' },

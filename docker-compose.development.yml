@@ -4,7 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "${BACKEND_PORT:-8091}:8091"
+      - '${BACKEND_PORT:-8091}:8091'
     environment:
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET}
@@ -18,8 +18,28 @@ services:
       - ${BASE_DIR:-$PWD}/data:/app/data
     networks:
       - minepanel-network
-    restart: always
+    restart: unless-stopped
     working_dir: /app
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:8091/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   frontend:
     build:
@@ -32,12 +52,33 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - '${FRONTEND_PORT:-3000}:3000'
     networks:
       - minepanel-network
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
 
   # MC Proxy Router - Routes Minecraft Java Edition traffic by hostname (optional)
   # Note: Only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
@@ -49,7 +90,7 @@ services:
     profiles:
       - proxy
     ports:
-      - "${MC_PROXY_PORT:-25565}:25565"
+      - '${MC_PROXY_PORT:-25565}:25565'
     environment:
       - ROUTES_CONFIG=/data/routes.json
       - ROUTES_CONFIG_WATCH=true

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/organisms/Sidebar";
 import { DashboardHeader } from "@/components/organisms/DashboardHeader";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { useAuthStore, useUIStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useUIStore } from "@/lib/store/ui-store";
 
 interface DashboardShellProps {
   readonly children: React.ReactNode;

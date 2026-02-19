@@ -124,6 +124,21 @@ flowchart LR
 - Large file uploads (chunked)
 - Drag & drop folders
 
+### Docker named volumes support
+
+- Allow using Docker named volumes instead of only directory paths
+- Requires filebrowser refactor to access volume data
+- Volume lifecycle management (create, list, inspect, prune)
+- Migration path from directory-based to volume-based storage
+- Better isolation and Docker-native approach
+
+**Why not now?**
+
+- Current directory-based approach allows direct file access from Minepanel
+- Named volumes require accessing data through Docker API or volume mounts
+- Filebrowser currently reads from host paths (`BASE_DIR/servers/*/mc-data`)
+- Would need container-to-volume inspection or mount points to read files
+
 ### Better log viewer
 
 - Search and filtering
@@ -308,13 +323,13 @@ gantt
 
 **2026 Milestones:**
 
-| Quarter | Version  | Focus         | Key Features                                              |
-| ------- | -------- | ------------- | --------------------------------------------------------- |
-| Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management, Bedrock Support  |
-| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs, Bedrock Addons    |
-| Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                           |
-| Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity       |
-| Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins                    |
+| Quarter | Version  | Focus         | Key Features                                             |
+| ------- | -------- | ------------- | -------------------------------------------------------- |
+| Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management, Bedrock Support |
+| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs, Bedrock Addons   |
+| Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                          |
+| Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity      |
+| Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins                   |
 
 ---
 

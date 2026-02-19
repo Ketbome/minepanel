@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { useServersStore, ServerStatus } from "@/lib/store";
+import { useServersStore, ServerStatus } from "@/lib/store/servers-store";
 
 export function useServerStatus(serverId: string) {
   const { t } = useLanguage();
