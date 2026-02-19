@@ -19,13 +19,6 @@ Web panel to manage Minecraft servers with Docker — Create, configure, and mon
 <div align="center">
   <img src="./doc/public/img/Animation.gif" alt="Minepanel Dashboard" width="90%">
 </div>
-<div align="center" style="margin-top: 8px;">
-  <a href="https://buymeacoffee.com/pims2711y" target="_blank" rel="noopener">
-    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&slug=pims2711y&button_colour=FFDD00&font_colour=000000&font_family=Arial&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" style="margin-top: 8px;" />
-  </a>
-  <br>
-  <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
-</div>
 
 ---
 
