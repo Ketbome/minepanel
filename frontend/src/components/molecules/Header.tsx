@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/services/auth/auth.service";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { LogOut, User } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -33,9 +33,9 @@ export function Header() {
     <header className="relative z-10 border-b border-gray-800/60 bg-black/30 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
         <Link href="/dashboard/home" className="flex items-center gap-3 font-bold">
-          <motion.div whileHover={{ rotate: [0, -10, 10, -10, 0] }} transition={{ duration: 0.5 }}>
+          <m.div whileHover={{ rotate: [0, -10, 10, -10, 0] }} transition={{ duration: 0.5 }}>
             <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" />
-          </motion.div>
+          </m.div>
           <span className="text-xl bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft">Minepanel</span>
         </Link>
 

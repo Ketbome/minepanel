@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Globe, Wifi, Loader2, Network } from 'lucide-react';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import Image from 'next/image';
 import { getAllIPs, getProxyStatus, getServerProxyHostname } from '@/services/network.service';
@@ -102,7 +102,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-cyan-600/50 transition-colors">
                 <span className="select-all">{proxyHostname}</span>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -111,27 +111,27 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
                   >
                     <AnimatePresence mode="wait">
                       {copiedProxy ? (
-                        <motion.div
+                        <m.div
                           key="check"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
                         >
                           <Check className="h-4 w-4 text-cyan-400" />
-                        </motion.div>
+                        </m.div>
                       ) : (
-                        <motion.div
+                        <m.div
                           key="copy"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
                         >
                           <Copy className="h-4 w-4" />
-                        </motion.div>
+                        </m.div>
                       )}
                     </AnimatePresence>
                   </Button>
-                </motion.div>
+                </m.div>
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-emerald-600/50 transition-colors">
               <span className="select-all">{globalAddress}</span>
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -164,27 +164,27 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
                 >
                   <AnimatePresence mode="wait">
                     {copiedGlobal ? (
-                      <motion.div
+                      <m.div
                         key="check"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         exit={{ scale: 0 }}
                       >
                         <Check className="h-4 w-4 text-emerald-400" />
-                      </motion.div>
+                      </m.div>
                     ) : (
-                      <motion.div
+                      <m.div
                         key="copy"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         exit={{ scale: 0 }}
                       >
                         <Copy className="h-4 w-4" />
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
                 </Button>
-              </motion.div>
+              </m.div>
             </div>
           </div>
         </div>
@@ -198,7 +198,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-blue-600/50 transition-colors">
                 <span className="select-all">{lanAddress}</span>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -207,27 +207,27 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
                   >
                     <AnimatePresence mode="wait">
                       {copiedLAN ? (
-                        <motion.div
+                        <m.div
                           key="check"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
                         >
                           <Check className="h-4 w-4 text-blue-400" />
-                        </motion.div>
+                        </m.div>
                       ) : (
-                        <motion.div
+                        <m.div
                           key="copy"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
                         >
                           <Copy className="h-4 w-4" />
-                        </motion.div>
+                        </m.div>
                       )}
                     </AnimatePresence>
                   </Button>
-                </motion.div>
+                </m.div>
               </div>
             </div>
           </div>
@@ -258,7 +258,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -273,6 +273,6 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
       </div>
 
       {renderConnectionContent()}
-    </motion.div>
+    </m.div>
   );
 }

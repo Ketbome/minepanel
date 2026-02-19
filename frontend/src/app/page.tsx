@@ -11,7 +11,7 @@ import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAuthenticated, login } from "@/services/auth/auth.service";
 import { healthService } from "@/services/health.service";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ConnectionErrorDialog } from "@/components/ui/connection-error-dialog";
@@ -79,7 +79,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
+          <m.div
             animate={{
               y: [0, -20, 0],
               x: [0, 10, 0],
@@ -93,8 +93,8 @@ export default function Home() {
             className="absolute top-20 left-10 opacity-20"
           >
             <Image src="/images/grass.webp" alt="" width={60} height={60} />
-          </motion.div>
-          <motion.div
+          </m.div>
+          <m.div
             animate={{
               y: [0, 20, 0],
               x: [0, -15, 0],
@@ -109,8 +109,8 @@ export default function Home() {
             className="absolute top-40 right-20 opacity-20"
           >
             <Image src="/images/diamond.webp" alt="" width={50} height={50} />
-          </motion.div>
-          <motion.div
+          </m.div>
+          <m.div
             animate={{
               y: [0, -25, 0],
               x: [0, 12, 0],
@@ -124,8 +124,8 @@ export default function Home() {
             className="absolute bottom-32 left-1/4 opacity-15"
           >
             <Image src="/images/grass.webp" alt="" width={45} height={45} />
-          </motion.div>
-          <motion.div
+          </m.div>
+          <m.div
             animate={{
               y: [0, 18, 0],
               rotate: [0, 10, 0],
@@ -139,25 +139,25 @@ export default function Home() {
             className="absolute bottom-20 right-1/4 opacity-15"
           >
             <Image src="/images/diamond.webp" alt="" width={55} height={55} />
-          </motion.div>
+          </m.div>
         </div>
 
         <header className="relative z-10 border-b border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg">
           <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
             <Link href="/" className="flex items-center gap-3 font-bold group">
-              <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
+              <m.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
                 <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" priority />
-              </motion.div>
-              <span className="text-xl bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft group-hover:from-emerald-400 group-hover:to-green-500 transition-all">Minepanel</span>
+              </m.div>
+              <span className="text-xl bg-linear-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft group-hover:from-emerald-400 group-hover:to-green-500 transition-all">Minepanel</span>
             </Link>
             <LanguageSwitcher />
           </div>
         </header>
 
         <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mx-auto max-w-md w-full">
+          <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mx-auto max-w-md w-full">
             <div className="space-y-4 text-center mb-8">
-              <motion.h1
+              <m.h1
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -167,22 +167,22 @@ export default function Home() {
                 }}
               >
                 {t("welcome")}
-              </motion.h1>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.4 }} className="text-gray-200 text-lg">
+              </m.h1>
+              <m.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.4 }} className="text-gray-200 text-lg">
                 {t("welcomeDescription")}
-              </motion.p>
+              </m.p>
             </div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.4 }} className="relative">
+            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.4 }} className="relative">
               {/* Efecto de brillo animado detrás del card */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 rounded-lg opacity-30 blur-lg animate-pulse"></div>
+              <div className="absolute -inset-1 bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 rounded-lg opacity-30 blur-lg animate-pulse"></div>
 
               <Card className="relative border-2 border-emerald-600/30 bg-gray-900/95 backdrop-blur-md shadow-2xl shadow-emerald-900/20 hover:border-emerald-500/50 transition-all duration-300">
                 <form onSubmit={handleSubmit}>
                   <CardHeader className="space-y-1 pb-4">
                     <CardTitle className="text-2xl font-minecraft text-white flex items-center gap-2">
                       {t("login")}
-                      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      <m.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-2 h-2 bg-emerald-500 rounded-full" />
                     </CardTitle>
                     <CardDescription className="text-gray-300">{t("enterCredentials")}</CardDescription>
                   </CardHeader>
@@ -247,10 +247,10 @@ export default function Home() {
                   </CardFooter>
                 </form>
               </Card>
-            </motion.div>
+            </m.div>
 
             <div className="mt-10 flex justify-center items-center space-x-6">
-              <motion.div
+              <m.div
                 whileHover={{ scale: 1.2, rotate: 10 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -10, 0] }}
@@ -259,8 +259,8 @@ export default function Home() {
                 }}
               >
                 <Image src="/images/grass.webp" alt="Grass Block" width={48} height={48} className="drop-shadow-lg" />
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 whileHover={{ scale: 1.2, rotate: -10 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -12, 0] }}
@@ -269,8 +269,8 @@ export default function Home() {
                 }}
               >
                 <Image src="/images/diamond.webp" alt="Diamond" width={48} height={48} className="drop-shadow-lg" />
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 whileHover={{ scale: 1.2, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -8, 0] }}
@@ -279,9 +279,9 @@ export default function Home() {
                 }}
               >
                 <Image src="/images/creeper.webp" alt="Creeper" width={24} height={48} className="drop-shadow-lg" />
-              </motion.div>
+              </m.div>
             </div>
-          </motion.div>
+          </m.div>
         </main>
 
         <footer className="relative z-10 py-4 border-t border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg">
