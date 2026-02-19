@@ -53,10 +53,7 @@ describe('AuthController', () => {
         expires_in: 900,
       });
 
-      const result = await controller.login(
-        { username: 'admin', password: 'password' },
-        mockResponse as Response,
-      );
+      const result = await controller.login({ username: 'admin', password: 'password' }, mockResponse as Response);
 
       expect(result).toEqual({
         username: 'admin',
@@ -70,9 +67,7 @@ describe('AuthController', () => {
     it('should throw UnauthorizedException on invalid credentials', async () => {
       authService.validateUser.mockResolvedValue(null);
 
-      await expect(
-        controller.login({ username: 'admin', password: 'wrong' }, mockResponse as Response)
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login({ username: 'admin', password: 'wrong' }, mockResponse as Response)).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -101,18 +96,14 @@ describe('AuthController', () => {
     it('should throw UnauthorizedException when refresh token is missing', async () => {
       mockRequest.cookies = {};
 
-      await expect(
-        controller.refresh(mockRequest as Request, mockResponse as Response)
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.refresh(mockRequest as Request, mockResponse as Response)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should clear cookies and throw when refresh token is invalid', async () => {
       mockRequest.cookies = { refresh_token: 'invalid.token' };
       authService.validateRefreshToken.mockResolvedValue(null);
 
-      await expect(
-        controller.refresh(mockRequest as Request, mockResponse as Response)
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.refresh(mockRequest as Request, mockResponse as Response)).rejects.toThrow(UnauthorizedException);
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('access_token');
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refresh_token');
@@ -144,4 +135,3 @@ describe('AuthController', () => {
     });
   });
 });
-
