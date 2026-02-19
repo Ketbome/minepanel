@@ -1,6 +1,7 @@
-import { Controller, Post, Body, UnauthorizedException, UseGuards, Res, Req } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, UseGuards, Res, Req, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from './guards/auth.guard';
 import { Response, Request } from 'express';
 
 @Controller('auth')
@@ -36,6 +37,16 @@ export class AuthController {
     return {
       username: tokens.username,
       expires_in: tokens.expires_in,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@Req() req: any) {
+    return {
+      userId: req.user.userId,
+      username: req.user.username,
+      role: req.user.role,
     };
   }
 

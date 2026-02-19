@@ -59,10 +59,11 @@ export const isAuthenticated = async (): Promise<boolean> => {
   if (typeof window === "undefined") return false;
 
   try {
-    // Try to refresh token to verify session is valid
-    const isValid = await refreshToken();
-    return isValid;
+    // Try to fetch current user session (lightweight check)
+    const response = await api.get("/auth/me", { withCredentials: true });
+    return response.status === 200;
   } catch (error) {
+    // If 401, token expired or invalid
     console.error("Error checking authentication:", error);
     return false;
   }
