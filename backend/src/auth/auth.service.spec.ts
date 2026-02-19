@@ -1,16 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/services/users.service';
 import { PayloadToken } from './models/token.model';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { Repository } from 'typeorm';
 
 jest.mock('bcrypt');
+jest.mock('crypto', () => ({
+  randomBytes: jest.fn(() => ({ toString: () => 'mock-random-token' })),
+}));
 
 describe('AuthService', () => {
   let service: AuthService;
   let jwtService: jest.Mocked<JwtService>;
   let usersService: jest.Mocked<UsersService>;
+  let refreshTokenRepo: jest.Mocked<Repository<RefreshToken>>;
 
   const mockUser = {
     id: 1,
@@ -27,6 +34,13 @@ describe('AuthService', () => {
 
     const mockUsersService = {
       getUserByUsername: jest.fn(),
+      getUserById: jest.fn(),
+    };
+
+    const mockRefreshTokenRepo = {
+      save: jest.fn(),
+      find: jest.fn(),
+      update: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -34,12 +48,14 @@ describe('AuthService', () => {
         AuthService,
         { provide: JwtService, useValue: mockJwtService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: getRepositoryToken(RefreshToken), useValue: mockRefreshTokenRepo },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     jwtService = module.get(JwtService);
     usersService = module.get(UsersService);
+    refreshTokenRepo = module.get(getRepositoryToken(RefreshToken));
   });
 
   afterEach(() => {
@@ -100,9 +116,13 @@ describe('AuthService', () => {
   });
 
   describe('generateJwt', () => {
-    it('should return access token and username', async () => {
-      const mockToken = 'jwt.token.here';
-      jwtService.sign.mockReturnValue(mockToken);
+    it('should return access token, refresh token, username and expires_in', async () => {
+      const mockAccessToken = 'jwt.access.token';
+      const mockHashedToken = 'hashed.refresh.token';
+      
+      jwtService.sign.mockReturnValue(mockAccessToken);
+      (bcrypt.hash as jest.Mock).mockResolvedValue(mockHashedToken);
+      refreshTokenRepo.save.mockResolvedValue({} as any);
 
       const payload: PayloadToken = {
         userId: 1,
@@ -113,10 +133,19 @@ describe('AuthService', () => {
       const result = await service.generateJwt(payload);
 
       expect(result).toEqual({
-        access_token: mockToken,
+        access_token: mockAccessToken,
+        refresh_token: 'mock-random-token',
         username: 'testuser',
+        expires_in: 900,
       });
       expect(jwtService.sign).toHaveBeenCalledWith(payload);
+      expect(refreshTokenRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 1,
+          token: mockHashedToken,
+          revoked: false,
+        })
+      );
     });
   });
 
