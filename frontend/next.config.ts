@@ -7,6 +7,27 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   ...(basePath && { basePath }),
 
+  // Webpack optimizations for faster builds
+  webpack: (config, { dev, isServer }) => {
+    // Enable persistent caching for production builds
+    if (!dev) {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+      };
+    }
+
+    // Optimize module resolution
+    config.resolve = {
+      ...config.resolve,
+      symlinks: false,
+    };
+
+    return config;
+  },
+
   images: {
     remotePatterns: [
       {
@@ -37,6 +58,13 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-slider",
       "@radix-ui/react-tooltip",
     ],
+    // Speed up builds with concurrent features
+    cpus: 4,
+  },
+
+  // Compiler optimizations (SWC is default in Next.js 15)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
 };
 
