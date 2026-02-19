@@ -1,5 +1,5 @@
 {
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "Minecraft Docker Manager - Control panel for managing Minecraft servers via Docker",
   "author": "ketbome",
   "license": "MIT"
