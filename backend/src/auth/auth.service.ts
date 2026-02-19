@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
 import { UsersService } from 'src/users/services/users.service';
 import { RefreshToken } from './entities/refresh-token.entity';

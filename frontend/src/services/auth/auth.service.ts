@@ -97,7 +97,7 @@ export const setupAxiosInterceptors = () => {
         } else {
           isRefreshing = false;
           await logout();
-          return Promise.reject(error);
+          throw error;
         }
       }
 
