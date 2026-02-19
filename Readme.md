@@ -93,8 +93,8 @@ Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License
 
 </div>
 <div align="center" style="margin-top: 8px;">
-  <a href="https://buymeacoffee.com/pims2711y" target="_blank" rel="noopener">
-    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&slug=pims2711y&button_colour=FFDD00&font_colour=000000&font_family=Arial&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" style="margin-top: 8px;" />
+  <a href="https://buymeacoffee.com/pims2711y" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150" height="40">
   </a>
   <br>
   <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
