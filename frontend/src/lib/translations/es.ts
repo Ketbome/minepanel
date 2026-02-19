@@ -1329,4 +1329,19 @@ export const es: Record<TranslationKey, string> = {
   bedrockCreativeDesc: 'Modo creativo con trucos habilitados para todos.',
   bedrockFamily: 'Bedrock Familiar',
   bedrockFamilyDesc: 'Servidor LAN privado para juego familiar con lista blanca.',
+
+  // SFTP
+  sftp: 'SFTP',
+  enableSftp: 'Habilitar SFTP',
+  disableSftp: 'Deshabilitar SFTP',
+  sftpDetails: 'Detalles de Conexión SFTP',
+  sftpHost: 'Host',
+  sftpPort: 'Puerto',
+  sftpUsername: 'Usuario',
+  sftpPassword: 'Contraseña',
+  sftpPasswordDesc: 'Usa tu contraseña de cuenta',
+  sftpStatus: 'Estado SFTP',
+  sftpActive: 'Activo',
+  sftpInactive: 'Inactivo',
+  sftpWarning: 'SFTP permite acceso directo a los archivos. Ten cuidado.',
 };

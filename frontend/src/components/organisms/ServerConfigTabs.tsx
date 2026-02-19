@@ -11,8 +11,9 @@ import { GeneralSettingsTab } from "../molecules/Tabs/GeneralSettingsTab";
 import { ServerTypeTab } from "../molecules/Tabs/ServerTypeTab";
 import { BedrockSettingsTab } from "../molecules/Tabs/BedrockSettingsTab";
 import { FilesTab } from "../molecules/Tabs/FilesTab";
+import { SftpTab } from "../molecules/Tabs/SftpTab";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Network } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface ServerConfigTabsProps {
@@ -39,7 +40,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
+    const validTabs = ["type", "general", "sftp", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
     return validTabs.includes(hash) ? hash : "type";
   };
 
@@ -73,7 +74,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
+      const validTabs = ["type", "general", "sftp", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -144,6 +145,11 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <span className="hidden md:inline">{t("general")}</span>
                   </TabsTrigger>
 
+                  <TabsTrigger value="sftp" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                    <Network className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">{t("sftp")}</span>
+                  </TabsTrigger>
+
                   {showResourcesTab && (
                     <TabsTrigger value="resources" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                       <Cpu className="h-4 w-4 shrink-0" />
@@ -206,6 +212,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsContent value="general" className="space-y-4 mt-0">
                 <GeneralSettingsTab config={config} updateConfig={updateConfig} />
+              </TabsContent>
+
+              <TabsContent value="sftp" className="space-y-4 mt-0">
+                <SftpTab serverId={serverId} />
               </TabsContent>
 
               {showResourcesTab && (

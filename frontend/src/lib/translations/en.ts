@@ -1309,6 +1309,21 @@ export const en = {
   bedrockCreativeDesc: 'Creative mode with cheats enabled for all players.',
   bedrockFamily: 'Bedrock Family',
   bedrockFamilyDesc: 'Private LAN server for family play with whitelist.',
+
+  // SFTP
+  sftp: 'SFTP',
+  enableSftp: 'Enable SFTP',
+  disableSftp: 'Disable SFTP',
+  sftpDetails: 'SFTP Connection Details',
+  sftpHost: 'Host',
+  sftpPort: 'Port',
+  sftpUsername: 'Username',
+  sftpPassword: 'Password',
+  sftpPasswordDesc: 'Use your account password',
+  sftpStatus: 'SFTP Status',
+  sftpActive: 'Active',
+  sftpInactive: 'Inactive',
+  sftpWarning: 'SFTP allows direct file access. Be careful.',
 };
 
 export type TranslationKey = keyof typeof en;
