@@ -38,11 +38,11 @@ All variables can be set in `.env` or `docker-compose.yml`.
 
 ### URLs
 
-| Variable                       | Default                 | Description            |
-| ------------------------------ | ----------------------- | ---------------------- |
-| `FRONTEND_URL`                 | `http://localhost:3000` | Controls CORS          |
-| `NEXT_PUBLIC_BACKEND_URL`      | `http://localhost:8091` | API URL for frontend   |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`                    | `en`, `es`, `nl`, `de` |
+| Variable                       | Default                 | Description                  |
+| ------------------------------ | ----------------------- | ---------------------------- |
+| `FRONTEND_URL`                 | `http://localhost:3000` | Controls CORS                |
+| `NEXT_PUBLIC_BACKEND_URL`      | `http://localhost:8091` | API URL for frontend         |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`                    | `en`, `es`, `nl`, `de`, `pl` |
 
 ::: danger CORS
 `FRONTEND_URL` **must match** how you access the panel. Mismatch = blocked requests.

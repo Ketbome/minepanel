@@ -320,6 +320,7 @@ export const en = {
   english: 'English',
   dutch: 'Dutch',
   german: 'German',
+  polish: 'Polish',
   changeLanguage: 'Change language',
 
   // ===========================

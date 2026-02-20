@@ -323,6 +323,7 @@ export const es: Record<TranslationKey, string> = {
   english: 'Inglés',
   dutch: 'Holandés',
   german: 'Alemán',
+  polish: 'Polaco',
   changeLanguage: 'Cambiar idioma',
 
   // ===========================

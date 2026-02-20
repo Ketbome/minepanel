@@ -98,7 +98,7 @@ Edit from UI:
 
 | Feature          | Description                               |
 | ---------------- | ----------------------------------------- |
-| Multi-language   | EN, ES, NL, DE                            |
+| Multi-language   | EN, ES, NL, DE, PL                        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
 | MC Proxy Router  | Single port for Java servers via hostname |
