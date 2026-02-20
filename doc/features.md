@@ -23,14 +23,14 @@ flowchart LR
 
 ## Server Management
 
-| Feature          | Description                                                |
-| ---------------- | ---------------------------------------------------------- |
-| Java & Bedrock   | Both Minecraft editions supported                          |
-| Multiple servers | Run as many as hardware allows, isolated containers        |
+| Feature          | Description                                                          |
+| ---------------- | -------------------------------------------------------------------- |
+| Java & Bedrock   | Both Minecraft editions supported                                    |
+| Multiple servers | Run as many as hardware allows, isolated containers                  |
 | All server types | Vanilla, Paper, Forge, Neoforge, Fabric, Purpur, CurseForge modpacks |
-| Any version      | 1.8 to latest, snapshots included                          |
-| Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, etc.    |
-| Resource limits  | Set RAM, CPU per server                                    |
+| Any version      | 1.8 to latest, snapshots included                                    |
+| Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, etc.              |
+| Resource limits  | Set RAM, CPU per server                                              |
 
 ## Real-time Monitoring
 
@@ -98,7 +98,7 @@ Edit from UI:
 
 | Feature          | Description                               |
 | ---------------- | ----------------------------------------- |
-| Multi-language   | EN, ES, NL, DE                            |
+| Multi-language   | EN, ES, NL, DE, PL                        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
 | MC Proxy Router  | Single port for Java servers via hostname |

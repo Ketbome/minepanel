@@ -320,6 +320,7 @@ export const en = {
   english: 'English',
   dutch: 'Dutch',
   german: 'German',
+  polish: 'Polish',
   changeLanguage: 'Change language',
 
   // ===========================
@@ -998,7 +999,8 @@ export const en = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth Modpack',
   modrinthModpackDesc: 'Enter the slug or URL of the Modrinth modpack you want to use.',
-  modrinthModpackTooltip: 'Enter the Modrinth project slug or URL. You can also include a specific version (e.g., https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  modrinthModpackTooltip:
+    'Enter the Modrinth project slug or URL. You can also include a specific version (e.g., https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Deprecated Feature',
@@ -1276,7 +1278,8 @@ export const en = {
   autoUpdate: 'Auto Update',
   preview: 'Preview',
   bedrockInfo: 'Bedrock Edition Server',
-  bedrockInfoDesc: 'Bedrock servers support cross-play between mobile, console, and Windows 10/11 players. Note: RCON commands are not supported.',
+  bedrockInfoDesc:
+    'Bedrock servers support cross-play between mobile, console, and Windows 10/11 players. Note: RCON commands are not supported.',
   bedrock: 'Bedrock',
   bedrockSettings: 'Bedrock Settings',
   bedrockSettingsDesc: 'Configure Bedrock-specific server options',

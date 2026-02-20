@@ -92,7 +92,7 @@ BASE_DIR=.
 
 ```bash
 NEXT_PUBLIC_BACKEND_URL='http://localhost:8091' # URL of the backend API, it's important start with http:// or https://
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en # es or en
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en # en, es, nl, de, pl
 ```
 
 ## Tech stack

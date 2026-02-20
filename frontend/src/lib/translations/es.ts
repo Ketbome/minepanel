@@ -323,6 +323,7 @@ export const es: Record<TranslationKey, string> = {
   english: 'Inglés',
   dutch: 'Holandés',
   german: 'Alemán',
+  polish: 'Polaco',
   changeLanguage: 'Cambiar idioma',
 
   // ===========================
@@ -970,7 +971,8 @@ export const es: Record<TranslationKey, string> = {
 
   // Configuración de Neoforge
   neoforgeVersion: 'Versión de Neoforge',
-  neoforgeBuildDesc: 'Número de compilación de Neoforge (se seleccionará automáticamente la versión correcta de Minecraft)',
+  neoforgeBuildDesc:
+    'Número de compilación de Neoforge (se seleccionará automáticamente la versión correcta de Minecraft)',
 
   // Configuración de Fabric
   serverFabric:
@@ -1006,7 +1008,8 @@ export const es: Record<TranslationKey, string> = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modpack de Modrinth',
   modrinthModpackDesc: 'Introduce el slug o la URL del modpack de Modrinth que quieres usar.',
-  modrinthModpackTooltip: 'Introduce el slug o la URL del proyecto de Modrinth. También puedes incluir una versión específica (p. ej., https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  modrinthModpackTooltip:
+    'Introduce el slug o la URL del proyecto de Modrinth. También puedes incluir una versión específica (p. ej., https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: 'Función obsoleta (Deprecated)',
@@ -1296,7 +1299,8 @@ export const es: Record<TranslationKey, string> = {
   autoUpdate: 'Auto Actualizar',
   preview: 'Vista Previa',
   bedrockInfo: 'Servidor Bedrock Edition',
-  bedrockInfoDesc: 'Los servidores Bedrock soportan juego cruzado entre móvil, consola y Windows 10/11. Nota: Los comandos RCON no están soportados.',
+  bedrockInfoDesc:
+    'Los servidores Bedrock soportan juego cruzado entre móvil, consola y Windows 10/11. Nota: Los comandos RCON no están soportados.',
   bedrock: 'Bedrock',
   bedrockSettings: 'Configuración Bedrock',
   bedrockSettingsDesc: 'Configura opciones específicas del servidor Bedrock',

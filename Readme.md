@@ -19,6 +19,13 @@ Web panel to manage Minecraft servers with Docker — Create, configure, and mon
 <div align="center">
   <img src="./doc/public/img/Animation.gif" alt="Minepanel Dashboard" width="90%">
 </div>
+<div align="center" style="margin-top: 8px;">
+  <a href="https://buymeacoffee.com/pims2711y" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150" height="40">
+  </a>
+  <br>
+  <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
+</div>
 
 ---
 
@@ -45,7 +52,7 @@ Open http://localhost:3000 — Login: `admin` / `admin`
 - **Automatic backups** — Scheduled backups with retention policies
 - **Proxy support** — mc-router for single-port multi-server (Java)
 - **Discord webhooks** — Server events notifications
-- **Multi-language** — English, Spanish, Dutch, German
+- **Multi-language** — English, Spanish, Dutch, German, Polish
 
 ---
 

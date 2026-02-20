@@ -269,7 +269,7 @@ FRONTEND_URL=http://localhost:3000
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8091
 
 # Optional
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en  # en, es, nl, de, pl
 # Network settings (Public IP, LAN IP, Proxy) configured via web UI
 ```
 

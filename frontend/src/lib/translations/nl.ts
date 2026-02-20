@@ -327,6 +327,7 @@ export const nl: Record<TranslationKey, string> = {
   english: 'Engels',
   dutch: 'Nederlands',
   german: 'Duits',
+  polish: 'Pools',
   changeLanguage: 'Taal wijzigen',
 
   // ===========================
@@ -987,7 +988,8 @@ export const nl: Record<TranslationKey, string> = {
 
   // Forge Configuration
   neoforgeVersion: 'Neoforge versie',
-  neoforgeBuildDesc: 'Neoforge buildnummer (de juiste Minecraft-versie wordt automatisch geselecteerd)',
+  neoforgeBuildDesc:
+    'Neoforge buildnummer (de juiste Minecraft-versie wordt automatisch geselecteerd)',
 
   // Fabric Configuration
   serverFabric:
@@ -1023,7 +1025,8 @@ export const nl: Record<TranslationKey, string> = {
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth Modpack',
   modrinthModpackDesc: 'Voer de slug of URL in van het Modrinth-modpack dat je wilt gebruiken.',
-  modrinthModpackTooltip: 'Voer de Modrinth-projectslug of URL in. Je kunt ook een specifieke versie opgeven (bijv. https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  modrinthModpackTooltip:
+    'Voer de Modrinth-projectslug of URL in. Je kunt ook een specifieke versie opgeven (bijv. https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Verouderde functie',
@@ -1303,17 +1306,19 @@ export const nl: Record<TranslationKey, string> = {
   bedrockEditionDesc: 'Cross-platform (mobiel, console, Win10)',
   editionLocked: 'Kan niet worden gewijzigd na het aanmaken van de server',
   bedrockVersion: 'Bedrock Versie',
-  bedrockVersionDesc: 'Selecteer de Bedrock versie. LATEST werkt automatisch bij naar de nieuwste release.',
+  bedrockVersionDesc:
+    'Selecteer de Bedrock versie. LATEST werkt automatisch bij naar de nieuwste release.',
   autoUpdate: 'Auto Update',
   preview: 'Preview',
   bedrockInfo: 'Bedrock Editie Server',
-  bedrockInfoDesc: 'Bedrock servers ondersteunen cross-play tussen mobiel, console en Windows 10/11 spelers. Let op: RCON commando\'s worden niet ondersteund.',
+  bedrockInfoDesc:
+    "Bedrock servers ondersteunen cross-play tussen mobiel, console en Windows 10/11 spelers. Let op: RCON commando's worden niet ondersteund.",
   bedrock: 'Bedrock',
   bedrockSettings: 'Bedrock Instellingen',
   bedrockSettingsDesc: 'Configureer Bedrock-specifieke serveropties',
   permissions: 'Rechten',
   allowCheats: 'Cheats Toestaan',
-  allowCheatsDesc: 'Schakel commando\'s in voor alle spelers wanneer geen operator',
+  allowCheatsDesc: "Schakel commando's in voor alle spelers wanneer geen operator",
   defaultPermissionLevel: 'Standaard Rechtenniveau',
   defaultPermissionLevelDesc: 'Rechtenniveau voor nieuwe spelers',
   visitor: 'Bezoeker',

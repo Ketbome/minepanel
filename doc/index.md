@@ -63,7 +63,7 @@ features:
 
   - icon: 🌍
     title: Multi-language
-    details: EN / ES / NL / DE
+    details: EN / ES / NL / DE / PL
 
   - icon: 🔄
     title: Multi-arch
