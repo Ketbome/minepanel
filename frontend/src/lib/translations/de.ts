@@ -974,7 +974,8 @@ export const de: Record<TranslationKey, string> = {
 
   // Neoforge Configuration
   neoforgeVersion: 'Neoforge-Version',
-  neoforgeBuildDesc: 'Neoforge-Buildnummer (die richtige Minecraft-Version wird automatisch ausgewählt)',
+  neoforgeBuildDesc:
+    'Neoforge-Buildnummer (die richtige Minecraft-Version wird automatisch ausgewählt)',
 
   // Fabric Configuration
   serverFabric:
@@ -1011,9 +1012,10 @@ export const de: Record<TranslationKey, string> = {
 
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth-Modpack',
-  modrinthModpackDesc: 'Gib den Slug oder die URL des Modrinth-Modpacks ein, das du verwenden möchtest.',
-  modrinthModpackTooltip: 'Gib den Modrinth-Projekt-Slug oder die URL ein. Du kannst auch eine spezifische Version angeben (z. B. https://modrinth.com/modpack/surface-living/version/1.2.1).',
-
+  modrinthModpackDesc:
+    'Gib den Slug oder die URL des Modrinth-Modpacks ein, das du verwenden möchtest.',
+  modrinthModpackTooltip:
+    'Gib den Modrinth-Projekt-Slug oder die URL ein. Du kannst auch eine spezifische Version angeben (z. B. https://modrinth.com/modpack/surface-living/version/1.2.1).',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Veraltete Funktion',
@@ -1299,11 +1301,13 @@ export const de: Record<TranslationKey, string> = {
   bedrockEditionDesc: 'Plattformübergreifend (Mobil, Konsole, Win10)',
   editionLocked: 'Kann nach der Servererstellung nicht geändert werden',
   bedrockVersion: 'Bedrock Version',
-  bedrockVersionDesc: 'Wähle die Bedrock-Version. LATEST aktualisiert automatisch auf die neueste Version.',
+  bedrockVersionDesc:
+    'Wähle die Bedrock-Version. LATEST aktualisiert automatisch auf die neueste Version.',
   autoUpdate: 'Auto Update',
   preview: 'Vorschau',
   bedrockInfo: 'Bedrock Edition Server',
-  bedrockInfoDesc: 'Bedrock-Server unterstützen Cross-Play zwischen Mobil-, Konsolen- und Windows 10/11-Spielern. Hinweis: RCON-Befehle werden nicht unterstützt.',
+  bedrockInfoDesc:
+    'Bedrock-Server unterstützen Cross-Play zwischen Mobil-, Konsolen- und Windows 10/11-Spielern. Hinweis: RCON-Befehle werden nicht unterstützt.',
   bedrock: 'Bedrock',
   bedrockSettings: 'Bedrock Einstellungen',
   bedrockSettingsDesc: 'Konfiguriere Bedrock-spezifische Serveroptionen',

@@ -9,7 +9,7 @@ export const translations = {
   en,
   nl,
   de,
-  pl
+  pl,
 };
 
 export type Language = keyof typeof translations;

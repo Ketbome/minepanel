@@ -27,7 +27,6 @@ Web panel to manage Minecraft servers with Docker — Create, configure, and mon
   <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
 </div>
 
-
 ---
 
 ## Quick Start
