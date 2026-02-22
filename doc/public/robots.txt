@@ -19,18 +19,9 @@ User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
-# Block AI scrapers that don't respect robots.txt properly
-User-agent: GPTBot
-Disallow: /
-
-User-agent: ChatGPT-User
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
-
-User-agent: anthropic-ai
-Disallow: /
+# Note: Reputable AI crawlers (e.g. GPTBot, Anthropic) are allowed
+# to index the docs to improve discoverability and integrations.
+# If abusive scraping appears, re-add specific Disallow entries.
 
 # Sitemap
 Sitemap: https://minepanel.ketbome.com/sitemap.xml
