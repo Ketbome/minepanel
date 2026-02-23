@@ -117,8 +117,12 @@ export default withMermaid(
     // Generate dynamic canonical URLs and merge page-specific meta
     transformHead({ pageData }) {
       const head: HeadConfig[] = [];
-      const pagePath = pageData.relativePath.replace(/\.md$/, '').replace(/index$/, '');
-      const canonicalUrl = `${hostname}/${pagePath}`;
+      const pagePath = pageData.relativePath
+        .replace(/\.md$/, '')
+        .replace(/\/index$/, '')
+        .replace(/^index$/, '');
+      const canonicalPath = pagePath ? `/${pagePath}` : '/';
+      const canonicalUrl = `${hostname}${canonicalPath}`;
 
       head.push(
         ['link', { rel: 'canonical', href: canonicalUrl }],
@@ -138,6 +142,8 @@ export default withMermaid(
 
       return head;
     },
+
+    cleanUrls: true,
 
     themeConfig: {
       // https://vitepress.dev/reference/default-theme-config
@@ -295,8 +301,9 @@ export default withMermaid(
       transformItems: (items) => {
         return items.map((item) => {
           let priority = 0.7;
+          const isHome = item.url === hostname || item.url === `${hostname}/`;
 
-          if (item.url === hostname) {
+          if (isHome) {
             priority = 1;
           } else if (item.url.includes('getting-started')) {
             priority = 0.9;
@@ -306,7 +313,7 @@ export default withMermaid(
             priority = 0.8;
           }
 
-          const changefreq = item.url === hostname ? 'weekly' : 'monthly';
+          const changefreq = isHome ? 'weekly' : 'monthly';
 
           return {
             ...item,
