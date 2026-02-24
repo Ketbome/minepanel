@@ -9,6 +9,7 @@ Web panel to manage Minecraft servers with Docker — Create, configure, and mon
 [![License](https://img.shields.io/badge/License-Community-blue.svg)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker&color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 [![Docker Size](https://img.shields.io/docker/image-size/ketbom/minepanel/latest?color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Ketbome/minepanel)
 
 [Documentation](https://minepanel.ketbome.com) · [Report Bug](https://github.com/Ketbome/minepanel/issues/new?labels=bug) · [Request Feature](https://github.com/Ketbome/minepanel/issues/new?labels=enhancement)
 
@@ -66,6 +67,10 @@ Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
 - [Features](https://minepanel.ketbome.com/features) — Full feature documentation
 - [FAQ](https://minepanel.ketbome.com/faq) — Common questions
 - [API](https://minepanel.ketbome.com/api) — REST API reference
+
+### 🔍 AI-Powered Documentation
+
+Need quick answers? You can use **[DeepWiki](https://deepwiki.com/Ketbome/minepanel)** to search our documentation using natural language and get contextual answers to your questions.
 
 ---
 
