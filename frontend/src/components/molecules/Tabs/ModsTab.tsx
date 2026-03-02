@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import { getSettings } from "@/services/settings/settings.service";
 import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { CurseForgeModpack } from "@/services/curseforge/curseforge.service";
+import { ModsBrowserDialog } from "@/components/molecules/mods/ModsBrowserDialog";
+import { ModLoader, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 
 const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
   ssr: false,
@@ -33,12 +35,27 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showModpackBrowser, setShowModpackBrowser] = useState(false);
+  const [showModsBrowser, setShowModsBrowser] = useState(false);
+  const [modsBrowserProvider, setModsBrowserProvider] = useState<ModProvider>("curseforge");
+  const [modsTargetField, setModsTargetField] = useState<"cfFiles" | "modrinthProjects">("cfFiles");
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isModrinth = config.serverType === "MODRINTH";
   const isForge = config.serverType === "FORGE";
   const isNeoforge = config.serverType === "NEOFORGE";
   const isFabric = config.serverType === "FABRIC";
+  const resolvedLoader = useMemo<ModLoader | undefined>(() => {
+    if (config.serverType === "FORGE") return "forge";
+    if (config.serverType === "NEOFORGE") return "neoforge";
+    if (config.serverType === "FABRIC") return "fabric";
+    if (config.serverType === "QUILT") return "quilt";
+
+    const customLoader = (config.modrinthLoader || "").toLowerCase();
+    if (customLoader === "forge" || customLoader === "neoforge" || customLoader === "fabric" || customLoader === "quilt") {
+      return customLoader;
+    }
+    return undefined;
+  }, [config.serverType, config.modrinthLoader]);
 
   const handleModpackSelect = (modpack: CurseForgeModpack) => {
     if (config.cfMethod === "url") {
@@ -68,6 +85,68 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const openModsBrowser = (provider: ModProvider, field: "cfFiles" | "modrinthProjects") => {
+    setModsBrowserProvider(provider);
+    setModsTargetField(field);
+    setShowModsBrowser(true);
+  };
+
+  const parseEntries = (value: string): string[] =>
+    value
+      .split(/[\n,]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+  const normalizeEntryBase = (entry: string): string => {
+    const trimmed = entry.trim().toLowerCase();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      const parts = trimmed.split("/").filter(Boolean);
+      return parts[parts.length - 1] || trimmed;
+    }
+
+    const withoutDatapack = trimmed.startsWith("datapack:") ? trimmed.slice("datapack:".length) : trimmed;
+    const separators = [withoutDatapack.indexOf(":"), withoutDatapack.indexOf("@")].filter((index) => index > 0);
+    if (separators.length === 0) return withoutDatapack;
+    return withoutDatapack.slice(0, Math.min(...separators));
+  };
+
+  const isModAlreadyAdded = (mod: ModSearchItem): boolean => {
+    const currentValue = String(config[modsTargetField] || "");
+    const entries = parseEntries(currentValue);
+    const slug = mod.slug.toLowerCase();
+    const id = mod.projectId.toLowerCase();
+
+    return entries.some((entry) => {
+      const raw = entry.toLowerCase();
+      const base = normalizeEntryBase(entry);
+      return raw === slug || raw === id || base === slug || base === id;
+    });
+  };
+
+  const toggleModFromBrowser = (mod: ModSearchItem, insertAs: "slug" | "id"): "added" | "removed" | "noop" => {
+    const currentValue = String(config[modsTargetField] || "");
+    const entries = parseEntries(currentValue);
+    const slug = mod.slug.toLowerCase();
+    const id = mod.projectId.toLowerCase();
+    const alreadyAdded = isModAlreadyAdded(mod);
+
+    if (alreadyAdded) {
+      const filtered = entries.filter((entry) => {
+        const raw = entry.toLowerCase();
+        const base = normalizeEntryBase(entry);
+        const shouldRemove = raw === slug || raw === id || base === slug || base === id;
+        return !shouldRemove;
+      });
+      updateConfig(modsTargetField, filtered.join("\n"));
+      return "removed";
+    }
+
+    const toInsert = insertAs === "id" ? mod.projectId : mod.slug;
+    updateConfig(modsTargetField, [...entries, toInsert].join("\n"));
+    return "added";
   };
 
   if (!isCurseForge && !isForge && !isNeoforge && !isManualCurseForge && !isFabric &&!isModrinth) {
@@ -164,6 +243,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("curseforge", "cfFiles")} className="h-8 text-xs px-3 font-minecraft border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -239,6 +322,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("curseforge", "cfFiles")} className="h-8 text-xs px-3 font-minecraft border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -323,6 +410,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("curseforge", "cfFiles")} className="h-8 text-xs px-3 font-minecraft border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -661,6 +752,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("curseforge", "cfFiles")} className="h-8 text-xs px-3 font-minecraft border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -756,6 +851,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("curseforge", "cfFiles")} className="h-8 text-xs px-3 font-minecraft border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -788,6 +887,10 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <a href="https://modrinth.com/mods" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline">
                     {t("browseMods")}
                   </a>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openModsBrowser("modrinth", "modrinthProjects")} className="h-8 text-xs px-3 font-minecraft border-blue-500/50 bg-blue-600/20 text-blue-300 hover:bg-blue-500/30 hover:text-blue-200 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]">
+                    <Search className="h-3 w-3 mr-1" />
+                    {t("searchMods")}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1024,6 +1127,15 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
       </CardContent>
 
       <ModpackBrowser open={showModpackBrowser} onClose={() => setShowModpackBrowser(false)} onSelect={handleModpackSelect} />
+      <ModsBrowserDialog
+        open={showModsBrowser}
+        onClose={() => setShowModsBrowser(false)}
+        provider={modsBrowserProvider}
+        minecraftVersion={config.minecraftVersion}
+        loader={resolvedLoader}
+        isAdded={isModAlreadyAdded}
+        onToggle={toggleModFromBrowser}
+      />
     </Card>
   );
 };

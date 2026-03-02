@@ -7,7 +7,6 @@ import {
   updateServerConfig,
 } from '@/services/docker/fetchs';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { minecraftVersionsService } from '@/services/minecraft-versions.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 const defaultConfig: ServerConfig = {
@@ -85,7 +84,7 @@ const defaultConfig: ServerConfig = {
   enableSaveAll: true,
   enableSync: true,
   dockerImage: 'latest',
-  minecraftVersion: '1.21.10',
+  minecraftVersion: 'latest',
   restartPolicy: 'unless-stopped',
   stopDelay: '60',
   execDirectly: true,
@@ -147,8 +146,7 @@ export function useServerConfig(serverId: string) {
           if (serverConfig.edition === 'BEDROCK') {
             serverConfig.minecraftVersion = 'LATEST';
           } else {
-            const latestRelease = await minecraftVersionsService.getLatestRelease();
-            serverConfig.minecraftVersion = latestRelease;
+            serverConfig.minecraftVersion = 'latest';
           }
         }
 

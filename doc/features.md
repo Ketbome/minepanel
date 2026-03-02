@@ -64,6 +64,7 @@ flowchart LR
 | Modrinth   | Auto-download, dependency resolution |
 | CurseForge | Mods and modpacks                    |
 | Combined   | Use both simultaneously              |
+| In-panel search | Search and add mod slugs/IDs directly from the Mods tab |
 
 **→ Details:** [Mods & Plugins](/mods-plugins)
 

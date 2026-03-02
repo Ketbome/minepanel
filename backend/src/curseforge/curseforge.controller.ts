@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { CurseforgeService } from './curseforge.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { SettingsService } from '../users/services/settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
+import { SearchCurseforgeModsQueryDto } from './dto/search-mods.query.dto';
 
 @Controller('curseforge')
 @UseGuards(JwtAuthGuard)
@@ -15,7 +16,7 @@ export class CurseforgeController {
   private async getApiKey(userId: number): Promise<string> {
     const settings = await this.settingsService.getSettings(userId);
     if (!settings?.cfApiKey) {
-      throw new Error('CurseForge API key not configured. Please add it in settings.');
+      throw new BadRequestException('CurseForge API key not configured. Please add it in settings.');
     }
     const cfApiKey = settings.cfApiKey;
     return cfApiKey;
@@ -41,6 +42,20 @@ export class CurseforgeController {
     const user = req.user as PayloadToken;
     const apiKey = await this.getApiKey(user.userId);
     return this.curseforgeService.getPopularModpacks(apiKey, limit ? Number.parseInt(limit, 10) : 10);
+  }
+
+  @Get('mods/search')
+  async searchMods(@Request() req, @Query() query: SearchCurseforgeModsQueryDto) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+
+    return this.curseforgeService.searchMods(apiKey, {
+      q: query.q,
+      pageSize: query.pageSize,
+      index: query.index,
+      minecraftVersion: query.minecraftVersion,
+      loader: query.loader,
+    });
   }
 
   @Get(':id')
