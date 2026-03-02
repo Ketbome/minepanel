@@ -285,27 +285,53 @@ export class CurseforgeService {
       );
     }
 
-    const pageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 50);
+    const requestedPageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 50);
+    const pageSize = requestedPageSize % 2 === 0
+      ? requestedPageSize
+      : Math.min(requestedPageSize + 1, 50);
     const index = Math.max(query.index ?? 0, 0);
+    const maxBatches = 8;
 
     try {
       const client = this.getApiClient(apiKey);
-      const response = await client.get<CurseForgeSearchResponse>('/mods/search', {
-        params: {
-          gameId: this.MINECRAFT_GAME_ID,
-          classId: this.MODS_CLASS_ID,
-          searchFilter: query.q,
-          pageSize,
-          index,
-          sortField: 2,
-          sortOrder: 'desc',
-          gameVersion: query.minecraftVersion,
-        },
-      });
+      const normalized: NormalizedModSearchResult[] = [];
+      const seen = new Set<string>();
+      let totalCount = 0;
+      let batchIndex = index;
+      let batches = 0;
 
-      const normalized = response.data.data
-        .map((mod) => this.normalizeMod(mod))
-        .filter((mod) => this.isCompatibleResult(mod, query.minecraftVersion, query.loader));
+      while (normalized.length < pageSize && batches < maxBatches) {
+        const response = await client.get<CurseForgeSearchResponse>('/mods/search', {
+          params: {
+            gameId: this.MINECRAFT_GAME_ID,
+            classId: this.MODS_CLASS_ID,
+            searchFilter: query.q,
+            pageSize,
+            index: batchIndex,
+            sortField: 2,
+            sortOrder: 'desc',
+            gameVersion: query.minecraftVersion,
+          },
+        });
+
+        totalCount = response.data.pagination.totalCount;
+        const compatibleBatch = response.data.data
+          .map((mod) => this.normalizeMod(mod))
+          .filter((mod) => this.isCompatibleResult(mod, query.minecraftVersion, query.loader));
+
+        for (const mod of compatibleBatch) {
+          if (normalized.length >= pageSize) break;
+          if (seen.has(mod.projectId)) continue;
+          normalized.push(mod);
+          seen.add(mod.projectId);
+        }
+
+        batchIndex += pageSize;
+        batches += 1;
+
+        if (batchIndex >= totalCount) break;
+        if (response.data.data.length === 0) break;
+      }
 
       return {
         data: normalized,
@@ -313,7 +339,7 @@ export class CurseforgeService {
           index,
           pageSize,
           resultCount: normalized.length,
-          totalCount: response.data.pagination.totalCount,
+          totalCount,
         },
       };
     } catch (error) {

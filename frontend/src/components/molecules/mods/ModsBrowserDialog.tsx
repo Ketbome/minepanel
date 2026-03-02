@@ -33,6 +33,11 @@ interface ModsBrowserDialogProps {
   onToggle: (mod: ModSearchItem, insertAs: 'slug' | 'id') => 'added' | 'removed' | 'noop';
 }
 
+const PAGE_SIZE_BY_PROVIDER: Record<ModProvider, number> = {
+  curseforge: 6,
+  modrinth: 6,
+};
+
 const formatDownloads = (count?: number): string => {
   if (!count) return '0';
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -58,7 +63,7 @@ export function ModsBrowserDialog({
   const [pageIndex, setPageIndex] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const pageSize = 6;
+  const pageSize = PAGE_SIZE_BY_PROVIDER[provider];
 
   const providerLabel = useMemo(() => {
     return provider === 'curseforge' ? 'CurseForge' : 'Modrinth';
@@ -114,7 +119,7 @@ export function ModsBrowserDialog({
         setIsLoadingMore(false);
       }
     },
-    [open, minecraftVersion, provider, query, loader, t],
+    [open, minecraftVersion, provider, query, loader, pageSize, t],
   );
 
   useEffect(() => {
