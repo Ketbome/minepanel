@@ -1001,6 +1001,7 @@ export const en = {
   insertAsSlug: 'Insert as slug',
   insertAsId: 'Insert as ID',
   addMod: 'Add mod',
+  removeMod: 'Remove mod',
   alreadyAdded: 'This mod is already in the list',
   noCompatibleModsFound: 'No compatible mods found with current filters',
   compatibilityFiltered: 'Showing only compatible mods for your current server configuration',

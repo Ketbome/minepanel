@@ -193,6 +193,19 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                   <SelectValue placeholder={loading ? t('loadingVersions') : t('selectVersion')} />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 max-h-[300px]">
+                  <SelectItem
+                    value="latest"
+                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
+                      <span>latest{latestRelease ? ` (${latestRelease})` : ''}</span>
+                      <Badge className="bg-yellow-500/20 text-yellow-400 text-xs border-yellow-500/30">
+                        {t('latest')}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                  <div className="h-px bg-gray-700 my-1" />
                   {latestRelease && (
                     <>
                       <SelectItem

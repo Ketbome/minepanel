@@ -158,10 +158,12 @@ export class JavaServerStrategy implements IServerStrategy {
 
   private addForgeConfig(env: Record<string, string>, config: ServerConfig): void {
     if (config.forgeBuild) env['FORGE_VERSION'] = config.forgeBuild;
+    env['VERSION'] = String(config.minecraftVersion);
   }
 
   private addNeoforgeConfig(env: Record<string, string>, config: ServerConfig): void {
     if (config.neoforgeBuild) env['NEOFORGE_VERSION'] = config.neoforgeBuild;
+    env['VERSION'] = String(config.minecraftVersion);
   }
 
   private addFabricConfig(env: Record<string, string>, config: ServerConfig): void {

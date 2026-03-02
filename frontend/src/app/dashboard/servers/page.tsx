@@ -160,7 +160,7 @@ export default function Dashboard() {
         edition: selectedEdition,
         port: selectedEdition === "BEDROCK" ? "19132" : "25565",
         enableRcon: selectedEdition !== "BEDROCK",
-        minecraftVersion: selectedEdition === "BEDROCK" ? "LATEST" : undefined,
+        minecraftVersion: selectedEdition === "BEDROCK" ? "LATEST" : "latest",
       };
       const serverData = selectedTemplate ? { ...baseConfig, ...selectedTemplate.config } : baseConfig;
       const response = await createServer(serverData);

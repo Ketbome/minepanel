@@ -1130,6 +1130,7 @@ export const es: Record<TranslationKey, string> = {
   insertAsSlug: 'Insertar como slug',
   insertAsId: 'Insertar como ID',
   addMod: 'Agregar mod',
+  removeMod: 'Sacar mod',
   alreadyAdded: 'Este mod ya está en la lista',
   noCompatibleModsFound: 'No se encontraron mods compatibles con los filtros actuales',
   compatibilityFiltered: 'Mostrando solo mods compatibles con la configuración actual del servidor',

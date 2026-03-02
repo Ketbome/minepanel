@@ -1015,6 +1015,7 @@ export const de: Record<TranslationKey, string> = {
   insertAsSlug: 'Als Slug einfügen',
   insertAsId: 'Als ID einfügen',
   addMod: 'Mod hinzufügen',
+  removeMod: 'Mod entfernen',
   alreadyAdded: 'Dieser Mod ist bereits in der Liste',
   noCompatibleModsFound: 'Keine kompatiblen Mods mit den aktuellen Filtern gefunden',
   compatibilityFiltered: 'Es werden nur kompatible Mods für deine aktuelle Serverkonfiguration angezeigt',

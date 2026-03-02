@@ -1144,6 +1144,7 @@ export const nl: Record<TranslationKey, string> = {
   insertAsSlug: 'Invoegen als slug',
   insertAsId: 'Invoegen als ID',
   addMod: 'Mod toevoegen',
+  removeMod: 'Mod verwijderen',
   alreadyAdded: 'Deze mod staat al in de lijst',
   noCompatibleModsFound: 'Geen compatibele mods gevonden met de huidige filters',
   compatibilityFiltered: 'Alleen compatibele mods voor je huidige serverconfiguratie',
