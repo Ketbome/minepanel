@@ -12,6 +12,7 @@ import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
+import { ModrinthModule } from './modrinth/modrinth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProxyModule } from './proxy/proxy.module';
     SystemMonitoringModule,
     DiscordModule,
     CurseforgeModule,
+    ModrinthModule,
     FilesModule,
     ProxyModule,
   ],

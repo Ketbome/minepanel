@@ -995,6 +995,17 @@ export const pl: Record<TranslationKey, string> = {
   modpackSelected: 'Wybrany pakiet modów',
   searchOrBrowsePopular: 'Wyszukaj pakiet modów lub przeglądaj popularne',
   searchModpacks: 'Wyszukaj pakiety modów...',
+  searchMods: 'Szukaj modów',
+  searchModsDesc: 'Wyniki filtrowane według kompatybilności dla wersji/loadera:',
+  searchProvider: 'Dostawca',
+  insertAsSlug: 'Wstaw jako slug',
+  insertAsId: 'Wstaw jako ID',
+  addMod: 'Dodaj mod',
+  alreadyAdded: 'Ten mod jest już na liście',
+  noCompatibleModsFound: 'Nie znaleziono kompatybilnych modów dla bieżących filtrów',
+  compatibilityFiltered: 'Wyświetlane są tylko kompatybilne mody dla bieżącej konfiguracji serwera',
+  loaderNotDetected: 'Nie wykryto loadera. Zgodność jest filtrowana tylko po wersji Minecrafta.',
+  errorSearchingMods: 'Błąd podczas wyszukiwania modów',
 
   // Modrinth Modpack Configuration
   modrinthModpack: 'Pakiet Modrinth',

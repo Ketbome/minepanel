@@ -995,6 +995,17 @@ export const en = {
   modpackSelected: 'Modpack selected',
   searchOrBrowsePopular: 'Search for a modpack or browse popular ones',
   searchModpacks: 'Search modpacks...',
+  searchMods: 'Search mods',
+  searchModsDesc: 'Results filtered by compatibility for version/loader:',
+  searchProvider: 'Provider',
+  insertAsSlug: 'Insert as slug',
+  insertAsId: 'Insert as ID',
+  addMod: 'Add mod',
+  alreadyAdded: 'This mod is already in the list',
+  noCompatibleModsFound: 'No compatible mods found with current filters',
+  compatibilityFiltered: 'Showing only compatible mods for your current server configuration',
+  loaderNotDetected: 'Loader not detected. Compatibility is being filtered by Minecraft version only.',
+  errorSearchingMods: 'Error searching mods',
 
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modrinth Modpack',

@@ -116,11 +116,35 @@ export interface CurseForgeModResponse {
   data: CurseForgeModpack;
 }
 
+export interface NormalizedModSearchResult {
+  provider: 'curseforge' | 'modrinth';
+  projectId: string;
+  slug: string;
+  name: string;
+  summary: string;
+  iconUrl?: string;
+  downloads?: number;
+  lastUpdated?: string;
+  supportedVersions: string[];
+  supportedLoaders: string[];
+}
+
+export interface NormalizedModSearchResponse {
+  data: NormalizedModSearchResult[];
+  pagination: {
+    index: number;
+    pageSize: number;
+    resultCount: number;
+    totalCount: number;
+  };
+}
+
 @Injectable()
 export class CurseforgeService {
   private readonly apiClient: AxiosInstance;
   private readonly CURSEFORGE_API_BASE = 'https://api.curseforge.com/v1';
   private readonly MINECRAFT_GAME_ID = 432;
+  private readonly MODS_CLASS_ID = 6;
   private readonly MODPACK_CLASS_ID = 4471;
 
   constructor() {
@@ -243,5 +267,123 @@ export class CurseforgeService {
   async getPopularModpacks(apiKey: string, limit: number = 10): Promise<CurseForgeSearchResponse> {
     return this.searchModpacks(apiKey, undefined, limit, 0, 2, 'desc');
   }
-}
 
+  async searchMods(
+    apiKey: string,
+    query: {
+      q?: string;
+      pageSize?: number;
+      index?: number;
+      minecraftVersion: string;
+      loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+    },
+  ): Promise<NormalizedModSearchResponse> {
+    if (!apiKey) {
+      throw new HttpException(
+        'CurseForge API key not configured',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const pageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 50);
+    const index = Math.max(query.index ?? 0, 0);
+
+    try {
+      const client = this.getApiClient(apiKey);
+      const response = await client.get<CurseForgeSearchResponse>('/mods/search', {
+        params: {
+          gameId: this.MINECRAFT_GAME_ID,
+          classId: this.MODS_CLASS_ID,
+          searchFilter: query.q,
+          pageSize,
+          index,
+          sortField: 2,
+          sortOrder: 'desc',
+          gameVersion: query.minecraftVersion,
+        },
+      });
+
+      const normalized = response.data.data
+        .map((mod) => this.normalizeMod(mod))
+        .filter((mod) => this.isCompatibleResult(mod, query.minecraftVersion, query.loader));
+
+      return {
+        data: normalized,
+        pagination: {
+          index,
+          pageSize,
+          resultCount: normalized.length,
+          totalCount: response.data.pagination.totalCount,
+        },
+      };
+    } catch (error) {
+      console.error('Error searching CurseForge mods:', error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) {
+          throw new HttpException(
+            'Invalid CurseForge API key',
+            HttpStatus.FORBIDDEN,
+          );
+        }
+        throw new HttpException(
+          error.response?.data?.message || 'Error searching mods',
+          error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      throw new HttpException(
+        'Error searching mods',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private normalizeMod(mod: CurseForgeModpack): NormalizedModSearchResult {
+    const versions = new Set<string>();
+    const loaders = new Set<string>();
+
+    for (const file of mod.latestFiles ?? []) {
+      for (const version of file.gameVersions ?? []) {
+        versions.add(version);
+        this.extractLoadersFromGameVersion(version).forEach((loader) => loaders.add(loader));
+      }
+    }
+
+    return {
+      provider: 'curseforge',
+      projectId: mod.id.toString(),
+      slug: mod.slug,
+      name: mod.name,
+      summary: mod.summary ?? '',
+      iconUrl: mod.logo?.thumbnailUrl || mod.logo?.url,
+      downloads: mod.downloadCount,
+      lastUpdated: mod.dateModified,
+      supportedVersions: Array.from(versions),
+      supportedLoaders: Array.from(loaders),
+    };
+  }
+
+  private extractLoadersFromGameVersion(version: string): string[] {
+    const normalized = version.toLowerCase();
+    const loaders: string[] = [];
+    if (normalized.includes('neoforge')) loaders.push('neoforge');
+    if (normalized.includes('forge') && !normalized.includes('neoforge')) loaders.push('forge');
+    if (normalized.includes('fabric')) loaders.push('fabric');
+    if (normalized.includes('quilt')) loaders.push('quilt');
+    return loaders;
+  }
+
+  private isCompatibleResult(
+    mod: NormalizedModSearchResult,
+    minecraftVersion: string,
+    loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt',
+  ): boolean {
+    const hasVersion = mod.supportedVersions.some((version) => version === minecraftVersion);
+    if (!hasVersion) return false;
+
+    if (!loader) return true;
+    if (mod.supportedLoaders.length === 0) return true;
+    return mod.supportedLoaders.includes(loader);
+  }
+}

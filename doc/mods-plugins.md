@@ -61,6 +61,30 @@ flowchart LR
 For advanced options and all environment variables, see the [docker-minecraft-server mods documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/).
 :::
 
+## Integrated Mod Search in Minepanel
+
+Minepanel includes an integrated search dialog in the **Mods** tab for both **CurseForge Files** and **Modrinth Projects**.
+
+### What it does
+
+- Searches directly from Minepanel (no need to manually browse first)
+- Filters results by current server compatibility:
+  - Minecraft version
+  - Loader (Forge/Neoforge/Fabric/Quilt) when available
+- Adds entries in one click as:
+  - **Slug** (default)
+  - **ID**
+
+### How to use it
+
+1. Open **Create Server** or **Edit Server**
+2. Go to the **Mods** tab
+3. In either **CurseForge Files** or **Modrinth Projects**, click **Search mods**
+4. Pick insertion format (Slug or ID)
+5. Click **Add mod**
+
+The selected entries are appended to the same existing fields (`CURSEFORGE_FILES` and `MODRINTH_PROJECTS`) using newline format, preserving manual entries and avoiding duplicates.
+
 ---
 
 ## Modrinth
