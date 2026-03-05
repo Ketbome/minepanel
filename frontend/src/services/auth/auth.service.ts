@@ -2,6 +2,7 @@ import api from "../axios.service";
 
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
+const AUTH_ENDPOINTS = ["/auth/login", "/auth/refresh", "/auth/logout"];
 
 const onRefreshed = (token: string) => {
   refreshSubscribers.forEach((callback) => callback(token));
@@ -10,6 +11,11 @@ const onRefreshed = (token: string) => {
 
 const addRefreshSubscriber = (callback: (token: string) => void) => {
   refreshSubscribers.push(callback);
+};
+
+const isAuthEndpoint = (url?: string): boolean => {
+  if (!url) return false;
+  return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 };
 
 export const login = async (username: string, password: string) => {
@@ -76,8 +82,15 @@ export const setupAxiosInterceptors = () => {
     (response) => response,
     async (error) => {
       const originalRequest = error.config;
+      const status = error.response?.status;
+      const requestUrl = originalRequest?.url;
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      // Never trigger token refresh on auth endpoints to avoid refresh loops.
+      if (status === 401 && isAuthEndpoint(requestUrl)) {
+        return Promise.reject(error);
+      }
+
+      if (status === 401 && originalRequest && !originalRequest._retry) {
         if (isRefreshing) {
           return new Promise((resolve) => {
             addRefreshSubscriber(() => {
@@ -108,4 +121,3 @@ export const setupAxiosInterceptors = () => {
 };
 
 if (globalThis.window !== undefined) setupAxiosInterceptors();
-
