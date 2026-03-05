@@ -1,16 +1,21 @@
 import api from "../axios.service";
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+let refreshSubscribers: Array<{ onSuccess: () => void; onError: (error: unknown) => void }> = [];
 const AUTH_ENDPOINTS = ["/auth/login", "/auth/refresh", "/auth/logout"];
 
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((callback) => callback(token));
+const onRefreshed = () => {
+  refreshSubscribers.forEach((subscriber) => subscriber.onSuccess());
   refreshSubscribers = [];
 };
 
-const addRefreshSubscriber = (callback: (token: string) => void) => {
-  refreshSubscribers.push(callback);
+const onRefreshFailed = (error: unknown) => {
+  refreshSubscribers.forEach((subscriber) => subscriber.onError(error));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (onSuccess: () => void, onError: (error: unknown) => void) => {
+  refreshSubscribers.push({ onSuccess, onError });
 };
 
 const isAuthEndpoint = (url?: string): boolean => {
@@ -92,9 +97,11 @@ export const setupAxiosInterceptors = () => {
 
       if (status === 401 && originalRequest && !originalRequest._retry) {
         if (isRefreshing) {
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
             addRefreshSubscriber(() => {
               resolve(api(originalRequest));
+            }, (refreshError) => {
+              reject(refreshError);
             });
           });
         }
@@ -106,10 +113,11 @@ export const setupAxiosInterceptors = () => {
 
         if (refreshed) {
           isRefreshing = false;
-          onRefreshed("refreshed");
+          onRefreshed();
           return api(originalRequest);
         } else {
           isRefreshing = false;
+          onRefreshFailed(error);
           await logout();
           throw error;
         }
