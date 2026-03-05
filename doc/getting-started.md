@@ -85,6 +85,7 @@ To access from outside your network, update `docker-compose.yml`:
 environment:
   - FRONTEND_URL=http://your-ip:3000
   - NEXT_PUBLIC_BACKEND_URL=http://your-ip:8091
+  - ALLOW_INSECURE_AUTH_COOKIES=true # Only if staying on HTTP (LAN/dev)
 ```
 
 Then restart:
@@ -94,6 +95,11 @@ docker compose restart
 ```
 
 **→ Full guide:** [Networking](/networking)
+
+::: warning HTTP authentication
+`ALLOW_INSECURE_AUTH_COOKIES=true` is a fallback for HTTP-only setups.
+For production/public access, use HTTPS and keep this variable disabled.
+:::
 
 ## Next Steps
 

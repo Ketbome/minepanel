@@ -35,6 +35,7 @@ All variables can be set in `.env` or `docker-compose.yml`.
 | ----------------- | ------- | -------------- |
 | `CLIENT_USERNAME` | `admin` | Login username |
 | `CLIENT_PASSWORD` | `admin` | Login password |
+| `ALLOW_INSECURE_AUTH_COOKIES` | `false` | Set `true` only for HTTP/LAN access when browsers block auth cookies |
 
 ### URLs
 
@@ -46,6 +47,18 @@ All variables can be set in `.env` or `docker-compose.yml`.
 
 ::: danger CORS
 `FRONTEND_URL` **must match** how you access the panel. Mismatch = blocked requests.
+:::
+
+::: warning Authentication over HTTP
+In production, authentication cookies are secure by default. If you access Minepanel over plain HTTP (for example via local IP), browsers may reject secure cookies and login can get stuck on **"Verifying authentication..."**.
+
+You can explicitly opt in to HTTP auth cookies with:
+
+```bash
+ALLOW_INSECURE_AUTH_COOKIES=true
+```
+
+Use this only for trusted LAN/development environments. Prefer HTTPS whenever possible.
 :::
 
 ## Quick Reference

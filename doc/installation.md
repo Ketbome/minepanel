@@ -32,6 +32,7 @@ Create a `.env` file for custom settings:
 ```bash
 # Authentication
 JWT_SECRET=your_secret_here  # openssl rand -base64 32
+ALLOW_INSECURE_AUTH_COOKIES=false  # Set true only if using HTTP (LAN/dev)
 
 # Ports (optional)
 FRONTEND_PORT=3000
@@ -42,6 +43,11 @@ BASE_DIR=$PWD
 ```
 
 **→ All variables:** [Configuration](/configuration)
+
+::: tip HTTP access note
+If you access Minepanel via plain HTTP (local IP) and login gets stuck on "Verifying authentication...", set `ALLOW_INSECURE_AUTH_COOKIES=true`.
+Use this only on trusted networks and prefer HTTPS.
+:::
 
 ## Update
 

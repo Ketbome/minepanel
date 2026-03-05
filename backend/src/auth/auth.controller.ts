@@ -2,10 +2,13 @@ import { Controller, Post, Body, UnauthorizedException, UseGuards, Res, Req, Get
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth.guard';
-import { Response, Request } from 'express';
+import { Response, Request, CookieOptions } from 'express';
 
 @Controller('auth')
 export class AuthController {
+  private static readonly ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000; // 15 minutes
+  private static readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(AuthGuard('local'))
@@ -20,19 +23,8 @@ export class AuthController {
     const tokens = await this.authService.generateJwt(user);
     
     // Set httpOnly cookies
-    res.cookie('access_token', tokens.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-    
-    res.cookie('refresh_token', tokens.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(AuthController.ACCESS_TOKEN_MAX_AGE));
+    res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
     
     return {
       username: tokens.username,
@@ -72,19 +64,8 @@ export class AuthController {
     const tokens = await this.authService.generateJwt(user);
     
     // Update cookies with new tokens
-    res.cookie('access_token', tokens.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
-    
-    res.cookie('refresh_token', tokens.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(AuthController.ACCESS_TOKEN_MAX_AGE));
+    res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
     
     return {
       username: tokens.username,
@@ -107,5 +88,21 @@ export class AuthController {
     res.clearCookie('refresh_token');
     
     return { message: 'Logged out successfully' };
+  }
+
+  private getAuthCookieOptions(maxAge: number): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.shouldUseSecureCookies(),
+      sameSite: 'lax',
+      maxAge,
+    };
+  }
+
+  private shouldUseSecureCookies(): boolean {
+    if (process.env.ALLOW_INSECURE_AUTH_COOKIES === 'true') {
+      return false;
+    }
+    return process.env.NODE_ENV === 'production';
   }
 }
