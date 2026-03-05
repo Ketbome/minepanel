@@ -225,6 +225,33 @@ docker compose up -d
 
 See [Password Management](/administration#password-management).
 
+### Stuck on "Verifying authentication..."
+
+**Symptoms:** Login appears successful, but dashboard keeps loading on "Verifying authentication...".
+
+**Cause:** Browser is rejecting auth cookies because they are marked `Secure` while the panel is being accessed over plain HTTP.
+
+**Quick checks:**
+
+1. Open browser DevTools → **Network** and inspect `/auth/me` response (usually `401` in this case).
+2. Open DevTools → **Application/Storage → Cookies** and verify whether `access_token`/`refresh_token` are being stored.
+
+**Solutions:**
+
+1. **Recommended:** Use HTTPS and set `FRONTEND_URL` / `NEXT_PUBLIC_BACKEND_URL` to `https://...`.
+2. **HTTP fallback (LAN/dev only):** Enable insecure auth cookies explicitly:
+
+```yaml
+environment:
+  - ALLOW_INSECURE_AUTH_COOKIES=true
+```
+
+Then restart Minepanel:
+
+```bash
+docker compose restart
+```
+
 ### JWT Token Errors
 
 **Error:** "Invalid token" or "Token expired"

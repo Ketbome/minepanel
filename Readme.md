@@ -41,6 +41,8 @@ docker compose up -d
 
 Open http://localhost:3000 — Login: `admin` / `admin`
 
+If you access Minepanel over plain HTTP by local IP and login gets stuck on "Verifying authentication...", see the [Configuration](https://minepanel.ketbome.com/configuration) docs for `ALLOW_INSECURE_AUTH_COOKIES`.
+
 ---
 
 ## Features

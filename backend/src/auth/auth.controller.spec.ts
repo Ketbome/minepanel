@@ -9,8 +9,15 @@ describe('AuthController', () => {
   let authService: jest.Mocked<AuthService>;
   let mockResponse: Partial<Response>;
   let mockRequest: Partial<Request>;
+  let originalNodeEnv: string | undefined;
+  let originalAllowInsecureCookies: string | undefined;
 
   beforeEach(async () => {
+    originalNodeEnv = process.env.NODE_ENV;
+    originalAllowInsecureCookies = process.env.ALLOW_INSECURE_AUTH_COOKIES;
+    process.env.NODE_ENV = 'test';
+    delete process.env.ALLOW_INSECURE_AUTH_COOKIES;
+
     const mockAuthService = {
       validateUser: jest.fn(),
       generateJwt: jest.fn(),
@@ -35,6 +42,19 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
+  });
+
+  afterEach(() => {
+    if (originalNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = originalNodeEnv;
+    }
+    if (originalAllowInsecureCookies === undefined) {
+      delete process.env.ALLOW_INSECURE_AUTH_COOKIES;
+    } else {
+      process.env.ALLOW_INSECURE_AUTH_COOKIES = originalAllowInsecureCookies;
+    }
   });
 
   it('should be defined', () => {
@@ -62,6 +82,87 @@ describe('AuthController', () => {
       expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
       expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', 'jwt.access.token', expect.any(Object));
       expect(mockResponse.cookie).toHaveBeenCalledWith('refresh_token', 'jwt.refresh.token', expect.any(Object));
+    });
+
+    it('should set secure cookies in production by default', async () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.ALLOW_INSECURE_AUTH_COOKIES;
+
+      const mockPayload = { userId: 1, username: 'admin', role: 'ADMIN' };
+      authService.validateUser.mockResolvedValue(mockPayload);
+      authService.generateJwt.mockResolvedValue({
+        access_token: 'jwt.access.token',
+        refresh_token: 'jwt.refresh.token',
+        username: 'admin',
+        expires_in: 900,
+      });
+
+      await controller.login({ username: 'admin', password: 'password' }, mockResponse as Response);
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'jwt.access.token',
+        expect.objectContaining({ secure: true, httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'jwt.refresh.token',
+        expect.objectContaining({ secure: true, httpOnly: true, sameSite: 'lax' }),
+      );
+    });
+
+    it('should set insecure cookies when ALLOW_INSECURE_AUTH_COOKIES=true in production', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.ALLOW_INSECURE_AUTH_COOKIES = 'true';
+
+      const mockPayload = { userId: 1, username: 'admin', role: 'ADMIN' };
+      authService.validateUser.mockResolvedValue(mockPayload);
+      authService.generateJwt.mockResolvedValue({
+        access_token: 'jwt.access.token',
+        refresh_token: 'jwt.refresh.token',
+        username: 'admin',
+        expires_in: 900,
+      });
+
+      await controller.login({ username: 'admin', password: 'password' }, mockResponse as Response);
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'jwt.access.token',
+        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'jwt.refresh.token',
+        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+      );
+    });
+
+    it('should set insecure cookies in development mode', async () => {
+      process.env.NODE_ENV = 'development';
+      delete process.env.ALLOW_INSECURE_AUTH_COOKIES;
+
+      const mockPayload = { userId: 1, username: 'admin', role: 'ADMIN' };
+      authService.validateUser.mockResolvedValue(mockPayload);
+      authService.generateJwt.mockResolvedValue({
+        access_token: 'jwt.access.token',
+        refresh_token: 'jwt.refresh.token',
+        username: 'admin',
+        expires_in: 900,
+      });
+
+      await controller.login({ username: 'admin', password: 'password' }, mockResponse as Response);
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'jwt.access.token',
+        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'jwt.refresh.token',
+        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+      );
     });
 
     it('should throw UnauthorizedException on invalid credentials', async () => {
