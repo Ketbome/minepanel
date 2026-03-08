@@ -81,6 +81,7 @@ Runs on `http://localhost:3000`
 FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
 # Generate a strong random secret: openssl rand -base64 32
 JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=2d # Access token expiration (use 20s to test refresh flow)
 CLIENT_PASSWORD= # Password for client
 CLIENT_USERNAME= # Username for the client
 DB_PATH=./data/minepanel.db

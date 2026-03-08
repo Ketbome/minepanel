@@ -8,6 +8,7 @@ services:
       # Backend Configuration
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET} # JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 32
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-2d}
       - CLIENT_PASSWORD=${CLIENT_PASSWORD:-admin}
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}

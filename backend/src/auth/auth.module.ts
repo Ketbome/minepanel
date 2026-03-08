@@ -21,7 +21,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
         return {
           secret: configService.get('jwtSecret'),
           signOptions: {
-            expiresIn: '15m',
+            expiresIn: configService.get('jwtExpiresIn') || '2d',
             issuer: configService.get('jwtIssuer'),
             audience: configService.get('jwtAudience'),
           },

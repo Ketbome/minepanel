@@ -6,7 +6,6 @@ import { Response, Request, CookieOptions } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  private static readonly ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000; // 15 minutes
   private static readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
   constructor(private readonly authService: AuthService) {}
@@ -23,7 +22,7 @@ export class AuthController {
     const tokens = await this.authService.generateJwt(user);
     
     // Set httpOnly cookies
-    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(AuthController.ACCESS_TOKEN_MAX_AGE));
+    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(tokens.expires_in * 1000));
     res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
     
     return {
@@ -64,7 +63,7 @@ export class AuthController {
     const tokens = await this.authService.generateJwt(user);
     
     // Update cookies with new tokens
-    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(AuthController.ACCESS_TOKEN_MAX_AGE));
+    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(tokens.expires_in * 1000));
     res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
     
     return {
@@ -100,9 +99,6 @@ export class AuthController {
   }
 
   private shouldUseSecureCookies(): boolean {
-    if (process.env.ALLOW_INSECURE_AUTH_COOKIES === 'true') {
-      return false;
-    }
-    return process.env.NODE_ENV === 'production';
+    return process.env.ALLOW_INSECURE_AUTH_COOKIES !== 'true';
   }
 }

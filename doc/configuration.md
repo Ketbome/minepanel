@@ -35,6 +35,7 @@ All variables can be set in `.env` or `docker-compose.yml`.
 | ----------------- | ------- | -------------- |
 | `CLIENT_USERNAME` | `admin` | Login username |
 | `CLIENT_PASSWORD` | `admin` | Login password |
+| `JWT_EXPIRES_IN` | `2d` | Access token expiration (`20s`, `15m`, `1h`, `2d`) |
 | `ALLOW_INSECURE_AUTH_COOKIES` | `false` | Set `true` only for HTTP/LAN access when browsers block auth cookies |
 
 ### URLs
@@ -68,6 +69,7 @@ Use this only for trusted LAN/development environments. Prefer HTTPS whenever po
 ```bash
 # .env
 JWT_SECRET=your_secret
+JWT_EXPIRES_IN=2d
 ```
 
 ### Remote Access
@@ -75,6 +77,7 @@ JWT_SECRET=your_secret
 ```bash
 # .env
 JWT_SECRET=your_secret
+JWT_EXPIRES_IN=2d
 FRONTEND_URL=http://your-ip:3000
 NEXT_PUBLIC_BACKEND_URL=http://your-ip:8091
 ```
@@ -84,6 +87,7 @@ NEXT_PUBLIC_BACKEND_URL=http://your-ip:8091
 ```bash
 # .env
 JWT_SECRET=your_secret
+JWT_EXPIRES_IN=2d
 FRONTEND_URL=https://minepanel.yourdomain.com
 NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
 ```
