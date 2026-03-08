@@ -22,6 +22,7 @@ services:
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
       - BASE_DIR=${BASE_DIR:-$PWD}
+      - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock

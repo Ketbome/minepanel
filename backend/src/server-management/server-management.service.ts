@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { exec } from 'node:child_process';
+import type { ExecOptions } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as path from 'node:path';
 import * as fs from 'fs-extra';
@@ -16,13 +17,14 @@ const execAsync = promisify(exec);
 const DOCKER_COMMANDS = {
   COMPOSE_DOWN: 'docker compose down',
   COMPOSE_UP: 'docker compose up -d',
+  COMPOSE_PS_SERVICE: 'docker compose ps -aq mc',
   PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
   PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
   INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
-  STATS_ALL: String.raw`docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
+  STATS_ALL: String.raw`docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
   LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   EXEC_RCON: (containerId: string, port: string, password: string, command: string) => {
@@ -78,6 +80,7 @@ export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
   private readonly BASE_DIR: string;
+  private readonly COMPOSE_PROJECT?: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -87,6 +90,7 @@ export class ServerManagementService {
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
+    this.COMPOSE_PROJECT = this.configService.get<string>('composeProject')?.trim() || undefined;
     fs.ensureDirSync(this.SERVERS_DIR);
   }
 
@@ -104,6 +108,32 @@ export class ServerManagementService {
 
   private getMcDataPath(serverId: string): string {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
+  }
+
+  private getComposeProjectName(serverId: string): string | undefined {
+    if (!this.COMPOSE_PROJECT) return undefined;
+    return `${this.COMPOSE_PROJECT}_${serverId}`;
+  }
+
+  private getComposeExecOptions(serverId: string): ExecOptions {
+    const composeDir = path.dirname(this.getDockerComposePath(serverId));
+    const composeProjectName = this.getComposeProjectName(serverId);
+
+    if (!composeProjectName) {
+      return { cwd: composeDir };
+    }
+
+    return {
+      cwd: composeDir,
+      env: {
+        ...process.env,
+        COMPOSE_PROJECT_NAME: composeProjectName,
+      },
+    };
+  }
+
+  private async execComposeCommand(serverId: string, command: string) {
+    return execAsync(command, this.getComposeExecOptions(serverId));
   }
 
   private async getUserSettings(): Promise<{
@@ -243,6 +273,27 @@ export class ServerManagementService {
       throw new Error(`Invalid server ID: ${serverId}`);
     }
 
+    const dockerComposePath = this.getDockerComposePath(serverId);
+    if (await fs.pathExists(dockerComposePath)) {
+      try {
+        const { stdout } = await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_PS_SERVICE);
+        const composeContainerIds = stdout
+          .toString()
+          .trim()
+          .split('\n')
+          .filter((id) => id.trim());
+
+        if (composeContainerIds.length > 0) {
+          if (composeContainerIds.length > 1) {
+            this.logger.warn(`Multiple compose containers found for server "${serverId}". Using first: ${composeContainerIds[0]}`);
+          }
+          return composeContainerIds[0];
+        }
+      } catch (error) {
+        this.logger.warn(`Could not resolve compose container for server ${serverId}, using legacy fallback`, error);
+      }
+    }
+
     const { stdout } = await execAsync(DOCKER_COMMANDS.PS_FILTER(serverId));
     if (stdout.trim()) {
       const containerIds = stdout
@@ -272,9 +323,8 @@ export class ServerManagementService {
         return false;
       }
 
-      const composeDir = path.dirname(dockerComposePath);
-      await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
-      await execAsync(DOCKER_COMMANDS.COMPOSE_UP, { cwd: composeDir });
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
       await this.sendDiscordNotification('restarted', serverId);
@@ -298,8 +348,7 @@ export class ServerManagementService {
       const dockerComposePath = this.getDockerComposePath(serverId);
 
       if (await fs.pathExists(dockerComposePath)) {
-        const composeDir = path.dirname(dockerComposePath);
-        await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+        await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
       }
 
       if (await fs.pathExists(serverDataDir)) {
@@ -435,7 +484,7 @@ export class ServerManagementService {
       return {
         exists: false,
         status: 'not_found',
-        error: error.message,
+        error: (error as Error).message,
       };
     }
   }
@@ -456,9 +505,8 @@ export class ServerManagementService {
       }
 
       if (await fs.pathExists(dockerComposePath)) {
-        const composeDir = path.dirname(dockerComposePath);
         try {
-          await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+          await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
         } catch (error) {
           this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
         }
@@ -575,10 +623,10 @@ export class ServerManagementService {
 
       // Get statuses and limits in parallel
       const serverDataPromises = validServers.map(async (serverId) => {
-        const [status, limits] = await Promise.all([this.getServerStatus(serverId), this.getServerLimits(serverId)]);
+        const [status, limits, containerId] = await Promise.all([this.getServerStatus(serverId), this.getServerLimits(serverId), this.findContainerId(serverId)]);
 
-        // Match container name - could be serverId or serverId-minecraft-1
-        const stats = allStats[serverId] || allStats[`${serverId}-minecraft-1`] || allStats[`${serverId}_minecraft_1`];
+        // Prefer exact container ID mapping, then fallback to legacy name patterns
+        const stats = allStats.byId[containerId] || allStats.byName[serverId] || allStats.byName[`${serverId}-minecraft-1`] || allStats.byName[`${serverId}_minecraft_1`];
 
         if (status !== 'running' || !stats) {
           return {
@@ -622,10 +670,14 @@ export class ServerManagementService {
   }
 
   // Get stats for ALL running containers in a single docker command
-  private async getAllContainersStats(): Promise<Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }>> {
+  private async getAllContainersStats(): Promise<{
+    byId: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }>;
+    byName: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }>;
+  }> {
     try {
       const { stdout } = await execAsync(DOCKER_COMMANDS.STATS_ALL);
-      const stats: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
+      const statsById: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
+      const statsByName: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
 
       const lines = stdout
         .trim()
@@ -633,24 +685,27 @@ export class ServerManagementService {
         .filter((line) => line.trim());
       for (const line of lines) {
         const parts = line.split('\t');
-        if (parts.length >= 3) {
-          const name = parts[0].trim();
-          const cpuUsage = parts[1].trim();
-          const memUsage = parts[2].trim();
+        if (parts.length >= 4) {
+          const containerId = parts[0].trim();
+          const name = parts[1].trim();
+          const cpuUsage = parts[2].trim();
+          const memUsage = parts[3].trim();
           const memoryParts = memUsage.split(' / ');
 
-          stats[name] = {
+          const parsedStats = {
             cpuUsage,
             memoryUsage: memoryParts[0] || 'N/A',
             memoryLimit: memoryParts[1] || 'N/A',
           };
+          statsById[containerId] = parsedStats;
+          statsByName[name] = parsedStats;
         }
       }
 
-      return stats;
+      return { byId: statsById, byName: statsByName };
     } catch (error) {
       this.logger.warn('Failed to get all containers stats:', error);
-      return {};
+      return { byId: {}, byName: {} };
     }
   }
 
@@ -714,7 +769,7 @@ export class ServerManagementService {
     } catch (error) {
       this.logger.error(`Failed to get logs for server ${serverId}`, error);
       return {
-        logs: `Error retrieving logs: ${error.message}`,
+        logs: `Error retrieving logs: ${(error as Error).message}`,
         hasErrors: true,
         lastUpdate: new Date(),
         status: 'not_found',
@@ -832,7 +887,7 @@ export class ServerManagementService {
     } catch (error) {
       console.error(`Failed to get logs stream for server ${serverId}:`, error);
       return {
-        logs: `Error retrieving logs: ${error.message}`,
+        logs: `Error retrieving logs: ${(error as Error).message}`,
         hasErrors: true,
         lastUpdate: new Date(),
         status: 'not_found',
@@ -889,7 +944,7 @@ export class ServerManagementService {
     } catch (error) {
       this.logger.error(`Failed to get logs since ${timestamp} for server ${serverId}`, error);
       return {
-        logs: `Error retrieving logs: ${error.message}`,
+        logs: `Error retrieving logs: ${(error as Error).message}`,
         hasErrors: true,
         lastUpdate: new Date(),
         status: 'not_found',
@@ -941,7 +996,7 @@ export class ServerManagementService {
       return { success: true, output: stdout || 'Command executed successfully' };
     } catch (error) {
       this.logger.error(`Error executing command on server ${serverId}`, error);
-      return { success: false, output: `Error: ${error.message}` };
+      return { success: false, output: `Error: ${(error as Error).message}` };
     }
   }
 
@@ -972,13 +1027,11 @@ export class ServerManagementService {
         await this.fixBedrockPermissions(serverId);
       }
 
-      const composeDir = path.dirname(dockerComposePath);
-
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
-        await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+        await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
       }
 
-      await execAsync(DOCKER_COMMANDS.COMPOSE_UP, { cwd: composeDir });
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} started successfully`);
       await this.sendDiscordNotification('started', serverId);
@@ -1020,7 +1073,7 @@ export class ServerManagementService {
       await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(hostMcDataPath, uid, gid));
       this.logger.log(`Permissions fixed for ${serverId}`);
     } catch (error) {
-      this.logger.warn(`Could not fix permissions for ${serverId}: ${error.message}`);
+      this.logger.warn(`Could not fix permissions for ${serverId}: ${(error as Error).message}`);
       // Continue anyway - might work if permissions are already correct
     }
   }
@@ -1038,8 +1091,7 @@ export class ServerManagementService {
         return false;
       }
 
-      const composeDir = path.dirname(dockerComposePath);
-      await execAsync(DOCKER_COMMANDS.COMPOSE_DOWN, { cwd: composeDir });
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
       await this.sendDiscordNotification('stopped', serverId);

@@ -6,6 +6,7 @@ export default () => ({
   clientUsername: process.env.CLIENT_USERNAME,
   clientPassword: process.env.CLIENT_PASSWORD,
   frontendUrl: process.env.FRONTEND_URL,
+  composeProject: process.env.COMPOSE_PROJECT,
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
   serversDir: '/app/servers',
   baseDir: process.env.BASE_DIR || '/app',

@@ -47,6 +47,7 @@ describe('ServerManagementService', () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
         if (key === 'serversDir') return SERVERS_DIR;
+        if (key === 'baseDir') return '/app';
         return null;
       }),
     };
@@ -125,6 +126,33 @@ describe('ServerManagementService', () => {
       const status = await service.getServerStatus('myserver');
 
       expect(status).toBe('starting');
+    });
+  });
+
+  describe('findContainerId', () => {
+    it('should resolve container via docker compose first', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      mockExec.mockResolvedValueOnce({ stdout: 'compose123\n', stderr: '' });
+
+      const containerId = await (service as any).findContainerId('myserver');
+
+      expect(containerId).toBe('compose123');
+      expect(mockExec).toHaveBeenCalledWith(
+        expect.stringContaining('docker compose ps -aq mc'),
+        expect.objectContaining({ cwd: '/app/servers/myserver' }),
+      );
+    });
+
+    it('should fallback to legacy exact name lookup when compose lookup fails', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      mockExec
+        .mockRejectedValueOnce(new Error('compose unavailable'))
+        .mockResolvedValueOnce({ stdout: 'legacy123\n', stderr: '' });
+
+      const containerId = await (service as any).findContainerId('myserver');
+
+      expect(containerId).toBe('legacy123');
+      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('name=^/myserver$'));
     });
   });
 

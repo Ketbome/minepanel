@@ -1086,7 +1086,6 @@ export class DockerComposeService {
       image: strategy.getDockerImage(config.dockerImage),
       tty: true,
       stdin_open: true,
-      container_name: config.id,
       environment,
       volumes,
       restart: config.restartPolicy,
@@ -1105,7 +1104,11 @@ export class DockerComposeService {
     // Si usa proxy, no exponer puerto al host; si no, exponer como siempre
     if (useProxy) {
       mcService.expose = [internalPort];
-      mcService.networks = ['minepanel-network'];
+      mcService.networks = {
+        'minepanel-network': {
+          aliases: [config.id],
+        },
+      };
       if (config.extraPorts?.length) {
         mcService.ports = config.extraPorts;
       }

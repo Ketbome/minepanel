@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DockerComposeService } from './docker-compose.service';
+import * as fs from 'fs-extra';
+import * as yaml from 'js-yaml';
 
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
@@ -54,6 +56,32 @@ describe('DockerComposeService', () => {
     it('should return null when server does not exist', async () => {
       const result = await service.getServerConfig('nonexistent');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('generateDockerComposeFile', () => {
+    it('should generate mc service without container_name', async () => {
+      const config = (service as any).createDefaultConfig('survival');
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.container_name).toBeUndefined();
+    });
+
+    it('should add stable proxy alias when proxy is enabled', async () => {
+      const config = (service as any).createDefaultConfig('proxyserver');
+
+      await service.generateDockerComposeFile(config, true);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.networks['minepanel-network'].aliases).toEqual(['proxyserver']);
     });
   });
 });
