@@ -51,12 +51,14 @@ export class AuthService {
     
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.createRefreshToken(user.userId);
+    const decodedToken = this.jwtService.decode(accessToken) as { exp?: number; iat?: number } | null;
+    const expiresIn = decodedToken?.exp && decodedToken?.iat ? decodedToken.exp - decodedToken.iat : 900;
     
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
       username: user.username,
-      expires_in: 900, // 15 minutes in seconds
+      expires_in: expiresIn,
     };
   }
 

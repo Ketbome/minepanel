@@ -30,6 +30,7 @@ describe('AuthService', () => {
   beforeEach(async () => {
     const mockJwtService = {
       sign: jest.fn(),
+      decode: jest.fn(),
     };
 
     const mockUsersService = {
@@ -121,6 +122,7 @@ describe('AuthService', () => {
       const mockHashedToken = 'hashed.refresh.token';
       
       jwtService.sign.mockReturnValue(mockAccessToken);
+      jwtService.decode.mockReturnValue({ iat: 100, exp: 120 } as any);
       (bcrypt.hash as jest.Mock).mockResolvedValue(mockHashedToken);
       refreshTokenRepo.save.mockResolvedValue({} as any);
 
@@ -136,7 +138,7 @@ describe('AuthService', () => {
         access_token: mockAccessToken,
         refresh_token: 'mock-random-token',
         username: 'testuser',
-        expires_in: 900,
+        expires_in: 20,
       });
       expect(jwtService.sign).toHaveBeenCalledWith(payload);
       expect(refreshTokenRepo.save).toHaveBeenCalledWith(

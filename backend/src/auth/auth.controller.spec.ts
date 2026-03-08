@@ -138,7 +138,7 @@ describe('AuthController', () => {
       );
     });
 
-    it('should set insecure cookies in development mode', async () => {
+    it('should set secure cookies in development mode by default', async () => {
       process.env.NODE_ENV = 'development';
       delete process.env.ALLOW_INSECURE_AUTH_COOKIES;
 
@@ -156,12 +156,12 @@ describe('AuthController', () => {
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'access_token',
         'jwt.access.token',
-        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+        expect.objectContaining({ secure: true, httpOnly: true, sameSite: 'lax' }),
       );
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'refresh_token',
         'jwt.refresh.token',
-        expect.objectContaining({ secure: false, httpOnly: true, sameSite: 'lax' }),
+        expect.objectContaining({ secure: true, httpOnly: true, sameSite: 'lax' }),
       );
     });
 

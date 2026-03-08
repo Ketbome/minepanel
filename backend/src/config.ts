@@ -1,5 +1,6 @@
 export default () => ({
   jwtSecret: process.env.JWT_SECRET,
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2d',
   jwtIssuer: process.env.JWT_ISSUER || 'minepanel',
   jwtAudience: process.env.JWT_AUDIENCE || 'minepanel-users',
   clientUsername: process.env.CLIENT_USERNAME,
