@@ -13,6 +13,7 @@ services:
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
       - BASE_DIR=${BASE_DIR:-$PWD}
+      - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
 
       # Frontend Configuration (loaded at runtime)
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}

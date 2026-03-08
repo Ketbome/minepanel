@@ -12,6 +12,7 @@ services:
       - CLIENT_USERNAME=${CLIENT_USERNAME:-admin}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
       - BASE_DIR=${BASE_DIR:-$PWD}
+      - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
       # - BASE_PATH=${BASE_PATH}  # Subdirectory routing (e.g., /api)
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers

@@ -28,6 +28,7 @@ All variables can be set in `.env` or `docker-compose.yml`.
 | `FRONTEND_PORT` | `3000`  | Web UI port               |
 | `BACKEND_PORT`  | `8091`  | API port                  |
 | `BASE_DIR`      | `$PWD`  | Base path for server data |
+| `COMPOSE_PROJECT` | _(empty)_ | Optional prefix for per-server Docker Compose project names (`<prefix>_<serverId>`) |
 
 ### Authentication
 
