@@ -123,11 +123,19 @@ export default withMermaid(
         .replace(/^index$/, '');
       const canonicalPath = pagePath ? `/${pagePath}` : '/';
       const canonicalUrl = `${hostname}${canonicalPath}`;
+      const normalizedPagePath = pagePath.toLowerCase();
 
       head.push(
         ['link', { rel: 'canonical', href: canonicalUrl }],
         ['meta', { property: 'og:url', content: canonicalUrl }],
       );
+
+      if (normalizedPagePath === 'agents') {
+        head.push(
+          ['meta', { name: 'robots', content: 'noindex, nofollow' }],
+          ['meta', { name: 'googlebot', content: 'noindex, nofollow' }],
+        );
+      }
 
       // Use page title/description for Twitter if not set in frontmatter
       if (pageData.frontmatter.title) {
@@ -299,7 +307,9 @@ export default withMermaid(
       hostname: 'https://minepanel.ketbome.com',
       lastmodDateOnly: false,
       transformItems: (items) => {
-        return items.map((item) => {
+        const filteredItems = items.filter((item) => !/(^|\/)agents(?:\/)?$/i.test(item.url));
+
+        return filteredItems.map((item) => {
           let priority = 0.7;
           const isHome = item.url === hostname || item.url === `${hostname}/`;
 
