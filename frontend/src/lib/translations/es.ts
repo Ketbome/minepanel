@@ -1339,6 +1339,28 @@ export const es: Record<TranslationKey, string> = {
   serverPortV6Help: 'Opcional. Configura si tu servidor soporta conexiones IPv6.',
 
   // BEDROCK TEMPLATES
+  // BACKUPS
+  backups: 'Copias de seguridad',
+  backupsDesc: 'Gestiona las copias de seguridad del mundo. Crear, restaurar, descargar o eliminar copias.',
+  backupCreate: 'Crear copia',
+  backupTriggered: 'Copia de seguridad iniciada',
+  backupTriggerError: 'Error al iniciar la copia de seguridad',
+  backupRestored: 'Copia restaurada. El servidor se está reiniciando.',
+  backupRestoreError: 'Error al restaurar la copia',
+  backupDeleted: 'Copia eliminada',
+  backupDeleteError: 'Error al eliminar la copia',
+  backupDownload: 'Descargar',
+  backupDownloadError: 'Error al descargar la copia',
+  backupRestore: 'Restaurar',
+  backupDelete: 'Eliminar',
+  backupLoadError: 'Error al cargar las copias de seguridad',
+  backupNoBackups: 'Sin copias de seguridad',
+  backupNoBackupsDesc: 'Activa las copias automáticas en los ajustes del servidor o crea una manualmente.',
+  backupRestoreConfirmTitle: '¿Restaurar copia?',
+  backupRestoreConfirmDesc: 'Esto detendrá el servidor, reemplazará los datos del mundo con esta copia y reiniciará el servidor. Esta acción no se puede deshacer.',
+  backupDeleteConfirmTitle: '¿Eliminar copia?',
+  backupDeleteConfirmDesc: 'Esta copia de seguridad se eliminará permanentemente. Esta acción no se puede deshacer.',
+
   bedrockSurvival: 'Bedrock Supervivencia',
   bedrockSurvivalDesc: 'Supervivencia clásica para jugadores móviles y de consola.',
   bedrockCreative: 'Bedrock Creativo',

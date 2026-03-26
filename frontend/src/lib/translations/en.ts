@@ -1317,6 +1317,28 @@ export const en = {
   serverPortV6Desc: 'Port for IPv6 connections. Leave empty to disable.',
   serverPortV6Help: 'Optional. Set if your server supports IPv6 connections.',
 
+  // BACKUPS
+  backups: 'Backups',
+  backupsDesc: 'Manage server world backups. Create, restore, download, or delete backups.',
+  backupCreate: 'Create Backup',
+  backupTriggered: 'Backup triggered successfully',
+  backupTriggerError: 'Failed to trigger backup',
+  backupRestored: 'Backup restored successfully. Server is restarting.',
+  backupRestoreError: 'Failed to restore backup',
+  backupDeleted: 'Backup deleted',
+  backupDeleteError: 'Failed to delete backup',
+  backupDownload: 'Download',
+  backupDownloadError: 'Failed to download backup',
+  backupRestore: 'Restore',
+  backupDelete: 'Delete',
+  backupLoadError: 'Failed to load backups',
+  backupNoBackups: 'No backups yet',
+  backupNoBackupsDesc: 'Enable automatic backups in server settings or create one manually.',
+  backupRestoreConfirmTitle: 'Restore Backup?',
+  backupRestoreConfirmDesc: 'This will stop the server, replace the current world data with this backup, and restart the server. This action cannot be undone.',
+  backupDeleteConfirmTitle: 'Delete Backup?',
+  backupDeleteConfirmDesc: 'This backup file will be permanently deleted. This action cannot be undone.',
+
   // BEDROCK TEMPLATES
   bedrockSurvival: 'Bedrock Survival',
   bedrockSurvivalDesc: 'Classic survival for mobile and console players.',

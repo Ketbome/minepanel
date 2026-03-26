@@ -13,6 +13,7 @@ import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { ModrinthModule } from './modrinth/modrinth.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ModrinthModule } from './modrinth/modrinth.module';
     ModrinthModule,
     FilesModule,
     ProxyModule,
+    BackupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
