@@ -1373,6 +1373,7 @@ export const pl: Record<TranslationKey, string> = {
   english: 'Angielski',
   dutch: 'Niderlandzki',
   german: 'Niemiecki',
+  french: 'Francuski',
   polish: 'Polski',
   peaceful: 'Pokojowy',
   unlessStopped: 'Chyba że zatrzymane',
