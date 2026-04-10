@@ -147,6 +147,12 @@ When a world is selected from **General -> World**, Minepanel updates compose co
 
 You can classify worlds using subfolders (for example `minigames/`, `skyblock/`, `modded/`) in both local and global libraries.
 
+World Library also includes a **Discover Worlds** panel:
+
+- Search worlds in CurseForge from the UI and import them into the global library
+- Import world archives from direct HTTPS URLs (`.zip`, `.tar`, `.tar.gz`, `.tgz`)
+- Imported files are stored under `servers/.world/worlds/curseforge/` or `servers/.world/worlds/url/`
+
 ### Vanilla
 
 Basic Minecraft server without mods or plugins.

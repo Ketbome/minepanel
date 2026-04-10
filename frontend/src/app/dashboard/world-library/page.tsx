@@ -3,9 +3,12 @@
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { FileBrowser } from "@/components/molecules/FileBrowser";
+import { useState } from "react";
+import { WorldDiscoverPanel } from "@/components/organisms/world-library/WorldDiscoverPanel";
 
 export default function WorldLibraryPage() {
   const { t } = useLanguage();
+  const [browserKey, setBrowserKey] = useState(0);
 
   return (
     <div className="space-y-6">
@@ -17,7 +20,9 @@ export default function WorldLibraryPage() {
         <p className="text-gray-400 mt-2">{t("worldLibraryDesc")}</p>
       </div>
 
-      <FileBrowser serverId=".world" />
+      <WorldDiscoverPanel onImported={() => setBrowserKey((value) => value + 1)} />
+
+      <FileBrowser key={browserKey} serverId=".world" />
     </div>
   );
 }

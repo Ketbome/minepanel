@@ -92,6 +92,7 @@ Operational notes:
 - Uploading/changing worlds, mods, plugins, and most configs usually requires restart.
 - World switching supports folders with `level.dat` and archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`).
 - `WORLD` clone source is mounted read-only by Minepanel to avoid accidental source overwrites.
+- World Library includes **Discover Worlds** to search CurseForge worlds and import remote ZIP/TAR URLs directly into `servers/.world/worlds/`.
 
 ## Backups
 
