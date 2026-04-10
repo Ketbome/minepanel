@@ -327,6 +327,7 @@ export const nl: Record<TranslationKey, string> = {
   english: 'Engels',
   dutch: 'Nederlands',
   german: 'Duits',
+  french: 'Frans',
   polish: 'Pools',
   changeLanguage: 'Taal wijzigen',
 
