@@ -64,6 +64,8 @@ docker compose restart
    - Folder containing `level.dat`
    - `.zip`, `.tar`, `.tar.gz`, `.tgz`
 3. If the world is inside nested folders, ensure one of them contains `level.dat`
+4. For Discover Worlds imports, only archive files are accepted (`.zip`, `.tar`, `.tar.gz`, `.tgz`)
+5. CurseForge search/import requires a configured API key in Settings
 
 ### World switch applied but server starts old world
 

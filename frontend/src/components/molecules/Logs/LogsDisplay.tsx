@@ -28,7 +28,7 @@ export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLo
           <Terminal className="h-3 w-3 mr-1" />
           {error ? t("error") : hasErrors ? t("withErrors") : t("console")}
         </div>
-        <pre ref={logsContainerRef} className={`logs-container p-4 pt-6 rounded-md overflow-x-auto overflow-y-auto text-xs font-mono border-gray-700/50 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 h-[600px] wrap-break-word whitespace-pre-wrap ${error ? "bg-red-950/40 text-red-300" : hasErrors ? "bg-yellow-950/20 text-emerald-400" : "bg-gray-950/80 text-emerald-400"}`}>
+        <pre ref={logsContainerRef} className={`logs-container p-4 pt-6 rounded-md overflow-x-hidden overflow-y-auto text-xs font-mono border-gray-700/50 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 h-[600px] max-w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap ${error ? "bg-red-950/40 text-red-300" : hasErrors ? "bg-yellow-950/20 text-emerald-400" : "bg-gray-950/80 text-emerald-400"}`}>
           {filteredLogEntries.length > 0 ? (
             <div className="minecraft-log">
               {filteredLogEntries.map((entry: any) => (

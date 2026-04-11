@@ -50,11 +50,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
       <Sidebar />
 
-      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"}`}>
+      <div
+        className={`flex flex-col relative z-10 transition-all duration-300 min-w-0 ${
+          isSidebarCollapsed ? "ml-16 w-[calc(100%-4rem)]" : "ml-64 w-[calc(100%-16rem)]"
+        }`}
+      >
         <DashboardHeader />
 
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto animate-fade-in">
+        <main className="flex-1 p-6 overflow-auto min-w-0">
+          <div className="max-w-7xl mx-auto animate-fade-in min-w-0">
             {children}
           </div>
         </main>

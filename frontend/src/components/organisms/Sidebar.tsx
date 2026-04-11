@@ -277,7 +277,8 @@ export function Sidebar() {
                     />
                     <div
                       className={cn(
-                        'absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-gray-900',
+                        'absolute w-3 h-3 rounded-full border-2 border-gray-900',
+                        isCollapsed ? 'bottom-0 right-0' : '-bottom-1 -right-1',
                         getStatusColor(server.status),
                       )}
                     />
