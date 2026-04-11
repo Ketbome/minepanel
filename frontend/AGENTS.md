@@ -2,25 +2,41 @@
 
 ## Project Purpose
 
-Frontend app for Minepanel built with Next.js.
+Minepanel frontend is a Next.js dashboard for managing Minecraft servers.
 
-- Provides dashboard UI to create and manage Minecraft servers.
-- Consumes backend API for auth, lifecycle actions, files, settings, and monitoring.
-- Handles client UX for Java and Bedrock flows.
+- Creates and edits server configuration.
+- Controls runtime actions (start, stop, restart, logs, worlds, files, settings).
+- Supports both Java and Bedrock UX paths.
 
 ## Architecture
 
 ```txt
 frontend/src/
-|- app/                   Next.js App Router pages
-|- components/            Feature components
-|- components/ui/         Base shadcn/ui primitives
-|- lib/hooks/             Reusable hooks
-|- lib/store/             Zustand stores
-|- lib/translations/      i18n dictionaries
-|- services/              API service layer
-|- services/axios.service.ts Shared HTTP client
+|- app/                         App Router pages
+|  |- dashboard/
+|  |  |- servers/[server]/      Server config/details route
+|  |  |- files/                 Global files browser route
+|  |  |- world-library/         Global world library route
+|- components/
+|  |- organisms/                Complex feature sections
+|  |- molecules/                Mid-level reusable UI
+|  |- ui/                       Base shadcn primitives (generated)
+|- services/
+|  |- axios.service.ts          Shared API client config
+|  |- docker/                   Server lifecycle/config endpoints
+|  |- files/                    File browser endpoints
+|  |- world-discovery/          World import endpoints
+|- lib/
+|  |- store/                    Zustand stores
+|  |- translations/             i18n dictionaries
+|  |- hooks/                    Custom hooks
 ```
+
+Backend integration model:
+
+- Frontend never accesses host filesystem directly.
+- Files and worlds are always mediated by backend endpoints.
+- Route `serverId` values are API-level identifiers with special cases (`_root`, `.world`).
 
 ## Key Commands
 
@@ -31,36 +47,86 @@ npm run start
 npm run lint
 ```
 
+From repo root:
+
+```bash
+npm run dev --prefix frontend
+npm run lint --prefix frontend
+```
+
 ## Code Patterns
 
-- Prefer server components; use client components only when needed.
-- Keep components focused and small; split large views by feature.
-- Use service layer in `src/services/*` for API calls.
-- Always keep auth cookies in requests (`credentials: 'include'` in fetch or axios equivalent).
-- Do not edit base components in `src/components/ui/*`; wrap/compose instead.
+- Prefer server components by default; use client components when state/effects/browser APIs are required.
+- Keep API calls in `src/services/*`; do not scatter ad-hoc fetch calls across UI.
+- Reuse `src/services/axios.service.ts` for auth/session behavior.
+- Keep components focused; split large feature blocks into molecules/organisms.
+- Maintain existing visual/system patterns; do not redesign unrelated UI.
+
+Auth/session patterns:
+
+- Axios client uses `withCredentials: true`; preserve it.
+- Some file download flows append token from localStorage to URL; avoid breaking current behavior unless task requires auth refactor.
+
+Java/Bedrock UI parity:
+
+- Preserve edition-aware behavior in tabs and settings.
+- Do not expose Java-only controls for Bedrock by mistake (proxy/RCON-specific behavior).
 
 ## Critical Files
 
-- `src/app/layout.tsx`
-- `src/app/page.tsx`
-- `src/services/axios.service.ts`
-- `src/lib/store/`
-- `src/lib/translations/`
+- `src/services/axios.service.ts` - baseURL and credential behavior.
+- `src/services/docker/fetchs.ts` - core server API calls.
+- `src/services/files/files.service.ts` - files API contract.
+- `src/components/molecules/FileBrowser/FileBrowser.tsx` - file management UX and upload/download behavior.
+- `src/app/dashboard/files/page.tsx` - global file browser entry (`_root`).
+- `src/app/dashboard/world-library/page.tsx` - world library entry (`.world`).
+- `src/app/dashboard/servers/[server]/page.tsx` - dynamic server route binding.
 - `src/components/molecules/Tabs/ServerTypeTab.tsx`
 - `src/components/molecules/Tabs/BedrockSettingsTab.tsx`
+- `src/lib/store/servers-store.ts`
+- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`)
 - `package.json`
 
 ## Agent-Specific Instructions
 
-- Read root `AGENTS.md` before frontend changes.
-- Keep Java/Bedrock UX parity when editing server setup and connection views.
-- Preserve existing design system and interaction patterns.
-- Do not introduce new state libraries or API clients.
-- If API contracts change, coordinate with backend and update docs in `doc/`.
+General:
+
+- Read root `AGENTS.md` before frontend edits.
+- Do not add new state/API libraries unless explicitly required.
+- If backend API contracts change, sync frontend services and update docs in `doc/`.
+
+Path and serverId semantics (important):
+
+- `serverId="_root"` means "all servers root" in files UI (maps backend to `/app/servers`).
+- `serverId=".world"` means global world library (maps backend to `/app/servers/.world/worlds`).
+- Any normal server ID maps to that server data directory in backend files module.
+- Do not normalize or rewrite these IDs on frontend; pass them exactly as expected by backend.
+
+File browser and uploads:
+
+- Keep current upload semantics (`path` + optional `relativePath(s)`) because backend preserves folder structures using these fields.
+- Keep encoding and query parameter usage stable for download URLs.
+- Avoid frontend-side path sanitization that can conflict with backend path validation rules.
+
+Routing and data flow:
+
+- `dashboard/servers/[server]` route param is the source of truth for selected server ID.
+- Keep service hooks (`useServerConfig`, `useServerStatus`) aligned with API endpoints.
+- Do not move API logic into presentation components.
+
+i18n:
+
+- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`).
+- Keep key naming consistent; avoid one-off names that break translation structure.
+
+UI base components:
+
+- Do not edit autogenerated base components in `src/components/ui/*` unless explicitly requested.
+- Extend behavior through wrappers/composition in feature components.
 
 ## Required AGENTS.md Content
 
-Any frontend AGENTS update must preserve these sections:
+Every frontend AGENTS update must include:
 
 - Project purpose
 - Architecture
@@ -72,11 +138,11 @@ Any frontend AGENTS update must preserve these sections:
 
 ## Writing Tips (Mandatory)
 
-- Be explicit and practical.
-- Point to exact files for frequent tasks.
-- Keep only high-signal instructions.
-- Add rules iteratively based on real mistakes.
+- Be explicit and concrete.
+- Reference exact files for sensitive flows (auth, files, worlds, route params).
+- Keep only relevant context.
+- Iterate and tighten rules based on recurring mistakes.
 
 ## Context Maintenance (Golden Rule)
 
-When frontend workflow, architecture, commands, or conventions change, update both `frontend/AGENTS.md` and `frontend/README.md` in the same task.
+The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
