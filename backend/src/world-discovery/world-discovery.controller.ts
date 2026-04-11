@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ImportWorldDto } from './dto/import-world.dto';
@@ -45,5 +45,11 @@ export class WorldDiscoveryController {
       fileName: body.fileName,
       targetFolder: body.targetFolder,
     });
+  }
+
+  @Get('curseforge/:projectId')
+  async getCurseForgeWorldDetails(@Request() req, @Param('projectId') projectId: string) {
+    const user = req.user as PayloadToken;
+    return this.worldDiscoveryService.getCurseForgeWorldDetails(user.userId, projectId);
   }
 }

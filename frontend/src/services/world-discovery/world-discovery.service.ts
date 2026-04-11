@@ -23,6 +23,18 @@ export interface DiscoverWorldsResponse {
   };
 }
 
+export interface DiscoverWorldDetails {
+  provider: "curseforge";
+  projectId: string;
+  name: string;
+  summary: string;
+  slug: string;
+  downloads?: number;
+  iconUrl?: string;
+  websiteUrl?: string;
+  screenshots: string[];
+}
+
 export interface ImportWorldResponse {
   success: boolean;
   provider: "curseforge" | "url";
@@ -61,6 +73,11 @@ export const worldDiscoveryService = {
       fileName: payload.fileName,
       targetFolder: payload.targetFolder,
     });
+    return data;
+  },
+
+  async getCurseforgeWorldDetails(projectId: string): Promise<DiscoverWorldDetails> {
+    const { data } = await api.get(`/world-discovery/curseforge/${projectId}`);
     return data;
   },
 };

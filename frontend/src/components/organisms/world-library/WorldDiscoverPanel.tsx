@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
-import { DiscoverWorldItem, worldDiscoveryService } from "@/services/world-discovery/world-discovery.service";
+import { DiscoverWorldDetails, DiscoverWorldItem, worldDiscoveryService } from "@/services/world-discovery/world-discovery.service";
 
 interface WorldDiscoverPanelProps {
   onImported: () => void;
@@ -26,6 +26,8 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
   const [index, setIndex] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [detailsByProjectId, setDetailsByProjectId] = useState<Record<string, DiscoverWorldDetails>>({});
+  const [loadingDetailsId, setLoadingDetailsId] = useState<string | null>(null);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -46,11 +48,32 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
       setIndex(response.pagination.index);
       setTotalCount(response.pagination.totalCount);
       setExpandedProjectId(null);
+      setDetailsByProjectId({});
     } catch (error) {
       console.error("Error searching worlds:", error);
       mcToast.error(t("worldDiscoverSearchError"));
     } finally {
       setLoadingSearch(false);
+    }
+  };
+
+  const toggleDetails = async (projectId: string) => {
+    if (expandedProjectId === projectId) {
+      setExpandedProjectId(null);
+      return;
+    }
+
+    setExpandedProjectId(projectId);
+    if (detailsByProjectId[projectId]) return;
+
+    setLoadingDetailsId(projectId);
+    try {
+      const details = await worldDiscoveryService.getCurseforgeWorldDetails(projectId);
+      setDetailsByProjectId((current) => ({ ...current, [projectId]: details }));
+    } catch (error) {
+      console.error("Error loading world details:", error);
+    } finally {
+      setLoadingDetailsId(null);
     }
   };
 
@@ -158,7 +181,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
                 results.map((world) => (
                   <div
                     key={world.projectId}
-                    onClick={() => setExpandedProjectId((current) => (current === world.projectId ? null : world.projectId))}
+                    onClick={() => toggleDetails(world.projectId)}
                     className="rounded-md border border-gray-700/60 bg-gray-800/40 p-3 cursor-pointer transition-colors hover:bg-gray-800/60"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -187,14 +210,45 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
 
                     {expandedProjectId === world.projectId ? (
                       <div className="mt-3 space-y-2 border-t border-gray-700/60 pt-3">
-                        <p className="text-xs text-gray-300">{world.summary || t("noDescription")}</p>
+                        {loadingDetailsId === world.projectId ? (
+                          <div className="py-2 flex items-center justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                          </div>
+                        ) : null}
+
+                        {detailsByProjectId[world.projectId]?.screenshots?.length ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {detailsByProjectId[world.projectId].screenshots.slice(0, 6).map((screenshot, imageIndex) => (
+                              <a
+                                key={`${world.projectId}-${imageIndex}`}
+                                href={screenshot}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                onClick={(event) => event.stopPropagation()}
+                                className="block overflow-hidden rounded border border-gray-700/60"
+                              >
+                                <Image
+                                  src={screenshot}
+                                  alt={`${world.name}-${imageIndex + 1}`}
+                                  width={160}
+                                  height={90}
+                                  className="h-16 w-full object-cover"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <p className="text-xs text-gray-300">{detailsByProjectId[world.projectId]?.summary || world.summary || t("noDescription")}</p>
                         {world.fileName ? <p className="text-xs text-gray-500">{world.fileName}</p> : null}
-                        {typeof world.downloads === "number" ? (
-                          <p className="text-xs text-gray-400">Downloads: {world.downloads.toLocaleString()}</p>
+                        {typeof (detailsByProjectId[world.projectId]?.downloads ?? world.downloads) === "number" ? (
+                          <p className="text-xs text-gray-400">
+                            Downloads: {(detailsByProjectId[world.projectId]?.downloads ?? world.downloads)?.toLocaleString()}
+                          </p>
                         ) : null}
                         <div className="flex items-center justify-end gap-2">
                           <a
-                            href={`https://www.curseforge.com/minecraft/worlds/${world.slug}`}
+                            href={detailsByProjectId[world.projectId]?.websiteUrl || `https://www.curseforge.com/minecraft/worlds/${world.slug}`}
                             target="_blank"
                             rel="noreferrer noopener"
                             className="inline-flex items-center gap-1 text-xs text-emerald-300 hover:text-emerald-200"

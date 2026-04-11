@@ -56,6 +56,13 @@ interface CurseForgeProject {
   summary?: string;
   downloadCount?: number;
   logo?: CurseForgeAsset;
+  links?: {
+    websiteUrl?: string;
+  };
+  screenshots?: Array<{
+    url?: string;
+    thumbnailUrl?: string;
+  }>;
   latestFiles?: CurseForgeFile[];
 }
 
@@ -217,6 +224,37 @@ export class WorldDiscoveryService {
       source: 'remote',
       ...saved,
     };
+  }
+
+  async getCurseForgeWorldDetails(userId: number, projectId: string) {
+    const apiKey = await this.getCurseForgeApiKey(userId);
+    const client = this.getCurseForgeClient(apiKey);
+    const parsedProjectId = Number.parseInt(projectId, 10);
+
+    if (!Number.isFinite(parsedProjectId) || parsedProjectId <= 0) {
+      throw new BadRequestException('Invalid projectId');
+    }
+
+    try {
+      const response = await client.get<CurseForgeProjectResponse>(`/mods/${parsedProjectId}`);
+      const project = response.data.data;
+
+      return {
+        provider: 'curseforge' as const,
+        projectId: project.id.toString(),
+        name: project.name,
+        summary: project.summary ?? '',
+        slug: project.slug,
+        downloads: project.downloadCount,
+        iconUrl: project.logo?.thumbnailUrl || project.logo?.url,
+        websiteUrl: project.links?.websiteUrl,
+        screenshots: (project.screenshots ?? [])
+          .map((item) => item.thumbnailUrl || item.url)
+          .filter((value): value is string => !!value),
+      };
+    } catch (error) {
+      this.handleCurseForgeError(error, 'Error loading CurseForge world details');
+    }
   }
 
   private async downloadWorldArchive(payload: {
