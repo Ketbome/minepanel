@@ -1,329 +1,89 @@
-# AGENTS.md — Backend (NestJS)
+# AGENTS.md - Backend
 
-## Overview
+## Project Purpose
 
-NestJS 11 API handling server management, authentication, file operations, and Docker orchestration.
+Backend API for Minepanel built with NestJS.
 
-**Port:** 8091
-**Database:** SQLite via sql.js + TypeORM
+- Manages Minecraft servers lifecycle (create/start/stop/delete).
+- Generates and executes Docker Compose runtime config.
+- Handles auth, file operations, monitoring, and integrations.
 
----
+## Architecture
 
-## Module Structure
-
-```
-src/
-├── auth/                 # JWT auth, guards, strategies
-├── server-management/    # Core CRUD, start/stop, logs
-│   └── strategies/       # Edition-specific behavior (Java/Bedrock)
-├── docker-compose/       # Compose file generation
-├── files/                # File browser, editor, upload/download
-├── users/                # User entity and settings
-├── curseforge/           # CurseForge mod API integration
-├── discord/              # Webhook notifications
-├── system-monitoring/    # Host metrics (CPU, RAM, disk)
-├── proxy/                # mc-router proxy configuration
-└── database/             # TypeORM + SQLite config
+```txt
+backend/src/
+|- auth/                 JWT auth, guards, strategies
+|- server-management/    Core server operations
+|- server-management/strategies/ Java/Bedrock strategy pattern
+|- docker-compose/       Compose generation
+|- files/                File browser and file actions
+|- users/                User and settings
+|- system-monitoring/    Host metrics
+|- proxy/                Proxy/network support
+|- database/             TypeORM + sql.js setup
+|- config.ts             Runtime config mapping
 ```
 
-### Server Edition Strategies
+Key pattern: edition-specific behavior is in `server-management/strategies/*`.
 
-Edition-specific logic (Docker image, ports, commands) is encapsulated via Strategy Pattern:
-
-```
-src/server-management/strategies/
-├── server-strategy.interface.ts   # IServerStrategy interface
-├── java-server.strategy.ts        # Java Edition (RCON, TCP, mods)
-├── bedrock-server.strategy.ts     # Bedrock Edition (send-command, UDP)
-├── server-strategy.factory.ts     # Factory for creating strategies
-└── index.ts                       # Exports
-```
-
-**Usage:**
-```typescript
-const strategy = ServerStrategyFactory.create(edition);
-const dockerImage = strategy.getDockerImage();
-const defaultPort = strategy.getDefaultPort();
-const envVars = strategy.getEnvironmentVariables(config);
-```
-
----
-
-## Patterns & Best Practices
-
-### Module/Service/Controller
-
-```typescript
-// ✅ Standard NestJS pattern
-@Controller('servers')
-export class ServerController {
-  constructor(private readonly serverService: ServerService) {}
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.serverService.findOne(id);
-  }
-}
-```
-
-### DTOs
-
-- Always validate input with `class-validator`
-- Place in `dto/` subdirectory per module
-- Use `@IsString()`, `@IsOptional()`, `@IsInt()`, etc.
-
-```typescript
-// ✅ GOOD
-export class CreateServerDto {
-  @IsString()
-  @Matches(/^[a-zA-Z0-9_-]+$/)
-  name: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1024)
-  @Max(65535)
-  port?: number;
-}
-```
-
-### Entities
-
-- Use TypeORM decorators
-- Place in `entities/` subdirectory
-- Primary key: `@PrimaryGeneratedColumn('uuid')` or auto-increment
-
-```typescript
-@Entity()
-export class Server {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column()
-  name: string;
-
-  @Column({ default: 25565 })
-  port: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-}
-```
-
-### Error Handling
-
-Let NestJS handle errors. Throw standard HTTP exceptions:
-
-```typescript
-// ✅ GOOD
-if (!server) {
-  throw new NotFoundException(`Server ${id} not found`);
-}
-
-// ❌ BAD - Manual try/catch everywhere
-try {
-  // ...
-} catch (e) {
-  return { error: e.message };
-}
-```
-
-### Logging
-
-Use NestJS Logger, not console.log:
-
-```typescript
-private readonly logger = new Logger(ServerService.name);
-
-this.logger.log(`Starting server ${id}`);
-this.logger.error(`Failed to start: ${err.message}`);
-```
-
----
-
-## Docker Operations
-
-Shell exec is used for Docker Compose operations (dockerode doesn't support compose v2):
-
-```typescript
-// Compose up
-execSync(`docker compose -f ${composePath} up -d`, { cwd: serverDir });
-
-// Container status
-execSync(`docker inspect ${containerId} --format '{{.State.Status}}'`);
-
-// Logs
-execSync(`docker logs ${containerId} --tail 100`);
-
-// Commands: Java (RCON)
-execSync(`docker exec ${containerId} rcon-cli --port ${rconPort} --password ${pass} ${cmd}`);
-
-// Commands: Bedrock (send-command)
-execSync(`docker exec ${containerId} send-command ${cmd}`);
-```
-
-**Security:** Always validate `serverId` against `/^[a-zA-Z0-9_-]+$/` before using in shell commands.
-
----
-
-## Testing
+## Key Commands
 
 ```bash
-npm test              # Unit tests
-npm run test:watch    # Watch mode
-npm run test:cov      # Coverage
-npm run test:e2e      # e2e tests
+npm run start:dev
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
 ```
 
-### Test Structure
+## Code Patterns
 
-- Unit tests: `*.spec.ts` next to source files
-- e2e tests: `test/` directory
-- Mock external dependencies (Docker, filesystem)
+- Keep controllers thin; business logic in services.
+- Validate all DTO input with `class-validator`.
+- Use Nest exceptions (`NotFoundException`, `BadRequestException`, etc).
+- Use `Logger` instead of `console.log`.
+- Keep naming consistent: `kebab-case` files, `PascalCase` classes, `camelCase` methods.
 
-### Writing Service Tests
+## Critical Files
 
-```typescript
-// ✅ GOOD - Mock dependencies properly
-describe('AuthService', () => {
-  let service: AuthService;
-  let jwtService: jest.Mocked<JwtService>;
+- `src/config.ts`
+- `src/main.ts`
+- `src/app.module.ts`
+- `src/server-management/server-management.service.ts`
+- `src/server-management/server-management.controller.ts`
+- `src/server-management/strategies/server-strategy.factory.ts`
+- `src/docker-compose/docker-compose.service.ts`
+- `src/files/files.service.ts`
+- `package.json`
 
-  beforeEach(async () => {
-    const mockJwtService = {
-      sign: jest.fn(),
-    };
+## Agent-Specific Instructions
 
-    const module = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: JwtService, useValue: mockJwtService },
-      ],
-    }).compile();
+- Read root `AGENTS.md` before backend changes.
+- Keep Java and Bedrock behavior parity when changing server lifecycle logic.
+- Do not hardcode ports, paths, or image names already driven by config/DTO.
+- Validate values used in shell execution paths/commands.
+- Do not add dependencies or scripts unless explicitly required by the task.
+- If backend contract changes, update frontend usage and docs in `doc/`.
 
-    service = module.get(AuthService);
-    jwtService = module.get(JwtService);
-  });
+## Required AGENTS.md Content
 
-  it('should generate JWT token', async () => {
-    jwtService.sign.mockReturnValue('token');
-    const result = await service.generateJwt({ userId: 1 });
-    expect(result.access_token).toBe('token');
-  });
-});
-```
+Any backend AGENTS update must preserve these sections:
 
-### Mocking fs-extra
+- Project purpose
+- Architecture
+- Key commands
+- Code patterns
+- Critical files
+- Specific agent instructions
+- Context Maintenance Rule
 
-```typescript
-// Mock at top level (Jest hoists this)
-jest.mock('fs-extra', () => ({
-  pathExists: jest.fn(),
-  readFile: jest.fn(),
-  ensureDirSync: jest.fn(),
-}));
+## Writing Tips (Mandatory)
 
-import * as fs from 'fs-extra';
+- Be specific and operational.
+- Reference concrete files used often.
+- Keep instructions short and relevant.
+- Add new rules only when recurring errors justify them.
 
-// Use in tests
-(fs.pathExists as jest.Mock).mockResolvedValue(true);
-```
+## Context Maintenance (Golden Rule)
 
-### Mocking child_process
-
-```typescript
-jest.mock('node:child_process', () => ({ exec: jest.fn() }));
-jest.mock('node:util', () => ({
-  ...jest.requireActual('node:util'),
-  promisify: () => jest.fn(), // Returns mock for execAsync
-}));
-
-const mockExec = jest.requireMock('node:util').promisify();
-mockExec.mockResolvedValue({ stdout: 'output' });
-```
-
-### Controller Tests
-
-```typescript
-describe('ServerController', () => {
-  let controller: ServerController;
-  let service: jest.Mocked<ServerService>;
-
-  beforeEach(async () => {
-    const mockService = {
-      startServer: jest.fn(),
-      stopServer: jest.fn(),
-    };
-
-    const module = await Test.createTestingModule({
-      controllers: [ServerController],
-      providers: [{ provide: ServerService, useValue: mockService }],
-    }).compile();
-
-    controller = module.get(ServerController);
-    service = module.get(ServerService);
-  });
-
-  it('should start server', async () => {
-    service.startServer.mockResolvedValue(true);
-    const result = await controller.startServer('myserver');
-    expect(result.success).toBe(true);
-  });
-});
-```
-
-### Test Coverage
-
-CI runs tests with coverage. Aim for:
-- Services: >80% coverage
-- Controllers: >70% coverage
-- Critical paths (auth, server ops): >90%
-
----
-
-## Anti-patterns to Avoid
-
-```typescript
-// ❌ Business logic in controllers
-@Post()
-create(@Body() dto: CreateServerDto) {
-  const server = this.repo.create(dto);
-  // Don't do validation/logic here
-}
-
-// ❌ Raw SQL queries (use TypeORM)
-this.dataSource.query('SELECT * FROM servers WHERE id = ?', [id]);
-
-// ❌ Hardcoded values
-const port = 25565; // Should be configurable
-
-// ❌ Swallowing errors
-try { ... } catch (e) { /* silent */ }
-
-// ❌ console.log instead of Logger
-console.log('Server started');
-```
-
----
-
-## Common Tasks
-
-### Add new endpoint
-
-1. Create DTO in `src/{module}/dto/`
-2. Add method to `{module}.service.ts`
-3. Add route to `{module}.controller.ts`
-4. Add unit test in `{module}.service.spec.ts`
-
-### Add new module
-
-```bash
-nest g module {name}
-nest g service {name}
-nest g controller {name}
-```
-
-### Add entity field
-
-1. Add property with `@Column()` decorator
-2. TypeORM auto-migrates on restart (dev mode)
+When backend workflow, architecture, commands, or conventions change, update both `backend/AGENTS.md` and `backend/README.md` in the same task.
