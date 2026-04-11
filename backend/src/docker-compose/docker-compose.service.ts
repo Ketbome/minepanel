@@ -1105,7 +1105,8 @@ export class DockerComposeService {
           return `${absoluteHostPath}:${containerPath}`;
         }
         return volume;
-      });
+      })
+      .map((volume) => this.enforceReadOnlyWorldLibraryMount(volume));
 
     const edition = config.edition ?? 'JAVA';
     if (edition === 'JAVA') {
@@ -1122,6 +1123,29 @@ export class DockerComposeService {
     }
 
     return volumes;
+  }
+
+  private enforceReadOnlyWorldLibraryMount(volume: string): string {
+    const parts = volume.split(':');
+    if (parts.length < 2) return volume;
+
+    const target = parts[1];
+    const isWorldLibraryMount =
+      target === '/data/.world-library/local' ||
+      target === '/worlds/local' ||
+      target === '/worlds' ||
+      target === '/data/.world-library/global' ||
+      target === '/worlds/global';
+
+    if (!isWorldLibraryMount) return volume;
+
+    const host = parts[0];
+    const options = parts.slice(2).filter((option) => option && option !== 'rw' && option !== 'z' && option !== 'Z');
+    if (!options.includes('ro')) {
+      options.push('ro');
+    }
+
+    return [host, target, ...options].join(':');
   }
 
   private hasMountTarget(volume: string, target: string): boolean {

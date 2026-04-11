@@ -343,11 +343,16 @@ export class ServerManagementController {
   }
 
   @Post(':id/clear-data')
-  async clearServerData(@Param('id') id: string) {
+  async clearServerData(@Request() req, @Param('id') id: string) {
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
+
+    const user = req.user as PayloadToken;
+    const settings = await this.settingsService.getSettings(user.userId);
+    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    await this.dockerComposeService.updateServerConfig(id, {}, proxyEnabled);
 
     const result = await this.managementService.clearServerData(id);
     return {
