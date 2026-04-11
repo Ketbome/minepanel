@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Loader2, Search } from "lucide-react";
+import { ExternalLink, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
   const [results, setResults] = useState<DiscoverWorldItem[]>([]);
   const [index, setIndex] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -44,6 +45,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
       setResults(response.data);
       setIndex(response.pagination.index);
       setTotalCount(response.pagination.totalCount);
+      setExpandedProjectId(null);
     } catch (error) {
       console.error("Error searching worlds:", error);
       mcToast.error(t("worldDiscoverSearchError"));
@@ -154,26 +156,56 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
                 <p className="text-sm text-gray-400 px-2 py-1">{t("worldDiscoverEmpty")}</p>
               ) : (
                 results.map((world) => (
-                  <div key={world.projectId} className="flex items-start justify-between gap-3 rounded-md border border-gray-700/60 bg-gray-800/40 p-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        {world.iconUrl ? (
-                          <Image src={world.iconUrl} alt={world.name} width={20} height={20} className="rounded" />
-                        ) : null}
-                        <p className="text-sm font-medium text-gray-100 truncate">{world.name}</p>
+                  <div
+                    key={world.projectId}
+                    onClick={() => setExpandedProjectId((current) => (current === world.projectId ? null : world.projectId))}
+                    className="rounded-md border border-gray-700/60 bg-gray-800/40 p-3 cursor-pointer transition-colors hover:bg-gray-800/60"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {world.iconUrl ? (
+                            <Image src={world.iconUrl} alt={world.name} width={20} height={20} className="rounded" />
+                          ) : null}
+                          <p className="text-sm font-medium text-gray-100 truncate">{world.name}</p>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{world.summary || t("noDescription")}</p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1 line-clamp-2">{world.summary || t("noDescription")}</p>
-                      {world.fileName ? <p className="text-xs text-gray-500 mt-1">{world.fileName}</p> : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleImportCurseforge(world);
+                        }}
+                        disabled={!world.importable || importingId === world.projectId}
+                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                      >
+                        {importingId === world.projectId ? <Loader2 className="h-4 w-4 animate-spin" /> : t("worldDiscoverImport")}
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleImportCurseforge(world)}
-                      disabled={!world.importable || importingId === world.projectId}
-                      className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                    >
-                      {importingId === world.projectId ? <Loader2 className="h-4 w-4 animate-spin" /> : t("worldDiscoverImport")}
-                    </Button>
+
+                    {expandedProjectId === world.projectId ? (
+                      <div className="mt-3 space-y-2 border-t border-gray-700/60 pt-3">
+                        <p className="text-xs text-gray-300">{world.summary || t("noDescription")}</p>
+                        {world.fileName ? <p className="text-xs text-gray-500">{world.fileName}</p> : null}
+                        {typeof world.downloads === "number" ? (
+                          <p className="text-xs text-gray-400">Downloads: {world.downloads.toLocaleString()}</p>
+                        ) : null}
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={`https://www.curseforge.com/minecraft/worlds/${world.slug}`}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1 text-xs text-emerald-300 hover:text-emerald-200"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            CurseForge
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ))
               )}
