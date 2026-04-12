@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import AdmZip = require('adm-zip');
+import * as AdmZip from 'adm-zip';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
