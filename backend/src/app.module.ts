@@ -14,6 +14,7 @@ import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { ModrinthModule } from './modrinth/modrinth.module';
 import { WorldDiscoveryModule } from './world-discovery/world-discovery.module';
+import { BedrockAddonsModule } from './bedrock-addons/bedrock-addons.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { WorldDiscoveryModule } from './world-discovery/world-discovery.module';
     CurseforgeModule,
     ModrinthModule,
     WorldDiscoveryModule,
+    BedrockAddonsModule,
     FilesModule,
     ProxyModule,
   ],

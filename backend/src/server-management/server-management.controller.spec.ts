@@ -5,12 +5,14 @@ import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { SettingsService } from '../users/services/settings.service';
 import { ProxyService } from '../proxy/proxy.service';
+import { BedrockAddonsService } from '../bedrock-addons/bedrock-addons.service';
 
 describe('ServerManagementController', () => {
   let controller: ServerManagementController;
   let serverService: jest.Mocked<ServerManagementService>;
   let dockerComposeService: jest.Mocked<DockerComposeService>;
   let settingsService: jest.Mocked<SettingsService>;
+  let bedrockAddonsService: jest.Mocked<BedrockAddonsService>;
 
   beforeEach(async () => {
     const mockServerService = {
@@ -50,6 +52,10 @@ describe('ServerManagementController', () => {
       getServerHostname: jest.fn(),
     };
 
+    const mockBedrockAddonsService = {
+      clearAddonRuntimeState: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ServerManagementController],
       providers: [
@@ -57,6 +63,7 @@ describe('ServerManagementController', () => {
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: ProxyService, useValue: mockProxyService },
+        { provide: BedrockAddonsService, useValue: mockBedrockAddonsService },
       ],
     }).compile();
 
@@ -64,6 +71,7 @@ describe('ServerManagementController', () => {
     serverService = module.get(ServerManagementService);
     dockerComposeService = module.get(DockerComposeService);
     settingsService = module.get(SettingsService);
+    bedrockAddonsService = module.get(BedrockAddonsService);
   });
 
   it('should be defined', () => {
@@ -124,6 +132,35 @@ describe('ServerManagementController', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toContain('restarted');
+    });
+  });
+
+  describe('clearServerData', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    it('should clear addon runtime state for BEDROCK servers', async () => {
+      dockerComposeService.getServerConfig.mockResolvedValue({ id: 'bed', edition: 'BEDROCK' } as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue({ id: 'bed' } as any);
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
+      serverService.clearServerData.mockResolvedValue(true);
+      bedrockAddonsService.clearAddonRuntimeState.mockResolvedValue({ success: true, changed: true } as any);
+
+      const result = await controller.clearServerData(mockReq, 'bed');
+
+      expect(result.success).toBe(true);
+      expect(bedrockAddonsService.clearAddonRuntimeState).toHaveBeenCalledWith('bed');
+    });
+
+    it('should not clear addon runtime state for JAVA servers', async () => {
+      dockerComposeService.getServerConfig.mockResolvedValue({ id: 'java', edition: 'JAVA' } as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue({ id: 'java' } as any);
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
+      serverService.clearServerData.mockResolvedValue(true);
+
+      const result = await controller.clearServerData(mockReq, 'java');
+
+      expect(result.success).toBe(true);
+      expect(bedrockAddonsService.clearAddonRuntimeState).not.toHaveBeenCalled();
     });
   });
 

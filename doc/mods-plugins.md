@@ -15,16 +15,16 @@ head:
 
 # Mods, Plugins & Addons
 
-Manage mods for Java Edition (automatic) and addons for Bedrock Edition (manual).
+Manage mods for Java Edition and addons for Bedrock Edition from the same Minepanel workflow.
 
 ![Mods Tab](/img/mods-tab.png)
 
 ## Overview
 
-| Edition     | Platforms                    | Automation                     |
-| ----------- | ---------------------------- | ------------------------------ |
-| **Java**    | Modrinth, CurseForge, Spiget | ✅ Automatic                   |
-| **Bedrock** | MCPEDL, BedrockTweaks        | ❌ Manual (automation planned) |
+| Edition     | Platforms / Sources                    | Automation                                  |
+| ----------- | -------------------------------------- | ------------------------------------------- |
+| **Java**    | Modrinth, CurseForge, Spiget           | ✅ Automatic                                |
+| **Bedrock** | Upload `.mcaddon` / `.mcpack` / `.zip`, CurseForge | ✅ Import, enable/disable, sync to world |
 
 ```mermaid
 flowchart LR
@@ -445,13 +445,21 @@ environment:
 
 Where the numbers are Spigot resource IDs from [SpigotMC](https://www.spigotmc.org/resources/).
 
-## Bedrock Addons (Manual)
+## Bedrock Addons
 
-Bedrock Edition uses **behavior packs** and **resource packs** instead of traditional mods. Currently, addon installation is manual.
+Bedrock Edition uses **behavior packs** and **resource packs** instead of traditional mods.
 
-::: warning Manual Process
-Unlike Java Edition, Bedrock addon installation is not yet automated. This feature is on the [roadmap](/roadmap).
-:::
+Minepanel now includes an **Addons** tab for Bedrock servers with two sources:
+
+- **Manual upload** of `.mcaddon`, `.mcpack`, or `.zip`
+- **CurseForge import** using your configured API key
+
+Downloaded addon files are stored under `servers/<server-id>/addons/` and Minepanel syncs enabled packs into `mc-data/behavior_packs/` and `mc-data/resource_packs/`.
+
+When you enable an addon, Minepanel also updates:
+
+- `worlds/<level-name>/world_behavior_packs.json`
+- `worlds/<level-name>/world_resource_packs.json`
 
 ### Understanding Bedrock Addons
 
@@ -462,84 +470,47 @@ Unlike Java Edition, Bedrock addon installation is not yet automated. This featu
 
 Both `.mcaddon` and `.mcpack` files are actually **renamed ZIP files**.
 
-### Installation Steps
+::: info Resource Pack vs Behavior Pack
+Many Bedrock projects publish the **resource pack (RP)** and **behavior pack (BP)** as separate downloads.
 
-#### 1. Obtain the Addon Files
-
-Download addons from:
-
-- [MCPEDL](https://mcpedl.com/)
-- [BedrockTweaks](https://bedrocktweaks.net/)
-- Other Bedrock addon sites
-
-#### 2. Extract Addon Contents
-
-```bash
-# .mcaddon → behavior_packs
-unzip my-addon.mcaddon -d extracted/
-
-# .mcpack → resource_packs
-unzip my-resource.mcpack -d extracted/
-```
-
-#### 3. Upload to Server
-
-Using Minepanel's **Files** tab:
-
-1. Navigate to your Bedrock server's files
-2. Go to `mc-data/behavior_packs/` or `mc-data/resource_packs/`
-3. Upload the extracted addon folder (not the zip)
-
-**Structure should look like:**
-
-```
-mc-data/
-├── behavior_packs/
-│   └── my-addon/
-│       ├── manifest.json
-│       └── ... (addon files)
-├── resource_packs/
-│   └── my-resource/
-│       ├── manifest.json
-│       └── ... (resource files)
-└── worlds/
-    └── Bedrock level/
-        └── world_behavior_packs.json  ← Create this
-```
-
-#### 4. Get UUID and Version from manifest.json
-
-Each addon has a `manifest.json`. Find the `uuid` and `version`:
-
-```json
-{
-  "header": {
-    "uuid": "5f51f7b7-85dc-44da-a3ef-a48d8414e4d5",
-    "version": [3, 0, 0]
-  }
-}
-```
-
-#### 5. Create Pack Configuration
-
-Create `world_behavior_packs.json` in `worlds/{level-name}/`:
-
-```json
-[
-  {
-    "pack_id": "5f51f7b7-85dc-44da-a3ef-a48d8414e4d5",
-    "version": [3, 0, 0]
-  }
-]
-```
-
-For resource packs, create `world_resource_packs.json` with the same format.
-
-::: tip
-You can put both behavior and resource packs in the same `world_behavior_packs.json` file.
+- If you import only the **RP**, Minepanel can activate it, but gameplay logic will not exist.
+- If the addon changes mechanics, entities, scripts, UI interactions, or world logic, you usually also need the **BP** companion.
+- The Addons tab shows which packs were detected for each import (`RP`, `BP`, or both).
 :::
 
-#### 6. Force Resource Packs (Optional)
+### Installation Steps
+
+#### 1. Open the Addons Tab
+
+Go to your Bedrock server and open **Addons**.
+
+#### 2. Choose a Source
+
+You can:
+
+- Upload a local `.mcaddon`, `.mcpack`, or `.zip` file
+- Search CurseForge and import directly from the UI
+
+If you use CurseForge, configure your API key first in **Settings**.
+
+#### 3. Enable the Addon
+
+Imported addons are stored first, then you can enable or disable each one from the list.
+
+When enabled, Minepanel:
+
+- Extracts and registers pack metadata from each `manifest.json`
+- Copies behavior packs into `mc-data/behavior_packs/<uuid>/`
+- Copies resource packs into `mc-data/resource_packs/<uuid>/`
+- Rebuilds the world pack JSON files for the active Bedrock world
+
+#### 4. Restart the Server
+
+Restart the server to apply the enabled addons.
+
+If you want clients to be forced to download enabled **resource packs**, also enable `TEXTUREPACK_REQUIRED` or set it from the **Bedrock** settings tab.
+
+#### 5. Force Resource Packs (Optional)
 
 To require clients to download resource packs:
 
@@ -548,47 +519,38 @@ environment:
   TEXTUREPACK_REQUIRED: 'true'
 ```
 
-Or set in Minepanel's Bedrock settings tab.
+Or set it in Minepanel's **Bedrock** settings tab.
 
-#### 7. Restart Server
-
-Restart the server to apply changes. Players will be prompted to download resource packs when connecting.
+Players will be prompted to download resource packs when connecting.
 
 ### Example: Installing One Player Sleep
 
-```bash
-# 1. Download ops.mcaddon from MCPEDL
-
-# 2. Extract
-unzip ops.mcaddon -d ops-pack/
-
-# 3. Upload ops-pack/ folder to mc-data/behavior_packs/
-
-# 4. Check ops-pack/manifest.json for uuid and version
-
-# 5. Create worlds/Bedrock level/world_behavior_packs.json:
-[
-  {
-    "pack_id": "uuid-from-manifest",
-    "version": [1, 0, 0]
-  }
-]
-
-# 6. Restart server
-```
+1. Open the server's **Addons** tab
+2. Upload `ops.mcaddon` or import it from a supported source
+3. Wait for Minepanel to detect the contained behavior/resource packs
+4. Click **Enable** on the addon
+5. Restart the server
 
 ### Troubleshooting Bedrock Addons
 
-| Issue                         | Solution                                         |
-| ----------------------------- | ------------------------------------------------ |
-| Addon not loading             | Check `pack_id` matches manifest `uuid` exactly  |
-| Version error                 | Ensure version format is `[major, minor, patch]` |
-| Resource pack not downloading | Set `TEXTUREPACK_REQUIRED: "true"`               |
-| Pack conflicts                | Check for duplicate UUIDs                        |
+| Issue                         | Solution |
+| ----------------------------- | -------- |
+| `Pack Stack - None` in Bedrock logs | Check `world_behavior_packs.json` / `world_resource_packs.json` in the active world and restart after enabling addons |
+| Addon appears enabled but has no gameplay effect | Verify you imported the **BP** companion and not only the RP |
+| Version error                 | Verify the addon contains a valid `manifest.json` |
+| Resource pack not downloading | Set `TEXTUREPACK_REQUIRED: "true"` |
+| Pack conflicts                | Check for duplicate UUIDs |
+| Server data was cleared       | Minepanel keeps downloaded addon files, but applied runtime packs are reset. Re-enable the addons you want to use again |
 
-### Future Automation
+### Notes About Server Data Reset
 
-Automated Bedrock addon management is planned. See [Roadmap](/roadmap) for timeline.
+If you use **Clear server data** in Minepanel:
+
+- `mc-data/` is recreated from scratch
+- downloaded addon archives remain in `servers/<server-id>/addons/`
+- previously applied Bedrock addons are marked as inactive to avoid a broken "enabled but not applied" state
+
+After a reset, go back to **Addons** and enable the packs you want to apply again.
 
 ---
 

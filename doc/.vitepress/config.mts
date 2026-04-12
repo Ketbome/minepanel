@@ -112,7 +112,7 @@ export default withMermaid(
             ratingValue: '5',
             reviewCount: '1',
           },
-          softwareVersion: '1.0',
+          softwareVersion: '1.10.1',
           softwareRequirements: 'Docker 20.10+, Docker Compose v2.0+',
           releaseNotes: `${hostname}/roadmap`,
           screenshot: `${hostname}/img/Animation.gif`,

@@ -11,6 +11,12 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        minepanel:
+          "border border-emerald-500/40 bg-linear-to-r from-emerald-600 to-emerald-500 text-white shadow-[0_0_0_1px_rgba(16,185,129,0.18),0_14px_32px_rgba(5,150,105,0.22)] hover:from-emerald-500 hover:to-emerald-400 hover:shadow-[0_0_0_1px_rgba(52,211,153,0.28),0_18px_36px_rgba(16,185,129,0.26)]",
+        minepanelOutline:
+          "border border-gray-600/80 bg-gray-900/70 text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-300",
+        minepanelDanger:
+          "border border-red-500/40 bg-red-950/50 text-red-200 shadow-[0_0_0_1px_rgba(239,68,68,0.1)] hover:border-red-400/60 hover:bg-red-900/40 hover:text-red-100",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
