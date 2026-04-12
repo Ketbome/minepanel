@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isAuthenticated } from "@/services/auth/auth.service";
 import { useServerStatus } from "@/lib/hooks/useServerStatus";
@@ -16,6 +16,7 @@ export default function ServerConfig() {
   const router = useRouter();
   const params = useParams();
   const serverId = params.server as string;
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId);
   const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
@@ -27,6 +28,14 @@ export default function ServerConfig() {
     }
   }, [router]);
 
+  const handleClearServerData = useCallback(async () => {
+    const success = await clearServerData();
+    if (success) {
+      setRefreshToken((current) => current + 1);
+    }
+    return success;
+  }, [clearServerData]);
+
   if (configLoading) {
     return <ServerLoadingSkeleton />;
   }
@@ -34,11 +43,11 @@ export default function ServerConfig() {
   return (
     <div className="space-y-8">
       <div className="animate-fade-in-up">
-        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={clearServerData} />
+        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={handleClearServerData} />
       </div>
 
       <div className="animate-fade-in-up stagger-1">
-        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} />
+        <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} refreshToken={refreshToken} />
       </div>
 
       <div className="flex justify-center gap-8 pt-8 animate-fade-in stagger-2">

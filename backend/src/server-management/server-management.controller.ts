@@ -9,6 +9,7 @@ import { PayloadToken } from 'src/auth/models/token.model';
 import { ProxyService } from 'src/proxy/proxy.service';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
 import { SelectWorldDto } from './dto/select-world.dto';
+import { BedrockAddonsService } from 'src/bedrock-addons/bedrock-addons.service';
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
   'onlineMode',
@@ -40,6 +41,7 @@ export class ServerManagementController {
     private readonly managementService: ServerManagementService,
     private readonly settingsService: SettingsService,
     private readonly proxyService: ProxyService,
+    private readonly bedrockAddonsService: BedrockAddonsService,
   ) {}
 
   private sanitizeJavaServerDefaults(defaults: Record<string, any> | undefined): Record<string, any> {
@@ -355,6 +357,11 @@ export class ServerManagementController {
     await this.dockerComposeService.updateServerConfig(id, {}, proxyEnabled);
 
     const result = await this.managementService.clearServerData(id);
+
+    if (result && config.edition === 'BEDROCK') {
+      await this.bedrockAddonsService.clearAddonRuntimeState(id);
+    }
+
     return {
       success: result,
       message: result ? 'Server data cleared successfully' : 'Failed to clear server data',

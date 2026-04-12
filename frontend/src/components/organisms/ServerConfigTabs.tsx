@@ -15,6 +15,7 @@ const ResourcesTab = dynamic(() => import("../molecules/Tabs/ResourcesTab").then
 const GeneralSettingsTab = dynamic(() => import("../molecules/Tabs/GeneralSettingsTab").then(mod => mod.GeneralSettingsTab));
 const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").then(mod => mod.ServerTypeTab));
 const BedrockSettingsTab = dynamic(() => import("../molecules/Tabs/BedrockSettingsTab").then(mod => mod.BedrockSettingsTab));
+const BedrockAddonsTab = dynamic(() => import("../molecules/Tabs/BedrockAddonsTab").then(mod => mod.BedrockAddonsTab));
 const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
 
 interface ServerConfigTabsProps {
@@ -24,9 +25,10 @@ interface ServerConfigTabsProps {
   readonly saveConfig: () => Promise<boolean>;
   readonly serverStatus: string;
   readonly isSaving: boolean;
+  readonly refreshToken?: number;
 }
 
-export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving }) => {
+export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving, refreshToken = 0 }) => {
   const { t } = useLanguage();
 
   const isJava = config.edition !== "BEDROCK";
@@ -41,7 +43,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
+    const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files"];
     return validTabs.includes(hash) ? hash : "type";
   };
 
@@ -75,7 +77,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "bedrock", "mods", "plugins", "advanced", "logs", "commands", "files"];
+      const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files"];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -105,7 +107,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     if (isServerRunning) {
-      const disabledTabs = ["type", "general", "resources", "mods", "plugins", "advanced", "files"];
+      const disabledTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "files"];
       if (disabledTabs.includes(activeTab)) {
         setActiveTab("logs");
       }
@@ -157,6 +159,13 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <TabsTrigger value="bedrock" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                       <Smartphone className="h-4 w-4 shrink-0" />
                       <span className="hidden md:inline">{t("bedrock")}</span>
+                    </TabsTrigger>
+                  )}
+
+                  {isBedrock && (
+                    <TabsTrigger value="addons" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      <Package className="h-4 w-4 shrink-0" />
+                      <span className="hidden md:inline">{t("addons")}</span>
                     </TabsTrigger>
                   )}
 
@@ -219,6 +228,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               {isBedrock && (
                 <TabsContent value="bedrock" className="space-y-4 mt-0">
                   <BedrockSettingsTab config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
+
+              {isBedrock && (
+                <TabsContent value="addons" className="space-y-4 mt-0">
+                  <BedrockAddonsTab serverId={serverId} refreshToken={refreshToken} />
                 </TabsContent>
               )}
 
