@@ -100,6 +100,10 @@ export class BedrockServerStrategy implements IServerStrategy {
       env['LEVEL_TYPE'] = this.mapLevelType(config.levelType);
     }
 
+    if (config.worldLevelName) {
+      env['LEVEL_NAME'] = config.worldLevelName;
+    }
+
     // OPS uses XUIDs in Bedrock
     if (config.ops) {
       env['OPS'] = config.ops;
