@@ -35,6 +35,7 @@ const props = defineProps({
 const rootEl = ref(null);
 const isVisible = ref(false);
 const reduceMotion = ref(false);
+const copied = ref(false);
 
 const typingStyle = computed(() => ({
   '--typing-width': `${props.command.length}ch`,
@@ -45,6 +46,30 @@ const typingStyle = computed(() => ({
 const getOutputStyle = (idx) => ({
   animationDelay: `${props.startDelayMs + props.typingMs + 260 + idx * props.lineGapMs}ms`,
 });
+
+const copyLine = async (text, idx) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedIndex.value = idx;
+    setTimeout(() => {
+      copiedIndex.value = null;
+    }, 1500);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+};
+
+const copyCommand = async () => {
+  try {
+    await navigator.clipboard.writeText(props.command);
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 1500);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+};
 
 onMounted(() => {
   if (typeof window === 'undefined') {
@@ -87,23 +112,43 @@ onMounted(() => {
       </div>
 
       <div class="terminal-body">
-        <p class="line command-line">
-          <span class="prompt">{{ prompt }}</span>
-          <span class="typed" :class="{ run: isVisible && !reduceMotion }" :style="typingStyle">
-            {{ command }}
-          </span>
-          <span v-if="reduceMotion" class="typed-static">{{ command }}</span>
-        </p>
+        <div class="line-row">
+          <p class="line command-line">
+            <span class="prompt">{{ prompt }}</span>
+            <span class="typed" :class="{ run: isVisible && !reduceMotion }" :style="typingStyle">
+              {{ command }}
+            </span>
+            <span v-if="reduceMotion" class="typed-static">{{ command }}</span>
+          </p>
+          <button
+            class="copy-btn"
+            :class="{ copied: copied }"
+            @click="copyCommand"
+            :title="copied ? 'Copied!' : 'Copy'"
+          >
+            <svg v-if="!copied" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
 
-        <p
+        <div
           v-for="(line, idx) in outputs"
           :key="`${idx}-${line}`"
-          class="line output"
-          :class="{ run: isVisible && !reduceMotion, static: reduceMotion }"
-          :style="getOutputStyle(idx)"
+          class="line-row"
         >
-          {{ line }}
-        </p>
+          <p
+            class="line output"
+            :class="{ run: isVisible && !reduceMotion, static: reduceMotion }"
+            :style="getOutputStyle(idx)"
+          >
+            {{ line }}
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -162,9 +207,21 @@ onMounted(() => {
   font: 400 14px/1.55 var(--vp-font-family-mono);
 }
 
+.line-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+.line-row + .line-row {
+  margin-top: 4px;
+}
+
 .line {
   margin: 0;
-  white-space: pre-wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .command-line {
@@ -176,6 +233,7 @@ onMounted(() => {
 .prompt {
   color: #7fbe5f;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .typed {
@@ -196,12 +254,14 @@ onMounted(() => {
   display: inline-block;
 }
 
+.output:first-of-type {
+  margin-top: 10px;
+  color: #b9dca7;
+}
+
 .output {
   opacity: 0;
   transform: translateY(4px);
-  max-width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-all;
 }
 
 .output.run {
@@ -213,9 +273,32 @@ onMounted(() => {
   transform: none;
 }
 
-.output:first-of-type {
-  margin-top: 10px;
-  color: #b9dca7;
+.copy-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #7a9a6b;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+  background: rgba(122, 166, 93, 0.2);
+  color: #a7e181;
+}
+
+.copy-btn.copied {
+  opacity: 1;
+  color: #82c763;
 }
 
 @keyframes typing {
@@ -244,6 +327,11 @@ onMounted(() => {
 
   .label {
     font-size: 10px;
+  }
+
+  .copy-btn {
+    width: 20px;
+    height: 20px;
   }
 }
 </style>

@@ -31,6 +31,7 @@ const props = defineProps({
 const rootEl = ref(null);
 const isVisible = ref(false);
 const reduceMotion = ref(false);
+const copiedIdx = ref(null);
 
 const rows = computed(() => {
   const normalized = Array.isArray(props.steps) ? props.steps : [];
@@ -46,6 +47,8 @@ const rows = computed(() => {
       key: `cmd-${idx}`,
       type: 'command',
       text: command,
+      canCopy: true,
+      idx: idx,
       style: {
         '--typing-width': `${command.length}ch`,
         '--typing-duration': `${duration}ms`,
@@ -60,6 +63,7 @@ const rows = computed(() => {
         key: `out-${idx}-${lineIdx}`,
         type: 'output',
         text: String(line),
+        canCopy: false,
         style: {
           animationDelay: `${delay + lineIdx * props.lineGapMs}ms`,
         },
@@ -71,6 +75,18 @@ const rows = computed(() => {
 
   return list;
 });
+
+const copyCommand = async (text, idx) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedIdx.value = idx;
+    setTimeout(() => {
+      copiedIdx.value = null;
+    }, 1500);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+};
 
 onMounted(() => {
   if (typeof window === 'undefined') {
@@ -113,24 +129,40 @@ onMounted(() => {
       </div>
 
       <div class="terminal-body">
-        <p v-for="row in rows" :key="row.key" class="line" :class="row.type">
-          <template v-if="row.type === 'command'">
-            <span class="prompt">{{ prompt }}</span>
-            <span class="typed" :class="{ run: isVisible && !reduceMotion }" :style="row.style">
-              {{ row.text }}
-            </span>
-            <span v-if="reduceMotion" class="typed-static">{{ row.text }}</span>
-          </template>
-
-          <span
+        <template v-for="row in rows" :key="row.key">
+          <div v-if="row.type === 'command'" class="line-row">
+            <p class="line command">
+              <span class="prompt">{{ prompt }}</span>
+              <span class="typed" :class="{ run: isVisible && !reduceMotion }" :style="row.style">
+                {{ row.text }}
+              </span>
+              <span v-if="reduceMotion" class="typed-static">{{ row.text }}</span>
+            </p>
+            <button
+              v-if="row.canCopy"
+              class="copy-btn"
+              :class="{ copied: copiedIdx === row.idx }"
+              @click="copyCommand(row.text, row.idx)"
+              :title="copiedIdx === row.idx ? 'Copied!' : 'Copy'"
+            >
+              <svg v-if="copiedIdx !== row.idx" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+          </div>
+          <p
             v-else
-            class="output"
+            class="line output"
             :class="{ run: isVisible && !reduceMotion, static: reduceMotion }"
             :style="row.style"
           >
             {{ row.text }}
-          </span>
-        </p>
+          </p>
+        </template>
       </div>
     </div>
   </section>
@@ -189,15 +221,29 @@ onMounted(() => {
   font: 400 14px/1.6 var(--vp-font-family-mono);
 }
 
+.line-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+.line-row + .line-row {
+  margin-top: 8px;
+}
+
 .line {
   margin: 0;
-  white-space: pre-wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .command {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .command + .output {
@@ -250,6 +296,34 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #7a9a6b;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+  background: rgba(122, 166, 93, 0.2);
+  color: #a7e181;
+}
+
+.copy-btn.copied {
+  opacity: 1;
+  color: #82c763;
 }
 
 @media (max-width: 768px) {
