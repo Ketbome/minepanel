@@ -168,8 +168,8 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 
 ## Coming Soon
 
-- Better log viewer with search/filter
-- Edit server.properties from UI
+- Export logs from the log viewer
+- Dedicated `server.properties` editor with validation
 - Scheduled tasks (auto restart, commands)
 - Plugin browser
 

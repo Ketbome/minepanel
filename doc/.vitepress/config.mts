@@ -175,9 +175,9 @@ export default withMermaid(
           text: 'Resources',
           items: [
             { text: 'Features', link: '/features' },
+            { text: 'API Reference', link: '/api' },
             { text: 'Roadmap', link: '/roadmap' },
             { text: 'Architecture', link: '/architecture' },
-            { text: 'API Reference', link: '/api' },
             { text: 'Development', link: '/development' },
             { text: 'FAQ', link: '/faq' },
           ],
@@ -234,6 +234,7 @@ export default withMermaid(
           text: '🛠️ Development',
           collapsed: false,
           items: [
+            { text: 'API Reference', link: '/api' },
             { text: 'Architecture', link: '/architecture' },
             { text: 'Development', link: '/development' },
             { text: 'Roadmap', link: '/roadmap' },

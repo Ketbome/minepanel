@@ -65,7 +65,7 @@ npm run lint --prefix frontend
 Auth/session patterns:
 
 - Axios client uses `withCredentials: true`; preserve it.
-- Some file download flows append token from localStorage to URL; avoid breaking current behavior unless task requires auth refactor.
+- Keep browser auth in `httpOnly` cookies; do not introduce token storage in `localStorage` or append JWTs to URLs.
 
 Java/Bedrock UI parity:
 

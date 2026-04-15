@@ -16,7 +16,7 @@ backend/src/
 |- main.ts
 |- app.module.ts
 |- config.ts
-|- auth/                    JWT cookies and auth flow
+|- auth/                    Global JWT guard, public auth endpoints, cookie session flow
 |- server-management/       Runtime control, status, logs, commands
 |  |- strategies/           Java/Bedrock strategy pattern
 |- docker-compose/          Compose generation and server config persistence
@@ -92,6 +92,8 @@ General:
 - Read root `AGENTS.md` before backend edits.
 - Do not add dependencies/scripts unless required by the task.
 - If API contract changes, update frontend usage and docs in `doc/`.
+- Backend auth is private-by-default through a global JWT guard; only explicitly `@Public()` routes should bypass auth.
+- Keep auth transport limited to `httpOnly` cookies and bearer headers; never add JWT support via query params.
 
 Server ID and directory safety:
 

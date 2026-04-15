@@ -12,7 +12,7 @@ head:
 
 # Roadmap
 
-What's planned for MinePanel.
+What's planned for MinePanel. Current stable line: `v1.10.0`.
 
 ```mermaid
 flowchart LR
@@ -50,10 +50,33 @@ flowchart LR
 
 ### ✅ CurseForge Files
 
-- Individual mod downloads from CurseForge
-- Works alongside Modrinth
-- Multiple reference formats
-- Auto-version selection
+- ~~Individual mod downloads from CurseForge~~
+- ~~Works alongside Modrinth~~
+- ~~Multiple reference formats~~
+- ~~Auto-version selection~~
+
+### ✅ Bedrock Addon Manager (v1.10.0)
+
+- ~~Upload `.mcaddon`, `.mcpack`, and `.zip` files~~
+- ~~Auto-extract and install~~
+- ~~Auto-generate `world_behavior_packs.json` and `world_resource_packs.json`~~
+- ~~Browse and import addons from CurseForge~~
+
+### ✅ File manager improvements (v1.10.0)
+
+- ~~Integrated text editor~~
+- ~~Folder uploads~~
+- ~~Drag & drop folders~~
+
+### ✅ Better log viewer (v1.10.0)
+
+- ~~Search and filtering~~
+- ~~Error highlighting~~
+- ~~Live entry stats~~
+
+### ✅ `server.properties` editing (v1.10.0)
+
+- ~~Edit from UI~~
 
 ### ✅ Discord webhooks
 
@@ -105,13 +128,6 @@ flowchart LR
 - One-click install
 - Update plugins
 
-### Bedrock Addon Manager
-
-- Upload .mcaddon/.mcpack files
-- Auto-extract and install
-- Auto-generate world_behavior_packs.json
-- Browse addon sources (MCPEDL integration)
-
 ### Scheduled tasks
 
 - Auto restarts at intervals
@@ -120,9 +136,7 @@ flowchart LR
 
 ### File manager improvements
 
-- Integrated text editor
 - Large file uploads (chunked)
-- Drag & drop folders
 
 ### Docker named volumes support
 
@@ -141,14 +155,11 @@ flowchart LR
 
 ### Better log viewer
 
-- Search and filtering
 - Export logs
-- Error highlighting
-- Stats
+- Saved log views / presets
 
-### server.properties editor
+### Dedicated server.properties editor
 
-- Edit from UI
 - Validation
 - Tooltips for each setting
 - Backup before save
@@ -309,7 +320,7 @@ gantt
     dateFormat YYYY-MM-DD
 
     section Stable
-    v1.7-1.9 Dashboard & UX    :a1, 2026-01-01, 90d
+    v1.7-1.10.0 Dashboard & UX :a1, 2026-01-01, 120d
 
     section Scale
     v2.0-2.2 Multi-node Swarm  :a2, 2026-04-01, 90d
@@ -326,7 +337,7 @@ gantt
 | Quarter | Version  | Focus         | Key Features                                             |
 | ------- | -------- | ------------- | -------------------------------------------------------- |
 | Q1      | v1.7     | **Stable** ✅ | Dashboard, Templates, Player Management, Bedrock Support |
-| Q1      | v1.8-1.9 | **Stable**    | Scheduler, Plugins, File Manager, Logs, Bedrock Addons   |
+| Q1      | v1.8-1.10.0 | **Stable** ✅ | CurseForge Files, Bedrock Addons, File Manager, Logs |
 | Q2      | v2.0-2.2 | **Scale**     | Swarm Mode, Multi-node, Node UI                          |
 | Q3      | v2.3-2.5 | **Pro**       | Cloud backup, Metrics, Alerts, Multi-user, Velocity      |
 | Q4      | v3.0+    | **Ecosystem** | Marketplace, Public API, Panel plugins                   |

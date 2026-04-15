@@ -6,7 +6,7 @@ import { PayloadToken } from '../models/token.model';
 import { UsersService } from 'src/users/services/users.service';
 import { Request } from 'express';
 
-const extractJwtFromHeaderOrQuery = (req: Request): string | null => {
+const extractJwtFromRequest = (req: Request): string | null => {
   // Priority 1: Cookie (most secure)
   if (req.cookies?.access_token) {
     return req.cookies.access_token;
@@ -16,9 +16,7 @@ const extractJwtFromHeaderOrQuery = (req: Request): string | null => {
   const fromHeader = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
   if (fromHeader) return fromHeader;
 
-  // Priority 3: Query param (for file downloads only)
-  const token = req.query?.token as string;
-  return token || null;
+  return null;
 };
 
 @Injectable()
@@ -28,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly usersService: UsersService,
   ) {
     super({
-      jwtFromRequest: extractJwtFromHeaderOrQuery,
+      jwtFromRequest: extractJwtFromRequest,
       ignoreExpiration: false,
       secretOrKey: configService.get('jwtSecret'),
       issuer: configService.get('jwtIssuer'),

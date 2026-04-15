@@ -95,11 +95,20 @@ export const filesService = {
     return data;
   },
 
-  getDownloadUrl(serverId: string, path: string): string {
-    return `${api.defaults.baseURL}/files/${serverId}/download?path=${encodeURIComponent(path)}`;
+  async downloadFile(serverId: string, path: string): Promise<Blob> {
+    const { data } = await api.get(`/files/${serverId}/download`, {
+      params: { path },
+      responseType: "blob",
+    });
+    return data;
   },
 
-  getDownloadZipUrl(serverId: string, path: string): string {
-    return `${api.defaults.baseURL}/files/${serverId}/download-zip?path=${encodeURIComponent(path)}`;
+  async downloadZip(serverId: string, path: string): Promise<Blob> {
+    const { data } = await api.get(`/files/${serverId}/download-zip`, {
+      params: { path },
+      responseType: "blob",
+    });
+    return data;
   },
+
 };

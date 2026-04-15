@@ -329,35 +329,47 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   const handleDownload = useCallback(
-    (file: FileItem) => {
-      const token = localStorage.getItem("token");
-      const url = `${filesService.getDownloadUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
+    async (file: FileItem) => {
+      try {
+        const blob = await filesService.downloadFile(serverId, file.path);
+        const url = window.URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        mcToast.error(t("errorLoadingFiles"));
+      }
     },
-    [serverId]
+    [serverId, t]
   );
 
   const handleDownloadZip = useCallback(
-    (file: FileItem) => {
+    async (file: FileItem) => {
       if (!file.isDirectory) return;
 
-      const token = localStorage.getItem("token");
-      const url = `${filesService.getDownloadZipUrl(serverId, file.path)}&token=${encodeURIComponent(token || "")}`;
+      try {
+        const blob = await filesService.downloadZip(serverId, file.path);
+        const url = window.URL.createObjectURL(blob);
 
-      mcToast.success(t("zipDownloaded"));
+        mcToast.success(t("zipDownloaded"));
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${file.name}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${file.name}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading zip:", error);
+        mcToast.error(t("errorLoadingFiles"));
+      }
     },
     [serverId, t]
   );

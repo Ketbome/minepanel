@@ -2,6 +2,7 @@ import { Controller, Post, Body, UnauthorizedException, UseGuards, Res, Req, Get
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth.guard';
+import { Public } from './decorators/public.decorator';
 import { Response, Request, CookieOptions } from 'express';
 
 @Controller('auth')
@@ -10,6 +11,7 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(
@@ -41,6 +43,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('refresh')
   async refresh(
     @Req() req: Request,
@@ -72,6 +75,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('logout')
   async logout(
     @Req() req: Request,

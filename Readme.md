@@ -67,8 +67,8 @@ Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
 - [Configuration](https://minepanel.ketbome.com/configuration) — Environment variables & settings
 - [Networking](https://minepanel.ketbome.com/networking) — Ports, DNS, and proxy setup
 - [Features](https://minepanel.ketbome.com/features) — Full feature documentation
+- [API](https://minepanel.ketbome.com/api) — Authentication model and backend endpoints
 - [FAQ](https://minepanel.ketbome.com/faq) — Common questions
-- [API](https://minepanel.ketbome.com/api) — REST API reference
 
 ### 🔍 AI-Powered Documentation
 
