@@ -26,6 +26,12 @@ npm run start
 npm run lint
 ```
 
+## Base Path
+
+- `NEXT_PUBLIC_BASE_PATH` mounts the frontend under a subpath such as `/minepanel`.
+- It is consumed from `next.config.ts`, so it must be set at build time.
+- If you build with a subpath, keep the runtime `NEXT_PUBLIC_BASE_PATH` aligned for healthchecks and diagnostics.
+
 ## Structure
 
 - `src/app/` - routes and layouts

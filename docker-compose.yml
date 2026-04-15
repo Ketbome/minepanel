@@ -13,7 +13,7 @@ services:
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
       - BASE_DIR=${BASE_DIR:-$PWD}
       - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
-      # - BASE_PATH=${BASE_PATH}  # Subdirectory routing (e.g., /api)
+      - BASE_PATH=${BASE_PATH:-}
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -24,10 +24,8 @@ services:
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
-          "require('http').get('http://localhost:8091/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+          'CMD-SHELL',
+          'node -e "const basePath = process.env.BASE_PATH || \"\"; const path = basePath + \"/health\"; require(\"http\").get(\"http://localhost:8091\" + path, (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"',
         ]
       interval: 30s
       timeout: 10s
@@ -48,8 +46,9 @@ services:
       - '${FRONTEND_PORT:-3000}:3000'
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
+      - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
-      # - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}  # Subdirectory routing (e.g., /minepanel)
+      # Runtime value should match the build-time value if the image was built with a custom frontend base path.
     depends_on:
       backend:
         condition: service_healthy
@@ -59,10 +58,8 @@ services:
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
-          "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+          'CMD-SHELL',
+          'node -e "const basePath = process.env.NEXT_PUBLIC_BASE_PATH || \"\"; const path = basePath || \"/\"; require(\"http\").get(\"http://localhost:3000\" + path, (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"',
         ]
       interval: 30s
       timeout: 10s

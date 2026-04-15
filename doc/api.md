@@ -18,6 +18,8 @@ Examples:
 
 If `BASE_PATH` is configured in the backend, that prefix is part of the API URL.
 
+If the frontend is also served under a subpath, that is controlled separately by `NEXT_PUBLIC_BASE_PATH`.
+
 ## Authentication
 
 Minepanel uses JWT sessions stored in `httpOnly` cookies:

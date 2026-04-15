@@ -26,6 +26,12 @@ npm run test
 npm run test:e2e
 ```
 
+## Base Path
+
+- `BASE_PATH` adds a global API prefix such as `/api`.
+- When it is set, the health endpoint becomes `<BASE_PATH>/health`.
+- `FRONTEND_URL` and `NEXT_PUBLIC_BACKEND_URL` should match the final browser and API URLs.
+
 ## Main Modules
 
 - `src/server-management/` - server lifecycle and runtime actions

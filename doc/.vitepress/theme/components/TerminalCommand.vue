@@ -199,6 +199,9 @@ onMounted(() => {
 .output {
   opacity: 0;
   transform: translateY(4px);
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-all;
 }
 
 .output.run {
