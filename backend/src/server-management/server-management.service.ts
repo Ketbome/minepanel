@@ -283,7 +283,7 @@ export class ServerManagementService {
 
   private getComposeProjectName(serverId: string): string | undefined {
     if (!this.COMPOSE_PROJECT) return undefined;
-    return `${this.COMPOSE_PROJECT}_${serverId}`;
+    return `${this.COMPOSE_PROJECT.toLowerCase()}_${serverId.toLowerCase()}`;
   }
 
   private getComposeExecOptions(serverId: string): ExecOptions {
