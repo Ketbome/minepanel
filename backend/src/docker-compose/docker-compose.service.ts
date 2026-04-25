@@ -109,8 +109,14 @@ export class DockerComposeService {
       const strategy = ServerStrategyFactory.create(edition);
 
       const defaultPort = strategy.getDefaultPort();
-      const port = mcService.ports?.[0]?.split(':')[0] ?? defaultPort;
-      const extraPorts = mcService.ports?.slice(1) || [];
+      const internalPort = strategy.getInternalPort();
+      const usesProxyCompose =
+        edition === 'JAVA' &&
+        this.extractUseProxy(mcService.labels) &&
+        Array.isArray(mcService.expose) &&
+        mcService.expose.some((value: string | number) => String(value) === internalPort);
+      const port = usesProxyCompose ? defaultPort : mcService.ports?.[0]?.split(':')[0] ?? defaultPort;
+      const extraPorts = usesProxyCompose ? (mcService.ports || []) : mcService.ports?.slice(1) || [];
       const defaultVersion = edition === 'BEDROCK' ? 'LATEST' : 'latest';
 
       const serverConfig: ServerConfig = {

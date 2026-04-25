@@ -57,6 +57,37 @@ describe('DockerComposeService', () => {
       const result = await service.getServerConfig('nonexistent');
       expect(result).toBeNull();
     });
+
+    it('should keep extra ports when loading a proxy compose file', async () => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'proxy-server',
+              TYPE: 'VANILLA',
+            },
+            expose: ['25565'],
+            ports: ['24454:24454/udp', '8123:8123'],
+            labels: ['minepanel.proxy.enabled=true'],
+          },
+        },
+      };
+
+      const existsSyncMock = fs.existsSync as unknown as jest.Mock;
+      existsSyncMock.mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/proxy-server` || target === `${SERVERS_DIR}/proxy-server/docker-compose.yml`
+      );
+
+      const readFileMock = fs.readFile as unknown as jest.Mock;
+      readFileMock.mockResolvedValue(yaml.dump(compose));
+
+      const result = await service.getServerConfig('proxy-server');
+
+      expect(result).not.toBeNull();
+      expect(result?.port).toBe('25565');
+      expect(result?.extraPorts).toEqual(['24454:24454/udp', '8123:8123']);
+    });
   });
 
   describe('generateDockerComposeFile', () => {
