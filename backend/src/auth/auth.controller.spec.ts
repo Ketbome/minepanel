@@ -21,9 +21,12 @@ describe('AuthController', () => {
     const mockAuthService = {
       validateUser: jest.fn(),
       generateJwt: jest.fn(),
-      generateHash: jest.fn(),
+      getSetupStatus: jest.fn(),
+      createInitialAdmin: jest.fn(),
       validateRefreshToken: jest.fn(),
       revokeRefreshToken: jest.fn(),
+      createPasswordReset: jest.fn(),
+      resetPassword: jest.fn(),
     };
 
     mockResponse = {
@@ -172,6 +175,36 @@ describe('AuthController', () => {
     });
   });
 
+  describe('setup status', () => {
+    it('should return the setup status', async () => {
+      authService.getSetupStatus.mockResolvedValue({ requiresSetup: true, passwordRecoveryEnabled: false });
+
+      await expect(controller.getSetupStatus()).resolves.toEqual({
+        requiresSetup: true,
+        passwordRecoveryEnabled: false,
+      });
+    });
+  });
+
+  describe('setup admin', () => {
+    it('should create the initial admin and set cookies', async () => {
+      authService.createInitialAdmin.mockResolvedValue({
+        access_token: 'jwt.access.token',
+        refresh_token: 'jwt.refresh.token',
+        username: 'admin',
+        expires_in: 900,
+      });
+
+      const result = await controller.setupAdmin(
+        { username: 'admin', email: 'admin@example.com', password: 'password123' },
+        mockResponse as Response,
+      );
+
+      expect(result).toEqual({ username: 'admin', expires_in: 900 });
+      expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('refresh', () => {
     it('should return new tokens when refresh token is valid', async () => {
       const mockPayload = { userId: 1, username: 'admin', role: 'ADMIN' };
@@ -233,6 +266,28 @@ describe('AuthController', () => {
       expect(authService.revokeRefreshToken).not.toHaveBeenCalled();
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('access_token');
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refresh_token');
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should delegate password reset request', async () => {
+      authService.createPasswordReset.mockResolvedValue(undefined);
+
+      await expect(controller.forgotPassword({ email: 'admin@example.com' })).resolves.toEqual({
+        message: 'If the email exists, a password reset link has been sent',
+      });
+      expect(authService.createPasswordReset).toHaveBeenCalledWith('admin@example.com');
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should reset password', async () => {
+      authService.resetPassword.mockResolvedValue(undefined);
+
+      await expect(
+        controller.resetPassword({ token: 'reset-token', password: 'new-password-123' }),
+      ).resolves.toEqual({ message: 'Password reset successfully' });
+      expect(authService.resetPassword).toHaveBeenCalledWith('reset-token', 'new-password-123');
     });
   });
 });

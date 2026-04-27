@@ -82,8 +82,13 @@ FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
 # Generate a strong random secret: openssl rand -base64 32
 JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=2d # Access token expiration (use 20s to test refresh flow)
-CLIENT_PASSWORD= # Password for client
-CLIENT_USERNAME= # Username for the client
+SMTP_HOST= # Optional: SMTP host for password recovery
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM='Minepanel <no-reply@example.com>'
+PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES=60
 DB_PATH=./data/minepanel.db
 BASE_DIR=.
 

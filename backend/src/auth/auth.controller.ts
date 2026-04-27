@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth.guard';
 import { Public } from './decorators/public.decorator';
 import { Response, Request, CookieOptions } from 'express';
+import { ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -12,21 +13,36 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Get('setup-status')
+  async getSetupStatus() {
+    return this.authService.getSetupStatus();
+  }
+
+  @Public()
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(
-    @Body() body: { username: string; password: string },
+    @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.authService.validateUser(body.username, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
     
     const tokens = await this.authService.generateJwt(user);
+    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
     
-    // Set httpOnly cookies
-    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(tokens.expires_in * 1000));
-    res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
-    
+    return {
+      username: tokens.username,
+      expires_in: tokens.expires_in,
+    };
+  }
+
+  @Public()
+  @Post('setup-admin')
+  async setupAdmin(@Body() body: SetupAdminDto, @Res({ passthrough: true }) res: Response) {
+    const tokens = await this.authService.createInitialAdmin(body);
+    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+
     return {
       username: tokens.username,
       expires_in: tokens.expires_in,
@@ -64,14 +80,31 @@ export class AuthController {
     }
 
     const tokens = await this.authService.generateJwt(user);
-    
-    // Update cookies with new tokens
-    res.cookie('access_token', tokens.access_token, this.getAuthCookieOptions(tokens.expires_in * 1000));
-    res.cookie('refresh_token', tokens.refresh_token, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
+    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
     
     return {
       username: tokens.username,
       expires_in: tokens.expires_in,
+    };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    await this.authService.createPasswordReset(body.email);
+
+    return {
+      message: 'If the email exists, a password reset link has been sent',
+    };
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    await this.authService.resetPassword(body.token, body.password);
+
+    return {
+      message: 'Password reset successfully',
     };
   }
 
@@ -100,6 +133,11 @@ export class AuthController {
       sameSite: 'lax',
       maxAge,
     };
+  }
+
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number): void {
+    res.cookie('access_token', accessToken, this.getAuthCookieOptions(expiresInSeconds * 1000));
+    res.cookie('refresh_token', refreshToken, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
   }
 
   private shouldUseSecureCookies(): boolean {

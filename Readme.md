@@ -39,7 +39,7 @@ export JWT_SECRET=$(openssl rand -base64 32)
 docker compose up -d
 ```
 
-Open http://localhost:3000 — Login: `admin` / `admin`
+Open http://localhost:3000 and complete the initial admin account setup in the UI.
 
 If you access Minepanel over plain HTTP by local IP and login gets stuck on "Verifying authentication...", see the [Configuration](https://minepanel.ketbome.com/configuration) docs for `ALLOW_INSECURE_AUTH_COOKIES`.
 

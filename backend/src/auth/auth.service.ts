@@ -1,25 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
 import { UsersService } from 'src/users/services/users.service';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { SetupAdminDto } from './dtos/auth.dto';
+import { AuthMailService } from './auth-mail.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+    private readonly authMailService: AuthMailService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
+    @InjectRepository(PasswordResetToken)
+    private readonly passwordResetTokenRepo: Repository<PasswordResetToken>,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<PayloadToken | null> {
+  async validateUser(identifier: string, password: string): Promise<PayloadToken | null> {
     try {
-      const user = await this.usersService.getUserByUsername(username);
+      const user = await this.usersService.getUserByUsernameOrEmail(identifier);
 
       if (!user?.isActive) {
         return null;
@@ -40,6 +50,23 @@ export class AuthService {
       console.error('Error validating user:', error);
       return null;
     }
+  }
+
+  async getSetupStatus() {
+    return {
+      requiresSetup: !(await this.usersService.hasUsers()),
+      passwordRecoveryEnabled: this.isPasswordRecoveryEnabled(),
+    };
+  }
+
+  async createInitialAdmin(dto: SetupAdminDto) {
+    const user = await this.usersService.createInitialAdmin(dto);
+
+    return this.generateJwt({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+    });
   }
 
   async generateJwt(user: PayloadToken) {
@@ -126,5 +153,84 @@ export class AuthService {
 
   async generateHash(password: string): Promise<string> {
     return bcrypt.hash(password, 12);
+  }
+
+  async createPasswordReset(email: string): Promise<void> {
+    if (!this.isPasswordRecoveryEnabled()) {
+      throw new ServiceUnavailableException('Password recovery is not configured');
+    }
+
+    const user = await this.usersService.getUserByEmail(email);
+    if (!user?.isActive || !user.email) {
+      return;
+    }
+
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + this.getPasswordResetTtlMinutes() * 60 * 1000);
+
+    await this.passwordResetTokenRepo.update({ userId: user.id, usedAt: null }, { usedAt: new Date() });
+    await this.passwordResetTokenRepo.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    try {
+      await this.authMailService.sendPasswordResetEmail(user.email, user.username, this.buildPasswordResetUrl(rawToken));
+    } catch (error) {
+      this.logger.error('Failed to send password reset email', error instanceof Error ? error.stack : undefined);
+      throw new InternalServerErrorException('Unable to send password reset email');
+    }
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const passwordResetToken = await this.passwordResetTokenRepo.findOne({
+      where: { tokenHash: this.hashToken(token) },
+      relations: ['user'],
+    });
+
+    if (
+      !passwordResetToken ||
+      passwordResetToken.usedAt ||
+      passwordResetToken.expiresAt < new Date() ||
+      !passwordResetToken.user?.isActive
+    ) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+
+    passwordResetToken.user.password = await bcrypt.hash(password, 12);
+    await this.passwordResetTokenRepo.manager.save(passwordResetToken.user);
+
+    const usedAt = new Date();
+    await this.passwordResetTokenRepo.update({ userId: passwordResetToken.userId, usedAt: null }, { usedAt });
+    await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
+  }
+
+  isPasswordRecoveryEnabled(): boolean {
+    return this.authMailService.isConfigured();
+  }
+
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private getPasswordResetTtlMinutes(): number {
+    const ttl = this.configService.get<number>('passwordResetTokenExpiresInMinutes');
+
+    return Number.isFinite(ttl) && ttl > 0 ? ttl : 60;
+  }
+
+  private buildPasswordResetUrl(token: string): string {
+    const frontendUrl = this.configService.get<string>('frontendUrl');
+    if (!frontendUrl) {
+      throw new ServiceUnavailableException('FRONTEND_URL is not configured');
+    }
+
+    const url = new URL(frontendUrl);
+    url.searchParams.set('resetToken', token);
+
+    return url.toString();
   }
 }

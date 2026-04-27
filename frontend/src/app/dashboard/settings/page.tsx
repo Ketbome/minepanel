@@ -42,7 +42,7 @@ import {
   ProxySettings,
   NetworkSettings,
 } from '@/services/settings/settings.service';
-import { changePassword } from '@/services/users/users.service';
+import { changePassword, getCurrentUser, updateProfile } from '@/services/users/users.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { regenerateAllDockerCompose } from '@/services/network.service';
@@ -53,7 +53,9 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -100,18 +102,13 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
-  }, []);
-
-  useEffect(() => {
     const loadSettings = async () => {
       setIsLoading(true);
       try {
-        const settings = await getSettings();
+        const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
         form.reset(settings);
+        setUsername(user.username);
+        setEmail(user.email || '');
         if (settings.proxy) {
           setProxySettings(settings.proxy);
           setProxyBaseDomain(settings.proxy.baseDomain || '');
@@ -136,6 +133,25 @@ export default function SettingsPage() {
 
     loadSettings();
   }, [form, t]);
+
+  const handleUpdateProfile = async () => {
+    if (!email.trim()) {
+      mcToast.error(t('emailRequired'));
+      return;
+    }
+
+    setIsUpdatingProfile(true);
+    try {
+      const user = await updateProfile({ email });
+      setEmail(user.email || '');
+      mcToast.success(t('emailUpdatedSuccessfully'));
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      mcToast.error(t('emailUpdateFailed'));
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
 
   const onSubmit = async (data: UserSettings) => {
     setIsSaving(true);
@@ -290,6 +306,40 @@ export default function SettingsPage() {
                   />
                   <p className="text-xs text-gray-500">{t('yourUsername')}</p>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-gray-200">
+                    {t('email')}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-gray-800 border-gray-700 text-white"
+                    placeholder="name@example.com"
+                  />
+                  <p className="text-xs text-gray-500">{t('yourEmail')}</p>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleUpdateProfile}
+                  disabled={isUpdatingProfile}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-minecraft"
+                >
+                  {isUpdatingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('saving')}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      {t('updateEmail')}
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>

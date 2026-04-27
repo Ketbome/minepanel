@@ -57,10 +57,20 @@ curl -i \
   -c cookies.txt \
   -H 'Content-Type: application/json' \
   -X POST https://panel.example.com/api/auth/login \
-  -d '{"username":"admin","password":"changeme"}'
+  -d '{"username":"admin-or-email@example.com","password":"changeme"}'
 ```
 
 Successful login returns the username and token lifetime, and writes auth cookies.
+
+### Initial Setup
+
+```bash
+curl -i \
+  -c cookies.txt \
+  -H 'Content-Type: application/json' \
+  -X POST https://panel.example.com/api/auth/setup-admin \
+  -d '{"username":"admin","email":"admin@example.com","password":"changeme123"}'
+```
 
 ### Current Session
 

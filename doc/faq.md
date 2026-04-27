@@ -73,7 +73,7 @@ Configure in **Settings → Network Settings**.
 Profile → Change Password in UI.
 
 **Forgot password?**
-Reset database or update via SQL.
+Use the login page recovery flow if SMTP is configured. Otherwise reset the database or update via SQL.
 **→** [Administration](/administration#forgot-your-password)
 
 **Where's data stored?**

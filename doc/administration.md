@@ -37,11 +37,18 @@ The password is hashed with bcrypt and stored securely in the database.
 This method only works for the FIRST login. After that, use the UI method above.
 :::
 
-Edit `docker-compose.yml`:
+Open the panel and complete the initial admin registration form.
+
+If you also want password recovery, configure SMTP in `docker-compose.yml` or `.env` before starting the stack:
 
 ```yaml
 environment:
-  - CLIENT_PASSWORD=your_new_password
+  - SMTP_HOST=smtp.example.com
+  - SMTP_PORT=587
+  - SMTP_SECURE=false
+  - SMTP_USER=your_smtp_user
+  - SMTP_PASS=your_smtp_password
+  - SMTP_FROM=Minepanel <no-reply@example.com>
 ```
 
 Restart:
@@ -54,9 +61,9 @@ docker compose restart
 
 If you've forgotten your password and can't access the UI:
 
-**Option 1: Reset via environment variable (doesn't work after first login)**
+**Option 1: Use the password reset email**
 
-If you've never changed your password through the UI, you can use the environment variable method above.
+If SMTP is configured and your account has an email address, use **Forgot your password?** on the login screen.
 
 **Option 2: Reset the database**
 
@@ -70,7 +77,7 @@ rm -f data/minepanel.db
 docker compose up -d
 ```
 
-You'll be able to log in with the default credentials (admin/admin) or your `CLIENT_PASSWORD` environment variable.
+After that, Minepanel will show the initial setup screen again so you can register a new admin account.
 
 **Option 3: Manual database update (Advanced)**
 
@@ -204,7 +211,7 @@ rm -f data/minepanel.db
 docker compose up -d
 ```
 
-After reset, log in with default credentials (admin/admin).
+After reset, Minepanel will show the initial setup screen again.
 
 ## Server Commands
 
