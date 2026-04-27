@@ -9,6 +9,9 @@ export class Users {
   @Column({ type: 'text', name: 'username', unique: true })
   username: string;
 
+  @Column({ type: 'text', name: 'email', unique: true, nullable: true })
+  email: string | null;
+
   @Exclude()
   @Column({ type: 'text', name: 'password' })
   password: string;

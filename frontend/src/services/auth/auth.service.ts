@@ -2,7 +2,31 @@ import api from "../axios.service";
 
 let isRefreshing = false;
 let refreshSubscribers: Array<{ onSuccess: () => void; onError: (error: unknown) => void }> = [];
-const AUTH_ENDPOINTS = ["/auth/login", "/auth/refresh", "/auth/logout"];
+const AUTH_ENDPOINTS = [
+  "/auth/login",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/setup-admin",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/setup-status",
+];
+
+export interface SetupStatus {
+  requiresSetup: boolean;
+  passwordRecoveryEnabled: boolean;
+}
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  const err = error as { response?: { data?: { message?: string | string[] } } };
+  const message = err.response?.data?.message;
+
+  if (Array.isArray(message)) {
+    return message[0] || fallback;
+  }
+
+  return message || fallback;
+};
 
 const onRefreshed = () => {
   refreshSubscribers.forEach((subscriber) => subscriber.onSuccess());
@@ -35,12 +59,55 @@ export const login = async (username: string, password: string) => {
     return { success: false, error: "NO_USERNAME" };
   } catch (error) {
     console.error("Error in login:", error);
-    const err = error as { response?: { data?: { message?: string } } };
     return {
       success: false,
-      error: err.response?.data?.message || "LOGIN_ERROR",
+      error: getApiErrorMessage(error, "LOGIN_ERROR"),
     };
   }
+};
+
+export const getSetupStatus = async (): Promise<SetupStatus> => {
+  const response = await api.get("/auth/setup-status", { withCredentials: true });
+  return response.data;
+};
+
+export const setupAdmin = async (data: { username: string; email: string; password: string }) => {
+  try {
+    const response = await api.post("/auth/setup-admin", data, { withCredentials: true });
+
+    if (response.data.username) {
+      localStorage.setItem("username", response.data.username);
+      return { success: true, data: response.data };
+    }
+
+    return { success: false, error: "NO_USERNAME" };
+  } catch (error) {
+    console.error("Error in setup admin:", error);
+    return {
+      success: false,
+      error: getApiErrorMessage(error, "SETUP_ERROR"),
+    };
+  }
+};
+
+export const requestPasswordReset = async (email: string) => {
+  const response = await api.post(
+    "/auth/forgot-password",
+    { email },
+    { withCredentials: true },
+  );
+
+  return response.data;
+};
+
+export const resetPassword = async (token: string, password: string) => {
+  const response = await api.post(
+    "/auth/reset-password",
+    { token, password },
+    { withCredentials: true },
+  );
+
+  return response.data;
 };
 
 export const logout = async () => {

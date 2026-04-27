@@ -34,10 +34,22 @@ All variables can be set in `.env` or `docker-compose.yml`.
 
 | Variable          | Default | Description    |
 | ----------------- | ------- | -------------- |
-| `CLIENT_USERNAME` | `admin` | Login username |
-| `CLIENT_PASSWORD` | `admin` | Login password |
 | `JWT_EXPIRES_IN` | `2d` | Access token expiration (`20s`, `15m`, `1h`, `2d`) |
 | `ALLOW_INSECURE_AUTH_COOKIES` | `false` | Set `true` only for HTTP/LAN access when browsers block auth cookies |
+
+Minepanel no longer uses default credentials from environment variables. The first visit to the panel opens a setup screen where you create the initial admin account.
+
+### Password Recovery
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `SMTP_HOST` | _(empty)_ | SMTP server hostname |
+| `SMTP_PORT` | `587` | SMTP port |
+| `SMTP_SECURE` | `false` | Use `true` for SMTPS/465, `false` for STARTTLS/587 |
+| `SMTP_USER` | _(empty)_ | SMTP username |
+| `SMTP_PASS` | _(empty)_ | SMTP password |
+| `SMTP_FROM` | _(empty)_ | Sender shown in password reset emails |
+| `PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES` | `60` | Password reset link lifetime in minutes |
 
 ### URLs
 

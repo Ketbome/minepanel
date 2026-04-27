@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { m } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,37 +17,94 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { isAuthenticated, login } from '@/services/auth/auth.service';
+import {
+  getSetupStatus,
+  isAuthenticated,
+  login,
+  requestPasswordReset,
+  resetPassword,
+  setupAdmin,
+  type SetupStatus,
+} from '@/services/auth/auth.service';
 import { healthService } from '@/services/health.service';
-import { m } from 'framer-motion';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
-import {
-  LINK,
-  LINK_DOCUMENTATION,
-  LINK_GITHUB,
-  LINK_FORGOT_PASSWORD,
-} from '@/lib/providers/constants';
+import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
+
+type AuthView = 'login' | 'setup' | 'forgot' | 'reset';
+
+const getErrorMessage = (error: unknown): string => {
+  const err = error as {
+    response?: {
+      data?: {
+        message?: string | string[];
+      };
+    };
+  };
+
+  const message = err.response?.data?.message;
+  if (Array.isArray(message)) {
+    return message[0] || 'Unexpected error';
+  }
+
+  return message || 'Unexpected error';
+};
 
 export default function Home() {
+  const [view, setView] = useState<AuthView>('login');
+  const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [serverAvailable, setServerAvailable] = useState<boolean | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetToken = searchParams.get('resetToken');
   const { t } = useLanguage();
 
+  const changeView = useCallback((nextView: AuthView) => {
+    setView(nextView);
+    setPassword('');
+    setConfirmPassword('');
+
+    if (nextView === 'login') {
+      setEmail('');
+      setUsername('');
+    }
+  }, []);
+
   useEffect(() => {
-    const checkAuth = async () => {
+    const initialize = async () => {
       const authenticated = await isAuthenticated();
       if (authenticated) {
         router.push('/dashboard/home');
+        return;
+      }
+
+      try {
+        const status = await getSetupStatus();
+        setSetupStatus(status);
+
+        if (status.requiresSetup) {
+          setView('setup');
+          return;
+        }
+
+        setView(resetToken ? 'reset' : 'login');
+      } catch (error) {
+        console.error('Error checking setup status:', error);
+        setSetupStatus({ requiresSetup: false, passwordRecoveryEnabled: false });
+        setView(resetToken ? 'reset' : 'login');
       }
     };
-    checkAuth();
-  }, [router]);
+
+    initialize();
+  }, [resetToken, router]);
 
   const checkHealth = useCallback(async () => {
     try {
@@ -64,106 +122,160 @@ export default function Home() {
     checkHealth();
   }, [checkHealth]);
 
+  const handleLogin = async () => {
+    const result = await login(identifier, password);
+
+    if (result.success) {
+      mcToast.success(t('loginSuccess'));
+      router.push('/dashboard/home');
+      return;
+    }
+
+    mcToast.error(typeof result.error === 'string' ? result.error : t('invalidCredentials'));
+  };
+
+  const handleSetup = async () => {
+    if (password !== confirmPassword) {
+      mcToast.error(t('passwordsMustMatch'));
+      return;
+    }
+
+    const result = await setupAdmin({ username, email, password });
+    if (result.success) {
+      mcToast.success(t('setupComplete'));
+      router.push('/dashboard/home');
+      return;
+    }
+
+    mcToast.error(typeof result.error === 'string' ? result.error : t('setupError'));
+  };
+
+  const handleForgotPassword = async () => {
+    await requestPasswordReset(email);
+    mcToast.success(t('passwordResetLinkSent'));
+    changeView('login');
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetToken) {
+      mcToast.error(t('invalidResetToken'));
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      mcToast.error(t('passwordsMustMatch'));
+      return;
+    }
+
+    await resetPassword(resetToken, password);
+    mcToast.success(t('passwordResetSuccess'));
+    router.replace('/');
+    changeView('login');
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const result = await login(username, password);
+      if (view === 'login') {
+        await handleLogin();
+      }
 
-      if (result.success) {
-        mcToast.success(t('loginSuccess'));
-        router.push('/dashboard/home');
-      } else {
-        const errorKey = result.error as string;
-        const hasTranslation =
-          errorKey && ['NO_ACCESS_TOKEN', 'LOGIN_ERROR', 'invalidCredentials'].includes(errorKey);
-        const errorMessage = hasTranslation
-          ? t(errorKey as 'NO_ACCESS_TOKEN' | 'LOGIN_ERROR' | 'invalidCredentials')
-          : t('invalidCredentials');
-        mcToast.error(errorMessage);
+      if (view === 'setup') {
+        await handleSetup();
+      }
+
+      if (view === 'forgot') {
+        await handleForgotPassword();
+      }
+
+      if (view === 'reset') {
+        await handleResetPassword();
       }
     } catch (error) {
-      console.error('Error en login:', error);
-      mcToast.error(t('connectionError'));
+      console.error('Authentication error:', error);
+      mcToast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const isSubmitDisabled = isLoading || !serverAvailable;
+
+  const getCardTitle = () => {
+    if (view === 'setup') return t('finishInitialSetup');
+    if (view === 'forgot') return t('forgotPassword');
+    if (view === 'reset') return t('resetPassword');
+    return t('login');
+  };
+
+  const getCardDescription = () => {
+    if (view === 'setup') return t('finishInitialSetupDescription');
+    if (view === 'forgot') return t('forgotPasswordDescription');
+    if (view === 'reset') return t('resetPasswordDescription');
+    return t('enterCredentials');
+  };
+
+  const getSubmitLabel = () => {
+    if (serverAvailable === null) {
+      return t('checkingServerStatus');
+    }
+
+    if (isLoading) {
+      return t('loading');
+    }
+
+    if (!serverAvailable) {
+      return t('serverUnavailable');
+    }
+
+    if (view === 'setup') return t('createAdminAccount');
+    if (view === 'forgot') return t('sendPasswordResetLink');
+    if (view === 'reset') return t('resetPassword');
+    return t('enterServer');
+  };
+
   return (
     <>
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
-      <div className="min-h-screen flex flex-col bg-[url('/images/background.webp')] bg-cover bg-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div className="relative flex min-h-screen flex-col overflow-hidden bg-[url('/images/background.webp')] bg-cover bg-center">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <m.div
-            animate={{
-              y: [0, -20, 0],
-              x: [0, 10, 0],
-              rotate: [0, 5, 0],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="absolute top-20 left-10 opacity-20"
+            animate={{ y: [0, -20, 0], x: [0, 10, 0], rotate: [0, 5, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute left-10 top-20 opacity-20"
           >
             <Image src="/images/grass.webp" alt="" width={60} height={60} />
           </m.div>
           <m.div
-            animate={{
-              y: [0, 20, 0],
-              x: [0, -15, 0],
-              rotate: [0, -5, 0],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1,
-            }}
-            className="absolute top-40 right-20 opacity-20"
+            animate={{ y: [0, 20, 0], x: [0, -15, 0], rotate: [0, -5, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="absolute right-20 top-40 opacity-20"
           >
             <Image src="/images/diamond.webp" alt="" width={50} height={50} />
           </m.div>
           <m.div
-            animate={{
-              y: [0, -25, 0],
-              x: [0, 12, 0],
-            }}
-            transition={{
-              duration: 9,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 2,
-            }}
+            animate={{ y: [0, -25, 0], x: [0, 12, 0] }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
             className="absolute bottom-32 left-1/4 opacity-15"
           >
             <Image src="/images/grass.webp" alt="" width={45} height={45} />
           </m.div>
           <m.div
-            animate={{
-              y: [0, 18, 0],
-              rotate: [0, 10, 0],
-            }}
-            transition={{
-              duration: 7,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 0.5,
-            }}
+            animate={{ y: [0, 18, 0], rotate: [0, 10, 0] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
             className="absolute bottom-20 right-1/4 opacity-15"
           >
             <Image src="/images/diamond.webp" alt="" width={55} height={55} />
           </m.div>
         </div>
 
-        <header className="relative z-10 border-b border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg">
-          <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
-            <Link href="/" className="flex items-center gap-3 font-bold group">
+        <header className="relative z-10 border-b border-gray-700/60 bg-gray-900/95 shadow-lg backdrop-blur-md">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
+            <Link href="/" className="group flex items-center gap-3 font-bold">
               <m.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
                 <Image
                   src="/images/minecraft-logo.webp"
@@ -174,7 +286,7 @@ export default function Home() {
                   priority
                 />
               </m.div>
-              <span className="text-xl bg-linear-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent font-minecraft group-hover:from-emerald-400 group-hover:to-green-500 transition-all">
+              <span className="font-minecraft text-xl text-transparent bg-linear-to-r from-green-400 to-emerald-600 bg-clip-text transition-all group-hover:from-emerald-400 group-hover:to-green-500">
                 Minepanel
               </span>
             </Link>
@@ -182,19 +294,19 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        <main className="relative z-10 flex flex-1 flex-col items-center justify-center p-6">
           <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mx-auto max-w-md w-full"
+            className="mx-auto w-full max-w-md"
           >
-            <div className="space-y-4 text-center mb-8">
+            <div className="mb-8 space-y-4 text-center">
               <m.h1
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-5xl font-bold text-white font-minecraft"
+                className="font-minecraft text-5xl font-bold text-white"
                 style={{
                   textShadow: '0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3)',
                 }}
@@ -205,9 +317,9 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="text-gray-200 text-lg"
+                className="text-lg text-gray-200"
               >
-                {t('welcomeDescription')}
+                {view === 'setup' ? t('setupWelcomeDescription') : t('welcomeDescription')}
               </m.p>
             </div>
 
@@ -217,205 +329,264 @@ export default function Home() {
               transition={{ delay: 0.3, duration: 0.4 }}
               className="relative"
             >
-              {/* Efecto de brillo animado detrás del card */}
-              <div className="absolute -inset-1 bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 rounded-lg opacity-30 blur-lg animate-pulse"></div>
+              <div className="absolute -inset-1 animate-pulse rounded-lg bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 opacity-30 blur-lg" />
 
-              <Card className="relative border-2 border-emerald-600/30 bg-gray-900/95 backdrop-blur-md shadow-2xl shadow-emerald-900/20 hover:border-emerald-500/50 transition-all duration-300">
+              <Card className="relative border-2 border-emerald-600/30 bg-gray-900/95 shadow-2xl shadow-emerald-900/20 backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50">
                 <form onSubmit={handleSubmit}>
                   <CardHeader className="space-y-1 pb-4">
-                    <CardTitle className="text-2xl font-minecraft text-white flex items-center gap-2">
-                      {t('login')}
+                    <CardTitle className="flex items-center gap-2 font-minecraft text-2xl text-white">
+                      {getCardTitle()}
                       <m.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="w-2 h-2 bg-emerald-500 rounded-full"
+                        className="h-2 w-2 rounded-full bg-emerald-500"
                       />
                     </CardTitle>
-                    <CardDescription className="text-gray-300">
-                      {t('enterCredentials')}
-                    </CardDescription>
+                    <CardDescription className="text-gray-300">{getCardDescription()}</CardDescription>
                   </CardHeader>
+
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="username" className="text-gray-200 font-medium">
-                          {t('username')}
-                        </Label>
-                        <div className="relative group">
-                          <Input
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder={t('username').toLowerCase()}
-                            required
-                            autoComplete="username"
-                            className="bg-gray-800/90 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 pl-10 text-gray-100 transition-all"
-                          />
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none group-focus-within:text-emerald-500 transition-colors">
-                            <svg
-                              className="w-5 h-5 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              />
-                            </svg>
+                      {view === 'login' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="identifier" className="font-medium text-gray-200">
+                              {t('usernameOrEmail')}
+                            </Label>
+                            <Input
+                              id="identifier"
+                              value={identifier}
+                              onChange={(e) => setIdentifier(e.target.value)}
+                              placeholder={t('usernameOrEmail')}
+                              required
+                              autoComplete="username"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
                           </div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="password" className="text-gray-200 font-medium">
-                          {t('password')}
-                        </Label>
-                        <div className="relative group">
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="********"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            autoComplete="current-password"
-                            className="bg-gray-800/90 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 pl-10 text-gray-100 transition-all"
-                          />
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none group-focus-within:text-emerald-500 transition-colors">
-                            <svg
-                              className="w-5 h-5 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="password" className="font-medium text-gray-200">
+                              {t('password')}
+                            </Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="********"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              autoComplete="current-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
                           </div>
+
+                          {setupStatus && !setupStatus.passwordRecoveryEnabled && (
+                            <p className="text-xs text-amber-300">{t('passwordRecoveryUnavailable')}</p>
+                          )}
+                        </>
+                      )}
+
+                      {view === 'setup' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="username" className="font-medium text-gray-200">
+                              {t('username')}
+                            </Label>
+                            <Input
+                              id="username"
+                              value={username}
+                              onChange={(e) => setUsername(e.target.value)}
+                              placeholder={t('username')}
+                              required
+                              autoComplete="username"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="email" className="font-medium text-gray-200">
+                              {t('email')}
+                            </Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="name@example.com"
+                              required
+                              autoComplete="email"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="setup-password" className="font-medium text-gray-200">
+                              {t('password')}
+                            </Label>
+                            <Input
+                              id="setup-password"
+                              type="password"
+                              placeholder="********"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="confirm-password" className="font-medium text-gray-200">
+                              {t('confirmPassword')}
+                            </Label>
+                            <Input
+                              id="confirm-password"
+                              type="password"
+                              placeholder="********"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {view === 'forgot' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="forgot-email" className="font-medium text-gray-200">
+                            {t('email')}
+                          </Label>
+                          <Input
+                            id="forgot-email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="name@example.com"
+                            required
+                            autoComplete="email"
+                            className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          />
                         </div>
-                      </div>
+                      )}
+
+                      {view === 'reset' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-password" className="font-medium text-gray-200">
+                              {t('newPassword')}
+                            </Label>
+                            <Input
+                              id="reset-password"
+                              type="password"
+                              placeholder="********"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-confirm-password" className="font-medium text-gray-200">
+                              {t('confirmPassword')}
+                            </Label>
+                            <Input
+                              id="reset-confirm-password"
+                              type="password"
+                              placeholder="********"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </CardContent>
-                  <CardFooter className="pb-4 pt-2 flex-col space-y-3">
+
+                  <CardFooter className="flex-col space-y-3 pb-4 pt-2">
                     <Button
                       type="submit"
-                      className="w-full font-minecraft bg-emerald-600 hover:bg-emerald-700 text-white py-2 transition-all hover:shadow-lg hover:shadow-emerald-600/50 hover:scale-[1.02] active:scale-[0.98]"
-                      disabled={isLoading || !serverAvailable}
+                      className="w-full bg-emerald-600 py-2 font-minecraft text-white transition-all hover:scale-[1.02] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/50 active:scale-[0.98]"
+                      disabled={isSubmitDisabled}
                     >
-                      {(() => {
-                        if (serverAvailable === null) {
-                          return (
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-5 h-5 border-t-2 border-r-2 border-white rounded-full animate-spin"></div>
-                              <span>{t('checkingServerStatus')}</span>
-                            </div>
-                          );
-                        }
-                        if (isLoading) {
-                          return (
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-5 h-5 border-t-2 border-r-2 border-white rounded-full animate-spin"></div>
-                              <span>{t('loading')}</span>
-                            </div>
-                          );
-                        }
-                        if (!serverAvailable) {
-                          return t('serverUnavailable');
-                        }
-                        return t('enterServer');
-                      })()}
+                      {getSubmitLabel()}
                     </Button>
-                    <a
-                      href={LINK_FORGOT_PASSWORD}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-gray-400 hover:text-emerald-400 transition-colors text-center"
-                    >
-                      {t('forgotPassword')}
-                    </a>
+
+                    {view === 'login' && setupStatus?.passwordRecoveryEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => changeView('forgot')}
+                        className="text-center text-xs text-gray-400 transition-colors hover:text-emerald-400"
+                      >
+                        {t('forgotPassword')}
+                      </button>
+                    )}
+
+                    {(view === 'forgot' || view === 'reset') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          router.replace('/');
+                          changeView('login');
+                        }}
+                        className="text-center text-xs text-gray-400 transition-colors hover:text-emerald-400"
+                      >
+                        {t('backToLogin')}
+                      </button>
+                    )}
                   </CardFooter>
                 </form>
               </Card>
             </m.div>
 
-            <div className="mt-10 flex justify-center items-center space-x-6">
+            <div className="mt-10 flex items-center justify-center space-x-6">
               <m.div
                 whileHover={{ scale: 1.2, rotate: 10 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -10, 0] }}
-                transition={{
-                  y: { duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.1 },
-                }}
+                transition={{ y: { duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.1 } }}
               >
-                <Image
-                  src="/images/grass.webp"
-                  alt="Grass Block"
-                  width={48}
-                  height={48}
-                  className="drop-shadow-lg"
-                />
+                <Image src="/images/grass.webp" alt="Grass Block" width={48} height={48} className="drop-shadow-lg" />
               </m.div>
               <m.div
                 whileHover={{ scale: 1.2, rotate: -10 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -12, 0] }}
-                transition={{
-                  y: { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.3 },
-                }}
+                transition={{ y: { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.3 } }}
               >
-                <Image
-                  src="/images/diamond.webp"
-                  alt="Diamond"
-                  width={48}
-                  height={48}
-                  className="drop-shadow-lg"
-                />
+                <Image src="/images/diamond.webp" alt="Diamond" width={48} height={48} className="drop-shadow-lg" />
               </m.div>
               <m.div
                 whileHover={{ scale: 1.2, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
                 animate={{ y: [0, -8, 0] }}
-                transition={{
-                  y: { duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 },
-                }}
+                transition={{ y: { duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 } }}
               >
-                <Image
-                  src="/images/creeper.webp"
-                  alt="Creeper"
-                  width={24}
-                  height={48}
-                  className="drop-shadow-lg"
-                />
+                <Image src="/images/creeper.webp" alt="Creeper" width={24} height={48} className="drop-shadow-lg" />
               </m.div>
             </div>
           </m.div>
         </main>
 
-        <footer className="relative z-10 py-4 border-t border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg">
-          <div className="container flex flex-col items-center justify-between gap-4 px-4 text-center md:flex-row md:text-left max-w-7xl mx-auto">
+        <footer className="relative z-10 border-t border-gray-700/60 bg-gray-900/95 py-4 shadow-lg backdrop-blur-md">
+          <div className="container mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center md:flex-row md:text-left">
             <p className="text-sm text-gray-300">
               &copy; {new Date().getFullYear()} Minepanel. {t('allRightsReserved')}
             </p>
             <div className="flex space-x-4 text-gray-300">
-              <Link href={LINK} className="hover:text-emerald-400 transition-all hover:scale-105">
+              <Link href={LINK} className="transition-all hover:scale-105 hover:text-emerald-400">
                 {t('help')}
               </Link>
-              <Link
-                href={LINK_DOCUMENTATION}
-                className="hover:text-emerald-400 transition-all hover:scale-105"
-              >
+              <Link href={LINK_DOCUMENTATION} className="transition-all hover:scale-105 hover:text-emerald-400">
                 {t('documentation')}
               </Link>
-              <Link
-                href={LINK_GITHUB}
-                className="hover:text-emerald-400 transition-all hover:scale-105"
-              >
+              <Link href={LINK_GITHUB} className="transition-all hover:scale-105 hover:text-emerald-400">
                 {t('github')}
               </Link>
             </div>

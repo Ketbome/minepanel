@@ -10,11 +10,13 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtAuthGuard } from './guards/auth.guard';
 import { UsersModule } from 'src/users/users.module';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { AuthMailService } from './auth-mail.service';
 @Module({
   imports: [
     UsersModule,
     PassportModule,
-    TypeOrmModule.forFeature([RefreshToken]),
+    TypeOrmModule.forFeature([RefreshToken, PasswordResetToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,7 +32,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
       },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard],
+  providers: [AuthService, AuthMailService, LocalStrategy, JwtStrategy, JwtAuthGuard],
   controllers: [AuthController],
   exports: [AuthService, JwtAuthGuard],
 })

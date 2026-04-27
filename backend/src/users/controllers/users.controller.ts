@@ -2,7 +2,7 @@ import { Controller, Get, UseGuards, Request, ValidationPipe, Body, Post, Param,
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UsersService } from '../services/users.service';
-import { ChangePasswordDto, CreateUsersDto, UpdateUsersDto } from '../dtos/users.dto';
+import { ChangePasswordDto, CreateUsersDto, UpdateProfileDto, UpdateUsersDto } from '../dtos/users.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -18,6 +18,12 @@ export class UsersController {
   getUserById(@Request() req) {
     const user = req.user as PayloadToken;
     return this.usersService.getUserById(user.userId);
+  }
+
+  @Patch('profile')
+  updateProfile(@Request() req, @Body(new ValidationPipe()) dto: UpdateProfileDto) {
+    const user = req.user as PayloadToken;
+    return this.usersService.updateProfile(user.userId, dto);
   }
 
   @Post()

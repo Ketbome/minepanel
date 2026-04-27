@@ -20,7 +20,7 @@ minepanel/
 |- docker-compose.yml
 |- docker-compose.development.yml
 |- docker-compose.test.yml
-|- env.example
+|- .env.example
 |- config.json
 ```
 
@@ -60,7 +60,7 @@ docker compose -f docker-compose.test.yml up -d
 
 - `AGENTS.md`
 - `Readme.md`
-- `env.example`
+- `.env.example`
 - `docker-compose.yml`
 - `docker-compose.development.yml`
 - `docker-compose.test.yml`

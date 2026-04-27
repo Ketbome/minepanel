@@ -242,11 +242,11 @@ docker compose restart
 
 1. **Check if first time login:**
 
-Default credentials are `admin`/`admin` unless you set `CLIENT_PASSWORD`.
+If no user exists yet, Minepanel should show the initial admin registration screen instead of the login form.
 
 2. **Password changed in UI:**
 
-If you changed password through the UI, environment variable won't work. Use the UI or [reset password](/administration#forgot-your-password).
+If SMTP is configured and your account has an email, use the login page recovery flow or [Administration](/administration#forgot-your-password).
 
 3. **Database issues:**
 
