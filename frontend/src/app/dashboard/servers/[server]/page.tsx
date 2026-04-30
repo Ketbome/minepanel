@@ -46,7 +46,7 @@ export default function ServerConfig() {
         <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={handleClearServerData} />
       </div>
 
-      <div className="animate-fade-in-up stagger-1">
+      <div className="animate-fade-in stagger-1">
         <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} refreshToken={refreshToken} />
       </div>
 

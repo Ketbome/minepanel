@@ -115,7 +115,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   }, [isServerRunning, activeTab]);
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 pb-24 animate-fade-in">
       {!isServerRunning && <SaveModeControl onManualSave={handleSaveConfig} isSaving={isSaving} hasUnsavedChanges={hasUnsavedChanges} />}
 
       {isServerRunning && (
