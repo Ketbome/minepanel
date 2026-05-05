@@ -178,6 +178,7 @@ export const fr = {
   systemActive: 'Système actif',
   admin: 'Admin',
   administrator: 'Administrateur',
+  userLabel: 'Utilisateur',
   minecraftPanel: 'Minepanel',
 
   // Home Page
@@ -247,6 +248,7 @@ export const fr = {
   settingsNavNetwork: 'Réseau',
   settingsNavDefaults: 'Paramètres Java',
   settingsNavDanger: 'Zone dangereuse',
+  settingsRestrictedDesc: 'Vous n’avez pas la permission de modifier cette section de configuration.',
   integrationsSettingsTitle: 'Intégrations',
   integrationsSettingsDesc: 'Connectez les services externes et les identifiants utilisés par le panneau.',
   userInvitationsTitle: 'Invitations utilisateur',

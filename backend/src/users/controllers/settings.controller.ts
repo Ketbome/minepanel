@@ -4,6 +4,8 @@ import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { DiscordService, SupportedLanguage } from 'src/discord/discord.service';
+import { UsersService } from '../services/users.service';
+import { AccessControlService } from '../services/access-control.service';
 
 @Controller('settings')
 @UseGuards(JwtAuthGuard)
@@ -11,6 +13,8 @@ export class SettingsController {
   constructor(
     private readonly settingsService: SettingsService,
     private readonly discordService: DiscordService,
+    private readonly usersService: UsersService,
+    private readonly accessControlService: AccessControlService,
   ) {}
 
   @Get()
@@ -27,8 +31,14 @@ export class SettingsController {
   }
 
   @Patch()
-  updateSettings(@Request() req, @Body() dto: UpdateSettingsDto) {
+  async updateSettings(@Request() req, @Body() dto: UpdateSettingsDto) {
     const user = req.user as PayloadToken;
+
+    if (dto.proxy || dto.network || dto.javaServerDefaults) {
+      const currentUser = await this.usersService.getRequiredUserById(user.userId);
+      this.accessControlService.assertManageSystemSettings(currentUser);
+    }
+
     return this.settingsService.updateSettings(dto, user.userId);
   }
 

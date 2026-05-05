@@ -8,11 +8,13 @@ import { LanguageSwitcher } from "../ui/language-switcher";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { cn } from "@/lib/utils";
+import { getSessionUser, type SessionUser } from "@/services/auth/auth.service";
 
 export function DashboardHeader() {
   const { t } = useLanguage();
   const logout = useAuthStore((state) => state.logout);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +26,15 @@ export function DashboardHeader() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    getSessionUser()
+      .then(setSessionUser)
+      .catch((error) => {
+        console.error("Error loading session user:", error);
+        setSessionUser(null);
+      });
   }, []);
 
   const handleLogout = () => {
@@ -45,8 +56,8 @@ export function DashboardHeader() {
                 <Image src="/images/player-head.png" alt="User" width={32} height={32} className="rounded-full object-cover" />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-white font-minecraft">{t("admin")}</p>
-                <p className="text-xs text-gray-400">{t("administrator")}</p>
+                <p className="text-sm font-medium text-white font-minecraft">{sessionUser?.username || "..."}</p>
+                <p className="text-xs text-gray-400">{sessionUser?.role === "ADMIN" ? t("administrator") : t("userLabel")}</p>
               </div>
               <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-200", showUserMenu && "rotate-180")} />
             </Button>
@@ -62,7 +73,7 @@ export function DashboardHeader() {
                   <Image src="/images/player-head.png" alt="User" width={40} height={40} className="rounded-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-medium font-minecraft text-white">{t("admin")}</p>
+                  <p className="font-medium font-minecraft text-white">{sessionUser?.username || "..."}</p>
                 </div>
               </div>
               <div className="flex flex-row items-center py-1 text-white px-2">

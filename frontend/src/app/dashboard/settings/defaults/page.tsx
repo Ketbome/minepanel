@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { getSettings, JavaServerDefaults, updateSettings } from '@/services/settings/settings.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
+import { getCurrentUser } from '@/services/users/users.service';
 
 const emptyDefaults: JavaServerDefaults = {
   onlineMode: true,
@@ -29,16 +30,31 @@ export default function DefaultsSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [javaDefaults, setJavaDefaults] = useState<JavaServerDefaults>(emptyDefaults);
+  const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
 
   useEffect(() => {
-    getSettings()
-      .then((settings) => setJavaDefaults(settings.javaServerDefaults || emptyDefaults))
+    Promise.all([getSettings(), getCurrentUser()])
+      .then(([settings, user]) => {
+        setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
+        setJavaDefaults(settings.javaServerDefaults || emptyDefaults);
+      })
       .catch((error) => {
         console.error('Error loading settings:', error);
         mcToast.error(t('errorLoadingServerInfo'));
       })
       .finally(() => setIsLoading(false));
   }, [t]);
+
+  if (!isLoading && !canManageSystemSettings) {
+    return (
+      <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-white font-minecraft">{t('javaServerDefaultsTitle')}</CardTitle>
+          <CardDescription className="text-gray-400">{t('settingsRestrictedDesc')}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   const handleSave = async () => {
     setIsSaving(true);

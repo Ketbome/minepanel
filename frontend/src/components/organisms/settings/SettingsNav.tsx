@@ -28,8 +28,12 @@ export function SettingsNav() {
       : []),
     { href: '/dashboard/settings/integrations', label: t('settingsNavIntegrations'), icon: KeyRound },
     { href: '/dashboard/settings/preferences', label: t('settingsNavPreferences'), icon: Palette },
-    { href: '/dashboard/settings/network', label: t('settingsNavNetwork'), icon: Network },
-    { href: '/dashboard/settings/defaults', label: t('settingsNavDefaults'), icon: SlidersHorizontal },
+    ...((currentUser?.role === 'ADMIN' || currentUser?.access.permissions.accessAllServers)
+      ? [
+          { href: '/dashboard/settings/network', label: t('settingsNavNetwork'), icon: Network },
+          { href: '/dashboard/settings/defaults', label: t('settingsNavDefaults'), icon: SlidersHorizontal },
+        ]
+      : []),
     { href: '/dashboard/settings/danger', label: t('settingsNavDanger'), icon: AlertTriangle },
   ];
 

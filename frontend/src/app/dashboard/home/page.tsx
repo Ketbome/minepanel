@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
 import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
 import { Button } from "@/components/ui/button";
+import { getSessionUser } from "@/services/auth/auth.service";
 
 type ServerInfo = {
   id: string;
@@ -27,10 +28,11 @@ export default function HomePage() {
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
+    getSessionUser()
+      .then((user) => setUsername(user.username))
+      .catch((error) => {
+        console.error("Error loading session user:", error);
+      });
   }, []);
 
   useEffect(() => {

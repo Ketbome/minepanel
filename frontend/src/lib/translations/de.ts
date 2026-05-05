@@ -180,6 +180,7 @@ export const de: Record<TranslationKey, string> = {
   systemActive: 'System aktiv',
   admin: 'Admin',
   administrator: 'Administrator',
+  userLabel: 'Benutzer',
   minecraftPanel: 'Minepanel',
 
   // Home Page
@@ -249,6 +250,7 @@ export const de: Record<TranslationKey, string> = {
   settingsNavNetwork: 'Netzwerk',
   settingsNavDefaults: 'Java-Standardwerte',
   settingsNavDanger: 'Gefahrenzone',
+  settingsRestrictedDesc: 'Du hast keine Berechtigung, diesen Konfigurationsbereich zu bearbeiten.',
   integrationsSettingsTitle: 'Integrationen',
   integrationsSettingsDesc: 'Verbinde externe Dienste und Zugangsdaten, die vom Panel verwendet werden.',
   userInvitationsTitle: 'Benutzereinladungen',

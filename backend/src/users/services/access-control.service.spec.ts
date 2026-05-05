@@ -49,6 +49,7 @@ describe('AccessControlService', () => {
     } as any;
 
     expect(service.canCreateServers(globalUser)).toBe(true);
+    expect(service.canManageSystemSettings(globalUser)).toBe(true);
   });
 
   it('should restrict server access to assigned servers when accessAllServers is false', () => {
@@ -66,5 +67,9 @@ describe('AccessControlService', () => {
 
   it('should throw when using console without permission', () => {
     expect(() => service.assertUseConsole(limitedUser, 'alpha')).toThrow(ForbiddenException);
+  });
+
+  it('should throw when editing system settings without global access', () => {
+    expect(() => service.assertManageSystemSettings(limitedUser)).toThrow(ForbiddenException);
   });
 });

@@ -30,6 +30,10 @@ export class AccessControlService {
     return this.isAdmin(user) || this.getAccessState(user).permissions.accessAllServers;
   }
 
+  canManageSystemSettings(user: Users): boolean {
+    return this.canCreateServers(user);
+  }
+
   canAccessServer(user: Users, serverId: string): boolean {
     if (this.isAdmin(user)) {
       return true;
@@ -69,6 +73,12 @@ export class AccessControlService {
   assertCreateServers(user: Users): void {
     if (!this.canCreateServers(user)) {
       throw new ForbiddenException('You need access to all servers to create new servers');
+    }
+  }
+
+  assertManageSystemSettings(user: Users): void {
+    if (!this.canManageSystemSettings(user)) {
+      throw new ForbiddenException('You need access to all servers to edit these settings');
     }
   }
 

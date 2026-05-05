@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/services/auth/auth.service";
+import { getSessionUser } from "@/services/auth/auth.service";
 import { m } from "framer-motion";
 import { LogOut, User } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -16,12 +17,11 @@ export function Header() {
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUsername = localStorage.getItem("username");
-      if (storedUsername) {
-        setUsername(storedUsername);
-      }
-    }
+    getSessionUser()
+      .then((user) => setUsername(user.username))
+      .catch((error) => {
+        console.error("Error loading session user:", error);
+      });
   }, []);
 
   const handleLogout = () => {

@@ -11,6 +11,7 @@ import { getSettings, ProxySettings, updateSettings } from '@/services/settings/
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { regenerateAllDockerCompose } from '@/services/network.service';
+import { getCurrentUser } from '@/services/users/users.service';
 
 export default function NetworkSettingsPage() {
   const { t } = useLanguage();
@@ -22,10 +23,12 @@ export default function NetworkSettingsPage() {
   const [initialProxyDomain, setInitialProxyDomain] = useState('');
   const [publicIp, setPublicIp] = useState('');
   const [lanIp, setLanIp] = useState('');
+  const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
 
   useEffect(() => {
-    getSettings()
-      .then((settings) => {
+    Promise.all([getSettings(), getCurrentUser()])
+      .then(([settings, user]) => {
+        setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
         const nextProxy = settings.proxy || { enabled: false, baseDomain: null, available: false };
         setProxySettings(nextProxy);
         setProxyBaseDomain(nextProxy.baseDomain || '');
@@ -71,6 +74,17 @@ export default function NetworkSettingsPage() {
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
         {t('loading')}
       </div>
+    );
+  }
+
+  if (!canManageSystemSettings) {
+    return (
+      <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-white font-minecraft">{t('networkSettings')}</CardTitle>
+          <CardDescription className="text-gray-400">{t('settingsRestrictedDesc')}</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 

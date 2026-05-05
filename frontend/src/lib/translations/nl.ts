@@ -181,6 +181,7 @@ export const nl: Record<TranslationKey, string> = {
   systemActive: 'Systeem actief',
   admin: 'Admin',
   administrator: 'Beheerder',
+  userLabel: 'Gebruiker',
   minecraftPanel: 'Minepanel',
 
   // ===========================
@@ -252,6 +253,7 @@ export const nl: Record<TranslationKey, string> = {
   settingsNavNetwork: 'Netwerk',
   settingsNavDefaults: 'Java-standaarden',
   settingsNavDanger: 'Gevarenzone',
+  settingsRestrictedDesc: 'Je hebt geen toestemming om dit configuratiegedeelte te bewerken.',
   integrationsSettingsTitle: 'Integraties',
   integrationsSettingsDesc: 'Verbind externe diensten en inloggegevens die door het paneel worden gebruikt.',
   userInvitationsTitle: 'Gebruikersuitnodigingen',
