@@ -1,4 +1,5 @@
 import api from "../axios.service";
+import { UserAccessState, UserInvitation } from "../users/users.service";
 
 let isRefreshing = false;
 let refreshSubscribers: Array<{ onSuccess: () => void; onError: (error: unknown) => void }> = [];
@@ -10,11 +11,27 @@ const AUTH_ENDPOINTS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/setup-status",
+  "/auth/invitations",
+  "/auth/invitations/accept",
 ];
 
 export interface SetupStatus {
   requiresSetup: boolean;
   passwordRecoveryEnabled: boolean;
+}
+
+export interface AcceptInvitationData {
+  token: string;
+  username: string;
+  password: string;
+  email?: string;
+}
+
+export interface SessionUser {
+  userId: number;
+  username: string;
+  role: string;
+  access: UserAccessState;
 }
 
 const getApiErrorMessage = (error: unknown, fallback: string): string => {
@@ -107,6 +124,21 @@ export const resetPassword = async (token: string, password: string) => {
     { withCredentials: true },
   );
 
+  return response.data;
+};
+
+export const getInvitation = async (token: string): Promise<UserInvitation> => {
+  const response = await api.get(`/auth/invitations/${token}`, { withCredentials: true });
+  return response.data;
+};
+
+export const acceptInvitation = async (data: AcceptInvitationData) => {
+  const response = await api.post("/auth/invitations/accept", data, { withCredentials: true });
+  return response.data;
+};
+
+export const getSessionUser = async (): Promise<SessionUser> => {
+  const response = await api.get("/auth/me", { withCredentials: true });
   return response.data;
 };
 

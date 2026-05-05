@@ -113,6 +113,61 @@ const hash = bcrypt.hashSync('your_new_password', 10);
 console.log(hash);
 ```
 
+## Roles and User Access
+
+Minepanel now includes the **first phase** of user roles and access control.
+
+### Roles
+
+- `ADMIN` has full access to the panel and is not restricted by user permissions.
+- `USER` can only access the features and servers explicitly assigned to them.
+
+### User Access Controls
+
+For `USER` accounts, Minepanel can now control:
+
+- Access to all servers
+- Access to specific servers when global server access is disabled
+- Log viewing
+- Console usage
+- Global file browser access
+- Global file management
+- Server file access
+- Server file management
+
+If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands.
+
+### Invitations
+
+New users are created through invitation links.
+
+1. Open **Settings** as an `ADMIN`
+2. Go to the **User invitations** section
+3. Choose the new user's permissions and server access
+4. Create the invitation link
+
+If SMTP is configured and you provide an email address, Minepanel can also send the invitation by email.
+
+### SMTP for Invitations and Password Recovery
+
+Minepanel uses the same SMTP configuration for both password recovery and user invitations:
+
+```yaml
+environment:
+  - SMTP_HOST=smtp.example.com
+  - SMTP_PORT=587
+  - SMTP_SECURE=false
+  - SMTP_USER=your_smtp_user
+  - SMTP_PASS=your_smtp_password
+  - SMTP_FROM=Minepanel <no-reply@example.com>
+```
+
+After updating SMTP settings:
+
+```bash
+docker compose restart
+```
+
 ## Database Management
 
 ### Database Location

@@ -49,6 +49,12 @@ describe('AuthService', () => {
       hasUsers: jest.fn(),
       createInitialAdmin: jest.fn(),
       getUserById: jest.fn(),
+      getRequiredUserById: jest.fn(),
+      buildUserAccessState: jest.fn(),
+      createInvitation: jest.fn(),
+      getActiveInvitations: jest.fn(),
+      getInvitationByToken: jest.fn(),
+      acceptInvitation: jest.fn(),
     };
 
     const mockRefreshTokenRepo = {
@@ -77,6 +83,7 @@ describe('AuthService', () => {
     const mockAuthMailService = {
       isConfigured: jest.fn(() => true),
       sendPasswordResetEmail: jest.fn(),
+      sendUserInvitationEmail: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -236,6 +243,80 @@ describe('AuthService', () => {
         'testuser',
         'http://localhost:3000/?resetToken=mock-random-token',
       );
+    });
+  });
+
+  describe('createInvitation', () => {
+    it('should send invitation email automatically when smtp is configured and email exists', async () => {
+      usersService.createInvitation.mockResolvedValue({
+        invitation: {
+          id: 7,
+          email: 'invite@example.com',
+          role: 'USER',
+          permissions: { accessAllServers: true },
+          serverAccess: [],
+          expiresAt: new Date('2026-01-01T00:00:00Z'),
+        },
+        inviteUrl: 'http://localhost:3000/?inviteToken=abc',
+      } as any);
+      authMailService.isConfigured.mockReturnValue(true);
+      authMailService.sendUserInvitationEmail.mockResolvedValue(undefined);
+
+      const result = await service.createInvitation({
+        email: 'invite@example.com',
+        permissions: { accessAllServers: true },
+      } as any);
+
+      expect(authMailService.sendUserInvitationEmail).toHaveBeenCalledWith(
+        'invite@example.com',
+        'http://localhost:3000/?inviteToken=abc',
+      );
+      expect(result.emailSent).toBe(true);
+    });
+
+    it('should skip invitation email when smtp is not configured', async () => {
+      usersService.createInvitation.mockResolvedValue({
+        invitation: {
+          id: 8,
+          email: 'invite@example.com',
+          role: 'USER',
+          permissions: { accessAllServers: false },
+          serverAccess: ['alpha'],
+          expiresAt: new Date('2026-01-01T00:00:00Z'),
+        },
+        inviteUrl: 'http://localhost:3000/?inviteToken=abc',
+      } as any);
+      authMailService.isConfigured.mockReturnValue(false);
+
+      const result = await service.createInvitation({
+        email: 'invite@example.com',
+        permissions: { accessAllServers: false },
+      } as any);
+
+      expect(authMailService.sendUserInvitationEmail).not.toHaveBeenCalled();
+      expect(result.emailSent).toBe(false);
+    });
+  });
+
+  describe('getSessionUser', () => {
+    it('should return role and effective access for the current user', async () => {
+      usersService.getRequiredUserById.mockResolvedValue(mockUser as any);
+      usersService.buildUserAccessState.mockReturnValue({
+        permissions: { accessAllServers: false },
+        serverAccess: ['alpha'],
+      } as any);
+
+      const result = await service.getSessionUser(1);
+
+      expect(result).toEqual({
+        userId: 1,
+        username: 'testuser',
+        role: 'USER',
+        access: {
+          permissions: { accessAllServers: false },
+          serverAccess: ['alpha'],
+        },
+      });
     });
   });
 

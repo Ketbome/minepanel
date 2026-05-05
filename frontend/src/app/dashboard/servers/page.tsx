@@ -20,6 +20,7 @@ import { useServersStore } from "@/lib/store/servers-store";
 import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
 import { ServerEdition } from "@/lib/types/types";
 import { TranslationKey } from "@/lib/translations";
+import { getCurrentUser } from "@/services/users/users.service";
 
 type ServerInfo = {
   id: string;
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const [createMode, setCreateMode] = useState<"quick" | "template">("quick");
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
   const [selectedEdition, setSelectedEdition] = useState<ServerEdition>("JAVA");
+  const [canCreateServers, setCanCreateServers] = useState(false);
 
   const form = useForm<{ id: string }>({
     defaultValues: {
@@ -53,6 +55,16 @@ export default function Dashboard() {
 
     const initializeDashboard = async () => {
       if (isMounted) {
+        try {
+          const user = await getCurrentUser();
+          if (isMounted) {
+            setCanCreateServers(user.role === "ADMIN" || user.access.permissions.accessAllServers);
+          }
+        } catch {
+          if (isMounted) {
+            setCanCreateServers(false);
+          }
+        }
         await fetchServersFromBackend();
       }
     };
@@ -224,12 +236,14 @@ export default function Dashboard() {
             }
           }}
         >
-          <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-              <Plus className="h-4 w-4 mr-2" />
-              {t("createServer")}
-            </Button>
-          </DialogTrigger>
+          {canCreateServers ? (
+            <DialogTrigger asChild>
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+                <Plus className="h-4 w-4 mr-2" />
+                {t("createServer")}
+              </Button>
+            </DialogTrigger>
+          ) : null}
           <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700 text-white max-h-[85vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="font-minecraft">{t("createNewServer")}</DialogTitle>

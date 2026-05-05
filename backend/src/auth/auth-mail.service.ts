@@ -38,6 +38,24 @@ export class AuthMailService {
     });
   }
 
+  async sendUserInvitationEmail(to: string, inviteUrl: string): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Email delivery is not configured');
+    }
+
+    await this.getTransporter().sendMail({
+      from: this.configService.get('smtp.from'),
+      to,
+      subject: 'Minepanel | User invitation',
+      text: [
+        'You have been invited to join Minepanel.',
+        '',
+        `Open this link to create your account: ${inviteUrl}`,
+      ].join('\n'),
+      html: this.buildUserInvitationHtml(inviteUrl),
+    });
+  }
+
   private getTransporter(): Transporter {
     if (this.transporter) {
       return this.transporter;
@@ -114,6 +132,54 @@ export class AuthMailService {
                   <tr>
                     <td style="padding:18px 28px;background:#0b1120;border-top:1px solid #1f2937;font-size:12px;line-height:1.7;color:#94a3b8;text-align:center;">
                       Minepanel · Minecraft server management made simple
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+  }
+
+  private buildUserInvitationHtml(inviteUrl: string): string {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+        <body style="margin:0;padding:0;background:#0b1220;color:#e5e7eb;font-family:Verdana,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0b1220;padding:24px 12px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#111827;border:1px solid #22c55e;border-radius:18px;overflow:hidden;box-shadow:0 0 0 4px rgba(34,197,94,0.12);">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);padding:24px 28px;border-bottom:4px solid #14532d;">
+                      <div style="font-family:'Courier New',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#dcfce7;margin-bottom:10px;">
+                        Minepanel Access
+                      </div>
+                      <div style="font-family:'Courier New',monospace;font-size:34px;line-height:1.1;font-weight:700;color:#ffffff;text-shadow:0 2px 0 rgba(0,0,0,0.35);">
+                        You are invited
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:28px;">
+                      <div style="font-size:15px;line-height:1.8;color:#d1d5db;">
+                        A Minepanel administrator invited you to create an account.
+                      </div>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:24px;">
+                        <tr>
+                          <td align="center">
+                            <a href="${inviteUrl}" style="display:inline-block;background:#22c55e;color:#08110c;text-decoration:none;font-family:'Courier New',monospace;font-size:16px;font-weight:700;padding:16px 28px;border-radius:12px;border:2px solid #4ade80;box-shadow:0 4px 0 #166534;">
+                              Accept Invitation
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <div style="margin-top:24px;padding:16px 18px;background:#0f172a;border:1px solid #374151;border-radius:12px;font-size:13px;line-height:1.7;color:#cbd5e1;">
+                        If the button does not work, copy and paste this link into your browser:<br />
+                        <a href="${inviteUrl}" style="color:#4ade80;word-break:break-all;text-decoration:none;">${inviteUrl}</a>
+                      </div>
                     </td>
                   </tr>
                 </table>

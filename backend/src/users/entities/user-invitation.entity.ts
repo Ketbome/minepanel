@@ -1,27 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { UserPermissions, UserRole } from '../access-control.types';
 
-@Entity('users')
-export class Users {
+@Entity('user_invitations')
+export class UserInvitation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'text', name: 'username', unique: true })
-  username: string;
+  @Column({ type: 'text', unique: true })
+  tokenHash: string;
 
-  @Column({ type: 'text', name: 'email', unique: true, nullable: true })
+  @Column({ type: 'text', nullable: true })
   email: string | null;
-
-  @Exclude()
-  @Column({ type: 'text', name: 'password' })
-  password: string;
 
   @Column({ type: 'varchar', length: 10, default: 'USER' })
   role: UserRole;
-
-  @Column({ type: 'boolean', default: false })
-  isActive: boolean;
 
   @Column({ type: 'simple-json', nullable: true })
   permissions: UserPermissions | null;
@@ -29,11 +21,15 @@ export class Users {
   @Column({ type: 'simple-json', nullable: true })
   serverAccess: string[] | null;
 
-  @Exclude()
+  @Column({ type: 'datetime' })
+  expiresAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  usedAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Exclude()
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

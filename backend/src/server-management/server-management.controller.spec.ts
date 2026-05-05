@@ -6,6 +6,8 @@ import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { SettingsService } from '../users/services/settings.service';
 import { ProxyService } from '../proxy/proxy.service';
 import { BedrockAddonsService } from '../bedrock-addons/bedrock-addons.service';
+import { UsersService } from '../users/services/users.service';
+import { AccessControlService } from '../users/services/access-control.service';
 
 describe('ServerManagementController', () => {
   let controller: ServerManagementController;
@@ -13,6 +15,7 @@ describe('ServerManagementController', () => {
   let dockerComposeService: jest.Mocked<DockerComposeService>;
   let settingsService: jest.Mocked<SettingsService>;
   let bedrockAddonsService: jest.Mocked<BedrockAddonsService>;
+  let accessControlService: jest.Mocked<AccessControlService>;
 
   beforeEach(async () => {
     const mockServerService = {
@@ -56,6 +59,19 @@ describe('ServerManagementController', () => {
       clearAddonRuntimeState: jest.fn(),
     };
 
+    const mockUsersService = {
+      getRequiredUserById: jest.fn(),
+    };
+
+    const mockAccessControlService = {
+      assertCreateServers: jest.fn(),
+      assertServerAccess: jest.fn(),
+      assertViewLogs: jest.fn(),
+      assertUseConsole: jest.fn(),
+      getVisibleServerIds: jest.fn((_, ids) => ids),
+      isAdmin: jest.fn(() => false),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ServerManagementController],
       providers: [
@@ -64,6 +80,8 @@ describe('ServerManagementController', () => {
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: ProxyService, useValue: mockProxyService },
         { provide: BedrockAddonsService, useValue: mockBedrockAddonsService },
+        { provide: UsersService, useValue: mockUsersService },
+        { provide: AccessControlService, useValue: mockAccessControlService },
       ],
     }).compile();
 
@@ -72,6 +90,7 @@ describe('ServerManagementController', () => {
     dockerComposeService = module.get(DockerComposeService);
     settingsService = module.get(SettingsService);
     bedrockAddonsService = module.get(BedrockAddonsService);
+    accessControlService = module.get(AccessControlService);
   });
 
   it('should be defined', () => {
@@ -203,6 +222,15 @@ describe('ServerManagementController', () => {
   describe('createServer', () => {
     const mockReq = { user: { userId: 1 } };
 
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        role: 'USER',
+        permissions: { accessAllServers: true },
+        serverAccess: [],
+      });
+    });
+
     it('should apply global java defaults when creating JAVA server', async () => {
       settingsService.getSettings.mockResolvedValue({
         preferences: {
@@ -251,6 +279,17 @@ describe('ServerManagementController', () => {
 
       const bedrockPayload = dockerComposeService.createServer.mock.calls[0][1] as Record<string, unknown>;
       expect(bedrockPayload.onlineMode).toBeUndefined();
+    });
+
+    it('should enforce create server permission before creating', async () => {
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
+      dockerComposeService.createServer.mockResolvedValue({ id: 'restricted' } as any);
+
+      await controller.createServer(mockReq, { id: 'restricted', edition: 'JAVA' } as any);
+
+      expect(accessControlService.assertCreateServers).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 1 }),
+      );
     });
   });
 });

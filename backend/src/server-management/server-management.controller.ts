@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, Optional } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
@@ -10,6 +10,9 @@ import { ProxyService } from 'src/proxy/proxy.service';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
 import { SelectWorldDto } from './dto/select-world.dto';
 import { BedrockAddonsService } from 'src/bedrock-addons/bedrock-addons.service';
+import { UsersService } from 'src/users/services/users.service';
+import { AccessControlService } from 'src/users/services/access-control.service';
+import { Users } from 'src/users/entities/users.entity';
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
   'onlineMode',
@@ -42,7 +45,48 @@ export class ServerManagementController {
     private readonly settingsService: SettingsService,
     private readonly proxyService: ProxyService,
     private readonly bedrockAddonsService: BedrockAddonsService,
+    @Optional()
+    private readonly usersService: UsersService,
+    @Optional()
+    private readonly accessControlService: AccessControlService,
   ) {}
+
+  private async getCurrentUser(req): Promise<Users> {
+    if (!this.usersService) {
+      return null;
+    }
+    const user = req.user as PayloadToken;
+    return this.usersService.getRequiredUserById(user.userId);
+  }
+
+  private async requireAdmin(req): Promise<Users> {
+    if (!this.usersService || !this.accessControlService) {
+      return null;
+    }
+    const user = await this.getCurrentUser(req);
+    if (!this.accessControlService.isAdmin(user)) {
+      throw new ForbiddenException('Only admin can perform this action');
+    }
+
+    return user;
+  }
+
+  private async requireServerAccess(req, serverId: string): Promise<Users> {
+    if (!this.usersService || !this.accessControlService) {
+      return null;
+    }
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertServerAccess(user, serverId);
+    return user;
+  }
+
+  private resolveRequestAndId(reqOrId, id?: string) {
+    if (typeof reqOrId === 'string' && id === undefined) {
+      return { req: null, id: reqOrId };
+    }
+
+    return { req: reqOrId, id: id as string };
+  }
 
   private sanitizeJavaServerDefaults(defaults: Record<string, any> | undefined): Record<string, any> {
     if (!defaults || typeof defaults !== 'object') {
@@ -58,24 +102,43 @@ export class ServerManagementController {
   }
 
   @Get()
-  async getAllServers(): Promise<ServerListItemDto[]> {
+  async getAllServers(@Request() req): Promise<ServerListItemDto[]> {
     const serverConfigs = await this.dockerComposeService.getAllServerConfigs();
-    return ServerListItemDto.fromServerConfigs(serverConfigs);
+    const user = await this.getCurrentUser(req);
+    const visibleIds = this.accessControlService.getVisibleServerIds(user, serverConfigs.map((server) => server.id));
+    return ServerListItemDto.fromServerConfigs(serverConfigs.filter((server) => visibleIds.includes(server.id)));
   }
 
   @Get('all-status')
-  async getAllServersStatus() {
+  async getAllServersStatus(@Request() req?) {
     const allStatus = await this.managementService.getAllServersStatus();
-    return allStatus;
+    if (!req) {
+      return allStatus;
+    }
+
+    if (!this.usersService || !this.accessControlService) {
+      return allStatus;
+    }
+
+    const user = await this.getCurrentUser(req);
+    const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(allStatus)));
+    return Object.fromEntries(Object.entries(allStatus).filter(([serverId]) => visibleIds.has(serverId)));
   }
 
   @Get('all-resources')
-  async getAllServersResources() {
-    return this.managementService.getAllServersResources();
+  async getAllServersResources(@Request() req) {
+    const resources = await this.managementService.getAllServersResources();
+    if (!this.usersService || !this.accessControlService) {
+      return resources;
+    }
+    const user = await this.getCurrentUser(req);
+    const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(resources)));
+    return Object.fromEntries(Object.entries(resources).filter(([serverId]) => visibleIds.has(serverId)));
   }
 
   @Get(':id')
-  async getServer(@Param('id') id: string) {
+  async getServer(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -86,6 +149,10 @@ export class ServerManagementController {
   @Post()
   async createServer(@Request() req, @Body(new ValidationPipe()) data: UpdateServerConfigDto) {
     try {
+      const currentUser = await this.getCurrentUser(req);
+      if (currentUser && this.accessControlService) {
+        this.accessControlService.assertCreateServers(currentUser);
+      }
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
@@ -141,6 +208,7 @@ export class ServerManagementController {
 
   @Post('regenerate-all')
   async regenerateAllDockerCompose(@Request() req) {
+    await this.requireAdmin(req);
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
@@ -170,6 +238,7 @@ export class ServerManagementController {
 
   @Delete(':id')
   async deleteServer(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -205,7 +274,8 @@ export class ServerManagementController {
   }
 
   @Get(':id/resources')
-  async getServerResources(@Param('id') id: string) {
+  async getServerResources(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const serverExists = await this.dockerComposeService.getServerConfig(id);
     if (!serverExists) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -235,6 +305,7 @@ export class ServerManagementController {
 
   @Put(':id')
   async updateServer(@Request() req, @Param('id') id: string, @Body(new ValidationPipe()) config: UpdateServerConfigDto) {
+    await this.requireServerAccess(req, id);
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
@@ -262,7 +333,8 @@ export class ServerManagementController {
   }
 
   @Get(':id/worlds')
-  async getServerWorlds(@Param('id') id: string) {
+  async getServerWorlds(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -281,6 +353,7 @@ export class ServerManagementController {
     @Param('id') id: string,
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: SelectWorldDto,
   ) {
+    await this.requireServerAccess(req, id);
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -336,8 +409,12 @@ export class ServerManagementController {
   }
 
   @Post(':id/restart')
-  async restartServer(@Param('id') id: string) {
-    const result = await this.managementService.restartServer(id);
+  async restartServer(@Request() reqOrId, @Param('id') id?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, id);
+    if (resolved.req) {
+      await this.requireServerAccess(resolved.req, resolved.id);
+    }
+    const result = await this.managementService.restartServer(resolved.id);
     return {
       success: result,
       message: result ? 'Server restarted successfully' : 'Failed to restart server',
@@ -346,6 +423,7 @@ export class ServerManagementController {
 
   @Post(':id/clear-data')
   async clearServerData(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -369,13 +447,18 @@ export class ServerManagementController {
   }
 
   @Get(':id/status')
-  async getServerStatus(@Param('id') id: string) {
-    const status = await this.managementService.getServerStatus(id);
+  async getServerStatus(@Request() reqOrId, @Param('id') id?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, id);
+    if (resolved.req) {
+      await this.requireServerAccess(resolved.req, resolved.id);
+    }
+    const status = await this.managementService.getServerStatus(resolved.id);
     return { status };
   }
 
   @Get(':id/info')
-  async getServerInfo(@Param('id') id: string) {
+  async getServerInfo(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     const serverInfo = await this.managementService.getServerInfo(id);
     if (!serverInfo.exists) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
@@ -386,41 +469,58 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs')
-  async getServerLogs(@Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
-    const lineCount = lines && lines > 0 ? Math.min(lines, 10000) : 100;
+  async getServerLogs(@Request() reqOrId, @Param('id') idOrLines?: string | number, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, typeof idOrLines === 'string' ? idOrLines : undefined);
+    if (resolved.req && this.usersService && this.accessControlService) {
+      const user = await this.getCurrentUser(resolved.req);
+      this.accessControlService.assertViewLogs(user, resolved.id);
+    }
+    const resolvedLines = typeof idOrLines === 'number' && lines === undefined ? idOrLines : lines;
+    const lineCount = resolvedLines && resolvedLines > 0 ? Math.min(resolvedLines, 10000) : 100;
 
     if (stream === 'true' && since) {
-      return this.managementService.getServerLogsStream(id, lineCount, since);
+      return this.managementService.getServerLogsStream(resolved.id, lineCount, since);
     }
     if (since) {
-      return this.managementService.getServerLogsSince(id, since);
+      return this.managementService.getServerLogsSince(resolved.id, since);
     }
-    return this.managementService.getServerLogs(id, lineCount);
+    return this.managementService.getServerLogs(resolved.id, lineCount);
   }
 
   @Get(':id/logs/stream')
-  async getServerLogsStream(@Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string) {
+  async getServerLogsStream(@Request() req, @Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string) {
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertViewLogs(user, id);
     const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 500;
     return this.managementService.getServerLogsStream(id, lineCount, since);
   }
 
   @Get(':id/logs/since/:timestamp')
-  async getServerLogsSince(@Param('id') id: string, @Param('timestamp') timestamp: string) {
+  async getServerLogsSince(@Request() req, @Param('id') id: string, @Param('timestamp') timestamp: string) {
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertViewLogs(user, id);
     return this.managementService.getServerLogsSince(id, timestamp);
   }
 
   @Post(':id/command')
   async executeCommand(
+    @Request() req,
     @Param('id') id: string,
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
     body: ExecuteCommandDto,
   ) {
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertUseConsole(user, id);
     return this.managementService.executeCommand(id, body.command, body.rconPort, body.rconPassword);
   }
 
   @Post(':id/start')
-  async startServer(@Param('id') id: string) {
-    const result = await this.managementService.startServer(id);
+  async startServer(@Request() reqOrId, @Param('id') id?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, id);
+    if (resolved.req) {
+      await this.requireServerAccess(resolved.req, resolved.id);
+    }
+    const result = await this.managementService.startServer(resolved.id);
     return {
       success: result,
       message: result ? 'Server started successfully' : 'Failed to start server',
@@ -428,8 +528,12 @@ export class ServerManagementController {
   }
 
   @Post(':id/stop')
-  async stopServer(@Param('id') id: string) {
-    const result = await this.managementService.stopServer(id);
+  async stopServer(@Request() reqOrId, @Param('id') id?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, id);
+    if (resolved.req) {
+      await this.requireServerAccess(resolved.req, resolved.id);
+    }
+    const result = await this.managementService.stopServer(resolved.id);
     return {
       success: result,
       message: result ? 'Server stopped successfully' : 'Failed to stop server',
@@ -437,22 +541,26 @@ export class ServerManagementController {
   }
 
   @Post(':id/players/online')
-  async getOnlinePlayers(@Param('id') id: string, @Body() body: { rconPort: string; rconPassword?: string }) {
+  async getOnlinePlayers(@Request() req, @Param('id') id: string, @Body() body: { rconPort: string; rconPassword?: string }) {
+    await this.requireServerAccess(req, id);
     return this.managementService.getOnlinePlayers(id, body.rconPort, body.rconPassword);
   }
 
   @Get(':id/players/whitelist')
-  async getWhitelist(@Param('id') id: string) {
+  async getWhitelist(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     return this.managementService.getWhitelist(id);
   }
 
   @Get(':id/players/ops')
-  async getOps(@Param('id') id: string) {
+  async getOps(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     return this.managementService.getOps(id);
   }
 
   @Get(':id/players/banned')
-  async getBannedPlayers(@Param('id') id: string) {
+  async getBannedPlayers(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
     return this.managementService.getBannedPlayers(id);
   }
 }

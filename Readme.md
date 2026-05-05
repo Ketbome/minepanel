@@ -55,6 +55,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **Automatic backups** — Scheduled backups with retention policies
 - **Proxy support** — mc-router for single-port multi-server (Java)
 - **Discord webhooks** — Server events notifications
+- **Admin + user access control** — First phase with invitations and per-user permissions
 - **Multi-language** — English, Spanish, Dutch, German, Polish
 
 ---

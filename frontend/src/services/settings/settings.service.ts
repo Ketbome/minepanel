@@ -1,5 +1,7 @@
 import api from '../axios.service';
 
+type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl';
+
 export interface ProxySettings {
   enabled: boolean;
   baseDomain: string | null;
@@ -36,7 +38,7 @@ export interface JavaServerDefaults {
 export interface UserSettings {
   cfApiKey?: string;
   discordWebhook?: string;
-  language?: 'en' | 'es';
+  language?: AppLanguage;
   proxy?: ProxySettings;
   network?: NetworkSettings;
   javaServerDefaults?: JavaServerDefaults | null;
@@ -45,7 +47,7 @@ export interface UserSettings {
 export interface UpdateUserSettings {
   cfApiKey?: string;
   discordWebhook?: string;
-  language?: 'en' | 'es';
+  language?: AppLanguage;
   proxy?: {
     proxyEnabled?: boolean;
     proxyBaseDomain?: string;
