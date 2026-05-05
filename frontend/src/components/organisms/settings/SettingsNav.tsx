@@ -26,7 +26,9 @@ export function SettingsNav() {
     ...(currentUser?.role === 'ADMIN'
       ? [{ href: '/dashboard/settings/access', label: t('settingsNavAccess'), icon: Shield }]
       : []),
-    { href: '/dashboard/settings/integrations', label: t('settingsNavIntegrations'), icon: KeyRound },
+    ...((currentUser?.role === 'ADMIN' || currentUser?.access.permissions.accessAllServers)
+      ? [{ href: '/dashboard/settings/integrations', label: t('settingsNavIntegrations'), icon: KeyRound }]
+      : []),
     { href: '/dashboard/settings/preferences', label: t('settingsNavPreferences'), icon: Palette },
     ...((currentUser?.role === 'ADMIN' || currentUser?.access.permissions.accessAllServers)
       ? [

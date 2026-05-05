@@ -34,7 +34,7 @@ export class SettingsController {
   async updateSettings(@Request() req, @Body() dto: UpdateSettingsDto) {
     const user = req.user as PayloadToken;
 
-    if (dto.proxy || dto.network || dto.javaServerDefaults) {
+    if (dto.cfApiKey !== undefined || dto.discordWebhook !== undefined || dto.proxy || dto.network || dto.javaServerDefaults) {
       const currentUser = await this.usersService.getRequiredUserById(user.userId);
       this.accessControlService.assertManageSystemSettings(currentUser);
     }

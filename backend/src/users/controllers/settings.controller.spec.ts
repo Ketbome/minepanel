@@ -76,6 +76,20 @@ describe('SettingsController', () => {
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
   });
 
+  it('should enforce high-level permission for integration settings', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+    accessControlService.assertManageSystemSettings.mockImplementation(() => {
+      throw new ForbiddenException('forbidden');
+    });
+
+    await expect(
+      controller.updateSettings({ user: { userId: 1 } }, { discordWebhook: 'https://discord.test' }),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
+    expect(settingsService.updateSettings).not.toHaveBeenCalled();
+  });
+
   it('should enforce high-level permission for java defaults', async () => {
     usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);

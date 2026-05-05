@@ -10,23 +10,46 @@ import { Input } from '@/components/ui/input';
 import { getSettings, testDiscordWebhook, updateSettings, UserSettings } from '@/services/settings/settings.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { getCurrentUser } from '@/services/users/users.service';
 
 export default function IntegrationsSettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
   const form = useForm<UserSettings>({ defaultValues: { cfApiKey: '', discordWebhook: '' } });
 
   useEffect(() => {
-    getSettings()
-      .then((settings) => form.reset(settings))
+    Promise.all([getSettings(), getCurrentUser()])
+      .then(([settings, user]) => {
+        setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
+        form.reset(settings);
+      })
       .catch((error) => {
         console.error('Error loading settings:', error);
         mcToast.error(t('errorLoadingServerInfo'));
       })
       .finally(() => setIsLoading(false));
   }, [form, t]);
+
+  if (!isLoading && !canManageSystemSettings) {
+    return (
+      <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <Key className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div>
+              <CardTitle className="text-white font-minecraft">{t('integrationsSettingsTitle')}</CardTitle>
+              <CardDescription className="text-gray-400">{t('settingsRestrictedDesc')}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   const onSubmit = async (data: UserSettings) => {
     setIsSaving(true);
