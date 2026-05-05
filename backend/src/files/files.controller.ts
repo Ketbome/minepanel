@@ -1,21 +1,40 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { UsersService } from 'src/users/services/users.service';
+import { AccessControlService } from 'src/users/services/access-control.service';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly usersService: UsersService,
+    private readonly accessControlService: AccessControlService,
+  ) {}
+
+  private async assertFilesAccess(req, serverId: string, write: boolean) {
+    const user = await this.usersService.getRequiredUserById(req.user.userId);
+
+    if (serverId === '_root' || serverId === '.world') {
+      this.accessControlService.assertGlobalFiles(user, write);
+      return;
+    }
+
+    this.accessControlService.assertServerFiles(user, serverId, write);
+  }
 
   @Get(':serverId/list')
-  async listFiles(@Param('serverId') serverId: string, @Query('path') dirPath: string = ''): Promise<FileItem[]> {
+  async listFiles(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string = ''): Promise<FileItem[]> {
+    await this.assertFilesAccess(req, serverId, false);
     return this.filesService.listFiles(serverId, dirPath);
   }
 
   @Get(':serverId/read')
-  async readFile(@Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ content: string; encoding: string }> {
+  async readFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ content: string; encoding: string }> {
+    await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
@@ -23,7 +42,8 @@ export class FilesController {
   }
 
   @Get(':serverId/download')
-  async downloadFile(@Param('serverId') serverId: string, @Query('path') filePath: string, @Res() res: Response): Promise<void> {
+  async downloadFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string, @Res() res: Response): Promise<void> {
+    await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
@@ -56,7 +76,8 @@ export class FilesController {
   }
 
   @Get(':serverId/download-zip')
-  async downloadZip(@Param('serverId') serverId: string, @Query('path') dirPath: string, @Res() res: Response): Promise<void> {
+  async downloadZip(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string, @Res() res: Response): Promise<void> {
+    await this.assertFilesAccess(req, serverId, false);
     if (!dirPath) {
       throw new BadRequestException('Path is required');
     }
@@ -70,7 +91,8 @@ export class FilesController {
   }
 
   @Get(':serverId/info')
-  async getFileInfo(@Param('serverId') serverId: string, @Query('path') filePath: string): Promise<FileItem> {
+  async getFileInfo(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<FileItem> {
+    await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
@@ -78,7 +100,8 @@ export class FilesController {
   }
 
   @Post(':serverId/write')
-  async writeFile(@Param('serverId') serverId: string, @Body() body: { path: string; content: string }): Promise<{ success: boolean }> {
+  async writeFile(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string; content: string }): Promise<{ success: boolean }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!body.path) {
       throw new BadRequestException('Path is required');
     }
@@ -87,7 +110,8 @@ export class FilesController {
   }
 
   @Post(':serverId/mkdir')
-  async createDirectory(@Param('serverId') serverId: string, @Body() body: { path: string }): Promise<{ success: boolean }> {
+  async createDirectory(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string }): Promise<{ success: boolean }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!body.path) {
       throw new BadRequestException('Path is required');
     }
@@ -98,11 +122,13 @@ export class FilesController {
   @Post(':serverId/upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
+    @Request() req,
     @Param('serverId') serverId: string,
     @Query('path') dirPath: string = '',
     @Query('relativePath') relativePath: string = '',
     @UploadedFile() file: Express.Multer.File,
   ): Promise<{ success: boolean; path: string }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -118,11 +144,13 @@ export class FilesController {
   @Post(':serverId/upload-multiple')
   @UseInterceptors(FilesInterceptor('files', 100))
   async uploadMultipleFiles(
+    @Request() req,
     @Param('serverId') serverId: string,
     @Query('path') dirPath: string = '',
     @UploadedFiles() files: Express.Multer.File[],
     @Body() body: { relativePaths?: string },
   ): Promise<{ success: boolean; uploaded: number; errors: number }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!files || files.length === 0) {
       throw new BadRequestException('At least one file is required');
     }
@@ -149,7 +177,8 @@ export class FilesController {
   }
 
   @Put(':serverId/rename')
-  async rename(@Param('serverId') serverId: string, @Body() body: { path: string; newName: string }): Promise<{ success: boolean }> {
+  async rename(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string; newName: string }): Promise<{ success: boolean }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!body.path || !body.newName) {
       throw new BadRequestException('Path and newName are required');
     }
@@ -158,7 +187,8 @@ export class FilesController {
   }
 
   @Delete(':serverId/delete')
-  async deleteFile(@Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ success: boolean }> {
+  async deleteFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ success: boolean }> {
+    await this.assertFilesAccess(req, serverId, true);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }

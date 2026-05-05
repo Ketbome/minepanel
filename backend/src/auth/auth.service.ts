@@ -11,6 +11,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { SetupAdminDto } from './dtos/auth.dto';
 import { AuthMailService } from './auth-mail.service';
+import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 
 @Injectable()
 export class AuthService {
@@ -67,6 +68,17 @@ export class AuthService {
       username: user.username,
       role: user.role,
     });
+  }
+
+  async getSessionUser(userId: number) {
+    const user = await this.usersService.getRequiredUserById(userId);
+
+    return {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      access: this.usersService.buildUserAccessState(user),
+    };
   }
 
   async generateJwt(user: PayloadToken) {
@@ -206,6 +218,72 @@ export class AuthService {
     const usedAt = new Date();
     await this.passwordResetTokenRepo.update({ userId: passwordResetToken.userId, usedAt: null }, { usedAt });
     await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
+  }
+
+  async createInvitation(dto: CreateUserInvitationDto) {
+    const result = await this.usersService.createInvitation(dto);
+    const shouldSendEmail = !!result.invitation.email && this.authMailService.isConfigured();
+
+    if (shouldSendEmail) {
+      await this.authMailService.sendUserInvitationEmail(result.invitation.email, result.inviteUrl);
+    }
+
+    return {
+      id: result.invitation.id,
+      email: result.invitation.email,
+      role: result.invitation.role,
+      access: {
+        permissions: result.invitation.permissions,
+        serverAccess: result.invitation.serverAccess ?? [],
+      },
+      expiresAt: result.invitation.expiresAt,
+      inviteUrl: result.inviteUrl,
+      emailSent: shouldSendEmail,
+    };
+  }
+
+  async getActiveInvitations() {
+    const invitations = await this.usersService.getActiveInvitations();
+
+    return invitations.map((invitation) => ({
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      access: {
+        permissions: invitation.permissions,
+        serverAccess: invitation.serverAccess ?? [],
+      },
+      expiresAt: invitation.expiresAt,
+      createdAt: invitation.createdAt,
+    }));
+  }
+
+  async getInvitation(token: string) {
+    const invitation = await this.usersService.getInvitationByToken(token);
+
+    return {
+      email: invitation.email,
+      role: invitation.role,
+      access: {
+        permissions: invitation.permissions,
+        serverAccess: invitation.serverAccess ?? [],
+      },
+      expiresAt: invitation.expiresAt,
+    };
+  }
+
+  async acceptInvitation(token: string, username: string, password: string, email?: string) {
+    const user = await this.usersService.acceptInvitation(token, {
+      username,
+      password,
+      email,
+    });
+
+    return this.generateJwt({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+    });
   }
 
   isPasswordRecoveryEnabled(): boolean {

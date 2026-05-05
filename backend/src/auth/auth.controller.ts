@@ -1,10 +1,11 @@
-import { Controller, Post, Body, UnauthorizedException, UseGuards, Res, Req, Get } from '@nestjs/common';
+import { Controller, Post, Body, ForbiddenException, UnauthorizedException, UseGuards, Res, Req, Get, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth.guard';
 import { Public } from './decorators/public.decorator';
 import { Response, Request, CookieOptions } from 'express';
-import { ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
+import { AcceptInvitationDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
+import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -52,10 +53,46 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: any) {
+    return this.authService.getSessionUser(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('invitations')
+  async listInvitations(@Req() req: any) {
+    const sessionUser = await this.authService.getSessionUser(req.user.userId);
+    if (!sessionUser.access.permissions.manageUsers) {
+      throw new ForbiddenException('Forbidden');
+    }
+
+    return this.authService.getActiveInvitations();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('invitations')
+  async createInvitation(@Req() req: any, @Body() body: CreateUserInvitationDto) {
+    const sessionUser = await this.authService.getSessionUser(req.user.userId);
+    if (!sessionUser.access.permissions.manageUsers) {
+      throw new ForbiddenException('Forbidden');
+    }
+
+    return this.authService.createInvitation(body);
+  }
+
+  @Public()
+  @Get('invitations/:token')
+  async getInvitation(@Param('token') token: string) {
+    return this.authService.getInvitation(token);
+  }
+
+  @Public()
+  @Post('invitations/accept')
+  async acceptInvitation(@Body() body: AcceptInvitationDto, @Res({ passthrough: true }) res: Response) {
+    const tokens = await this.authService.acceptInvitation(body.token, body.username, body.password, body.email);
+    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+
     return {
-      userId: req.user.userId,
-      username: req.user.username,
-      role: req.user.role,
+      username: tokens.username,
+      expires_in: tokens.expires_in,
     };
   }
 

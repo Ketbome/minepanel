@@ -18,6 +18,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
+  acceptInvitation,
+  getInvitation,
   getSetupStatus,
   isAuthenticated,
   login,
@@ -26,13 +28,14 @@ import {
   setupAdmin,
   type SetupStatus,
 } from '@/services/auth/auth.service';
+import type { UserInvitation } from '@/services/users/users.service';
 import { healthService } from '@/services/health.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
 import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
 
-type AuthView = 'login' | 'setup' | 'forgot' | 'reset';
+type AuthView = 'login' | 'setup' | 'forgot' | 'reset' | 'invite';
 
 const getErrorMessage = (error: unknown): string => {
   const err = error as {
@@ -62,9 +65,11 @@ export default function Home() {
   const [serverAvailable, setServerAvailable] = useState<boolean | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [invitation, setInvitation] = useState<UserInvitation | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetToken = searchParams.get('resetToken');
+  const inviteToken = searchParams.get('inviteToken');
   const { t } = useLanguage();
 
   const changeView = useCallback((nextView: AuthView) => {
@@ -95,6 +100,14 @@ export default function Home() {
           return;
         }
 
+        if (inviteToken) {
+          const invite = await getInvitation(inviteToken);
+          setInvitation(invite);
+          setEmail(invite.email || '');
+          setView('invite');
+          return;
+        }
+
         setView(resetToken ? 'reset' : 'login');
       } catch (error) {
         console.error('Error checking setup status:', error);
@@ -104,7 +117,7 @@ export default function Home() {
     };
 
     initialize();
-  }, [resetToken, router]);
+  }, [inviteToken, resetToken, router]);
 
   const checkHealth = useCallback(async () => {
     try {
@@ -173,6 +186,28 @@ export default function Home() {
     changeView('login');
   };
 
+  const handleAcceptInvitation = async () => {
+    if (!inviteToken) {
+      mcToast.error(t('invalidInvitationToken'));
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      mcToast.error(t('passwordsMustMatch'));
+      return;
+    }
+
+    await acceptInvitation({
+      token: inviteToken,
+      username,
+      password,
+      email: invitation?.email ? undefined : email,
+    });
+
+    mcToast.success(t('invitationAccepted'));
+    router.push('/dashboard/home');
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -193,6 +228,10 @@ export default function Home() {
       if (view === 'reset') {
         await handleResetPassword();
       }
+
+      if (view === 'invite') {
+        await handleAcceptInvitation();
+      }
     } catch (error) {
       console.error('Authentication error:', error);
       mcToast.error(getErrorMessage(error));
@@ -207,6 +246,7 @@ export default function Home() {
     if (view === 'setup') return t('finishInitialSetup');
     if (view === 'forgot') return t('forgotPassword');
     if (view === 'reset') return t('resetPassword');
+    if (view === 'invite') return t('acceptInvitation');
     return t('login');
   };
 
@@ -214,6 +254,7 @@ export default function Home() {
     if (view === 'setup') return t('finishInitialSetupDescription');
     if (view === 'forgot') return t('forgotPasswordDescription');
     if (view === 'reset') return t('resetPasswordDescription');
+    if (view === 'invite') return t('acceptInvitationDesc');
     return t('enterCredentials');
   };
 
@@ -233,6 +274,7 @@ export default function Home() {
     if (view === 'setup') return t('createAdminAccount');
     if (view === 'forgot') return t('sendPasswordResetLink');
     if (view === 'reset') return t('resetPassword');
+    if (view === 'invite') return t('createAccount');
     return t('enterServer');
   };
 
@@ -319,7 +361,7 @@ export default function Home() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="text-lg text-gray-200"
               >
-                {view === 'setup' ? t('setupWelcomeDescription') : t('welcomeDescription')}
+                {view === 'setup' ? t('setupWelcomeDescription') : view === 'invite' ? t('acceptInvitationDesc') : t('welcomeDescription')}
               </m.p>
             </div>
 
@@ -506,6 +548,74 @@ export default function Home() {
                           </div>
                         </>
                       )}
+
+                      {view === 'invite' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="invite-username" className="font-medium text-gray-200">
+                              {t('username')}
+                            </Label>
+                            <Input
+                              id="invite-username"
+                              value={username}
+                              onChange={(e) => setUsername(e.target.value)}
+                              placeholder={t('username')}
+                              required
+                              autoComplete="username"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="invite-email" className="font-medium text-gray-200">
+                              {t('email')}
+                            </Label>
+                            <Input
+                              id="invite-email"
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="name@example.com"
+                              required={!invitation?.email}
+                              disabled={!!invitation?.email}
+                              autoComplete="email"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="invite-password" className="font-medium text-gray-200">
+                              {t('password')}
+                            </Label>
+                            <Input
+                              id="invite-password"
+                              type="password"
+                              placeholder="********"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="invite-confirm-password" className="font-medium text-gray-200">
+                              {t('confirmPassword')}
+                            </Label>
+                            <Input
+                              id="invite-confirm-password"
+                              type="password"
+                              placeholder="********"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              autoComplete="new-password"
+                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </CardContent>
 
@@ -528,7 +638,7 @@ export default function Home() {
                       </button>
                     )}
 
-                    {(view === 'forgot' || view === 'reset') && (
+                    {(view === 'forgot' || view === 'reset' || view === 'invite') && (
                       <button
                         type="button"
                         onClick={() => {

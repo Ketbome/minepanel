@@ -5,14 +5,10 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Home,
-  Plus,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
-  Loader2,
   LayoutDashboard,
   Settings,
   Package,
@@ -22,9 +18,9 @@ import {
   Globe,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useUIStore, useServersStore } from '@/lib/store';
+import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { getStatusColor, getStatusBadgeClassCompact } from '@/lib/utils/server-status';
+import { getCurrentUser, User } from '@/services/users/users.service';
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -49,27 +45,7 @@ export function Sidebar() {
   const { t } = useLanguage();
   const pathname = usePathname();
   const [isHydrated, setIsHydrated] = useState(false);
-
-  // Use global servers store
-  const servers = useServersStore((state) => state.servers);
-  const isLoading = useServersStore((state) => state.isLoading);
-  const fetchServers = useServersStore((state) => state.fetchServers);
-  const updateStatuses = useServersStore((state) => state.updateStatuses);
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'running':
-        return t('online');
-      case 'stopped':
-        return t('stopped');
-      case 'loading':
-        return t('loading');
-      case 'starting':
-        return t('starting');
-      default:
-        return t('error');
-    }
-  };
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -78,15 +54,14 @@ export function Sidebar() {
   useEffect(() => {
     if (!isHydrated) return;
 
-    // Initial fetch only if servers are empty
-    if (servers.length === 0) {
-      fetchServers();
-    }
+    getCurrentUser()
+      .then(setCurrentUser)
+      .catch((error) => {
+        console.error('Error loading current user:', error);
+      });
+  }, [isHydrated]);
 
-    // Update statuses every 10 seconds
-    const interval = setInterval(updateStatuses, 10000);
-    return () => clearInterval(interval);
-  }, [isHydrated, servers.length, fetchServers, updateStatuses]);
+  const canViewGlobalFiles = currentUser?.access.permissions.viewGlobalFiles || currentUser?.role === 'ADMIN';
 
   const navigationItems = [
     {
@@ -101,18 +76,22 @@ export function Sidebar() {
       href: '/dashboard/servers',
       isActive: pathname === '/dashboard/servers',
     },
-    {
-      label: t('files'),
-      icon: FolderOpen,
-      href: '/dashboard/files',
-      isActive: pathname === '/dashboard/files',
-    },
-    {
-      label: t('worldLibrary'),
-      icon: Globe,
-      href: '/dashboard/world-library',
-      isActive: pathname === '/dashboard/world-library',
-    },
+    ...(canViewGlobalFiles
+      ? [
+          {
+            label: t('files'),
+            icon: FolderOpen,
+            href: '/dashboard/files',
+            isActive: pathname === '/dashboard/files',
+          },
+          {
+            label: t('worldLibrary'),
+            icon: Globe,
+            href: '/dashboard/world-library',
+            isActive: pathname === '/dashboard/world-library',
+          },
+        ]
+      : []),
     {
       label: t('templates'),
       icon: Package,
@@ -218,104 +197,7 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="px-4 pb-4 flex-1 min-h-0 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <p
-            className={cn(
-              'text-xs text-gray-400 uppercase tracking-wider font-minecraft transition-opacity duration-200',
-              isCollapsed ? 'opacity-0' : 'opacity-100',
-            )}
-          >
-            {t('servers')}
-          </p>
-
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fetchServers()}
-              disabled={isLoading}
-              className="p-1.5 hover:bg-gray-800/60 text-gray-400 hover:text-white"
-            >
-              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            </Button>
-
-            {!isCollapsed && (
-              <Link href="/dashboard/servers">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-1.5 hover:bg-gray-800/60 text-emerald-400 hover:text-emerald-300"
-                >
-                  <Plus size={14} />
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-          {servers.map((server) => (
-            <Link key={server.id} href={`/dashboard/servers/${server.id}`}>
-              <div
-                className={cn(
-                  'p-3 rounded-lg border transition-colors duration-200',
-                  'bg-gray-800/40 border-gray-700/40 hover:bg-gray-700/60',
-                  pathname === `/dashboard/servers/${server.id}` &&
-                    'bg-emerald-600/20 border-emerald-600/40 text-emerald-400 shadow-lg shadow-emerald-600/10',
-                  isCollapsed && 'p-2',
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative shrink-0">
-                    <Image
-                      src="/images/grass.webp"
-                      alt="Server"
-                      width={isCollapsed ? 24 : 32}
-                      height={isCollapsed ? 24 : 32}
-                      className="object-contain"
-                    />
-                    <div
-                      className={cn(
-                        'absolute w-3 h-3 rounded-full border-2 border-gray-900',
-                        isCollapsed ? 'bottom-0 right-0' : '-bottom-1 -right-1',
-                        getStatusColor(server.status),
-                      )}
-                    />
-                  </div>
-
-                  <div
-                    className={cn(
-                      'flex-1 min-w-0 transition-all duration-200 overflow-hidden',
-                      isCollapsed ? 'opacity-0 w-0' : 'opacity-100',
-                    )}
-                  >
-                    <p className="font-minecraft text-sm font-medium text-white truncate">
-                      {server.serverName || server.id}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'text-xs px-2 py-0',
-                          getStatusBadgeClassCompact(server.status),
-                        )}
-                      >
-                        {getStatusText(server.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-          {servers.length === 0 && !isLoading && (
-            <div className={cn('text-center py-4 text-gray-500 text-sm', isCollapsed && 'hidden')}>
-              {t('noServers')}
-            </div>
-          )}
-        </div>
-      </div>
+      <div className="flex-1" />
 
       {/* External Links */}
       <div className="p-4 border-t border-gray-700/60 mt-auto shrink-0">

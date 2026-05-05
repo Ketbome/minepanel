@@ -49,6 +49,19 @@ flowchart LR
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
 
+## Roles and Access Control
+
+This is the first phase of Minepanel roles.
+
+| Feature | Description |
+| ------- | ----------- |
+| `ADMIN` role | Full panel access without permission restrictions |
+| `USER` role | Access limited by explicit permissions |
+| Server access | All servers or selected server assignments |
+| Logs vs console | Separate permissions for viewing logs and sending commands |
+| File access | Separate permissions for global files and per-server files |
+| Invitations | New users join through invitation links, with optional SMTP delivery |
+
 ## Player Management
 
 | Feature        | Description                                |
