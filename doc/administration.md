@@ -122,6 +122,16 @@ Minepanel now includes the **first phase** of user roles and access control.
 - `ADMIN` has full access to the panel and is not restricted by user permissions.
 - `USER` can only access the features and servers explicitly assigned to them.
 
+### Delegated user management
+
+Minepanel also supports delegated operators through the `manageUsers` permission.
+
+- They can open **Roles & Access**
+- They can create and manage invitation links
+- They can open the audit page
+- They do not become full administrators
+- Audit retention and other high-risk settings remain restricted to `ADMIN`
+
 ### User Access Controls
 
 For `USER` accounts, Minepanel can now control:
@@ -137,6 +147,16 @@ For `USER` accounts, Minepanel can now control:
 
 If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands.
 
+### Backend enforcement
+
+Minepanel does not trust permissions edited in the browser.
+
+- Authentication is stored in `httpOnly` cookies
+- The frontend may cache the current user briefly **in memory only** to reduce repeated session lookups
+- The backend still loads the current user and enforces permission checks again before returning protected data or executing actions
+
+Changing local browser state does not grant real access if the backend denies the request.
+
 ### Invitations
 
 New users are created through invitation links.
@@ -147,6 +167,13 @@ New users are created through invitation links.
 4. Create the invitation link
 
 If SMTP is configured and you provide an email address, Minepanel can also send the invitation by email.
+
+Invitation management now behaves like this:
+
+- the UI no longer exposes the raw invitation URL by default
+- pending invitations provide a **Copy link** action instead
+- copying the link reissues a fresh token server-side and returns a new URL
+- used, expired, or already-resolved invitations are removed from the pending list
 
 ### SMTP for Invitations and Password Recovery
 
@@ -167,6 +194,45 @@ After updating SMTP settings:
 ```bash
 docker compose restart
 ```
+
+### Email change confirmation
+
+The same SMTP setup is now used for account email changes.
+
+When SMTP is configured:
+
+1. Open **Settings -> Account**
+2. Enter the new email address
+3. Minepanel sends a confirmation code to the new address
+4. Enter the code in the panel to complete the change
+
+If SMTP is not configured, the email change is applied immediately.
+
+## Audit Log
+
+Minepanel now records a first audit trail for important account and server actions.
+
+### What is tracked
+
+- login
+- invitation creation, copy, and acceptance
+- password changes
+- email change request and confirmation
+- user access updates and user deletion
+- server configuration saves
+- server start, stop, and restart
+- server console commands
+
+### Access
+
+- `ADMIN` can view the audit page
+- `USER` accounts with `manageUsers` can also view the audit page
+
+### Retention
+
+- default retention is 15 days
+- admins can change the retention from **Settings -> Preferences**
+- old audit records are cleaned automatically
 
 ## Database Management
 

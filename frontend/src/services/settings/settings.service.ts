@@ -42,6 +42,7 @@ export interface UserSettings {
   proxy?: ProxySettings;
   network?: NetworkSettings;
   javaServerDefaults?: JavaServerDefaults | null;
+  auditRetentionDays?: number;
 }
 
 export interface UpdateUserSettings {
@@ -57,6 +58,7 @@ export interface UpdateUserSettings {
     lanIp?: string;
   };
   javaServerDefaults?: JavaServerDefaults;
+  auditRetentionDays?: number;
 }
 
 export const getSettings = async (): Promise<UserSettings> => {

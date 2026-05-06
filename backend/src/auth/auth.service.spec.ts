@@ -10,6 +10,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { AuthMailService } from './auth-mail.service';
 import { Repository } from 'typeorm';
+import { AuditLogService } from 'src/users/services/audit-log.service';
 
 jest.mock('bcrypt');
 jest.mock('node:crypto', () => ({
@@ -27,6 +28,7 @@ describe('AuthService', () => {
   let refreshTokenRepo: jest.Mocked<Repository<RefreshToken>>;
   let passwordResetTokenRepo: jest.Mocked<Repository<PasswordResetToken>>;
   let authMailService: jest.Mocked<AuthMailService>;
+  let auditLogService: jest.Mocked<AuditLogService>;
 
   const mockUser = {
     id: 1,
@@ -86,6 +88,10 @@ describe('AuthService', () => {
       sendUserInvitationEmail: jest.fn(),
     };
 
+    const mockAuditLogService = {
+      record: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -93,6 +99,7 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: mockUsersService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: AuthMailService, useValue: mockAuthMailService },
+        { provide: AuditLogService, useValue: mockAuditLogService },
         { provide: getRepositoryToken(RefreshToken), useValue: mockRefreshTokenRepo },
         { provide: getRepositoryToken(PasswordResetToken), useValue: mockPasswordResetTokenRepo },
       ],
@@ -104,6 +111,7 @@ describe('AuthService', () => {
     refreshTokenRepo = module.get(getRepositoryToken(RefreshToken));
     passwordResetTokenRepo = module.get(getRepositoryToken(PasswordResetToken));
     authMailService = module.get(AuthMailService);
+    auditLogService = module.get(AuditLogService);
   });
 
   afterEach(() => {
@@ -265,11 +273,14 @@ describe('AuthService', () => {
       const result = await service.createInvitation({
         email: 'invite@example.com',
         permissions: { accessAllServers: true },
-      } as any);
+      } as any, { userId: 1, username: 'admin', role: 'ADMIN' });
 
       expect(authMailService.sendUserInvitationEmail).toHaveBeenCalledWith(
         'invite@example.com',
         'http://localhost:3000/?inviteToken=abc',
+      );
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'create_invitation', actorUserId: 1, actorUsername: 'admin' }),
       );
       expect(result.emailSent).toBe(true);
     });
@@ -291,7 +302,7 @@ describe('AuthService', () => {
       const result = await service.createInvitation({
         email: 'invite@example.com',
         permissions: { accessAllServers: false },
-      } as any);
+      } as any, { userId: 1, username: 'admin', role: 'ADMIN' });
 
       expect(authMailService.sendUserInvitationEmail).not.toHaveBeenCalled();
       expect(result.emailSent).toBe(false);

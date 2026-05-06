@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { Bell, Globe, Loader2, Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, Globe, Loader2, Save, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { updateSettings } from '@/services/settings/settings.service';
+import { getSettings, updateSettings } from '@/services/settings/settings.service';
+import { getCurrentUser } from '@/services/users/users.service';
 
 export default function PreferencesSettingsPage() {
   const { t, language } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAudit, setIsSavingAudit] = useState(false);
+  const [role, setRole] = useState<string>('USER');
+  const [auditRetentionDays, setAuditRetentionDays] = useState('15');
+
+  useEffect(() => {
+    Promise.all([getCurrentUser(), getSettings()])
+      .then(([user, settings]) => {
+        setRole(user.role);
+        setAuditRetentionDays(String(settings.auditRetentionDays ?? 15));
+      })
+      .catch((error) => {
+        console.error('Error loading preferences settings:', error);
+      });
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -24,6 +40,19 @@ export default function PreferencesSettingsPage() {
       mcToast.error(t('settingsSaveFailed'));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveAuditRetention = async () => {
+    setIsSavingAudit(true);
+    try {
+      await updateSettings({ auditRetentionDays: Number(auditRetentionDays) });
+      mcToast.success(t('settingsSaved'));
+    } catch (error) {
+      console.error('Error saving audit retention:', error);
+      mcToast.error(t('settingsSaveFailed'));
+    } finally {
+      setIsSavingAudit(false);
     }
   };
 
@@ -77,6 +106,32 @@ export default function PreferencesSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {role === 'ADMIN' ? (
+        <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600/20">
+                <ShieldCheck className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <CardTitle className="text-white font-minecraft">{t('auditRetentionTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('auditRetentionDesc')}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-gray-200">{t('auditRetentionDays')}</Label>
+              <Input type="number" min={1} max={365} value={auditRetentionDays} onChange={(event) => setAuditRetentionDays(event.target.value)} className="bg-gray-800 border-gray-700 text-white" />
+            </div>
+            <Button type="button" onClick={handleSaveAuditRetention} disabled={isSavingAudit} className="bg-cyan-600 hover:bg-cyan-700 text-white font-minecraft">
+              {isSavingAudit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSavingAudit ? t('saving') : t('saveChanges')}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

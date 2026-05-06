@@ -12,6 +12,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { SetupAdminDto } from './dtos/auth.dto';
 import { AuthMailService } from './auth-mail.service';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
+import { AuditLogService } from 'src/users/services/audit-log.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
+    private readonly auditLogService: AuditLogService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
     @InjectRepository(PasswordResetToken)
@@ -220,13 +222,22 @@ export class AuthService {
     await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
   }
 
-  async createInvitation(dto: CreateUserInvitationDto) {
+  async createInvitation(dto: CreateUserInvitationDto, actor: PayloadToken) {
     const result = await this.usersService.createInvitation(dto);
     const shouldSendEmail = !!result.invitation.email && this.authMailService.isConfigured();
 
     if (shouldSendEmail) {
       await this.authMailService.sendUserInvitationEmail(result.invitation.email, result.inviteUrl);
     }
+
+    await this.auditLogService.record({
+      actorUserId: actor.userId,
+      actorUsername: actor.username,
+      category: 'invitations',
+      action: 'create_invitation',
+      summary: `Created invitation${result.invitation.email ? ` for ${result.invitation.email}` : ''}`,
+      metadata: { invitationId: result.invitation.id, emailSent: shouldSendEmail },
+    });
 
     return {
       id: result.invitation.id,
@@ -258,6 +269,21 @@ export class AuthService {
     }));
   }
 
+  async getInvitationLink(id: number, actor: PayloadToken) {
+    const inviteUrl = await this.usersService.getInvitationLink(id);
+
+    await this.auditLogService.record({
+      actorUserId: actor.userId,
+      actorUsername: actor.username,
+      category: 'invitations',
+      action: 'copy_invitation_link',
+      summary: `Copied invitation link for invitation ${id}`,
+      metadata: { invitationId: id },
+    });
+
+    return { inviteUrl };
+  }
+
   async getInvitation(token: string) {
     const invitation = await this.usersService.getInvitationByToken(token);
 
@@ -277,6 +303,14 @@ export class AuthService {
       username,
       password,
       email,
+    });
+
+    await this.auditLogService.record({
+      actorUserId: user.id,
+      actorUsername: user.username,
+      category: 'invitations',
+      action: 'accept_invitation',
+      summary: 'Accepted invitation and completed registration',
     });
 
     return this.generateJwt({

@@ -98,6 +98,12 @@ export class UpdateProfileDto {
   email: string;
 }
 
+export class ConfirmEmailChangeDto {
+  @IsNotEmpty({ message: 'Confirmation code is required' })
+  @IsString()
+  code: string;
+}
+
 export class ChangePasswordDto {
   @IsNotEmpty({ message: 'Current password is required' })
   @IsString()

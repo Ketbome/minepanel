@@ -56,6 +56,27 @@ export class AuthMailService {
     });
   }
 
+  async sendEmailChangeCodeEmail(to: string, username: string, code: string): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Email delivery is not configured');
+    }
+
+    await this.getTransporter().sendMail({
+      from: this.configService.get('smtp.from'),
+      to,
+      subject: 'Minepanel | Email change confirmation',
+      text: [
+        `Hello ${username},`,
+        '',
+        'Use this code to confirm your new email address in Minepanel:',
+        code,
+        '',
+        'If you did not request this change, you can ignore this email.',
+      ].join('\n'),
+      html: this.buildEmailChangeCodeHtml(username, code),
+    });
+  }
+
   private getTransporter(): Transporter {
     if (this.transporter) {
       return this.transporter;
@@ -179,6 +200,50 @@ export class AuthMailService {
                       <div style="margin-top:24px;padding:16px 18px;background:#0f172a;border:1px solid #374151;border-radius:12px;font-size:13px;line-height:1.7;color:#cbd5e1;">
                         If the button does not work, copy and paste this link into your browser:<br />
                         <a href="${inviteUrl}" style="color:#4ade80;word-break:break-all;text-decoration:none;">${inviteUrl}</a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+  }
+
+  private buildEmailChangeCodeHtml(username: string, code: string): string {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+        <body style="margin:0;padding:0;background:#0b1220;color:#e5e7eb;font-family:Verdana,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0b1220;padding:24px 12px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#111827;border:1px solid #22c55e;border-radius:18px;overflow:hidden;box-shadow:0 0 0 4px rgba(34,197,94,0.12);">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);padding:24px 28px;border-bottom:4px solid #14532d;">
+                      <div style="font-family:'Courier New',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#dcfce7;margin-bottom:10px;">
+                        Minepanel Security
+                      </div>
+                      <div style="font-family:'Courier New',monospace;font-size:34px;line-height:1.1;font-weight:700;color:#ffffff;text-shadow:0 2px 0 rgba(0,0,0,0.35);">
+                        Confirm Email Change
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:28px;">
+                      <div style="font-size:16px;line-height:1.8;color:#f3f4f6;">
+                        Hello <strong style="color:#86efac;">${this.escapeHtml(username)}</strong>,
+                      </div>
+                      <div style="margin-top:16px;font-size:15px;line-height:1.8;color:#d1d5db;">
+                        Enter the following code in Minepanel to confirm your new email address.
+                      </div>
+                      <div style="margin-top:24px;padding:18px;background:#0f172a;border:1px solid #4ade80;border-radius:14px;text-align:center;font-family:'Courier New',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:#86efac;">
+                        ${this.escapeHtml(code)}
+                      </div>
+                      <div style="margin-top:24px;padding:16px 18px;background:#1f2937;border-left:4px solid #ef4444;border-radius:10px;font-size:14px;line-height:1.7;color:#e5e7eb;">
+                        If you did not request this change, you can safely ignore this email.
                       </div>
                     </td>
                   </tr>

@@ -8,6 +8,7 @@ import { ProxyService } from '../proxy/proxy.service';
 import { BedrockAddonsService } from '../bedrock-addons/bedrock-addons.service';
 import { UsersService } from '../users/services/users.service';
 import { AccessControlService } from '../users/services/access-control.service';
+import { AuditLogService } from '../users/services/audit-log.service';
 
 describe('ServerManagementController', () => {
   let controller: ServerManagementController;
@@ -72,6 +73,10 @@ describe('ServerManagementController', () => {
       isAdmin: jest.fn(() => false),
     };
 
+    const mockAuditLogService = {
+      record: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ServerManagementController],
       providers: [
@@ -82,6 +87,7 @@ describe('ServerManagementController', () => {
         { provide: BedrockAddonsService, useValue: mockBedrockAddonsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: AccessControlService, useValue: mockAccessControlService },
+        { provide: AuditLogService, useValue: mockAuditLogService },
       ],
     }).compile();
 

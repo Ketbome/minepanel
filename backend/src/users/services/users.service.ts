@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from '../entities/users.entity';
@@ -9,6 +9,8 @@ import { UserInvitation } from '../entities/user-invitation.entity';
 import { createHash, randomBytes } from 'node:crypto';
 import { DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState } from '../access-control.types';
 import { ConfigService } from '@nestjs/config';
+import { PendingEmailChange } from '../entities/pending-email-change.entity';
+import { AuthMailService } from 'src/auth/auth-mail.service';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +21,10 @@ export class UsersService {
     private readonly settingsRepo: Repository<Settings>,
     @InjectRepository(UserInvitation)
     private readonly invitationsRepo: Repository<UserInvitation>,
+    @InjectRepository(PendingEmailChange)
+    private readonly pendingEmailChangesRepo: Repository<PendingEmailChange>,
     private readonly configService: ConfigService,
+    private readonly authMailService: AuthMailService,
   ) {}
 
   async getUsers(): Promise<Users[]> {
@@ -174,6 +179,78 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
+  async requestEmailChange(userId: number, dto: UpdateProfileDto): Promise<{ requiresConfirmation: boolean; pendingEmail?: string; user?: Users }> {
+    const user = await this.getRequiredUserById(userId);
+    const nextEmail = this.normalizeEmail(dto.email);
+
+    if (!nextEmail) {
+      throw new BadRequestException('Email is required');
+    }
+
+    await this.ensureUniqueEmail(nextEmail, user.id);
+
+    if (user.email === nextEmail) {
+      return { requiresConfirmation: false, user };
+    }
+
+    if (!this.authMailService.isConfigured()) {
+      user.email = nextEmail;
+      return {
+        requiresConfirmation: false,
+        user: await this.usersRepo.save(user),
+      };
+    }
+
+    const code = this.generateConfirmationCode();
+    const pendingChange = this.pendingEmailChangesRepo.create({
+      userId: user.id,
+      newEmail: nextEmail,
+      codeHash: this.hashToken(code),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      usedAt: null,
+    });
+
+    await this.pendingEmailChangesRepo.update({ userId: user.id, usedAt: null }, { usedAt: new Date() });
+    const savedChange = await this.pendingEmailChangesRepo.save(pendingChange);
+
+    try {
+      await this.authMailService.sendEmailChangeCodeEmail(nextEmail, user.username, code);
+    } catch (error) {
+      await this.pendingEmailChangesRepo.delete(savedChange.id);
+      throw new InternalServerErrorException('Unable to send email change confirmation');
+    }
+
+    return {
+      requiresConfirmation: true,
+      pendingEmail: nextEmail,
+    };
+  }
+
+  async confirmEmailChange(userId: number, code: string): Promise<Users> {
+    const pendingChange = await this.pendingEmailChangesRepo.findOne({
+      where: { userId, usedAt: null },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!pendingChange || pendingChange.expiresAt < new Date()) {
+      throw new BadRequestException('Invalid or expired email confirmation code');
+    }
+
+    if (pendingChange.codeHash !== this.hashToken(code.trim())) {
+      throw new BadRequestException('Invalid or expired email confirmation code');
+    }
+
+    const user = await this.getRequiredUserById(userId);
+    await this.ensureUniqueEmail(pendingChange.newEmail, user.id);
+    user.email = pendingChange.newEmail;
+
+    const updatedUser = await this.usersRepo.save(user);
+    pendingChange.usedAt = new Date();
+    await this.pendingEmailChangesRepo.save(pendingChange);
+
+    return updatedUser;
+  }
+
   async deleteUser(id: number): Promise<void> {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
@@ -192,12 +269,24 @@ export class UsersService {
   }
 
   async getActiveInvitations(): Promise<UserInvitation[]> {
+    const now = new Date();
     const invitations = await this.invitationsRepo.find({
       where: { usedAt: null },
       order: { createdAt: 'DESC' },
     });
 
-    return invitations.filter((invitation) => invitation.expiresAt > new Date());
+    const validInvitations = invitations.filter((invitation) => invitation.expiresAt > now);
+    const emails = validInvitations.map((invitation) => invitation.email).filter((email): email is string => !!email);
+    const registeredUsers = emails.length === 0 ? [] : await this.usersRepo.find({ where: emails.map((email) => ({ email })) });
+    const registeredEmails = new Set(registeredUsers.map((user) => user.email).filter((email): email is string => !!email));
+    const staleInvitations = validInvitations.filter((invitation) => invitation.email && registeredEmails.has(invitation.email));
+
+    if (staleInvitations.length > 0) {
+      const usedAt = new Date();
+      await this.invitationsRepo.update(staleInvitations.map((invitation) => invitation.id), { usedAt });
+    }
+
+    return validInvitations.filter((invitation) => !invitation.email || !registeredEmails.has(invitation.email));
   }
 
   async createInvitation(dto: CreateUserInvitationDto): Promise<{ invitation: UserInvitation; token: string; inviteUrl: string }> {
@@ -265,6 +354,29 @@ export class UsersService {
     return savedUser;
   }
 
+  async getInvitationLink(id: number): Promise<string> {
+    const invitation = await this.invitationsRepo.findOne({ where: { id, usedAt: null } });
+
+    if (!invitation || invitation.expiresAt < new Date()) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (invitation.email) {
+      const existingUser = await this.usersRepo.findOne({ where: { email: invitation.email } });
+      if (existingUser) {
+        invitation.usedAt = new Date();
+        await this.invitationsRepo.save(invitation);
+        throw new NotFoundException('Invitation not found');
+      }
+    }
+
+    const token = randomBytes(32).toString('hex');
+    invitation.tokenHash = this.hashToken(token);
+    await this.invitationsRepo.save(invitation);
+
+    return this.buildInvitationUrl(token);
+  }
+
   buildUserAccessState(user: Users): UserAccessState {
     if (user.role === 'ADMIN') {
       return {
@@ -327,6 +439,10 @@ export class UsersService {
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private generateConfirmationCode(): string {
+    return String(100000 + Math.floor(Math.random() * 900000));
   }
 
   private async invalidatePendingInvitationsForEmail(email: string): Promise<void> {

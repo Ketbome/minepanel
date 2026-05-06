@@ -3,10 +3,12 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
+import { AuditLogService } from 'src/users/services/audit-log.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthService>;
+  let auditLogService: jest.Mocked<AuditLogService>;
   let mockResponse: Partial<Response>;
   let mockRequest: Partial<Request>;
   let originalNodeEnv: string | undefined;
@@ -29,6 +31,10 @@ describe('AuthController', () => {
       resetPassword: jest.fn(),
     };
 
+    const mockAuditLogService = {
+      record: jest.fn(),
+    };
+
     mockResponse = {
       cookie: jest.fn(),
       clearCookie: jest.fn(),
@@ -40,11 +46,15 @@ describe('AuthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: AuditLogService, useValue: mockAuditLogService },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
+    auditLogService = module.get(AuditLogService);
   });
 
   afterEach(() => {
@@ -82,6 +92,9 @@ describe('AuthController', () => {
         username: 'admin',
         expires_in: 900,
       });
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'login', actorUserId: 1, actorUsername: 'admin' }),
+      );
       expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
       expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', 'jwt.access.token', expect.any(Object));
       expect(mockResponse.cookie).toHaveBeenCalledWith('refresh_token', 'jwt.refresh.token', expect.any(Object));
