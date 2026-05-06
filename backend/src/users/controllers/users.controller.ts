@@ -2,10 +2,11 @@ import { Controller, Get, UseGuards, Request, ValidationPipe, Body, Post, Param,
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UsersService } from '../services/users.service';
-import { ChangePasswordDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
+import { ChangePasswordDto, ConfirmEmailChangeDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
 import { AccessControlService } from '../services/access-control.service';
 import { Request as ExpressRequest } from 'express';
 import { AuditLogService } from '../services/audit-log.service';
+import { BadRequestException } from '@nestjs/common';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -38,7 +39,19 @@ export class UsersController {
   @Patch('profile')
   async updateProfile(@Request() req, @Body(new ValidationPipe()) dto: UpdateProfileDto) {
     const user = req.user as PayloadToken;
-    const updatedUser = await this.usersService.updateProfile(user.userId, dto);
+    const result = await this.usersService.requestEmailChange(user.userId, dto);
+
+    if (result.requiresConfirmation) {
+      await this.auditLogService.record({
+        actorUserId: user.userId,
+        actorUsername: user.username,
+        category: 'account',
+        action: 'request_email_change',
+        summary: `Requested email change to ${result.pendingEmail}`,
+      });
+
+      return result;
+    }
 
     await this.auditLogService.record({
       actorUserId: user.userId,
@@ -48,7 +61,44 @@ export class UsersController {
       summary: 'Updated account email',
     });
 
-    return this.usersService.serializeUser(updatedUser);
+    return {
+      requiresConfirmation: false,
+      user: this.usersService.serializeUser(result.user!),
+    };
+  }
+
+  @Post('profile/confirm-email')
+  async confirmEmailChange(@Request() req, @Body(new ValidationPipe()) dto: ConfirmEmailChangeDto) {
+    const user = req.user as PayloadToken;
+
+    try {
+      const updatedUser = await this.usersService.confirmEmailChange(user.userId, dto.code);
+
+      await this.auditLogService.record({
+        actorUserId: user.userId,
+        actorUsername: user.username,
+        category: 'account',
+        action: 'confirm_email_change',
+        summary: 'Confirmed email change',
+      });
+
+      return this.usersService.serializeUser(updatedUser);
+    } catch (error) {
+      await this.auditLogService.record({
+        actorUserId: user.userId,
+        actorUsername: user.username,
+        category: 'account',
+        action: 'confirm_email_change_failed',
+        outcome: 'error',
+        summary: 'Failed to confirm email change',
+      });
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw error;
+    }
   }
 
   @Post()

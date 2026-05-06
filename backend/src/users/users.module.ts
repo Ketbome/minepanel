@@ -12,11 +12,13 @@ import { AccessControlService } from './services/access-control.service';
 import { AuditLog } from './entities/audit-log.entity';
 import { AuditLogService } from './services/audit-log.service';
 import { AuditLogController } from './controllers/audit-log.controller';
+import { PendingEmailChange } from './entities/pending-email-change.entity';
+import { AuthMailService } from 'src/auth/auth-mail.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog]), DiscordModule],
+  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule],
   controllers: [UsersController, SettingsController, AuditLogController],
-  providers: [UsersService, SettingsService, AccessControlService, AuditLogService],
+  providers: [UsersService, SettingsService, AccessControlService, AuditLogService, AuthMailService],
   exports: [UsersService, SettingsService, AccessControlService, AuditLogService],
 })
 export class UsersModule {}

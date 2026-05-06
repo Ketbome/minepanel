@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { changePassword, getCurrentUser, updateProfile } from '@/services/users/users.service';
+import { changePassword, confirmEmailChange, getCurrentUser, updateProfile } from '@/services/users/users.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 
@@ -14,9 +14,12 @@ export default function AccountSettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [confirmationCode, setConfirmationCode] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,14 +50,43 @@ export default function AccountSettingsPage() {
 
     setIsUpdatingProfile(true);
     try {
-      const user = await updateProfile({ email });
-      setEmail(user.email || '');
-      mcToast.success(t('emailUpdatedSuccessfully'));
+      const result = await updateProfile({ email });
+
+      if (result.requiresConfirmation) {
+        setPendingEmail(result.pendingEmail || email);
+        setConfirmationCode('');
+        mcToast.success(t('emailChangeCodeSent'));
+      } else {
+        setPendingEmail('');
+        setEmail(result.user?.email || '');
+        mcToast.success(t('emailUpdatedSuccessfully'));
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       mcToast.error(t('emailUpdateFailed'));
     } finally {
       setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleConfirmEmail = async () => {
+    if (!confirmationCode.trim()) {
+      mcToast.error(t('emailConfirmationCodeRequired'));
+      return;
+    }
+
+    setIsConfirmingEmail(true);
+    try {
+      const user = await confirmEmailChange({ code: confirmationCode });
+      setEmail(user.email || '');
+      setPendingEmail('');
+      setConfirmationCode('');
+      mcToast.success(t('emailUpdatedSuccessfully'));
+    } catch (error) {
+      console.error('Error confirming email change:', error);
+      mcToast.error(t('emailConfirmationFailed'));
+    } finally {
+      setIsConfirmingEmail(false);
     }
   };
 
@@ -125,6 +157,20 @@ export default function AccountSettingsPage() {
                 {isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isUpdatingProfile ? t('saving') : t('updateEmail')}
               </Button>
+              {pendingEmail ? (
+                <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+                  <p className="text-sm text-amber-200">{t('pendingEmailChange')}: <span className="font-medium">{pendingEmail}</span></p>
+                  <p className="text-xs text-amber-100/80">{t('emailChangeCodeSentDesc')}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="email-confirmation-code" className="text-gray-200">{t('emailConfirmationCode')}</Label>
+                    <Input id="email-confirmation-code" value={confirmationCode} onChange={(event) => setConfirmationCode(event.target.value)} className="bg-gray-800 border-gray-700 text-white" placeholder="123456" />
+                  </div>
+                  <Button type="button" onClick={handleConfirmEmail} disabled={isConfirmingEmail} className="bg-amber-600 hover:bg-amber-700 text-white font-minecraft">
+                    {isConfirmingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isConfirmingEmail ? t('saving') : t('confirmEmailChange')}
+                  </Button>
+                </div>
+              ) : null}
             </>
           )}
         </CardContent>

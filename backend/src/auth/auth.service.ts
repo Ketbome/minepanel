@@ -269,6 +269,21 @@ export class AuthService {
     }));
   }
 
+  async getInvitationLink(id: number, actor: PayloadToken) {
+    const inviteUrl = await this.usersService.getInvitationLink(id);
+
+    await this.auditLogService.record({
+      actorUserId: actor.userId,
+      actorUsername: actor.username,
+      category: 'invitations',
+      action: 'copy_invitation_link',
+      summary: `Copied invitation link for invitation ${id}`,
+      metadata: { invitationId: id },
+    });
+
+    return { inviteUrl };
+  }
+
   async getInvitation(token: string) {
     const invitation = await this.usersService.getInvitationByToken(token);
 

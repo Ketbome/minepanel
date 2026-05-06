@@ -63,6 +63,16 @@ export interface UpdateProfileData {
   email: string;
 }
 
+export interface UpdateProfileResponse {
+  requiresConfirmation: boolean;
+  pendingEmail?: string;
+  user?: User;
+}
+
+export interface ConfirmEmailChangeData {
+  code: string;
+}
+
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get("/users");
   return response.data;
@@ -93,8 +103,13 @@ export const deleteUser = async (id: number): Promise<{ success: boolean; messag
   return response.data;
 };
 
-export const updateProfile = async (data: UpdateProfileData): Promise<User> => {
+export const updateProfile = async (data: UpdateProfileData): Promise<UpdateProfileResponse> => {
   const response = await api.patch("/users/profile", data);
+  return response.data;
+};
+
+export const confirmEmailChange = async (data: ConfirmEmailChangeData): Promise<User> => {
+  const response = await api.post('/users/profile/confirm-email', data);
   return response.data;
 };
 
@@ -110,5 +125,10 @@ export const getInvitations = async (): Promise<UserInvitation[]> => {
 
 export const createInvitation = async (data: CreateInvitationData): Promise<UserInvitation> => {
   const response = await api.post("/auth/invitations", data);
+  return response.data;
+};
+
+export const getInvitationLink = async (id: number): Promise<{ inviteUrl: string }> => {
+  const response = await api.get(`/auth/invitations/${id}/link`);
   return response.data;
 };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, User, KeyRound, Palette, Network, SlidersHorizontal, AlertTriangle } from 'lucide-react';
+import { Shield, User, KeyRound, Palette, Network, SlidersHorizontal, AlertTriangle, ScrollText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getCurrentUser, type User as CurrentUser } from '@/services/users/users.service';
@@ -24,7 +24,10 @@ export function SettingsNav() {
   const items = [
     { href: '/dashboard/settings/account', label: t('settingsNavAccount'), icon: User },
     ...(currentUser?.role === 'ADMIN'
-      ? [{ href: '/dashboard/settings/access', label: t('settingsNavAccess'), icon: Shield }]
+      ? [
+          { href: '/dashboard/settings/access', label: t('settingsNavAccess'), icon: Shield },
+          { href: '/dashboard/settings/audit', label: t('settingsNavAudit'), icon: ScrollText },
+        ]
       : []),
     ...((currentUser?.role === 'ADMIN' || currentUser?.access.permissions.accessAllServers)
       ? [{ href: '/dashboard/settings/integrations', label: t('settingsNavIntegrations'), icon: KeyRound }]

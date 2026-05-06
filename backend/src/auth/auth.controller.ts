@@ -90,6 +90,17 @@ export class AuthController {
     return this.authService.createInvitation(body, req.user);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('invitations/:id/link')
+  async getInvitationLink(@Req() req: any, @Param('id') id: number) {
+    const sessionUser = await this.authService.getSessionUser(req.user.userId);
+    if (!sessionUser.access.permissions.manageUsers) {
+      throw new ForbiddenException('Forbidden');
+    }
+
+    return this.authService.getInvitationLink(Number(id), req.user);
+  }
+
   @Public()
   @Get('invitations/:token')
   async getInvitation(@Param('token') token: string) {
