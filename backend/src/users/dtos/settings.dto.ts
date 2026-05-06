@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean, IsEnum, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsEnum, ValidateNested, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ProxySettingsDto {
@@ -116,6 +116,12 @@ export class UpdateSettingsDto {
   preferences?: Record<string, any>;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  auditRetentionDays?: number;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => ProxySettingsDto)
   proxy?: ProxySettingsDto;
@@ -146,4 +152,5 @@ export class SettingsResponseDto {
     lanIp: string | null;
   };
   javaServerDefaults?: JavaServerDefaultsDto | null;
+  auditRetentionDays?: number;
 }

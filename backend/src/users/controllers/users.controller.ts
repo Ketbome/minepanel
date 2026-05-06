@@ -5,6 +5,7 @@ import { UsersService } from '../services/users.service';
 import { ChangePasswordDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
 import { AccessControlService } from '../services/access-control.service';
 import { Request as ExpressRequest } from 'express';
+import { AuditLogService } from '../services/audit-log.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -12,6 +13,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   private async getCurrentUser(req: ExpressRequest & { user: PayloadToken }) {
@@ -34,15 +36,37 @@ export class UsersController {
   }
 
   @Patch('profile')
-  updateProfile(@Request() req, @Body(new ValidationPipe()) dto: UpdateProfileDto) {
+  async updateProfile(@Request() req, @Body(new ValidationPipe()) dto: UpdateProfileDto) {
     const user = req.user as PayloadToken;
-    return this.usersService.updateProfile(user.userId, dto).then((updatedUser) => this.usersService.serializeUser(updatedUser));
+    const updatedUser = await this.usersService.updateProfile(user.userId, dto);
+
+    await this.auditLogService.record({
+      actorUserId: user.userId,
+      actorUsername: user.username,
+      category: 'account',
+      action: 'update_profile_email',
+      summary: 'Updated account email',
+    });
+
+    return this.usersService.serializeUser(updatedUser);
   }
 
   @Post()
   async createUser(@Request() req, @Body(new ValidationPipe()) dto: CreateUsersDto) {
-    this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
-    return this.usersService.createUser(dto).then((user) => this.usersService.serializeUser(user));
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertManageUsers(currentUser);
+    const user = await this.usersService.createUser(dto);
+
+    await this.auditLogService.record({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      category: 'users',
+      action: 'create_user',
+      summary: `Created user ${user.username}`,
+      metadata: { targetUserId: user.id, targetUsername: user.username },
+    });
+
+    return this.usersService.serializeUser(user);
   }
 
   @Put('/username/:username')
@@ -59,14 +83,38 @@ export class UsersController {
 
   @Patch(':id/access')
   async updateUserAccess(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUserAccessDto) {
-    this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
-    return this.usersService.updateUserAccess(id, dto).then((user) => this.usersService.serializeUser(user));
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertManageUsers(currentUser);
+    const user = await this.usersService.updateUserAccess(id, dto);
+
+    await this.auditLogService.record({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      category: 'users',
+      action: 'update_user_access',
+      summary: `Updated access for ${user.username}`,
+      metadata: { targetUserId: user.id, targetUsername: user.username },
+    });
+
+    return this.usersService.serializeUser(user);
   }
 
   @Delete(':id')
   async deleteUser(@Request() req, @Param('id') id: number) {
-    this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertManageUsers(currentUser);
+    const targetUser = await this.usersService.getRequiredUserById(id);
     await this.usersService.deleteUser(id);
+
+    await this.auditLogService.record({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      category: 'users',
+      action: 'delete_user',
+      summary: `Deleted user ${targetUser.username}`,
+      metadata: { targetUserId: targetUser.id, targetUsername: targetUser.username },
+    });
+
     return {
       success: true,
       message: 'User deleted successfully',
@@ -74,8 +122,18 @@ export class UsersController {
   }
 
   @Post('change-password')
-  changePassword(@Request() req, @Body(new ValidationPipe()) dto: ChangePasswordDto) {
+  async changePassword(@Request() req, @Body(new ValidationPipe()) dto: ChangePasswordDto) {
     const user = req.user as PayloadToken;
-    return this.usersService.changePassword(user.userId, dto);
+    const result = await this.usersService.changePassword(user.userId, dto);
+
+    await this.auditLogService.record({
+      actorUserId: user.userId,
+      actorUsername: user.username,
+      category: 'account',
+      action: 'change_password',
+      summary: 'Changed account password',
+    });
+
+    return result;
   }
 }

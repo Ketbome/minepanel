@@ -5,6 +5,7 @@ import { SettingsService } from '../services/settings.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from '../services/users.service';
 import { AccessControlService } from '../services/access-control.service';
+import { AuditLogService } from '../services/audit-log.service';
 
 describe('SettingsController', () => {
   let controller: SettingsController;
@@ -23,6 +24,7 @@ describe('SettingsController', () => {
             getSettings: jest.fn(),
             getProxySettings: jest.fn(),
             getNetworkSettings: jest.fn(),
+            getAuditRetentionDays: jest.fn(),
           },
         },
         {
@@ -41,6 +43,13 @@ describe('SettingsController', () => {
           provide: AccessControlService,
           useValue: {
             assertManageSystemSettings: jest.fn(),
+            isAdmin: jest.fn(),
+          },
+        },
+        {
+          provide: AuditLogService,
+          useValue: {
+            record: jest.fn(),
           },
         },
       ],
@@ -105,5 +114,30 @@ describe('SettingsController', () => {
       { javaServerDefaults: { maxMemory: '4G' } },
       1,
     );
+  });
+
+  it('should enforce high-level permission for audit retention settings', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' } as any);
+    accessControlService.isAdmin.mockReturnValue(true);
+    accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
+    settingsService.updateSettings.mockResolvedValue({} as any);
+    settingsService.getAuditRetentionDays.mockResolvedValue(15);
+
+    await controller.updateSettings({ user: { userId: 1, username: 'admin' } }, { auditRetentionDays: 15 });
+
+    expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
+    expect(settingsService.updateSettings).toHaveBeenCalledWith({ auditRetentionDays: 15 }, 1);
+  });
+
+  it('should reject audit retention updates for non-admin users', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 2, role: 'USER' } as any);
+    accessControlService.isAdmin.mockReturnValue(false);
+    accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
+
+    await expect(
+      controller.updateSettings({ user: { userId: 2, username: 'user' } }, { auditRetentionDays: 15 }),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(settingsService.updateSettings).not.toHaveBeenCalled();
   });
 });

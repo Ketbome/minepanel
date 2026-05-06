@@ -5,6 +5,8 @@ import { Settings } from '../entities/settings.entity';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { UsersService } from 'src/users/services/users.service';
 
+const DEFAULT_AUDIT_RETENTION_DAYS = 15;
+
 @Injectable()
 export class SettingsService {
   private readonly javaDefaultsKeys = new Set([
@@ -93,6 +95,11 @@ export class SettingsService {
       delete (dto as any).javaServerDefaults;
     }
 
+    if (dto.auditRetentionDays !== undefined) {
+      await this.updateAuditRetentionDays(dto.auditRetentionDays);
+      delete (dto as any).auditRetentionDays;
+    }
+
     Object.assign(settings, dto);
     return this.settingsRepo.save(settings);
   }
@@ -128,5 +135,27 @@ export class SettingsService {
   async getFirstUserSettings(): Promise<Settings | null> {
     const [first] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
     return first ?? null;
+  }
+
+  async getAuditRetentionDays(): Promise<number> {
+    const settings = await this.getFirstUserSettings();
+    const value = settings?.preferences?.auditRetentionDays;
+
+    return Number.isInteger(value) && value > 0 ? value : DEFAULT_AUDIT_RETENTION_DAYS;
+  }
+
+  private async updateAuditRetentionDays(auditRetentionDays: number): Promise<void> {
+    const settings = await this.getFirstUserSettings();
+
+    if (!settings) {
+      throw new NotFoundException('Settings not found');
+    }
+
+    settings.preferences = {
+      ...settings.preferences,
+      auditRetentionDays,
+    };
+
+    await this.settingsRepo.save(settings);
   }
 }

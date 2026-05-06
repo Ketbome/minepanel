@@ -6,12 +6,16 @@ import { Public } from './decorators/public.decorator';
 import { Response, Request, CookieOptions } from 'express';
 import { AcceptInvitationDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
+import { AuditLogService } from 'src/users/services/audit-log.service';
 
 @Controller('auth')
 export class AuthController {
   private static readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   @Public()
   @Get('setup-status')
@@ -31,6 +35,14 @@ export class AuthController {
     
     const tokens = await this.authService.generateJwt(user);
     this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+
+    await this.auditLogService.record({
+      actorUserId: user.userId,
+      actorUsername: user.username,
+      category: 'auth',
+      action: 'login',
+      summary: 'Signed in successfully',
+    });
     
     return {
       username: tokens.username,
@@ -75,7 +87,7 @@ export class AuthController {
       throw new ForbiddenException('Forbidden');
     }
 
-    return this.authService.createInvitation(body);
+    return this.authService.createInvitation(body, req.user);
   }
 
   @Public()
