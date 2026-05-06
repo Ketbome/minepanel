@@ -215,7 +215,7 @@ export class UsersService {
 
     try {
       await this.authMailService.sendEmailChangeCodeEmail(nextEmail, user.username, code);
-    } catch (error) {
+    } catch {
       await this.pendingEmailChangesRepo.delete(savedChange.id);
       throw new InternalServerErrorException('Unable to send email change confirmation');
     }
