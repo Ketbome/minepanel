@@ -1,4 +1,10 @@
 import api from "../axios.service";
+import { invalidateSessionUserCache } from "../auth/auth.service";
+
+let currentUserCache: User | null = null;
+let currentUserPromise: Promise<User> | null = null;
+let currentUserCachedAt = 0;
+const CURRENT_USER_CACHE_TTL_MS = 30_000;
 
 export interface UserPermissions {
   manageUsers: boolean;
@@ -73,14 +79,38 @@ export interface ConfirmEmailChangeData {
   code: string;
 }
 
+export const invalidateCurrentUserCache = () => {
+  currentUserCache = null;
+  currentUserPromise = null;
+  currentUserCachedAt = 0;
+};
+
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get("/users");
   return response.data;
 };
 
-export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get("/users/one");
-  return response.data;
+export const getCurrentUser = async (options?: { force?: boolean }): Promise<User> => {
+  const shouldUseCache = !options?.force && currentUserCache !== null && Date.now() - currentUserCachedAt < CURRENT_USER_CACHE_TTL_MS;
+  if (shouldUseCache && currentUserCache !== null) {
+    return currentUserCache;
+  }
+
+  if (!options?.force && currentUserPromise) {
+    return currentUserPromise;
+  }
+
+  currentUserPromise = api.get("/users/one").then((response) => {
+    currentUserCache = response.data;
+    currentUserCachedAt = Date.now();
+    currentUserPromise = null;
+    return response.data;
+  }).catch((error) => {
+    invalidateCurrentUserCache();
+    throw error;
+  });
+
+  return currentUserPromise;
 };
 
 export const createUser = async (user: CreateUserData): Promise<User> => {
@@ -105,11 +135,21 @@ export const deleteUser = async (id: number): Promise<{ success: boolean; messag
 
 export const updateProfile = async (data: UpdateProfileData): Promise<UpdateProfileResponse> => {
   const response = await api.patch("/users/profile", data);
+  if (response.data.user) {
+    currentUserCache = response.data.user;
+    currentUserCachedAt = Date.now();
+  } else {
+    invalidateCurrentUserCache();
+  }
+  invalidateSessionUserCache();
   return response.data;
 };
 
 export const confirmEmailChange = async (data: ConfirmEmailChangeData): Promise<User> => {
   const response = await api.post('/users/profile/confirm-email', data);
+  currentUserCache = response.data;
+  currentUserCachedAt = Date.now();
+  invalidateSessionUserCache();
   return response.data;
 };
 

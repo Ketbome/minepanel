@@ -57,10 +57,32 @@ This is the first phase of Minepanel roles.
 | ------- | ----------- |
 | `ADMIN` role | Full panel access without permission restrictions |
 | `USER` role | Access limited by explicit permissions |
+| `manageUsers` permission | Lets delegated operators manage users, invitations, and audit access without full admin rights |
 | Server access | All servers or selected server assignments |
 | Logs vs console | Separate permissions for viewing logs and sending commands |
 | File access | Separate permissions for global files and per-server files |
 | Invitations | New users join through invitation links, with optional SMTP delivery |
+| Audit log | Filterable activity history for account, invitation, and server actions |
+
+### Authorization model
+
+- The frontend can hide or show sections for convenience, but the backend is the real permission boundary.
+- Minepanel keeps authentication in `httpOnly` cookies and does not rely on `localStorage` for authorization.
+- The current user/session can be cached briefly **in memory only** to reduce repeated calls such as `/auth/me` or `/users/one`.
+- Every protected backend route still resolves the current user and re-checks the required permission before returning data or executing the action.
+
+### Audit coverage
+
+The current audit phase includes:
+
+- login
+- invitation creation, copy, and acceptance
+- password changes
+- email change request and confirmation
+- user access updates and deletion
+- server configuration saves
+- server start, stop, and restart
+- console command execution
 
 ## Player Management
 

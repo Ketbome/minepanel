@@ -3,6 +3,10 @@ import { UserAccessState, UserInvitation } from "../users/users.service";
 
 let isRefreshing = false;
 let refreshSubscribers: Array<{ onSuccess: () => void; onError: (error: unknown) => void }> = [];
+let sessionUserCache: SessionUser | null = null;
+let sessionUserPromise: Promise<SessionUser> | null = null;
+let sessionUserCachedAt = 0;
+const SESSION_USER_CACHE_TTL_MS = 30_000;
 const AUTH_ENDPOINTS = [
   "/auth/login",
   "/auth/refresh",
@@ -59,6 +63,12 @@ const addRefreshSubscriber = (onSuccess: () => void, onError: (error: unknown) =
   refreshSubscribers.push({ onSuccess, onError });
 };
 
+export const invalidateSessionUserCache = () => {
+  sessionUserCache = null;
+  sessionUserPromise = null;
+  sessionUserCachedAt = 0;
+};
+
 const isAuthEndpoint = (url?: string): boolean => {
   if (!url) return false;
   return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
@@ -69,7 +79,7 @@ export const login = async (username: string, password: string) => {
     const response = await api.post(`/auth/login`, { username, password }, { withCredentials: true });
 
     if (response.data.username) {
-      localStorage.setItem("username", response.data.username);
+      invalidateSessionUserCache();
       return { success: true, data: response.data };
     }
 
@@ -93,7 +103,7 @@ export const setupAdmin = async (data: { username: string; email: string; passwo
     const response = await api.post("/auth/setup-admin", data, { withCredentials: true });
 
     if (response.data.username) {
-      localStorage.setItem("username", response.data.username);
+      invalidateSessionUserCache();
       return { success: true, data: response.data };
     }
 
@@ -137,9 +147,27 @@ export const acceptInvitation = async (data: AcceptInvitationData) => {
   return response.data;
 };
 
-export const getSessionUser = async (): Promise<SessionUser> => {
-  const response = await api.get("/auth/me", { withCredentials: true });
-  return response.data;
+export const getSessionUser = async (options?: { force?: boolean }): Promise<SessionUser> => {
+  const shouldUseCache = !options?.force && sessionUserCache !== null && Date.now() - sessionUserCachedAt < SESSION_USER_CACHE_TTL_MS;
+  if (shouldUseCache && sessionUserCache !== null) {
+    return sessionUserCache;
+  }
+
+  if (!options?.force && sessionUserPromise) {
+    return sessionUserPromise;
+  }
+
+  sessionUserPromise = api.get("/auth/me", { withCredentials: true }).then((response) => {
+    sessionUserCache = response.data;
+    sessionUserCachedAt = Date.now();
+    sessionUserPromise = null;
+    return response.data;
+  }).catch((error) => {
+    invalidateSessionUserCache();
+    throw error;
+  });
+
+  return sessionUserPromise;
 };
 
 export const logout = async () => {
@@ -148,7 +176,7 @@ export const logout = async () => {
   } catch (error) {
     console.error("Error in logout:", error);
   } finally {
-    localStorage.removeItem("username");
+    invalidateSessionUserCache();
     if (typeof window !== "undefined" && window.location.pathname !== "/") {
       window.location.href = "/";
     }
