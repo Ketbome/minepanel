@@ -1,15 +1,17 @@
-import axios from "axios";
-import { env } from "next-runtime-env";
-
-const API_URL = env("NEXT_PUBLIC_BACKEND_URL");
+import axios from 'axios';
+import { getPublicEnv } from '@/lib/public-env';
 
 const api = axios.create({
-  baseURL: API_URL,
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json, text/plain, */*",
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/plain, */*',
   },
+});
+
+api.interceptors.request.use((config) => {
+  config.baseURL = getPublicEnv('NEXT_PUBLIC_BACKEND_URL');
+  return config;
 });
 
 export default api;

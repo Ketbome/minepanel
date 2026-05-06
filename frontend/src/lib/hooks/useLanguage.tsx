@@ -10,7 +10,7 @@ import {
   useMemo,
 } from 'react';
 import { translations, Language, TranslationKey } from '../translations';
-import { env } from 'next-runtime-env';
+import { getPublicEnv } from '@/lib/public-env';
 
 interface LanguageContextType {
   language: Language;
@@ -21,7 +21,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const envLang = env('NEXT_PUBLIC_DEFAULT_LANGUAGE');
+  const envLang = getPublicEnv('NEXT_PUBLIC_DEFAULT_LANGUAGE');
   const isValidLang = envLang && envLang in translations;
 
   if (envLang && !isValidLang) {

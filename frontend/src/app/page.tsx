@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -54,7 +54,7 @@ const getErrorMessage = (error: unknown): string => {
   return message || 'Unexpected error';
 };
 
-export default function Home() {
+function HomeContent() {
   const [view, setView] = useState<AuthView>('login');
   const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
@@ -704,5 +704,13 @@ export default function Home() {
         </footer>
       </div>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
