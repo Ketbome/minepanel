@@ -31,7 +31,7 @@ const initialFilters: Filters = {
 
 export default function AuditSettingsPage() {
   const { t } = useLanguage();
-  const [role, setRole] = useState<string>('USER');
+  const [canManageUsers, setCanManageUsers] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -62,8 +62,9 @@ export default function AuditSettingsPage() {
   useEffect(() => {
     Promise.all([getCurrentUser(), getUsers()])
       .then(async ([currentUser, allUsers]) => {
-        setRole(currentUser.role);
-        if (currentUser.role !== 'ADMIN') {
+        const allowed = currentUser.role === 'ADMIN' || currentUser.access.permissions.manageUsers;
+        setCanManageUsers(allowed);
+        if (!allowed) {
           setIsLoading(false);
           return;
         }
@@ -77,7 +78,7 @@ export default function AuditSettingsPage() {
       });
   }, [loadAudit]);
 
-  if (role !== 'ADMIN' && !isLoading) {
+  if (!canManageUsers && !isLoading) {
     return (
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>

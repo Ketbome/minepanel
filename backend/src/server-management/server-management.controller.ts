@@ -13,6 +13,7 @@ import { BedrockAddonsService } from 'src/bedrock-addons/bedrock-addons.service'
 import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { Users } from 'src/users/entities/users.entity';
+import { AuditLogService } from 'src/users/services/audit-log.service';
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
   'onlineMode',
@@ -49,7 +50,26 @@ export class ServerManagementController {
     private readonly usersService: UsersService,
     @Optional()
     private readonly accessControlService: AccessControlService,
+    @Optional()
+    private readonly auditLogService: AuditLogService,
   ) {}
+
+  private async recordServerAudit(user: Users | null, action: string, serverId: string, summary: string, outcome: 'success' | 'error' = 'success', metadata?: Record<string, unknown>) {
+    if (!user || !this.auditLogService) {
+      return;
+    }
+
+    await this.auditLogService.record({
+      actorUserId: user.id,
+      actorUsername: user.username,
+      category: 'servers',
+      action,
+      outcome,
+      serverId,
+      summary,
+      metadata,
+    });
+  }
 
   private async getCurrentUser(req): Promise<Users> {
     if (!this.usersService) {
@@ -305,7 +325,7 @@ export class ServerManagementController {
 
   @Put(':id')
   async updateServer(@Request() req, @Param('id') id: string, @Body(new ValidationPipe()) config: UpdateServerConfigDto) {
-    await this.requireServerAccess(req, id);
+    const currentUser = await this.requireServerAccess(req, id);
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
@@ -328,6 +348,8 @@ export class ServerManagementController {
         }));
       await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
     }
+
+    await this.recordServerAudit(currentUser, 'update_server_config', id, `Updated server configuration for ${id}`);
 
     return updatedConfig;
   }
@@ -411,10 +433,12 @@ export class ServerManagementController {
   @Post(':id/restart')
   async restartServer(@Request() reqOrId, @Param('id') id?: string) {
     const resolved = this.resolveRequestAndId(reqOrId, id);
+    let currentUser: Users | null = null;
     if (resolved.req) {
-      await this.requireServerAccess(resolved.req, resolved.id);
+      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
     }
     const result = await this.managementService.restartServer(resolved.id);
+    await this.recordServerAudit(currentUser, 'restart_server', resolved.id, result ? `Restarted server ${resolved.id}` : `Failed to restart server ${resolved.id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server restarted successfully' : 'Failed to restart server',
@@ -511,16 +535,20 @@ export class ServerManagementController {
   ) {
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertUseConsole(user, id);
-    return this.managementService.executeCommand(id, body.command, body.rconPort, body.rconPassword);
+    const result = await this.managementService.executeCommand(id, body.command, body.rconPort, body.rconPassword);
+    await this.recordServerAudit(user, 'execute_server_command', id, `Executed command on ${id}: ${body.command}`, 'success', { command: body.command });
+    return result;
   }
 
   @Post(':id/start')
   async startServer(@Request() reqOrId, @Param('id') id?: string) {
     const resolved = this.resolveRequestAndId(reqOrId, id);
+    let currentUser: Users | null = null;
     if (resolved.req) {
-      await this.requireServerAccess(resolved.req, resolved.id);
+      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
     }
     const result = await this.managementService.startServer(resolved.id);
+    await this.recordServerAudit(currentUser, 'start_server', resolved.id, result ? `Started server ${resolved.id}` : `Failed to start server ${resolved.id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server started successfully' : 'Failed to start server',
@@ -530,10 +558,12 @@ export class ServerManagementController {
   @Post(':id/stop')
   async stopServer(@Request() reqOrId, @Param('id') id?: string) {
     const resolved = this.resolveRequestAndId(reqOrId, id);
+    let currentUser: Users | null = null;
     if (resolved.req) {
-      await this.requireServerAccess(resolved.req, resolved.id);
+      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
     }
     const result = await this.managementService.stopServer(resolved.id);
+    await this.recordServerAudit(currentUser, 'stop_server', resolved.id, result ? `Stopped server ${resolved.id}` : `Failed to stop server ${resolved.id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server stopped successfully' : 'Failed to stop server',

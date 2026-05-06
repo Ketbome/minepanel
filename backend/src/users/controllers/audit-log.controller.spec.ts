@@ -30,7 +30,7 @@ describe('AuditLogController', () => {
         {
           provide: AccessControlService,
           useValue: {
-            isAdmin: jest.fn(),
+            assertManageUsers: jest.fn(),
           },
         },
       ],
@@ -42,18 +42,19 @@ describe('AuditLogController', () => {
     accessControlService = module.get(AccessControlService);
   });
 
-  it('should list audit logs for admins', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' } as any);
-    accessControlService.isAdmin.mockReturnValue(true);
+  it('should list audit logs for users with manageUsers access', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'USER' } as any);
     auditLogService.list.mockResolvedValue([{ id: 1 }] as any);
 
     await expect(controller.listAuditLogs({ user: { userId: 1 } }, {} as any)).resolves.toEqual([{ id: 1 }]);
     expect(auditLogService.list).toHaveBeenCalledWith({});
   });
 
-  it('should reject non-admin users', async () => {
+  it('should reject users without manageUsers access', async () => {
     usersService.getRequiredUserById.mockResolvedValue({ id: 2, role: 'USER' } as any);
-    accessControlService.isAdmin.mockReturnValue(false);
+    accessControlService.assertManageUsers.mockImplementation(() => {
+      throw new ForbiddenException('Forbidden');
+    });
 
     await expect(controller.listAuditLogs({ user: { userId: 2 } }, {} as any)).rejects.toThrow(ForbiddenException);
     expect(auditLogService.list).not.toHaveBeenCalled();

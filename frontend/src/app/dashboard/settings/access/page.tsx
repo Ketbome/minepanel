@@ -9,13 +9,15 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 
 export default function AccessSettingsPage() {
   const { t } = useLanguage();
-  const [role, setRole] = useState<string>('USER');
+  const [canManageUsers, setCanManageUsers] = useState(false);
 
   useEffect(() => {
-    getCurrentUser().then((user) => setRole(user.role)).catch(() => setRole('USER'));
+    getCurrentUser()
+      .then((user) => setCanManageUsers(user.role === 'ADMIN' || user.access.permissions.manageUsers))
+      .catch(() => setCanManageUsers(false));
   }, []);
 
-  if (role !== 'ADMIN') {
+  if (!canManageUsers) {
     return (
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>

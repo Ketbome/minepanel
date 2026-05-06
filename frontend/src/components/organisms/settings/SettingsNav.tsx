@@ -21,9 +21,11 @@ export function SettingsNav() {
       .catch(() => setCurrentUser(null));
   }, []);
 
+  const canManageUsers = currentUser?.role === 'ADMIN' || currentUser?.access.permissions.manageUsers;
+
   const items = [
     { href: '/dashboard/settings/account', label: t('settingsNavAccount'), icon: User },
-    ...(currentUser?.role === 'ADMIN'
+    ...(canManageUsers
       ? [
           { href: '/dashboard/settings/access', label: t('settingsNavAccess'), icon: Shield },
           { href: '/dashboard/settings/audit', label: t('settingsNavAudit'), icon: ScrollText },

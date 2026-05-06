@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Request, UseGuards, ValidationPipe, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { AuditLogService } from '../services/audit-log.service';
 import { AuditLogQueryDto } from '../dtos/audit-log.dto';
@@ -17,10 +17,7 @@ export class AuditLogController {
   @Get()
   async listAuditLogs(@Request() req, @Query(new ValidationPipe({ transform: true })) query: AuditLogQueryDto) {
     const currentUser = await this.usersService.getRequiredUserById(req.user.userId);
-
-    if (!this.accessControlService.isAdmin(currentUser)) {
-      throw new ForbiddenException('Forbidden');
-    }
+    this.accessControlService.assertManageUsers(currentUser);
 
     return this.auditLogService.list(query);
   }
