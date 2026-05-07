@@ -52,6 +52,7 @@ export class JavaServerStrategy implements IServerStrategy {
       'AUTO_CURSEFORGE',
       'CURSEFORGE',
       'MODRINTH',
+      'GTNH',
       'SPIGOT',
       'FABRIC',
       'MAGMA',
@@ -86,7 +87,7 @@ export class JavaServerStrategy implements IServerStrategy {
       EXEC_DIRECTLY: String(config.execDirectly),
       PLAYER_IDLE_TIMEOUT: config.playerIdleTimeout,
       ENTITY_BROADCAST_RANGE_PERCENTAGE: config.entityBroadcastRange,
-      LEVEL_TYPE: config.levelType,
+      LEVEL_TYPE: this.resolveLevelType(config),
       MODE: config.gameMode,
       HARDCORE: String(config.hardcore),
       SPAWN_ANIMALS: String(config.spawnAnimals),
@@ -110,7 +111,7 @@ export class JavaServerStrategy implements IServerStrategy {
     this.addServerTypeConfig(env, config);
     this.addCustomEnvVars(env, config);
 
-    return env;
+    return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined && value !== ''));
   }
 
   private addJvmOptions(env: Record<string, string>, config: ServerConfig): void {
@@ -211,6 +212,7 @@ export class JavaServerStrategy implements IServerStrategy {
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
       CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
       MODRINTH: () => this.addModrinthConfig(env, config),
+      GTNH: () => this.addGtnhConfig(env, config),
       SPIGOT: () => this.addPluginServerConfig(env, config),
       PAPER: () => this.addPluginServerConfig(env, config),
       BUKKIT: () => this.addPluginServerConfig(env, config),
@@ -242,6 +244,20 @@ export class JavaServerStrategy implements IServerStrategy {
     if (config.serverType === 'MODRINTH') {
       env['MODRINTH_MODPACK'] = config.modrinthModpack;
     }
+  }
+
+  private addGtnhConfig(env: Record<string, string>, config: ServerConfig): void {
+    if (config.gtnhPackVersion) env['GTNH_PACK_VERSION'] = config.gtnhPackVersion;
+    if (config.gtnhDeleteBackups) env['GTNH_DELETE_BACKUPS'] = 'true';
+    if (config.skipGtnhUpdateCheck) env['SKIP_GTNH_UPDATE_CHECK'] = 'true';
+  }
+
+  private resolveLevelType(config: ServerConfig): string {
+    if (config.serverType !== 'GTNH' && config.levelType === 'rwg') {
+      return 'minecraft:default';
+    }
+
+    return config.levelType;
   }
 
   private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {

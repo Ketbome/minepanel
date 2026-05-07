@@ -147,6 +147,8 @@ export const fr = {
     "Mode manuel pour les modpacks CurseForge. Utilise des fichiers ZIP préchargés. Fonction obsolète, il est recommandé d'utiliser CurseForge Modpack.",
   serverModrinth:
     "Installe automatiquement des modpacks depuis Modrinth. Peut être configuré via l'URL ou le slug du modpack.",
+  serverGtnh:
+    'Deploys GT New Horizons with its dedicated container mode and recommended defaults for this modpack.',
   serverSpigot: 'Serveur optimisé compatible avec les plugins Bukkit',
   serverPaper: 'Serveur haute performance basé sur Spigot avec des optimisations supplémentaires',
   serverBukkit: 'Serveur classique avec prise en charge standard de l’API des plugins',
@@ -499,6 +501,7 @@ export const fr = {
   largeBiomes: 'Grands biomes',
   amplified: 'Amplifié',
   singleBiomeSurface: 'Surface à biome unique',
+  gtnhWorldType: 'RWG (GTNH)',
 
   // World Options
   hardcore: 'Hardcore',
@@ -1117,6 +1120,20 @@ export const fr = {
   modrinthModpackDesc: 'Entrez le slug ou l’URL du modpack Modrinth que vous souhaitez utiliser.',
   modrinthModpackTooltip:
     'Entrez le slug ou l’URL du projet Modrinth. Vous pouvez aussi inclure une version spécifique (ex : https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  gtnhRequirementsTitle: 'GTNH recommended resources',
+  gtnhRequirementsBody:
+    'Use 2-4 CPU cores, at least 6 GB of RAM, extra RAM per player, and 20 GB or more of storage. SSD is preferred.',
+  gtnhJavaNote:
+    'GTNH supports Java 8 and 17+. Java 17+ is recommended, and java25 is the preferred option for GTNH 2.8.0 and later.',
+  gtnhPackVersion: 'GTNH Pack Version',
+  gtnhPackVersionDesc:
+    'Use a fixed version such as 2.8.1 for controlled upgrades, or latest/latest-dev if you want automatic updates.',
+  gtnhDeleteBackups: 'Delete GTNH config backups on startup',
+  gtnhDeleteBackupsDesc:
+    'Deletes the backup folders created by GTNH when config files are replaced during upgrades.',
+  skipGtnhUpdateCheck: 'Skip GTNH update check',
+  skipGtnhUpdateCheckDesc:
+    'Disable update checks after the first installation if you want to prevent automatic GTNH updates from running.',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Fonctionnalité obsolète',

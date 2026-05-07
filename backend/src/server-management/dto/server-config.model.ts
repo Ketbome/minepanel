@@ -20,9 +20,9 @@ export class ServerConfigDto {
   @IsOptional()
   edition?: ServerEdition;
 
-  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'MODRINTH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
+  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'MODRINTH', 'GTNH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'MODRINTH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
+  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'MODRINTH' | 'GTNH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
 
   // General configuration
   @IsString()
@@ -89,9 +89,9 @@ export class ServerConfigDto {
   @IsOptional()
   forceWorldCopy?: boolean;
 
-  @IsEnum(['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface'])
+  @IsEnum(['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface', 'rwg'])
   @IsOptional()
-  levelType?: 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface';
+  levelType?: 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' | 'rwg';
 
   @IsBoolean()
   @IsOptional()
@@ -409,6 +409,19 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   modrinthModpack?: string;
+
+  // GTNH specific
+  @IsString()
+  @IsOptional()
+  gtnhPackVersion?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  gtnhDeleteBackups?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  skipGtnhUpdateCheck?: boolean;
 
   // Ports
   @IsString({ each: true })

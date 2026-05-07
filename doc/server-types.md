@@ -1,16 +1,16 @@
 ---
 title: Server Types - Minepanel | Java & Bedrock Edition Support
-description: Complete guide to Minecraft server types in Minepanel - Java Edition (Vanilla, Paper, Spigot, Forge, Neoforge, Fabric, Purpur, Folia, CurseForge modpacks) and Bedrock Edition servers with full configuration.
+description: Complete guide to Minecraft server types in Minepanel - Java Edition (Vanilla, Paper, Spigot, Forge, Neoforge, Fabric, Purpur, Folia, GTNH, CurseForge modpacks) and Bedrock Edition servers with full configuration.
 head:
   - - meta
     - name: keywords
-      content: minecraft server types, paper server, forge server, neoforge server, fabric server, purpur server, bedrock server, vanilla server, spigot server, curseforge modpacks, minecraft editions
+      content: minecraft server types, paper server, forge server, neoforge server, fabric server, purpur server, gtnh server, bedrock server, vanilla server, spigot server, curseforge modpacks, minecraft editions
   - - meta
     - property: og:title
       content: Minecraft Server Types - Minepanel
   - - meta
     - property: og:description
-      content: Configure Java Edition (Vanilla, Paper, Forge, Neoforge, Fabric, Purpur) and Bedrock Edition servers with Minepanel.
+      content: Configure Java Edition (Vanilla, Paper, Forge, Neoforge, Fabric, Purpur, GTNH) and Bedrock Edition servers with Minepanel.
 ---
 
 # Server Types
@@ -360,6 +360,36 @@ environment:
   TYPE: MODRINTH
   MODRINTH_MODPACK: https://modrinth.com/modpack/surface-living/version/1.2.1
 ```
+
+## GT New Horizons (GTNH)
+
+Install GT New Horizons using the dedicated **GTNH** server type.
+
+### Recommended defaults in Minepanel
+
+- `TYPE=GTNH`
+- `GTNH_PACK_VERSION=2.8.1`
+- `GTNH_DELETE_BACKUPS=false`
+- `SKIP_GTNH_UPDATE_CHECK=false`
+- `LEVEL_TYPE=rwg`
+- `DIFFICULTY=hard`
+- `ALLOW_FLIGHT=true`
+- `ENABLE_COMMAND_BLOCK=true`
+
+### GTNH options
+
+| Option              | Variable                  | Description                                              | Default |
+| ------------------- | ------------------------- | -------------------------------------------------------- | ------- |
+| Pack Version        | `GTNH_PACK_VERSION`       | `latest`, `latest-dev`, or a fixed version like `2.8.1` | `2.8.1` |
+| Delete Backups      | `GTNH_DELETE_BACKUPS`     | Remove config backup folders created during upgrades     | `false` |
+| Skip Update Check   | `SKIP_GTNH_UPDATE_CHECK`  | Skip the GTNH update/install check after first install   | `false` |
+
+### Notes
+
+- GTNH targets Minecraft `1.7.10`
+- Java `17+` is recommended
+- `java25` is preferred for GTNH `2.8.0+`
+- Enable `SKIP_GTNH_UPDATE_CHECK` only after the initial install if you want to freeze updates
 
 ## CurseForge Modpacks
 

@@ -147,6 +147,8 @@ export const en = {
     'Manual mode for CurseForge modpacks. Uses preloaded ZIP files. Obsolete feature, we recommend using CurseForge Modpack.',
   serverModrinth:
     "Automatically installs modpacks from Modrinth. Can be configured using the modpack's URL, or slug.",
+  serverGtnh:
+    'Deploys GT New Horizons with its dedicated container mode and recommended defaults for this modpack.',
   serverSpigot: 'Optimized server compatible with Bukkit plugins',
   serverPaper: 'High-performance server based on Spigot with additional optimizations',
   serverBukkit: 'Classic server with standard plugin API support',
@@ -499,6 +501,7 @@ export const en = {
   largeBiomes: 'Large Biomes',
   amplified: 'Amplified',
   singleBiomeSurface: 'Single Biome Surface',
+  gtnhWorldType: 'RWG (GTNH)',
 
   // World Options
   hardcore: 'Hardcore',
@@ -1117,6 +1120,20 @@ export const en = {
   modrinthModpackDesc: 'Enter the slug or URL of the Modrinth modpack you want to use.',
   modrinthModpackTooltip:
     'Enter the Modrinth project slug or URL. You can also include a specific version (e.g., https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  gtnhRequirementsTitle: 'GTNH recommended resources',
+  gtnhRequirementsBody:
+    'Use 2-4 CPU cores, at least 6 GB of RAM, extra RAM per player, and 20 GB or more of storage. SSD is preferred.',
+  gtnhJavaNote:
+    'GTNH supports Java 8 and 17+. Java 17+ is recommended, and java25 is the preferred option for GTNH 2.8.0 and later.',
+  gtnhPackVersion: 'GTNH Pack Version',
+  gtnhPackVersionDesc:
+    'Use a fixed version such as 2.8.1 for controlled upgrades, or latest/latest-dev if you want automatic updates.',
+  gtnhDeleteBackups: 'Delete GTNH config backups on startup',
+  gtnhDeleteBackupsDesc:
+    'Deletes the backup folders created by GTNH when config files are replaced during upgrades.',
+  skipGtnhUpdateCheck: 'Skip GTNH update check',
+  skipGtnhUpdateCheckDesc:
+    'Disable update checks after the first installation if you want to prevent automatic GTNH updates from running.',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Deprecated Feature',

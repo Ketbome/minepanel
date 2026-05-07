@@ -106,7 +106,8 @@ export class SettingsService {
 
   private sanitizeJavaServerDefaults(defaults: Record<string, any>): Record<string, any> {
     return Object.entries(defaults).reduce((acc, [key, value]) => {
-      if (this.javaDefaultsKeys.has(key) && value !== undefined) {
+      const isBlankString = typeof value === 'string' && value.trim() === '';
+      if (this.javaDefaultsKeys.has(key) && value !== undefined && !isBlankString) {
         acc[key] = value;
       }
       return acc;

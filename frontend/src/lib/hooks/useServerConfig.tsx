@@ -94,6 +94,9 @@ const defaultConfig: ServerConfig = {
   execDirectly: true,
   envVars: '',
   extraPorts: [],
+  gtnhPackVersion: '2.8.1',
+  gtnhDeleteBackups: false,
+  skipGtnhUpdateCheck: false,
   cfMethod: 'url',
   cfUrl: '',
   cfSlug: '',
@@ -160,6 +163,8 @@ export function useServerConfig(serverId: string) {
         if (!serverConfig.minecraftVersion) {
           if (serverConfig.edition === 'BEDROCK') {
             serverConfig.minecraftVersion = 'LATEST';
+          } else if (serverConfig.serverType === 'GTNH') {
+            serverConfig.minecraftVersion = '1.7.10';
           } else {
             serverConfig.minecraftVersion = 'latest';
           }
