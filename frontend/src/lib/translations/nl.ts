@@ -1410,6 +1410,8 @@ export const nl: Record<TranslationKey, string> = {
     'Het domein dat wordt gebruikt voor server subdomeinen (bijv. mc.example.com)',
   enableProxy: 'Proxy Inschakelen',
   enableProxyDesc: 'Routeer al het Minecraft verkeer via mc-router op poort 25565',
+  proxyToggleWarning:
+    'Zorg ervoor dat alle servers zijn gestopt voordat je opslaat. Het wijzigen van de globale proxy terwijl servers draaien kan problemen veroorzaken.',
   proxyRequiresDomain: 'Configureer een basisdomein om de proxyfunctie in te schakelen',
   proxyDnsInfo: 'Configureer een wildcard DNS record dat naar je server wijst:',
   proxyHostname: 'Aangepaste Hostnaam',

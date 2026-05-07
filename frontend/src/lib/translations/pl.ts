@@ -1382,6 +1382,8 @@ export const pl: Record<TranslationKey, string> = {
   proxyBaseDomainDesc: 'Domena, która będzie używana dla subdomen serwerów (np. mc.example.com)',
   enableProxy: 'Włącz proxy',
   enableProxyDesc: 'Kieruj cały ruch Minecraft przez mc-router na porcie 25565',
+  proxyToggleWarning:
+    'Przed zapisaniem upewnij się, że wszystkie serwery są wyłączone. Zmiana globalnego proxy, gdy serwery działają, może powodować problemy.',
   proxyRequiresDomain: 'Skonfiguruj domenę bazową, aby włączyć funkcję proxy',
   proxyDnsInfo: 'Skonfiguruj rekord DNS z symbolem wieloznacznym wskazujący na Twój serwer:',
   proxyHostname: 'Niestandardowa nazwa hosta',

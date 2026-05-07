@@ -1378,6 +1378,8 @@ export const en = {
   proxyBaseDomainDesc: 'The domain that will be used for server subdomains (e.g., mc.example.com)',
   enableProxy: 'Enable Proxy',
   enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
+  proxyToggleWarning:
+    'Before saving, make sure all servers are stopped. Changing the global proxy while servers are running can cause issues.',
   proxyRequiresDomain: 'Configure a base domain to enable the proxy feature',
   proxyDnsInfo: 'Configure a wildcard DNS record pointing to your server:',
   proxyHostname: 'Custom Hostname',

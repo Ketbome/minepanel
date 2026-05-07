@@ -1398,6 +1398,8 @@ export const es: Record<TranslationKey, string> = {
     'El dominio que se usará para los subdominios de servidores (ej: mc.example.com)',
   enableProxy: 'Habilitar Proxy',
   enableProxyDesc: 'Enrutar todo el tráfico de Minecraft a través de mc-router en el puerto 25565',
+  proxyToggleWarning:
+    'Antes de guardar, asegúrate de que todos los servidores estén apagados. Cambiar el proxy global con servidores encendidos puede causar problemas.',
   proxyRequiresDomain: 'Configura un dominio base para habilitar la función de proxy',
   proxyDnsInfo: 'Configura un registro DNS wildcard apuntando a tu servidor:',
   proxyHostname: 'Hostname Personalizado',
