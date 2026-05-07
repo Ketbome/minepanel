@@ -30,7 +30,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const isJava = edition === 'JAVA';
   const isBedrock = edition === 'BEDROCK';
   const isModpack =
-    config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' || config.serverType === 'MODRINTH';
+    config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' || config.serverType === 'MODRINTH' || config.serverType === 'GTNH';
 
   const { versions, loading, latestRelease, refresh, getRecommended } = useMinecraftVersions({
     filterType: 'release',
@@ -44,6 +44,30 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
 
   const recommendedIds = new Set(recommendedVersions.map((v) => v.id));
   const otherVersions = versions.filter((v) => v.id !== latestRelease && !recommendedIds.has(v.id));
+
+  const handleServerTypeChange = (newType: ServerType) => {
+    updateConfig('serverType', newType);
+
+    if (newType === 'GTNH') {
+      updateConfig('minecraftVersion', '1.7.10');
+      updateConfig('levelType', 'rwg');
+      updateConfig('difficulty', 'hard');
+      updateConfig('allowFlight', true);
+      updateConfig('commandBlock', true);
+      updateConfig('gtnhPackVersion', config.gtnhPackVersion || '2.8.1');
+      updateConfig('gtnhDeleteBackups', config.gtnhDeleteBackups ?? false);
+      updateConfig('skipGtnhUpdateCheck', config.skipGtnhUpdateCheck ?? false);
+
+      if (
+        !config.motd ||
+        config.motd === 'A Minecraft server' ||
+        config.motd === 'An incredible Minecraft server' ||
+        config.motd.startsWith('Greg Tech New Horizon')
+      ) {
+        updateConfig('motd', `Greg Tech New Horizon ${config.gtnhPackVersion || '2.8.1'}`);
+      }
+    }
+  };
 
   const handleEditionChange = (newEdition: ServerEdition) => {
     // Don't allow edition change if server already exists
@@ -396,7 +420,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
             <h3 className="text-sm font-minecraft text-gray-300 mb-4">{t('selectType')}</h3>
             <RadioGroup
               value={config.serverType}
-              onValueChange={(value: ServerType) => updateConfig('serverType', value)}
+              onValueChange={(value: ServerType) => handleServerTypeChange(value)}
               className="space-y-4"
             >
               <div
@@ -565,6 +589,23 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                     </Label>
                   </div>
                   <p className="text-sm text-gray-300 mt-1">{t('serverModrinth')}</p>
+                </div>
+              </div>
+
+              <div
+                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'GTNH' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+              >
+                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                  <Image src="/images/anvil.webp" alt="GTNH" width={24} height={24} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="GTNH" id="gtnh" className="border-amber-600/50" />
+                    <Label htmlFor="gtnh" className="text-base font-medium text-gray-100 font-minecraft">
+                      GT New Horizons
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-300 mt-1">{t('serverGtnh')}</p>
                 </div>
               </div>
 

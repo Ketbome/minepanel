@@ -41,6 +41,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isModrinth = config.serverType === "MODRINTH";
+  const isGtnh = config.serverType === "GTNH";
   const isForge = config.serverType === "FORGE";
   const isNeoforge = config.serverType === "NEOFORGE";
   const isFabric = config.serverType === "FABRIC";
@@ -149,7 +150,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
     return "added";
   };
 
-  if (!isCurseForge && !isForge && !isNeoforge && !isManualCurseForge && !isFabric &&!isModrinth) {
+  if (!isCurseForge && !isForge && !isNeoforge && !isManualCurseForge && !isFabric && !isModrinth && !isGtnh) {
     return (
       <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
         <CardHeader className="pb-3">
@@ -871,6 +872,65 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               </div>
               <Textarea id="cfFiles" value={config.cfFiles} onChange={(e) => updateConfig("cfFiles", e.target.value)} placeholder="jei, geckolib, aquaculture" className="min-h-20 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
               <p className="text-xs text-gray-400">{t("curseforgeFilesDesc")}</p>
+            </div>
+          </>
+        )}
+
+        {isGtnh && (
+          <>
+            <div className="rounded-md border border-amber-600/30 bg-amber-900/20 p-4">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+                <div className="space-y-1 text-sm text-amber-100/90">
+                  <p className="font-minecraft text-amber-300">{t("gtnhRequirementsTitle")}</p>
+                  <p>{t("gtnhRequirementsBody")}</p>
+                  <p>{t("gtnhJavaNote")}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-amber-500/30 bg-gray-800/50 p-4">
+              <Label htmlFor="gtnhPackVersion" className="text-amber-300 font-minecraft text-sm">
+                {t("gtnhPackVersion")}
+              </Label>
+              <Input
+                id="gtnhPackVersion"
+                value={config.gtnhPackVersion || "2.8.1"}
+                onChange={(e) => updateConfig("gtnhPackVersion", e.target.value)}
+                placeholder="2.8.1"
+                className="bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-amber-500/50 focus:ring-amber-500/30"
+              />
+              <p className="text-xs text-gray-400">{t("gtnhPackVersionDesc")}</p>
+            </div>
+
+            <div className="space-y-4 rounded-md border border-gray-700/50 bg-gray-800/50 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label htmlFor="gtnhDeleteBackups" className="text-gray-200 font-minecraft text-sm">
+                    {t("gtnhDeleteBackups")}
+                  </Label>
+                  <p className="text-xs text-gray-400 mt-1">{t("gtnhDeleteBackupsDesc")}</p>
+                </div>
+                <Switch
+                  id="gtnhDeleteBackups"
+                  checked={config.gtnhDeleteBackups === true}
+                  onCheckedChange={(checked) => updateConfig("gtnhDeleteBackups", checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label htmlFor="skipGtnhUpdateCheck" className="text-gray-200 font-minecraft text-sm">
+                    {t("skipGtnhUpdateCheck")}
+                  </Label>
+                  <p className="text-xs text-gray-400 mt-1">{t("skipGtnhUpdateCheckDesc")}</p>
+                </div>
+                <Switch
+                  id="skipGtnhUpdateCheck"
+                  checked={config.skipGtnhUpdateCheck === true}
+                  onCheckedChange={(checked) => updateConfig("skipGtnhUpdateCheck", checked)}
+                />
+              </div>
             </div>
           </>
         )}

@@ -149,6 +149,8 @@ export const de: Record<TranslationKey, string> = {
     'Manueller Modus für CurseForge-Modpacks. Verwendet vorgeladene ZIP-Dateien. Veraltete Funktion, wir empfehlen CurseForge Modpack.',
   serverModrinth:
     'Installiert automatisch Modpacks von Modrinth. Kann über URL oder Slug des Modpacks konfiguriert werden.',
+  serverGtnh:
+    'Deploys GT New Horizons with its dedicated container mode and recommended defaults for this modpack.',
   serverSpigot: 'Optimierter Server kompatibel mit Bukkit-Plugins',
   serverPaper: 'Hochleistungsserver basierend auf Spigot mit zusätzlichen Optimierungen',
   serverBukkit: 'Klassischer Server mit Standard-Plugin-API-Unterstützung',
@@ -501,6 +503,7 @@ export const de: Record<TranslationKey, string> = {
   largeBiomes: 'Große Biome',
   amplified: 'Verstärkt',
   singleBiomeSurface: 'Einzelnes Biom Oberfläche',
+  gtnhWorldType: 'RWG (GTNH)',
 
   // World Options
   hardcore: 'Hardcore',
@@ -1133,6 +1136,20 @@ export const de: Record<TranslationKey, string> = {
     'Gib den Slug oder die URL des Modrinth-Modpacks ein, das du verwenden möchtest.',
   modrinthModpackTooltip:
     'Gib den Modrinth-Projekt-Slug oder die URL ein. Du kannst auch eine spezifische Version angeben (z. B. https://modrinth.com/modpack/surface-living/version/1.2.1).',
+  gtnhRequirementsTitle: 'GTNH recommended resources',
+  gtnhRequirementsBody:
+    'Use 2-4 CPU cores, at least 6 GB of RAM, extra RAM per player, and 20 GB or more of storage. SSD is preferred.',
+  gtnhJavaNote:
+    'GTNH supports Java 8 and 17+. Java 17+ is recommended, and java25 is the preferred option for GTNH 2.8.0 and later.',
+  gtnhPackVersion: 'GTNH Pack Version',
+  gtnhPackVersionDesc:
+    'Use a fixed version such as 2.8.1 for controlled upgrades, or latest/latest-dev if you want automatic updates.',
+  gtnhDeleteBackups: 'Delete GTNH config backups on startup',
+  gtnhDeleteBackupsDesc:
+    'Deletes the backup folders created by GTNH when config files are replaced during upgrades.',
+  skipGtnhUpdateCheck: 'Skip GTNH update check',
+  skipGtnhUpdateCheckDesc:
+    'Disable update checks after the first installation if you want to prevent automatic GTNH updates from running.',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Veraltete Funktion',
@@ -1386,6 +1403,8 @@ export const de: Record<TranslationKey, string> = {
   proxyBaseDomainDesc: 'Die Domain, die für Server-Subdomains verwendet wird (z.B. mc.example.com)',
   enableProxy: 'Proxy Aktivieren',
   enableProxyDesc: 'Leite den gesamten Minecraft-Verkehr über mc-router auf Port 25565',
+  proxyToggleWarning:
+    'Stelle vor dem Speichern sicher, dass alle Server gestoppt sind. Das Ändern des globalen Proxys während Server laufen kann Probleme verursachen.',
   proxyRequiresDomain: 'Konfiguriere eine Basis-Domain, um die Proxy-Funktion zu aktivieren',
   proxyDnsInfo: 'Konfiguriere einen Wildcard-DNS-Eintrag, der auf deinen Server zeigt:',
   proxyHostname: 'Benutzerdefinierter Hostname',

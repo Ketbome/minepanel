@@ -117,7 +117,7 @@ export class DockerComposeService {
         mcService.expose.some((value: string | number) => String(value) === internalPort);
       const port = usesProxyCompose ? defaultPort : mcService.ports?.[0]?.split(':')[0] ?? defaultPort;
       const extraPorts = usesProxyCompose ? (mcService.ports || []) : mcService.ports?.slice(1) || [];
-      const defaultVersion = edition === 'BEDROCK' ? 'LATEST' : 'latest';
+      const defaultVersion = edition === 'BEDROCK' ? 'LATEST' : env.TYPE === 'GTNH' ? '1.7.10' : 'latest';
 
       const serverConfig: ServerConfig = {
         id: env.ID_MANAGER ?? serverId,
@@ -143,7 +143,7 @@ export class DockerComposeService {
         worldScope: this.parseWorldScope(env.WORLD),
         worldLevelName: edition === 'BEDROCK' ? env.LEVEL_NAME ?? env.LEVEL : env.LEVEL ?? 'world',
         forceWorldCopy: env.FORCE_WORLD_COPY === 'TRUE' || env.FORCE_WORLD_COPY === 'true',
-        levelType: this.parseLevelType(env.LEVEL_TYPE, edition),
+        levelType: this.parseLevelType(env.LEVEL_TYPE, edition, env.TYPE),
         hardcore: env.HARDCORE === 'true',
         spawnAnimals: env.SPAWN_ANIMALS !== 'false',
         spawnMonsters: env.SPAWN_MONSTERS !== 'false',
@@ -228,6 +228,9 @@ export class DockerComposeService {
         modrinthDownloadDependencies: 'none',
         modrinthDefaultVersionType: 'release',
         modrinthLoader: '',
+        gtnhPackVersion: env.GTNH_PACK_VERSION ?? '2.8.1',
+        gtnhDeleteBackups: env.GTNH_DELETE_BACKUPS === 'true',
+        skipGtnhUpdateCheck: env.SKIP_GTNH_UPDATE_CHECK === 'true',
 
         // Proxy config from labels or env
         proxyHostname: this.extractProxyHostname(mcService.labels),
@@ -256,10 +259,11 @@ export class DockerComposeService {
   private parseLevelType(
     levelType: string | undefined,
     edition: ServerEdition,
-  ): 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' {
-    const validTypes = ['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface'] as const;
+    serverType?: string,
+  ): 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' | 'rwg' {
+    const validTypes = ['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface', 'rwg'] as const;
 
-    if (!levelType) return 'minecraft:default';
+    if (!levelType) return serverType === 'GTNH' ? 'rwg' : 'minecraft:default';
 
     // Bedrock uses uppercase values (DEFAULT, FLAT), map them back to minecraft: format
     if (edition === 'BEDROCK') {
@@ -302,9 +306,10 @@ export class DockerComposeService {
     const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'MODRINTH_MODPACK', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
 
     const knownWorldVars = new Set(['LEVEL', 'LEVEL_NAME', 'WORLD', 'FORCE_WORLD_COPY']);
+    const knownGtnhVars = new Set(['GTNH_PACK_VERSION', 'GTNH_DELETE_BACKUPS', 'SKIP_GTNH_UPDATE_CHECK']);
     const customVars: string[] = [];
     for (const [key, value] of Object.entries(env)) {
-      if (!knownEnvVars.has(key) && !knownWorldVars.has(key) && value !== undefined && value !== null) {
+      if (!knownEnvVars.has(key) && !knownWorldVars.has(key) && !knownGtnhVars.has(key) && value !== undefined && value !== null) {
         customVars.push(`${key}=${value}`);
       }
     }
@@ -428,6 +433,11 @@ export class DockerComposeService {
         serverConfig.cfBaseDir = env.CF_BASE_DIR ?? '/data';
         serverConfig.useModpackStartScript = env.USE_MODPACK_START_SCRIPT !== 'false';
         serverConfig.ftbLegacyJavaFixer = env.FTB_LEGACYJAVAFIXER === 'true';
+      },
+      GTNH: () => {
+        serverConfig.gtnhPackVersion = env.GTNH_PACK_VERSION ?? '2.8.1';
+        serverConfig.gtnhDeleteBackups = env.GTNH_DELETE_BACKUPS === 'true';
+        serverConfig.skipGtnhUpdateCheck = env.SKIP_GTNH_UPDATE_CHECK === 'true';
       },
     };
 
@@ -663,6 +673,9 @@ export class DockerComposeService {
       modrinthDownloadDependencies: 'none',
       modrinthDefaultVersionType: 'release',
       modrinthLoader: '',
+      gtnhPackVersion: '2.8.1',
+      gtnhDeleteBackups: false,
+      skipGtnhUpdateCheck: false,
 
       proxyHostname: undefined,
       useProxy: true,
@@ -1205,12 +1218,19 @@ export class DockerComposeService {
 
     // Only add resource limits for Java (Bedrock doesn't use JVM)
     if (edition === 'JAVA') {
-      mcService.deploy = {
-        resources: {
-          limits: { cpus: config.cpuLimit, memory: config.maxMemory },
-          reservations: { cpus: config.cpuReservation, memory: config.memoryReservation },
-        },
-      };
+      const limits = Object.fromEntries(
+        Object.entries({ cpus: config.cpuLimit, memory: config.maxMemory }).filter(([, value]) => value !== undefined && value !== ''),
+      );
+      const reservations = Object.fromEntries(
+        Object.entries({ cpus: config.cpuReservation, memory: config.memoryReservation }).filter(([, value]) => value !== undefined && value !== ''),
+      );
+      const resources = Object.fromEntries(
+        Object.entries({ limits, reservations }).filter(([, value]) => Object.keys(value).length > 0),
+      );
+
+      if (Object.keys(resources).length > 0) {
+        mcService.deploy = { resources };
+      }
     }
 
     // Si usa proxy, no exponer puerto al host; si no, exponer como siempre
@@ -1300,7 +1320,12 @@ export class DockerComposeService {
     if (config.enableSync === false) env.ENABLE_SYNC = 'false';
   }
 
-  private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
+  private async addBackupService(
+    dockerComposeConfig: any,
+    config: ServerConfig,
+    serverDir: string,
+    useProxy: boolean,
+  ): Promise<void> {
     const backupEnv = this.buildBackupEnvironment(config);
     this.addOptionalBackupEnv(backupEnv, config);
 
@@ -1315,6 +1340,12 @@ export class DockerComposeService {
       volumes: [`${mcDataPath}:/data:ro`, `${backupsPath}:/backups`],
       restart: 'unless-stopped',
     };
+
+    if (useProxy) {
+      dockerComposeConfig.services.backup.networks = {
+        'minepanel-network': {},
+      };
+    }
 
     dockerComposeConfig.volumes.backups = {};
     await fs.ensureDir(path.join(serverDir, 'backups'));
@@ -1340,7 +1371,7 @@ export class DockerComposeService {
     const dockerComposeConfig = this.buildDockerComposeConfig(normalizedConfig, environment, volumes, availablePort, proxyEnabled, strategy);
 
     if (normalizedConfig.enableBackup) {
-      await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir);
+      await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir, useProxy);
     }
 
     let yamlContent = yaml.dump(dockerComposeConfig);

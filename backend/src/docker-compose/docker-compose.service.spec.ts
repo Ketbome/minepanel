@@ -121,6 +121,19 @@ describe('DockerComposeService', () => {
       expect(parsed.services.mc.networks['minepanel-network'].aliases).toEqual(['proxyserver']);
     });
 
+    it('should attach backup service to proxy network when proxy is enabled', async () => {
+      const config = (service as any).createDefaultConfig('proxybackup');
+      config.enableBackup = true;
+
+      await service.generateDockerComposeFile(config, true);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.backup.networks['minepanel-network']).toEqual({});
+    });
+
     it('should force restart policy to "no" when auto-stop is enabled', async () => {
       const config = (service as any).createDefaultConfig('autostop-server');
       config.enableAutoStop = true;

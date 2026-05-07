@@ -329,6 +329,24 @@ For `AUTO_CURSEFORGE`, `CF_SET_LEVEL_FROM` and the Java **Worlds** tab are alter
 
 Minepanel includes a **Browse** button to search CurseForge modpacks directly from the UI. Click it to find and select modpacks without leaving the panel.
 
+## GTNH {#gtnh}
+
+Minepanel also supports **GT New Horizons** through the dedicated **GTNH** server type.
+
+Use it when you want the container to handle GTNH-specific install and update behavior without manually entering env vars.
+
+Available GTNH fields in Minepanel:
+
+- `GTNH_PACK_VERSION`
+- `GTNH_DELETE_BACKUPS`
+- `SKIP_GTNH_UPDATE_CHECK`
+
+Recommended workflow:
+
+1. Keep a fixed pack version such as `2.8.1`
+2. Leave update check enabled for the first install
+3. Only enable `SKIP_GTNH_UPDATE_CHECK` after the server has been installed once
+
 ## CurseForge Files (Individual Mods) {#curseforge-files}
 
 Download specific mods/plugins from [CurseForge](https://www.curseforge.com) to add to any modded server.

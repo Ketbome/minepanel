@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Globe, Info, Loader2, Network, Save } from 'lucide-react';
+import { AlertTriangle, Globe, Info, Loader2, Network, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ export default function NetworkSettingsPage() {
   const [publicIp, setPublicIp] = useState('');
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
+  const proxyToggleChanged = proxySettings.enabled !== initialProxyEnabled;
 
   useEffect(() => {
     Promise.all([getSettings(), getCurrentUser()])
@@ -115,6 +116,12 @@ export default function NetworkSettingsPage() {
             </div>
             <Switch checked={proxySettings.enabled} onCheckedChange={(checked) => setProxySettings((current) => ({ ...current, enabled: checked }))} disabled={!proxyBaseDomain} />
           </div>
+          {proxyToggleChanged ? (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <p className="text-xs text-amber-300">{t('proxyToggleWarning')}</p>
+            </div>
+          ) : null}
           {!proxyBaseDomain ? (
             <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />

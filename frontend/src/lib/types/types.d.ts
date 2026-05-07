@@ -13,6 +13,7 @@ export type ServerType =
   | 'AUTO_CURSEFORGE'
   | 'MODRINTH'
   | 'CURSEFORGE'
+  | 'GTNH'
   | 'SPIGOT'
   | 'FABRIC'
   | 'MAGMA'
@@ -71,7 +72,8 @@ export interface ServerConfig {
     | 'minecraft:flat'
     | 'minecraft:large_biomes'
     | 'minecraft:amplified'
-    | 'minecraft:single_biome_surface';
+    | 'minecraft:single_biome_surface'
+    | 'rwg';
   hardcore: boolean;
   spawnAnimals: boolean;
   spawnMonsters: boolean;
@@ -171,6 +173,11 @@ export interface ServerConfig {
   modrinthLoader?: string;
 
   modrinthModpack?: string;
+
+  // GTNH specific
+  gtnhPackVersion?: string;
+  gtnhDeleteBackups?: boolean;
+  skipGtnhUpdateCheck?: boolean;
 
   // CurseForge specific
   cfMethod?: 'url' | 'slug' | 'file';

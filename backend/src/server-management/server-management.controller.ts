@@ -114,7 +114,8 @@ export class ServerManagementController {
     }
 
     return Object.entries(defaults).reduce((acc, [key, value]) => {
-      if (JAVA_SERVER_DEFAULT_KEYS.has(key) && value !== undefined) {
+      const isBlankString = typeof value === 'string' && value.trim() === '';
+      if (JAVA_SERVER_DEFAULT_KEYS.has(key) && value !== undefined && !isBlankString) {
         acc[key] = value;
       }
       return acc;

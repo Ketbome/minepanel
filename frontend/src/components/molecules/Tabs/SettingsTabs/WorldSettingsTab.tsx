@@ -21,6 +21,7 @@ interface WorldSettingsTabProps {
 export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverStatus, config, updateConfig }) => {
   const { t } = useLanguage();
   const isJava = config.edition !== "BEDROCK";
+  const isGtnh = config.serverType === 'GTNH';
 
   return (
     <div className="space-y-6">
@@ -46,6 +47,7 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
               <SelectItem value="minecraft:default">{t("normal")}</SelectItem>
               <SelectItem value="minecraft:flat">{t("flat")}</SelectItem>
+              {isGtnh && <SelectItem value="rwg">{t("gtnhWorldType")}</SelectItem>}
               {isJava && (
                 <>
                   <SelectItem value="minecraft:large_biomes">{t("largeBiomes")}</SelectItem>
