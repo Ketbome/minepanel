@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
+import * as yaml from 'js-yaml';
 import { Settings } from 'src/users/entities/settings.entity';
 
 export interface ProxyMapping {
@@ -26,6 +27,7 @@ interface ServerProxyInfo {
 @Injectable()
 export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
+  private readonly SERVERS_DIR: string;
   private readonly PROXY_DIR: string;
   private readonly ROUTES_FILE: string;
 
@@ -34,6 +36,7 @@ export class ProxyService {
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
   ) {
+    this.SERVERS_DIR = this.configService.get('serversDir');
     // Use /app/data for files written by backend (not BASE_DIR which is for host paths)
     this.PROXY_DIR = '/app/data/proxy';
     this.ROUTES_FILE = path.join(this.PROXY_DIR, 'routes.json');
@@ -136,10 +139,43 @@ export class ProxyService {
 
     const proxySettings = await this.getProxySettings();
     if (proxySettings.enabled && proxySettings.baseDomain) {
-      return this.generateHostname(serverId, proxySettings.baseDomain);
+      return this.getConfiguredServerHostname(serverId, proxySettings.baseDomain);
     }
 
     return null;
+  }
+
+  private async getConfiguredServerHostname(serverId: string, baseDomain: string): Promise<string | null> {
+    try {
+      const dockerComposePath = path.join(this.SERVERS_DIR, serverId, 'docker-compose.yml');
+      if (!(await fs.pathExists(dockerComposePath))) {
+        return this.generateHostname(serverId, baseDomain);
+      }
+
+      const content = await fs.readFile(dockerComposePath, 'utf8');
+      const compose = yaml.load(content) as { services?: { mc?: { labels?: string[] | Record<string, string> } } };
+      const labels = compose?.services?.mc?.labels;
+      const getLabel = (key: string): string | undefined => {
+        if (Array.isArray(labels)) {
+          return labels.find((label) => label.startsWith(`${key}=`))?.split('=').slice(1).join('=');
+        }
+
+        if (labels && typeof labels === 'object') {
+          return labels[key];
+        }
+
+        return undefined;
+      };
+
+      if (getLabel('minepanel.proxy.enabled') === 'false') {
+        return null;
+      }
+
+      return this.generateHostname(serverId, baseDomain, getLabel('minepanel.proxy.hostname'));
+    } catch (error) {
+      this.logger.warn(`Failed to load configured proxy hostname for ${serverId}`, error);
+      return this.generateHostname(serverId, baseDomain);
+    }
   }
 
   async getAllMappings(): Promise<ProxyMapping[]> {

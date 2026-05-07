@@ -1320,7 +1320,12 @@ export class DockerComposeService {
     if (config.enableSync === false) env.ENABLE_SYNC = 'false';
   }
 
-  private async addBackupService(dockerComposeConfig: any, config: ServerConfig, serverDir: string): Promise<void> {
+  private async addBackupService(
+    dockerComposeConfig: any,
+    config: ServerConfig,
+    serverDir: string,
+    useProxy: boolean,
+  ): Promise<void> {
     const backupEnv = this.buildBackupEnvironment(config);
     this.addOptionalBackupEnv(backupEnv, config);
 
@@ -1335,6 +1340,12 @@ export class DockerComposeService {
       volumes: [`${mcDataPath}:/data:ro`, `${backupsPath}:/backups`],
       restart: 'unless-stopped',
     };
+
+    if (useProxy) {
+      dockerComposeConfig.services.backup.networks = {
+        'minepanel-network': {},
+      };
+    }
 
     dockerComposeConfig.volumes.backups = {};
     await fs.ensureDir(path.join(serverDir, 'backups'));
@@ -1360,7 +1371,7 @@ export class DockerComposeService {
     const dockerComposeConfig = this.buildDockerComposeConfig(normalizedConfig, environment, volumes, availablePort, proxyEnabled, strategy);
 
     if (normalizedConfig.enableBackup) {
-      await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir);
+      await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir, useProxy);
     }
 
     let yamlContent = yaml.dump(dockerComposeConfig);
