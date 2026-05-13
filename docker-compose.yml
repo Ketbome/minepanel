@@ -26,16 +26,6 @@ services:
     networks:
       - minepanel-network
     restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'node -e "const basePath = process.env.BASE_PATH || \"\"; const path = basePath + \"/health\"; require(\"http\").get(\"http://localhost:8091\" + path, (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"',
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
 
   frontend:
     image: ketbom/minepanel-frontend:latest
