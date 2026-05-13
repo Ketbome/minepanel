@@ -19,7 +19,7 @@ let cachedLatestRelease: string | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 60 * 60 * 1000;
 
-const isValidJavaRelease = (id: string): boolean => /^1\.\d+(\.\d+)?$/.test(id);
+const isValidJavaRelease = (id: string): boolean => /^\d+\.\d+(\.\d+)?$/.test(id);
 
 export const minecraftVersionsService = {
   async fetchVersions(): Promise<MinecraftVersion[]> {
