@@ -16,7 +16,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  const basePath = process.env.BASE_PATH || '';
+  const basePath = (process.env.BASE_PATH || '').split('#')[0].trim();
   if (basePath) {
     app.setGlobalPrefix(basePath);
   }

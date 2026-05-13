@@ -646,7 +646,7 @@ docker compose logs minepanel | grep -i error
 
 ```bash
 # Test API endpoint
-curl http://localhost:8091/api/health
+curl http://localhost:8091/health
 
 # Test frontend
 curl http://localhost:3000

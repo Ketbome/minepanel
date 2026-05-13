@@ -36,14 +36,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
 
   frontend:
     image: ketbom/minepanel-frontend:latest
@@ -60,25 +52,6 @@ services:
     networks:
       - minepanel-network
     restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'node -e "const basePath = process.env.NEXT_PUBLIC_BASE_PATH || \"\"; const path = basePath || \"/\"; require(\"http\").get(\"http://localhost:3000\" + path, (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"',
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-
   # MC Proxy Router - Routes Minecraft Java Edition traffic by hostname (optional)
   # Note: Only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
   # Enable with: docker compose --profile proxy up -d
