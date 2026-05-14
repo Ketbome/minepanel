@@ -35,10 +35,6 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8091}
       - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
       - NEXT_PUBLIC_DEFAULT_LANGUAGE=${NEXT_PUBLIC_DEFAULT_LANGUAGE:-en}
-      # Runtime value should match the build-time value if the image was built with a custom frontend base path.
-    depends_on:
-      backend:
-        condition: service_healthy
     networks:
       - minepanel-network
     restart: unless-stopped
