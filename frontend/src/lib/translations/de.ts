@@ -159,6 +159,7 @@ export const de: Record<TranslationKey, string> = {
   serverLeaf: 'Paper-Fork mit Fokus auf Leistung und Low-Level-Optimierungen',
   serverFolia: 'Experimenteller Paper-Server mit Multi-Threading-Unterstützung (Regionen)',
   selectType: 'Servertyp auswählen',
+  serverTypeOthers: 'Andere',
 
   // Server Actions
   startServer: 'Server starten',

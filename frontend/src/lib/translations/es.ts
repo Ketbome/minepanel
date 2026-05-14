@@ -160,6 +160,7 @@ export const es: Record<TranslationKey, string> = {
   serverLeaf: 'Fork de Paper enfocado en rendimiento y optimizaciones de bajo nivel',
   serverFolia: 'Servidor experimental de Paper con soporte para multi-threading (regiones)',
   selectType: 'Seleccionar tipo de servidor',
+  serverTypeOthers: 'Otros',
 
   // Acciones de Servidor
   startServer: 'Iniciar Servidor',

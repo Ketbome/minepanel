@@ -160,6 +160,7 @@ export const pl: Record<TranslationKey, string> = {
   serverLeaf: 'Fork serwera Paper skoncentrowany na wydajności i niskopoziomowych optymalizacjach',
   serverFolia: 'Eksperymentalny serwer Paper z obsługą wielowątkowości (regiony)',
   selectType: 'Wybierz typ serwera',
+  serverTypeOthers: 'Inne',
 
   // Akcje server
   startServer: 'Uruchom',

@@ -157,6 +157,7 @@ export const fr = {
   serverLeaf: 'Fork de Paper axé sur la performance et les optimisations bas niveau',
   serverFolia: 'Serveur Paper expérimental avec prise en charge du multi-threading (régions)',
   selectType: 'Sélectionnez le type de serveur',
+  serverTypeOthers: 'Autres',
 
   // Server Actions
   startServer: 'Démarrer le serveur',

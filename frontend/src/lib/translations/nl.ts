@@ -160,6 +160,7 @@ export const nl: Record<TranslationKey, string> = {
   serverLeaf: 'Paper fork gericht op prestaties en low-level optimalisaties',
   serverFolia: "Experimentele Paper server met multi-threading ondersteuning (voor regio's)",
   selectType: 'Selecteer een servertype',
+  serverTypeOthers: 'Overige',
 
   // Server Actions
   startServer: 'Server starten',

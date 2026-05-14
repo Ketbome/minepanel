@@ -49,8 +49,8 @@ export default function NetworkSettingsPage() {
     setIsSaving(true);
     try {
       await updateSettings({
-        proxy: { proxyEnabled: proxySettings.enabled, proxyBaseDomain: proxyBaseDomain || undefined },
-        network: { publicIp: publicIp || undefined, lanIp: lanIp || undefined },
+        proxy: { proxyEnabled: proxySettings.enabled, proxyBaseDomain },
+        network: { publicIp, lanIp },
       });
 
       const proxyChanged = proxySettings.enabled !== initialProxyEnabled || proxyBaseDomain !== initialProxyDomain;

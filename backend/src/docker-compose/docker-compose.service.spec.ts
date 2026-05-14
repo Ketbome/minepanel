@@ -4,6 +4,12 @@ import { DockerComposeService } from './docker-compose.service';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 
+jest.mock('node:child_process', () => ({
+  exec: jest.fn((_: string, callback: (error: Error | null, result: { stdout: string; stderr: string }) => void) => {
+    callback(null, { stdout: '', stderr: '' });
+  }),
+}));
+
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
   ensureDir: jest.fn().mockResolvedValue(undefined),
@@ -119,6 +125,36 @@ describe('DockerComposeService', () => {
       const parsed = yaml.load(yamlContent as string) as any;
 
       expect(parsed.services.mc.networks['minepanel-network'].aliases).toEqual(['proxyserver']);
+    });
+
+    it('should reserve port 25565 for direct java servers when global proxy is enabled', async () => {
+      const config = (service as any).createDefaultConfig('direct-server');
+      config.useProxy = false;
+
+      await service.generateDockerComposeFile(config, true);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.ports).toContain('25566:25565');
+    });
+
+    it('should reserve port 25565 when mc-router is running even if global proxy is disabled', async () => {
+      const childProcess = jest.requireMock('node:child_process') as { exec: jest.Mock };
+      childProcess.exec.mockImplementation((_: string, callback: (error: Error | null, result: { stdout: string; stderr: string }) => void) => {
+        callback(null, { stdout: 'router-id\n', stderr: '' });
+      });
+
+      const config = (service as any).createDefaultConfig('router-running-server');
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.ports).toContain('25566:25565');
     });
 
     it('should attach backup service to proxy network when proxy is enabled', async () => {

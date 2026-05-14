@@ -37,6 +37,13 @@ export class SettingsService {
     private readonly usersService: UsersService,
   ) {}
 
+  private normalizeOptionalText(value: string | undefined | null): string | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+
   async getSettings(userId: number): Promise<Settings> {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
@@ -69,20 +76,29 @@ export class SettingsService {
 
     // Handle proxy settings
     if (dto.proxy) {
+      const hasProxyBaseDomain = dto.proxy.proxyBaseDomain !== undefined;
+      const proxyBaseDomain = this.normalizeOptionalText(dto.proxy.proxyBaseDomain);
+      const nextProxyBaseDomain = hasProxyBaseDomain ? (proxyBaseDomain ?? null) : (settings.preferences?.proxyBaseDomain ?? null);
+
       settings.preferences = {
         ...settings.preferences,
-        proxyEnabled: dto.proxy.proxyEnabled ?? settings.preferences?.proxyEnabled ?? false,
-        proxyBaseDomain: dto.proxy.proxyBaseDomain ?? settings.preferences?.proxyBaseDomain ?? null,
+        proxyEnabled: nextProxyBaseDomain ? (dto.proxy.proxyEnabled ?? settings.preferences?.proxyEnabled ?? false) : false,
+        proxyBaseDomain: nextProxyBaseDomain,
       };
       delete (dto as any).proxy;
     }
 
     // Handle network settings
     if (dto.network) {
+      const hasPublicIp = dto.network.publicIp !== undefined;
+      const hasLanIp = dto.network.lanIp !== undefined;
+      const publicIp = this.normalizeOptionalText(dto.network.publicIp);
+      const lanIp = this.normalizeOptionalText(dto.network.lanIp);
+
       settings.preferences = {
         ...settings.preferences,
-        publicIp: dto.network.publicIp ?? settings.preferences?.publicIp ?? null,
-        lanIp: dto.network.lanIp ?? settings.preferences?.lanIp ?? null,
+        publicIp: hasPublicIp ? (publicIp ?? null) : (settings.preferences?.publicIp ?? null),
+        lanIp: hasLanIp ? (lanIp ?? null) : (settings.preferences?.lanIp ?? null),
       };
       delete (dto as any).network;
     }

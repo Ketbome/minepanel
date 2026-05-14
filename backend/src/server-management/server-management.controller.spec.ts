@@ -52,6 +52,7 @@ describe('ServerManagementController', () => {
 
     const mockProxyService = {
       generateRoutesFile: jest.fn(),
+      clearRoutesFile: jest.fn(),
       getProxySettings: jest.fn(),
       getServerHostname: jest.fn(),
     };
@@ -296,6 +297,21 @@ describe('ServerManagementController', () => {
       expect(accessControlService.assertCreateServers).toHaveBeenCalledWith(
         expect.objectContaining({ id: 1 }),
       );
+    });
+  });
+
+  describe('regenerateAllDockerCompose', () => {
+    it('should clear proxy routes when global proxy is disabled', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ role: 'ADMIN' });
+      accessControlService.isAdmin.mockReturnValue(true);
+      settingsService.getSettings.mockResolvedValue({ preferences: { proxyEnabled: false, proxyBaseDomain: null } } as any);
+      dockerComposeService.regenerateAllDockerCompose.mockResolvedValue({ updated: [], errors: [] });
+
+      await controller.regenerateAllDockerCompose({ user: { userId: 1 } });
+
+      const proxyService = (controller as any).proxyService;
+      expect(proxyService.clearRoutesFile).toHaveBeenCalled();
+      expect(proxyService.generateRoutesFile).not.toHaveBeenCalled();
     });
   });
 });

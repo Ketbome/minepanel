@@ -78,4 +78,24 @@ describe('ProxyService', () => {
 
     expect(hostname).toBe('lobby.proxy.test');
   });
+
+  it('uses current user proxy settings for hostname fallback', async () => {
+    const settingsRepo = (service as any).settingsRepo;
+    settingsRepo.findOne.mockResolvedValue({ preferences: { proxyEnabled: true, proxyBaseDomain: 'user.test' } });
+
+    (fs.pathExists as jest.Mock).mockImplementation(async (target: string) => target === '/app/servers/survival/docker-compose.yml');
+    (fs.readFile as unknown as jest.Mock).mockResolvedValue(
+      yaml.dump({
+        services: {
+          mc: {
+            labels: ['minepanel.proxy.enabled=true'],
+          },
+        },
+      }),
+    );
+
+    const hostname = await service.getServerHostname('survival', 42);
+
+    expect(hostname).toBe('survival.user.test');
+  });
 });

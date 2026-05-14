@@ -1,10 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
 import { ServerConfig, ServerEdition, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
+
+const execAsync = promisify(exec);
 
 interface DockerComposeConfig {
   services?: {
@@ -52,10 +56,10 @@ export class DockerComposeService {
     };
   }
 
-  private async findAvailablePort(startPort: number, serverId: string): Promise<number> {
+  private async findAvailablePort(startPort: number, serverId: string, reservedPorts: number[] = []): Promise<number> {
     try {
       const serverIds = await this.getAllServerIds();
-      const usedPorts = new Set<number>();
+      const usedPorts = new Set<number>(reservedPorts);
 
       for (const id of serverIds) {
         if (id === serverId) continue;
@@ -73,6 +77,16 @@ export class DockerComposeService {
     } catch (error) {
       this.logger.error('Error finding available port', error);
       return startPort;
+    }
+  }
+
+  private async isMcRouterRunning(): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync('docker ps --filter "name=^/mc-router$" --format "{{.ID}}"');
+      return stdout.trim().length > 0;
+    } catch (error) {
+      this.logger.warn('Failed to detect mc-router status', error);
+      return false;
     }
   }
 
@@ -1180,11 +1194,14 @@ export class DockerComposeService {
     return mountTarget === target;
   }
 
-  private async ensurePortAvailable(config: ServerConfig): Promise<string> {
+  private async ensurePortAvailable(config: ServerConfig, proxyEnabled = false): Promise<string> {
     const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
     const defaultPort = strategy.getDefaultPort();
     const requestedPort = Number.parseInt(config.port || defaultPort);
-    const availablePort = await this.findAvailablePort(requestedPort, config.id);
+    const usesProxy = proxyEnabled && (config.edition ?? 'JAVA') === 'JAVA' && config.useProxy !== false;
+    const reserveProxyPort = (config.edition ?? 'JAVA') === 'JAVA' && !usesProxy && (proxyEnabled || await this.isMcRouterRunning());
+    const reservedPorts = reserveProxyPort ? [Number.parseInt(defaultPort)] : [];
+    const availablePort = await this.findAvailablePort(requestedPort, config.id, reservedPorts);
     if (availablePort !== requestedPort) {
       config.port = availablePort.toString();
     }
@@ -1366,7 +1383,7 @@ export class DockerComposeService {
     // When proxy is enabled, servers don't expose ports to host, so no need to find available port
     // Note: Proxy only works with Java edition (mc-router doesn't support Bedrock)
     const useProxy = proxyEnabled && normalizedConfig.useProxy !== false && edition === 'JAVA';
-    const availablePort = useProxy ? strategy.getInternalPort() : await this.ensurePortAvailable(normalizedConfig);
+    const availablePort = useProxy ? strategy.getInternalPort() : await this.ensurePortAvailable(normalizedConfig, proxyEnabled);
     const volumes = this.parseVolumes(normalizedConfig);
     const dockerComposeConfig = this.buildDockerComposeConfig(normalizedConfig, environment, volumes, availablePort, proxyEnabled, strategy);
 
