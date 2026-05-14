@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -18,11 +18,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface ServerTypeTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
+
+const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
 
 export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
@@ -38,12 +41,21 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   });
 
   const [showManualInput, setShowManualInput] = useState(false);
+  const [serverTypeAccordion, setServerTypeAccordion] = useState<string | undefined>(
+    OTHER_SERVER_TYPES.includes(config.serverType) ? 'others' : undefined,
+  );
   const recommendedVersions = getRecommended();
 
   const filteredRecommendedVersions = recommendedVersions.filter((v) => v.id !== latestRelease);
 
   const recommendedIds = new Set(recommendedVersions.map((v) => v.id));
   const otherVersions = versions.filter((v) => v.id !== latestRelease && !recommendedIds.has(v.id));
+
+  useEffect(() => {
+    if (OTHER_SERVER_TYPES.includes(config.serverType)) {
+      setServerTypeAccordion('others');
+    }
+  }, [config.serverType]);
 
   const handleServerTypeChange = (newType: ServerType) => {
     updateConfig('serverType', newType);
@@ -468,26 +480,6 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               </div>
 
               <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'NEOFORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/neoforged.png" alt="Neoforge" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="NEOFORGE" id="neoforge" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="neoforge"
-                      className="text-base font-medium text-gray-100 font-minecraft"
-                    >
-                      Neoforge
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverNeoforge')}</p>
-                </div>
-              </div>
-
-              <div
                 className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'FABRIC' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
               >
                 <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
@@ -536,138 +528,142 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </div>
               </div>
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'CURSEFORGE' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+              <Accordion
+                type="single"
+                collapsible
+                value={serverTypeAccordion}
+                onValueChange={setServerTypeAccordion}
+                className="w-full rounded-md border border-gray-700/50 bg-gray-800/30"
               >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/book.webp" alt="CurseForge Manual" width={24} height={24} />
-                  <div className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs px-1 rounded text-[8px] font-bold">
-                    LEGACY
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="CURSEFORGE"
-                      id="curseforge-manual"
-                      className="border-amber-600/50"
-                    />
-                    <Label
-                      htmlFor="curseforge-manual"
-                      className="text-base font-medium text-gray-100 font-minecraft"
+                <AccordionItem value="others" className="border-b-0">
+                  <AccordionTrigger className="px-4 py-3 text-sm font-minecraft text-gray-200 hover:bg-gray-700/30">
+                    {t('serverTypeOthers')}
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 px-4 pb-4 pt-1">
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'NEOFORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
                     >
-                      CurseForge Manual (Deprecated)
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverCurseForgeManual')}</p>
-                </div>
-              </div>
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/neoforged.png" alt="Neoforge" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="NEOFORGE" id="neoforge" className="border-emerald-600/50" />
+                          <Label htmlFor="neoforge" className="text-base font-medium text-gray-100 font-minecraft">
+                            Neoforge
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverNeoforge')}</p>
+                      </div>
+                    </div>
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'MODRINTH' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image
-                    src="/images/modrinth.svg"
-                    alt="CurseForge"
-                    width={24}
-                    height={24}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="MODRINTH"
-                      id="modrinth"
-                      className="border-emerald-600/50"
-                    />
-                    <Label
-                      htmlFor="modrinth"
-                      className="text-base font-medium text-gray-100 font-minecraft"
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'CURSEFORGE' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
                     >
-                      Modrinth Modpack
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverModrinth')}</p>
-                </div>
-              </div>
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/book.webp" alt="CurseForge Manual" width={24} height={24} />
+                        <div className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs px-1 rounded text-[8px] font-bold">
+                          LEGACY
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="CURSEFORGE" id="curseforge-manual" className="border-amber-600/50" />
+                          <Label htmlFor="curseforge-manual" className="text-base font-medium text-gray-100 font-minecraft">
+                            CurseForge Manual (Deprecated)
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverCurseForgeManual')}</p>
+                      </div>
+                    </div>
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'GTNH' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/anvil.webp" alt="GTNH" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="GTNH" id="gtnh" className="border-amber-600/50" />
-                    <Label htmlFor="gtnh" className="text-base font-medium text-gray-100 font-minecraft">
-                      GT New Horizons
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverGtnh')}</p>
-                </div>
-              </div>
-
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'SPIGOT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/redstone.webp" alt="Spigot" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="SPIGOT" id="spigot" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="spigot"
-                      className="text-base font-medium text-gray-100 font-minecraft"
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'MODRINTH' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
                     >
-                      Spigot
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverSpigot')}</p>
-                </div>
-              </div>
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/modrinth.svg" alt="Modrinth" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="MODRINTH" id="modrinth" className="border-emerald-600/50" />
+                          <Label htmlFor="modrinth" className="text-base font-medium text-gray-100 font-minecraft">
+                            Modrinth Modpack
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverModrinth')}</p>
+                      </div>
+                    </div>
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'PAPER' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/paper.webp" alt="Paper" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PAPER" id="paper" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="paper"
-                      className="text-base font-medium text-gray-100 font-minecraft"
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'GTNH' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
                     >
-                      Paper
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverPaper')}</p>
-                </div>
-              </div>
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/anvil.webp" alt="GTNH" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="GTNH" id="gtnh" className="border-amber-600/50" />
+                          <Label htmlFor="gtnh" className="text-base font-medium text-gray-100 font-minecraft">
+                            GT New Horizons
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverGtnh')}</p>
+                      </div>
+                    </div>
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'BUKKIT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/emerald.webp" alt="Bukkit" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="BUKKIT" id="bukkit" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="bukkit"
-                      className="text-base font-medium text-gray-100 font-minecraft"
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'SPIGOT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
                     >
-                      Bukkit
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverBukkit')}</p>
-                </div>
-              </div>
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/redstone.webp" alt="Spigot" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="SPIGOT" id="spigot" className="border-emerald-600/50" />
+                          <Label htmlFor="spigot" className="text-base font-medium text-gray-100 font-minecraft">
+                            Spigot
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverSpigot')}</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'PAPER' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+                    >
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/paper.webp" alt="Paper" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="PAPER" id="paper" className="border-emerald-600/50" />
+                          <Label htmlFor="paper" className="text-base font-medium text-gray-100 font-minecraft">
+                            Paper
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverPaper')}</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'BUKKIT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+                    >
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/emerald.webp" alt="Bukkit" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="BUKKIT" id="bukkit" className="border-emerald-600/50" />
+                          <Label htmlFor="bukkit" className="text-base font-medium text-gray-100 font-minecraft">
+                            Bukkit
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverBukkit')}</p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </RadioGroup>
           </div>
         )}

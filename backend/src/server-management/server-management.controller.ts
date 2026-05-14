@@ -248,6 +248,8 @@ export class ServerManagementController {
           useProxy: true,
         }));
       await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+    } else {
+      await this.proxyService.clearRoutesFile();
     }
 
     return {

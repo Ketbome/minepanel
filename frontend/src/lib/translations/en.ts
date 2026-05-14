@@ -157,6 +157,7 @@ export const en = {
   serverLeaf: 'Paper fork focused on performance and low-level optimizations',
   serverFolia: 'Experimental Paper server with multi-threading support (regions)',
   selectType: 'Select server type',
+  serverTypeOthers: 'Others',
 
   // Server Actions
   startServer: 'Start Server',

@@ -126,7 +126,12 @@ export class ProxyService {
     this.logger.log(`Removed server ${serverId} from proxy`);
   }
 
-  async getServerHostname(serverId: string): Promise<string | null> {
+  async clearRoutesFile(): Promise<void> {
+    await this.saveRoutesConfig({ mappings: {} });
+    this.logger.log('Cleared proxy routes.json');
+  }
+
+  async getServerHostname(serverId: string, userId?: number): Promise<string | null> {
     const config = await this.loadRoutesConfig();
     const backend = `${serverId}:25565`;
 
@@ -137,7 +142,7 @@ export class ProxyService {
       }
     }
 
-    const proxySettings = await this.getProxySettings();
+    const proxySettings = await this.getProxySettings(userId);
     if (proxySettings.enabled && proxySettings.baseDomain) {
       return this.getConfiguredServerHostname(serverId, proxySettings.baseDomain);
     }
