@@ -357,7 +357,8 @@ export class DockerComposeService {
     }
 
     if (typeof labels === 'object') {
-      return labels['minepanel.proxy.hostname'];
+      const hostname = labels['minepanel.proxy.hostname'];
+      return hostname === undefined ? undefined : String(hostname);
     }
 
     return undefined;
@@ -372,7 +373,7 @@ export class DockerComposeService {
     }
 
     if (typeof labels === 'object' && 'minepanel.proxy.enabled' in labels) {
-      return labels['minepanel.proxy.enabled'] === 'true';
+      return String(labels['minepanel.proxy.enabled']) === 'true';
     }
 
     return true;

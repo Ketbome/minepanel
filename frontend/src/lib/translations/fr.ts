@@ -1361,6 +1361,9 @@ export const fr = {
   vanillaHardcoreDesc: 'Une seule vie. Difficulté élevée, aucune seconde chance.',
   paperPerformance: 'Performance Paper',
   paperPerformanceDesc: 'Serveur Paper optimisé avec les flags Aikar. Idéal pour les serveurs publics.',
+  paperCrossplay: 'Paper Cross-Play',
+  paperCrossplayDesc:
+    'Serveur Paper préconfiguré avec Geyser, Floodgate, ViaVersion et le port UDP Bedrock 19132.',
   skyblock: 'SkyBlock',
   skyblockDesc: 'Commencez sur une île flottante. Monde plat sans structures.',
   pvpArena: 'Arène PvP',

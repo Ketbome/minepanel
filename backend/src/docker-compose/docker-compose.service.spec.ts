@@ -94,6 +94,39 @@ describe('DockerComposeService', () => {
       expect(result?.port).toBe('25565');
       expect(result?.extraPorts).toEqual(['24454:24454/udp', '8123:8123']);
     });
+
+    it('should read object-style proxy labels with boolean enabled state', async () => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'proxy-server',
+              TYPE: 'VANILLA',
+            },
+            expose: ['25565'],
+            labels: {
+              'minepanel.proxy.enabled': true,
+              'minepanel.proxy.hostname': 'lobby',
+            },
+          },
+        },
+      };
+
+      const existsSyncMock = fs.existsSync as unknown as jest.Mock;
+      existsSyncMock.mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/proxy-server` || target === `${SERVERS_DIR}/proxy-server/docker-compose.yml`
+      );
+
+      const readFileMock = fs.readFile as unknown as jest.Mock;
+      readFileMock.mockResolvedValue(yaml.dump(compose));
+
+      const result = await service.getServerConfig('proxy-server');
+
+      expect(result).not.toBeNull();
+      expect(result?.useProxy).toBe(true);
+      expect(result?.proxyHostname).toBe('lobby');
+    });
   });
 
   describe('generateDockerComposeFile', () => {

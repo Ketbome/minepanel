@@ -29,7 +29,7 @@ flowchart LR
 | Multiple servers | Run as many as hardware allows, isolated containers                  |
 | All server types | Vanilla, Paper, Forge, Neoforge, Fabric, Purpur, GTNH, CurseForge and Modrinth modpacks |
 | Any version      | 1.8 to latest, snapshots included                                    |
-| Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, etc.              |
+| Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, Bedrock presets, and Paper cross-play |
 | Java defaults    | Global defaults for new Java servers (offline mode, resources, backup switch) |
 | Resource limits  | Set RAM, CPU per server                                              |
 
@@ -101,6 +101,7 @@ The current audit phase includes:
 | CurseForge | Mods and modpacks                    |
 | Combined   | Use both simultaneously              |
 | In-panel search | Search and add mod slugs/IDs directly from the Mods tab |
+| Cross-play template | One-click Paper preset with Geyser, Floodgate, ViaVersion, and UDP port 19132 |
 
 **→ Details:** [Mods & Plugins](/mods-plugins)
 

@@ -62,6 +62,25 @@ describe('ProxyService', () => {
     expect(hostname).toBeNull();
   });
 
+  it('returns null when object-style labels disable proxy with boolean false', async () => {
+    (fs.pathExists as jest.Mock).mockImplementation(async (target: string) => target === '/app/servers/survival/docker-compose.yml');
+    (fs.readFile as unknown as jest.Mock).mockResolvedValue(
+      yaml.dump({
+        services: {
+          mc: {
+            labels: {
+              'minepanel.proxy.enabled': false,
+            },
+          },
+        },
+      }),
+    );
+
+    const hostname = await service.getServerHostname('survival');
+
+    expect(hostname).toBeNull();
+  });
+
   it('uses custom server hostname when no route mapping exists yet', async () => {
     (fs.pathExists as jest.Mock).mockImplementation(async (target: string) => target === '/app/servers/survival/docker-compose.yml');
     (fs.readFile as unknown as jest.Mock).mockResolvedValue(
@@ -69,6 +88,26 @@ describe('ProxyService', () => {
         services: {
           mc: {
             labels: ['minepanel.proxy.enabled=true', 'minepanel.proxy.hostname=lobby'],
+          },
+        },
+      }),
+    );
+
+    const hostname = await service.getServerHostname('survival');
+
+    expect(hostname).toBe('lobby.proxy.test');
+  });
+
+  it('uses object-style hostname labels when no route mapping exists yet', async () => {
+    (fs.pathExists as jest.Mock).mockImplementation(async (target: string) => target === '/app/servers/survival/docker-compose.yml');
+    (fs.readFile as unknown as jest.Mock).mockResolvedValue(
+      yaml.dump({
+        services: {
+          mc: {
+            labels: {
+              'minepanel.proxy.enabled': true,
+              'minepanel.proxy.hostname': 'lobby',
+            },
           },
         },
       }),

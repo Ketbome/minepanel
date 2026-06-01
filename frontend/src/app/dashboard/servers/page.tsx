@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
 import { useServersStore } from "@/lib/store/servers-store";
-import { serverTemplates, ServerTemplate } from "@/lib/server-templates";
+import { getTemplatesByEdition, ServerTemplate } from "@/lib/server-templates";
 import { ServerEdition } from "@/lib/types/types";
 import { TranslationKey } from "@/lib/translations";
 import { getCurrentUser } from "@/services/users/users.service";
@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
   const [selectedEdition, setSelectedEdition] = useState<ServerEdition>("JAVA");
   const [canCreateServers, setCanCreateServers] = useState(false);
+  const availableTemplates = getTemplatesByEdition(selectedEdition);
 
   const form = useForm<{ id: string }>({
     defaultValues: {
@@ -275,7 +276,7 @@ export default function Dashboard() {
                   <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                     <p className="text-sm text-gray-400 mb-2">{t("selectTemplate")}</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {serverTemplates.map((template) => (
+                      {availableTemplates.map((template) => (
                         <button key={template.id} type="button" onClick={() => setSelectedTemplate(template)} className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate?.id === template.id ? "border-emerald-500 bg-emerald-900/30" : "border-gray-700 bg-gray-800/50 hover:border-gray-600"}`}>
                           <div className="flex items-start gap-2">
                             <Image src={`/images/${template.icon}.webp`} alt={template.name} width={24} height={24} className="mt-0.5" />
@@ -309,7 +310,10 @@ export default function Dashboard() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setSelectedEdition("JAVA")}
+                      onClick={() => {
+                        setSelectedEdition("JAVA");
+                        setSelectedTemplate(null);
+                      }}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                         selectedEdition === "JAVA"
                           ? "border-emerald-500 bg-emerald-900/30"
@@ -325,7 +329,10 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSelectedEdition("BEDROCK")}
+                      onClick={() => {
+                        setSelectedEdition("BEDROCK");
+                        setSelectedTemplate(null);
+                      }}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                         selectedEdition === "BEDROCK"
                           ? "border-emerald-500 bg-emerald-900/30"
