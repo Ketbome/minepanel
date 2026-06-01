@@ -216,5 +216,19 @@ describe('DockerComposeService', () => {
 
       expect(parsed.services.mc.restart).toBe('no');
     });
+
+    it('should generate valid yaml for docker labels with urls when proxy labels are also present', async () => {
+      const config = (service as any).createDefaultConfig('label-server');
+      config.dockerLabels = 'example.label=https://example.com/icon.png';
+
+      await service.generateDockerComposeFile(config, true);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.labels['example.label']).toBe('https://example.com/icon.png');
+      expect(parsed.services.mc.labels['minepanel.proxy.enabled']).toBe('true');
+    });
   });
 });
