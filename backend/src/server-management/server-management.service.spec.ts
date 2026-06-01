@@ -432,6 +432,26 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('getServerProxyHostname', () => {
+    it('should read custom hostname from object-style labels', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readFile as any).mockResolvedValue(`services:\n  mc:\n    labels:\n      minepanel.proxy.hostname: crossplay\n`);
+
+      const result = await (service as any).getServerProxyHostname('myserver', 'example.com');
+
+      expect(result).toBe('crossplay');
+    });
+
+    it('should return null when object-style labels disable proxy', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readFile as any).mockResolvedValue(`services:\n  mc:\n    labels:\n      minepanel.proxy.enabled: 'false'\n`);
+
+      const result = await (service as any).getServerProxyHostname('myserver', 'example.com');
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('getWhitelist', () => {
     it('should return empty array when whitelist does not exist', async () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(false);

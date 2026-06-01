@@ -1392,6 +1392,9 @@ export const nl: Record<TranslationKey, string> = {
   paperPerformance: 'Paper Prestatie',
   paperPerformanceDesc:
     'Geoptimaliseerde Paper-server met Aikar-vlaggen. Ideaal voor openbare servers.',
+  paperCrossplay: 'Paper Cross-Play',
+  paperCrossplayDesc:
+    'Paper-server met vooraf ingestelde Geyser, Floodgate, ViaVersion en Bedrock UDP-poort 19132.',
   skyblock: 'SkyBlock',
   skyblockDesc: 'Begin op een zwevend eiland. Vlakke wereld zonder structuren.',
   pvpArena: 'PvP Arena',

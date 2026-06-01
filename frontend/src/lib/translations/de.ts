@@ -1385,6 +1385,9 @@ export const de: Record<TranslationKey, string> = {
   vanillaHardcoreDesc: 'Nur ein Leben. Schwerer Schwierigkeitsgrad, keine zweiten Chancen.',
   paperPerformance: 'Paper Leistung',
   paperPerformanceDesc: 'Optimierter Paper-Server mit Aikar-Flags. Ideal für öffentliche Server.',
+  paperCrossplay: 'Paper Cross-Play',
+  paperCrossplayDesc:
+    'Paper-Server mit vorkonfiguriertem Geyser, Floodgate, ViaVersion und Bedrock-UDP-Port 19132.',
   skyblock: 'SkyBlock',
   skyblockDesc: 'Starten Sie auf einer schwebenden Insel. Flache Welt ohne Strukturen.',
   pvpArena: 'PvP Arena',

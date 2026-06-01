@@ -607,12 +607,23 @@ export class ServerManagementService {
           }
         }
 
+        if (labels && typeof labels === 'object') {
+          const hostnameLabel = labels['minepanel.proxy.hostname'];
+          if (typeof hostnameLabel === 'string' && hostnameLabel.length > 0) {
+            return hostnameLabel;
+          }
+        }
+
         // Check if server has proxy disabled
         if (Array.isArray(labels)) {
           const enabledLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.enabled='));
           if (enabledLabel?.split('=')[1] === 'false') {
             return null; // Server has proxy disabled
           }
+        }
+
+        if (labels && typeof labels === 'object' && labels['minepanel.proxy.enabled'] === 'false') {
+          return null;
         }
       }
       // Default: generate hostname from serverId

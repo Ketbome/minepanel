@@ -61,6 +61,19 @@ flowchart LR
 For advanced options and all environment variables, see the [docker-minecraft-server mods documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/).
 :::
 
+### Paper Cross-Play Template
+
+If you want a Java server that also accepts Bedrock players, Minepanel now includes a **Paper Cross-Play** template in **Create Server -> From Template**.
+
+It preconfigures:
+
+- `Geyser`
+- `Floodgate`
+- `ViaVersion`
+- `19132:19132/udp` as an extra port for Bedrock connections
+
+This is a preset for faster setup. You can still edit the plugin URLs or extra ports later from the server configuration tabs.
+
 ## Integrated Mod Search in Minepanel
 
 Minepanel includes an integrated search dialog in the **Mods** tab for both **CurseForge Files** and **Modrinth Projects**.

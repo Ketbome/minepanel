@@ -1380,6 +1380,9 @@ export const es: Record<TranslationKey, string> = {
   paperPerformance: 'Paper Rendimiento',
   paperPerformanceDesc:
     'Servidor Paper optimizado con flags Aikar. Ideal para servidores públicos.',
+  paperCrossplay: 'Paper Cross-Play',
+  paperCrossplayDesc:
+    'Servidor Paper preconfigurado con Geyser, Floodgate, ViaVersion y el puerto UDP 19132 para Bedrock.',
   skyblock: 'SkyBlock',
   skyblockDesc: 'Comienza en una isla flotante. Mundo plano sin estructuras.',
   pvpArena: 'Arena PvP',

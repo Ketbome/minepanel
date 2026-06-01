@@ -158,7 +158,7 @@ export class ProxyService {
       }
 
       const content = await fs.readFile(dockerComposePath, 'utf8');
-      const compose = yaml.load(content) as { services?: { mc?: { labels?: string[] | Record<string, string> } } };
+      const compose = yaml.load(content) as { services?: { mc?: { labels?: string[] | Record<string, string | boolean> } } };
       const labels = compose?.services?.mc?.labels;
       const getLabel = (key: string): string | undefined => {
         if (Array.isArray(labels)) {
@@ -166,7 +166,8 @@ export class ProxyService {
         }
 
         if (labels && typeof labels === 'object') {
-          return labels[key];
+          const value = labels[key];
+          return value === undefined ? undefined : String(value);
         }
 
         return undefined;
