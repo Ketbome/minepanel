@@ -405,6 +405,19 @@ export class DockerComposeService {
     return labels.length > 0 ? labels : undefined;
   }
 
+  private buildDockerLabels(labels: string[]): Record<string, string> {
+    return Object.fromEntries(
+      labels.map((label) => {
+        const separatorIndex = label.indexOf('=');
+        if (separatorIndex === -1) {
+          return [label, ''];
+        }
+
+        return [label.slice(0, separatorIndex), label.slice(separatorIndex + 1)];
+      }),
+    );
+  }
+
   private parseServerTypeSpecificConfig(serverConfig: ServerConfig, env: any): void {
     const typeHandlers = {
       FORGE: () => {
@@ -1282,7 +1295,7 @@ export class DockerComposeService {
 
     const allLabels = [...userLabels, ...proxyLabels];
     if (allLabels.length > 0) {
-      mcService.labels = allLabels;
+      mcService.labels = this.buildDockerLabels(allLabels);
     }
 
     const result: any = {
@@ -1392,21 +1405,7 @@ export class DockerComposeService {
       await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir, useProxy);
     }
 
-    let yamlContent = yaml.dump(dockerComposeConfig);
-
-    // Wrap label values in single quotes to handle special characters (backticks, etc.)
-    yamlContent = yamlContent.replaceAll(/^(\s+labels:\n)((?:\s+-\s+.+\n)+)/gm, (match, labelsHeader, labelsBlock) => {
-      const quotedLabels = labelsBlock.replaceAll(/^(\s+-\s+)(.+)$/gm, (_, prefix, value) => {
-        // Skip if already quoted
-        if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
-          return `${prefix}${value}`;
-        }
-        // Escape single quotes in value and wrap
-        const escaped = value.replaceAll('\'', "''");
-        return `${prefix}'${escaped}'`;
-      });
-      return labelsHeader + quotedLabels;
-    });
+    const yamlContent = yaml.dump(dockerComposeConfig, { lineWidth: -1 });
 
     await fs.writeFile(this.getDockerComposePath(normalizedConfig.id), yamlContent);
   }
