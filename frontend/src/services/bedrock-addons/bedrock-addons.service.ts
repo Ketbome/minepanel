@@ -94,4 +94,9 @@ export const bedrockAddonsService = {
   async remove(serverId: string, addonId: string): Promise<void> {
     await api.delete(`/bedrock-addons/${serverId}/${addonId}`);
   },
+
+  async reorder(serverId: string, addonIds: string[]): Promise<{ success: boolean; levelName: string; addons: BedrockAddon[] }> {
+    const { data } = await api.put(`/bedrock-addons/${serverId}/order`, { addonIds });
+    return data;
+  },
 };

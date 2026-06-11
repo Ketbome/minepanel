@@ -1519,6 +1519,14 @@ export const nl: Record<TranslationKey, string> = {
   bedrockAddonsProcessingEnable: 'Addon inschakelen en packs toepassen op de wereld...',
   bedrockAddonsProcessingDisable: 'Addon uitschakelen en de wereld-pack-stack opnieuw opbouwen...',
   bedrockAddonsProcessingDelete: 'Addon verwijderen en gesynchroniseerde packs opschonen...',
+  bedrockAddonsPriorityHint: 'Sleep om te herschikken. De bovenste addon heeft de hoogste prioriteit en overschrijft de packs eronder.',
+  bedrockAddonsReorderSuccess: 'Addon-prioriteit bijgewerkt',
+  bedrockAddonsReorderError: 'Kon de addon-prioriteit niet bijwerken',
+  bedrockAddonsMoveUp: 'Omhoog',
+  bedrockAddonsMoveDown: 'Omlaag',
+  bedrockAddonsDragHandle: 'Sleep om te herschikken',
+  bedrockAddonsClearSearch: 'Zoekopdracht wissen',
+  bedrockAddonsDeleteConfirmDesc: 'Dit verwijdert de addon-bestanden en ontkoppelt de packs van de actieve wereld.',
 
   // Worlds tab
   worlds: 'Werelden',

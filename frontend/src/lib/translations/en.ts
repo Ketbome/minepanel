@@ -1485,6 +1485,14 @@ export const en = {
   bedrockAddonsProcessingEnable: 'Enabling the addon and applying packs to the world...',
   bedrockAddonsProcessingDisable: 'Disabling the addon and rebuilding the world pack stack...',
   bedrockAddonsProcessingDelete: 'Deleting the addon and cleaning synced packs...',
+  bedrockAddonsPriorityHint: 'Drag to reorder. The top addon has the highest priority and overrides the packs below it.',
+  bedrockAddonsReorderSuccess: 'Addon priority updated',
+  bedrockAddonsReorderError: 'Could not update addon priority',
+  bedrockAddonsMoveUp: 'Move up',
+  bedrockAddonsMoveDown: 'Move down',
+  bedrockAddonsDragHandle: 'Drag to reorder',
+  bedrockAddonsClearSearch: 'Clear search',
+  bedrockAddonsDeleteConfirmDesc: 'This removes the addon files and unlinks its packs from the active world.',
 
   // Worlds tab
   worlds: 'Worlds',

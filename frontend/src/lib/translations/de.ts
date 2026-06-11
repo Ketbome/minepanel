@@ -1514,6 +1514,14 @@ export const de: Record<TranslationKey, string> = {
   bedrockAddonsProcessingEnable: 'Addon wird aktiviert und auf die Welt angewendet...',
   bedrockAddonsProcessingDisable: 'Addon wird deaktiviert und der Welt-Pack-Stack neu aufgebaut...',
   bedrockAddonsProcessingDelete: 'Addon wird gelöscht und synchronisierte Packs werden bereinigt...',
+  bedrockAddonsPriorityHint: 'Zum Neuordnen ziehen. Das oberste Addon hat die höchste Priorität und überschreibt die Packs darunter.',
+  bedrockAddonsReorderSuccess: 'Addon-Priorität aktualisiert',
+  bedrockAddonsReorderError: 'Addon-Priorität konnte nicht aktualisiert werden',
+  bedrockAddonsMoveUp: 'Nach oben',
+  bedrockAddonsMoveDown: 'Nach unten',
+  bedrockAddonsDragHandle: 'Zum Neuordnen ziehen',
+  bedrockAddonsClearSearch: 'Suche löschen',
+  bedrockAddonsDeleteConfirmDesc: 'Dies entfernt die Addon-Dateien und trennt seine Packs von der aktiven Welt.',
 
   // Worlds tab
   worlds: 'Welten',

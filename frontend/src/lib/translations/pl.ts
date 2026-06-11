@@ -1493,6 +1493,14 @@ export const pl: Record<TranslationKey, string> = {
   bedrockAddonsProcessingEnable: 'Włączanie dodatku i stosowanie paczek do świata...',
   bedrockAddonsProcessingDisable: 'Wyłączanie dodatku i odbudowywanie stosu paczek świata...',
   bedrockAddonsProcessingDelete: 'Usuwanie dodatku i czyszczenie zsynchronizowanych paczek...',
+  bedrockAddonsPriorityHint: 'Przeciągnij, aby zmienić kolejność. Dodatek na górze ma najwyższy priorytet i nadpisuje paczki poniżej.',
+  bedrockAddonsReorderSuccess: 'Priorytet dodatków zaktualizowany',
+  bedrockAddonsReorderError: 'Nie udało się zaktualizować priorytetu dodatków',
+  bedrockAddonsMoveUp: 'Przenieś wyżej',
+  bedrockAddonsMoveDown: 'Przenieś niżej',
+  bedrockAddonsDragHandle: 'Przeciągnij, aby zmienić kolejność',
+  bedrockAddonsClearSearch: 'Wyczyść wyszukiwanie',
+  bedrockAddonsDeleteConfirmDesc: 'To usunie pliki dodatku i odłączy jego paczki od aktywnego świata.',
 
   // Worlds tab
   worlds: 'Światy',

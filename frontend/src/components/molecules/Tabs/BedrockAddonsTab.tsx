@@ -1,8 +1,19 @@
 "use client";
 
 import axios from "axios";
-import { ChangeEvent, FC, useCallback, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FC, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Reorder } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +25,8 @@ import {
   BedrockAddonSearchItem,
   bedrockAddonsService,
 } from "@/services/bedrock-addons/bedrock-addons.service";
-import { CheckCircle2, ChevronLeft, ChevronRight, CircleOff, Download, ExternalLink, FileArchive, Loader2, Package, Search, Trash2, Upload } from "lucide-react";
+import { ArrowUpNarrowWide, ChevronLeft, ChevronRight, Download, ExternalLink, FileArchive, Loader2, Package, Search, Upload, X } from "lucide-react";
+import { BedrockAddonItem, normalizeAddonText } from "./BedrockAddonItem";
 
 interface BedrockAddonsTabProps {
   serverId: string;
@@ -22,14 +34,8 @@ interface BedrockAddonsTabProps {
 }
 
 const SEARCH_PAGE_SIZE = 8;
+const REORDER_COMMIT_DELAY = 500;
 const BEDROCK_ADDONS_DOCS_URL = "https://minepanel.ketbome.com/mods-plugins#bedrock-addons";
-
-const normalizeAddonText = (value: string) =>
-  value
-    .replace(/§./g, "")
-    .replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
 
 export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshToken = 0 }) => {
   const { t } = useLanguage();
@@ -45,22 +51,24 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
   const [searching, setSearching] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [blockingMessage, setBlockingMessage] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const [addonPendingDelete, setAddonPendingDelete] = useState<BedrockAddon | null>(null);
+
+  const addonsRef = useRef<BedrockAddon[]>([]);
+  const lastSyncedOrderRef = useRef<BedrockAddon[]>([]);
+  const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  addonsRef.current = addons;
 
   const isBusy = blockingMessage !== null;
 
   const canGoPrevious = searchIndex > 0;
   const canGoNext = searchIndex + SEARCH_PAGE_SIZE < searchTotalCount;
 
-  const sortedAddons = useMemo(
-    () => [...addons].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
-    [addons],
-  );
-
   const selectedFileName = selectedFile ? normalizeAddonText(selectedFile.name) : null;
 
   const getErrorMessage = useCallback((error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
-      const message = error.response?.data?.message;
+      const message = error.response?.data?.message ?? error.response?.data?.error;
       if (Array.isArray(message)) {
         return message.join("\n");
       }
@@ -84,6 +92,7 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
     try {
       const response = await bedrockAddonsService.list(serverId);
       setAddons(response.addons);
+      lastSyncedOrderRef.current = response.addons;
       setLevelName(response.levelName);
     } catch (error) {
       console.error("Error loading Bedrock addons:", error);
@@ -94,6 +103,67 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
       }
     }
   }, [getErrorMessage, serverId, t]);
+
+  const commitOrder = useCallback(async () => {
+    const next = addonsRef.current;
+    const previous = lastSyncedOrderRef.current;
+    const sameOrder = next.length === previous.length && next.every((addon, index) => addon.id === previous[index]?.id);
+    if (sameOrder) {
+      return;
+    }
+
+    setReordering(true);
+    try {
+      const response = await bedrockAddonsService.reorder(serverId, next.map((addon) => addon.id));
+      setAddons(response.addons);
+      lastSyncedOrderRef.current = response.addons;
+      mcToast.success(t("bedrockAddonsReorderSuccess"));
+    } catch (error) {
+      console.error("Error reordering Bedrock addons:", error);
+      setAddons(previous);
+      mcToast.error(getErrorMessage(error, t("bedrockAddonsReorderError")));
+    } finally {
+      setReordering(false);
+    }
+  }, [getErrorMessage, serverId, t]);
+
+  const scheduleCommitOrder = useCallback(() => {
+    if (reorderTimerRef.current) {
+      clearTimeout(reorderTimerRef.current);
+    }
+    reorderTimerRef.current = setTimeout(() => {
+      reorderTimerRef.current = null;
+      commitOrder();
+    }, REORDER_COMMIT_DELAY);
+  }, [commitOrder]);
+
+  useEffect(() => () => {
+    if (reorderTimerRef.current) {
+      clearTimeout(reorderTimerRef.current);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (reorderTimerRef.current) {
+      clearTimeout(reorderTimerRef.current);
+      reorderTimerRef.current = null;
+    }
+    commitOrder();
+  }, [commitOrder]);
+
+  const handleMove = useCallback((addon: BedrockAddon, direction: -1 | 1) => {
+    const current = addonsRef.current;
+    const index = current.findIndex((item) => item.id === addon.id);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= current.length) {
+      return;
+    }
+
+    const next = [...current];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    setAddons(next);
+    scheduleCommitOrder();
+  }, [scheduleCommitOrder]);
 
   useEffect(() => {
     loadAddons();
@@ -189,11 +259,7 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
   };
 
   const handleDelete = async (addon: BedrockAddon) => {
-    const confirmed = window.confirm(`${t("deleteConfirmMessage")} ${addon.name}?`);
-    if (!confirmed) {
-      return;
-    }
-
+    setAddonPendingDelete(null);
     setActionId(`delete-${addon.id}`);
     setBlockingMessage(t("bedrockAddonsProcessingDelete"));
     try {
@@ -300,8 +366,24 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
                     onKeyDown={(event) => event.key === "Enter" && runSearch(0)}
                     placeholder={t("bedrockAddonsSearchPlaceholder")}
                     disabled={isBusy}
-                    className="h-11 rounded-xl border-gray-700/80 bg-gray-900/70 pl-9 text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+                    className={`h-11 rounded-xl border-gray-700/80 bg-gray-900/70 pl-9 text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] ${searchQuery ? "pr-9" : ""}`}
                   />
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      aria-label={t("bedrockAddonsClearSearch")}
+                      disabled={isBusy}
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchResults([]);
+                        setSearchIndex(0);
+                        setSearchTotalCount(0);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-gray-400 transition-colors hover:text-emerald-300 disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
                 </div>
                 <Button type="button" variant="minepanelOutline" onClick={() => runSearch(0)} disabled={searching || isBusy} className="h-11 px-4 font-minecraft text-cyan-300 hover:border-cyan-500/60 hover:bg-cyan-950/30 hover:text-cyan-200">
                   {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -360,67 +442,64 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
               <div className="py-10 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
               </div>
-            ) : sortedAddons.length === 0 ? (
+            ) : addons.length === 0 ? (
               <p className="text-sm text-gray-400">{t("bedrockAddonsEmpty")}</p>
             ) : (
-              <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">
-                {sortedAddons.map((addon) => (
-                  <div key={addon.id} className="rounded-xl border border-gray-700/70 bg-linear-to-br from-gray-900/65 to-slate-950/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] transition-colors hover:border-emerald-500/25">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium text-gray-100">{normalizeAddonText(addon.name)}</p>
-                          <Badge variant="outline" className={addon.enabled ? "rounded-full border-emerald-500/40 bg-emerald-950/35 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.12em] text-emerald-300" : "rounded-full border-gray-600 bg-gray-900/70 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.12em] text-gray-300"}>
-                            {addon.enabled ? t("bedrockAddonsEnabledBadge") : t("bedrockAddonsDisabledBadge")}
-                          </Badge>
-                          <Badge variant="outline" className="rounded-full border-cyan-500/40 bg-cyan-950/25 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.12em] text-cyan-300">
-                            {addon.source === "curseforge" ? "CurseForge" : t("upload")}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">{addon.fileName}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-wide text-gray-400">{t("bedrockAddonsDetectedPacks")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {addon.packs.map((pack) => (
-                          <Badge key={`${addon.id}-${pack.kind}-${pack.uuid}`} variant="outline" className="rounded-full border-gray-600/80 bg-gray-900/80 px-3 py-1 text-gray-200">
-                            {pack.kind === "behavior" ? "BP" : "RP"} · {normalizeAddonText(pack.name)}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col justify-end gap-2 sm:flex-row">
-                      <Button
-                        type="button"
-                        variant={addon.enabled ? "minepanelOutline" : "minepanel"}
-                        onClick={() => handleToggle(addon)}
-                        disabled={actionId === addon.id || isBusy}
-                        className={addon.enabled ? "font-minecraft text-emerald-300 hover:border-emerald-400/60 hover:bg-emerald-950/30 hover:text-emerald-200" : "font-minecraft"}
-                      >
-                        {actionId === addon.id ? <Loader2 className="h-4 w-4 animate-spin" /> : addon.enabled ? <CircleOff className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                        {addon.enabled ? t("bedrockAddonsDisableButton") : t("bedrockAddonsEnableButton")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="minepanelDanger"
-                        onClick={() => handleDelete(addon)}
-                        disabled={actionId === `delete-${addon.id}` || isBusy}
-                        className="font-minecraft"
-                      >
-                        {actionId === `delete-${addon.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        {t("delete")}
-                      </Button>
-                    </div>
+              <>
+                {addons.length > 1 ? (
+                  <div className="flex items-start gap-2 rounded-lg border border-emerald-900/40 bg-emerald-950/20 px-3 py-2">
+                    <ArrowUpNarrowWide className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                    <p className="text-xs leading-relaxed text-gray-300">{t("bedrockAddonsPriorityHint")}</p>
                   </div>
-                ))}
-              </div>
+                ) : null}
+                <Reorder.Group
+                  as="div"
+                  axis="y"
+                  values={addons}
+                  onReorder={setAddons}
+                  className="space-y-3 max-h-[32rem] overflow-y-auto pr-1"
+                >
+                  {addons.map((addon, index) => (
+                    <BedrockAddonItem
+                      key={addon.id}
+                      addon={addon}
+                      index={index}
+                      total={addons.length}
+                      disabled={isBusy || reordering}
+                      actionId={actionId}
+                      onToggle={handleToggle}
+                      onRequestDelete={setAddonPendingDelete}
+                      onMove={handleMove}
+                      onDragEnd={handleDragEnd}
+                    />
+                  ))}
+                </Reorder.Group>
+              </>
             )}
           </div>
         </div>
       </CardContent>
+
+      <AlertDialog open={addonPendingDelete !== null} onOpenChange={(open) => !open && setAddonPendingDelete(null)}>
+        <AlertDialogContent className="bg-gray-900 border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-400 font-minecraft">{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              {addonPendingDelete ? `${t("deleteConfirmMessage")} ${normalizeAddonText(addonPendingDelete.name)}?` : null}
+              <span className="mt-2 block text-sm text-gray-400">{t("bedrockAddonsDeleteConfirmDesc")}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600">{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => addonPendingDelete && handleDelete(addonPendingDelete)}
+              className="bg-red-700 hover:bg-red-800 text-white border-red-900/50 font-minecraft"
+            >
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
