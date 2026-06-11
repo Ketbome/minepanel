@@ -554,6 +554,25 @@ Or set it in Minepanel's **Bedrock** settings tab.
 
 Players will be prompted to download resource packs when connecting.
 
+### Addon Priority
+
+When two addons modify the same content, their order decides which one wins. The **Addons** tab lets you reorder installed addons just like the pack screen in vanilla Minecraft:
+
+- **Drag** an addon by its handle, or use the **up/down arrows**.
+- The addon at the **top of the list has the highest priority** and overrides the packs below it.
+- Each card shows its current priority (`#1`, `#2`, ...).
+
+When you change the order, Minepanel rewrites the world pack files for the active world:
+
+- `worlds/<level-name>/world_behavior_packs.json`
+- `worlds/<level-name>/world_resource_packs.json`
+
+Managed addon packs are written first, in priority order. Packs you installed manually (outside the Addons tab) are preserved after them, with lower priority.
+
+::: tip
+Restart the server after reordering so the new priority takes effect in-game. Priority applies to the active world only.
+:::
+
 ### Example: Installing One Player Sleep
 
 1. Open the server's **Addons** tab
