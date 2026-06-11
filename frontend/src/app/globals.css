@@ -297,3 +297,58 @@
 .animate-loading-bar {
   animation: loading-bar 2.5s ease-in-out infinite;
 }
+
+/* End portal easter egg animations */
+@keyframes portal-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ender-drift {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(10px, -60px);
+  }
+  100% {
+    transform: translate(-10px, -120px);
+    opacity: 0;
+  }
+}
+
+.animate-portal-spin {
+  animation: portal-spin 6s linear infinite;
+  will-change: transform;
+}
+
+.animate-portal-spin-reverse {
+  animation: portal-spin 9s linear infinite reverse;
+  will-change: transform;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-ender-drift {
+  animation: ender-drift 4s ease-in-out infinite;
+}
