@@ -352,3 +352,38 @@
 .animate-ender-drift {
   animation: ender-drift 4s ease-in-out infinite;
 }
+
+/* Voxel ender dragon wing flap: --wing-z anchors the wing to the body flank,
+   --flap-dir mirrors the rotation for the opposite wing */
+@keyframes wing-flap {
+  0%,
+  100% {
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 55deg));
+  }
+  50% {
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 125deg));
+  }
+}
+
+.animate-wing-flap {
+  animation: wing-flap 1.1s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+/* Zero-gravity limb flail for the floating enderman */
+@keyframes limb-sway {
+  0%,
+  100% {
+    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * 10deg));
+  }
+  50% {
+    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * -16deg));
+  }
+}
+
+.animate-limb-sway {
+  animation: limb-sway 1.6s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}
