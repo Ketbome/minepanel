@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EndPortalEasterEgg } from '@/components/organisms/settings/EndPortalEasterEgg';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 export default function DangerSettingsPage() {
@@ -25,6 +26,9 @@ export default function DangerSettingsPage() {
         <div className="py-4 text-center">
           <Image src="/images/barrier.webp" alt="Danger" width={48} height={48} className="mx-auto mb-3 opacity-60" />
           <p className="text-sm text-gray-400">{t('comingSoon')}</p>
+          <div className="mt-6">
+            <EndPortalEasterEgg />
+          </div>
         </div>
       </CardContent>
     </Card>

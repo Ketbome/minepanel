@@ -43,6 +43,8 @@ export interface BedrockAddonRegistry {
   addons: BedrockAddonRecord[];
 }
 
+export const MAX_BEDROCK_ADDON_SIZE = 128 * 1024 * 1024;
+
 export interface AddonSearchResult {
   projectId: string;
   fileId?: number;
@@ -83,7 +85,8 @@ export class BedrockAddonsService {
 
     return {
       levelName,
-      addons: registry.addons.sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+      // Registry array order is the priority order (index 0 = highest priority)
+      addons: registry.addons,
     };
   }
 
@@ -94,7 +97,7 @@ export class BedrockAddonsService {
 
     await this.ensureServerDirectories(serverId);
     const downloadsDir = this.getDownloadsPath(serverId);
-    const safeFileName = this.resolveAvailableFileName(downloadsDir, this.sanitizeFileName(file.originalname || 'addon.zip'));
+    const safeFileName = await this.resolveAvailableFileName(downloadsDir, this.sanitizeFileName(file.originalname || 'addon.zip'));
     const downloadPath = path.join(downloadsDir, safeFileName);
     await fs.writeFile(downloadPath, file.buffer);
 
@@ -177,13 +180,15 @@ export class BedrockAddonsService {
       }
 
       const downloadsDir = this.getDownloadsPath(serverId);
-      const safeFileName = this.resolveAvailableFileName(downloadsDir, this.sanitizeFileName(file.fileName || `curseforge-addon-${projectId}.zip`));
+      const safeFileName = await this.resolveAvailableFileName(downloadsDir, this.sanitizeFileName(file.fileName || `curseforge-addon-${projectId}.zip`));
       const destinationPath = path.join(downloadsDir, safeFileName);
 
       const response = await axios.get(file.downloadUrl, {
         responseType: 'arraybuffer',
         timeout: 60000,
         maxRedirects: 5,
+        maxContentLength: MAX_BEDROCK_ADDON_SIZE,
+        maxBodyLength: MAX_BEDROCK_ADDON_SIZE,
         validateStatus: (status) => status >= 200 && status < 300,
       });
 
@@ -236,14 +241,40 @@ export class BedrockAddonsService {
       throw new NotFoundException('Addon not found');
     }
 
+    await fs.remove(path.join(this.getExtractedPath(serverId), addonId));
+
+    const addonsPath = this.getAddonsPath(serverId);
+    const downloadFile = path.resolve(addonsPath, addon.downloadPath ?? '');
+    if (downloadFile.startsWith(addonsPath + path.sep)) {
+      await fs.remove(downloadFile);
+    } else {
+      this.logger.warn(`Skipping unsafe addon download path for ${addonId}: ${addon.downloadPath}`);
+    }
+
     registry.addons = registry.addons.filter((item) => item.id !== addonId);
     await this.writeRegistry(serverId, registry);
-
-    await fs.remove(path.join(this.getExtractedPath(serverId), addonId));
-    await fs.remove(path.join(this.getAddonsPath(serverId), addon.downloadPath));
     const levelName = await this.syncAddonState(serverId, registry);
 
     return { success: true, levelName };
+  }
+
+  async reorderAddons(serverId: string, addonIds: string[]) {
+    await this.ensureServerDirectories(serverId);
+    const registry = await this.readRegistry(serverId);
+
+    const byId = new Map(registry.addons.map((addon) => [addon.id, addon]));
+    const uniqueIds = new Set(addonIds);
+    const coversRegistry = addonIds.length === registry.addons.length && uniqueIds.size === addonIds.length && addonIds.every((id) => byId.has(id));
+
+    if (!coversRegistry) {
+      throw new BadRequestException('Addon order must include every installed addon exactly once');
+    }
+
+    registry.addons = addonIds.map((id) => byId.get(id));
+    await this.writeRegistry(serverId, registry);
+    const levelName = await this.syncAddonState(serverId, registry);
+
+    return { success: true, levelName, addons: registry.addons };
   }
 
   async clearAddonRuntimeState(serverId: string) {
@@ -566,7 +597,8 @@ export class BedrockAddonsService {
   ) {
     const existing = await this.readWorldPackEntries(filePath);
     const preserved = existing.filter((entry) => !managedUuids.has(entry.pack_id));
-    const merged = [...preserved, ...nextEntries];
+    // Managed packs first, in registry priority order; manually installed packs keep lower priority
+    const merged = [...nextEntries, ...preserved];
     await fs.writeJson(filePath, merged, { spaces: 2 });
   }
 
@@ -860,12 +892,12 @@ export class BedrockAddonsService {
     return sanitized || 'addon.zip';
   }
 
-  private resolveAvailableFileName(dirPath: string, fileName: string) {
+  private async resolveAvailableFileName(dirPath: string, fileName: string) {
     const parsed = path.parse(fileName);
     let candidate = `${parsed.name}${parsed.ext}`;
     let counter = 1;
 
-    while (fs.existsSync(path.join(dirPath, candidate))) {
+    while (await fs.pathExists(path.join(dirPath, candidate))) {
       candidate = `${parsed.name}-${counter}${parsed.ext}`;
       counter += 1;
     }

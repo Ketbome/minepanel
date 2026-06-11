@@ -297,3 +297,93 @@
 .animate-loading-bar {
   animation: loading-bar 2.5s ease-in-out infinite;
 }
+
+/* End portal easter egg animations */
+@keyframes portal-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ender-drift {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(10px, -60px);
+  }
+  100% {
+    transform: translate(-10px, -120px);
+    opacity: 0;
+  }
+}
+
+.animate-portal-spin {
+  animation: portal-spin 6s linear infinite;
+  will-change: transform;
+}
+
+.animate-portal-spin-reverse {
+  animation: portal-spin 9s linear infinite reverse;
+  will-change: transform;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-ender-drift {
+  animation: ender-drift 4s ease-in-out infinite;
+}
+
+/* Voxel ender dragon wing flap: --wing-z anchors the wing to the body flank,
+   --flap-dir mirrors the rotation for the opposite wing */
+@keyframes wing-flap {
+  0%,
+  100% {
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 55deg));
+  }
+  50% {
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 125deg));
+  }
+}
+
+.animate-wing-flap {
+  animation: wing-flap 1.1s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+/* Zero-gravity limb flail for the floating enderman */
+@keyframes limb-sway {
+  0%,
+  100% {
+    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * 10deg));
+  }
+  50% {
+    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * -16deg));
+  }
+}
+
+.animate-limb-sway {
+  animation: limb-sway 1.6s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}

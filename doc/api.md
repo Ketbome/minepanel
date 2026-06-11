@@ -187,6 +187,10 @@ Bedrock addon management:
 - `POST /bedrock-addons/:serverId/upload`
 - `GET /bedrock-addons/:serverId/curseforge/search`
 - `POST /bedrock-addons/:serverId/curseforge/import`
+- `PUT /bedrock-addons/:serverId/order` — body `{ "addonIds": ["..."] }` with every installed addon ID in priority order (first = highest priority)
+- `POST /bedrock-addons/:serverId/:addonId/enable`
+- `POST /bedrock-addons/:serverId/:addonId/disable`
+- `DELETE /bedrock-addons/:serverId/:addonId`
 
 ### Proxy
 

@@ -6,6 +6,7 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
+  Put,
   Query,
   Request,
   UploadedFile,
@@ -16,11 +17,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
-import { BedrockAddonsService } from './bedrock-addons.service';
+import { BedrockAddonsService, MAX_BEDROCK_ADDON_SIZE } from './bedrock-addons.service';
 import { SearchBedrockAddonsQueryDto } from './dto/search-bedrock-addons.query.dto';
 import { ImportBedrockAddonDto } from './dto/import-bedrock-addon.dto';
-
-const MAX_BEDROCK_ADDON_UPLOAD_SIZE = 128 * 1024 * 1024;
+import { ReorderBedrockAddonsDto } from './dto/reorder-bedrock-addons.dto';
 
 @Controller('bedrock-addons')
 @UseGuards(JwtAuthGuard)
@@ -38,7 +38,7 @@ export class BedrockAddonsController {
     @Param('serverId') serverId: string,
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addMaxSizeValidator({ maxSize: MAX_BEDROCK_ADDON_UPLOAD_SIZE })
+        .addMaxSizeValidator({ maxSize: MAX_BEDROCK_ADDON_SIZE })
         .build({ fileIsRequired: true }),
     )
     file: Express.Multer.File,
@@ -65,6 +65,14 @@ export class BedrockAddonsController {
   ) {
     const user = req.user as PayloadToken;
     return this.bedrockAddonsService.importCurseForgeAddon(user.userId, serverId, body, enable === 'true');
+  }
+
+  @Put(':serverId/order')
+  async reorderAddons(
+    @Param('serverId') serverId: string,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) body: ReorderBedrockAddonsDto,
+  ) {
+    return this.bedrockAddonsService.reorderAddons(serverId, body.addonIds);
   }
 
   @Post(':serverId/:addonId/enable')
