@@ -9,7 +9,7 @@ head:
 
 # Installation
 
-![Installation](/img/installation.png)
+![Minepanel installation wizard with Docker Compose setup](/img/installation.avif)
 
 ## Quick Install (Recommended)
 

@@ -8,6 +8,8 @@ export default withMermaid(
   defineConfig({
     lang: 'en-US',
     title: 'Minepanel',
+    // Frontmatter titles already include the brand; avoid "… | Minepanel" duplication
+    titleTemplate: false,
     description:
       'Free open source Minecraft server management panel for Java and Bedrock Edition. Self-hosted Docker-based alternative to Pterodactyl and Aternos. Manage Paper, Forge, Fabric, Spigot, Purpur, and Bedrock servers from one web UI.',
 
@@ -17,12 +19,28 @@ export default withMermaid(
       ['link', { rel: 'dns-prefetch', href: 'https://fonts.gstatic.com' }],
       ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: '' }],
       ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+      // Load fonts async to avoid render-blocking CSS (LCP)
+      [
+        'link',
+        {
+          rel: 'preload',
+          as: 'style',
+          href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap',
+        },
+      ],
       [
         'link',
         {
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap',
+          media: 'print',
+          onload: "this.media='all'",
         },
+      ],
+      [
+        'noscript',
+        {},
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap">',
       ],
 
       // Icons & PWA
@@ -59,7 +77,7 @@ export default withMermaid(
       ['meta', { name: 'color-scheme', content: 'light dark' }],
       // Open Graph defaults (overridden per page via frontmatter)
       ['meta', { property: 'og:type', content: 'website' }],
-      ['meta', { property: 'og:locale', content: 'en' }],
+      ['meta', { property: 'og:locale', content: 'en_US' }],
       ['meta', { property: 'og:site_name', content: 'Minepanel' }],
       [
         'meta',
@@ -107,17 +125,12 @@ export default withMermaid(
             price: '0',
             priceCurrency: 'USD',
           },
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: '5',
-            reviewCount: '1',
-          },
-          softwareVersion: '1.10.1',
+          softwareVersion: '1.10.8',
           softwareRequirements: 'Docker 20.10+, Docker Compose v2.0+',
           releaseNotes: `${hostname}/roadmap`,
-          screenshot: `${hostname}/img/Animation.gif`,
+          screenshot: `${hostname}/img/dashboard-preview.avif`,
           datePublished: '2024-01-01',
-          dateModified: '2026-02-07',
+          dateModified: '2026-06-12',
         }),
       ],
     ],
@@ -136,6 +149,14 @@ export default withMermaid(
       const description =
         pageData.frontmatter.description ||
         'Free open source Minecraft server management panel for Java and Bedrock Edition.';
+
+      if (canonicalPath === '/') {
+        // Hero logo is the LCP element on the landing page
+        head.push([
+          'link',
+          { rel: 'preload', as: 'image', href: '/cubo.webp', fetchpriority: 'high' },
+        ]);
+      }
 
       head.push(
         ['link', { rel: 'canonical', href: canonicalUrl }],
@@ -299,6 +320,9 @@ export default withMermaid(
 
     markdown: {
       lineNumbers: true,
+      image: {
+        lazyLoading: true,
+      },
       theme: {
         light: 'github-light',
         dark: 'github-dark',

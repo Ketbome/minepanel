@@ -3,3 +3,4 @@ doc/
 .vitepress/dist/
 .vitepress/.temp/
 node_modules/
+.claude

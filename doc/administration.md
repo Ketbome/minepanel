@@ -14,7 +14,7 @@ head:
 
 Manage passwords, database, backups, updates, and system maintenance.
 
-![Administration](/img/administration.png)
+![Minepanel administration panel with password and backup management](/img/administration.avif)
 
 ## Password Management
 

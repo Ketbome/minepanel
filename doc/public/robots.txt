@@ -1,22 +1,10 @@
 # Minepanel Documentation - Robots Configuration
 # Allow all compliant crawlers
+# /AGENTS is excluded via meta noindex (must stay crawlable so bots can see it)
 
 User-agent: *
 Allow: /
 Disallow: /hashmap.json
-Disallow: /agents
-
-# Specific crawlers
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0
-
-User-agent: Googlebot-Image
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
 
 # Note: Reputable AI crawlers (e.g. GPTBot, Anthropic) are allowed
 # to index the docs to improve discoverability and integrations.
