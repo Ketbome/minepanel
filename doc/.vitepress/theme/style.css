@@ -1,9 +1,55 @@
-:root {
-  --minecraft-font-ui: 'Press Start 2P', 'VT323', monospace;
-  --minecraft-font-body: 'Atkinson Hyperlegible', 'Segoe UI', Roboto, sans-serif;
+/* ============================================================
+   Design tokens
+   ============================================================ */
 
-  --vp-font-family-base: var(--minecraft-font-body);
+:root {
+  --mc-font-display: 'Press Start 2P', monospace;
+  --mc-font-body: 'Atkinson Hyperlegible', 'Segoe UI', Roboto, sans-serif;
+
+  --vp-font-family-base: var(--mc-font-body);
   --vp-font-family-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+  /* Minecraft palette */
+  --mc-grass: #6aa84f;
+  --mc-grass-bright: #7cbd58;
+  --mc-grass-deep: #4f7f3d;
+  --mc-dirt: #79553a;
+  --mc-dirt-dark: #5c4027;
+  --mc-stone: #9e9e9e;
+  --mc-stone-dark: #6f6f6f;
+  --mc-bedrock: #2b2b2b;
+  --mc-xp: #80ff20;
+  --mc-xp-dark: #5dcc12;
+  --mc-tooltip-bg: rgba(18, 1, 18, 0.96);
+  --mc-tooltip-border: #2d0a63;
+  --mc-tooltip-border-inner: #5b2bab;
+
+  /* MOTD color codes */
+  --mc-motd-green: #55ff55;
+  --mc-motd-yellow: #ffff55;
+  --mc-motd-red: #ff5555;
+  --mc-motd-aqua: #55ffff;
+  --mc-motd-gold: #ffaa00;
+
+  /* GUI bevels (inset shadows so clip-path doesn't eat them) */
+  --mc-bevel-up: inset 0 3px 0 rgba(255, 255, 255, 0.35), inset 3px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.35), inset -3px 0 0 rgba(0, 0, 0, 0.22);
+  --mc-bevel-down: inset 0 3px 0 rgba(0, 0, 0, 0.35), inset 3px 0 0 rgba(0, 0, 0, 0.22),
+    inset 0 -3px 0 rgba(255, 255, 255, 0.18), inset -3px 0 0 rgba(255, 255, 255, 0.12);
+  --mc-pixel-corners: polygon(
+    0 4px,
+    4px 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    calc(100% - 4px) 4px,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    4px calc(100% - 4px),
+    0 calc(100% - 4px)
+  );
 
   --vp-c-brand-1: #6aa84f;
   --vp-c-brand-2: #84c766;
@@ -19,6 +65,9 @@
   --vp-c-text-2: #3e4c36;
   --vp-c-text-3: #5f6b57;
 
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, var(--mc-grass-deep), var(--mc-grass-bright) 60%, var(--mc-xp-dark));
+
   --vp-button-brand-bg: #5f9a44;
   --vp-button-brand-hover-bg: #6eb34f;
   --vp-button-brand-active-bg: #4f7f3d;
@@ -30,6 +79,40 @@
   --vp-button-alt-active-bg: #b7ac92;
   --vp-button-alt-text: #2f3828;
   --vp-button-alt-border: #5a634f;
+
+  /* Custom blocks as MC item tooltips (dark by design, both modes) */
+  --vp-custom-block-tip-bg: transparent;
+  --vp-custom-block-tip-text: #e8e3f0;
+  --vp-custom-block-tip-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-tip-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-info-bg: transparent;
+  --vp-custom-block-info-text: #e8e3f0;
+  --vp-custom-block-info-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-info-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-note-bg: transparent;
+  --vp-custom-block-note-text: #e8e3f0;
+  --vp-custom-block-note-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-note-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-important-bg: transparent;
+  --vp-custom-block-important-text: #e8e3f0;
+  --vp-custom-block-important-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-important-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-warning-bg: transparent;
+  --vp-custom-block-warning-text: #e8e3f0;
+  --vp-custom-block-warning-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-warning-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-danger-bg: transparent;
+  --vp-custom-block-danger-text: #e8e3f0;
+  --vp-custom-block-danger-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-danger-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-caution-bg: transparent;
+  --vp-custom-block-caution-text: #e8e3f0;
+  --vp-custom-block-caution-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-caution-code-bg: rgba(255, 255, 255, 0.08);
+  --vp-custom-block-details-bg: transparent;
+  --vp-custom-block-details-text: #e8e3f0;
+  --vp-custom-block-details-border: var(--mc-tooltip-border-inner);
+  --vp-custom-block-details-code-bg: rgba(255, 255, 255, 0.08);
 }
 
 .dark {
@@ -47,6 +130,8 @@
   --vp-c-text-2: #c9d7bf;
   --vp-c-text-3: #9ead96;
 
+  --vp-home-hero-name-background: linear-gradient(120deg, var(--mc-grass-bright), var(--mc-motd-green) 55%, var(--mc-xp));
+
   --vp-button-brand-bg: #5f9a44;
   --vp-button-brand-hover-bg: #6eb34f;
   --vp-button-brand-active-bg: #4f7f3d;
@@ -59,6 +144,10 @@
   --vp-button-alt-text: #d7e3d0;
   --vp-button-alt-border: #5a6f52;
 }
+
+/* ============================================================
+   Background (block grid + ambient light)
+   ============================================================ */
 
 body {
   background-image:
@@ -78,59 +167,102 @@ body {
     radial-gradient(circle at 95% 80%, rgba(75, 103, 62, 0.24), transparent 40%);
 }
 
-.VPNavBarTitle,
-.VPNavBarMenuLink,
-.VPFlyout .text,
-.VPSidebarItem .text,
-.VPDoc h1,
-.VPDoc h2,
-.VPDoc h3,
-.VPDoc h4,
-.VPHero .name,
-.VPHero .text,
-.VPHero .tagline,
-.VPButton,
-.vp-badge,
-.VPLink.link {
-  font-family: var(--minecraft-font-ui);
-  letter-spacing: 0.03em;
+/* XP scroll progress (progressive enhancement, no JS) */
+@supports (animation-timeline: scroll()) {
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 100;
+    background: var(--mc-xp);
+    box-shadow: 0 0 6px rgba(128, 255, 32, 0.6);
+    transform-origin: left;
+    transform: scaleX(0);
+    animation: mc-xp-progress linear;
+    animation-timeline: scroll(root);
+    pointer-events: none;
+  }
+
+  @keyframes mc-xp-progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
 }
 
-.VPNavBarMenuLink,
-.VPFlyout .text {
-  font-size: 10px;
-  letter-spacing: 0.01em;
+/* ============================================================
+   Typography — pixel font on display elements only
+   ============================================================ */
+
+.VPNavBar .VPNavBarTitle .title {
+  font-family: var(--mc-font-display);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
-.VPNavBarTitle .title {
-  font-size: 10px;
-  letter-spacing: 0.01em;
+.VPDoc .vp-doc h1 {
+  font-family: var(--mc-font-display);
+  font-size: 22px;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
-.VPSidebarItem.level-0 .text {
-  font-size: 10px;
-  letter-spacing: 0.015em;
+.VPDoc .vp-doc h2 {
+  font-family: var(--mc-font-display);
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
-.VPSidebarItem.level-1 .text,
-.VPSidebarItem.level-2 .text,
-.VPSidebarItem.level-3 .text,
-.VPSidebarItem.level-4 .text,
-.VPSidebarItem.level-5 .text {
-  font-size: 9.5px;
-  letter-spacing: 0.01em;
+.VPHome .VPHero .name {
+  font-family: var(--mc-font-display);
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
-.VPDoc p,
-.VPDoc li,
-.VPDoc td,
-.VPDoc blockquote,
-.VPDoc .custom-block,
-.VPLocalSearchBox,
-.DocSearch-Button,
-.DocSearch-Input {
-  font-family: var(--minecraft-font-body);
+.VPHome .VPHero .text {
+  font-family: var(--mc-font-display);
+  font-size: 12px;
+  line-height: 1.8;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
 }
+
+.VPHome .VPHero .tagline {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+@media (min-width: 640px) {
+  .VPHome .VPHero .name {
+    font-size: 32px;
+  }
+
+  .VPHome .VPHero .text {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHome .VPHero .name {
+    font-size: 38px;
+  }
+
+  .VPHome .VPHero .text {
+    font-size: 20px;
+  }
+}
+
+/* ============================================================
+   Navbar & sidebar — grass-over-dirt strata
+   ============================================================ */
 
 .VPNavBar,
 .VPSidebar {
@@ -138,13 +270,14 @@ body {
 }
 
 .VPNavBar {
-  border-bottom: 3px solid rgba(41, 64, 31, 0.55);
+  border-bottom: none;
   background: linear-gradient(180deg, rgba(240, 236, 223, 0.9), rgba(233, 227, 212, 0.9));
+  box-shadow: 0 2px 0 var(--mc-grass), 0 3px 0 var(--mc-dirt-dark);
 }
 
 .dark .VPNavBar {
-  border-bottom: 3px solid rgba(143, 177, 115, 0.3);
   background: linear-gradient(180deg, rgba(24, 34, 20, 0.9), rgba(17, 25, 14, 0.9));
+  box-shadow: 0 2px 0 var(--mc-grass-deep), 0 3px 0 rgba(92, 64, 39, 0.8);
 }
 
 .VPSidebar {
@@ -157,26 +290,62 @@ body {
   background: linear-gradient(180deg, rgba(26, 36, 22, 0.88), rgba(20, 28, 17, 0.95));
 }
 
-.VPSidebarItem.level-0.is-active > .item .text {
+.VPSidebar .VPSidebarItem.level-0.is-active > .item .text {
   color: var(--vp-c-brand-1);
 }
 
-.VPButton {
-  border-width: 3px;
-  border-style: solid;
-  border-radius: 4px;
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
-  text-transform: uppercase;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+.VPSidebar .VPSidebarItem .item .indicator {
+  border-radius: 0;
 }
 
-.VPButton:hover {
+.VPSidebar .VPSidebarItem.is-active > .item .indicator,
+.VPSidebar .VPSidebarItem.has-active > .item .indicator {
+  background-color: var(--mc-grass);
+  width: 3px;
+}
+
+/* ============================================================
+   Minecraft GUI buttons (home hero)
+   ============================================================ */
+
+.VPHome .VPHero .actions .VPButton {
+  border: none;
+  border-radius: 0;
+  clip-path: var(--mc-pixel-corners);
+  font-family: var(--mc-font-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: var(--mc-bevel-up);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.VPHome .VPHero .actions .VPButton.brand {
+  background: linear-gradient(180deg, var(--mc-grass-bright), var(--mc-grass-deep));
+  color: #f8fff4;
+}
+
+.VPHome .VPHero .actions .VPButton.alt {
+  background: linear-gradient(180deg, var(--mc-stone), var(--mc-stone-dark));
+  color: #ffffff;
+}
+
+.VPHome .VPHero .actions .VPButton:hover {
+  filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
-.VPButton:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+.VPHome .VPHero .actions .VPButton:active {
+  box-shadow: var(--mc-bevel-down);
+  transform: translateY(2px);
+}
+
+/* Other buttons keep a lighter MC accent */
+.VPButton {
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 0;
 }
 
 .VPButton.brand {
@@ -187,52 +356,124 @@ body {
   border-color: var(--vp-button-alt-border);
 }
 
-.VPHero .image img {
+/* ============================================================
+   Hero image — floating pixelated cube
+   ============================================================ */
+
+.VPHome .VPHero .image img {
   image-rendering: pixelated;
   filter: drop-shadow(0 12px 30px rgba(29, 45, 23, 0.35));
+  animation: mc-float 4s ease-in-out infinite;
 }
 
-.VPFeature {
-  border: 3px solid rgba(58, 86, 46, 0.5);
-  border-radius: 6px;
-  background: linear-gradient(180deg, rgba(250, 247, 239, 0.95), rgba(237, 231, 216, 0.95));
-  box-shadow: 0 8px 24px rgba(42, 66, 33, 0.12);
+@keyframes mc-float {
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.VPFeature .icon {
-  width: 56px;
-  height: 56px;
-  border: 2px solid rgba(89, 120, 72, 0.45);
-  background: linear-gradient(180deg, rgba(146, 188, 115, 0.2), rgba(72, 98, 57, 0.22));
-  color: #d9f1cb;
+/* ============================================================
+   Custom blocks → MC item tooltips
+   ============================================================ */
+
+.VPDoc .custom-block {
+  border: 2px solid var(--mc-tooltip-border-inner);
+  outline: 3px solid var(--mc-tooltip-bg);
+  outline-offset: 0;
+  border-radius: 0;
+  background: var(--mc-tooltip-bg);
+  margin-left: 3px;
+  margin-right: 3px;
 }
 
-.VPFeature .icon svg {
-  width: 30px;
-  height: 30px;
-  stroke: currentColor;
+.VPDoc .custom-block .custom-block-title {
+  font-family: var(--mc-font-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 13px;
 }
 
-.VPFeature:hover .icon {
-  border-color: rgba(132, 199, 102, 0.7);
-  color: #efffe5;
+.VPDoc .custom-block.tip .custom-block-title {
+  color: var(--mc-motd-green);
 }
 
-.dark .VPFeature {
-  border: 3px solid rgba(110, 146, 86, 0.5);
-  background: linear-gradient(180deg, rgba(36, 48, 31, 0.94), rgba(27, 36, 23, 0.94));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+.VPDoc .custom-block.info .custom-block-title,
+.VPDoc .custom-block.note .custom-block-title,
+.VPDoc .custom-block.details summary {
+  color: var(--mc-motd-aqua);
 }
 
-.dark .VPFeature .icon {
-  border-color: rgba(104, 145, 80, 0.55);
-  background: linear-gradient(180deg, rgba(65, 93, 51, 0.45), rgba(39, 57, 31, 0.45));
+.VPDoc .custom-block.warning .custom-block-title,
+.VPDoc .custom-block.important .custom-block-title {
+  color: var(--mc-motd-yellow);
 }
+
+.VPDoc .custom-block.danger .custom-block-title,
+.VPDoc .custom-block.caution .custom-block-title {
+  color: var(--mc-motd-red);
+}
+
+.VPDoc .custom-block a {
+  color: var(--mc-motd-aqua);
+}
+
+.VPDoc .custom-block a:hover {
+  color: var(--mc-motd-green);
+}
+
+/* ============================================================
+   XP bar dividers
+   ============================================================ */
+
+.VPDoc .vp-doc hr {
+  height: 8px;
+  margin: 28px 0;
+  border: none;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--mc-xp) 0 12px, var(--mc-xp-dark) 12px 14px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 0 2px var(--mc-bedrock);
+  clip-path: var(--mc-pixel-corners);
+}
+
+/* ============================================================
+   Badges — MOTD chips
+   ============================================================ */
+
+.VPDoc .VPBadge {
+  font-family: var(--mc-font-body);
+  font-weight: 700;
+  border: none;
+  border-radius: 0;
+  clip-path: var(--mc-pixel-corners);
+  background-color: #1d1d21;
+}
+
+.VPDoc .VPBadge.tip {
+  color: var(--mc-motd-green);
+}
+
+.VPDoc .VPBadge.info {
+  color: var(--mc-motd-aqua);
+}
+
+.VPDoc .VPBadge.warning {
+  color: var(--mc-motd-yellow);
+}
+
+.VPDoc .VPBadge.danger {
+  color: var(--mc-motd-red);
+}
+
+/* ============================================================
+   Code blocks — sunken command-block panels
+   ============================================================ */
 
 .VPDoc div[class*='language-'] {
   border: 3px solid rgba(50, 69, 43, 0.6);
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
+  box-shadow: var(--mc-bevel-down);
 }
 
 .dark .VPDoc div[class*='language-'] {
@@ -240,7 +481,7 @@ body {
 }
 
 .vp-doc [class*='language-'] > button.copy {
-  border-radius: 4px;
+  border-radius: 0;
   border-width: 2px;
   transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
@@ -251,11 +492,11 @@ body {
 
 .vp-doc [class*='language-'] > button.copy.copied {
   animation: copy-pop 0.28s ease;
-  box-shadow: 0 0 0 3px rgba(130, 199, 99, 0.3);
+  box-shadow: 0 0 0 3px rgba(128, 255, 32, 0.35);
 }
 
 .vp-doc [class*='language-'] > button.copy.copied::before {
-  font-family: var(--minecraft-font-ui);
+  font-family: var(--mc-font-display);
   font-size: 9px;
 }
 
@@ -273,10 +514,9 @@ body {
   }
 }
 
-.VPDoc .custom-block {
-  border-width: 3px;
-  border-radius: 6px;
-}
+/* ============================================================
+   Tables & images
+   ============================================================ */
 
 .VPDoc table {
   display: table;
@@ -285,7 +525,7 @@ body {
   table-layout: auto;
   border-collapse: collapse;
   border: 3px solid rgba(73, 95, 60, 0.5);
-  border-radius: 6px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -308,7 +548,7 @@ body {
   max-width: 100%;
   height: auto;
   border: 3px solid rgba(73, 95, 60, 0.5);
-  border-radius: 8px;
+  border-radius: 0;
   box-shadow: 0 10px 22px rgba(22, 37, 17, 0.2);
   background: rgba(236, 242, 228, 0.4);
 }
@@ -319,21 +559,86 @@ body {
   background: rgba(43, 56, 36, 0.45);
 }
 
+/* ============================================================
+   Search — inventory slot
+   ============================================================ */
+
+.VPNavBarSearch .DocSearch-Button {
+  border-radius: 0;
+  background: var(--vp-c-bg-soft);
+  box-shadow: var(--mc-bevel-down);
+}
+
+/* ============================================================
+   Scrollbar — stone thumb
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--vp-c-bg-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mc-stone);
+  border: 2px solid var(--mc-stone-dark);
+  border-radius: 0;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+}
+
+html {
+  scrollbar-color: var(--mc-stone) var(--vp-c-bg-alt);
+}
+
+/* ============================================================
+   Footer — bedrock strata
+   ============================================================ */
+
+.VPFooter {
+  border-top: 4px solid var(--mc-bedrock);
+  background: linear-gradient(180deg, var(--vp-c-bg-alt), var(--mc-bedrock) 400%);
+}
+
+/* ============================================================
+   Home highlights — inventory slots with grass strata
+   ============================================================ */
+
 .vp-doc .home-highlights {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 28px;
+  gap: 16px 20px;
   margin: 14px 0 24px;
 }
 
 .vp-doc .home-highlight {
-  padding: 10px 0 14px;
-  border-bottom: 2px dashed rgba(96, 126, 77, 0.55);
+  position: relative;
+  padding: 18px 16px 14px;
+  background: var(--vp-c-bg-soft);
+  box-shadow: var(--mc-bevel-down);
+  border-top: 6px solid var(--mc-grass);
+  transition: transform 0.12s ease;
+}
+
+.vp-doc .home-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--mc-dirt);
+}
+
+.vp-doc .home-highlight:hover {
+  transform: translateY(-2px);
 }
 
 .vp-doc .home-highlight h3 {
   margin: 0;
-  font: 400 11px/1.5 var(--minecraft-font-ui);
+  font: 400 11px/1.6 var(--mc-font-display);
   color: var(--vp-c-brand-1);
 }
 
@@ -341,14 +646,14 @@ body {
   margin: 8px 0 0;
 }
 
-.dark .vp-doc .home-highlight {
-  border-bottom-color: rgba(125, 160, 102, 0.45);
-}
+/* ============================================================
+   Responsive
+   ============================================================ */
 
 @media (max-width: 768px) {
   .vp-doc .home-highlights {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 12px;
   }
 
   .VPDoc table {
@@ -357,31 +662,30 @@ body {
     overflow-x: auto;
   }
 
-  .VPNavBarMenuLink,
-  .VPFlyout .text,
-  .VPSidebarItem .text {
-    font-size: 9px;
-    letter-spacing: 0.01em;
+  .VPDoc .vp-doc h1 {
+    font-size: 18px;
   }
 
-  .VPDoc h1,
-  .VPDoc h2,
-  .VPHero .name,
-  .VPHero .text {
-    letter-spacing: 0.01em;
-    line-height: 1.25;
-  }
-
-  .VPHero .tagline {
-    font-size: 12px;
-    line-height: 1.8;
+  .VPDoc .vp-doc h2 {
+    font-size: 13px;
   }
 }
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   .vp-doc [class*='language-'] > button.copy,
   .vp-doc [class*='language-'] > button.copy:hover,
-  .vp-doc [class*='language-'] > button.copy.copied {
+  .vp-doc [class*='language-'] > button.copy.copied,
+  .VPHome .VPHero .image img,
+  .VPHome .VPHero .actions .VPButton,
+  .VPHome .VPHero .actions .VPButton:hover,
+  .VPHome .VPHero .actions .VPButton:active,
+  .vp-doc .home-highlight,
+  .vp-doc .home-highlight:hover,
+  body::after {
     animation: none;
     transform: none;
     transition: none;
