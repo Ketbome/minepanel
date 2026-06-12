@@ -115,6 +115,10 @@ export default withMermaid(
           description:
             'Free open source Minecraft server management panel for Java and Bedrock Edition',
           url: hostname,
+          sameAs: [
+            'https://github.com/Ketbome/minepanel',
+            'https://hub.docker.com/r/ketbom/minepanel',
+          ],
           author: {
             '@type': 'Person',
             name: 'Ketbome',
