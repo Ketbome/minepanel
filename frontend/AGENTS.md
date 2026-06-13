@@ -26,6 +26,8 @@ frontend/src/
 |  |- docker/                   Server lifecycle/config endpoints
 |  |- files/                    File browser endpoints
 |  |- world-discovery/          World import endpoints
+|  |- metrics/                  Per-server CPU/RAM history endpoints
+|  |- scheduler/                Scheduled tasks CRUD endpoints
 |- lib/
 |  |- store/                    Zustand stores
 |  |- translations/             i18n dictionaries

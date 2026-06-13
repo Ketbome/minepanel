@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
@@ -17,6 +17,8 @@ const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").th
 const BedrockSettingsTab = dynamic(() => import("../molecules/Tabs/BedrockSettingsTab").then(mod => mod.BedrockSettingsTab));
 const BedrockAddonsTab = dynamic(() => import("../molecules/Tabs/BedrockAddonsTab").then(mod => mod.BedrockAddonsTab));
 const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
+const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
+const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasksTab").then(mod => mod.ScheduledTasksTab));
 
 interface ServerConfigTabsProps {
   readonly serverId: string;
@@ -43,7 +45,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files"];
+    const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
     return validTabs.includes(hash) ? hash : "type";
   };
 
@@ -77,7 +79,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files"];
+      const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -204,6 +206,16 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                     <FolderOpen className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("files")}</span>
                   </TabsTrigger>
+
+                  <TabsTrigger value="metrics" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                    <Activity className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">{t("metrics")}</span>
+                  </TabsTrigger>
+
+                  <TabsTrigger value="tasks" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
+                    <Clock className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">{t("tasks")}</span>
+                  </TabsTrigger>
                 </TabsList>
               </div>
               <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-gray-800/70 to-transparent"></div>
@@ -265,6 +277,14 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsContent value="files" className="space-y-4 mt-0">
                 <FilesTab serverId={serverId} />
+              </TabsContent>
+
+              <TabsContent value="metrics" className="space-y-4 mt-0">
+                <MetricsTab serverId={serverId} />
+              </TabsContent>
+
+              <TabsContent value="tasks" className="space-y-4 mt-0">
+                <ScheduledTasksTab serverId={serverId} />
               </TabsContent>
             </div>
           </Tabs>
