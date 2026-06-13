@@ -4,10 +4,13 @@ Next.js dashboard for Minepanel.
 
 ## Stack
 
-- Next.js 15 (App Router)
+- Next.js 16 (App Router, Turbopack)
 - React 19
 - Tailwind CSS 4
 - Zustand
+
+`next lint` was removed in Next.js 16; linting uses the ESLint CLI (`eslint src`)
+with the flat config from `eslint-config-next` in `eslint.config.mjs`.
 
 ## Run
 
