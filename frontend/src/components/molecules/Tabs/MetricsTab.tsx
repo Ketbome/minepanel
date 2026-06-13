@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, type MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Activity, Cpu, MemoryStick, RefreshCw } from "lucide-react";
@@ -18,6 +18,10 @@ const RANGES = [
 
 const REFRESH_MS = 60_000;
 
+const X_TICKS = 4;
+const CHART_HEIGHT = 160;
+const V_PADDING = 8;
+
 interface SeriesChartProps {
   points: MetricPoint[];
   accessor: (point: MetricPoint) => number;
@@ -28,30 +32,51 @@ interface SeriesChartProps {
 
 const SeriesChart: FC<SeriesChartProps> = ({ points, accessor, color, unit, maxHint }) => {
   const width = 600;
-  const height = 160;
-  const padding = 8;
+  const [hover, setHover] = useState<number | null>(null);
 
   const values = points.map(accessor);
   const maxValue = Math.max(maxHint ?? 0, ...values, 1);
   const minTs = new Date(points[0].timestamp).getTime();
   const maxTs = new Date(points[points.length - 1].timestamp).getTime();
   const tsRange = Math.max(1, maxTs - minTs);
+  const showDate = tsRange > 24 * 60 * 60 * 1000;
 
-  const coords = points.map((point) => {
-    const x = padding + ((new Date(point.timestamp).getTime() - minTs) / tsRange) * (width - padding * 2);
-    const y = height - padding - (accessor(point) / maxValue) * (height - padding * 2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const xFrac = (point: MetricPoint) => (new Date(point.timestamp).getTime() - minTs) / tsRange;
+  const yPx = (value: number) => CHART_HEIGHT - V_PADDING - (value / maxValue) * (CHART_HEIGHT - V_PADDING * 2);
 
+  const coords = points.map((point) => `${(xFrac(point) * width).toFixed(1)},${yPx(accessor(point)).toFixed(1)}`);
   const linePath = coords.join(" ");
-  const areaPath = `${padding},${height - padding} ${linePath} ${width - padding},${height - padding}`;
+  const areaPath = `0,${CHART_HEIGHT} ${linePath} ${width},${CHART_HEIGHT}`;
   const last = values[values.length - 1];
+
+  const formatTime = (timestamp: string) =>
+    new Date(timestamp).toLocaleString([], showDate ? { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" } : { hour: "2-digit", minute: "2-digit" });
+
+  const handleMove = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    let nearest = 0;
+    let best = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const distance = Math.abs(xFrac(points[i]) - frac);
+      if (distance < best) {
+        best = distance;
+        nearest = i;
+      }
+    }
+    setHover(nearest);
+  };
+
+  const tick = (index: number) => points[Math.round((index / (X_TICKS - 1)) * (points.length - 1))];
+  const hovered = hover !== null ? points[hover] : null;
+  const hoverLeft = hovered ? xFrac(hovered) * 100 : 0;
+  const hoverTransform = hoverLeft > 75 ? "translateX(-100%)" : hoverLeft < 25 ? "translateX(0)" : "translateX(-50%)";
 
   return (
     <div className="w-full">
       <div className="flex items-baseline justify-between mb-1">
         <span className="text-xs text-gray-400">
-          {unit === "%" ? "0" : "0"} – {Math.round(maxValue)}
+          0 – {Math.round(maxValue)}
           {unit}
         </span>
         <span className="text-sm font-minecraft" style={{ color }}>
@@ -59,10 +84,33 @@ const SeriesChart: FC<SeriesChartProps> = ({ points, accessor, color, unit, maxH
           {unit}
         </span>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40" preserveAspectRatio="none">
-        <polygon points={areaPath} fill={color} opacity={0.12} />
-        <polyline points={linePath} fill="none" stroke={color} strokeWidth={2} />
-      </svg>
+
+      <div className="relative w-full" style={{ height: CHART_HEIGHT }} onMouseMove={handleMove} onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${width} ${CHART_HEIGHT}`} className="w-full h-40" preserveAspectRatio="none">
+          <polygon points={areaPath} fill={color} opacity={0.12} />
+          <polyline points={linePath} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+        </svg>
+
+        {hovered && (
+          <>
+            <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-gray-500/60" style={{ left: `${hoverLeft}%` }} />
+            <div className="pointer-events-none absolute h-2.5 w-2.5 rounded-full border-2 border-gray-900" style={{ left: `${hoverLeft}%`, top: yPx(accessor(hovered)), backgroundColor: color, transform: "translate(-50%, -50%)" }} />
+            <div className="pointer-events-none absolute top-1 z-10 rounded-md border border-gray-700 bg-gray-900/95 px-2 py-1 text-xs whitespace-nowrap shadow-lg" style={{ left: `${hoverLeft}%`, transform: hoverTransform }}>
+              <span className="font-minecraft" style={{ color }}>
+                {accessor(hovered).toFixed(unit === "%" ? 1 : 0)}
+                {unit}
+              </span>
+              <span className="text-gray-400"> · {formatTime(hovered.timestamp)}</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mt-1 flex justify-between text-[10px] text-gray-500">
+        {Array.from({ length: X_TICKS }, (_, index) => (
+          <span key={index}>{formatTime(tick(index).timestamp)}</span>
+        ))}
+      </div>
     </div>
   );
 };
