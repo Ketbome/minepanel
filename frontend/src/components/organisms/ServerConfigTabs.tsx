@@ -43,21 +43,49 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showResourcesTab = isJava; // JVM settings only apply to Java
   const showCommandsTab = isJava; // RCON only works with Java
 
-  const availableTabs: TabSearchItem[] = [
-    { value: "type", label: t("serverType"), icon: Server },
-    { value: "general", label: t("general"), icon: Settings },
-    ...(showResourcesTab ? [{ value: "resources", label: t("resources"), icon: Cpu }] : []),
-    ...(isBedrock ? [{ value: "bedrock", label: t("bedrock"), icon: Smartphone }] : []),
-    ...(isBedrock ? [{ value: "addons", label: t("addons"), icon: Package }] : []),
-    ...(showModsTab ? [{ value: "mods", label: t("mods"), icon: Package }] : []),
-    ...(showPluginsTab ? [{ value: "plugins", label: t("plugins"), icon: Layers }] : []),
-    { value: "advanced", label: t("advanced"), icon: Code },
-    { value: "logs", label: t("logs"), icon: ScrollText },
-    ...(showCommandsTab ? [{ value: "commands", label: t("commands"), icon: Terminal }] : []),
-    { value: "files", label: t("files"), icon: FolderOpen },
-    { value: "metrics", label: t("metrics"), icon: Activity },
-    { value: "tasks", label: t("tasks"), icon: Clock },
+  const tabItems: TabSearchItem[] = [
+    { value: "type", label: t("serverType"), icon: Server, target: "type" },
+    { value: "general", label: t("general"), icon: Settings, target: "general" },
+    ...(showResourcesTab ? [{ value: "resources", label: t("resources"), icon: Cpu, target: "resources" }] : []),
+    ...(isBedrock ? [{ value: "bedrock", label: t("bedrock"), icon: Smartphone, target: "bedrock" }] : []),
+    ...(isBedrock ? [{ value: "addons", label: t("addons"), icon: Package, target: "addons" }] : []),
+    ...(showModsTab ? [{ value: "mods", label: t("mods"), icon: Package, target: "mods" }] : []),
+    ...(showPluginsTab ? [{ value: "plugins", label: t("plugins"), icon: Layers, target: "plugins" }] : []),
+    { value: "advanced", label: t("advanced"), icon: Code, target: "advanced" },
+    { value: "logs", label: t("logs"), icon: ScrollText, target: "logs" },
+    ...(showCommandsTab ? [{ value: "commands", label: t("commands"), icon: Terminal, target: "commands" }] : []),
+    { value: "files", label: t("files"), icon: FolderOpen, target: "files" },
+    { value: "metrics", label: t("metrics"), icon: Activity, target: "metrics" },
+    { value: "tasks", label: t("tasks"), icon: Clock, target: "tasks" },
   ];
+
+  // Curated index of individual settings -> the tab that holds them, so the
+  // palette can answer searches like "ram", "cheats" or "puerto". Keywords are
+  // bilingual (ES/EN) to match regardless of the active UI language.
+  const settingItems: TabSearchItem[] = [
+    ...(showResourcesTab
+      ? [
+          { value: "set-memory", label: t("memoryCpu"), icon: Cpu, target: "resources", group: t("resources"), keywords: "ram memoria memory cpu nucleos cores xms xmx" },
+          { value: "set-jvm", label: t("jvmOptions"), icon: Cpu, target: "resources", group: t("resources"), keywords: "jvm aikar flags java args argumentos garbage gc" },
+          { value: "set-runtime", label: t("advancedResources"), icon: Cpu, target: "resources", group: t("resources"), keywords: "autostop autopause auto stop pause pausa timezone zona horaria rolling logs" },
+        ]
+      : []),
+    { value: "set-basic", label: t("basicSettings"), icon: Settings, target: "general", group: t("general"), keywords: "motd nombre name dificultad difficulty gamemode modo de juego" },
+    { value: "set-world", label: t("worldSettings"), icon: Settings, target: "general", group: t("general"), keywords: "mundo world seed semilla pvp nivel level hardcore" },
+    { value: "set-connectivity", label: t("connectivitySettings"), icon: Settings, target: "general", group: t("general"), keywords: "puerto port online mode modo conexion ip" },
+    { value: "set-performance", label: t("performanceSettings"), icon: Settings, target: "general", group: t("general"), keywords: "jugadores players max view distance distancia render simulation simulacion" },
+    ...(isBedrock
+      ? [
+          { value: "set-cheats", label: t("allowCheats"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "cheats trucos commands comandos" },
+          { value: "set-tick", label: t("tickDistance"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "tick distance distancia simulacion" },
+          { value: "set-permission", label: t("defaultPermissionLevel"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "permisos permission op operador" },
+          { value: "set-whitelist", label: t("whiteList"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "whitelist lista blanca allow allowlist" },
+        ]
+      : []),
+    { value: "set-type", label: t("serverType"), icon: Server, target: "type", group: t("serverType"), keywords: "tipo type paper forge fabric purpur vanilla neoforge version" },
+  ];
+
+  const paletteItems: TabSearchItem[] = [...tabItems, ...settingItems];
 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
@@ -156,7 +184,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="relative overflow-hidden">
               <div className="overflow-x-auto overflow-y-hidden custom-scrollbar text-gray-200 scroll-smooth flex items-stretch bg-gray-800/70 border-b border-gray-700/60">
-                <TabSearch items={availableTabs} onSelect={setActiveTab} />
+                <TabSearch items={paletteItems} onSelect={setActiveTab} />
                 <TabsList className="flex w-max min-w-full h-auto p-1 bg-transparent">
                   <TabsTrigger value="type" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Server className="h-4 w-4 shrink-0" />

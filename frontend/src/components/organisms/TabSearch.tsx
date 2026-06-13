@@ -8,12 +8,14 @@ export interface TabSearchItem {
   value: string;
   label: string;
   icon: LucideIcon;
+  target: string;
   group?: string;
+  keywords?: string;
 }
 
 interface TabSearchProps {
   items: TabSearchItem[];
-  onSelect: (value: string) => void;
+  onSelect: (target: string) => void;
 }
 
 export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
@@ -43,11 +45,11 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
-    return items.filter((item) => item.label.toLowerCase().includes(q) || (item.group ?? "").toLowerCase().includes(q));
+    return items.filter((item) => item.label.toLowerCase().includes(q) || (item.group ?? "").toLowerCase().includes(q) || (item.keywords ?? "").toLowerCase().includes(q));
   }, [items, query]);
 
-  const select = (value: string) => {
-    onSelect(value);
+  const select = (target: string) => {
+    onSelect(target);
     setOpen(false);
   };
 
@@ -60,7 +62,7 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
       setActiveIndex((prev) => Math.max(prev - 1, 0));
     } else if (event.key === "Enter" && filtered[activeIndex]) {
       event.preventDefault();
-      select(filtered[activeIndex].value);
+      select(filtered[activeIndex].target);
     }
   };
 
@@ -102,7 +104,7 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => select(item.value)}
+                  onClick={() => select(item.target)}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${index === activeIndex ? "bg-emerald-600/20 text-emerald-300" : "text-gray-300 hover:bg-gray-800"}`}
                 >
