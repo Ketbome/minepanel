@@ -1589,6 +1589,9 @@ export const en = {
   tasksNameRequired: 'Name is required',
   tasksIntervalInvalid: 'Interval must be at least 1 minute',
   tasksCommandRequired: 'Command is required',
+  tabSearch: 'Search tabs',
+  tabSearchPlaceholder: 'Search tabs and sections...',
+  tabSearchEmpty: 'No matches found.',
 };
 
 export type TranslationKey = keyof typeof en;

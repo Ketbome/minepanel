@@ -5,6 +5,7 @@ import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
 import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { TabSearch, type TabSearchItem } from "./TabSearch";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
@@ -41,6 +42,22 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showPluginsTab = isJava && (config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA");
   const showResourcesTab = isJava; // JVM settings only apply to Java
   const showCommandsTab = isJava; // RCON only works with Java
+
+  const availableTabs: TabSearchItem[] = [
+    { value: "type", label: t("serverType"), icon: Server },
+    { value: "general", label: t("general"), icon: Settings },
+    ...(showResourcesTab ? [{ value: "resources", label: t("resources"), icon: Cpu }] : []),
+    ...(isBedrock ? [{ value: "bedrock", label: t("bedrock"), icon: Smartphone }] : []),
+    ...(isBedrock ? [{ value: "addons", label: t("addons"), icon: Package }] : []),
+    ...(showModsTab ? [{ value: "mods", label: t("mods"), icon: Package }] : []),
+    ...(showPluginsTab ? [{ value: "plugins", label: t("plugins"), icon: Layers }] : []),
+    { value: "advanced", label: t("advanced"), icon: Code },
+    { value: "logs", label: t("logs"), icon: ScrollText },
+    ...(showCommandsTab ? [{ value: "commands", label: t("commands"), icon: Terminal }] : []),
+    { value: "files", label: t("files"), icon: FolderOpen },
+    { value: "metrics", label: t("metrics"), icon: Activity },
+    { value: "tasks", label: t("tasks"), icon: Clock },
+  ];
 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
@@ -138,8 +155,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
         <form onSubmit={handleSubmit}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="relative overflow-hidden">
-              <div className="overflow-x-auto overflow-y-hidden custom-scrollbar text-gray-200 scroll-smooth">
-                <TabsList className="flex w-max min-w-full h-auto p-1 bg-gray-800/70 border-b border-gray-700/60">
+              <div className="overflow-x-auto overflow-y-hidden custom-scrollbar text-gray-200 scroll-smooth flex items-stretch bg-gray-800/70 border-b border-gray-700/60">
+                <TabSearch items={availableTabs} onSelect={setActiveTab} />
+                <TabsList className="flex w-max min-w-full h-auto p-1 bg-transparent">
                   <TabsTrigger value="type" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                     <Server className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">{t("serverType")}</span>

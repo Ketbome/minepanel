@@ -1616,4 +1616,7 @@ export const pl: Record<TranslationKey, string> = {
   tasksNameRequired: 'Nazwa jest wymagana',
   tasksIntervalInvalid: 'Interwał musi wynosić co najmniej 1 minutę',
   tasksCommandRequired: 'Polecenie jest wymagane',
+  tabSearch: 'Szukaj kart',
+  tabSearchPlaceholder: 'Szukaj kart i sekcji...',
+  tabSearchEmpty: 'Brak wyników.',
 };

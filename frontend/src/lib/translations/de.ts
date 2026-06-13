@@ -1620,4 +1620,7 @@ export const de: Record<TranslationKey, string> = {
   tasksNameRequired: 'Name ist erforderlich',
   tasksIntervalInvalid: 'Intervall muss mindestens 1 Minute betragen',
   tasksCommandRequired: 'Befehl ist erforderlich',
+  tabSearch: 'Tabs durchsuchen',
+  tabSearchPlaceholder: 'Tabs und Bereiche suchen...',
+  tabSearchEmpty: 'Keine Treffer.',
 };

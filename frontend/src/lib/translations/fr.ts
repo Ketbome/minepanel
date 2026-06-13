@@ -1590,6 +1590,9 @@ export const fr = {
   tasksNameRequired: 'Le nom est requis',
   tasksIntervalInvalid: 'L’intervalle doit être d’au moins 1 minute',
   tasksCommandRequired: 'La commande est requise',
+  tabSearch: 'Rechercher des onglets',
+  tabSearchPlaceholder: 'Rechercher onglets et sections...',
+  tabSearchEmpty: 'Aucun résultat.',
 };
 
 export type TranslationKey = keyof typeof fr;

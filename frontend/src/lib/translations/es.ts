@@ -1615,4 +1615,7 @@ export const es: Record<TranslationKey, string> = {
   tasksNameRequired: 'El nombre es obligatorio',
   tasksIntervalInvalid: 'El intervalo debe ser de al menos 1 minuto',
   tasksCommandRequired: 'El comando es obligatorio',
+  tabSearch: 'Buscar pestañas',
+  tabSearchPlaceholder: 'Buscar pestañas y secciones...',
+  tabSearchEmpty: 'Sin resultados.',
 };

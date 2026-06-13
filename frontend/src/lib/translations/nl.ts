@@ -1625,4 +1625,7 @@ export const nl: Record<TranslationKey, string> = {
   tasksNameRequired: 'Naam is verplicht',
   tasksIntervalInvalid: 'Interval moet minstens 1 minuut zijn',
   tasksCommandRequired: 'Opdracht is verplicht',
+  tabSearch: 'Tabbladen zoeken',
+  tabSearchPlaceholder: 'Zoek tabbladen en secties...',
+  tabSearchEmpty: 'Geen resultaten.',
 };
