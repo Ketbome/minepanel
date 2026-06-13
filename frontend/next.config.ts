@@ -7,25 +7,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   ...(basePath && { basePath }),
 
-  // Webpack optimizations for faster builds
-  webpack: (config, { dev, isServer }) => {
-    // Enable persistent caching for production builds
-    if (!dev) {
-      config.cache = {
-        type: 'filesystem',
-        buildDependencies: {
-          config: [__filename],
-        },
-      };
-    }
-
-    // Optimize module resolution
-    config.resolve = {
-      ...config.resolve,
-      symlinks: false,
-    };
-
-    return config;
+  // Turbopack is the default bundler in Next.js 16. Pin the workspace root so
+  // the multi-lockfile warning is silenced and builds are deterministic.
+  turbopack: {
+    root: __dirname,
   },
 
   images: {
@@ -58,11 +43,9 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-slider',
       '@radix-ui/react-tooltip',
     ],
-    // Speed up builds with concurrent features
-    cpus: 4,
   },
 
-  // Compiler optimizations (SWC is default in Next.js 15)
+  // Compiler optimizations (SWC is default in Next.js 16)
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
