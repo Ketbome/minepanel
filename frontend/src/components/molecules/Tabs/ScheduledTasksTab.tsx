@@ -139,18 +139,22 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
               <Label htmlFor="task-name" className="text-gray-300">
                 {t("tasksName")}
               </Label>
-              <Input id="task-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder={t("tasksNamePlaceholder")} />
+              <Input id="task-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder={t("tasksNamePlaceholder")} className="bg-gray-800 border-gray-700 text-white" />
             </div>
 
             <div className="space-y-1">
               <Label className="text-gray-300">{t("tasksType")}</Label>
               <Select value={form.type} onValueChange={(value: ScheduledTaskType) => setForm({ ...form, type: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-gray-800/70 border-gray-700/50 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="restart">{t("tasksTypeRestart")}</SelectItem>
-                  <SelectItem value="command">{t("tasksTypeCommand")}</SelectItem>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="restart" className="text-white hover:bg-gray-700">
+                    {t("tasksTypeRestart")}
+                  </SelectItem>
+                  <SelectItem value="command" className="text-white hover:bg-gray-700">
+                    {t("tasksTypeCommand")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -160,7 +164,7 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                 <Label htmlFor="task-command" className="text-gray-300">
                   {t("tasksCommand")}
                 </Label>
-                <Input id="task-command" value={form.command} onChange={(event) => setForm({ ...form, command: event.target.value })} placeholder="say Restarting soon" />
+                <Input id="task-command" value={form.command} onChange={(event) => setForm({ ...form, command: event.target.value })} placeholder="say Restarting soon" className="bg-gray-800 border-gray-700 text-white" />
               </div>
             )}
 
@@ -168,7 +172,7 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
               <Label htmlFor="task-interval" className="text-gray-300">
                 {t("tasksInterval")}
               </Label>
-              <Input id="task-interval" type="number" min={1} value={form.intervalMinutes} onChange={(event) => setForm({ ...form, intervalMinutes: event.target.value })} />
+              <Input id="task-interval" type="number" min={1} value={form.intervalMinutes} onChange={(event) => setForm({ ...form, intervalMinutes: event.target.value })} className="bg-gray-800 border-gray-700 text-white" />
             </div>
 
             <div className="flex items-center gap-2 pt-6">
@@ -180,11 +184,11 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" onClick={handleCreate} disabled={saving} className="bg-emerald-600 hover:bg-emerald-500">
+            <Button type="button" onClick={handleCreate} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40">
               <Plus className="h-4 w-4 mr-1" />
               {t("tasksAdd")}
             </Button>
-            <Button type="button" variant="outline" className="border-gray-700 text-gray-300" onClick={resetForm}>
+            <Button type="button" variant="outline" className="bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white" onClick={resetForm}>
               <X className="h-4 w-4 mr-1" />
               {t("tasksClear")}
             </Button>
@@ -196,7 +200,7 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="font-minecraft text-gray-200 text-base">{t("tasksScheduled")}</CardTitle>
-            <Button type="button" size="sm" variant="outline" className="border-gray-700 text-gray-300" onClick={fetchTasks} disabled={loading}>
+            <Button type="button" size="sm" variant="outline" className="bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white" onClick={fetchTasks} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </div>
@@ -232,10 +236,10 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
 
                 <div className="flex items-center gap-2">
                   <Switch checked={task.enabled} onCheckedChange={() => handleToggle(task)} />
-                  <Button type="button" size="sm" variant="outline" className="border-gray-700 text-gray-300" onClick={() => handleRun(task)}>
+                  <Button type="button" size="sm" variant="outline" className="bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white" onClick={() => handleRun(task)}>
                     <Play className="h-4 w-4" />
                   </Button>
-                  <Button type="button" size="sm" variant="outline" className="border-red-800 text-red-300 hover:bg-red-900/30" onClick={() => handleDelete(task)}>
+                  <Button type="button" size="sm" variant="outline" className="bg-gray-800/60 border-red-800 text-red-300 hover:bg-red-900/40 hover:text-red-200" onClick={() => handleDelete(task)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

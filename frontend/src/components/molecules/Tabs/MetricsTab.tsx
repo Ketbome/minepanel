@@ -117,13 +117,13 @@ export const MetricsTab: FC<MetricsTabProps> = ({ serverId }) => {
                   type="button"
                   size="sm"
                   variant={hours === range.hours ? "default" : "outline"}
-                  className={hours === range.hours ? "bg-emerald-600 hover:bg-emerald-500" : "border-gray-700 text-gray-300"}
+                  className={hours === range.hours ? "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/40" : "bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white"}
                   onClick={() => setHours(range.hours)}
                 >
                   {range.label}
                 </Button>
               ))}
-              <Button type="button" size="sm" variant="outline" className="border-gray-700 text-gray-300" onClick={fetchMetrics} disabled={loading}>
+              <Button type="button" size="sm" variant="outline" className="bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white" onClick={fetchMetrics} disabled={loading}>
                 <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               </Button>
             </div>
