@@ -76,6 +76,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "set-performance", label: t("performanceSettings"), icon: Settings, target: "general", group: t("general"), keywords: "jugadores players max view distance distancia render simulation simulacion" },
     ...(isBedrock
       ? [
+          { value: "set-bedrock-perf", label: t("performance"), icon: Cpu, target: "bedrock", group: t("bedrock"), keywords: "rendimiento performance threads hilos maxthreads ram memoria memory cpu" },
           { value: "set-cheats", label: t("allowCheats"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "cheats trucos commands comandos" },
           { value: "set-tick", label: t("tickDistance"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "tick distance distancia simulacion" },
           { value: "set-permission", label: t("defaultPermissionLevel"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "permisos permission op operador" },
