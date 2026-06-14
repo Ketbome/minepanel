@@ -95,7 +95,7 @@ export const FileToolbar: FC<FileToolbarProps> = ({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border-b border-gray-700/50 select-none">
+      <div className="mc-titlebar flex items-center gap-2 px-3 py-2 select-none">
         <Button
           variant="ghost"
           size="sm"

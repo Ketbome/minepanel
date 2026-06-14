@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check, Coffee, Smartphone } from "lucide-react";
 import { fetchServerList, createServer, getAllServersStatus, deleteServer } from "@/services/docker/fetchs";
@@ -216,15 +216,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between animate-fade-in-up">
-        <div>
-          <h1 className="text-3xl font-bold text-white font-minecraft flex items-center gap-3">
-            <Image src="/images/command-block.webp" alt="Dashboard" width={40} height={40} />
-            {t("dashboardTitle")}
-          </h1>
-          <p className="text-gray-400 mt-2">{t("dashboardDescription")}</p>
-        </div>
+    <div className="space-y-6">
+      <div className="mc-panel animate-fade-in-up">
+        <div className="mc-titlebar flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Image src="/images/command-block.webp" alt="Dashboard" width={32} height={32} className="pixelated animate-float" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("dashboardTitle")}</h1>
+              <p className="text-gray-300 text-xs">{t("dashboardDescription")}</p>
+            </div>
+          </div>
 
         <Dialog
           open={isDialogOpen}
@@ -239,10 +240,10 @@ export default function Dashboard() {
         >
           {canCreateServers ? (
             <DialogTrigger asChild>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
-                <Plus className="h-4 w-4 mr-2" />
+              <button className="mc-btn mc-btn-emerald px-4 py-2.5 self-start">
+                <Plus className="h-4 w-4" />
                 {t("createServer")}
-              </Button>
+              </button>
             </DialogTrigger>
           ) : null}
           <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700 text-white max-h-[85vh] overflow-hidden flex flex-col">
@@ -373,51 +374,52 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <DialogFooter className="gap-3 sm:gap-0 pt-2">
-                  <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)} className="bg-gray-700 hover:bg-gray-600">
+                <DialogFooter className="gap-3 sm:gap-2 pt-2">
+                  <button type="button" onClick={() => setIsDialogOpen(false)} className="mc-btn px-4 py-2.5">
                     {t("cancel")}
-                  </Button>
-                  <Button type="submit" disabled={isCreatingServer || (createMode === "template" && !selectedTemplate)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  </button>
+                  <button type="submit" disabled={isCreatingServer || (createMode === "template" && !selectedTemplate)} className="mc-btn mc-btn-emerald px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
                     {isCreatingServer ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         {t("creating")}
                       </>
                     ) : (
                       t("createServer")
                     )}
-                  </Button>
+                  </button>
                 </DialogFooter>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div>
         {servers.length === 0 && !isLoading ? (
-          <div className="text-center py-16 animate-fade-in">
-            <Image src="/images/chest.webp" alt="Empty chest" width={80} height={80} className="mx-auto mb-6 opacity-60" />
-            <h3 className="text-2xl font-minecraft text-gray-300 mb-4">{t("noServersAvailable")}</h3>
+          <div className="mc-panel text-center py-16 px-6 animate-fade-in">
+            <Image src="/images/chest.webp" alt="Empty chest" width={80} height={80} className="pixelated mx-auto mb-6 opacity-70 animate-float" />
+            <h3 className="text-2xl font-minecraft text-gray-200 mb-4">{t("noServersAvailable")}</h3>
             <p className="text-gray-400 mb-8 text-lg">{t("noServersAvailableDesc")}</p>
-            <Button onClick={() => setIsDialogOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft text-lg px-8 py-3">
-              <Plus className="h-5 w-5 mr-2" />
+            <button onClick={() => setIsDialogOpen(true)} className="mc-btn mc-btn-emerald text-lg px-8 py-3 mx-auto">
+              <Plus className="h-5 w-5" />
               {t("createFirstServer")}
-            </Button>
+            </button>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {servers.map((server: ServerInfo, index: number) => (
               <div key={server.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}>
-                <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-emerald-600/30 group">
+                <div className="mc-panel group transition-transform duration-200 hover:-translate-y-1 overflow-hidden flex flex-col gap-4 pb-5">
                   <div className={`h-2 ${getStatusColor(server.status)}`}></div>
 
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-0 pt-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <Image src={getStatusIcon(server.status)} alt="Server Status" width={48} height={48} className="object-contain" />
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-900 ${getStatusColor(server.status)}`} />
+                        <div className="mc-slot relative w-14 h-14 flex items-center justify-center shrink-0">
+                          <Image src={getStatusIcon(server.status)} alt="Server Status" width={40} height={40} className="pixelated object-contain" />
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[var(--mc-frame)] ${getStatusColor(server.status)}`} />
                         </div>
                         <div>
                           <CardTitle className="text-white font-minecraft text-lg group-hover:text-emerald-400 transition-colors">{server.id}</CardTitle>
@@ -456,17 +458,17 @@ export default function Dashboard() {
 
                   <CardFooter className="flex gap-2 pt-0">
                     <Link href={`/dashboard/servers/${server.id}`} className="flex-1">
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 font-minecraft text-white">
-                        <SettingsIcon className="h-4 w-4 mr-2" />
+                      <button className="mc-btn mc-btn-emerald w-full py-2.5">
+                        <SettingsIcon className="h-4 w-4" />
                         {t("configure")}
-                      </Button>
+                      </button>
                     </Link>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="border-red-600/50 text-red-400 bg-blue-600/20">
+                        <button className="mc-btn px-3 py-2.5 text-red-300" style={{ background: "linear-gradient(180deg,#b94a4a,#8f3636)" }}>
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
                         <AlertDialogHeader>
@@ -500,7 +502,7 @@ export default function Dashboard() {
                       </AlertDialogContent>
                     </AlertDialog>
                   </CardFooter>
-                </Card>
+                </div>
               </div>
             ))}
           </div>

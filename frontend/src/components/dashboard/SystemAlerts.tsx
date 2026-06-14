@@ -137,9 +137,8 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
       case "high_cpu":
         return {
           icon: Cpu,
-          bgColor: "bg-yellow-900/30",
-          borderColor: "border-yellow-600/50",
-          textColor: "text-yellow-400",
+          accent: "#f5c542",
+          textColor: "text-yellow-300",
           message: t("alertHighCPU")
             .replace("{server}", alert.serverName)
             .replace("{value}", alert.value?.toFixed(0) || "0"),
@@ -147,9 +146,8 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
       case "high_memory":
         return {
           icon: Activity,
-          bgColor: "bg-orange-900/30",
-          borderColor: "border-orange-600/50",
-          textColor: "text-orange-400",
+          accent: "#f0843c",
+          textColor: "text-orange-300",
           message: t("alertHighMemory")
             .replace("{server}", alert.serverName)
             .replace("{value}", alert.value?.toFixed(0) || "0"),
@@ -164,18 +162,18 @@ export function SystemAlerts({ servers }: SystemAlertsProps) {
         const Icon = config.icon;
 
         return (
-          <Link key={alert.id} href={`/dashboard/servers/${alert.serverId}`} className="block">
-            <div className={`flex items-center gap-3 p-3 rounded-lg ${config.bgColor} border ${config.borderColor} group hover:opacity-90 transition-opacity`}>
-              <AlertTriangle className={`w-5 h-5 ${config.textColor} shrink-0`} />
+          <Link key={alert.id} href={`/dashboard/servers/${alert.serverId}`} className="block group">
+            <div className="mc-slot flex items-center gap-3 p-3 transition-transform group-hover:translate-x-0.5" style={{ borderColor: config.accent }}>
+              <AlertTriangle className={`w-5 h-5 ${config.textColor} shrink-0 animate-pulse`} />
               <Icon className={`w-4 h-4 ${config.textColor} shrink-0`} />
-              <span className={`text-sm ${config.textColor} flex-1`}>{config.message}</span>
+              <span className={`text-sm font-minecraft ${config.textColor} flex-1`}>{config.message}</span>
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   dismissAlert(alert.id);
                 }}
-                className="p-1 rounded hover:bg-gray-700/50 transition-colors"
+                className="p-1 hover:bg-black/40 transition-colors"
               >
                 <X className="w-4 h-4 text-gray-400 hover:text-white" />
               </button>

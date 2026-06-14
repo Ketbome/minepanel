@@ -26,6 +26,8 @@ frontend/src/
 |  |- docker/                   Server lifecycle/config endpoints
 |  |- files/                    File browser endpoints
 |  |- world-discovery/          World import endpoints
+|  |- metrics/                  Per-server CPU/RAM history endpoints
+|  |- scheduler/                Scheduled tasks CRUD endpoints
 |- lib/
 |  |- store/                    Zustand stores
 |  |- translations/             i18n dictionaries
@@ -72,6 +74,16 @@ Java/Bedrock UI parity:
 - Preserve edition-aware behavior in tabs and settings.
 - Do not expose Java-only controls for Bedrock by mistake (proxy/RCON-specific behavior).
 
+Tooling / build (Next.js 16):
+
+- Turbopack is the default bundler for `next dev` and `next build`. `next.config.ts`
+  uses a `turbopack` block; do not reintroduce a `webpack` config (it errors under Turbopack).
+- `next lint` was removed. The `lint` script is `eslint src`, using the flat config
+  exported by `eslint-config-next` in `eslint.config.mjs`.
+- The React Compiler `react-hooks/*` rules shipped by eslint-config-next 16 are
+  disabled in `eslint.config.mjs` to preserve the pre-upgrade baseline; revisit as a
+  dedicated cleanup, not inside unrelated changes.
+
 ## Critical Files
 
 - `src/services/axios.service.ts` - baseURL and credential behavior.
@@ -83,8 +95,17 @@ Java/Bedrock UI parity:
 - `src/app/dashboard/servers/[server]/page.tsx` - dynamic server route binding.
 - `src/components/molecules/Tabs/ServerTypeTab.tsx`
 - `src/components/molecules/Tabs/BedrockSettingsTab.tsx`
+- `src/components/organisms/ServerConfigTabs.tsx` - server view content. Owns the single tab metadata source + command-palette index (`paletteItems`); publishes the tab list/active tab to the global sidebar via `server-nav-store`.
+- `src/components/organisms/Sidebar.tsx` - global sidebar; drills into a per-server tab nav when on `/dashboard/servers/[server]` (back button + grouped tabs), otherwise shows the base navigation.
+- `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
+- `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
+- `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
+- `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
+- `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/lib/store/servers-store.ts`
 - `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`)
+- `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
+- `next.config.ts` - Turbopack config, standalone output, image/compiler options.
 - `package.json`
 
 ## Agent-Specific Instructions

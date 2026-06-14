@@ -8,8 +8,8 @@ export function ServerLoadingSkeleton() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-8">
-      <div className="bg-gray-900/80 backdrop-blur-md p-6 rounded-lg border border-gray-700/60 space-y-4 animate-fade-in-up">
+    <div className="space-y-6">
+      <div className="mc-panel p-6 space-y-4 animate-fade-in-up">
         <div className="flex items-center gap-3">
           <Skeleton className="h-12 w-12 rounded-md bg-gray-700/50" />
           <div className="flex-1">
@@ -26,8 +26,8 @@ export function ServerLoadingSkeleton() {
       </div>
 
       {/* Tabs skeleton */}
-      <div className="bg-gray-900/80 backdrop-blur-md rounded-lg border border-gray-700/60 overflow-hidden animate-fade-in-up stagger-1">
-        <div className="flex gap-1 border-b border-gray-700/60 px-6 pt-6">
+      <div className="mc-panel overflow-hidden animate-fade-in-up stagger-1">
+        <div className="mc-titlebar flex gap-1 px-6 pt-6 pb-2">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-10 w-24 rounded-t-md bg-gray-700/50" />
           ))}
@@ -45,8 +45,8 @@ export function ServerLoadingSkeleton() {
             <p className="text-gray-400">{t("preparingBlocks")}</p>
           </div>
 
-          <div className="w-80 h-3 bg-gray-800/60 rounded-full overflow-hidden border border-gray-700/40">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 animate-loading-bar" />
+          <div className="mc-bar w-80">
+            <div className="mc-bar__fill animate-loading-bar" style={{ backgroundColor: "#34d399" }} />
           </div>
 
           <div className="flex gap-4 opacity-60">

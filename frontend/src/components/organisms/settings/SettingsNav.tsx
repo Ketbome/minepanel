@@ -45,7 +45,7 @@ export function SettingsNav() {
   ];
 
   return (
-    <aside className="h-fit rounded-2xl border border-gray-700/60 bg-gray-900/80 p-3 backdrop-blur-md">
+    <aside className="mc-panel h-fit p-3">
       <div className="mb-3 px-3 pt-2">
         <p className="font-minecraft text-xs uppercase tracking-[0.25em] text-emerald-300/80">{t('settingsTitle')}</p>
         <p className="mt-2 text-sm text-gray-400">{t('settingsNavDescription')}</p>
@@ -60,10 +60,10 @@ export function SettingsNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-xl border px-3 py-3 text-sm transition-colors',
+                'flex items-center gap-3 px-3 py-3 text-sm font-minecraft transition-colors',
                 isActive
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                  : 'border-transparent text-gray-300 hover:border-gray-700 hover:bg-gray-800/60 hover:text-white',
+                  ? 'bg-emerald-600/25 text-emerald-300 border-2 border-[var(--mc-frame)] shadow-[inset_2px_2px_0_rgba(255,255,255,0.12),inset_-2px_-2px_0_rgba(0,0,0,0.4)]'
+                  : 'border-2 border-transparent text-gray-300 hover:bg-black/40 hover:text-white',
               )}
             >
               <Icon className={iconClassName} />

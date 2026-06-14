@@ -5,12 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { m } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
@@ -282,7 +280,7 @@ function HomeContent() {
     <>
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
       <div className="relative flex min-h-screen flex-col overflow-hidden bg-[url('/images/background.webp')] bg-cover bg-center">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-[#0a0d09]/75 backdrop-blur-sm" />
 
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <m.div
@@ -315,7 +313,7 @@ function HomeContent() {
           </m.div>
         </div>
 
-        <header className="relative z-10 border-b border-gray-700/60 bg-gray-900/95 shadow-lg backdrop-blur-md">
+        <header className="relative z-10 mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
             <Link href="/" className="group flex items-center gap-3 font-bold">
               <m.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
@@ -371,11 +369,11 @@ function HomeContent() {
               transition={{ delay: 0.3, duration: 0.4 }}
               className="relative"
             >
-              <div className="absolute -inset-1 animate-pulse rounded-lg bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 opacity-30 blur-lg" />
+              <div className="absolute -inset-1 animate-pulse bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 opacity-30 blur-lg" />
 
-              <Card className="relative border-2 border-emerald-600/30 bg-gray-900/95 shadow-2xl shadow-emerald-900/20 backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50">
+              <div className="mc-panel relative backdrop-blur-md">
                 <form onSubmit={handleSubmit}>
-                  <CardHeader className="space-y-1 pb-4">
+                  <CardHeader className="space-y-1 pb-4 pt-6">
                     <CardTitle className="flex items-center gap-2 font-minecraft text-2xl text-white">
                       {getCardTitle()}
                       <m.div
@@ -402,7 +400,7 @@ function HomeContent() {
                               placeholder={t('usernameOrEmail')}
                               required
                               autoComplete="username"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -418,7 +416,7 @@ function HomeContent() {
                               onChange={(e) => setPassword(e.target.value)}
                               required
                               autoComplete="current-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -441,7 +439,7 @@ function HomeContent() {
                               placeholder={t('username')}
                               required
                               autoComplete="username"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -457,7 +455,7 @@ function HomeContent() {
                               placeholder="name@example.com"
                               required
                               autoComplete="email"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -473,7 +471,7 @@ function HomeContent() {
                               onChange={(e) => setPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -489,7 +487,7 @@ function HomeContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
                         </>
@@ -508,7 +506,7 @@ function HomeContent() {
                             placeholder="name@example.com"
                             required
                             autoComplete="email"
-                            className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            className="mc-input h-10 text-gray-100"
                           />
                         </div>
                       )}
@@ -527,7 +525,7 @@ function HomeContent() {
                               onChange={(e) => setPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -543,7 +541,7 @@ function HomeContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
                         </>
@@ -562,7 +560,7 @@ function HomeContent() {
                               placeholder={t('username')}
                               required
                               autoComplete="username"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -579,7 +577,7 @@ function HomeContent() {
                               required={!invitation?.email}
                               disabled={!!invitation?.email}
                               autoComplete="email"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -595,7 +593,7 @@ function HomeContent() {
                               onChange={(e) => setPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
 
@@ -611,7 +609,7 @@ function HomeContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
                               autoComplete="new-password"
-                              className="bg-gray-800/90 text-gray-100 border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                              className="mc-input h-10 text-gray-100"
                             />
                           </div>
                         </>
@@ -620,13 +618,13 @@ function HomeContent() {
                   </CardContent>
 
                   <CardFooter className="flex-col space-y-3 pb-4 pt-2">
-                    <Button
+                    <button
                       type="submit"
-                      className="w-full bg-emerald-600 py-2 font-minecraft text-white transition-all hover:scale-[1.02] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/50 active:scale-[0.98]"
+                      className="mc-btn mc-btn-emerald w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isSubmitDisabled}
                     >
                       {getSubmitLabel()}
-                    </Button>
+                    </button>
 
                     {view === 'login' && setupStatus?.passwordRecoveryEnabled && (
                       <button
@@ -652,7 +650,7 @@ function HomeContent() {
                     )}
                   </CardFooter>
                 </form>
-              </Card>
+              </div>
             </m.div>
 
             <div className="mt-10 flex items-center justify-center space-x-6">
@@ -684,7 +682,7 @@ function HomeContent() {
           </m.div>
         </main>
 
-        <footer className="relative z-10 border-t border-gray-700/60 bg-gray-900/95 py-4 shadow-lg backdrop-blur-md">
+        <footer className="relative z-10 bg-[var(--mc-stone)]/95 py-4 backdrop-blur-md" style={{ borderTop: "3px solid var(--mc-frame)" }}>
           <div className="container mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center md:flex-row md:text-left">
             <p className="text-sm text-gray-300">
               &copy; {new Date().getFullYear()} Minepanel. {t('allRightsReserved')}

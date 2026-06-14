@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { LogOut, ChevronDown } from "lucide-react";
 import { LanguageSwitcher } from "../ui/language-switcher";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -42,33 +41,40 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-700/60 bg-gray-900/95 backdrop-blur-md shadow-lg animate-fade-in">
-      <div className="flex h-16 items-center justify-end px-6">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-sm text-gray-300 font-minecraft">{t("systemActive")}</span>
-          </div>
+    <header className="sticky top-0 z-40 w-full mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md animate-fade-in">
+      <div className="flex h-16 items-center justify-end px-6 gap-3">
+        <div className="mc-slot hidden sm:flex items-center gap-2 px-3 py-1.5">
+          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+          <span className="text-xs text-emerald-200 font-minecraft">{t("systemActive")}</span>
+        </div>
 
-          <div className="relative" ref={menuRef}>
-            <Button variant="ghost" className="flex items-center gap-3 hover:bg-gray-800/60 p-2" onClick={() => setShowUserMenu(!showUserMenu)}>
-              <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center overflow-hidden">
-                <Image src="/images/player-head.png" alt="User" width={32} height={32} className="rounded-full object-cover" />
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-white font-minecraft">{sessionUser?.username || "..."}</p>
-                <p className="text-xs text-gray-400">{sessionUser?.role === "ADMIN" ? t("administrator") : t("userLabel")}</p>
-              </div>
-              <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-200", showUserMenu && "rotate-180")} />
-            </Button>
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className={cn(
+              "flex items-center gap-3 px-2.5 py-1.5 border-2 transition-colors font-minecraft",
+              showUserMenu ? "border-[var(--mc-frame)] bg-emerald-600/20" : "border-transparent hover:border-[var(--mc-frame)] hover:bg-black/30",
+            )}
+          >
+            <div className="mc-slot h-9 w-9 flex items-center justify-center overflow-hidden">
+              <Image src="/images/player-head.png" alt="User" width={28} height={28} className="pixelated object-cover" />
+            </div>
+            <div className="hidden md:block text-left leading-tight">
+              <p className="text-sm font-medium text-white">{sessionUser?.username || "..."}</p>
+              <p className="text-[11px] text-gray-400">{sessionUser?.role === "ADMIN" ? t("administrator") : t("userLabel")}</p>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-200", showUserMenu && "rotate-180")} />
+          </button>
 
             {/* Dropdown menu with CSS transitions */}
             <div className={cn(
-              "absolute right-0 mt-2 w-56 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-xl z-50",
+              "absolute right-0 mt-2 w-56 z-50 bg-[var(--mc-stone)] border-2 border-[var(--mc-frame)]",
+              "shadow-[inset_2px_2px_0_rgba(255,255,255,0.1),inset_-2px_-2px_0_rgba(0,0,0,0.5),0_8px_24px_rgba(0,0,0,0.55)]",
               "transition-all duration-200 origin-top-right",
               showUserMenu ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
             )}>
-              <div className="flex items-center gap-3 p-4 border-b border-gray-700">
+              <div className="mc-titlebar flex items-center gap-3 p-4">
                 <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center overflow-hidden">
                   <Image src="/images/player-head.png" alt="User" width={40} height={40} className="rounded-full object-cover" />
                 </div>
@@ -94,7 +100,6 @@ export function DashboardHeader() {
             </div>
           </div>
         </div>
-      </div>
     </header>
   );
 }

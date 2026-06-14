@@ -16,6 +16,8 @@ import { ProxyModule } from './proxy/proxy.module';
 import { ModrinthModule } from './modrinth/modrinth.module';
 import { WorldDiscoveryModule } from './world-discovery/world-discovery.module';
 import { BedrockAddonsModule } from './bedrock-addons/bedrock-addons.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { ScheduledTasksModule } from './scheduled-tasks/scheduled-tasks.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -34,6 +36,8 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     ModrinthModule,
     WorldDiscoveryModule,
     BedrockAddonsModule,
+    MetricsModule,
+    ScheduledTasksModule,
     FilesModule,
     ProxyModule,
   ],

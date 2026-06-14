@@ -24,6 +24,8 @@ backend/src/
 |- world-discovery/         World import/discovery into global world library
 |- proxy/                   mc-router routes.json generation
 |- system-monitoring/       Host metrics
+|- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
+|- scheduled-tasks/         Interval-based auto-restart and scheduled commands
 |- users/                   User and settings persistence
 |- database/                TypeORM/sql.js setup
 ```

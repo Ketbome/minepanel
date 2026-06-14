@@ -63,6 +63,7 @@ describe('AuthService', () => {
       save: jest.fn(),
       find: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     };
 
     const mockPasswordResetTokenRepo = {

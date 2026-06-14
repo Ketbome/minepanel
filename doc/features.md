@@ -40,6 +40,7 @@ flowchart LR
 | Dashboard | Status cards, resource usage at a glance  |
 | Live logs | Streaming, errors highlighted, searchable |
 | Stats     | CPU%, RAM%, player count, uptime          |
+| History   | Per-server CPU/RAM graphs (1h–72h) in the Metrics tab, sampled every minute with 7-day retention |
 
 ## Server Control
 
@@ -48,6 +49,7 @@ flowchart LR
 | Basic controls | Start, Stop, Restart, Delete                              |
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
+| Scheduled tasks | Auto restarts and scheduled console commands at fixed intervals, managed per server in the Tasks tab |
 
 ## Roles and Access Control
 
@@ -206,7 +208,7 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 
 - Export logs from the log viewer
 - Dedicated `server.properties` editor with validation
-- Scheduled tasks (auto restart, commands)
-- Plugin browser
+- Cron-style scheduling (specific times) for scheduled tasks
+- Bedrock console commands
 
 **→ Full roadmap:** [Roadmap](/roadmap)
