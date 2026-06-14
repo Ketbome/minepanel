@@ -1592,6 +1592,10 @@ export const en = {
   tabSearch: 'Search tabs',
   tabSearchPlaceholder: 'Search tabs and sections...',
   tabSearchEmpty: 'No matches found.',
+  tabGroupConfig: 'Configuration',
+  tabGroupOperation: 'Operation',
+  tabGroupMonitoring: 'Monitoring',
+  back: 'Back',
 };
 
 export type TranslationKey = keyof typeof en;

@@ -1619,4 +1619,8 @@ export const pl: Record<TranslationKey, string> = {
   tabSearch: 'Szukaj kart',
   tabSearchPlaceholder: 'Szukaj kart i sekcji...',
   tabSearchEmpty: 'Brak wyników.',
+  tabGroupConfig: 'Konfiguracja',
+  tabGroupOperation: 'Obsługa',
+  tabGroupMonitoring: 'Monitorowanie',
+  back: 'Wstecz',
 };

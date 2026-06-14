@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { cn } from "@/lib/utils";
 
 export interface TabSearchItem {
   value: string;
@@ -16,13 +17,19 @@ export interface TabSearchItem {
 interface TabSearchProps {
   items: TabSearchItem[];
   onSelect: (target: string) => void;
+  collapsed?: boolean;
 }
 
-export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
+export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = false }) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(/mac/i.test(navigator.platform));
+  }, []);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -34,6 +41,8 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  const shortcutLabel = isMac ? "⌘K" : "Ctrl K";
 
   useEffect(() => {
     if (open) {
@@ -71,11 +80,20 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect }) => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-gray-700/60 bg-gray-800/90 py-2 pl-3 pr-3 text-gray-400 hover:text-emerald-400 transition-colors"
+        className={cn(
+          "flex items-center gap-2 rounded-xl border border-gray-700/60 bg-gray-800/40 text-gray-400 transition-colors hover:border-gray-600 hover:text-emerald-400",
+          collapsed ? "justify-center p-2" : "w-full px-3 py-2",
+        )}
         aria-label={t("tabSearch")}
+        title={collapsed ? t("tabSearch") : undefined}
       >
         <Search className="h-4 w-4 shrink-0" />
-        <kbd className="hidden md:inline-flex items-center rounded border border-gray-600 bg-gray-900/70 px-1.5 py-0.5 text-[10px] text-gray-400 font-mono">⌘K</kbd>
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate text-left text-sm text-gray-500">{t("tabSearchPlaceholder")}</span>
+            <kbd className="inline-flex items-center rounded border border-gray-600 bg-gray-900/70 px-1.5 py-0.5 text-[10px] font-mono text-gray-400">{shortcutLabel}</kbd>
+          </>
+        )}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>

@@ -54,7 +54,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
   };
 
   return (
-    <div className="bg-gray-900/80 backdrop-blur-md p-6 rounded-lg border border-gray-700/60 space-y-4 text-gray-200">
+    <div className="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 space-y-4 text-gray-200">
       <div className="flex items-center gap-3">
         <Link href="/dashboard/servers">
           <Button variant="outline" size="icon" type="button" className="border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-emerald-600/20 hover:text-emerald-400 hover:border-emerald-600/50">
@@ -77,7 +77,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
         </Badge>
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-lg border border-gray-700/40 bg-gray-800/30 backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-xl border border-gray-700/40 bg-gray-800/30 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="shrink-0 w-12 h-12 relative">
             <Image src={getStatusIcon(serverStatus)} alt="Server Status" width={48} height={48} className="object-contain" />

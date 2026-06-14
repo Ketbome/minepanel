@@ -16,11 +16,13 @@ import {
   BookOpen,
   Bug,
   Globe,
+  ArrowLeft,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useUIStore } from '@/lib/store';
+import { useUIStore, useServerNavStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, User } from '@/services/users/users.service';
+import { SidebarServerNav } from './SidebarServerNav';
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -44,6 +46,10 @@ export function Sidebar() {
   const isCollapsed = isSidebarCollapsed;
   const { t } = useLanguage();
   const pathname = usePathname();
+  const serverMatch = pathname.match(/^\/dashboard\/servers\/([^/]+)$/);
+  const inServerView = Boolean(serverMatch);
+  const storeServerName = useServerNavStore((state) => state.serverName);
+  const serverDisplayName = storeServerName || serverMatch?.[1] || '';
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -134,23 +140,39 @@ export function Sidebar() {
     >
       <div className="p-4 border-b border-gray-700/60">
         <div className="flex items-center justify-between">
-          <div
-            className={cn(
-              'flex items-center gap-3 transition-all duration-200 overflow-hidden',
-              isCollapsed ? 'opacity-0 w-0' : 'opacity-100',
-            )}
-          >
-            <Image
-              src="/images/minecraft-logo.webp"
-              alt="Logo"
-              width={32}
-              height={32}
-              className="object-contain shrink-0"
-            />
-            <h2 className="font-minecraft text-lg text-white whitespace-nowrap">
-              {t('minecraftPanel')}
-            </h2>
-          </div>
+          {inServerView ? (
+            <Link
+              href="/dashboard/servers"
+              className={cn(
+                'flex items-center gap-2 overflow-hidden text-gray-300 hover:text-emerald-400 transition-colors',
+                isCollapsed ? 'w-0 opacity-0' : 'opacity-100',
+              )}
+            >
+              <ArrowLeft size={18} className="shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-minecraft">{t('back')}</p>
+                <p className="font-minecraft text-sm text-white truncate">{serverDisplayName}</p>
+              </div>
+            </Link>
+          ) : (
+            <div
+              className={cn(
+                'flex items-center gap-3 transition-all duration-200 overflow-hidden',
+                isCollapsed ? 'opacity-0 w-0' : 'opacity-100',
+              )}
+            >
+              <Image
+                src="/images/minecraft-logo.webp"
+                alt="Logo"
+                width={32}
+                height={32}
+                className="object-contain shrink-0"
+              />
+              <h2 className="font-minecraft text-lg text-white whitespace-nowrap">
+                {t('minecraftPanel')}
+              </h2>
+            </div>
+          )}
 
           <Button
             variant="ghost"
@@ -161,46 +183,58 @@ export function Sidebar() {
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </Button>
         </div>
+
+        {inServerView && isCollapsed && (
+          <Link href="/dashboard/servers" title={t('back')} className="mt-3 flex justify-center text-gray-400 hover:text-emerald-400 transition-colors">
+            <ArrowLeft size={18} />
+          </Link>
+        )}
       </div>
 
-      <div className="p-4 space-y-2">
-        <p
-          className={cn(
-            'text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3 transition-opacity duration-200',
-            isCollapsed ? 'opacity-0' : 'opacity-100',
-          )}
-        >
-          {t('navigation')}
-        </p>
-
-        {navigationItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Button
-              variant="ghost"
+      {inServerView ? (
+        <div className="flex-1 overflow-y-auto custom-scrollbar py-4">
+          <SidebarServerNav collapsed={isCollapsed} />
+        </div>
+      ) : (
+        <>
+          <div className="p-4 space-y-2">
+            <p
               className={cn(
-                'w-full justify-start gap-3 h-10 px-3 hover:bg-gray-800/60 hover:text-white text-white transition-colors',
-                item.isActive && 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30',
-                isCollapsed && 'justify-center px-0',
+                'text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3 transition-opacity duration-200',
+                isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
-              <item.icon size={18} className="text-gray-400 hover:text-white shrink-0" />
-              <span
-                className={cn(
-                  'font-minecraft text-sm transition-all duration-200 overflow-hidden whitespace-nowrap',
-                  isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block',
-                )}
-              >
-                {item.label}
-              </span>
-            </Button>
-          </Link>
-        ))}
-      </div>
+              {t('navigation')}
+            </p>
 
-      <div className="flex-1" />
+            {navigationItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'w-full justify-start gap-3 h-10 px-3 hover:bg-gray-800/60 hover:text-white text-white transition-colors',
+                    item.isActive && 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30',
+                    isCollapsed && 'justify-center px-0',
+                  )}
+                >
+                  <item.icon size={18} className="text-gray-400 hover:text-white shrink-0" />
+                  <span
+                    className={cn(
+                      'font-minecraft text-sm transition-all duration-200 overflow-hidden whitespace-nowrap',
+                      isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block',
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </Button>
+              </Link>
+            ))}
+          </div>
 
-      {/* External Links */}
-      <div className="p-4 border-t border-gray-700/60 mt-auto shrink-0">
+          <div className="flex-1" />
+
+          {/* External Links */}
+          <div className="p-4 border-t border-gray-700/60 mt-auto shrink-0">
         <p
           className={cn(
             'text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3 transition-opacity duration-200',
@@ -265,7 +299,9 @@ export function Sidebar() {
             </Button>
           </a>
         </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

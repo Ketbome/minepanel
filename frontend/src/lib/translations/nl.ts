@@ -1628,4 +1628,8 @@ export const nl: Record<TranslationKey, string> = {
   tabSearch: 'Tabbladen zoeken',
   tabSearchPlaceholder: 'Zoek tabbladen en secties...',
   tabSearchEmpty: 'Geen resultaten.',
+  tabGroupConfig: 'Configuratie',
+  tabGroupOperation: 'Beheer',
+  tabGroupMonitoring: 'Monitoring',
+  back: 'Terug',
 };

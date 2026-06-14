@@ -95,7 +95,10 @@ Tooling / build (Next.js 16):
 - `src/app/dashboard/servers/[server]/page.tsx` - dynamic server route binding.
 - `src/components/molecules/Tabs/ServerTypeTab.tsx`
 - `src/components/molecules/Tabs/BedrockSettingsTab.tsx`
-- `src/components/organisms/ServerConfigTabs.tsx` - server tab bar; owns the tab list and the command-palette index (`paletteItems`).
+- `src/components/organisms/ServerConfigTabs.tsx` - server view content. Owns the single tab metadata source + command-palette index (`paletteItems`); publishes the tab list/active tab to the global sidebar via `server-nav-store`.
+- `src/components/organisms/Sidebar.tsx` - global sidebar; drills into a per-server tab nav when on `/dashboard/servers/[server]` (back button + grouped tabs), otherwise shows the base navigation.
+- `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
+- `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.

@@ -1618,4 +1618,8 @@ export const es: Record<TranslationKey, string> = {
   tabSearch: 'Buscar pestañas',
   tabSearchPlaceholder: 'Buscar pestañas y secciones...',
   tabSearchEmpty: 'Sin resultados.',
+  tabGroupConfig: 'Configuración',
+  tabGroupOperation: 'Operación',
+  tabGroupMonitoring: 'Monitoreo',
+  back: 'Volver',
 };

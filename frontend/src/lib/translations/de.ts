@@ -1623,4 +1623,8 @@ export const de: Record<TranslationKey, string> = {
   tabSearch: 'Tabs durchsuchen',
   tabSearchPlaceholder: 'Tabs und Bereiche suchen...',
   tabSearchEmpty: 'Keine Treffer.',
+  tabGroupConfig: 'Konfiguration',
+  tabGroupOperation: 'Betrieb',
+  tabGroupMonitoring: 'Überwachung',
+  back: 'Zurück',
 };

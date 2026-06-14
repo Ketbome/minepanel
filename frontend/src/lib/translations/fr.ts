@@ -1593,6 +1593,10 @@ export const fr = {
   tabSearch: 'Rechercher des onglets',
   tabSearchPlaceholder: 'Rechercher onglets et sections...',
   tabSearchEmpty: 'Aucun résultat.',
+  tabGroupConfig: 'Configuration',
+  tabGroupOperation: 'Opération',
+  tabGroupMonitoring: 'Surveillance',
+  back: 'Retour',
 };
 
 export type TranslationKey = keyof typeof fr;

@@ -1,11 +1,12 @@
 import { FormEvent, FC, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
 import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { TabSearch, type TabSearchItem } from "./TabSearch";
+import { type TabSearchItem } from "./TabSearch";
+import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
@@ -21,6 +22,10 @@ const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => 
 const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
 const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasksTab").then(mod => mod.ScheduledTasksTab));
 
+// Fixed list of every possible tab value, used only to validate the URL hash
+// regardless of which tabs are currently visible for this edition/type.
+const ALL_TAB_VALUES = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+
 interface ServerConfigTabsProps {
   readonly serverId: string;
   readonly config: ServerConfig;
@@ -33,7 +38,11 @@ interface ServerConfigTabsProps {
 
 export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving, refreshToken = 0 }) => {
   const { t } = useLanguage();
+  const setNav = useServerNavStore((state) => state.setNav);
+  const setActiveNav = useServerNavStore((state) => state.setActive);
+  const clearNav = useServerNavStore((state) => state.clear);
 
+  const serverName = config.serverName || serverId;
   const isJava = config.edition !== "BEDROCK";
   const isBedrock = config.edition === "BEDROCK";
 
@@ -43,21 +52,29 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showResourcesTab = isJava; // JVM settings only apply to Java
   const showCommandsTab = isJava; // RCON only works with Java
 
-  const tabItems: TabSearchItem[] = [
-    { value: "type", label: t("serverType"), icon: Server, target: "type" },
-    { value: "general", label: t("general"), icon: Settings, target: "general" },
-    ...(showResourcesTab ? [{ value: "resources", label: t("resources"), icon: Cpu, target: "resources" }] : []),
-    ...(isBedrock ? [{ value: "bedrock", label: t("bedrock"), icon: Smartphone, target: "bedrock" }] : []),
-    ...(isBedrock ? [{ value: "addons", label: t("addons"), icon: Package, target: "addons" }] : []),
-    ...(showModsTab ? [{ value: "mods", label: t("mods"), icon: Package, target: "mods" }] : []),
-    ...(showPluginsTab ? [{ value: "plugins", label: t("plugins"), icon: Layers, target: "plugins" }] : []),
-    { value: "advanced", label: t("advanced"), icon: Code, target: "advanced" },
-    { value: "logs", label: t("logs"), icon: ScrollText, target: "logs" },
-    ...(showCommandsTab ? [{ value: "commands", label: t("commands"), icon: Terminal, target: "commands" }] : []),
-    { value: "files", label: t("files"), icon: FolderOpen, target: "files" },
-    { value: "metrics", label: t("metrics"), icon: Activity, target: "metrics" },
-    { value: "tasks", label: t("tasks"), icon: Clock, target: "tasks" },
+  const isServerRunning = serverStatus === "running" || serverStatus === "starting";
+
+  // Single source of truth for the tab list. Drives the side nav, the hash
+  // validation and the command-palette index, so there is no duplicated list.
+  const tabsMeta: (ServerNavItem & { show: boolean })[] = [
+    { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
+    { value: "general", label: t("general"), icon: Settings, group: "config", show: true, disabled: isServerRunning },
+    { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
+    { value: "bedrock", label: t("bedrock"), icon: Smartphone, group: "config", show: isBedrock, disabled: isServerRunning },
+    { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning },
+    { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning },
+    { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning },
+    { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning },
+    { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
+    { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
+    { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
+    { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
+    { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
+
+  const navItems: ServerNavItem[] = tabsMeta.filter((tab) => tab.show).map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, group: tab.group, disabled: tab.disabled }));
+  const navSignature = navItems.map((item) => `${item.value}:${item.disabled ? 1 : 0}:${item.label}`).join(",");
+  const tabItems: TabSearchItem[] = navItems.map((item) => ({ value: item.value, label: item.label, icon: item.icon, target: item.value }));
 
   // Curated index of individual settings -> the tab that holds them, so the
   // palette can answer searches like "ram", "cheats" or "puerto". Keywords are
@@ -91,8 +108,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const getInitialTab = () => {
     if (typeof window === "undefined") return "type";
     const hash = window.location.hash.slice(1);
-    const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
-    return validTabs.includes(hash) ? hash : "type";
+    return ALL_TAB_VALUES.includes(hash) ? hash : "type";
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
@@ -125,8 +141,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
-      if (validTabs.includes(hash)) {
+      if (ALL_TAB_VALUES.includes(hash)) {
         setActiveTab(hash);
       }
     };
@@ -134,6 +149,19 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
+
+  // Publish the tab list to the global sidebar (drill-in nav). navSignature is a
+  // stable proxy for navItems/paletteItems, which are rebuilt on every render.
+  useEffect(() => {
+    setNav({ serverId, serverName, items: navItems, paletteItems });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navSignature, serverId, serverName, setNav]);
+
+  useEffect(() => {
+    setActiveNav(activeTab);
+  }, [activeTab, setActiveNav]);
+
+  useEffect(() => () => clearNav(), [clearNav]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -150,8 +178,6 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     }
     return success;
   };
-
-  const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
   useEffect(() => {
     if (isServerRunning) {
@@ -180,96 +206,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
         </div>
       )}
 
-      <div className="bg-gray-900/80 backdrop-blur-md rounded-lg border border-gray-700/60 overflow-hidden text-gray-200">
-        <form onSubmit={handleSubmit}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="relative overflow-hidden">
-              <div className="overflow-x-auto overflow-y-hidden custom-scrollbar text-gray-200 scroll-smooth flex items-stretch bg-gray-800/70 border-b border-gray-700/60">
-                <TabSearch items={paletteItems} onSelect={setActiveTab} />
-                <TabsList className="flex w-max min-w-full h-auto p-1 bg-transparent">
-                  <TabsTrigger value="type" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Server className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("serverType")}</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger value="general" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Settings className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("general")}</span>
-                  </TabsTrigger>
-
-                  {showResourcesTab && (
-                    <TabsTrigger value="resources" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Cpu className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("resources")}</span>
-                    </TabsTrigger>
-                  )}
-
-                  {isBedrock && (
-                    <TabsTrigger value="bedrock" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Smartphone className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("bedrock")}</span>
-                    </TabsTrigger>
-                  )}
-
-                  {isBedrock && (
-                    <TabsTrigger value="addons" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Package className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("addons")}</span>
-                    </TabsTrigger>
-                  )}
-
-                  {showModsTab && (
-                    <TabsTrigger value="mods" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Package className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("mods")}</span>
-                    </TabsTrigger>
-                  )}
-
-                  {showPluginsTab && (
-                    <TabsTrigger value="plugins" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Layers className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("plugins")}</span>
-                    </TabsTrigger>
-                  )}
-
-                    <TabsTrigger value="advanced" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Code className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("advanced")}</span>
-                    </TabsTrigger>
-
-                  <TabsTrigger value="logs" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
-                    <ScrollText className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("logs")}</span>
-                  </TabsTrigger>
-
-                  {showCommandsTab && (
-                    <TabsTrigger value="commands" disabled={!isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
-                      <Terminal className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{t("commands")}</span>
-                    </TabsTrigger>
-                  )}
-
-                  <TabsTrigger value="files" disabled={isServerRunning} className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                    <FolderOpen className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("files")}</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger value="metrics" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
-                    <Activity className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("metrics")}</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger value="tasks" className="flex text-gray-200 items-center gap-1 py-2 px-2 md:px-3 data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 font-minecraft text-xs md:text-sm whitespace-nowrap">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{t("tasks")}</span>
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-gray-800/70 to-transparent"></div>
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-gray-800/70 to-transparent"></div>
-            </div>
-
-            <div className="p-4 bg-gray-900/60 min-h-[400px]">
+      <form onSubmit={handleSubmit}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="min-w-0 rounded-2xl border border-gray-700/60 bg-gray-900/80 p-4 text-gray-200 backdrop-blur-md min-h-[400px]">
               <TabsContent value="type" className="space-y-4 mt-0">
                 <ServerTypeTab config={config} updateConfig={updateConfig} />
               </TabsContent>
@@ -333,10 +272,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               <TabsContent value="tasks" className="space-y-4 mt-0">
                 <ScheduledTasksTab serverId={serverId} />
               </TabsContent>
-            </div>
-          </Tabs>
-        </form>
-      </div>
+          </div>
+        </Tabs>
+      </form>
     </div>
   );
 };
