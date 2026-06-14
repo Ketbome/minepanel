@@ -12,12 +12,14 @@ export default function WorldLibraryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-emerald-400 font-minecraft flex items-center gap-3">
-          <Image src="/images/grass.webp" alt="World Library" width={32} height={32} className="opacity-90" />
-          {t("worldLibrary")}
-        </h1>
-        <p className="text-gray-400 mt-2">{t("worldLibraryDesc")}</p>
+      <div className="mc-panel animate-fade-in-up">
+        <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
+          <Image src="/images/grass.webp" alt="World Library" width={32} height={32} className="pixelated animate-float" />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("worldLibrary")}</h1>
+            <p className="text-gray-300 text-xs">{t("worldLibraryDesc")}</p>
+          </div>
+        </div>
       </div>
 
       <WorldDiscoverPanel onImported={() => setBrowserKey((value) => value + 1)} />

@@ -64,6 +64,20 @@ npm run lint --prefix frontend
 - Keep components focused; split large feature blocks into molecules/organisms.
 - Maintain existing visual/system patterns; do not redesign unrelated UI.
 
+Design system (Minecraft GUI):
+
+- The app uses a pixel/inventory "Minecraft GUI" look defined in `src/app/globals.css`.
+- Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
+  slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).
+  Segmented bars: `mc-bar` + `mc-bar__fill` (set fill color via inline `backgroundColor`).
+  Status chips: `mc-tag`. Inputs: `mc-input`.
+- The base shadcn primitives are skinned to this look via helper classes so feature UI inherits it
+  automatically: `Card` uses `mc-panel`; `Button` uses `mc-bevel` + `font-minecraft`; `Input` uses
+  `mc-field`; `Badge` uses `mc-chip`; `Tabs` list/trigger are squared with emerald active state.
+  Prefer plain `Card`/`Button`/`Input`/`Badge`/`Tabs` and let the skin apply; only reach for the raw
+  `mc-*` classes for bespoke layouts (dashboards, headers).
+- Use the existing pixel item art in `public/images/*.webp` with the `pixelated` class for icons.
+
 Auth/session patterns:
 
 - Axios client uses `withCredentials: true`; preserve it.

@@ -8,7 +8,6 @@ import ModpackCard from "@/components/molecules/modpacks/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/molecules/modpacks/ModpackDetailsModalEnhanced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks } from "@/services/curseforge/curseforge.service";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 
@@ -145,36 +144,39 @@ export default function TemplatesPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-16 h-16 text-emerald-400 animate-spin" />
-        <p className="text-gray-400 font-minecraft">{t("loadingModpacks")}</p>
+        <Image src="/images/loading-cube.webp" alt="" width={64} height={64} className="pixelated animate-spin-slow" />
+        <p className="text-gray-300 font-minecraft">{t("loadingModpacks")}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="animate-fade-in-up">
-        <div className="flex items-center gap-3 mb-2">
-          <Image src="/images/bookshelf.webp" alt="Templates" width={40} height={40} />
-          <h1 className="text-3xl font-bold text-white font-minecraft">{t("modpackTemplates")}</h1>
+    <div className="space-y-6">
+      {/* Recipe book header */}
+      <div className="mc-panel animate-fade-in-up">
+        <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
+          <Image src="/images/bookshelf.webp" alt="Templates" width={32} height={32} className="pixelated animate-float" />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("modpackTemplates")}</h1>
+            <p className="text-gray-300 text-xs">{t("modpackTemplatesDescription")}</p>
+          </div>
         </div>
-        <p className="text-gray-400">{t("modpackTemplatesDescription")}</p>
       </div>
 
       {error && (
         <div className="animate-fade-in">
-          <Alert className="border-2 border-red-600/40 bg-red-900/20">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <AlertTitle className="text-red-400">{t("error")}</AlertTitle>
-            <AlertDescription className="text-gray-300">
-              {error}
+          <div className="mc-slot flex items-start gap-3 p-4" style={{ borderColor: "#f05a5a" }}>
+            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-minecraft text-red-300 mb-1">{t("error")}</p>
+              <p className="text-gray-300">{error}</p>
               {error === t("curseforgeApiKeyNotConfigured") && (
-                <a href="/dashboard/settings" className="block mt-2 text-emerald-400 hover:underline">
+                <a href="/dashboard/settings" className="block mt-2 text-emerald-400 hover:underline font-minecraft">
                   {t("goToSettings")}
                 </a>
               )}
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         </div>
       )}
 
@@ -185,16 +187,16 @@ export default function TemplatesPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-gray-800 border border-gray-700">
-              <TabsTrigger value="featured" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <TabsList className="h-auto">
+              <TabsTrigger value="featured">
                 <Star className="w-4 h-4 mr-2" />
                 {t("featured")}
               </TabsTrigger>
-              <TabsTrigger value="popular" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <TabsTrigger value="popular">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 {t("popular")}
               </TabsTrigger>
-              <TabsTrigger value="search" className="text-white data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <TabsTrigger value="search">
                 <Package className="w-4 h-4 mr-2" />
                 {t("searchResults")}
               </TabsTrigger>

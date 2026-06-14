@@ -31,7 +31,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   if (!isHydrated || isLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-900 items-center justify-center">
+      <div className="flex min-h-screen bg-[#0a0d09] items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p className="text-gray-400">{!isHydrated ? t("initializing") : t("verifyingAuth")}</p>
@@ -46,7 +46,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   return (
     <div className="flex min-h-screen bg-[url('/images/background.webp')] bg-cover bg-fixed bg-center relative">
-      <div className="absolute inset-0 bg-black/60"></div>
+      <div className="absolute inset-0 bg-[#0a0d09]/78"></div>
 
       <Sidebar />
 

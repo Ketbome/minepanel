@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import { Cpu, Activity, Server, AlertTriangle, ArrowRight } from "lucide-react";
 import { getAllServersResources, ServerResourceInfo } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -124,21 +123,21 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "running":
-        return "bg-emerald-600/20 text-emerald-400 border-emerald-600/30";
+        return "bg-emerald-700/70 text-emerald-200";
       case "starting":
-        return "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
+        return "bg-yellow-700/70 text-yellow-200";
       case "stopped":
-        return "bg-gray-600/20 text-gray-400 border-gray-600/30";
+        return "bg-gray-700/70 text-gray-200";
       default:
-        return "bg-red-600/20 text-red-400 border-red-600/30";
+        return "bg-red-800/70 text-red-200";
     }
   };
 
   // Colors based on percentage of configured limit
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return "from-red-600 to-red-400";
-    if (percent >= 70) return "from-yellow-600 to-yellow-400";
-    return "from-emerald-600 to-emerald-400";
+    if (percent >= 90) return "#f05a5a";
+    if (percent >= 70) return "#f5c542";
+    return "#34d399";
   };
 
   const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuPercent >= 80 || server.memoryPercent >= 80);
@@ -146,59 +145,58 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
   if (servers.length === 0) return null;
 
   return (
-    <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-white font-minecraft flex items-center gap-2">
-            <Server className="w-5 h-5 text-blue-400" />
-            {t("serversOverview")}
-          </CardTitle>
-          <Link href="/dashboard/servers" className="text-sm text-gray-400 hover:text-emerald-400 flex items-center gap-1 transition-colors">
-            {t("viewAll")}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className="mc-panel">
+      <div className="mc-titlebar flex items-center justify-between px-4 py-2.5">
+        <span className="font-minecraft text-sm text-white flex items-center gap-2">
+          <Server className="w-4 h-4 text-cyan-300" />
+          {t("serversOverview")}
+        </span>
+        <Link href="/dashboard/servers" className="text-xs font-minecraft text-gray-300 hover:text-emerald-400 flex items-center gap-1 transition-colors">
+          {t("viewAll")}
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="p-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-gray-400">{t("loading")}</div>
+            <div className="text-gray-400 font-minecraft">{t("loading")}</div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {serversData.map((server) => (
-              <Link key={server.id} href={`/dashboard/servers/${server.id}`} className="block">
-                <div className="p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-gray-600/50 transition-all group">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-white group-hover:text-emerald-400 transition-colors truncate max-w-[200px]">{server.name}</span>
-                      {hasHighUsage(server) && <AlertTriangle className="w-4 h-4 text-yellow-400 animate-pulse" />}
+              <Link key={server.id} href={`/dashboard/servers/${server.id}`} className="block group">
+                <div className="mc-slot p-3 transition-transform group-hover:translate-x-0.5">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="mc-slot w-10 h-10 shrink-0 flex items-center justify-center">
+                        <Image src={server.status === "running" ? "/images/grass.webp" : "/images/barrier.webp"} alt="" width={26} height={26} className="pixelated" />
+                      </div>
+                      <span className="font-minecraft text-sm text-white group-hover:text-emerald-400 transition-colors truncate">{server.name}</span>
+                      {hasHighUsage(server) && <AlertTriangle className="w-4 h-4 text-yellow-400 animate-pulse shrink-0" />}
                     </div>
-                    <Badge variant="outline" className={getStatusColor(server.status)}>
-                      {t(server.status)}
-                    </Badge>
+                    <span className={`mc-tag ${getStatusColor(server.status)} text-[10px] px-2 py-0.5 shrink-0`}>{t(server.status)}</span>
                   </div>
 
                   {server.status === "running" && (
                     <div className="grid grid-cols-2 gap-3 mt-2">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 text-xs text-gray-400 font-minecraft">
                           <Cpu className="w-3 h-3" />
                           <span>CPU</span>
                           <span className="ml-auto font-mono">{server.cpuPercent.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.cpuPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.cpuPercent, 100)}%` }} />
+                        <div className="mc-bar h-2.5">
+                          <div className="mc-bar__fill" style={{ width: `${Math.min(server.cpuPercent, 100)}%`, backgroundColor: getUsageColor(server.cpuPercent) }} />
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 text-xs text-gray-400 font-minecraft">
                           <Activity className="w-3 h-3" />
                           <span>RAM</span>
                           <span className="ml-auto font-mono">{server.memoryPercent.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full bg-linear-to-r ${getUsageColor(server.memoryPercent)} transition-all duration-500`} style={{ width: `${Math.min(server.memoryPercent, 100)}%` }} />
+                        <div className="mc-bar h-2.5">
+                          <div className="mc-bar__fill" style={{ width: `${Math.min(server.memoryPercent, 100)}%`, backgroundColor: getUsageColor(server.memoryPercent) }} />
                         </div>
                       </div>
                     </div>
@@ -208,7 +206,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

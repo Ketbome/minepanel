@@ -99,8 +99,8 @@ export const FileList: FC<FileListProps> = ({
     <>
     <div className="flex-1 overflow-auto select-none">
       <table className="w-full text-sm">
-          <thead className="bg-gray-800/50 sticky top-0 z-10">
-            <tr className="text-gray-400 text-left">
+          <thead className="bg-[var(--mc-stone-deep)] sticky top-0 z-10">
+            <tr className="text-gray-400 text-left font-minecraft">
               <th className="px-4 py-2 font-medium">Name</th>
               <th className="px-4 py-2 font-medium w-24">Size</th>
               <th className="px-4 py-2 font-medium w-44">Modified</th>
@@ -109,7 +109,7 @@ export const FileList: FC<FileListProps> = ({
           <tbody>
             {onNavigateUp && (
               <tr
-                className="hover:bg-gray-800/40 cursor-pointer border-b border-gray-800/30"
+                className="hover:bg-emerald-600/15 cursor-pointer border-b border-[var(--mc-frame)]/40"
                 onClick={onNavigateUp}
               >
                 <td className="px-4 py-2 flex items-center gap-2 text-gray-300">
@@ -124,8 +124,8 @@ export const FileList: FC<FileListProps> = ({
               <tr
                 key={file.path}
                 className={cn(
-                  "hover:bg-gray-800/40 cursor-pointer border-b border-gray-800/30 transition-colors",
-                  selectedFile?.path === file.path && "bg-emerald-900/20 hover:bg-emerald-900/30"
+                  "hover:bg-emerald-600/15 cursor-pointer border-b border-[var(--mc-frame)]/40 transition-colors",
+                  selectedFile?.path === file.path && "bg-emerald-900/30 hover:bg-emerald-900/40"
                 )}
                 onClick={() => onFileClick(file)}
                 onDoubleClick={() => onFileDoubleClick(file)}

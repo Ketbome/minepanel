@@ -81,7 +81,7 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex items-center gap-2 rounded-xl border border-gray-700/60 bg-gray-800/40 text-gray-400 transition-colors hover:border-gray-600 hover:text-emerald-400",
+          "mc-field flex items-center gap-2 text-gray-400 transition-colors hover:text-emerald-400",
           collapsed ? "justify-center p-2" : "w-full px-3 py-2",
         )}
         aria-label={t("tabSearch")}
@@ -91,15 +91,15 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
         {!collapsed && (
           <>
             <span className="flex-1 truncate text-left text-sm text-gray-500">{t("tabSearchPlaceholder")}</span>
-            <kbd className="inline-flex items-center rounded border border-gray-600 bg-gray-900/70 px-1.5 py-0.5 text-[10px] font-mono text-gray-400">{shortcutLabel}</kbd>
+            <kbd className="mc-chip inline-flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] font-mono text-gray-400">{shortcutLabel}</kbd>
           </>
         )}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-gray-200 p-0 gap-0 overflow-hidden top-[20%] translate-y-0">
+        <DialogContent className="bg-[var(--mc-stone)] border-2 border-[var(--mc-frame)] text-gray-200 p-0 gap-0 overflow-hidden top-[20%] translate-y-0">
           <DialogTitle className="sr-only">{t("tabSearch")}</DialogTitle>
-          <div className="flex items-center gap-2 border-b border-gray-700/60 pl-3 pr-10">
+          <div className="mc-titlebar flex items-center gap-2 pl-3 pr-10">
             <Search className="h-4 w-4 shrink-0 text-gray-400" />
             <input
               autoFocus
@@ -124,7 +124,7 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
                   type="button"
                   onClick={() => select(item.target)}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${index === activeIndex ? "bg-emerald-600/20 text-emerald-300" : "text-gray-300 hover:bg-gray-800"}`}
+                  className={`flex w-full items-center gap-3 border-2 px-3 py-2 text-left text-sm transition-colors ${index === activeIndex ? "border-[var(--mc-frame)] bg-emerald-600/25 text-emerald-300" : "border-transparent text-gray-300 hover:bg-black/40"}`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="flex-1 font-minecraft">{item.label}</span>

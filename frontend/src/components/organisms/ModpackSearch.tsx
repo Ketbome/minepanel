@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Search, Loader2, SlidersHorizontal } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
@@ -33,35 +31,27 @@ export function ModpackSearch({ onSearch, isLoading }: ModpackSearchProps) {
     <div className="space-y-4">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+          <input
             type="text"
             placeholder={t("searchModpacks")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            onKeyDown={handleKeyPress}
+            className="mc-input w-full h-10 pl-10 pr-3 text-sm"
             disabled={isLoading}
           />
         </div>
-        <Button
-          onClick={handleSearch}
-          disabled={isLoading}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft px-6"
-        >
+        <button onClick={handleSearch} disabled={isLoading} className="mc-btn mc-btn-emerald px-6">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("search")}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-emerald-400 hover:border-emerald-500"
-        >
+        </button>
+        <button onClick={() => setShowFilters(!showFilters)} className="mc-btn px-4">
           <SlidersHorizontal className="w-4 h-4" />
-        </Button>
+        </button>
       </div>
 
       {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-800/60 rounded-lg border border-gray-700">
+        <div className="mc-panel grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           <div className="space-y-2">
             <label className="text-sm text-gray-300 font-medium">{t("sortBy")}</label>
             <Select value={sortField.toString()} onValueChange={(value) => setSortField(parseInt(value))}>

@@ -387,3 +387,290 @@
   transform-origin: top center;
   will-change: transform;
 }
+
+/* ============================================================
+   Minecraft GUI design system
+   Beveled inventory panels, item slots, hotbar, pixel buttons
+   and segmented XP-style bars. Dark "deepslate" variant to sit
+   on top of the fixed world background.
+   ============================================================ */
+:root {
+  --mc-frame: #0a0d09;
+  --mc-stone: #2b3327;
+  --mc-stone-deep: #191e16;
+  --mc-emerald: #34d399;
+  --mc-diamond: #5eead4;
+  --mc-gold: #f5c542;
+  --mc-lapis: #5b8dff;
+  --mc-redstone: #f05a5a;
+  --mc-amethyst: #b388ff;
+}
+
+/* Raised stone panel (chest / inventory window) */
+.mc-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)), var(--mc-stone);
+  border: 3px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.1), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 0 6px 0 rgba(0, 0, 0, 0.35), 0 14px 28px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+/* Subtle pixel-stone grain so panels never read as flat */
+.mc-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 2px, transparent 2px 4px), repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px);
+  mix-blend-mode: overlay;
+}
+
+.mc-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Window header strip */
+.mc-titlebar {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55));
+  border-bottom: 3px solid var(--mc-frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Inset inventory slot */
+.mc-slot {
+  position: relative;
+  background: var(--mc-stone-deep);
+  border: 3px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06);
+  image-rendering: pixelated;
+}
+
+.mc-slot--active {
+  outline: 3px solid var(--mc-emerald);
+  outline-offset: -1px;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 16px rgba(52, 211, 153, 0.55);
+}
+
+/* Stack-count number, bottom-right like real item stacks */
+.mc-count {
+  font-family: "Minecraft", sans-serif;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85);
+  line-height: 1;
+}
+
+/* Pixel push-button */
+.mc-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: "Minecraft", sans-serif;
+  color: #f3fff8;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #4d4d4d, #383838);
+  border: 3px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.22), inset -2px -2px 0 rgba(0, 0, 0, 0.45), 0 4px 0 rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
+  image-rendering: pixelated;
+}
+
+.mc-btn:hover {
+  filter: brightness(1.14);
+}
+
+.mc-btn:active {
+  transform: translateY(3px);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.4), inset -2px -2px 0 rgba(255, 255, 255, 0.12);
+}
+
+.mc-btn-emerald {
+  background: linear-gradient(180deg, #57a83f, #3c7e2a);
+}
+.mc-btn-lapis {
+  background: linear-gradient(180deg, #4f7bdd, #2f55ad);
+}
+.mc-btn-gold {
+  background: linear-gradient(180deg, #d9a52f, #a9781b);
+}
+.mc-btn-amethyst {
+  background: linear-gradient(180deg, #8a63d6, #5f3fa3);
+}
+
+/* Segmented XP / resource bar */
+.mc-bar {
+  position: relative;
+  height: 16px;
+  background: var(--mc-stone-deep);
+  border: 3px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.mc-bar__fill {
+  position: relative;
+  height: 100%;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  transition: width 0.6s ease;
+}
+
+.mc-bar__fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.32) 0 2px, transparent 2px 9px);
+}
+
+/* Pixel chip / tag (status badge) */
+.mc-tag {
+  font-family: "Minecraft", sans-serif;
+  border: 2px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.2), inset -1px -1px 0 rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Pixel text input */
+.mc-input {
+  background: var(--mc-stone-deep);
+  border: 3px solid var(--mc-frame);
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.5);
+  color: #eafff2;
+}
+.mc-input::placeholder {
+  color: rgba(234, 255, 242, 0.4);
+}
+.mc-input:focus {
+  outline: none;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(52, 211, 153, 0.5);
+}
+
+@keyframes slot-glint {
+  0%,
+  100% {
+    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 0 rgba(52, 211, 153, 0);
+  }
+  50% {
+    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 18px rgba(52, 211, 153, 0.45);
+  }
+}
+
+.animate-slot-glint {
+  animation: slot-glint 2.4s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------
+   Primitive skins — applied inside the shadcn base components so
+   every Card/Button/Input/Badge/Tabs across the app inherits the
+   Minecraft GUI look. Keep colors from the component variants;
+   these only add bevel + square corners.
+   ------------------------------------------------------------ */
+
+/* Beveled push effect for buttons (keeps variant background) */
+.mc-bevel {
+  border: 2px solid var(--mc-frame) !important;
+  border-radius: 0 !important;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.42), 0 3px 0 rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
+  image-rendering: pixelated;
+}
+.mc-bevel:hover {
+  filter: brightness(1.12);
+}
+.mc-bevel:active {
+  transform: translateY(2px);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.38), inset -2px -2px 0 rgba(255, 255, 255, 0.1);
+}
+.mc-bevel:disabled,
+.mc-bevel[disabled] {
+  filter: none;
+  transform: none;
+}
+
+/* Inset field look for inputs/textareas */
+.mc-field {
+  border: 2px solid var(--mc-frame) !important;
+  border-radius: 0 !important;
+  background: var(--mc-stone-deep);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+.mc-field:focus,
+.mc-field:focus-visible {
+  outline: none;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(52, 211, 153, 0.5);
+}
+
+/* Keep browser autofill on-theme instead of the default lavender/yellow */
+.mc-field:-webkit-autofill,
+.mc-input:-webkit-autofill,
+.mc-field:-webkit-autofill:focus,
+.mc-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #eafff2;
+  caret-color: #eafff2;
+  -webkit-box-shadow: inset 0 0 0 1000px var(--mc-stone-deep), inset 2px 2px 0 rgba(0, 0, 0, 0.45);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Square pixel chip for badges */
+.mc-chip {
+  border: 2px solid var(--mc-frame) !important;
+  border-radius: 0 !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.18), inset -1px -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ------------------------------------------------------------
+   Legacy retrofit — feature panels (config tabs, settings, modals)
+   that still use the old gray theme via raw divs get reshaped to
+   the Minecraft GUI look (square + pixel frame + inset bevel)
+   without editing each file. Matches only "panel-like" elements:
+   a rounded utility together with a gray/emerald bg + border.
+   Inputs/buttons/badges are excluded (they use mc-field/bevel/chip).
+   ------------------------------------------------------------ */
+[class*="rounded-"][class*="bg-gray-9"][class*="border-gray-7"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="bg-gray-8"][class*="border-gray-7"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="bg-gray-9"][class*="border-emerald"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="bg-gray-8"][class*="border-emerald"]:not(input):not(textarea):not(button) {
+  border-width: 2px !important;
+  border-color: var(--mc-frame) !important;
+  border-radius: 0 !important;
+}
+
+/* Outer panels (gray-900) get the stone surface; inner boxes (gray-800)
+   get the darker inset surface so nesting still reads. */
+[class*="rounded-"][class*="bg-gray-9"][class*="border-gray-7"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="bg-gray-9"][class*="border-emerald"]:not(input):not(textarea):not(button) {
+  background-color: var(--mc-stone) !important;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.08), inset -2px -2px 0 rgba(0, 0, 0, 0.45);
+}
+[class*="rounded-"][class*="bg-gray-8"][class*="border-gray-7"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="bg-gray-8"][class*="border-emerald"]:not(input):not(textarea):not(button) {
+  background-color: var(--mc-stone-deep) !important;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5), inset -2px -2px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Legacy gradient panels (bg-linear/gradient from-gray/via-gray) → flat stone */
+[class*="rounded-"][class*="border-"][class*="from-gray"]:not(input):not(textarea):not(button),
+[class*="rounded-"][class*="border-"][class*="via-gray"]:not(input):not(textarea):not(button) {
+  background-image: none !important;
+  background-color: var(--mc-stone) !important;
+  border-width: 2px !important;
+  border-color: var(--mc-frame) !important;
+  border-radius: 0 !important;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.08), inset -2px -2px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Small inline code/example chips on the old theme → square pixel chips */
+[class*="rounded"][class*="bg-gray-800"]:not([class*="border"]):not(input):not(textarea):not(button),
+[class*="rounded"][class*="bg-gray-700"]:not([class*="border"]):not(input):not(textarea):not(button) {
+  border-radius: 0 !important;
+}
