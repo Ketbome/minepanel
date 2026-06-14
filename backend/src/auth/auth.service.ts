@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
@@ -109,6 +109,9 @@ export class AuthService {
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+    // Drop revoked/expired tokens so the table doesn't grow unbounded
+    await this.refreshTokenRepo.delete([{ revoked: true }, { expiresAt: LessThan(new Date()) }]);
 
     await this.refreshTokenRepo.save({
       userId,
