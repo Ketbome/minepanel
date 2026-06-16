@@ -47,6 +47,9 @@ SSO is configured with environment variables. It is enabled only when `OIDC_ISSU
 
 > The redirect URI points to the **backend**, not the frontend.
 
+With Docker, just add these variables to your `.env` file — the Compose files load optional
+settings from `.env` automatically (no need to edit `docker-compose.yml`).
+
 ## Example: Authentik
 
 1. In Authentik create an **OAuth2/OpenID Provider**:
