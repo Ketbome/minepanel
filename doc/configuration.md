@@ -13,7 +13,10 @@ head:
 
 ## Environment Variables
 
-All variables can be set in `.env` or `docker-compose.yml`.
+The Compose files only declare the core variables. **Optional features (SMTP password
+recovery, OIDC/SSO, ...) are read from your `.env` file** via `env_file`, so you don't need
+to edit `docker-compose.yml` to enable them — just add the variables to `.env`. See
+[`.env.example`](https://github.com/Ketbome/minepanel/blob/main/.env.example) for the full list.
 
 ### Required
 
@@ -50,6 +53,22 @@ Minepanel no longer uses default credentials from environment variables. The fir
 | `SMTP_PASS` | _(empty)_ | SMTP password |
 | `SMTP_FROM` | _(empty)_ | Sender shown in password reset emails |
 | `PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES` | `60` | Password reset link lifetime in minutes |
+
+### Single Sign-On (OIDC)
+
+Optional. Enabled only when `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and
+`OIDC_REDIRECT_URI` are all set. Works with any OpenID Connect provider (Authentik, Authelia,
+Keycloak, Google, ...). See the [Single Sign-On](/sso) guide for setup.
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `OIDC_ISSUER` | _(empty)_ | Provider issuer URL (endpoints are auto-discovered) |
+| `OIDC_CLIENT_ID` | _(empty)_ | OAuth2 client ID |
+| `OIDC_CLIENT_SECRET` | _(empty)_ | OAuth2 client secret (kept server-side only) |
+| `OIDC_REDIRECT_URI` | _(empty)_ | Backend callback, e.g. `https://api.example.com/auth/oidc/callback` |
+| `OIDC_SCOPES` | `openid email profile` | Space-separated scopes |
+| `OIDC_PROVIDER_NAME` | `SSO` | Label shown on the login button |
+| `OIDC_DISABLE_PASSWORD_LOGIN` | `false` | `true` hides and blocks password login (SSO only) |
 
 ### URLs
 

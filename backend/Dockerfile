@@ -20,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production
+    npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 

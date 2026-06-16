@@ -36,7 +36,7 @@ COPY --from=backend-builder /app/backend/package*.json ./backend/
 
 WORKDIR /app/backend
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production
+    npm ci --omit=dev
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs && \

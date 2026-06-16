@@ -13,19 +13,17 @@ services:
     image: ketbom/minepanel-backend-test:latest
     ports:
       - "${BACKEND_PORT:-8091}:8091"
+    # Optional features (SMTP password recovery, OIDC/SSO, ...) are read from .env.
+    # See .env.example and doc/sso.md for the full list.
+    env_file:
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET} # Required. Generate with: openssl rand -base64 32
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-2d}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
-      - SMTP_HOST=${SMTP_HOST:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_SECURE=${SMTP_SECURE:-false}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASS=${SMTP_PASS:-}
-      - SMTP_FROM=${SMTP_FROM:-}
-      - PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES=${PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES:-60}
       - BASE_DIR=${BASE_DIR:-$PWD}
       - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
       - BASE_PATH=${BASE_PATH:-}

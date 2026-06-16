@@ -82,6 +82,7 @@ Auth/session patterns:
 
 - Axios client uses `withCredentials: true`; preserve it.
 - Keep browser auth in `httpOnly` cookies; do not introduce token storage in `localStorage` or append JWTs to URLs.
+- SSO: `getSetupStatus()` returns an optional `sso` field; the login page (`app/page.tsx`) shows a "Sign in with {provider}" button and, when `sso.passwordLoginDisabled`, hides the password form. SSO starts via `startSsoLogin()` (top-level navigation to the backend `/auth/oidc/login`, not axios). A `?ssoError=1` query shows a toast.
 
 Java/Bedrock UI parity:
 

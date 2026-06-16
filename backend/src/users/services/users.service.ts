@@ -115,6 +115,61 @@ export class UsersService {
     return savedAdmin;
   }
 
+  async findOrProvisionOidcUser(profile: { sub: string; email?: string | null; username?: string | null }): Promise<Users> {
+    const existingBySubject = await this.usersRepo.findOne({ where: { oidcSubject: profile.sub } });
+    if (existingBySubject) {
+      if (!existingBySubject.isActive) {
+        throw new UnauthorizedException('User account is disabled');
+      }
+      return existingBySubject;
+    }
+
+    const normalizedEmail = this.normalizeEmail(profile.email);
+    if (normalizedEmail) {
+      const existingByEmail = await this.usersRepo.findOne({ where: { email: normalizedEmail } });
+      if (existingByEmail) {
+        if (!existingByEmail.isActive) {
+          throw new UnauthorizedException('User account is disabled');
+        }
+        existingByEmail.oidcSubject = profile.sub;
+        return this.usersRepo.save(existingByEmail);
+      }
+    }
+
+    const isFirstUser = !(await this.hasUsers());
+    const username = await this.generateUniqueUsername(profile.username, profile.email, profile.sub);
+
+    const user = this.usersRepo.create({
+      username,
+      email: normalizedEmail,
+      password: null,
+      oidcSubject: profile.sub,
+      role: isFirstUser ? 'ADMIN' : 'USER',
+      isActive: true,
+      permissions: isFirstUser ? FULL_ACCESS_PERMISSIONS : DEFAULT_USER_PERMISSIONS,
+      serverAccess: [],
+    });
+
+    const savedUser = await this.usersRepo.save(user);
+    const settings = this.settingsRepo.create({ userId: savedUser.id });
+    await this.settingsRepo.save(settings);
+
+    return savedUser;
+  }
+
+  private async generateUniqueUsername(preferred?: string | null, email?: string | null, sub?: string): Promise<string> {
+    const base = (preferred?.trim() || email?.split('@')[0]?.trim() || `user-${sub?.slice(0, 8)}`).replace(/\s+/g, '-');
+
+    let candidate = base;
+    let suffix = 1;
+    while (await this.usersRepo.findOne({ where: { username: candidate } })) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
+
   async updateUserByUsername(username: string, dto: UpdateUsersDto): Promise<Users> {
     const user = await this.usersRepo.findOne({ where: { username } });
     if (!user) {
@@ -404,6 +459,10 @@ export class UsersService {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    if (!user.password) {
+      throw new BadRequestException('This account uses single sign-on and has no password');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);

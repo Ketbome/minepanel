@@ -34,7 +34,7 @@ export class AuthService {
     try {
       const user = await this.usersService.getUserByUsernameOrEmail(identifier);
 
-      if (!user?.isActive) {
+      if (!user?.isActive || !user.password) {
         return null;
       }
 
@@ -56,10 +56,30 @@ export class AuthService {
   }
 
   async getSetupStatus() {
+    const oidc = this.configService.get('oidc');
+
     return {
       requiresSetup: !(await this.usersService.hasUsers()),
       passwordRecoveryEnabled: this.isPasswordRecoveryEnabled(),
+      sso: {
+        enabled: !!oidc?.enabled,
+        providerName: oidc?.providerName ?? 'SSO',
+        passwordLoginDisabled: !!oidc?.disablePasswordLogin && !!oidc?.enabled,
+        loginUrl: '/auth/oidc/login',
+      },
     };
+  }
+
+  async loginWithOidc(profile: { sub: string; email?: string | null; username?: string | null }) {
+    const user = await this.usersService.findOrProvisionOidcUser(profile);
+
+    const tokens = await this.generateJwt({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+    });
+
+    return { ...tokens, userId: user.id };
   }
 
   async createInitialAdmin(dto: SetupAdminDto) {

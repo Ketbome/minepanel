@@ -1,4 +1,5 @@
 import api from "../axios.service";
+import { getPublicEnv } from "@/lib/public-env";
 import { UserAccessState, UserInvitation } from "../users/users.service";
 
 let isRefreshing = false;
@@ -19,9 +20,17 @@ const AUTH_ENDPOINTS = [
   "/auth/invitations/accept",
 ];
 
+export interface SsoStatus {
+  enabled: boolean;
+  providerName: string;
+  passwordLoginDisabled: boolean;
+  loginUrl: string;
+}
+
 export interface SetupStatus {
   requiresSetup: boolean;
   passwordRecoveryEnabled: boolean;
+  sso?: SsoStatus;
 }
 
 export interface AcceptInvitationData {
@@ -96,6 +105,12 @@ export const login = async (username: string, password: string) => {
 export const getSetupStatus = async (): Promise<SetupStatus> => {
   const response = await api.get("/auth/setup-status", { withCredentials: true });
   return response.data;
+};
+
+export const startSsoLogin = (loginUrl: string) => {
+  if (typeof window === "undefined") return;
+  const backendUrl = getPublicEnv("NEXT_PUBLIC_BACKEND_URL");
+  window.location.href = `${backendUrl}${loginUrl}`;
 };
 
 export const setupAdmin = async (data: { username: string; email: string; password: string }) => {
