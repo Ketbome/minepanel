@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { OidcController } from './oidc/oidc.controller';
+import { OidcService } from './oidc/oidc.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtAuthGuard } from './guards/auth.guard';
@@ -32,8 +34,8 @@ import { AuthMailService } from './auth-mail.service';
       },
     }),
   ],
-  providers: [AuthService, AuthMailService, LocalStrategy, JwtStrategy, JwtAuthGuard],
-  controllers: [AuthController],
+  providers: [AuthService, AuthMailService, OidcService, LocalStrategy, JwtStrategy, JwtAuthGuard],
+  controllers: [AuthController, OidcController],
   exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

@@ -14,8 +14,12 @@ export class Users {
   email: string | null;
 
   @Exclude()
-  @Column({ type: 'text', name: 'password' })
-  password: string;
+  @Column({ type: 'text', name: 'password', nullable: true })
+  password: string | null;
+
+  @Exclude()
+  @Column({ type: 'text', name: 'oidc_subject', unique: true, nullable: true })
+  oidcSubject: string | null;
 
   @Column({ type: 'varchar', length: 10, default: 'USER' })
   role: UserRole;

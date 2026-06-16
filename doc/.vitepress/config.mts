@@ -250,6 +250,7 @@ export default withMermaid(
           collapsed: false,
           items: [
             { text: 'Networking', link: '/networking' },
+            { text: 'Single Sign-On (SSO)', link: '/sso' },
             { text: 'Administration', link: '/administration' },
             { text: 'Troubleshooting', link: '/troubleshooting' },
             { text: 'FAQ', link: '/faq' },

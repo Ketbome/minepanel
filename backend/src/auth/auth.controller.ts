@@ -1,20 +1,21 @@
 import { Controller, Post, Body, ForbiddenException, UnauthorizedException, UseGuards, Res, Req, Get, Param } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth.guard';
 import { Public } from './decorators/public.decorator';
-import { Response, Request, CookieOptions } from 'express';
+import { Response, Request } from 'express';
 import { AcceptInvitationDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { setAuthCookies } from './utils/auth-cookies';
 
 @Controller('auth')
 export class AuthController {
-  private static readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
-
   constructor(
     private readonly authService: AuthService,
     private readonly auditLogService: AuditLogService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -30,11 +31,13 @@ export class AuthController {
     @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
+    this.assertPasswordLoginEnabled();
+
     const user = await this.authService.validateUser(body.username, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    
+
     const tokens = await this.authService.generateJwt(user);
-    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+    setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 
     await this.auditLogService.record({
       actorUserId: user.userId,
@@ -53,8 +56,10 @@ export class AuthController {
   @Public()
   @Post('setup-admin')
   async setupAdmin(@Body() body: SetupAdminDto, @Res({ passthrough: true }) res: Response) {
+    this.assertPasswordLoginEnabled();
+
     const tokens = await this.authService.createInitialAdmin(body);
-    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+    setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 
     return {
       username: tokens.username,
@@ -111,7 +116,7 @@ export class AuthController {
   @Post('invitations/accept')
   async acceptInvitation(@Body() body: AcceptInvitationDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.acceptInvitation(body.token, body.username, body.password, body.email);
-    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+    setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 
     return {
       username: tokens.username,
@@ -140,8 +145,8 @@ export class AuthController {
     }
 
     const tokens = await this.authService.generateJwt(user);
-    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
-    
+    setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+
     return {
       username: tokens.username,
       expires_in: tokens.expires_in,
@@ -186,21 +191,10 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
-  private getAuthCookieOptions(maxAge: number): CookieOptions {
-    return {
-      httpOnly: true,
-      secure: this.shouldUseSecureCookies(),
-      sameSite: 'lax',
-      maxAge,
-    };
-  }
-
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number): void {
-    res.cookie('access_token', accessToken, this.getAuthCookieOptions(expiresInSeconds * 1000));
-    res.cookie('refresh_token', refreshToken, this.getAuthCookieOptions(AuthController.REFRESH_TOKEN_MAX_AGE));
-  }
-
-  private shouldUseSecureCookies(): boolean {
-    return process.env.ALLOW_INSECURE_AUTH_COOKIES !== 'true';
+  private assertPasswordLoginEnabled(): void {
+    const oidc = this.configService.get('oidc');
+    if (oidc?.enabled && oidc?.disablePasswordLogin) {
+      throw new ForbiddenException('Password login is disabled; use single sign-on');
+    }
   }
 }

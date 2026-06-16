@@ -45,8 +45,10 @@ These routes do not require an authenticated session:
 | `POST` | `/auth/login` | Start a session |
 | `POST` | `/auth/refresh` | Renew access token using `refresh_token` cookie |
 | `POST` | `/auth/logout` | Clear session cookies and revoke refresh token when present |
+| `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
+| `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
 
-All other endpoints require JWT authentication.
+All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
 
 ## Login Flow
 

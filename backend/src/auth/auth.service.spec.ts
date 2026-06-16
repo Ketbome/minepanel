@@ -227,6 +227,12 @@ describe('AuthService', () => {
       await expect(service.getSetupStatus()).resolves.toEqual({
         requiresSetup: true,
         passwordRecoveryEnabled: true,
+        sso: {
+          enabled: false,
+          providerName: 'SSO',
+          passwordLoginDisabled: false,
+          loginUrl: '/auth/oidc/login',
+        },
       });
     });
   });

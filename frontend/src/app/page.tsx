@@ -24,6 +24,7 @@ import {
   requestPasswordReset,
   resetPassword,
   setupAdmin,
+  startSsoLogin,
   type SetupStatus,
 } from '@/services/auth/auth.service';
 import type { UserInvitation } from '@/services/users/users.service';
@@ -68,7 +69,12 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const resetToken = searchParams.get('resetToken');
   const inviteToken = searchParams.get('inviteToken');
+  const ssoError = searchParams.get('ssoError');
   const { t } = useLanguage();
+
+  const sso = setupStatus?.sso;
+  const ssoEnabled = !!sso?.enabled;
+  const passwordLoginDisabled = !!sso?.passwordLoginDisabled;
 
   const changeView = useCallback((nextView: AuthView) => {
     setView(nextView);
@@ -94,7 +100,8 @@ function HomeContent() {
         setSetupStatus(status);
 
         if (status.requiresSetup) {
-          setView('setup');
+          // With SSO-only the first admin is bootstrapped on the first SSO login.
+          setView(status.sso?.passwordLoginDisabled ? 'login' : 'setup');
           return;
         }
 
@@ -116,6 +123,13 @@ function HomeContent() {
 
     initialize();
   }, [inviteToken, resetToken, router]);
+
+  useEffect(() => {
+    if (ssoError) {
+      mcToast.error(t('ssoError'));
+      router.replace('/');
+    }
+  }, [ssoError, router, t]);
 
   const checkHealth = useCallback(async () => {
     try {
@@ -389,39 +403,47 @@ function HomeContent() {
                     <div className="space-y-4">
                       {view === 'login' && (
                         <>
-                          <div className="space-y-2">
-                            <Label htmlFor="identifier" className="font-medium text-gray-200">
-                              {t('usernameOrEmail')}
-                            </Label>
-                            <Input
-                              id="identifier"
-                              value={identifier}
-                              onChange={(e) => setIdentifier(e.target.value)}
-                              placeholder={t('usernameOrEmail')}
-                              required
-                              autoComplete="username"
-                              className="mc-input h-10 text-gray-100"
-                            />
-                          </div>
+                          {!passwordLoginDisabled && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="identifier" className="font-medium text-gray-200">
+                                  {t('usernameOrEmail')}
+                                </Label>
+                                <Input
+                                  id="identifier"
+                                  value={identifier}
+                                  onChange={(e) => setIdentifier(e.target.value)}
+                                  placeholder={t('usernameOrEmail')}
+                                  required
+                                  autoComplete="username"
+                                  className="mc-input h-10 text-gray-100"
+                                />
+                              </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="password" className="font-medium text-gray-200">
-                              {t('password')}
-                            </Label>
-                            <Input
-                              id="password"
-                              type="password"
-                              placeholder="********"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              required
-                              autoComplete="current-password"
-                              className="mc-input h-10 text-gray-100"
-                            />
-                          </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="password" className="font-medium text-gray-200">
+                                  {t('password')}
+                                </Label>
+                                <Input
+                                  id="password"
+                                  type="password"
+                                  placeholder="********"
+                                  value={password}
+                                  onChange={(e) => setPassword(e.target.value)}
+                                  required
+                                  autoComplete="current-password"
+                                  className="mc-input h-10 text-gray-100"
+                                />
+                              </div>
 
-                          {setupStatus && !setupStatus.passwordRecoveryEnabled && (
-                            <p className="text-xs text-amber-300">{t('passwordRecoveryUnavailable')}</p>
+                              {setupStatus && !setupStatus.passwordRecoveryEnabled && (
+                                <p className="text-xs text-amber-300">{t('passwordRecoveryUnavailable')}</p>
+                              )}
+                            </>
+                          )}
+
+                          {passwordLoginDisabled && (
+                            <p className="text-sm text-gray-300">{t('ssoOnlyHint')}</p>
                           )}
                         </>
                       )}
@@ -618,15 +640,28 @@ function HomeContent() {
                   </CardContent>
 
                   <CardFooter className="flex-col space-y-3 pb-4 pt-2">
-                    <button
-                      type="submit"
-                      className="mc-btn mc-btn-emerald w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isSubmitDisabled}
-                    >
-                      {getSubmitLabel()}
-                    </button>
+                    {!(view === 'login' && passwordLoginDisabled) && (
+                      <button
+                        type="submit"
+                        className="mc-btn mc-btn-emerald w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isSubmitDisabled}
+                      >
+                        {getSubmitLabel()}
+                      </button>
+                    )}
 
-                    {view === 'login' && setupStatus?.passwordRecoveryEnabled && (
+                    {view === 'login' && ssoEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => startSsoLogin(sso!.loginUrl)}
+                        className="mc-btn mc-btn-lapis w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!serverAvailable}
+                      >
+                        {t('loginWithSso').replace('{provider}', sso!.providerName)}
+                      </button>
+                    )}
+
+                    {view === 'login' && !passwordLoginDisabled && setupStatus?.passwordRecoveryEnabled && (
                       <button
                         type="button"
                         onClick={() => changeView('forgot')}

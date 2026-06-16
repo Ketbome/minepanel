@@ -17,6 +17,7 @@ backend/src/
 |- app.module.ts
 |- config.ts
 |- auth/                    Global JWT guard, public auth endpoints, cookie session flow
+|  |- oidc/                 OpenID Connect SSO (provider-agnostic) -> issues Minepanel session
 |- server-management/       Runtime control, status, logs, commands
 |  |- strategies/           Java/Bedrock strategy pattern
 |- docker-compose/          Compose generation and server config persistence
@@ -96,6 +97,7 @@ General:
 - If API contract changes, update frontend usage and docs in `doc/`.
 - Backend auth is private-by-default through a global JWT guard; only explicitly `@Public()` routes should bypass auth.
 - Keep auth transport limited to `httpOnly` cookies and bearer headers; never add JWT support via query params.
+- Optional SSO is OpenID Connect via `auth/oidc/*` (provider-agnostic; configured by `OIDC_*` env in `config.ts`). It validates the IdP `id_token` then issues the same Minepanel session cookies via `auth/utils/auth-cookies.ts`; the `client_secret` stays server-side and is never exposed. `OIDC_DISABLE_PASSWORD_LOGIN=true` blocks password login server-side (only when SSO is fully configured).
 
 Server ID and directory safety:
 

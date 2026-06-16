@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
@@ -35,6 +36,10 @@ describe('AuthController', () => {
       record: jest.fn(),
     };
 
+    const mockConfigService = {
+      get: jest.fn(() => undefined),
+    };
+
     mockResponse = {
       cookie: jest.fn(),
       clearCookie: jest.fn(),
@@ -49,6 +54,7 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuditLogService, useValue: mockAuditLogService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -190,12 +196,14 @@ describe('AuthController', () => {
 
   describe('setup status', () => {
     it('should return the setup status', async () => {
-      authService.getSetupStatus.mockResolvedValue({ requiresSetup: true, passwordRecoveryEnabled: false });
-
-      await expect(controller.getSetupStatus()).resolves.toEqual({
+      const status = {
         requiresSetup: true,
         passwordRecoveryEnabled: false,
-      });
+        sso: { enabled: false, providerName: 'SSO', passwordLoginDisabled: false, loginUrl: '/auth/oidc/login' },
+      };
+      authService.getSetupStatus.mockResolvedValue(status);
+
+      await expect(controller.getSetupStatus()).resolves.toEqual(status);
     });
   });
 
