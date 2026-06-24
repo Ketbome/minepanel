@@ -18,7 +18,7 @@ Web panel to manage Minecraft servers with Docker — Create, configure, and mon
 ---
 
 <div align="center">
-  <img src="./doc/public/img/Animation.gif" alt="Minepanel Dashboard" width="90%">
+  <img src="./doc/public/img/minepanel.png" alt="Minepanel Dashboard" width="90%">
 </div>
 <div align="center" style="margin-top: 8px;">
   <a href="https://buymeacoffee.com/pims2711y" target="_blank">

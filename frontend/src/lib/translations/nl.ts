@@ -522,6 +522,8 @@ export const nl: Record<TranslationKey, string> = {
   largeBiomes: 'Grote biomen',
   amplified: 'Versterkt',
   singleBiomeSurface: 'Enkel bioom oppervlak',
+  customLevelType: 'Aangepast',
+  customLevelTypeDescription: 'Aangepast wereldtype van een mod of modpack (bijv. skyblockbuilder:skyblock voor ATM10 To The Sky).',
   gtnhWorldType: 'RWG (GTNH)',
 
   // ===========================

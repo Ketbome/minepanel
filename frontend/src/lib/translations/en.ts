@@ -509,6 +509,8 @@ export const en = {
   largeBiomes: 'Large Biomes',
   amplified: 'Amplified',
   singleBiomeSurface: 'Single Biome Surface',
+  customLevelType: 'Custom',
+  customLevelTypeDescription: 'Custom world type provided by a mod or modpack (e.g. skyblockbuilder:skyblock for ATM10 To The Sky).',
   gtnhWorldType: 'RWG (GTNH)',
 
   // World Options

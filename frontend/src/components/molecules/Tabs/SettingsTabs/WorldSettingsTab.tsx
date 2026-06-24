@@ -1,5 +1,6 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ServerConfig } from "@/lib/types/types";
@@ -23,6 +24,9 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
   const isJava = config.edition !== "BEDROCK";
   const isGtnh = config.serverType === 'GTNH';
 
+  const presetLevelTypes = ["minecraft:default", "minecraft:flat", "rwg", "minecraft:large_biomes", "minecraft:amplified", "minecraft:single_biome_surface"];
+  const [customLevelType, setCustomLevelType] = useState(!!config.levelType && !presetLevelTypes.includes(config.levelType));
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -40,7 +44,18 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
             <Image src="/images/map.webp" alt={t("levelType")} width={16} height={16} />
             {t("levelType")}
           </Label>
-          <Select value={config.levelType || "minecraft:default"} onValueChange={(value: ServerConfig["levelType"]) => updateConfig("levelType", value)}>
+          <Select
+            value={customLevelType ? "custom" : config.levelType || "minecraft:default"}
+            onValueChange={(value) => {
+              if (value === "custom") {
+                setCustomLevelType(true);
+                updateConfig("levelType", "");
+              } else {
+                setCustomLevelType(false);
+                updateConfig("levelType", value);
+              }
+            }}
+          >
             <SelectTrigger id="levelType" className="bg-gray-800/70 border-gray-700/50 focus:ring-emerald-500/30">
               <SelectValue placeholder={t("selectLevelType")} />
             </SelectTrigger>
@@ -55,8 +70,15 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
                   <SelectItem value="minecraft:single_biome_surface">{t("singleBiomeSurface")}</SelectItem>
                 </>
               )}
+              {isJava && <SelectItem value="custom">{t("customLevelType")}</SelectItem>}
             </SelectContent>
           </Select>
+          {isJava && customLevelType && (
+            <>
+              <Input value={config.levelType || ""} onChange={(e) => updateConfig("levelType", e.target.value)} placeholder="skyblockbuilder:skyblock" className="bg-gray-800/70 border-gray-700/50 focus-visible:ring-emerald-500/30" />
+              <p className="text-xs text-gray-400">{t("customLevelTypeDescription")}</p>
+            </>
+          )}
         </div>
 
         <div className="space-y-2 text-gray-200">
