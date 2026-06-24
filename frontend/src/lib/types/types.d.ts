@@ -67,13 +67,7 @@ export interface ServerConfig {
   worldScope?: 'local' | 'global';
   worldLevelName?: string;
   forceWorldCopy?: boolean;
-  levelType:
-    | 'minecraft:default'
-    | 'minecraft:flat'
-    | 'minecraft:large_biomes'
-    | 'minecraft:amplified'
-    | 'minecraft:single_biome_surface'
-    | 'rwg';
+  levelType: string;
   hardcore: boolean;
   spawnAnimals: boolean;
   spawnMonsters: boolean;

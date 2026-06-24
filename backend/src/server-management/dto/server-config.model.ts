@@ -89,9 +89,9 @@ export class ServerConfigDto {
   @IsOptional()
   forceWorldCopy?: boolean;
 
-  @IsEnum(['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface', 'rwg'])
+  @IsString()
   @IsOptional()
-  levelType?: 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' | 'rwg';
+  levelType?: string;
 
   @IsBoolean()
   @IsOptional()

@@ -505,6 +505,8 @@ export const pl: Record<TranslationKey, string> = {
   largeBiomes: 'Duże biomy',
   amplified: 'Wzmocniony',
   singleBiomeSurface: 'Powierzchnia pojedynczego biomu',
+  customLevelType: 'Niestandardowy',
+  customLevelTypeDescription: 'Niestandardowy typ świata dostarczany przez mod lub modpack (np. skyblockbuilder:skyblock dla ATM10 To The Sky).',
   gtnhWorldType: 'RWG (GTNH)',
 
   // Ustawienia świata

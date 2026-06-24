@@ -270,18 +270,12 @@ export class DockerComposeService {
     }
   }
 
-  private parseLevelType(
-    levelType: string | undefined,
-    edition: ServerEdition,
-    serverType?: string,
-  ): 'minecraft:default' | 'minecraft:flat' | 'minecraft:large_biomes' | 'minecraft:amplified' | 'minecraft:single_biome_surface' | 'rwg' {
-    const validTypes = ['minecraft:default', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified', 'minecraft:single_biome_surface', 'rwg'] as const;
-
+  private parseLevelType(levelType: string | undefined, edition: ServerEdition, serverType?: string): string {
     if (!levelType) return serverType === 'GTNH' ? 'rwg' : 'minecraft:default';
 
     // Bedrock uses uppercase values (DEFAULT, FLAT), map them back to minecraft: format
     if (edition === 'BEDROCK') {
-      const bedrockMapping: Record<string, typeof validTypes[number]> = {
+      const bedrockMapping: Record<string, string> = {
         DEFAULT: 'minecraft:default',
         FLAT: 'minecraft:flat',
         LEGACY: 'minecraft:default',
@@ -289,11 +283,7 @@ export class DockerComposeService {
       return bedrockMapping[levelType] || 'minecraft:default';
     }
 
-    // Java already uses minecraft: format, validate it
-    if (validTypes.includes(levelType as typeof validTypes[number])) {
-      return levelType as typeof validTypes[number];
-    }
-    return 'minecraft:default';
+    return levelType;
   }
 
   private parseWorldSource(world: string | undefined): string {

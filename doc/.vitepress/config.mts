@@ -262,6 +262,7 @@ export default withMermaid(
           items: [
             { text: 'API Reference', link: '/api' },
             { text: 'Architecture', link: '/architecture' },
+            { text: 'Storage & Scaling', link: '/storage-scaling' },
             { text: 'Development', link: '/development' },
             { text: 'Roadmap', link: '/roadmap' },
           ],

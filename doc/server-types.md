@@ -153,6 +153,20 @@ World Library also includes a **Discover Worlds** panel:
 - Import world archives from direct HTTPS URLs (`.zip`, `.tar`, `.tar.gz`, `.tgz`)
 - Imported files are stored under `servers/.world/worlds/curseforge/` or `servers/.world/worlds/url/`
 
+### World Type (level-type)
+
+The world type is set in **General -> World** via `LEVEL_TYPE`. Besides the standard
+presets (default, flat, large biomes, amplified, single biome surface), Java servers
+offer a **Custom** option to enter any `level-type` provided by a mod or modpack.
+
+This is required for modpacks with their own world generation. For example, **ATM10 To
+The Sky** needs `skyblockbuilder:skyblock`; without it the `itzg/docker-minecraft-server`
+image rewrites `server.properties` on every start and the world regenerates as normal.
+
+For CurseForge modpacks that ship a prebuilt world (To The Sky packs), you can also use
+`CF_SET_LEVEL_FROM` (`WORLD_FILE` or `OVERRIDES`) under the CurseForge advanced options
+so the modpack's bundled world is used.
+
 ### Vanilla
 
 Basic Minecraft server without mods or plugins.
