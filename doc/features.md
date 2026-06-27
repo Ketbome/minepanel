@@ -146,6 +146,7 @@ Backup configuration is available in **Advanced -> Backup** (Java servers):
 - `backupMethod`: `tar`, `rsync`, `restic`, `rclone`
 - `backupInterval`, `backupInitialDelay`
 - `backupPruneDays`, `backupDestDir`, `backupExcludes`
+- `backupHostDir`: host path where backups are physically stored. Empty uses the global `BACKUP_BASE_DIR` or the default `${BASE_DIR}/servers/<id>/backups`
 - `backupOnStartup`
 
 Practical defaults:

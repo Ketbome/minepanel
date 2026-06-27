@@ -679,6 +679,8 @@ export const pl: Record<TranslationKey, string> = {
   backupPruneDaysDesc: 'Usuń kopie zapasowe starsze niż podana liczba dni',
   backupDestDir: 'Katalog docelowy kopii zapasowej',
   backupDestDirDesc: 'Ścieżka, w której będą zapisywane kopie zapasowe',
+  backupHostDir: 'Katalog kopii zapasowych na hoście',
+  backupHostDirDesc: 'Ścieżka hosta, w której fizycznie przechowywane są pliki kopii zapasowych (np. /network-disk/minepanel). Pozostaw puste, aby użyć globalnej lokalizacji domyślnej.',
   backupExcludes: 'Wykluczenia kopii zapasowych',
   backupExcludesDesc: 'Wzorce plików do wykluczenia z kopii zapasowej (rozdzielone przecinkami)',
   backupExcludesHelp: 'Pliki i katalogi, które nie zostaną uwzględnione w kopii zapasowej',

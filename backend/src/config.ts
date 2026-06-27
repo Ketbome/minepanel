@@ -32,6 +32,7 @@ export default () => ({
   },
   serversDir: '/app/servers',
   baseDir: process.env.BASE_DIR || '/app',
+  backupBaseDir: process.env.BACKUP_BASE_DIR || undefined,
   database: {
     path: '/app/data/minepanel.db',
   },

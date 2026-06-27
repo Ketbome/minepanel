@@ -680,6 +680,8 @@ export const fr = {
   backupPruneDaysDesc: 'Supprimer les sauvegardes plus anciennes que ce nombre de jours',
   backupDestDir: 'Répertoire de destination des sauvegardes',
   backupDestDirDesc: 'Chemin où les sauvegardes seront enregistrées',
+  backupHostDir: 'Répertoire de sauvegarde sur l\'hôte',
+  backupHostDirDesc: 'Chemin de l\'hôte où les fichiers de sauvegarde sont physiquement stockés (ex. /network-disk/minepanel). Laissez vide pour utiliser l\'emplacement global par défaut.',
   backupExcludes: 'Exclusions de sauvegarde',
   backupExcludesDesc: 'Motifs de fichiers à exclure de la sauvegarde (séparés par des virgules)',
   backupExcludesHelp: 'Fichiers et dossiers qui ne seront pas inclus dans la sauvegarde',

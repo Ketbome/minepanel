@@ -690,6 +690,8 @@ export const es: Record<TranslationKey, string> = {
   backupPruneDaysDesc: 'Eliminar backups más antiguos que este número de días',
   backupDestDir: 'Directorio Destino',
   backupDestDirDesc: 'Ruta donde se guardarán los backups',
+  backupHostDir: 'Directorio de Backups en el Host',
+  backupHostDirDesc: 'Ruta del host donde se almacenan físicamente los backups (ej. /network-disk/minepanel). Déjalo vacío para usar la ubicación global por defecto.',
   backupExcludes: 'Archivos a Excluir',
   backupExcludesDesc: 'Patrones de archivos a excluir del backup (separados por comas)',
   backupExcludesHelp: 'Archivos y directorios que no se incluirán en el backup',
