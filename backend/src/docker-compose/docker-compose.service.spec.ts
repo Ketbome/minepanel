@@ -155,6 +155,50 @@ describe('DockerComposeService', () => {
       expect(result?.useProxy).toBe(true);
       expect(result?.proxyHostname).toBe('lobby');
     });
+
+    const loadWithBackupVolume = async (svc: DockerComposeService, id: string, hostPath: string) => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: id, TYPE: 'VANILLA' },
+          },
+          backup: {
+            image: 'itzg/mc-backup',
+            environment: { DEST_DIR: '/backups' },
+            volumes: [`${BASE_DIR}/servers/${id}/mc-data:/data:ro`, `${hostPath}:/backups`],
+          },
+        },
+      };
+
+      (fs.existsSync as unknown as jest.Mock).mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/${id}` || target === `${SERVERS_DIR}/${id}/docker-compose.yml`
+      );
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue(yaml.dump(compose));
+
+      return svc.getServerConfig(id);
+    };
+
+    it('should leave backupHostDir undefined for the default backups mount', async () => {
+      const result = await loadWithBackupVolume(service, 'rt-default', `${BASE_DIR}/servers/rt-default/backups`);
+
+      expect(result?.enableBackup).toBe(true);
+      expect(result?.backupHostDir).toBeUndefined();
+    });
+
+    it('should read backupHostDir from a custom backups mount', async () => {
+      const result = await loadWithBackupVolume(service, 'rt-custom', '/network-disk/custom');
+
+      expect(result?.backupHostDir).toBe('/network-disk/custom');
+    });
+
+    it('should leave backupHostDir undefined when the mount matches the global base', async () => {
+      const svc = await makeService('/nas/minepanel');
+
+      const result = await loadWithBackupVolume(svc, 'rt-global', '/nas/minepanel/rt-global');
+
+      expect(result?.backupHostDir).toBeUndefined();
+    });
   });
 
   describe('generateDockerComposeFile', () => {
