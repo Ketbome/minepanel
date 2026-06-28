@@ -47,6 +47,34 @@ describe('DockerComposeService', () => {
     service = module.get<DockerComposeService>(DockerComposeService);
   });
 
+  const makeService = async (backupBaseDir?: string): Promise<DockerComposeService> => {
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        if (key === 'serversDir') return SERVERS_DIR;
+        if (key === 'baseDir') return BASE_DIR;
+        if (key === 'backupBaseDir') return backupBaseDir ?? null;
+        return null;
+      }),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DockerComposeService,
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
+    }).compile();
+
+    return module.get<DockerComposeService>(DockerComposeService);
+  };
+
+  const generateBackupVolumes = async (svc: DockerComposeService, config: any): Promise<string[]> => {
+    await svc.generateDockerComposeFile(config, false);
+    const writeFileMock = fs.writeFile as unknown as jest.Mock;
+    const [, yamlContent] = writeFileMock.mock.calls[writeFileMock.mock.calls.length - 1];
+    const parsed = yaml.load(yamlContent as string) as any;
+    return parsed.services.backup.volumes as string[];
+  };
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -201,6 +229,36 @@ describe('DockerComposeService', () => {
       const parsed = yaml.load(yamlContent as string) as any;
 
       expect(parsed.services.backup.networks['minepanel-network']).toEqual({});
+    });
+
+    it('should mount the default backups path when no custom dir is configured', async () => {
+      const config = (service as any).createDefaultConfig('backup-default');
+      config.enableBackup = true;
+
+      const volumes = await generateBackupVolumes(service, config);
+
+      expect(volumes).toContain(`${BASE_DIR}/servers/backup-default/backups:/backups`);
+    });
+
+    it('should mount backups under BACKUP_BASE_DIR when the global base is set', async () => {
+      const svc = await makeService('/nas/minepanel');
+      const config = (svc as any).createDefaultConfig('backup-global');
+      config.enableBackup = true;
+
+      const volumes = await generateBackupVolumes(svc, config);
+
+      expect(volumes).toContain('/nas/minepanel/backup-global:/backups');
+    });
+
+    it('should let per-server backupHostDir override the global base', async () => {
+      const svc = await makeService('/nas/minepanel');
+      const config = (svc as any).createDefaultConfig('backup-override');
+      config.enableBackup = true;
+      config.backupHostDir = '/network-disk/custom';
+
+      const volumes = await generateBackupVolumes(svc, config);
+
+      expect(volumes).toContain('/network-disk/custom:/backups');
     });
 
     it('should force restart policy to "no" when auto-stop is enabled', async () => {
