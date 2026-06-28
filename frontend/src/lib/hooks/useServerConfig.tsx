@@ -76,6 +76,7 @@ const defaultConfig: ServerConfig = {
   backupInitialDelay: '2m',
   backupPruneDays: '7',
   backupDestDir: '/backups',
+  backupHostDir: '',
   backupName: 'world',
   backupOnStartup: false,
   pauseIfNoPlayers: false,

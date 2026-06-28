@@ -680,6 +680,8 @@ export const en = {
   backupPruneDaysDesc: 'Delete backups older than this number of days',
   backupDestDir: 'Backup Destination Directory',
   backupDestDirDesc: 'Path where backups will be saved',
+  backupHostDir: 'Host Backup Directory',
+  backupHostDirDesc: 'Host path where backup files are physically stored (e.g. /network-disk/minepanel). Leave empty to use the global default location.',
   backupExcludes: 'Backup Excludes',
   backupExcludesDesc: 'Patterns of files to exclude from backup (separated by commas)',
   backupExcludesHelp: 'Files and directories that will not be included in the backup',

@@ -25,6 +25,7 @@ Two path concepts drive the whole model (`backend/src/config.ts`):
 
 - `serversDir` (`/app/servers`) — container-side path the backend reads/writes.
 - `baseDir` (`BASE_DIR`) — host-side path written into the generated compose mounts.
+- `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `${BASE_DIR}/servers/<id>/backups`.
 
 When a server is generated, `./` volume entries are expanded to absolute host paths under
 `${BASE_DIR}/servers/<id>/...` (`backend/src/docker-compose/docker-compose.service.ts`,

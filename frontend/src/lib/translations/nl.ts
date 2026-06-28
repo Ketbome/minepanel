@@ -704,6 +704,8 @@ export const nl: Record<TranslationKey, string> = {
   backupPruneDaysDesc: 'Verwijder back-ups ouder dan dit aantal dagen',
   backupDestDir: 'Back-up locatie',
   backupDestDirDesc: 'Pad waar back-ups worden opgeslagen',
+  backupHostDir: 'Back-upmap op host',
+  backupHostDirDesc: 'Hostpad waar back-upbestanden fysiek worden opgeslagen (bijv. /network-disk/minepanel). Laat leeg om de globale standaardlocatie te gebruiken.',
   backupExcludes: 'Back-up uitsluitingen',
   backupExcludesDesc:
     "Patronen van bestanden om uit te sluiten van back-up (gescheiden door komma's)",

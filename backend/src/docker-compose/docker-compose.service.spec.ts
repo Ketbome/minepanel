@@ -47,6 +47,34 @@ describe('DockerComposeService', () => {
     service = module.get<DockerComposeService>(DockerComposeService);
   });
 
+  const makeService = async (backupBaseDir?: string): Promise<DockerComposeService> => {
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        if (key === 'serversDir') return SERVERS_DIR;
+        if (key === 'baseDir') return BASE_DIR;
+        if (key === 'backupBaseDir') return backupBaseDir ?? null;
+        return null;
+      }),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DockerComposeService,
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
+    }).compile();
+
+    return module.get<DockerComposeService>(DockerComposeService);
+  };
+
+  const generateBackupVolumes = async (svc: DockerComposeService, config: any): Promise<string[]> => {
+    await svc.generateDockerComposeFile(config, false);
+    const writeFileMock = fs.writeFile as unknown as jest.Mock;
+    const [, yamlContent] = writeFileMock.mock.calls[writeFileMock.mock.calls.length - 1];
+    const parsed = yaml.load(yamlContent as string) as any;
+    return parsed.services.backup.volumes as string[];
+  };
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -127,6 +155,50 @@ describe('DockerComposeService', () => {
       expect(result?.useProxy).toBe(true);
       expect(result?.proxyHostname).toBe('lobby');
     });
+
+    const loadWithBackupVolume = async (svc: DockerComposeService, id: string, hostPath: string) => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: id, TYPE: 'VANILLA' },
+          },
+          backup: {
+            image: 'itzg/mc-backup',
+            environment: { DEST_DIR: '/backups' },
+            volumes: [`${BASE_DIR}/servers/${id}/mc-data:/data:ro`, `${hostPath}:/backups`],
+          },
+        },
+      };
+
+      (fs.existsSync as unknown as jest.Mock).mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/${id}` || target === `${SERVERS_DIR}/${id}/docker-compose.yml`
+      );
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue(yaml.dump(compose));
+
+      return svc.getServerConfig(id);
+    };
+
+    it('should leave backupHostDir undefined for the default backups mount', async () => {
+      const result = await loadWithBackupVolume(service, 'rt-default', `${BASE_DIR}/servers/rt-default/backups`);
+
+      expect(result?.enableBackup).toBe(true);
+      expect(result?.backupHostDir).toBeUndefined();
+    });
+
+    it('should read backupHostDir from a custom backups mount', async () => {
+      const result = await loadWithBackupVolume(service, 'rt-custom', '/network-disk/custom');
+
+      expect(result?.backupHostDir).toBe('/network-disk/custom');
+    });
+
+    it('should leave backupHostDir undefined when the mount matches the global base', async () => {
+      const svc = await makeService('/nas/minepanel');
+
+      const result = await loadWithBackupVolume(svc, 'rt-global', '/nas/minepanel/rt-global');
+
+      expect(result?.backupHostDir).toBeUndefined();
+    });
   });
 
   describe('generateDockerComposeFile', () => {
@@ -201,6 +273,36 @@ describe('DockerComposeService', () => {
       const parsed = yaml.load(yamlContent as string) as any;
 
       expect(parsed.services.backup.networks['minepanel-network']).toEqual({});
+    });
+
+    it('should mount the default backups path when no custom dir is configured', async () => {
+      const config = (service as any).createDefaultConfig('backup-default');
+      config.enableBackup = true;
+
+      const volumes = await generateBackupVolumes(service, config);
+
+      expect(volumes).toContain(`${BASE_DIR}/servers/backup-default/backups:/backups`);
+    });
+
+    it('should mount backups under BACKUP_BASE_DIR when the global base is set', async () => {
+      const svc = await makeService('/nas/minepanel');
+      const config = (svc as any).createDefaultConfig('backup-global');
+      config.enableBackup = true;
+
+      const volumes = await generateBackupVolumes(svc, config);
+
+      expect(volumes).toContain('/nas/minepanel/backup-global:/backups');
+    });
+
+    it('should let per-server backupHostDir override the global base', async () => {
+      const svc = await makeService('/nas/minepanel');
+      const config = (svc as any).createDefaultConfig('backup-override');
+      config.enableBackup = true;
+      config.backupHostDir = '/network-disk/custom';
+
+      const volumes = await generateBackupVolumes(svc, config);
+
+      expect(volumes).toContain('/network-disk/custom:/backups');
     });
 
     it('should force restart policy to "no" when auto-stop is enabled', async () => {

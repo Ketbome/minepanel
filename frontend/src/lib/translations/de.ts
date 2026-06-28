@@ -687,6 +687,8 @@ export const de: Record<TranslationKey, string> = {
   backupPruneDaysDesc: 'Backups löschen, die älter als diese Anzahl von Tagen sind',
   backupDestDir: 'Backup-Zielverzeichnis',
   backupDestDirDesc: 'Pfad, in dem Backups gespeichert werden',
+  backupHostDir: 'Backup-Verzeichnis auf dem Host',
+  backupHostDirDesc: 'Host-Pfad, in dem die Backup-Dateien physisch gespeichert werden (z. B. /network-disk/minepanel). Leer lassen, um den globalen Standardspeicherort zu verwenden.',
   backupExcludes: 'Backup-Ausschlüsse',
   backupExcludesDesc:
     'Muster von Dateien, die vom Backup ausgeschlossen werden sollen (durch Kommas getrennt)',

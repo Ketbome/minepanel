@@ -330,6 +330,41 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                     className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label
+                      htmlFor="backupHostDir"
+                      className="text-gray-200 font-minecraft text-sm flex items-center gap-2"
+                    >
+                      <Image src="/images/ender_chest.webp" alt="Host" width={16} height={16} />
+                      {t('backupHostDir')}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
+                          >
+                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                          <p>{t('backupHostDirDesc')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="backupHostDir"
+                    value={config.backupHostDir || ''}
+                    onChange={(e) => updateConfig('backupHostDir', e.target.value)}
+                    placeholder="/network-disk/minepanel"
+                    className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6">

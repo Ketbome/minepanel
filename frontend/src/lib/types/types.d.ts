@@ -113,6 +113,7 @@ export interface ServerConfig {
   backupInitialDelay: string;
   backupPruneDays: string;
   backupDestDir: string;
+  backupHostDir: string;
   backupName: string;
   backupOnStartup: boolean;
   pauseIfNoPlayers: boolean;

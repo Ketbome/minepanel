@@ -24,10 +24,6 @@ export class JavaServerStrategy implements IServerStrategy {
     return true;
   }
 
-  supportsBackup(): boolean {
-    return true;
-  }
-
   supportsAutoPause(): boolean {
     return true;
   }

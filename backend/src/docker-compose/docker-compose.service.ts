@@ -24,11 +24,13 @@ export class DockerComposeService {
   private readonly logger = new Logger(DockerComposeService.name);
   private readonly SERVERS_DIR: string;
   private readonly BASE_DIR: string;
+  private readonly BACKUP_BASE_DIR?: string;
   private readonly RESERVED_SERVER_DIRS = new Set(['.world']);
 
   constructor(private readonly configService: ConfigService) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
+    this.BACKUP_BASE_DIR = this.configService.get('backupBaseDir');
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(path.join(this.SERVERS_DIR, '.world', 'worlds'));
   }
@@ -189,6 +191,7 @@ export class DockerComposeService {
         backupInitialDelay: backupEnv.INITIAL_DELAY ?? '2m',
         backupPruneDays: backupEnv.PRUNE_BACKUPS_DAYS ?? '7',
         backupDestDir: backupEnv.DEST_DIR ?? '/backups',
+        backupHostDir: this.parseBackupHostDir(serverId, backupService?.volumes),
         backupName: backupEnv.BACKUP_NAME ?? 'world',
         backupOnStartup: backupEnv.BACKUP_ON_STARTUP !== 'false',
         pauseIfNoPlayers: backupEnv.PAUSE_IF_NO_PLAYERS === 'true',
@@ -1341,6 +1344,26 @@ export class DockerComposeService {
     if (config.enableSync === false) env.ENABLE_SYNC = 'false';
   }
 
+  private parseBackupHostDir(serverId: string, volumes?: string[]): string | undefined {
+    const suffix = ':/backups';
+    const entry = Array.isArray(volumes) ? volumes.find((v) => v.endsWith(suffix)) : undefined;
+    if (!entry) {
+      return undefined;
+    }
+    const hostPath = entry.slice(0, -suffix.length);
+    return hostPath === this.resolveBackupsHostPath(serverId) ? undefined : hostPath;
+  }
+
+  private resolveBackupsHostPath(serverId: string, override?: string): string {
+    if (override?.trim()) {
+      return override.trim();
+    }
+    if (this.BACKUP_BASE_DIR) {
+      return path.join(this.BACKUP_BASE_DIR, serverId);
+    }
+    return path.join(this.BASE_DIR, 'servers', serverId, 'backups');
+  }
+
   private async addBackupService(
     dockerComposeConfig: any,
     config: ServerConfig,
@@ -1351,7 +1374,8 @@ export class DockerComposeService {
     this.addOptionalBackupEnv(backupEnv, config);
 
     const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');
-    const backupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
+    const defaultBackupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
+    const backupsPath = this.resolveBackupsHostPath(config.id, config.backupHostDir);
 
     dockerComposeConfig.services.backup = {
       image: 'itzg/mc-backup',
@@ -1369,7 +1393,16 @@ export class DockerComposeService {
     }
 
     dockerComposeConfig.volumes.backups = {};
-    await fs.ensureDir(path.join(serverDir, 'backups'));
+
+    if (backupsPath === defaultBackupsPath) {
+      await fs.ensureDir(path.join(serverDir, 'backups'));
+    } else {
+      try {
+        await fs.ensureDir(backupsPath);
+      } catch (error) {
+        this.logger.warn(`Could not pre-create custom backup dir ${backupsPath}: ${error.message}. Docker will create it on start.`);
+      }
+    }
   }
 
   async generateDockerComposeFile(config: ServerConfig, proxyEnabled: boolean = false): Promise<void> {

@@ -242,6 +242,10 @@ export class ServerConfigDto {
 
   @IsString()
   @IsOptional()
+  backupHostDir?: string;
+
+  @IsString()
+  @IsOptional()
   backupName?: string;
 
   @IsBoolean()

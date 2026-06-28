@@ -71,7 +71,8 @@ Path and filesystem patterns (critical):
   - `/app/servers/<serverId>/docker-compose.yml`
   - `/app/servers/<serverId>/mc-data/`
   - `/app/servers/<serverId>/worlds/`
-  - `/app/servers/<serverId>/backups/` (if backup enabled)
+  - `/app/servers/<serverId>/backups/` (if backup enabled, default location)
+- Backup host mount is configurable: `BACKUP_BASE_DIR` (`backupBaseDir`) sets a global host base, and per-server `backupHostDir` overrides it. When set, the backup mount's host side can point outside `${BASE_DIR}` (e.g. a NAS); the backend's `fs.ensureDir` for it is best-effort (Docker creates the bind source if unreachable). See `resolveBackupsHostPath`/`parseBackupHostDir` in `docker-compose.service.ts`.
 - Global world library is reserved under `/app/servers/.world/worlds/`.
 - Reserved/hidden folders must not be treated as server IDs.
 

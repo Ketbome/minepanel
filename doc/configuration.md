@@ -31,6 +31,7 @@ to edit `docker-compose.yml` to enable them — just add the variables to `.env`
 | `FRONTEND_PORT` | `3000`  | Web UI port               |
 | `BACKEND_PORT`  | `8091`  | API port                  |
 | `BASE_DIR`      | `$PWD`  | Base path for server data |
+| `BACKUP_BASE_DIR` | _(empty)_ | Optional host path for backups (e.g. `/network-disk/minepanel`). Empty keeps the default `${BASE_DIR}/servers/<id>/backups`. Can be overridden per server in the UI |
 | `COMPOSE_PROJECT` | _(empty)_ | Optional prefix for per-server Docker Compose project names (`<prefix>_<serverId>`) |
 
 ### Authentication
