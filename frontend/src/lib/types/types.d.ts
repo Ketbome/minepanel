@@ -88,6 +88,7 @@ export interface ServerConfig {
   playerIdleTimeout: string;
   preventProxyConnections: boolean;
   opPermissionLevel: string;
+  spawnProtection: string;
 
   // RCON
   enableRcon: boolean;

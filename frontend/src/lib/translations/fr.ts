@@ -527,6 +527,8 @@ export const fr = {
     'Définit si les structures comme les villages, temples, etc. seront générées',
   allowNether: 'Autoriser le Nether',
   allowNetherDescription: 'Activer ou désactiver l’accès à la dimension Nether',
+  spawnProtection: 'Protection du spawn',
+  spawnProtectionDescription: 'Rayon (en blocs) autour du spawn que les non-opérateurs ne peuvent pas modifier. Mettre 0 pour désactiver',
 
   // ===========================
   // PERFORMANCE SETTINGS TAB

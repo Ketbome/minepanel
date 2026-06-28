@@ -523,6 +523,8 @@ export const pl: Record<TranslationKey, string> = {
     'Określ, czy struktury takie jak wioski, świątynie itp. będą generowane',
   allowNether: 'Zachowaj Nether',
   allowNetherDescription: 'Włącz lub wyłącz dostęp do wymiaru Nether',
+  spawnProtection: 'Ochrona spawnu',
+  spawnProtectionDescription: 'Promień (w blokach) wokół spawnu, którego nie-operatorzy nie mogą edytować. Ustaw 0, aby wyłączyć',
 
   // ===========================
   // STRONA: WYDAJNOŚĆ

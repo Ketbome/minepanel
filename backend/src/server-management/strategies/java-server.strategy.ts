@@ -152,6 +152,7 @@ export class JavaServerStrategy implements IServerStrategy {
   private addConnectivityOptions(env: Record<string, string>, config: ServerConfig): void {
     if (config.preventProxyConnections) env['PREVENT_PROXY_CONNECTIONS'] = 'true';
     if (config.opPermissionLevel) env['OP_PERMISSION_LEVEL'] = config.opPermissionLevel;
+    if (config.spawnProtection !== undefined && config.spawnProtection !== '') env['SPAWN_PROTECTION'] = config.spawnProtection;
   }
 
   private addWorldConfig(env: Record<string, string>, config: ServerConfig): void {

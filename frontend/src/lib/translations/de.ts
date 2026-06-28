@@ -529,6 +529,8 @@ export const de: Record<TranslationKey, string> = {
     'Definiert, ob Strukturen wie Dörfer, Tempel usw. generiert werden',
   allowNether: 'Nether erlauben',
   allowNetherDescription: 'Zugang zur Nether-Dimension aktivieren oder deaktivieren',
+  spawnProtection: 'Spawn-Schutz',
+  spawnProtectionDescription: 'Radius (in Blöcken) um den Spawn, den Nicht-Ops nicht bearbeiten können. 0 zum Deaktivieren',
 
   // ===========================
   // PERFORMANCE SETTINGS TAB
