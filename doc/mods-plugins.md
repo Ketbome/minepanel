@@ -331,6 +331,24 @@ With Slug method, the version **never updates automatically**. You must manually
 
 Useful for modpacks downloaded manually or custom modpacks.
 
+### Use the modpack URL, not the server-file URL
+
+`AUTO_CURSEFORGE` always expects the **modpack (client) page or file** — it reads the manifest
+and builds the server side from it. Pointing it at a dedicated "server files" download breaks
+with:
+
+```
+Invalid parameter provided for "install-curseforge" command:
+The modpack's manifest file was not valid - did you make sure to reference a client, not server file?
+```
+
+So use the modpack page URL (e.g. `https://www.curseforge.com/minecraft/modpacks/<pack>`) or a
+specific modpack file (`.../files/<id>`), never the server-files variant.
+
+If the install then loops or crashes on start because of a client-only mod, exclude it with the
+**Exclude mods** field (`CF_EXCLUDE_MODS`), which accepts a comma-separated list of mod slugs or
+filenames, e.g. `optifine,client-only-mod`.
+
 ### World source conflict with Worlds tab
 
 For `AUTO_CURSEFORGE`, `CF_SET_LEVEL_FROM` and the Java **Worlds** tab are alternative world-source mechanisms.
