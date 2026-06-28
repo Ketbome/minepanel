@@ -5,6 +5,13 @@ on:
     branches: ['**']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
@@ -16,10 +23,13 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
       version: ${{ steps.version.outputs.version }}
+      is_new: ${{ steps.version.outputs.is_new }}
       is_main: ${{ github.ref == 'refs/heads/main' }}
       branch_name: ${{ steps.branch.outputs.name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -33,9 +43,22 @@ jobs:
               - 'config.json'
               - 'frontend/**'
               - 'backend/**'
-      - name: Read version
+      - name: Resolve version
         id: version
-        run: echo "version=$(jq -r '.version' config.json)" >> $GITHUB_OUTPUT
+        run: |
+          base=$(jq -r '.version' config.json)
+          git fetch --tags --force --quiet 2>/dev/null || true
+          head_tag=$(git tag --points-at HEAD | grep -E "^v${base//./\\.}\.[0-9]+$" | sort -V | tail -n1 || true)
+          if [ -n "$head_tag" ]; then
+            version="${head_tag#v}"
+            echo "is_new=false" >> "$GITHUB_OUTPUT"
+          else
+            max=$(git tag -l "v${base}.*" | sed -E "s|^v${base}\.||" | grep -E '^[0-9]+$' | sort -n | tail -n1)
+            version="${base}.$(( ${max:--1} + 1 ))"
+            echo "is_new=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $version"
       - name: Get branch name
         id: branch
         run: echo "name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
@@ -184,10 +207,10 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # Create tag and release only if version changed
+  # Tag + GitHub release: one patch bump per merge to main
   release:
     needs: [changes, build-main]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.changes.outputs.is_new == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -197,27 +220,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Check if tag exists
-        id: check
-        run: |
-          if git rev-parse "v${{ needs.changes.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create tag
-        if: steps.check.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
+          tag="v${{ needs.changes.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ needs.changes.outputs.version }}" -m "Release v${{ needs.changes.outputs.version }}"
-          git push origin "v${{ needs.changes.outputs.version }}"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"
 
       - name: Create Release
-        if: steps.check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.changes.outputs.version }}
