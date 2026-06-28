@@ -47,6 +47,7 @@ const defaultConfig: ServerConfig = {
   playerIdleTimeout: '0',
   preventProxyConnections: false,
   opPermissionLevel: '4',
+  spawnProtection: '16',
   enableRcon: true,
   rconPort: '25575',
   rconPassword: '',

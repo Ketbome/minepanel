@@ -1,3 +1,33 @@
+import { execSync } from 'node:child_process';
+import { dirname } from 'node:path';
+import * as os from 'node:os';
+
+// The generated server compose files and the chown helper run against the host Docker
+// daemon, so their volume paths must be host paths. BASE_DIR is the host path that maps to
+// /app. Instead of trusting the env var, ask Docker for the real source of the /app/servers
+// bind and derive BASE_DIR from it, so a misconfigured BASE_DIR can't send servers to the
+// wrong host folder. Falls back to the env var (e.g. local dev outside Docker).
+function detectHostBaseDir(): string | undefined {
+  try {
+    const containerId = process.env.HOSTNAME || os.hostname();
+    const source = execSync(`docker inspect ${containerId} --format '{{range .Mounts}}{{if eq .Destination "/app/servers"}}{{.Source}}{{end}}{{end}}'`, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 5000,
+    }).trim();
+    if (source) {
+      const detected = dirname(source);
+      if (process.env.BASE_DIR && process.env.BASE_DIR !== detected) {
+        console.warn(`[config] BASE_DIR is "${process.env.BASE_DIR}" but the /app/servers mount resolves to host "${detected}". Using the detected path.`);
+      }
+      return detected;
+    }
+  } catch {
+    // Docker unavailable (e.g. local dev) -> fall back to BASE_DIR env.
+  }
+  return undefined;
+}
+
 export default () => ({
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2d',
@@ -31,7 +61,7 @@ export default () => ({
     from: process.env.SMTP_FROM,
   },
   serversDir: '/app/servers',
-  baseDir: process.env.BASE_DIR || '/app',
+  baseDir: detectHostBaseDir() || process.env.BASE_DIR || '/app',
   backupBaseDir: process.env.BACKUP_BASE_DIR || undefined,
   database: {
     path: '/app/data/minepanel.db',

@@ -529,6 +529,8 @@ export const es: Record<TranslationKey, string> = {
   generateStructuresDescription: 'Define si se generarán estructuras como aldeas, templos, etc.',
   allowNether: 'Permitir Nether',
   allowNetherDescription: 'Habilita o deshabilita el acceso a la dimensión del Nether',
+  spawnProtection: 'Protección de Spawn',
+  spawnProtectionDescription: 'Radio (en bloques) alrededor del spawn que los no-operadores no pueden editar. Usa 0 para desactivar',
 
   // ===========================
   // PESTAÑA DE RENDIMIENTO

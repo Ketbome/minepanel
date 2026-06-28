@@ -165,6 +165,7 @@ Edit from UI:
 - Server name, MOTD
 - Max players, difficulty, game mode
 - View distance, PVP, command blocks
+- Spawn protection radius (Java, `SPAWN_PROTECTION`; `0` disables it)
 - JVM arguments, extra flags
 
 ## Server Resources (Java)

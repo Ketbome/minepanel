@@ -232,6 +232,21 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
               </div>
               <p className="text-xs text-gray-400">{t("allowNetherDescription")}</p>
             </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="spawnProtection" className="text-gray-200 flex items-center gap-2">
+                <Image src="/images/structure.webp" alt={t("spawnProtection")} width={16} height={16} />
+                {t("spawnProtection")}
+              </Label>
+              <Input
+                id="spawnProtection"
+                type="number"
+                min={0}
+                value={config.spawnProtection ?? "16"}
+                onChange={(e) => updateConfig("spawnProtection", e.target.value)}
+              />
+              <p className="text-xs text-gray-400">{t("spawnProtectionDescription")}</p>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

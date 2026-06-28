@@ -161,6 +161,10 @@ export class ServerConfigDto {
   @IsOptional()
   opPermissionLevel?: string;
 
+  @IsString()
+  @IsOptional()
+  spawnProtection?: string;
+
   // RCON
   @IsBoolean()
   @IsOptional()

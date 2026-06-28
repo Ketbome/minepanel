@@ -542,6 +542,8 @@ export const nl: Record<TranslationKey, string> = {
     'Bepaal of structuren zoals dorpen, tempels, etc. gegenereerd worden',
   allowNether: 'Nether toestaan',
   allowNetherDescription: 'Schakel toegang tot de Nether dimensie in of uit',
+  spawnProtection: 'Spawnbescherming',
+  spawnProtectionDescription: 'Straal (in blokken) rond de spawn die niet-ops niet kunnen bewerken. Zet op 0 om uit te schakelen',
 
   // ===========================
   // PRESTATIE INSTELLINGEN TAB
