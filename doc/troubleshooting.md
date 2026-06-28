@@ -339,6 +339,20 @@ df -h
 docker compose logs minepanel | grep -i error
 ```
 
+### Server Data Goes to the Wrong Host Folder
+
+**Symptoms:** A created server runs, but its files land somewhere other than where you mounted
+the data, or the generated `docker-compose.yml` points at a path that doesn't exist on the host.
+
+**Cause:** `BASE_DIR` (the host path that maps to `/app`) didn't match where you actually
+mounted the data. Generated server compose files use host paths derived from it.
+
+**Solution:** This is now auto-detected — Minepanel reads the real host source of the
+`/app/servers` mount at startup, so you can leave `BASE_DIR` unset and it will match your mount.
+If you previously hardcoded it to a wrong value, remove it (or fix it) and recreate the affected
+servers. If you set `BASE_DIR` and it differs from the detected path, the startup logs will warn
+you and the detected path wins. See [Configuration → Base Directory](/configuration#base-directory-host-path).
+
 ### Server Won't Start
 
 **Symptoms:** Server status shows "error" or "exited"

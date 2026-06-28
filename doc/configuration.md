@@ -30,7 +30,7 @@ to edit `docker-compose.yml` to enable them — just add the variables to `.env`
 | --------------- | ------- | ------------------------- |
 | `FRONTEND_PORT` | `3000`  | Web UI port               |
 | `BACKEND_PORT`  | `8091`  | API port                  |
-| `BASE_DIR`      | `$PWD`  | Base path for server data |
+| `BASE_DIR`      | auto-detected | Host path that maps to `/app`. Auto-detected from the `/app/servers` mount; the env var is only a fallback for local dev / non-Docker runs |
 | `BACKUP_BASE_DIR` | _(empty)_ | Optional host path for backups (e.g. `/network-disk/minepanel`). Empty keeps the default `${BASE_DIR}/servers/<id>/backups`. Can be overridden per server in the UI |
 | `COMPOSE_PROJECT` | _(empty)_ | Optional prefix for per-server Docker Compose project names (`<prefix>_<serverId>`) |
 
@@ -122,11 +122,24 @@ Public IP, LAN IP, and Proxy settings are configured through the web UI:
 
 ## Advanced
 
-### Custom Base Directory
+### Base Directory (host path)
+
+`BASE_DIR` is the **absolute host path** that maps to `/app` inside the container — the directory
+that holds `servers/` and `data/`. Because each Minecraft server runs through the host Docker
+daemon (via the mounted socket), the generated compose files use host paths built from this
+value, not container paths.
+
+You normally **don't need to set it**: at startup Minepanel asks Docker for the real host source
+of the `/app/servers` mount and uses it, so the path always matches wherever you mounted the
+data. The `BASE_DIR` env var is only a fallback for local dev or non-Docker runs:
 
 ```bash
 BASE_DIR=/mnt/external/minepanel
 ```
+
+If you set `BASE_DIR` and it doesn't match the detected mount, Minepanel logs a warning and uses
+the detected path. This is why custom composes that mounted data into a subdirectory (e.g.
+`./minepanel/servers:/app/servers`) no longer end up writing servers to the wrong host folder.
 
 ### Multiple Instances
 

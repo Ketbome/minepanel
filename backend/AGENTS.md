@@ -65,7 +65,10 @@ npm run test --prefix backend
 Path and filesystem patterns (critical):
 
 - `serversDir` is container-side path (`/app/servers`) from `backend/src/config.ts`.
-- `baseDir` is host-side path (`BASE_DIR`) used in generated compose mounts.
+- `baseDir` is host-side path used in generated compose mounts. It is auto-detected at startup
+  from the host `Source` of the `/app/servers` bind (via `docker inspect` on the own container,
+  see `detectHostBaseDir` in `config.ts`); `BASE_DIR` env is only a fallback (local dev / no
+  Docker). A mismatch between env and detected path is logged.
 - Never mix `serversDir` and `baseDir`; they are not interchangeable.
 - Per-server canonical layout is:
   - `/app/servers/<serverId>/docker-compose.yml`
