@@ -24,11 +24,6 @@ export class BedrockServerStrategy implements IServerStrategy {
     return false;
   }
 
-  supportsBackup(): boolean {
-    // mc-backup requires RCON for save-off/save-all/save-on coordination
-    return false;
-  }
-
   supportsAutoPause(): boolean {
     return false;
   }
