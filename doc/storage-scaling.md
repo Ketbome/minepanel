@@ -24,7 +24,10 @@ host, and Docker is controlled through the **local socket** (`/var/run/docker.so
 Two path concepts drive the whole model (`backend/src/config.ts`):
 
 - `serversDir` (`/app/servers`) — container-side path the backend reads/writes.
-- `baseDir` (`BASE_DIR`) — host-side path written into the generated compose mounts.
+- `baseDir` (`BASE_DIR`) — host-side path written into the generated compose mounts. It is
+  auto-detected from the `/app/servers` mount source via `docker inspect` (`backend/src/config.ts`),
+  with the `BASE_DIR` env var as fallback. This works unchanged when the mount source is a
+  network filesystem: `docker inspect` reports the host-side mountpoint path.
 - `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `${BASE_DIR}/servers/<id>/backups`.
 
 When a server is generated, `./` volume entries are expanded to absolute host paths under
@@ -64,8 +67,18 @@ A common instinct is to "move to named Docker volumes." For Minepanel this is a 
 - A named volume stores data under `/var/lib/docker/volumes/<name>/_data` (root-owned, fragile),
   so the **file manager stops working** — there is no clean host path the backend can read with
   `fs`.
-- Named volumes only help across hosts when paired with a **driver** (NFS / CSI). At that point a
-  shared filesystem is doing the real work, and the "named volume" is just a thin wrapper.
+- **Server discovery breaks too.** The backend enumerates servers by reading `/app/servers` with
+  `fs.readdir` and checking each directory for a `docker-compose.yml`
+  (`backend/src/server-management/server-management.service.ts`). With named volumes there is no
+  per-server directory to iterate — the panel would not even know which servers exist. The same
+  applies to the `mc-data` migration, world discovery, and the backup sidecar, which all mount or
+  read host paths under `${BASE_DIR}/servers/<id>/...`.
+- Named volumes do **not** buy Swarm portability either. With the default `local` driver a volume
+  is **per-node**: a service rescheduled to another node starts with an empty volume. They only
+  help across hosts when paired with a **driver** (NFS / CSI). At that point a shared filesystem
+  is doing the real work, and the "named volume" is just a thin wrapper. Meanwhile, Swarm supports
+  **bind mounts** (`type=bind`) natively — it only requires the path to exist on every node, which
+  is exactly what Option A provides.
 
 The current **bind mount + mirrored path (`BASE_DIR`)** model is actually *friendlier* for a panel
 that needs to browse and edit files. Named volumes are therefore **not recommended as the primary
@@ -85,8 +98,10 @@ Adopt **Option A — a shared filesystem (NFS / GlusterFS / CephFS) mounted at t
 path on all nodes**, keeping the current bind mount + `BASE_DIR` model.
 
 This preserves the file manager, world discovery, and per-server compose generation with minimal
-change. The **Docker control plane** for multi-node (Swarm `stack deploy` or a per-node agent) is
-addressed in a later phase and is **out of scope for the data decision** above.
+change. Swarm itself does not force a different data model: it supports bind mounts as long as the
+path exists on every node, which the shared filesystem guarantees. The **Docker control plane**
+for multi-node (remote Docker via `DOCKER_HOST`/contexts, Swarm `stack deploy`, or a per-node
+agent) is addressed in a later phase and is **out of scope for the data decision** above.
 
 Named volumes remain explicitly rejected as the primary mechanism, for the reasons in
 [Why not named volumes](#why-not-named-volumes).
@@ -109,8 +124,15 @@ New drivers are opt-in. **This is the next code phase, not part of this document
   same path on every node. No code change required; bind mounts and the file manager keep working.
 - **Phase 1 — Driver abstractions.** Introduce `NodeDriver` / `StorageDriver` with the local
   implementation as default. *Legacy criterion: single-host behavior is byte-for-byte unchanged.*
-- **Phase 2 — Multi-node Docker control.** Add remote/agent `NodeDriver` and a placement model so
-  servers can run on a chosen node. *Legacy criterion: omitting node config falls back to local.*
+- **Phase 2 — Multi-node Docker control.** Preferred mechanism: **remote Docker via
+  `DOCKER_HOST` / Docker contexts, per server**. `docker compose` supports it natively, so the
+  compose-per-server model survives intact — the backend keeps running the same commands, just
+  pointed at another daemon, and host paths stay valid because the shared filesystem mounts them
+  identically on every node. Code change is modest: a per-server `dockerHost` field injected as
+  env into the existing `execAsync` calls, becoming the remote `NodeDriver`. Swarm `stack deploy`
+  is explicitly **not** the target: it would force rewriting compose generation (no
+  `container_name`, overlay networks, placement constraints) and its scheduler competes with the
+  panel's own placement decisions. *Legacy criterion: omitting node config falls back to local.*
 
 ## Open questions & risks
 
@@ -122,8 +144,14 @@ New drivers are opt-in. **This is the next code phase, not part of this document
 - **Locking / concurrency** — only one node should run a given server at a time; placement must
   guarantee this.
 - **Swarm compose mismatch** — `docker stack deploy` does **not** consume the current per-server
-  compose files as-is (different volume model, overlay network, placement constraints). The
-  control plane phase must account for this.
+  compose files as-is (different volume model, overlay network, placement constraints). This is a
+  main reason Phase 2 prefers `DOCKER_HOST`/contexts over Swarm.
+- **mc-router across nodes** — the proxy relies on the `minepanel-network` **bridge** network,
+  which is per-host. A server placed on another node is unreachable by container name; routes
+  would need to target `nodeIP:publishedPort` (or an overlay network) in the multi-node phase.
+- **SQLite must stay off the network FS** — the backend database (`/app/data/minepanel.db`) must
+  remain on local disk of the node running the backend; SQLite over NFS is prone to locking
+  corruption. Only `${BASE_DIR}/servers` belongs on the shared filesystem.
 
 ## Scaling model: fleet vs single world
 
