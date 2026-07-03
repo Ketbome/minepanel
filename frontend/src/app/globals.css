@@ -388,6 +388,144 @@
   will-change: transform;
 }
 
+@keyframes portal-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: var(--drift-x, 120px) var(--drift-y, -80px);
+  }
+}
+
+.animate-portal-drift {
+  animation: portal-drift linear infinite;
+}
+
+@keyframes portal-glimmer {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.animate-portal-glimmer {
+  animation: portal-glimmer 5s ease-in-out infinite;
+}
+
+@keyframes screen-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(3px, -2px);
+  }
+  50% {
+    transform: translate(-2px, 3px);
+  }
+  75% {
+    transform: translate(2px, 2px);
+  }
+}
+
+.animate-screen-shake {
+  animation: screen-shake 0.22s linear infinite;
+}
+
+@keyframes tail-sway {
+  0%,
+  100% {
+    transform: rotateZ(calc(var(--sway-dir, 1) * 6deg));
+  }
+  50% {
+    transform: rotateZ(calc(var(--sway-dir, 1) * -8deg));
+  }
+}
+
+.animate-tail-sway {
+  animation: tail-sway 1.4s ease-in-out infinite;
+  transform-origin: 100% 50%;
+  will-change: transform;
+}
+
+@keyframes crystal-spin {
+  from {
+    transform: rotateX(-30deg) rotateY(45deg);
+  }
+  to {
+    transform: rotateX(-30deg) rotateY(405deg);
+  }
+}
+
+.animate-crystal-spin {
+  animation: crystal-spin 6s linear infinite;
+}
+
+@keyframes crystal-spin-reverse {
+  from {
+    transform: rotateX(60deg) rotateY(405deg);
+  }
+  to {
+    transform: rotateX(60deg) rotateY(45deg);
+  }
+}
+
+.animate-crystal-spin-reverse {
+  animation: crystal-spin-reverse 4s linear infinite;
+}
+
+@keyframes float-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.animate-float-bob {
+  animation: float-bob 3s ease-in-out infinite;
+}
+
+@keyframes shulker-peek {
+  0%,
+  55%,
+  100% {
+    transform: translateY(0);
+  }
+  65%,
+  85% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-shulker-peek {
+  animation: shulker-peek 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes dragon-breath {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(48px, var(--breath-y, -6px)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.animate-dragon-breath {
+  animation: dragon-breath 1.6s ease-in infinite;
+}
+
 /* ============================================================
    Minecraft GUI design system
    Beveled inventory panels, item slots, hotbar, pixel buttons
