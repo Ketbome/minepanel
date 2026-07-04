@@ -29,7 +29,7 @@ export const en = {
   troubleshootingSteps: 'Troubleshooting Steps',
   checkBackendUrl: 'Check Backend URL',
   checkBackendUrlDesc:
-    'Verify that the NEXT_PUBLIC_API_URL environment variable is correctly configured',
+    'Verify that the NEXT_PUBLIC_BACKEND_URL environment variable is correctly configured',
   checkServerRunning: 'Verify Server Status',
   checkServerRunningDesc:
     'Ensure the backend server is running and accessible on the configured port',

@@ -29,7 +29,7 @@ export const fr = {
   troubleshootingSteps: 'Étapes de dépannage',
   checkBackendUrl: 'Vérifier l\'URL du backend',
   checkBackendUrlDesc:
-    "Vérifiez que la variable d'environnement NEXT_PUBLIC_API_URL est correctement configurée",
+    "Vérifiez que la variable d'environnement NEXT_PUBLIC_BACKEND_URL est correctement configurée",
   checkServerRunning: 'Vérifier l\'état du serveur',
   checkServerRunningDesc:
     "Assurez-vous que le serveur backend est en cours d'exécution et accessible sur le port configuré",
