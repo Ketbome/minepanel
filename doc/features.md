@@ -32,6 +32,7 @@ flowchart LR
 | Templates        | Pre-configured: Survival, Creative, SkyBlock, PvP, Bedrock presets, and Paper cross-play |
 | Java defaults    | Global defaults for new Java servers (offline mode, resources, backup switch) |
 | Resource limits  | Set RAM, CPU per server                                              |
+| Clone server     | Duplicate a server's configuration under a new ID (world data and files are not copied) |
 
 ## Real-time Monitoring
 
@@ -39,6 +40,7 @@ flowchart LR
 | --------- | ----------------------------------------- |
 | Dashboard | Status cards, resource usage at a glance  |
 | Live logs | Streaming, errors highlighted, searchable |
+| Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime          |
 | History   | Per-server CPU/RAM graphs (1h–72h) in the Metrics tab, sampled every minute with 7-day retention |
 

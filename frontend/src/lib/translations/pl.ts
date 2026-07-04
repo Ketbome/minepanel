@@ -382,6 +382,13 @@ export const pl: Record<TranslationKey, string> = {
   serverStarted: 'Serwer został pomyślnie uruchomiony',
   serverStopped: 'Serwer został pomyślnie zatrzymany',
   serverCreatedSuccess: 'Serwer został pomyślnie utworzony',
+  cloneServer: 'Klonuj serwer',
+  cloneServerDesc: 'Utwórz nowy serwer z taką samą konfiguracją jak',
+  cloneServerNote: 'Dane świata, mody i pliki nie są kopiowane — tylko konfiguracja.',
+  cloning: 'Klonowanie...',
+  serverClonedSuccess: 'Serwer został pomyślnie sklonowany',
+  errorCloningServer: 'Błąd podczas klonowania serwera',
+  downloadLogs: 'Pobierz logi',
   serverDeletedSuccess: 'Serwer został pomyślnie usunięty',
 
   // ===========================

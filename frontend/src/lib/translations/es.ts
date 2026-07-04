@@ -381,6 +381,13 @@ export const es: Record<TranslationKey, string> = {
   serverStarted: 'Servidor iniciado exitosamente',
   serverStopped: 'Servidor detenido exitosamente',
   serverCreatedSuccess: 'Servidor creado correctamente',
+  cloneServer: 'Clonar servidor',
+  cloneServerDesc: 'Crear un nuevo servidor con la misma configuración que',
+  cloneServerNote: 'Los datos del mundo, mods y archivos no se copian — solo la configuración.',
+  cloning: 'Clonando...',
+  serverClonedSuccess: 'Servidor clonado correctamente',
+  errorCloningServer: 'Error al clonar el servidor',
+  downloadLogs: 'Descargar logs',
   serverDeletedSuccess: 'Servidor eliminado correctamente',
 
   // ===========================

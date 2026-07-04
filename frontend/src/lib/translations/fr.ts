@@ -378,6 +378,13 @@ export const fr = {
   serverStarted: 'Serveur démarré avec succès',
   serverStopped: 'Serveur arrêté avec succès',
   serverCreatedSuccess: 'Serveur créé avec succès',
+  cloneServer: 'Cloner le serveur',
+  cloneServerDesc: 'Créer un nouveau serveur avec la même configuration que',
+  cloneServerNote: 'Les données du monde, les mods et les fichiers ne sont pas copiés — uniquement la configuration.',
+  cloning: 'Clonage...',
+  serverClonedSuccess: 'Serveur cloné avec succès',
+  errorCloningServer: 'Erreur lors du clonage du serveur',
+  downloadLogs: 'Télécharger les logs',
   serverDeletedSuccess: 'Serveur supprimé avec succès',
 
   // ===========================

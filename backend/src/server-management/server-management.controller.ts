@@ -8,6 +8,7 @@ import { SettingsService } from 'src/users/services/settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ProxyService } from 'src/proxy/proxy.service';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
+import { CloneServerDto } from './dto/clone-server.dto';
 import { SelectWorldDto } from './dto/select-world.dto';
 import { BedrockAddonsService } from 'src/bedrock-addons/bedrock-addons.service';
 import { UsersService } from 'src/users/services/users.service';
@@ -224,6 +225,68 @@ export class ServerManagementController {
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(error.message || 'Failed to create server');
+    }
+  }
+
+  @Post(':id/clone')
+  async cloneServer(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+    body: CloneServerDto,
+  ) {
+    const currentUser = await this.requireServerAccess(req, id);
+    if (currentUser && this.accessControlService) {
+      this.accessControlService.assertCreateServers(currentUser);
+    }
+
+    const config = await this.dockerComposeService.getServerConfig(id);
+    if (!config?.serverExists) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+
+    const user = req.user as PayloadToken;
+    const settings = await this.settingsService.getSettings(user.userId);
+    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    const baseDomain = settings.preferences?.proxyBaseDomain;
+
+    const clonePayload = {
+      ...config,
+      id: body.newId,
+      serverName: body.serverName?.trim() || `${config.serverName} (copy)`,
+      extraPorts: [],
+      proxyHostname: undefined,
+      backupHostDir: undefined,
+    };
+    if (config.worldScope === 'local' && config.worldSource) {
+      clonePayload.worldSource = '';
+      clonePayload.forceWorldCopy = false;
+    }
+
+    try {
+      const serverConfig = await this.dockerComposeService.createServer(body.newId, clonePayload, proxyEnabled);
+
+      if (proxyEnabled && baseDomain) {
+        const servers = await this.dockerComposeService.getAllServerConfigs();
+        const proxyServers = servers
+          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
+          .map((s) => ({
+            id: s.id,
+            hostname: s.proxyHostname,
+            useProxy: true,
+          }));
+        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+      }
+
+      await this.recordServerAudit(currentUser, 'clone_server', body.newId, `Cloned server ${id} to ${body.newId}`, 'success', { sourceServerId: id });
+
+      return {
+        success: true,
+        message: `Server "${id}" cloned to "${body.newId}"`,
+        server: serverConfig,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to clone server');
     }
   }
 

@@ -151,6 +151,11 @@ export const getServerLogsSince = async (
   return data;
 };
 
+export const cloneServer = async (serverId: string, newId: string, serverName?: string): Promise<{ success: boolean; message: string; server: ServerConfig }> => {
+  const response = await api.post(`/servers/${serverId}/clone`, { newId, ...(serverName ? { serverName } : {}) });
+  return response.data;
+};
+
 export const deleteServer = async (serverId: string): Promise<{ success: boolean; message: string }> => {
   const response = await api.delete(`/servers/${serverId}`);
   return response.data;

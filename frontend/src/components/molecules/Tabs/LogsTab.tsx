@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Terminal, RefreshCcw, Cpu, Server, AlertTriangle, XCircle, CheckCircle, Clock, Search, Filter, Play, Pause } from "lucide-react";
+import { Terminal, RefreshCcw, Cpu, Server, AlertTriangle, XCircle, CheckCircle, Clock, Search, Filter, Play, Pause, Download } from "lucide-react";
 import { useServerLogs } from "@/lib/hooks/useServerLogs";
-import { getResources } from "@/services/docker/fetchs";
+import { getResources, getServerLogs } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import LogsControls from "../Logs/LogsControls";
@@ -118,6 +118,27 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
     await fetchLogs();
   };
 
+  const [downloadingLogs, setDownloadingLogs] = useState(false);
+
+  const handleDownloadLogs = async () => {
+    setDownloadingLogs(true);
+    try {
+      const result = await getServerLogs(serverId, 10000);
+      const blob = new Blob([result.logs || ""], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      link.href = url;
+      link.download = `${serverId}-logs-${stamp}.log`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading logs:", error);
+    } finally {
+      setDownloadingLogs(false);
+    }
+  };
+
   const handleAutoScrollToggle = (value: boolean) => {
     manualScrollControlRef.current = true;
     setAutoScroll(value);
@@ -154,6 +175,16 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
             )}
           </CardDescription>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadLogs}
+          disabled={downloadingLogs}
+          className="bg-gray-800/70 text-gray-200 border-gray-700/50 hover:bg-gray-700/50"
+        >
+          <Download className="h-4 w-4 mr-1" />
+          {t("downloadLogs")}
+        </Button>
       </CardHeader>
       <LogsControls searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} />
       <LogsErrorAlert error={error} resourcesError={resourcesError} />
