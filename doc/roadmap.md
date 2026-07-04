@@ -192,9 +192,14 @@ about productizing setup:
 
 ### Alerts
 
-- Server down notifications
-- High resource usage and log-error alerts
-- Notify via Discord/Email
+Shipped so far: per-server Discord alerts for unexpected server down and
+sustained high CPU/RAM (configurable thresholds, sustain window and cooldown,
+in the Metrics tab).
+
+Still planned:
+
+- Log-error alerts
+- Email notifications
 
 ### Network features
 

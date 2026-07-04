@@ -18,6 +18,7 @@ import { WorldDiscoveryModule } from './world-discovery/world-discovery.module';
 import { BedrockAddonsModule } from './bedrock-addons/bedrock-addons.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { ScheduledTasksModule } from './scheduled-tasks/scheduled-tasks.module';
+import { AlertsModule } from './alerts/alerts.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -38,6 +39,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     BedrockAddonsModule,
     MetricsModule,
     ScheduledTasksModule,
+    AlertsModule,
     FilesModule,
     ProxyModule,
   ],

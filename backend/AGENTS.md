@@ -26,6 +26,7 @@ backend/src/
 |- proxy/                   mc-router routes.json generation
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
+|- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
 |- scheduled-tasks/         Interval-based auto-restart and scheduled commands
 |- users/                   User and settings persistence
 |- database/                TypeORM/sql.js setup

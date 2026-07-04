@@ -5,9 +5,10 @@ import { MetricsController } from './metrics.controller';
 import { MetricsService } from './metrics.service';
 import { ServerManagementModule } from 'src/server-management/server-management.module';
 import { UsersModule } from 'src/users/users.module';
+import { AlertsModule } from 'src/alerts/alerts.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MetricSample]), ServerManagementModule, UsersModule],
+  imports: [TypeOrmModule.forFeature([MetricSample]), ServerManagementModule, UsersModule, AlertsModule],
   controllers: [MetricsController],
   providers: [MetricsService],
 })

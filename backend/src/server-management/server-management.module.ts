@@ -8,9 +8,10 @@ import { UsersModule } from 'src/users/users.module';
 import { ProxyModule } from 'src/proxy/proxy.module';
 import { BedrockAddonsModule } from 'src/bedrock-addons/bedrock-addons.module';
 import { Settings } from 'src/users/entities/settings.entity';
+import { AlertsModule } from 'src/alerts/alerts.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule],
+  imports: [TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule],
   controllers: [ServerManagementController],
   providers: [ServerManagementService, DockerComposeService],
   exports: [ServerManagementService, DockerComposeService],

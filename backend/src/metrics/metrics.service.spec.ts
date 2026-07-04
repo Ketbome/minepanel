@@ -3,11 +3,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { MetricsService } from './metrics.service';
 import { MetricSample } from './entities/metric-sample.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
+import { AlertsService } from 'src/alerts/alerts.service';
+import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersResources: jest.Mock };
+  let alertsService: { evaluate: jest.Mock };
 
   beforeEach(async () => {
     sampleRepo = {
@@ -17,12 +20,14 @@ describe('MetricsService', () => {
       delete: jest.fn().mockResolvedValue(undefined),
     };
     serverManagement = { getAllServersResources: jest.fn() };
+    alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MetricsService,
         { provide: getRepositoryToken(MetricSample), useValue: sampleRepo },
         { provide: ServerManagementService, useValue: serverManagement },
+        { provide: AlertsService, useValue: alertsService },
       ],
     }).compile();
 
@@ -37,7 +42,7 @@ describe('MetricsService', () => {
       ['', null],
       ['abc', null],
     ])('should parse %s to %s', (input, expected) => {
-      expect((service as any).parseCpuPercent(input)).toBe(expected);
+      expect(parseCpuPercent(input)).toBe(expected);
     });
   });
 
@@ -51,7 +56,7 @@ describe('MetricsService', () => {
       ['bad', null],
       ['10PiB', null],
     ])('should parse %s to %s', (input, expected) => {
-      expect((service as any).parseMemoryToMb(input)).toBe(expected);
+      expect(parseMemoryToMb(input)).toBe(expected);
     });
   });
 
@@ -92,6 +97,28 @@ describe('MetricsService', () => {
       await (service as any).collectSamples();
 
       expect(sampleRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('should pass resources to the alerts service', async () => {
+      const resources = {
+        srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },
+      };
+      serverManagement.getAllServersResources.mockResolvedValue(resources);
+
+      await (service as any).collectSamples();
+
+      expect(alertsService.evaluate).toHaveBeenCalledWith(resources);
+    });
+
+    it('should still persist samples when alert evaluation fails', async () => {
+      alertsService.evaluate.mockRejectedValue(new Error('boom'));
+      serverManagement.getAllServersResources.mockResolvedValue({
+        srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },
+      });
+
+      await (service as any).collectSamples();
+
+      expect(sampleRepo.save).toHaveBeenCalledTimes(1);
     });
   });
 });
