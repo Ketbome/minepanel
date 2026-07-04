@@ -31,7 +31,7 @@ export const de: Record<TranslationKey, string> = {
   troubleshootingSteps: 'Fehlerbehebungsschritte',
   checkBackendUrl: 'Backend-URL überprüfen',
   checkBackendUrlDesc:
-    'Stellen Sie sicher, dass die NEXT_PUBLIC_API_URL Umgebungsvariable korrekt konfiguriert ist',
+    'Stellen Sie sicher, dass die NEXT_PUBLIC_BACKEND_URL Umgebungsvariable korrekt konfiguriert ist',
   checkServerRunning: 'Serverstatus überprüfen',
   checkServerRunningDesc:
     'Stellen Sie sicher, dass der Backend-Server läuft und auf dem konfigurierten Port erreichbar ist',

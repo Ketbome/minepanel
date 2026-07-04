@@ -31,7 +31,7 @@ export const pl: Record<TranslationKey, string> = {
   troubleshootingSteps: 'Kroki rozwiązywania problemów',
   checkBackendUrl: 'Sprawdź adres URL backendu',
   checkBackendUrlDesc:
-    'Upewnij się, że zmienna środowiskowa NEXT_PUBLIC_API_URL jest poprawnie skonfigurowana',
+    'Upewnij się, że zmienna środowiskowa NEXT_PUBLIC_BACKEND_URL jest poprawnie skonfigurowana',
   checkServerRunning: 'Sprawdź stan serwera',
   checkServerRunningDesc:
     'Upewnij się, że serwer backend działa i jest dostępny na skonfigurowanym porcie',

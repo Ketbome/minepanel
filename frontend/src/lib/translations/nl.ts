@@ -31,7 +31,7 @@ export const nl: Record<TranslationKey, string> = {
   troubleshootingSteps: 'Probleemoplossingsstappen',
   checkBackendUrl: 'Controleer Backend URL',
   checkBackendUrlDesc:
-    'Verifieer dat de NEXT_PUBLIC_API_URL omgevingsvariabele correct is geconfigureerd',
+    'Verifieer dat de NEXT_PUBLIC_BACKEND_URL omgevingsvariabele correct is geconfigureerd',
   checkServerRunning: 'Controleer Server Status',
   checkServerRunningDesc:
     'Zorg ervoor dat de backend server draait en toegankelijk is op de geconfigureerde poort',
