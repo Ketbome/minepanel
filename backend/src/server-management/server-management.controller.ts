@@ -495,6 +495,19 @@ export class ServerManagementController {
     return { ...serverInfo, config: config || undefined };
   }
 
+  @Get(':id/backups/snapshots')
+  async getBackupSnapshots(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
+    const config = await this.dockerComposeService.getServerConfig(id);
+    if (!config?.serverExists) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+    if (config.backupMethod !== 'restic') {
+      throw new BadRequestException('Snapshots are only available for the restic backup method');
+    }
+    return this.managementService.getBackupSnapshots(id);
+  }
+
   @Get(':id/logs')
   async getServerLogs(@Request() reqOrId, @Param('id') idOrLines?: string | number, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
     const resolved = this.resolveRequestAndId(reqOrId, typeof idOrLines === 'string' ? idOrLines : undefined);

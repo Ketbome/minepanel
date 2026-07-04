@@ -156,7 +156,56 @@ Practical defaults:
 - `backupPruneDays=7`
 - `backupDestDir=/backups`
 
-If you only need local compressed backups, start with `tar`. Use `restic` or `rclone` only when you already have remote storage configured.
+If you only need local compressed backups, start with `tar`. Use `restic` when you want encrypted, deduplicated backups on remote storage.
+
+### Cloud backups (S3-compatible)
+
+Selecting `backupMethod=restic` shows a **Restic repository** section where you configure a
+remote destination. Any S3-compatible provider works:
+
+| Provider     | Repository example                                        |
+| ------------ | --------------------------------------------------------- |
+| AWS S3       | `s3:https://s3.amazonaws.com/my-bucket/minecraft`          |
+| MinIO        | `s3:https://minio.example.com:9000/minecraft-backups`      |
+| Backblaze B2 | `s3:https://s3.us-west-002.backblazeb2.com/my-bucket`      |
+| Wasabi       | `s3:https://s3.wasabisys.com/my-bucket`                    |
+| Local path   | `/backups/restic` (stays on the host backups mount)        |
+
+Fields:
+
+- **Repository**: restic repository URL. `s3:` repositories also need the access/secret key fields.
+- **Repository password**: encrypts the repository. Store it somewhere safe — without it snapshots cannot be restored.
+- **Retention policy**: `restic forget` flags applied after each backup (default `--keep-within 7d`, e.g. `--keep-daily 7 --keep-weekly 4`).
+
+The panel lists existing **snapshots** in the same section (the backup sidecar must be running).
+
+::: warning Credentials on disk
+Restic credentials are written to the server's generated `docker-compose.yml` under
+`${BASE_DIR}/servers/<id>/` (same model as the RCON password). Use a dedicated bucket and
+access keys scoped to it.
+:::
+
+Manual restore (until one-click restore ships):
+
+```bash
+# 1. List snapshots
+docker exec <serverId>-backup restic snapshots
+
+# 2. Stop the server from the panel, then restore into the data volume
+docker exec <serverId>-backup restic restore latest --target /data
+```
+
+`/data` inside the backup container is the server's `mc-data` directory. Note the default
+`/data` mount is read-only (`:ro`); for a restore, run a one-off container with the same
+repository env vars and a writable mount instead:
+
+```bash
+docker run --rm \
+  -e RESTIC_REPOSITORY=... -e RESTIC_PASSWORD=... \
+  -e AWS_ACCESS_KEY_ID=... -e AWS_SECRET_ACCESS_KEY=... \
+  -v ${BASE_DIR}/servers/<serverId>/mc-data:/data \
+  restic/restic restore latest --target /
+```
 
 ## Configuration
 

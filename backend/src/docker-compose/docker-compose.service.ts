@@ -193,6 +193,11 @@ export class DockerComposeService {
         backupDestDir: backupEnv.DEST_DIR ?? '/backups',
         backupHostDir: this.parseBackupHostDir(serverId, backupService?.volumes),
         backupName: backupEnv.BACKUP_NAME ?? 'world',
+        resticRepository: backupEnv.RESTIC_REPOSITORY ?? '',
+        resticPassword: backupEnv.RESTIC_PASSWORD ?? '',
+        resticS3AccessKeyId: backupEnv.AWS_ACCESS_KEY_ID ?? '',
+        resticS3SecretAccessKey: backupEnv.AWS_SECRET_ACCESS_KEY ?? '',
+        resticRetention: backupEnv.PRUNE_RESTIC_RETENTION ?? '',
         backupOnStartup: backupEnv.BACKUP_ON_STARTUP !== 'false',
         pauseIfNoPlayers: backupEnv.PAUSE_IF_NO_PLAYERS === 'true',
         playersOnlineCheckInterval: backupEnv.PLAYERS_ONLINE_CHECK_INTERVAL ?? '5m',
@@ -1331,7 +1336,25 @@ export class DockerComposeService {
       env.ENABLE_SAVE_ALL = 'false';
     }
 
+    if (env.BACKUP_METHOD === 'restic') {
+      this.addResticEnv(env, config);
+    }
+
     return env;
+  }
+
+  private addResticEnv(env: Record<string, string>, config: ServerConfig): void {
+    if (!config.resticRepository || !config.resticPassword) {
+      this.logger.warn(`Server ${config.id}: restic backup method selected but repository or password is missing`);
+    }
+    if (config.resticRepository) env.RESTIC_REPOSITORY = config.resticRepository;
+    if (config.resticPassword) env.RESTIC_PASSWORD = config.resticPassword;
+    env.PRUNE_RESTIC_RETENTION = config.resticRetention || '--keep-within 7d';
+    env.RESTIC_HOSTNAME = config.id;
+    if (config.resticRepository?.startsWith('s3:')) {
+      if (config.resticS3AccessKeyId) env.AWS_ACCESS_KEY_ID = config.resticS3AccessKeyId;
+      if (config.resticS3SecretAccessKey) env.AWS_SECRET_ACCESS_KEY = config.resticS3SecretAccessKey;
+    }
   }
 
   private addOptionalBackupEnv(env: Record<string, string>, config: ServerConfig): void {

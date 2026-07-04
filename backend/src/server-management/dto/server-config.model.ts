@@ -252,6 +252,26 @@ export class ServerConfigDto {
   @IsOptional()
   backupName?: string;
 
+  @IsString()
+  @IsOptional()
+  resticRepository?: string;
+
+  @IsString()
+  @IsOptional()
+  resticPassword?: string;
+
+  @IsString()
+  @IsOptional()
+  resticS3AccessKeyId?: string;
+
+  @IsString()
+  @IsOptional()
+  resticS3SecretAccessKey?: string;
+
+  @IsString()
+  @IsOptional()
+  resticRetention?: string;
+
   @IsBoolean()
   @IsOptional()
   useAikarFlags?: boolean;

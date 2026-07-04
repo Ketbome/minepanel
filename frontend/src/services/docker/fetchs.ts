@@ -151,6 +151,20 @@ export const getServerLogsSince = async (
   return data;
 };
 
+export interface ResticSnapshot {
+  id: string;
+  shortId: string;
+  time: string;
+  paths: string[];
+  tags: string[];
+  hostname: string;
+}
+
+export const getBackupSnapshots = async (serverId: string): Promise<{ success: boolean; snapshots: ResticSnapshot[]; error?: string }> => {
+  const response = await api.get(`/servers/${serverId}/backups/snapshots`);
+  return response.data;
+};
+
 export const deleteServer = async (serverId: string): Promise<{ success: boolean; message: string }> => {
   const response = await api.delete(`/servers/${serverId}`);
   return response.data;

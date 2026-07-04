@@ -35,6 +35,7 @@ const DOCKER_COMMANDS = {
   FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
     return `docker run --rm -v "${hostPath}:/data" alpine chown -R ${uid}:${gid} /data`;
   },
+  RESTIC_SNAPSHOTS: (serverId: string) => `docker exec ${serverId}-backup restic snapshots --json`,
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
   DU_SIZE: (worldPath: string) => `du -sb "${worldPath}" | cut -f1`,
@@ -69,6 +70,21 @@ export interface ServerLogsResponse {
 export interface CommandExecutionResponse {
   success: boolean;
   output: string;
+}
+
+export interface ResticSnapshot {
+  id: string;
+  shortId: string;
+  time: string;
+  paths: string[];
+  tags: string[];
+  hostname: string;
+}
+
+export interface BackupSnapshotsResponse {
+  success: boolean;
+  snapshots: ResticSnapshot[];
+  error?: string;
 }
 
 export interface AvailableWorld {
@@ -1322,6 +1338,31 @@ export class ServerManagementService {
         status: 'not_found',
         hasNewContent: false,
       };
+    }
+  }
+
+  async getBackupSnapshots(serverId: string): Promise<BackupSnapshotsResponse> {
+    if (!this.validateServerId(serverId)) {
+      return { success: false, snapshots: [], error: 'Invalid server ID' };
+    }
+
+    try {
+      const { stdout } = await execAsync(DOCKER_COMMANDS.RESTIC_SNAPSHOTS(serverId), { maxBuffer: 10 * 1024 * 1024 });
+      const parsed = JSON.parse(stdout) as Array<Record<string, any>>;
+      const snapshots = parsed.map((snapshot) => ({
+        id: snapshot.id ?? '',
+        shortId: snapshot.short_id ?? String(snapshot.id ?? '').slice(0, 8),
+        time: snapshot.time ?? '',
+        paths: Array.isArray(snapshot.paths) ? snapshot.paths : [],
+        tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+        hostname: snapshot.hostname ?? '',
+      }));
+      return { success: true, snapshots };
+    } catch (error) {
+      const message = (error as Error).message ?? '';
+      this.logger.warn(`Failed to list restic snapshots for server ${serverId}: ${message}`);
+      const friendly = message.includes('No such container') ? 'Backup container is not running' : 'Could not list snapshots from the restic repository';
+      return { success: false, snapshots: [], error: friendly };
     }
   }
 
