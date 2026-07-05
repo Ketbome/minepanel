@@ -617,6 +617,8 @@ export const de: Record<TranslationKey, string> = {
   dockerImageHelp: 'Docker-Image verwenden (latest, java21, java17)',
   dockerImageHelpTags: 'Hier sind die verfügbaren Tags',
   dockerImageHelpDocumentation: 'Java-Version-Dokumentation',
+  dockerImageAuto: 'Auto',
+  dockerImageAutoHint: 'Wird automatisch anhand der Minecraft-Version ausgewählt',
   dockerVolumes: 'Docker-Volumes',
   dockerVolumesDesc: 'Zusätzliche Volume-Mappings für den Docker-Container',
   dockerVolumesHelp:
