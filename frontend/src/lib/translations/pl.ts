@@ -611,6 +611,8 @@ export const pl: Record<TranslationKey, string> = {
   dockerImageHelp: 'Obraz Dockera do użycia (najnowszy, java21, java17)',
   dockerImageHelpTags: 'Oto dostępne tagi',
   dockerImageHelpDocumentation: 'Dokumentacja wersji Java',
+  dockerImageAuto: 'Auto',
+  dockerImageAutoHint: 'Wybierany automatycznie na podstawie wersji Minecraft',
   dockerVolumes: 'Woluminy Dockera',
   dockerVolumesDesc: 'Dodatkowe mapowania woluminów dla kontenera Dockera',
   dockerVolumesHelp:

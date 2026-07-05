@@ -613,6 +613,8 @@ export const fr = {
   dockerImageHelp: 'Image Docker à utiliser (latest, java21, java17)',
   dockerImageHelpTags: 'Voici les tags disponibles',
   dockerImageHelpDocumentation: 'Documentation des versions Java',
+  dockerImageAuto: 'Auto',
+  dockerImageAutoHint: 'Sélectionnée automatiquement selon la version de Minecraft',
   dockerVolumes: 'Volumes Docker',
   dockerVolumesDesc: 'Mappages de volumes supplémentaires pour le conteneur Docker',
   dockerVolumesHelp: 'Mappages de volumes Docker (un par ligne, format : chemin-local:chemin-conteneur)',

@@ -619,6 +619,8 @@ export const es: Record<TranslationKey, string> = {
   dockerImageHelp: 'Imagen Docker a utilizar (latest, java21, java17)',
   dockerImageHelpTags: 'Aquí están los tags disponibles',
   dockerImageHelpDocumentation: 'Documentación de versiones Java',
+  dockerImageAuto: 'Auto',
+  dockerImageAutoHint: 'Se selecciona automáticamente según la versión de Minecraft',
   dockerVolumes: 'Volúmenes Docker',
   dockerVolumesDesc: 'Mapeos adicionales de volúmenes para el contenedor Docker',
   dockerVolumesHelp:

@@ -27,6 +27,16 @@ interface ServerTypeTabProps {
 
 const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
 
+// Java requirements per Minecraft version (itzg/minecraft-server tags)
+const getSuggestedJavaImage = (mcVersion: string): string => {
+  if (!mcVersion || mcVersion.toLowerCase() === 'latest') return 'latest';
+  const [major, minor, patch] = mcVersion.split('.').map(Number);
+  if (major !== 1 || Number.isNaN(minor)) return 'latest';
+  if (minor <= 16) return 'java8';
+  if (minor < 20 || (minor === 20 && (patch || 0) <= 4)) return 'java17';
+  return 'java21';
+};
+
 export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const edition = config.edition ?? 'JAVA';
@@ -41,9 +51,22 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   });
 
   const [showManualInput, setShowManualInput] = useState(false);
+  const [dockerImageMode, setDockerImageMode] = useState<'auto' | 'manual' | null>(null);
   const [serverTypeAccordion, setServerTypeAccordion] = useState<string | undefined>(
     OTHER_SERVER_TYPES.includes(config.serverType) ? 'others' : undefined,
   );
+
+  const suggestedDockerImage = getSuggestedJavaImage(config.minecraftVersion);
+  const dockerImageAuto = dockerImageMode
+    ? dockerImageMode === 'auto'
+    : !config.dockerImage || config.dockerImage === 'latest' || config.dockerImage === suggestedDockerImage;
+
+  useEffect(() => {
+    if (!isJava || isModpack || !dockerImageAuto) return;
+    if (config.dockerImage !== suggestedDockerImage) {
+      updateConfig('dockerImage', suggestedDockerImage);
+    }
+  }, [isJava, isModpack, dockerImageAuto, suggestedDockerImage, config.dockerImage, updateConfig]);
   const recommendedVersions = getRecommended();
 
   const filteredRecommendedVersions = recommendedVersions.filter((v) => v.id !== latestRelease);
@@ -374,32 +397,47 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 <Image src="/images/barrier.webp" alt="Docker" width={16} height={16} />
                 {t('dockerImage')}
               </Label>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
-                    >
-                      <HelpCircle className="h-4 w-4 text-gray-400" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                    <p>{t('dockerImageDesc')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
+                      >
+                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t('dockerImageDesc')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {!isModpack && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs bg-transparent hover:bg-gray-700/50 text-gray-300"
+                    onClick={() => setDockerImageMode(dockerImageAuto ? 'manual' : 'auto')}
+                  >
+                    {dockerImageAuto ? t('manual') : t('dockerImageAuto')}
+                  </Button>
+                )}
+              </div>
             </div>
             <Input
               id="dockerImage"
               value={config.dockerImage}
               onChange={(e) => updateConfig('dockerImage', e.target.value)}
               placeholder="java17"
-              className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+              disabled={!isModpack && dockerImageAuto}
+              className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 disabled:opacity-70"
             />
             <div className="space-y-1">
-              <p className="text-xs text-gray-400">{t('dockerImageHelp')}</p>
+              <p className="text-xs text-gray-400">
+                {!isModpack && dockerImageAuto ? t('dockerImageAutoHint') : t('dockerImageHelp')}
+              </p>
               <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
                 <div className="shrink-0">
                   <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">

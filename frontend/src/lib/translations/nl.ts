@@ -634,6 +634,8 @@ export const nl: Record<TranslationKey, string> = {
   dockerImageHelp: 'Docker image om te gebruiken (latest, java21, java17)',
   dockerImageHelpTags: 'Hier zijn de beschikbare tags',
   dockerImageHelpDocumentation: 'Java versie documentatie',
+  dockerImageAuto: 'Auto',
+  dockerImageAutoHint: 'Automatisch geselecteerd op basis van de Minecraft versie',
   dockerVolumes: 'Docker volumes',
   dockerVolumesDesc: 'Aanvullende volume mappings voor de Docker container',
   dockerVolumesHelp: 'Docker volume mappings (één per regel, formaat: lokaal-pad:container-pad)',
