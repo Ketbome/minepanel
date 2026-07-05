@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Repository } from 'typeorm';
-import { ScheduledTask } from './entities/scheduled-task.entity';
+import { CronExpressionParser } from 'cron-parser';
+import { ScheduledTask, ScheduleKind } from './entities/scheduled-task.entity';
 import { CreateScheduledTaskDto } from './dto/create-scheduled-task.dto';
 import { UpdateScheduledTaskDto } from './dto/update-scheduled-task.dto';
 import { ServerManagementService } from 'src/server-management/server-management.service';
@@ -41,18 +42,22 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
 
   async create(serverId: string, dto: CreateScheduledTaskDto): Promise<ScheduledTask> {
     this.assertCommandPayload(dto.type, dto.command);
+    const scheduleKind = dto.scheduleKind ?? 'interval';
+    this.assertSchedulePayload(scheduleKind, dto.intervalMinutes, dto.cronExpression);
 
     const task = this.taskRepo.create({
       serverId,
       name: dto.name,
       type: dto.type,
       command: dto.type === 'command' ? dto.command : null,
-      intervalMinutes: dto.intervalMinutes,
+      scheduleKind,
+      intervalMinutes: scheduleKind === 'interval' ? dto.intervalMinutes : null,
+      cronExpression: scheduleKind === 'cron' ? dto.cronExpression : null,
       enabled: dto.enabled ?? true,
       lastRunAt: null,
-      nextRunAt: this.computeNextRun(dto.intervalMinutes),
       lastResult: null,
     });
+    task.nextRunAt = this.computeNextRun(task);
 
     return this.taskRepo.save(task);
   }
@@ -63,18 +68,27 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     const nextCommand = dto.command ?? task.command ?? undefined;
     this.assertCommandPayload(nextType, nextCommand);
 
+    const nextKind = dto.scheduleKind ?? task.scheduleKind ?? 'interval';
+    const nextInterval = dto.intervalMinutes ?? task.intervalMinutes ?? undefined;
+    const nextCron = dto.cronExpression ?? task.cronExpression ?? undefined;
+    this.assertSchedulePayload(nextKind, nextInterval, nextCron);
+
     if (dto.name !== undefined) task.name = dto.name;
     if (dto.type !== undefined) task.type = dto.type;
     if (dto.command !== undefined || dto.type !== undefined) {
       task.command = nextType === 'command' ? (nextCommand ?? null) : null;
     }
-    if (dto.intervalMinutes !== undefined && dto.intervalMinutes !== task.intervalMinutes) {
-      task.intervalMinutes = dto.intervalMinutes;
-      task.nextRunAt = this.computeNextRun(dto.intervalMinutes);
+
+    const scheduleChanged = nextKind !== task.scheduleKind || (nextKind === 'interval' && nextInterval !== task.intervalMinutes) || (nextKind === 'cron' && nextCron !== task.cronExpression);
+    if (scheduleChanged) {
+      task.scheduleKind = nextKind;
+      task.intervalMinutes = nextKind === 'interval' ? (nextInterval ?? null) : null;
+      task.cronExpression = nextKind === 'cron' ? (nextCron ?? null) : null;
+      task.nextRunAt = this.computeNextRun(task);
     }
     if (dto.enabled !== undefined) {
       if (dto.enabled && !task.enabled) {
-        task.nextRunAt = this.computeNextRun(task.intervalMinutes);
+        task.nextRunAt = this.computeNextRun(task);
       }
       task.enabled = dto.enabled;
     }
@@ -127,7 +141,7 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`Scheduled task ${task.id} failed: ${(error as Error).message}`);
     } finally {
       task.lastRunAt = new Date();
-      task.nextRunAt = this.computeNextRun(task.intervalMinutes);
+      task.nextRunAt = this.computeNextRun(task);
       await this.taskRepo.save(task);
     }
   }
@@ -161,7 +175,28 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private computeNextRun(intervalMinutes: number): Date {
-    return new Date(Date.now() + intervalMinutes * 60 * 1000);
+  private assertSchedulePayload(kind: ScheduleKind, intervalMinutes: number | undefined, cronExpression: string | undefined): void {
+    if (kind === 'interval') {
+      if (!intervalMinutes) {
+        throw new BadRequestException('intervalMinutes is required when scheduleKind is "interval"');
+      }
+      return;
+    }
+
+    if (!cronExpression || !cronExpression.trim()) {
+      throw new BadRequestException('cronExpression is required when scheduleKind is "cron"');
+    }
+    try {
+      CronExpressionParser.parse(cronExpression.trim());
+    } catch (error) {
+      throw new BadRequestException(`Invalid cron expression: ${(error as Error).message}`);
+    }
+  }
+
+  private computeNextRun(task: Pick<ScheduledTask, 'scheduleKind' | 'intervalMinutes' | 'cronExpression'>): Date {
+    if (task.scheduleKind === 'cron' && task.cronExpression) {
+      return CronExpressionParser.parse(task.cronExpression.trim()).next().toDate();
+    }
+    return new Date(Date.now() + (task.intervalMinutes ?? 60) * 60 * 1000);
   }
 }

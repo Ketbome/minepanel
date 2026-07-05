@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 export type ScheduledTaskType = 'restart' | 'command';
+export type ScheduleKind = 'interval' | 'cron';
 
 @Entity('scheduled_tasks')
 export class ScheduledTask {
@@ -20,8 +21,14 @@ export class ScheduledTask {
   @Column({ type: 'text', nullable: true })
   command: string | null;
 
-  @Column({ type: 'integer', name: 'interval_minutes' })
-  intervalMinutes: number;
+  @Column({ type: 'varchar', length: 16, name: 'schedule_kind', default: 'interval' })
+  scheduleKind: ScheduleKind;
+
+  @Column({ type: 'integer', name: 'interval_minutes', nullable: true })
+  intervalMinutes: number | null;
+
+  @Column({ type: 'text', name: 'cron_expression', nullable: true })
+  cronExpression: string | null;
 
   @Column({ type: 'boolean', default: true })
   enabled: boolean;

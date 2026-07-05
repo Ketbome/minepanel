@@ -116,7 +116,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 ### More scheduling options
 
-- Cron-style scheduling at specific times (current scheduled tasks run at fixed minute intervals)
+- ~~Cron-style scheduling at specific times~~ ✅ Shipped (interval or cron expression per task)
 - More flexible backup scheduling (beyond the current `backupInterval`)
 - Uptime tracking on top of the metrics history
 

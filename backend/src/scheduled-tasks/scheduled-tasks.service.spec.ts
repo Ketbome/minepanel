@@ -63,6 +63,55 @@ describe('ScheduledTasksService', () => {
     });
   });
 
+  describe('create with cron schedule', () => {
+    it('should compute nextRunAt from the cron expression', async () => {
+      const task = await service.create('srv', { name: 'nightly', type: 'restart', scheduleKind: 'cron', cronExpression: '0 4 * * *' } as any);
+
+      expect(task.scheduleKind).toBe('cron');
+      expect(task.intervalMinutes).toBeNull();
+      expect(task.cronExpression).toBe('0 4 * * *');
+      expect(task.nextRunAt.getHours()).toBe(4);
+      expect(task.nextRunAt.getMinutes()).toBe(0);
+      expect(task.nextRunAt.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should reject an invalid cron expression', async () => {
+      await expect(service.create('srv', { name: 'bad', type: 'restart', scheduleKind: 'cron', cronExpression: 'not a cron' } as any)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject a cron task without an expression', async () => {
+      await expect(service.create('srv', { name: 'bad', type: 'restart', scheduleKind: 'cron' } as any)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject an interval task without intervalMinutes', async () => {
+      await expect(service.create('srv', { name: 'bad', type: 'restart' } as any)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('update schedule kind', () => {
+    it('should switch an interval task to cron and recompute nextRunAt', async () => {
+      taskRepo.findOne.mockResolvedValue({
+        id: 1,
+        serverId: 'srv',
+        type: 'restart',
+        command: null,
+        scheduleKind: 'interval',
+        intervalMinutes: 10,
+        cronExpression: null,
+        enabled: true,
+        nextRunAt: new Date(0),
+      });
+
+      const task = await service.update('srv', 1, { scheduleKind: 'cron', cronExpression: '*/5 * * * *' } as any);
+
+      expect(task.scheduleKind).toBe('cron');
+      expect(task.intervalMinutes).toBeNull();
+      expect(task.cronExpression).toBe('*/5 * * * *');
+      expect(task.nextRunAt.getTime()).toBeGreaterThan(Date.now());
+      expect(task.nextRunAt.getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60 * 1000);
+    });
+  });
+
   describe('getOwnedTask (via remove)', () => {
     it('should throw NotFoundException when the task belongs to another server', async () => {
       taskRepo.findOne.mockResolvedValue({ id: 1, serverId: 'other' });
