@@ -1,6 +1,7 @@
 import api from "../axios.service";
 
 export type ScheduledTaskType = "restart" | "command";
+export type ScheduleKind = "interval" | "cron";
 
 export interface ScheduledTask {
   id: number;
@@ -8,7 +9,9 @@ export interface ScheduledTask {
   name: string;
   type: ScheduledTaskType;
   command: string | null;
-  intervalMinutes: number;
+  scheduleKind: ScheduleKind;
+  intervalMinutes: number | null;
+  cronExpression: string | null;
   enabled: boolean;
   lastRunAt: string | null;
   nextRunAt: string;
@@ -20,7 +23,9 @@ export interface ScheduledTaskInput {
   name: string;
   type: ScheduledTaskType;
   command?: string;
-  intervalMinutes: number;
+  scheduleKind?: ScheduleKind;
+  intervalMinutes?: number;
+  cronExpression?: string;
   enabled?: boolean;
 }
 

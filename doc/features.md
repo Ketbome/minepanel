@@ -49,7 +49,7 @@ flowchart LR
 | Basic controls | Start, Stop, Restart, Delete                              |
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
-| Scheduled tasks | Auto restarts and scheduled console commands at fixed intervals, managed per server in the Tasks tab |
+| Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone) |
 
 ## Roles and Access Control
 

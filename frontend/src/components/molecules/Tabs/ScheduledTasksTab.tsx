@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, Play, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
-import { createScheduledTask, deleteScheduledTask, getScheduledTasks, runScheduledTask, ScheduledTask, ScheduledTaskType, updateScheduledTask } from "@/services/scheduler/scheduler.service";
+import { createScheduledTask, deleteScheduledTask, getScheduledTasks, runScheduledTask, ScheduledTask, ScheduledTaskType, ScheduleKind, updateScheduledTask } from "@/services/scheduler/scheduler.service";
 
 interface ScheduledTasksTabProps {
   serverId: string;
@@ -19,7 +19,9 @@ interface TaskForm {
   name: string;
   type: ScheduledTaskType;
   command: string;
+  scheduleKind: ScheduleKind;
   intervalMinutes: string;
+  cronExpression: string;
   enabled: boolean;
 }
 
@@ -27,7 +29,9 @@ const emptyForm: TaskForm = {
   name: "",
   type: "restart",
   command: "",
+  scheduleKind: "interval",
   intervalMinutes: "60",
+  cronExpression: "",
   enabled: true,
 };
 
@@ -66,8 +70,12 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
       mcToast.error(t("tasksNameRequired"));
       return;
     }
-    if (!Number.isFinite(interval) || interval < 1) {
+    if (form.scheduleKind === "interval" && (!Number.isFinite(interval) || interval < 1)) {
       mcToast.error(t("tasksIntervalInvalid"));
+      return;
+    }
+    if (form.scheduleKind === "cron" && !form.cronExpression.trim()) {
+      mcToast.error(t("tasksCronRequired"));
       return;
     }
     if (form.type === "command" && !form.command.trim()) {
@@ -81,14 +89,18 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
         name: form.name.trim(),
         type: form.type,
         command: form.type === "command" ? form.command.trim() : undefined,
-        intervalMinutes: interval,
+        scheduleKind: form.scheduleKind,
+        intervalMinutes: form.scheduleKind === "interval" ? interval : undefined,
+        cronExpression: form.scheduleKind === "cron" ? form.cronExpression.trim() : undefined,
         enabled: form.enabled,
       });
       mcToast.success(t("tasksCreated"));
       resetForm();
       await fetchTasks();
-    } catch {
-      mcToast.error(t("tasksSaveError"));
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string | string[] } } };
+      const message = err.response?.data?.message;
+      mcToast.error(Array.isArray(message) ? message[0] : message || t("tasksSaveError"));
     } finally {
       setSaving(false);
     }
@@ -169,11 +181,40 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
             )}
 
             <div className="space-y-1">
-              <Label htmlFor="task-interval" className="text-gray-300">
-                {t("tasksInterval")}
-              </Label>
-              <Input id="task-interval" type="number" min={1} value={form.intervalMinutes} onChange={(event) => setForm({ ...form, intervalMinutes: event.target.value })} className="bg-gray-800 border-gray-700 text-white" />
+              <Label className="text-gray-300">{t("tasksScheduleKind")}</Label>
+              <Select value={form.scheduleKind} onValueChange={(value: ScheduleKind) => setForm({ ...form, scheduleKind: value })}>
+                <SelectTrigger className="bg-gray-800/70 border-gray-700/50 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="interval" className="text-white hover:bg-gray-700">
+                    {t("tasksScheduleInterval")}
+                  </SelectItem>
+                  <SelectItem value="cron" className="text-white hover:bg-gray-700">
+                    {t("tasksScheduleCron")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {form.scheduleKind === "interval" && (
+              <div className="space-y-1">
+                <Label htmlFor="task-interval" className="text-gray-300">
+                  {t("tasksInterval")}
+                </Label>
+                <Input id="task-interval" type="number" min={1} value={form.intervalMinutes} onChange={(event) => setForm({ ...form, intervalMinutes: event.target.value })} className="bg-gray-800 border-gray-700 text-white" />
+              </div>
+            )}
+
+            {form.scheduleKind === "cron" && (
+              <div className="space-y-1">
+                <Label htmlFor="task-cron" className="text-gray-300">
+                  {t("tasksCron")}
+                </Label>
+                <Input id="task-cron" value={form.cronExpression} onChange={(event) => setForm({ ...form, cronExpression: event.target.value })} placeholder="0 4 * * *" className="bg-gray-800 border-gray-700 text-white font-mono" />
+                <p className="text-xs text-gray-500">{t("tasksCronHelp")}</p>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 pt-6">
               <Switch id="task-enabled" checked={form.enabled} onCheckedChange={(checked) => setForm({ ...form, enabled: checked })} />
@@ -225,7 +266,14 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                   </div>
                   {task.type === "command" && task.command && <p className="text-xs text-gray-400 font-mono">{task.command}</p>}
                   <p className="text-xs text-gray-500">
-                    {t("tasksEvery")} {task.intervalMinutes} {t("tasksMinutes")} · {t("tasksNextRun")}: {formatDate(task.nextRunAt)}
+                    {task.scheduleKind === "cron" && task.cronExpression ? (
+                      <span className="font-mono">{task.cronExpression}</span>
+                    ) : (
+                      <>
+                        {t("tasksEvery")} {task.intervalMinutes} {t("tasksMinutes")}
+                      </>
+                    )}{" "}
+                    · {t("tasksNextRun")}: {formatDate(task.nextRunAt)}
                   </p>
                   {task.lastResult && (
                     <p className="text-xs text-gray-500">

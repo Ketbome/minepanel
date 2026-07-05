@@ -26,7 +26,7 @@ backend/src/
 |- proxy/                   mc-router routes.json generation
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
-|- scheduled-tasks/         Interval-based auto-restart and scheduled commands
+|- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- database/                TypeORM/sql.js setup
 ```
