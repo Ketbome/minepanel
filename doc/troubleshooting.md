@@ -17,7 +17,7 @@ head:
 
 Common issues and how to solve them.
 
-![Troubleshooting](/img/troubleshooting.png)
+![Troubleshooting](/img/troubleshooting.webp)
 
 ## Quick Checks
 

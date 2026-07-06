@@ -5,7 +5,7 @@ description: Complete Minepanel networking guide - Remote access, firewall ports
 
 # Networking
 
-![Server Connection](/img/server-connection.png)
+![Server Connection](/img/server-connection.webp)
 
 ## Overview
 

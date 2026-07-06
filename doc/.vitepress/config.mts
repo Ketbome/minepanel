@@ -132,7 +132,7 @@ export default withMermaid(
           softwareVersion: '1.10.8',
           softwareRequirements: 'Docker 20.10+, Docker Compose v2.0+',
           releaseNotes: `${hostname}/roadmap`,
-          screenshot: `${hostname}/img/dashboard-preview.avif`,
+          screenshot: `${hostname}/img/minepanel.png`,
           datePublished: '2024-01-01',
           dateModified: '2026-06-12',
         }),
