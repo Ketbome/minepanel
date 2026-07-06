@@ -131,7 +131,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 ### Log viewer
 
-- Export logs
+- ~~Export logs~~ ✅ Shipped (download from the Logs tab)
 - Saved log views / presets
 
 ### `server.properties` editor
@@ -236,7 +236,7 @@ Still planned:
 - Keyboard shortcuts
 - Favorites (frequent servers at top)
 - Global search
-- Copy server (clone configuration)
+- ~~Copy server (clone configuration)~~ ✅ Shipped
 - Bulk actions (start/stop multiple)
 - Server groups/folders
 - Reverse proxy helper (NGINX/Caddy)

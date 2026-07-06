@@ -5,8 +5,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check, Coffee, Smartphone } from "lucide-react";
-import { fetchServerList, createServer, getAllServersStatus, deleteServer } from "@/services/docker/fetchs";
+import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check, Coffee, Smartphone, Copy } from "lucide-react";
+import { fetchServerList, createServer, getAllServersStatus, deleteServer, cloneServer } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,9 @@ export default function Dashboard() {
   const [isCreatingServer, setIsCreatingServer] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeletingServer, setIsDeletingServer] = useState<string | null>(null);
+  const [cloneSource, setCloneSource] = useState<string | null>(null);
+  const [cloneNewId, setCloneNewId] = useState("");
+  const [isCloning, setIsCloning] = useState(false);
   const [createMode, setCreateMode] = useState<"quick" | "template">("quick");
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
   const [selectedEdition, setSelectedEdition] = useState<ServerEdition>("JAVA");
@@ -151,6 +154,29 @@ export default function Dashboard() {
       mcToast.error(err.response?.data?.message || t("errorDeletingServer"));
     } finally {
       setIsDeletingServer(null);
+    }
+  };
+
+  const handleCloneServer = async () => {
+    if (!cloneSource || !cloneNewId.trim()) return;
+    setIsCloning(true);
+    try {
+      const response = await cloneServer(cloneSource, cloneNewId.trim());
+      if (response.success) {
+        mcToast.success(`${t("serverClonedSuccess")} "${cloneNewId.trim()}"`);
+        setCloneSource(null);
+        setCloneNewId("");
+        await fetchServersFromBackend();
+        refreshGlobalServers();
+      } else {
+        mcToast.error(`${t("errorCloningServer")}: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error cloning server:", error);
+      const err = error as { response?: { data?: { message?: string } } };
+      mcToast.error(err.response?.data?.message || t("errorCloningServer"));
+    } finally {
+      setIsCloning(false);
     }
   };
 
@@ -464,6 +490,19 @@ export default function Dashboard() {
                       </button>
                     </Link>
 
+                    {canCreateServers && (
+                      <button
+                        className="mc-btn px-3 py-2.5"
+                        title={t("cloneServer")}
+                        onClick={() => {
+                          setCloneNewId(`${server.id}-copy`);
+                          setCloneSource(server.id);
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    )}
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button className="mc-btn px-3 py-2.5 text-red-300" style={{ background: "linear-gradient(180deg,#b94a4a,#8f3636)" }}>
@@ -508,6 +547,57 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={cloneSource !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCloneSource(null);
+            setCloneNewId("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[420px] bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="font-minecraft">{t("cloneServer")}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {t("cloneServerDesc")} &quot;{cloneSource}&quot;. {t("cloneServerNote")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-200">{t("serverIdLabel")}</p>
+            <Input
+              value={cloneNewId}
+              onChange={(e) => setCloneNewId(e.target.value)}
+              placeholder={t("serverIdPlaceholder")}
+              className="bg-gray-800 border-gray-700 text-white"
+            />
+            {cloneNewId.trim() !== "" && !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim()) && (
+              <p className="text-xs text-amber-400">{t("serverIdDescription")}</p>
+            )}
+          </div>
+          <DialogFooter className="gap-3 sm:gap-2 pt-2">
+            <button type="button" onClick={() => setCloneSource(null)} className="mc-btn px-4 py-2.5">
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleCloneServer}
+              disabled={isCloning || cloneNewId.trim() === "" || !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim())}
+              className="mc-btn mc-btn-emerald px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCloning ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("cloning")}
+                </>
+              ) : (
+                t("cloneServer")
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {servers.length > 0 && (
         <div className="flex justify-center gap-8 pt-8">

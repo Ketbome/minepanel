@@ -384,6 +384,13 @@ export const nl: Record<TranslationKey, string> = {
   serverStarted: 'Server succesvol gestart',
   serverStopped: 'Server succesvol gestopt',
   serverCreatedSuccess: 'Server succesvol aangemaakt',
+  cloneServer: 'Server klonen',
+  cloneServerDesc: 'Maak een nieuwe server met dezelfde configuratie als',
+  cloneServerNote: 'Wereldgegevens, mods en bestanden worden niet gekopieerd — alleen de configuratie.',
+  cloning: 'Klonen...',
+  serverClonedSuccess: 'Server succesvol gekloond',
+  errorCloningServer: 'Fout bij het klonen van de server',
+  downloadLogs: 'Logs downloaden',
   serverDeletedSuccess: 'Server succesvol verwijderd',
 
   // ===========================
