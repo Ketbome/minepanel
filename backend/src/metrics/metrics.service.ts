@@ -2,7 +2,9 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, MoreThanOrEqual, Repository } from 'typeorm';
 import { MetricSample } from './entities/metric-sample.entity';
+import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 import { ServerManagementService } from 'src/server-management/server-management.service';
+import { AlertsService } from 'src/alerts/alerts.service';
 
 const SAMPLE_INTERVAL_MS = 60_000;
 const RETENTION_DAYS = 7;
@@ -24,6 +26,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     @InjectRepository(MetricSample)
     private readonly sampleRepo: Repository<MetricSample>,
     private readonly serverManagement: ServerManagementService,
+    private readonly alertsService: AlertsService,
   ) {}
 
   onModuleInit(): void {
@@ -62,6 +65,13 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const resources = await this.serverManagement.getAllServersResources();
+
+      try {
+        await this.alertsService.evaluate(resources);
+      } catch (error) {
+        this.logger.warn(`Failed to evaluate alerts: ${(error as Error).message}`);
+      }
+
       const now = new Date();
       const samples: MetricSample[] = [];
 
@@ -70,8 +80,8 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
           continue;
         }
 
-        const cpuPercent = this.parseCpuPercent(data.cpuUsage);
-        const memoryMb = this.parseMemoryToMb(data.memoryUsage);
+        const cpuPercent = parseCpuPercent(data.cpuUsage);
+        const memoryMb = parseMemoryToMb(data.memoryUsage);
         if (cpuPercent === null || memoryMb === null) {
           continue;
         }
@@ -81,7 +91,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
             serverId,
             cpuPercent,
             memoryMb,
-            memoryLimitMb: this.parseMemoryToMb(data.memoryLimit),
+            memoryLimitMb: parseMemoryToMb(data.memoryLimit),
             createdAt: now,
           }),
         );
@@ -104,47 +114,4 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     await this.sampleRepo.delete({ createdAt: LessThan(cutoff) });
   }
 
-  private parseCpuPercent(value: string): number | null {
-    if (!value || value === 'N/A') {
-      return null;
-    }
-    const parsed = Number.parseFloat(value.replace('%', '').trim());
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  private parseMemoryToMb(value: string): number | null {
-    if (!value || value === 'N/A') {
-      return null;
-    }
-
-    const match = value.trim().match(/^([\d.]+)\s*([a-zA-Z]+)$/);
-    if (!match) {
-      return null;
-    }
-
-    const amount = Number.parseFloat(match[1]);
-    if (!Number.isFinite(amount)) {
-      return null;
-    }
-
-    const unit = match[2].toLowerCase();
-    const toMb: Record<string, number> = {
-      b: 1 / (1024 * 1024),
-      kb: 1 / 1024,
-      kib: 1 / 1024,
-      mb: 1,
-      mib: 1,
-      gb: 1024,
-      gib: 1024,
-      tb: 1024 * 1024,
-      tib: 1024 * 1024,
-    };
-
-    const factor = toMb[unit];
-    if (factor === undefined) {
-      return null;
-    }
-
-    return Math.round(amount * factor * 100) / 100;
-  }
 }

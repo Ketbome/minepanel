@@ -32,6 +32,7 @@ jest.mock('node:util', () => {
 
 // Import after mocks
 import { ServerManagementService } from './server-management.service';
+import { AlertsService } from '../alerts/alerts.service';
 import * as fs from 'fs-extra';
 
 // Get the mocked promisify result
@@ -61,6 +62,10 @@ describe('ServerManagementService', () => {
       sendServerNotification: jest.fn(),
     };
 
+    const mockAlertsService = {
+      markExpectedStop: jest.fn(),
+    };
+
     (fs.ensureDirSync as jest.Mock).mockImplementation(() => {});
     (fs.pathExists as jest.Mock).mockResolvedValue(true);
 
@@ -70,6 +75,7 @@ describe('ServerManagementService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: AlertsService, useValue: mockAlertsService },
       ],
     }).compile();
 

@@ -41,6 +41,7 @@ flowchart LR
 | Live logs | Streaming, errors highlighted, searchable |
 | Stats     | CPU%, RAM%, player count, uptime          |
 | History   | Per-server CPU/RAM graphs (1h–72h) in the Metrics tab, sampled every minute with 7-day retention |
+| Alerts    | Opt-in Discord alerts per server: unexpected server down, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
 
 ## Server Control
 

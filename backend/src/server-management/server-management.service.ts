@@ -11,6 +11,7 @@ import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerEdition } from './dto/server-config.model';
+import { AlertsService } from 'src/alerts/alerts.service';
 
 const execAsync = promisify(exec);
 
@@ -95,6 +96,7 @@ export class ServerManagementService {
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
     private readonly discordService: DiscordService,
+    private readonly alertsService: AlertsService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
@@ -689,6 +691,7 @@ export class ServerManagementService {
         return false;
       }
 
+      this.alertsService.markExpectedStop(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
@@ -714,6 +717,7 @@ export class ServerManagementService {
       const dockerComposePath = this.getDockerComposePath(serverId);
 
       if (await fs.pathExists(dockerComposePath)) {
+        this.alertsService.markExpectedStop(serverId);
         await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
       }
 
@@ -875,6 +879,7 @@ export class ServerManagementService {
 
       if (await fs.pathExists(dockerComposePath)) {
         try {
+          this.alertsService.markExpectedStop(serverId);
           await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
         } catch (error) {
           this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
@@ -1477,6 +1482,7 @@ export class ServerManagementService {
         return false;
       }
 
+      this.alertsService.markExpectedStop(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
