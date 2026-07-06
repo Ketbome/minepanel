@@ -17,7 +17,7 @@ head:
 
 Manage mods for Java Edition and addons for Bedrock Edition from the same Minepanel workflow.
 
-![Mods Tab](/img/mods-tab.png)
+![Mods Tab](/img/mods-tab.webp)
 
 ## Overview
 

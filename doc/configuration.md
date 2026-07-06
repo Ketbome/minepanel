@@ -9,7 +9,7 @@ head:
 
 # Configuration
 
-![Configuration](/img/configuration.png)
+![Configuration](/img/configuration.webp)
 
 ## Environment Variables
 
