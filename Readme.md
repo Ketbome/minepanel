@@ -92,6 +92,14 @@ Thank you itzg for making Minecraft server hosting accessible to everyone!
 
 ---
 
+## Related Projects
+
+Part of the same self-hosted game-server ecosystem:
+
+- **[Hytalepanel](https://github.com/Ketbome/hytalepanel)** — Docker-based web panel for Hytale dedicated servers, docs at **[hytalepanel.ketbome.com](https://hytalepanel.ketbome.com)**. Same philosophy as Minepanel, built for Hytale.
+
+---
+
 ## Contributors
 
 <a href="https://github.com/Ketbome/minepanel/graphs/contributors">
