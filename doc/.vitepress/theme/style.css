@@ -357,19 +357,12 @@ body {
 }
 
 /* ============================================================
-   Hero image — floating pixelated cube
+   Hero image — pixelated cube
    ============================================================ */
 
 .VPHome .VPHero .image img {
   image-rendering: pixelated;
   filter: drop-shadow(0 12px 30px rgba(29, 45, 23, 0.35));
-  animation: mc-float 4s ease-in-out infinite;
-}
-
-@keyframes mc-float {
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
 /* ============================================================

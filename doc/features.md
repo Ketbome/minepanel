@@ -9,7 +9,7 @@ head:
 
 # Features
 
-![Features](/img/modes.png)
+![Features](/img/modes.webp)
 
 ```mermaid
 flowchart LR
