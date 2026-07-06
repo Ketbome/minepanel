@@ -116,6 +116,11 @@ export interface ServerConfig {
   backupDestDir: string;
   backupHostDir: string;
   backupName: string;
+  resticRepository: string;
+  resticPassword: string;
+  resticS3AccessKeyId: string;
+  resticS3SecretAccessKey: string;
+  resticRetention: string;
   backupOnStartup: boolean;
   pauseIfNoPlayers: boolean;
   playersOnlineCheckInterval: string;

@@ -305,6 +305,78 @@ describe('DockerComposeService', () => {
       expect(volumes).toContain('/network-disk/custom:/backups');
     });
 
+    it('should emit restic env vars when the restic backup method is selected', async () => {
+      const config = (service as any).createDefaultConfig('restic-server');
+      config.enableBackup = true;
+      config.backupMethod = 'restic';
+      config.resticRepository = 's3:https://s3.amazonaws.com/my-bucket/minecraft';
+      config.resticPassword = 'secret-pass';
+      config.resticS3AccessKeyId = 'AKIA123';
+      config.resticS3SecretAccessKey = 's3cr3t';
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+      const backupEnv = parsed.services.backup.environment;
+
+      expect(backupEnv.RESTIC_REPOSITORY).toBe('s3:https://s3.amazonaws.com/my-bucket/minecraft');
+      expect(backupEnv.RESTIC_PASSWORD).toBe('secret-pass');
+      expect(backupEnv.PRUNE_RESTIC_RETENTION).toBe('--keep-within 7d');
+      expect(backupEnv.RESTIC_HOSTNAME).toBe('restic-server');
+      expect(backupEnv.AWS_ACCESS_KEY_ID).toBe('AKIA123');
+      expect(backupEnv.AWS_SECRET_ACCESS_KEY).toBe('s3cr3t');
+    });
+
+    it('should not emit restic or aws env vars for the default tar method', async () => {
+      const config = (service as any).createDefaultConfig('tar-server');
+      config.enableBackup = true;
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+      const backupEnv = parsed.services.backup.environment;
+
+      expect(backupEnv.RESTIC_REPOSITORY).toBeUndefined();
+      expect(backupEnv.RESTIC_PASSWORD).toBeUndefined();
+      expect(backupEnv.PRUNE_RESTIC_RETENTION).toBeUndefined();
+      expect(backupEnv.RESTIC_HOSTNAME).toBeUndefined();
+      expect(backupEnv.AWS_ACCESS_KEY_ID).toBeUndefined();
+    });
+
+    it('should round-trip restic settings through the generated compose file', async () => {
+      const config = (service as any).createDefaultConfig('restic-roundtrip');
+      config.enableBackup = true;
+      config.backupMethod = 'restic';
+      config.resticRepository = 's3:https://minio.local:9000/backups';
+      config.resticPassword = 'round-trip-pass';
+      config.resticS3AccessKeyId = 'minio-key';
+      config.resticS3SecretAccessKey = 'minio-secret';
+      config.resticRetention = '--keep-daily 7';
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+
+      (fs.existsSync as unknown as jest.Mock).mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/restic-roundtrip` || target === `${SERVERS_DIR}/restic-roundtrip/docker-compose.yml`
+      );
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue(yamlContent);
+
+      const loaded = await service.getServerConfig('restic-roundtrip');
+
+      expect(loaded?.backupMethod).toBe('restic');
+      expect(loaded?.resticRepository).toBe('s3:https://minio.local:9000/backups');
+      expect(loaded?.resticPassword).toBe('round-trip-pass');
+      expect(loaded?.resticS3AccessKeyId).toBe('minio-key');
+      expect(loaded?.resticS3SecretAccessKey).toBe('minio-secret');
+      expect(loaded?.resticRetention).toBe('--keep-daily 7');
+    });
+
     it('should force restart policy to "no" when auto-stop is enabled', async () => {
       const config = (service as any).createDefaultConfig('autostop-server');
       config.enableAutoStop = true;

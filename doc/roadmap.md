@@ -184,11 +184,14 @@ flowchart LR
 
 ### Cloud backups
 
-The backup sidecar already supports `restic` and `rclone` methods. This phase is
-about productizing setup:
+Shipped so far: restic backups to any S3-compatible destination (AWS S3, MinIO,
+Backblaze B2, Wasabi) configurable from the panel, retention policies
+(`PRUNE_RESTIC_RETENTION`), and snapshot listing in the backup section.
 
-- Guided UI for S3-compatible (MinIO, Backblaze B2, Wasabi), Google Cloud Storage, SFTP/FTP
-- Retention policies and one-click restore
+Still planned:
+
+- One-click restore from a snapshot
+- Guided setup for Google Cloud Storage and SFTP/FTP (rclone)
 
 ### Alerts
 

@@ -1,4 +1,5 @@
 import { FC, useState } from 'react';
+import { getBackupSnapshots, ResticSnapshot } from '@/services/docker/fetchs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { BookOpen, HelpCircle, Network, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, HelpCircle, Network, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { ServerConfig } from '@/lib/types/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLanguage } from '@/lib/hooks/useLanguage';
@@ -27,7 +28,28 @@ interface AdvancedTabProps {
 export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [newPort, setNewPort] = useState('');
+  const [snapshots, setSnapshots] = useState<ResticSnapshot[]>([]);
+  const [snapshotsError, setSnapshotsError] = useState('');
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false);
+  const [snapshotsLoaded, setSnapshotsLoaded] = useState(false);
   const autoStopEnabled = config.enableAutoStop === true;
+
+  const loadSnapshots = async () => {
+    setSnapshotsLoading(true);
+    setSnapshotsError('');
+    try {
+      const result = await getBackupSnapshots(config.id);
+      setSnapshots(result.snapshots || []);
+      if (!result.success) {
+        setSnapshotsError(result.error || t('snapshotsUnavailable'));
+      }
+    } catch {
+      setSnapshotsError(t('snapshotsUnavailable'));
+    } finally {
+      setSnapshotsLoading(false);
+      setSnapshotsLoaded(true);
+    }
+  };
 
   const isJava = config.edition !== 'BEDROCK';
   const isCurseForge =
@@ -186,6 +208,127 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                   />
                 </div>
               </div>
+
+              {config.backupMethod === 'restic' && (
+                <div className="space-y-4 p-4 rounded-md bg-gray-900/50 border border-gray-600/50">
+                  <div className="flex items-center gap-2">
+                    <Image src="/images/ender_chest.webp" alt="Restic" width={16} height={16} />
+                    <h4 className="text-emerald-400 font-minecraft text-sm">{t('resticConfig')}</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="resticRepository" className="text-gray-200 font-minecraft text-sm">
+                        {t('resticRepository')}
+                      </Label>
+                      <Input
+                        id="resticRepository"
+                        value={config.resticRepository || ''}
+                        onChange={(e) => updateConfig('resticRepository', e.target.value)}
+                        placeholder="s3:https://s3.amazonaws.com/my-bucket/minecraft"
+                        className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                      />
+                      <p className="text-xs text-gray-400">{t('resticRepositoryHelp')}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="resticPassword" className="text-gray-200 font-minecraft text-sm">
+                        {t('resticPassword')}
+                      </Label>
+                      <Input
+                        id="resticPassword"
+                        type="password"
+                        value={config.resticPassword || ''}
+                        onChange={(e) => updateConfig('resticPassword', e.target.value)}
+                        className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                      />
+                      <p className="text-xs text-gray-400">{t('resticPasswordHelp')}</p>
+                    </div>
+                  </div>
+
+                  {(config.resticRepository || '').startsWith('s3:') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="resticS3AccessKeyId" className="text-gray-200 font-minecraft text-sm">
+                          {t('resticS3AccessKey')}
+                        </Label>
+                        <Input
+                          id="resticS3AccessKeyId"
+                          value={config.resticS3AccessKeyId || ''}
+                          onChange={(e) => updateConfig('resticS3AccessKeyId', e.target.value)}
+                          className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="resticS3SecretAccessKey" className="text-gray-200 font-minecraft text-sm">
+                          {t('resticS3SecretKey')}
+                        </Label>
+                        <Input
+                          id="resticS3SecretAccessKey"
+                          type="password"
+                          value={config.resticS3SecretAccessKey || ''}
+                          onChange={(e) => updateConfig('resticS3SecretAccessKey', e.target.value)}
+                          className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="resticRetention" className="text-gray-200 font-minecraft text-sm">
+                      {t('resticRetention')}
+                    </Label>
+                    <Input
+                      id="resticRetention"
+                      value={config.resticRetention || ''}
+                      onChange={(e) => updateConfig('resticRetention', e.target.value)}
+                      placeholder="--keep-within 7d"
+                      className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                    />
+                    <p className="text-xs text-gray-400">{t('resticRetentionHelp')}</p>
+                  </div>
+
+                  <div className="p-3 rounded bg-amber-900/30 border border-amber-700/50">
+                    <p className="text-amber-300 text-xs">{t('resticCredentialsHint')}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-200 font-minecraft text-sm">{t('backupSnapshots')}</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={loadSnapshots}
+                        disabled={snapshotsLoading}
+                        className="bg-gray-800/70 text-gray-200 border-gray-700/50 hover:bg-gray-700/50"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-1 ${snapshotsLoading ? 'animate-spin' : ''}`} />
+                        {t('refreshSnapshots')}
+                      </Button>
+                    </div>
+                    {snapshotsError && <p className="text-xs text-amber-400">{snapshotsError}</p>}
+                    {snapshotsLoaded && !snapshotsError && snapshots.length === 0 && (
+                      <p className="text-xs text-gray-400">{t('noSnapshotsYet')}</p>
+                    )}
+                    {snapshots.length > 0 && (
+                      <div className="max-h-48 overflow-y-auto space-y-1">
+                        {snapshots.map((snapshot) => (
+                          <div
+                            key={snapshot.id}
+                            className="flex items-center justify-between text-xs bg-gray-800/70 border border-gray-700/50 rounded px-2 py-1.5"
+                          >
+                            <span className="text-gray-200 font-mono">{snapshot.shortId}</span>
+                            <span className="text-gray-400">{snapshot.time ? new Date(snapshot.time).toLocaleString() : ''}</span>
+                            <span className="text-gray-500">{snapshot.tags.join(', ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
