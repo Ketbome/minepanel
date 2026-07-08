@@ -25,7 +25,7 @@ interface ServerTypeTabProps {
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
+const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
 
 // Java requirements per Minecraft version (itzg/minecraft-server tags)
 const getSuggestedJavaImage = (mcVersion: string): string => {
@@ -43,7 +43,11 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const isJava = edition === 'JAVA';
   const isBedrock = edition === 'BEDROCK';
   const isModpack =
-    config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' || config.serverType === 'MODRINTH' || config.serverType === 'GTNH';
+    config.serverType === 'AUTO_CURSEFORGE' ||
+    config.serverType === 'CURSEFORGE' ||
+    config.serverType === 'FTBA' ||
+    config.serverType === 'MODRINTH' ||
+    config.serverType === 'GTNH';
 
   const { versions, loading, latestRelease, refresh, getRecommended } = useMinecraftVersions({
     filterType: 'release',
@@ -646,6 +650,23 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                           </Label>
                         </div>
                         <p className="text-sm text-gray-300 mt-1">{t('serverGtnh')}</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'FTBA' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+                    >
+                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+                        <Image src="/images/chest.webp" alt="FTB" width={24} height={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="FTBA" id="ftba" className="border-amber-600/50" />
+                          <Label htmlFor="ftba" className="text-base font-medium text-gray-100 font-minecraft">
+                            Feed The Beast
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{t('serverFtba')}</p>
                       </div>
                     </div>
 

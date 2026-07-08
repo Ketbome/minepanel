@@ -47,6 +47,7 @@ export class JavaServerStrategy implements IServerStrategy {
       'NEOFORGE',
       'AUTO_CURSEFORGE',
       'CURSEFORGE',
+      'FTBA',
       'MODRINTH',
       'GTNH',
       'SPIGOT',
@@ -208,6 +209,7 @@ export class JavaServerStrategy implements IServerStrategy {
       FABRIC: () => this.addFabricConfig(env, config),
       AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
       CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
+      FTBA: () => this.addFtbaConfig(env, config),
       MODRINTH: () => this.addModrinthConfig(env, config),
       GTNH: () => this.addGtnhConfig(env, config),
       SPIGOT: () => this.addPluginServerConfig(env, config),
@@ -247,6 +249,11 @@ export class JavaServerStrategy implements IServerStrategy {
     if (config.gtnhPackVersion) env['GTNH_PACK_VERSION'] = config.gtnhPackVersion;
     if (config.gtnhDeleteBackups) env['GTNH_DELETE_BACKUPS'] = 'true';
     if (config.skipGtnhUpdateCheck) env['SKIP_GTNH_UPDATE_CHECK'] = 'true';
+  }
+
+  private addFtbaConfig(env: Record<string, string>, config: ServerConfig): void {
+    if (config.ftbModpackId) env['FTB_MODPACK_ID'] = config.ftbModpackId;
+    if (config.ftbModpackVersionId) env['FTB_MODPACK_VERSION_ID'] = config.ftbModpackVersionId;
   }
 
   private resolveLevelType(config: ServerConfig): string {

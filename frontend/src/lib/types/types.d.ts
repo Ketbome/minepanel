@@ -13,6 +13,7 @@ export type ServerType =
   | 'AUTO_CURSEFORGE'
   | 'MODRINTH'
   | 'CURSEFORGE'
+  | 'FTBA'
   | 'GTNH'
   | 'SPIGOT'
   | 'FABRIC'
@@ -179,6 +180,10 @@ export interface ServerConfig {
   gtnhPackVersion?: string;
   gtnhDeleteBackups?: boolean;
   skipGtnhUpdateCheck?: boolean;
+
+  // FTBA specific
+  ftbModpackId?: string;
+  ftbModpackVersionId?: string;
 
   // CurseForge specific
   cfMethod?: 'url' | 'slug' | 'file';

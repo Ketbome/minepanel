@@ -20,9 +20,9 @@ export class ServerConfigDto {
   @IsOptional()
   edition?: ServerEdition;
 
-  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'MODRINTH', 'GTNH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
+  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'MODRINTH' | 'GTNH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
+  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'FTBA' | 'MODRINTH' | 'GTNH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
 
   // General configuration
   @IsString()
@@ -450,6 +450,15 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   skipGtnhUpdateCheck?: boolean;
+
+  // FTBA specific
+  @IsString()
+  @IsOptional()
+  ftbModpackId?: string;
+
+  @IsString()
+  @IsOptional()
+  ftbModpackVersionId?: string;
 
   // Ports
   @IsString({ each: true })

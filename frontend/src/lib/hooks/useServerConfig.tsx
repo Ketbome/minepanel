@@ -104,6 +104,8 @@ const defaultConfig: ServerConfig = {
   gtnhPackVersion: '2.8.1',
   gtnhDeleteBackups: false,
   skipGtnhUpdateCheck: false,
+  ftbModpackId: '',
+  ftbModpackVersionId: '',
   cfMethod: 'url',
   cfUrl: '',
   cfSlug: '',

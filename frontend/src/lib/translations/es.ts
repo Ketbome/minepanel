@@ -154,6 +154,8 @@ export const es: Record<TranslationKey, string> = {
     'Instala automáticamente modpacks de Modrinth. Se puede configurar mediante URL, o Slug.',
   serverGtnh:
     'Despliega GT New Horizons con su modo dedicado del contenedor y valores recomendados para este modpack.',
+  serverFtba:
+    'Instala automáticamente un modpack de Feed The Beast (FTB) por su ID. El pack fija su propia versión de Minecraft y loader.',
   serverSpigot: 'Servidor optimizado compatible con plugins de Bukkit',
   serverPaper: 'Servidor de alto rendimiento basado en Spigot con optimizaciones adicionales',
   serverBukkit: 'Servidor clásico con soporte de plugins API estándar',
@@ -1175,6 +1177,18 @@ export const es: Record<TranslationKey, string> = {
   skipGtnhUpdateCheck: 'Omitir verificación de actualizaciones GTNH',
   skipGtnhUpdateCheckDesc:
     'Desactiva la verificación de actualizaciones después de la instalación inicial si quieres evitar updates automáticos de GTNH.',
+
+  // FTB (Feed The Beast)
+  ftbaRequirementsTitle: 'Modpack Feed The Beast',
+  ftbaRequirementsBody:
+    'Instala automáticamente un modpack de FTB por su ID numérico. El pack fija su propia versión de Minecraft y loader. Encuentra el ID del modpack en su página en feed-the-beast.com.',
+  ftbModpackId: 'ID del modpack FTB',
+  ftbModpackIdDesc:
+    'ID numérico del modpack en feed-the-beast.com (por ejemplo 119 para FTB Presents Direwolf20). Obligatorio.',
+  ftbModpackVersionId: 'ID de versión FTB (opcional)',
+  ftbModpackVersionIdDesc:
+    'ID numérico de una versión específica del pack. Déjalo vacío para instalar siempre la última versión.',
+  ftbModpackVersionIdPlaceholder: 'latest',
 
   // CurseForge Manual (Obsoleto)
   deprecatedFeature: 'Función obsoleta (Deprecated)',
