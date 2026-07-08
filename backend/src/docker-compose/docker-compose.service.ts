@@ -319,9 +319,10 @@ export class DockerComposeService {
 
     const knownWorldVars = new Set(['LEVEL', 'LEVEL_NAME', 'WORLD', 'FORCE_WORLD_COPY']);
     const knownGtnhVars = new Set(['GTNH_PACK_VERSION', 'GTNH_DELETE_BACKUPS', 'SKIP_GTNH_UPDATE_CHECK']);
+    const knownFtbVars = new Set(['FTB_MODPACK_ID', 'FTB_MODPACK_VERSION_ID']);
     const customVars: string[] = [];
     for (const [key, value] of Object.entries(env)) {
-      if (!knownEnvVars.has(key) && !knownWorldVars.has(key) && !knownGtnhVars.has(key) && value !== undefined && value !== null) {
+      if (!knownEnvVars.has(key) && !knownWorldVars.has(key) && !knownGtnhVars.has(key) && !knownFtbVars.has(key) && value !== undefined && value !== null) {
         customVars.push(`${key}=${value}`);
       }
     }
@@ -464,6 +465,10 @@ export class DockerComposeService {
         serverConfig.gtnhPackVersion = env.GTNH_PACK_VERSION ?? '2.8.1';
         serverConfig.gtnhDeleteBackups = env.GTNH_DELETE_BACKUPS === 'true';
         serverConfig.skipGtnhUpdateCheck = env.SKIP_GTNH_UPDATE_CHECK === 'true';
+      },
+      FTBA: () => {
+        serverConfig.ftbModpackId = env.FTB_MODPACK_ID ?? '';
+        serverConfig.ftbModpackVersionId = env.FTB_MODPACK_VERSION_ID ?? '';
       },
     };
 
@@ -702,6 +707,9 @@ export class DockerComposeService {
       gtnhPackVersion: '2.8.1',
       gtnhDeleteBackups: false,
       skipGtnhUpdateCheck: false,
+
+      ftbModpackId: '',
+      ftbModpackVersionId: '',
 
       proxyHostname: undefined,
       useProxy: true,

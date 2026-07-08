@@ -152,6 +152,8 @@ export const en = {
     "Automatically installs modpacks from Modrinth. Can be configured using the modpack's URL, or slug.",
   serverGtnh:
     'Deploys GT New Horizons with its dedicated container mode and recommended defaults for this modpack.',
+  serverFtba:
+    'Automatically installs a Feed The Beast (FTB) modpack by its ID. The pack pins its own Minecraft and loader version.',
   serverSpigot: 'Optimized server compatible with Bukkit plugins',
   serverPaper: 'High-performance server based on Spigot with additional optimizations',
   serverBukkit: 'Classic server with standard plugin API support',
@@ -1177,6 +1179,18 @@ export const en = {
   skipGtnhUpdateCheck: 'Skip GTNH update check',
   skipGtnhUpdateCheckDesc:
     'Disable update checks after the first installation if you want to prevent automatic GTNH updates from running.',
+
+  // FTB (Feed The Beast)
+  ftbaRequirementsTitle: 'Feed The Beast modpack',
+  ftbaRequirementsBody:
+    'Automatically installs an FTB modpack by its numeric ID. The pack pins its own Minecraft and loader version. Find the modpack ID on the pack page at feed-the-beast.com.',
+  ftbModpackId: 'FTB Modpack ID',
+  ftbModpackIdDesc:
+    'Numeric ID of the modpack on feed-the-beast.com (for example 119 for FTB Presents Direwolf20). Required.',
+  ftbModpackVersionId: 'FTB Version ID (optional)',
+  ftbModpackVersionIdDesc:
+    'Numeric ID of a specific pack version. Leave empty to always install the latest version.',
+  ftbModpackVersionIdPlaceholder: 'latest',
 
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Deprecated Feature',

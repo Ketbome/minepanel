@@ -42,6 +42,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isModrinth = config.serverType === "MODRINTH";
   const isGtnh = config.serverType === "GTNH";
+  const isFtba = config.serverType === "FTBA";
   const isForge = config.serverType === "FORGE";
   const isNeoforge = config.serverType === "NEOFORGE";
   const isFabric = config.serverType === "FABRIC";
@@ -150,7 +151,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
     return "added";
   };
 
-  if (!isCurseForge && !isForge && !isNeoforge && !isManualCurseForge && !isFabric && !isModrinth && !isGtnh) {
+  if (!isCurseForge && !isForge && !isNeoforge && !isManualCurseForge && !isFabric && !isModrinth && !isGtnh && !isFtba) {
     return (
       <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
         <CardHeader className="pb-3">
@@ -934,7 +935,49 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
             </div>
           </>
         )}
-       
+
+        {isFtba && (
+          <>
+            <div className="rounded-md border border-amber-600/30 bg-amber-900/20 p-4">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+                <div className="space-y-1 text-sm text-amber-100/90">
+                  <p className="font-minecraft text-amber-300">{t("ftbaRequirementsTitle")}</p>
+                  <p>{t("ftbaRequirementsBody")}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-amber-500/30 bg-gray-800/50 p-4">
+              <Label htmlFor="ftbModpackId" className="text-amber-300 font-minecraft text-sm">
+                {t("ftbModpackId")}
+              </Label>
+              <Input
+                id="ftbModpackId"
+                value={config.ftbModpackId || ""}
+                onChange={(e) => updateConfig("ftbModpackId", e.target.value)}
+                placeholder="119"
+                className="bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-amber-500/50 focus:ring-amber-500/30"
+              />
+              <p className="text-xs text-gray-400">{t("ftbModpackIdDesc")}</p>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-gray-700/50 bg-gray-800/50 p-4">
+              <Label htmlFor="ftbModpackVersionId" className="text-gray-200 font-minecraft text-sm">
+                {t("ftbModpackVersionId")}
+              </Label>
+              <Input
+                id="ftbModpackVersionId"
+                value={config.ftbModpackVersionId || ""}
+                onChange={(e) => updateConfig("ftbModpackVersionId", e.target.value)}
+                placeholder={t("ftbModpackVersionIdPlaceholder")}
+                className="bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-amber-500/50 focus:ring-amber-500/30"
+              />
+              <p className="text-xs text-gray-400">{t("ftbModpackVersionIdDesc")}</p>
+            </div>
+          </>
+        )}
+
         {(isForge || isNeoforge || isFabric || isCurseForge || isModrinth) && (
           <>
             <div className="space-y-2 p-4 rounded-md bg-blue-900/10 border-2 border-blue-500/30">
