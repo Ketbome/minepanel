@@ -454,6 +454,43 @@ environment:
 | Force Include      | `CF_FORCE_INCLUDE_MODS`      | Force download specific mods            | -       |
 | Exclude Mods       | `CF_EXCLUDE_MODS`            | Exclude specific mods                   | -       |
 
+## Feed The Beast (FTBA)
+
+Install [Feed The Beast](https://www.feed-the-beast.com/) modpacks using the dedicated **FTBA**
+server type. The pack pins its own Minecraft and mod loader version, so you don't set a Minecraft
+version manually. No CurseForge API key is required.
+
+### Installation Methods
+
+**1. Latest version:**
+
+```yaml
+environment:
+  TYPE: FTBA
+  FTB_MODPACK_ID: 119
+```
+
+**2. Locked to a specific version:**
+
+```yaml
+environment:
+  TYPE: FTBA
+  FTB_MODPACK_ID: 119
+  FTB_MODPACK_VERSION_ID: 12179
+```
+
+### FTBA options
+
+| Option            | Variable                 | Description                                                    | Default  |
+| ----------------- | ------------------------ | ------------------------------------------------------------- | -------- |
+| Modpack ID        | `FTB_MODPACK_ID`         | Numeric modpack ID from the pack page on `feed-the-beast.com` | required |
+| Modpack Version ID | `FTB_MODPACK_VERSION_ID` | Numeric version ID; omit to always install the latest         | `latest` |
+
+### Notes
+
+- Find the modpack ID on the pack's page at [feed-the-beast.com](https://www.feed-the-beast.com/)
+- Leave `FTB_MODPACK_VERSION_ID` empty to always install the latest available version
+
 ## Server Type Categories
 
 ```mermaid
@@ -476,7 +513,7 @@ flowchart LR
 | **🟢 Vanilla**        | VANILLA                                  | Pure Minecraft Java, no modifications            |
 | **🔵 Mod Loaders**    | Forge, Neoforge, Fabric                  | Client-side mods required                        |
 | **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
-| **🟠 Modpacks**       | AUTO_CURSEFORGE                          | Pre-configured mod collections                   |
+| **🟠 Modpacks**       | AUTO_CURSEFORGE, Modrinth, GTNH, FTBA    | Pre-configured mod collections                   |
 
 ---
 

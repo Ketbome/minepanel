@@ -137,6 +137,24 @@ export default withMermaid(
           dateModified: '2026-06-12',
         }),
       ],
+
+      // Analytics (Umami, self-hosted)
+      [
+        'script',
+        {
+          defer: '',
+          src: 'https://umami.ketbome.com/script.js',
+          'data-website-id': '52729fa7-57f4-43e9-a142-f3ec0be2f1b6',
+        },
+      ],
+      [
+        'script',
+        {
+          defer: '',
+          src: 'https://umami.ketbome.com/recorder.js',
+          'data-website-id': '52729fa7-57f4-43e9-a142-f3ec0be2f1b6',
+        },
+      ],
     ],
 
     // Generate dynamic canonical URLs and merge page-specific meta
