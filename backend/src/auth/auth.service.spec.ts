@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { InstanceSettingsService } from '../settings/instance-settings.service';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
@@ -84,13 +85,18 @@ describe('AuthService', () => {
     };
 
     const mockAuthMailService = {
-      isConfigured: jest.fn(() => true),
+      isConfigured: jest.fn(async () => true),
       sendPasswordResetEmail: jest.fn(),
       sendUserInvitationEmail: jest.fn(),
     };
 
     const mockAuditLogService = {
       record: jest.fn(),
+    };
+
+    const mockInstanceSettings = {
+      getOidc: jest.fn(async () => ({ enabled: false, providerName: 'SSO', disablePasswordLogin: false, scopes: 'openid email profile' })),
+      getSmtp: jest.fn(async () => ({ enabled: true })),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -101,6 +107,7 @@ describe('AuthService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: AuthMailService, useValue: mockAuthMailService },
         { provide: AuditLogService, useValue: mockAuditLogService },
+        { provide: InstanceSettingsService, useValue: mockInstanceSettings },
         { provide: getRepositoryToken(RefreshToken), useValue: mockRefreshTokenRepo },
         { provide: getRepositoryToken(PasswordResetToken), useValue: mockPasswordResetTokenRepo },
       ],
@@ -222,7 +229,7 @@ describe('AuthService', () => {
   describe('getSetupStatus', () => {
     it('should report whether setup is required', async () => {
       usersService.hasUsers.mockResolvedValue(false);
-      authMailService.isConfigured.mockReturnValue(true);
+      authMailService.isConfigured.mockResolvedValue(true);
 
       await expect(service.getSetupStatus()).resolves.toEqual({
         requiresSetup: true,
@@ -274,7 +281,7 @@ describe('AuthService', () => {
         },
         inviteUrl: 'http://localhost:3000/?inviteToken=abc',
       } as any);
-      authMailService.isConfigured.mockReturnValue(true);
+      authMailService.isConfigured.mockResolvedValue(true);
       authMailService.sendUserInvitationEmail.mockResolvedValue(undefined);
 
       const result = await service.createInvitation({
@@ -304,7 +311,7 @@ describe('AuthService', () => {
         },
         inviteUrl: 'http://localhost:3000/?inviteToken=abc',
       } as any);
-      authMailService.isConfigured.mockReturnValue(false);
+      authMailService.isConfigured.mockResolvedValue(false);
 
       const result = await service.createInvitation({
         email: 'invite@example.com',

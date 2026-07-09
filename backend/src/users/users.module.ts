@@ -14,10 +14,12 @@ import { AuditLogService } from './services/audit-log.service';
 import { AuditLogController } from './controllers/audit-log.controller';
 import { PendingEmailChange } from './entities/pending-email-change.entity';
 import { AuthMailService } from 'src/auth/auth-mail.service';
+import { SettingsModule } from 'src/settings/settings.module';
+import { IntegrationSettingsController } from './controllers/integration-settings.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule],
-  controllers: [UsersController, SettingsController, AuditLogController],
+  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule],
+  controllers: [UsersController, SettingsController, AuditLogController, IntegrationSettingsController],
   providers: [UsersService, SettingsService, AccessControlService, AuditLogService, AuthMailService],
   exports: [UsersService, SettingsService, AccessControlService, AuditLogService],
 })

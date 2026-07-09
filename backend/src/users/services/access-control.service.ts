@@ -8,6 +8,12 @@ export class AccessControlService {
     return user?.role === 'ADMIN';
   }
 
+  assertIsAdmin(user: Pick<Users, 'role'> | null | undefined): void {
+    if (!this.isAdmin(user)) {
+      throw new ForbiddenException('Only admins can perform this action');
+    }
+  }
+
   getAccessState(user: Users): UserAccessState {
     if (this.isAdmin(user)) {
       return {

@@ -14,9 +14,11 @@ import { UsersModule } from 'src/users/users.module';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { AuthMailService } from './auth-mail.service';
+import { SettingsModule } from 'src/settings/settings.module';
 @Module({
   imports: [
     UsersModule,
+    SettingsModule,
     PassportModule,
     TypeOrmModule.forFeature([RefreshToken, PasswordResetToken]),
     JwtModule.registerAsync({

@@ -13,6 +13,7 @@ import { SetupAdminDto } from './dtos/auth.dto';
 import { AuthMailService } from './auth-mail.service';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
     private readonly auditLogService: AuditLogService,
+    private readonly instanceSettings: InstanceSettingsService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
     @InjectRepository(PasswordResetToken)
@@ -56,15 +58,15 @@ export class AuthService {
   }
 
   async getSetupStatus() {
-    const oidc = this.configService.get('oidc');
+    const [oidc, passwordRecoveryEnabled] = await Promise.all([this.instanceSettings.getOidc(), this.isPasswordRecoveryEnabled()]);
 
     return {
       requiresSetup: !(await this.usersService.hasUsers()),
-      passwordRecoveryEnabled: this.isPasswordRecoveryEnabled(),
+      passwordRecoveryEnabled,
       sso: {
-        enabled: !!oidc?.enabled,
-        providerName: oidc?.providerName ?? 'SSO',
-        passwordLoginDisabled: !!oidc?.disablePasswordLogin && !!oidc?.enabled,
+        enabled: oidc.enabled,
+        providerName: oidc.providerName,
+        passwordLoginDisabled: oidc.disablePasswordLogin && oidc.enabled,
         loginUrl: '/auth/oidc/login',
       },
     };
@@ -193,7 +195,7 @@ export class AuthService {
   }
 
   async createPasswordReset(email: string): Promise<void> {
-    if (!this.isPasswordRecoveryEnabled()) {
+    if (!(await this.isPasswordRecoveryEnabled())) {
       throw new ServiceUnavailableException('Password recovery is not configured');
     }
 
@@ -247,7 +249,7 @@ export class AuthService {
 
   async createInvitation(dto: CreateUserInvitationDto, actor: PayloadToken) {
     const result = await this.usersService.createInvitation(dto);
-    const shouldSendEmail = !!result.invitation.email && this.authMailService.isConfigured();
+    const shouldSendEmail = !!result.invitation.email && (await this.authMailService.isConfigured());
 
     if (shouldSendEmail) {
       await this.authMailService.sendUserInvitationEmail(result.invitation.email, result.inviteUrl);
@@ -343,7 +345,7 @@ export class AuthService {
     });
   }
 
-  isPasswordRecoveryEnabled(): boolean {
+  isPasswordRecoveryEnabled(): Promise<boolean> {
     return this.authMailService.isConfigured();
   }
 

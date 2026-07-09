@@ -184,9 +184,13 @@ export class ServerManagementController {
       const user = req.user as PayloadToken;
       const settings = await this.settingsService.getSettings(user.userId);
 
-      if (data.serverType === 'AUTO_CURSEFORGE' && !data.cfApiKey) {
-        if (settings.cfApiKey) {
-          data.cfApiKey = settings.cfApiKey;
+      // Inject the (decrypted) global CurseForge API key when the server does
+      // not define its own. It is written into the generated compose so itzg
+      // can read it as CF_API_KEY.
+      if (!data.cfApiKey) {
+        const cfApiKey = await this.settingsService.getCfApiKey(user.userId);
+        if (cfApiKey) {
+          data.cfApiKey = cfApiKey;
         }
       }
 

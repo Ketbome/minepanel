@@ -29,8 +29,12 @@ export class SettingsController {
       this.settingsService.getAuditRetentionDays(),
     ]);
 
+    const { cfApiKey, discordWebhook, ...rest } = settings;
+
     return {
-      ...settings,
+      ...rest,
+      hasCfApiKey: !!cfApiKey,
+      hasDiscordWebhook: !!discordWebhook,
       proxy,
       network,
       javaServerDefaults: settings.preferences?.javaServerDefaults ?? null,
@@ -64,8 +68,12 @@ export class SettingsController {
       summary: 'Updated panel settings',
     });
 
+    const { cfApiKey, discordWebhook, ...rest } = updatedSettings;
+
     return {
-      ...updatedSettings,
+      ...rest,
+      hasCfApiKey: !!cfApiKey,
+      hasDiscordWebhook: !!discordWebhook,
       auditRetentionDays,
     };
   }

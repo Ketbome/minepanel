@@ -1,19 +1,10 @@
 import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type * as OidcClient from 'openid-client';
+import { InstanceSettingsService, ResolvedOidc } from '../../settings/instance-settings.service';
 
 // openid-client v6 is ESM-only; keep a real dynamic import so TS does not down-level it to require().
 const importOidcClient = new Function('m', 'return import(m)') as (m: string) => Promise<typeof OidcClient>;
-
-interface OidcConfig {
-  enabled: boolean;
-  issuer: string;
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-  scopes: string;
-}
 
 interface OidcTransaction {
   state: string;
@@ -33,18 +24,25 @@ export class OidcService {
   private configPromise: Promise<OidcClient.Configuration> | null = null;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly instanceSettings: InstanceSettingsService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    // Rebuild the OIDC client the next time it is needed when settings change.
+    this.instanceSettings.registerResetHandler(() => {
+      this.configPromise = null;
+    });
+  }
 
-  get enabled(): boolean {
-    return !!this.configService.get('oidc')?.enabled;
+  async isEnabled(): Promise<boolean> {
+    return (await this.instanceSettings.getOidc()).enabled;
   }
 
   async buildLoginUrl(): Promise<{ url: string; tx: string }> {
+    const oidc = await this.getOidcConfig();
     const client = await this.getClient();
-    const config = await this.getConfig();
-    const { redirectUri, scopes } = this.getOidcConfig();
+    const config = await this.getConfig(oidc);
+    const redirectUri = oidc.redirectUri!;
+    const scopes = oidc.scopes;
 
     const codeVerifier = client.randomPKCECodeVerifier();
     const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
@@ -77,8 +75,9 @@ export class OidcService {
       throw new UnauthorizedException('Invalid OIDC transaction');
     }
 
+    const oidc = await this.getOidcConfig();
     const client = await this.getClient();
-    const config = await this.getConfig();
+    const config = await this.getConfig(oidc);
 
     const tokens = await client.authorizationCodeGrant(config, currentUrl, {
       pkceCodeVerifier: transaction.codeVerifier,
@@ -104,12 +103,16 @@ export class OidcService {
     return typeof preferred === 'string' ? preferred : null;
   }
 
-  private getOidcConfig(): OidcConfig {
-    const oidc = this.configService.get<OidcConfig>('oidc');
-    if (!oidc?.enabled) {
+  private async getOidcConfig(): Promise<ResolvedOidc> {
+    const oidc = await this.instanceSettings.getOidc();
+    if (!oidc.enabled) {
       throw new ServiceUnavailableException('Single sign-on is not configured');
     }
     return oidc;
+  }
+
+  async getRedirectUri(): Promise<string> {
+    return (await this.getOidcConfig()).redirectUri!;
   }
 
   private getClient(): Promise<typeof OidcClient> {
@@ -119,11 +122,10 @@ export class OidcService {
     return this.clientPromise;
   }
 
-  private getConfig(): Promise<OidcClient.Configuration> {
+  private getConfig(oidc: ResolvedOidc): Promise<OidcClient.Configuration> {
     if (!this.configPromise) {
-      const { issuer, clientId, clientSecret } = this.getOidcConfig();
       this.configPromise = this.getClient().then((client) =>
-        client.discovery(new URL(issuer), clientId, clientSecret),
+        client.discovery(new URL(oidc.issuer!), oidc.clientId!, oidc.clientSecret!),
       );
     }
     return this.configPromise;

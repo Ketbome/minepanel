@@ -45,6 +45,13 @@ Minepanel no longer uses default credentials from environment variables. The fir
 
 ### Password Recovery
 
+::: tip Configurable from the panel
+SMTP and OIDC can now be managed from **Settings → Integrations** (admin only), stored
+**encrypted** in the database. The variables below are still supported as a fallback; a value
+set in the panel **overrides** the matching variable. Secrets are write-only (never returned
+to the browser).
+:::
+
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `SMTP_HOST` | _(empty)_ | SMTP server hostname |
