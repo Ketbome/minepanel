@@ -32,8 +32,16 @@ Minepanel**.
 
 ## Configuration
 
-SSO is configured with environment variables. It is enabled only when `OIDC_ISSUER`,
-`OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_REDIRECT_URI` are all set.
+::: tip Configure from the panel (recommended)
+OIDC can now be managed from **Settings → Integrations** (admin only). Values are stored
+**encrypted** in the database and take effect without a restart. The environment variables
+below still work as a fallback/default; a value set in the panel **overrides** the matching
+variable. Secrets are write-only in the UI — the client secret is never sent back to the
+browser.
+:::
+
+SSO can also be configured with environment variables. It is enabled only when `OIDC_ISSUER`,
+`OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_REDIRECT_URI` are all set (in the panel or `.env`).
 
 | Variable | Required | Description |
 | --- | --- | --- |

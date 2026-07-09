@@ -19,7 +19,7 @@ export class OidcController {
   @Public()
   @Get('login')
   async login(@Res() res: Response) {
-    if (!this.oidcService.enabled) {
+    if (!(await this.oidcService.isEnabled())) {
       throw new NotFoundException('Single sign-on is not configured');
     }
 
@@ -33,12 +33,12 @@ export class OidcController {
   async callback(@Req() req: Request, @Res() res: Response) {
     const frontendUrl = this.configService.get<string>('frontendUrl');
 
-    if (!this.oidcService.enabled) {
+    if (!(await this.oidcService.isEnabled())) {
       throw new NotFoundException('Single sign-on is not configured');
     }
 
     try {
-      const callbackUrl = this.buildCallbackUrl(req);
+      const callbackUrl = await this.buildCallbackUrl(req);
       const profile = await this.oidcService.handleCallback(callbackUrl, req.cookies?.[OIDC_TX_COOKIE]);
       const tokens = await this.authService.loginWithOidc(profile);
 
@@ -60,8 +60,8 @@ export class OidcController {
     }
   }
 
-  private buildCallbackUrl(req: Request): URL {
-    const redirectUri = this.configService.get<string>('oidc.redirectUri');
+  private async buildCallbackUrl(req: Request): Promise<URL> {
+    const redirectUri = await this.oidcService.getRedirectUri();
     const url = new URL(redirectUri);
     const incoming = new URL(req.originalUrl, redirectUri);
     url.search = incoming.search;

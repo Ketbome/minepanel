@@ -14,11 +14,10 @@ export class CurseforgeController {
   ) {}
 
   private async getApiKey(userId: number): Promise<string> {
-    const settings = await this.settingsService.getSettings(userId);
-    if (!settings?.cfApiKey) {
+    const cfApiKey = await this.settingsService.getCfApiKey(userId);
+    if (!cfApiKey) {
       throw new BadRequestException('CurseForge API key not configured. Please add it in settings.');
     }
-    const cfApiKey = settings.cfApiKey;
     return cfApiKey;
   }
 

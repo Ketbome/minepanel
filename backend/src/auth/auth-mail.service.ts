@@ -1,29 +1,31 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { InstanceSettingsService } from '../settings/instance-settings.service';
 
 @Injectable()
 export class AuthMailService {
   private transporter: Transporter | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly instanceSettings: InstanceSettingsService) {
+    // Drop the cached transporter when SMTP settings change so the next email
+    // uses the new configuration without a restart.
+    this.instanceSettings.registerResetHandler(() => {
+      this.transporter = null;
+    });
+  }
 
-  isConfigured(): boolean {
-    const smtp = this.configService.get('smtp');
-
-    return !!smtp?.host && !!smtp?.port && !!smtp?.user && !!smtp?.pass && !!smtp?.from;
+  async isConfigured(): Promise<boolean> {
+    const smtp = await this.instanceSettings.getSmtp();
+    return smtp.enabled;
   }
 
   async sendPasswordResetEmail(to: string, username: string, resetUrl: string): Promise<void> {
-    if (!this.isConfigured()) {
-      throw new ServiceUnavailableException('Password recovery is not configured');
-    }
-
+    const smtp = await this.requireSmtp('Password recovery is not configured');
     const html = this.buildPasswordResetHtml(username, resetUrl);
 
     await this.getTransporter().sendMail({
-      from: this.configService.get('smtp.from'),
+      from: smtp.from,
       to,
       subject: 'Minepanel | Password reset',
       text: [
@@ -39,12 +41,10 @@ export class AuthMailService {
   }
 
   async sendUserInvitationEmail(to: string, inviteUrl: string): Promise<void> {
-    if (!this.isConfigured()) {
-      throw new ServiceUnavailableException('Email delivery is not configured');
-    }
+    const smtp = await this.requireSmtp('Email delivery is not configured');
 
     await this.getTransporter().sendMail({
-      from: this.configService.get('smtp.from'),
+      from: smtp.from,
       to,
       subject: 'Minepanel | User invitation',
       text: [
@@ -57,12 +57,10 @@ export class AuthMailService {
   }
 
   async sendEmailChangeCodeEmail(to: string, username: string, code: string): Promise<void> {
-    if (!this.isConfigured()) {
-      throw new ServiceUnavailableException('Email delivery is not configured');
-    }
+    const smtp = await this.requireSmtp('Email delivery is not configured');
 
     await this.getTransporter().sendMail({
-      from: this.configService.get('smtp.from'),
+      from: smtp.from,
       to,
       subject: 'Minepanel | Email change confirmation',
       text: [
@@ -77,21 +75,35 @@ export class AuthMailService {
     });
   }
 
-  private getTransporter(): Transporter {
-    if (this.transporter) {
-      return this.transporter;
-    }
+  async sendTestEmail(to: string): Promise<void> {
+    await this.requireSmtp('Email delivery is not configured');
+    const smtp = await this.instanceSettings.getSmtp();
 
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get('smtp.host'),
-      port: this.configService.get('smtp.port'),
-      secure: this.configService.get('smtp.secure'),
-      auth: {
-        user: this.configService.get('smtp.user'),
-        pass: this.configService.get('smtp.pass'),
-      },
+    await this.getTransporter().sendMail({
+      from: smtp.from,
+      to,
+      subject: 'Minepanel | SMTP test',
+      text: 'This is a test email from Minepanel. Your SMTP settings are working.',
     });
+  }
 
+  private async requireSmtp(message: string) {
+    const smtp = await this.instanceSettings.getSmtp();
+    if (!smtp.enabled) {
+      throw new ServiceUnavailableException(message);
+    }
+    if (!this.transporter) {
+      this.transporter = nodemailer.createTransport({
+        host: smtp.host,
+        port: smtp.port,
+        secure: smtp.secure,
+        auth: { user: smtp.user, pass: smtp.pass },
+      });
+    }
+    return smtp;
+  }
+
+  private getTransporter(): Transporter {
     return this.transporter;
   }
 

@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -40,6 +41,11 @@ describe('AuthController', () => {
       get: jest.fn(() => undefined),
     };
 
+    const mockInstanceSettings = {
+      getOidc: jest.fn(async () => ({ enabled: false, disablePasswordLogin: false })),
+      getSmtp: jest.fn(async () => ({ enabled: true })),
+    };
+
     mockResponse = {
       cookie: jest.fn(),
       clearCookie: jest.fn(),
@@ -55,6 +61,7 @@ describe('AuthController', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuditLogService, useValue: mockAuditLogService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: InstanceSettingsService, useValue: mockInstanceSettings },
       ],
     }).compile();
 

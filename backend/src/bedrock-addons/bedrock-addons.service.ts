@@ -701,11 +701,11 @@ export class BedrockAddonsService {
   }
 
   private async getCurseForgeApiKey(userId: number) {
-    const settings = await this.settingsService.getSettings(userId);
-    if (!settings?.cfApiKey) {
+    const cfApiKey = await this.settingsService.getCfApiKey(userId);
+    if (!cfApiKey) {
       throw new BadRequestException('CurseForge API key not configured. Please add it in settings.');
     }
-    return settings.cfApiKey;
+    return cfApiKey;
   }
 
   private async getCurseForgeBedrockGameId(client: AxiosInstance) {

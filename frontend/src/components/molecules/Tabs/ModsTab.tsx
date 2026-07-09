@@ -75,8 +75,9 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
     setIsImporting(true);
     try {
       const settings = await getSettings();
-      if (settings.cfApiKey) {
-        updateConfig("cfApiKey", settings.cfApiKey);
+      // The global CurseForge key is write-only and injected server-side on
+      // save, so we can only confirm that one is configured, not read it.
+      if (settings.hasCfApiKey) {
         mcToast.success(t("apiKeyImported"));
       } else {
         mcToast.error(t("noApiKeyConfigured"));

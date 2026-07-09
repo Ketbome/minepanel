@@ -29,8 +29,21 @@ backend/src/
 |- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
+|- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
+|- common/crypto/           Secret encryption at rest (AES-GCM, key derived from JWT_SECRET)
 |- database/                TypeORM/sql.js setup
 ```
+
+Integration settings & secrets:
+
+- SMTP and OIDC are read via `InstanceSettingsService` (module `settings/`), which merges
+  DB values over `.env` (DB wins). `auth-mail.service.ts` and `oidc.service.ts` consume it and
+  re-read on change via `registerResetHandler`; do not read `config.get('smtp'|'oidc')` directly.
+- Secrets (SMTP pass, OIDC client secret, CurseForge API key) are stored **encrypted** using
+  `common/crypto/secret-cipher.ts` and are **write-only** over HTTP: responses expose booleans
+  (`hasPassword`, `hasCfApiKey`, ...), never the value. The CurseForge key is decrypted only
+  server-side (`SettingsService.getCfApiKey`) and injected into the generated compose plaintext
+  so itzg reads it. Admin-only endpoints live in `users/controllers/integration-settings.controller.ts`.
 
 Primary runtime relationship:
 

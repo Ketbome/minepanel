@@ -48,6 +48,7 @@ describe('ServerManagementController', () => {
 
     const mockSettingsService = {
       getSettings: jest.fn(),
+      getCfApiKey: jest.fn(async () => ''),
     };
 
     const mockProxyService = {

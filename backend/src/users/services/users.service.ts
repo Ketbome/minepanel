@@ -248,7 +248,7 @@ export class UsersService {
       return { requiresConfirmation: false, user };
     }
 
-    if (!this.authMailService.isConfigured()) {
+    if (!(await this.authMailService.isConfigured())) {
       user.email = nextEmail;
       return {
         requiresConfirmation: false,

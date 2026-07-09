@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Settings } from '../entities/settings.entity';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { UsersService } from 'src/users/services/users.service';
+import { decryptSecret, encryptSecret } from 'src/common/crypto/secret-cipher';
 
 const DEFAULT_AUDIT_RETENTION_DAYS = 15;
 
@@ -116,8 +117,22 @@ export class SettingsService {
       delete (dto as any).auditRetentionDays;
     }
 
+    // CurseForge API key is a write-only secret: omitted keeps, '' clears, a
+    // value is stored encrypted. It is decrypted only server-side (getCfApiKey).
+    if (dto.cfApiKey !== undefined) {
+      settings.cfApiKey = dto.cfApiKey === '' ? (null as any) : encryptSecret(dto.cfApiKey);
+      delete (dto as any).cfApiKey;
+    }
+
     Object.assign(settings, dto);
     return this.settingsRepo.save(settings);
+  }
+
+  // Returns the decrypted CurseForge API key for server-side use (compose
+  // generation, CurseForge/Bedrock API calls). Never expose this over HTTP.
+  async getCfApiKey(userId: number): Promise<string> {
+    const settings = await this.settingsRepo.findOne({ where: { userId } });
+    return settings?.cfApiKey ? decryptSecret(settings.cfApiKey) : '';
   }
 
   private sanitizeJavaServerDefaults(defaults: Record<string, any>): Record<string, any> {

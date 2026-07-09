@@ -8,6 +8,7 @@ import { Response, Request } from 'express';
 import { AcceptInvitationDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SetupAdminDto } from './dtos/auth.dto';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { setAuthCookies } from './utils/auth-cookies';
 
 @Controller('auth')
@@ -16,6 +17,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly auditLogService: AuditLogService,
     private readonly configService: ConfigService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   @Public()
@@ -31,7 +33,7 @@ export class AuthController {
     @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    this.assertPasswordLoginEnabled();
+    await this.assertPasswordLoginEnabled();
 
     const user = await this.authService.validateUser(body.username, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
@@ -56,7 +58,7 @@ export class AuthController {
   @Public()
   @Post('setup-admin')
   async setupAdmin(@Body() body: SetupAdminDto, @Res({ passthrough: true }) res: Response) {
-    this.assertPasswordLoginEnabled();
+    await this.assertPasswordLoginEnabled();
 
     const tokens = await this.authService.createInitialAdmin(body);
     setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
@@ -191,9 +193,9 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
-  private assertPasswordLoginEnabled(): void {
-    const oidc = this.configService.get('oidc');
-    if (oidc?.enabled && oidc?.disablePasswordLogin) {
+  private async assertPasswordLoginEnabled(): Promise<void> {
+    const oidc = await this.instanceSettings.getOidc();
+    if (oidc.enabled && oidc.disablePasswordLogin) {
       throw new ForbiddenException('Password login is disabled; use single sign-on');
     }
   }

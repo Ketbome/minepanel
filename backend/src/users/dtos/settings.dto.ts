@@ -138,8 +138,8 @@ export class UpdateSettingsDto {
 }
 
 export class SettingsResponseDto {
-  cfApiKey?: string;
-  discordWebhook?: string;
+  hasCfApiKey?: boolean;
+  hasDiscordWebhook?: boolean;
   language: string;
   preferences?: Record<string, any>;
   proxy?: {
