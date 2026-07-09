@@ -6,6 +6,7 @@ import { ServerManagementModule } from './server-management/server-management.mo
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import config from 'src/config';
 import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
@@ -27,6 +28,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
       load: [config],
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{ ttl: seconds(60), limit: 10 }]),
     DatabaseModule,
     UsersModule,
     ServerManagementModule,

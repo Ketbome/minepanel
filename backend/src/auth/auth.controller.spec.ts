@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { AuditLogService } from 'src/users/services/audit-log.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -63,7 +64,10 @@ describe('AuthController', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: InstanceSettingsService, useValue: mockInstanceSettings },
       ],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);

@@ -2,6 +2,7 @@ import { Controller, Post, Body, ForbiddenException, UnauthorizedException, UseG
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/auth.guard';
 import { Public } from './decorators/public.decorator';
 import { Response, Request } from 'express';
@@ -27,7 +28,8 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(AuthGuard('local'))
+  @Throttle({ default: { limit: 10, ttl: seconds(60) } })
+  @UseGuards(ThrottlerGuard, AuthGuard('local'))
   @Post('login')
   async login(
     @Body() body: LoginDto,
@@ -115,6 +117,8 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: seconds(300) } })
+  @UseGuards(ThrottlerGuard)
   @Post('invitations/accept')
   async acceptInvitation(@Body() body: AcceptInvitationDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.acceptInvitation(body.token, body.username, body.password, body.email);
@@ -156,6 +160,8 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: seconds(300) } })
+  @UseGuards(ThrottlerGuard)
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     await this.authService.createPasswordReset(body.email);
@@ -166,6 +172,8 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: seconds(300) } })
+  @UseGuards(ThrottlerGuard)
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
     await this.authService.resetPassword(body.token, body.password);

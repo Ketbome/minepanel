@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, Optional } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, InternalServerErrorException, Optional } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
@@ -15,6 +15,16 @@ import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { Users } from 'src/users/entities/users.entity';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+
+// Accepts an ISO 8601 timestamp, a Unix timestamp, or a Go-style duration (e.g. "10m", "1h30m").
+// Anything else is rejected so the value can never break out of the `docker logs --since` argument.
+const LOGS_SINCE_PATTERN = /^(?:\d{1,14}(?:\.\d{1,9})?|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})?|(?:\d+(?:ns|us|µs|ms|s|m|h))+)$/;
+
+function assertValidSince(since: string): void {
+  if (!LOGS_SINCE_PATTERN.test(since)) {
+    throw new BadRequestException('Invalid "since" value: expected an ISO 8601 timestamp, a Unix timestamp, or a duration like "10m" or "1h".');
+  }
+}
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
   'onlineMode',
@@ -82,7 +92,7 @@ export class ServerManagementController {
 
   private async requireAdmin(req): Promise<Users> {
     if (!this.usersService || !this.accessControlService) {
-      return null;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     if (!this.accessControlService.isAdmin(user)) {
@@ -94,7 +104,7 @@ export class ServerManagementController {
 
   private async requireServerAccess(req, serverId: string): Promise<Users> {
     if (!this.usersService || !this.accessControlService) {
-      return null;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertServerAccess(user, serverId);
@@ -139,7 +149,7 @@ export class ServerManagementController {
     }
 
     if (!this.usersService || !this.accessControlService) {
-      return allStatus;
+      throw new InternalServerErrorException('Access control is not available');
     }
 
     const user = await this.getCurrentUser(req);
@@ -151,7 +161,7 @@ export class ServerManagementController {
   async getAllServersResources(@Request() req) {
     const resources = await this.managementService.getAllServersResources();
     if (!this.usersService || !this.accessControlService) {
-      return resources;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(resources)));
@@ -585,6 +595,9 @@ export class ServerManagementController {
     const resolvedLines = typeof idOrLines === 'number' && lines === undefined ? idOrLines : lines;
     const lineCount = resolvedLines && resolvedLines > 0 ? Math.min(resolvedLines, 10000) : 100;
 
+    if (since) {
+      assertValidSince(since);
+    }
     if (stream === 'true' && since) {
       return this.managementService.getServerLogsStream(resolved.id, lineCount, since);
     }
@@ -598,6 +611,9 @@ export class ServerManagementController {
   async getServerLogsStream(@Request() req, @Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string) {
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertViewLogs(user, id);
+    if (since) {
+      assertValidSince(since);
+    }
     const lineCount = lines && lines > 0 ? Math.min(lines, 5000) : 500;
     return this.managementService.getServerLogsStream(id, lineCount, since);
   }
@@ -606,6 +622,7 @@ export class ServerManagementController {
   async getServerLogsSince(@Request() req, @Param('id') id: string, @Param('timestamp') timestamp: string) {
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertViewLogs(user, id);
+    assertValidSince(timestamp);
     return this.managementService.getServerLogsSince(id, timestamp);
   }
 

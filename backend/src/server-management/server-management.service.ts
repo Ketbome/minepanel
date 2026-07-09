@@ -27,14 +27,9 @@ const DOCKER_COMMANDS = {
   // Single command to get all running containers stats at once (much faster)
   STATS_ALL: String.raw`docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
-  LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   // Bedrock: TODO - commands disabled due to TTY/permission issues with send-command
   EXEC_BEDROCK: (_containerId: string, _command: string) => {
     return `echo "Commands not supported for Bedrock servers yet"`;
-  },
-  // Fix permissions for Bedrock (needs UID/GID 1000)
-  FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
-    return `docker run --rm -v "${hostPath}:/data" alpine chown -R ${uid}:${gid} /data`;
   },
   RESTIC_SNAPSHOTS: (serverId: string) => `docker exec ${serverId}-backup restic snapshots --json`,
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
@@ -1241,14 +1236,14 @@ export class ServerManagementService {
         };
       }
 
-      let dockerCommand: string;
+      let logs: string;
       if (since) {
-        dockerCommand = `docker logs --since ${since} --timestamps ${containerId} 2>&1`;
+        const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--since', since, '--timestamps', containerId]);
+        logs = stdout + stderr;
       } else {
-        dockerCommand = `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`;
+        const result = await execAsync(`docker logs --tail ${lines} --timestamps ${containerId} 2>&1`);
+        logs = result.stdout;
       }
-
-      const { stdout: logs } = await execAsync(dockerCommand);
       const logAnalysis = this.analyzeLogs(logs);
 
       let lastTimestamp: string | undefined;
@@ -1323,7 +1318,8 @@ export class ServerManagementService {
         };
       }
 
-      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS_SINCE(containerId, timestamp));
+      const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--since', timestamp, '--timestamps', containerId]);
+      const logs = stdout + stderr;
       const hasNewContent = logs.trim().length > 0;
       const logAnalysis = this.analyzeLogs(logs);
 
@@ -1501,8 +1497,12 @@ export class ServerManagementService {
         // Use defaults
       }
 
-      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${uid}:${gid})...`);
-      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(hostMcDataPath, uid, gid));
+      // Coerce to numeric ids so they can never carry shell metacharacters, even from a tampered compose file
+      const safeUid = /^\d+$/.test(uid) ? uid : '1000';
+      const safeGid = /^\d+$/.test(gid) ? gid : '1000';
+
+      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${safeUid}:${safeGid})...`);
+      await this.executeProcess('docker', ['run', '--rm', '-v', `${hostMcDataPath}:/data`, 'alpine', 'chown', '-R', `${safeUid}:${safeGid}`, '/data']);
       this.logger.log(`Permissions fixed for ${serverId}`);
     } catch (error) {
       this.logger.warn(`Could not fix permissions for ${serverId}: ${(error as Error).message}`);
