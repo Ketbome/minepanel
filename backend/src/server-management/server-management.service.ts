@@ -31,10 +31,6 @@ const DOCKER_COMMANDS = {
   EXEC_BEDROCK: (_containerId: string, _command: string) => {
     return `echo "Commands not supported for Bedrock servers yet"`;
   },
-  // Fix permissions for Bedrock (needs UID/GID 1000)
-  FIX_PERMISSIONS: (hostPath: string, uid = '1000', gid = '1000') => {
-    return `docker run --rm -v "${hostPath}:/data" alpine chown -R ${uid}:${gid} /data`;
-  },
   RESTIC_SNAPSHOTS: (serverId: string) => `docker exec ${serverId}-backup restic snapshots --json`,
   VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
@@ -1501,8 +1497,12 @@ export class ServerManagementService {
         // Use defaults
       }
 
-      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${uid}:${gid})...`);
-      await execAsync(DOCKER_COMMANDS.FIX_PERMISSIONS(hostMcDataPath, uid, gid));
+      // Coerce to numeric ids so they can never carry shell metacharacters, even from a tampered compose file
+      const safeUid = /^\d+$/.test(uid) ? uid : '1000';
+      const safeGid = /^\d+$/.test(gid) ? gid : '1000';
+
+      this.logger.log(`Fixing permissions for Bedrock server ${serverId} (${safeUid}:${safeGid})...`);
+      await this.executeProcess('docker', ['run', '--rm', '-v', `${hostMcDataPath}:/data`, 'alpine', 'chown', '-R', `${safeUid}:${safeGid}`, '/data']);
       this.logger.log(`Permissions fixed for ${serverId}`);
     } catch (error) {
       this.logger.warn(`Could not fix permissions for ${serverId}: ${(error as Error).message}`);

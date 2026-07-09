@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, Matches } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
@@ -212,10 +212,12 @@ export class ServerConfigDto {
   simulationDistance?: string;
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'uid must be a numeric string' })
   @IsOptional()
   uid?: string;
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'gid must be a numeric string' })
   @IsOptional()
   gid?: string;
 
