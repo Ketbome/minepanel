@@ -138,20 +138,12 @@ export default withMermaid(
         }),
       ],
 
-      // Analytics (Umami, self-hosted)
+      // Analytics: anonymous, cookieless page views via self-hosted Umami.
       [
         'script',
         {
           defer: '',
           src: 'https://umami.ketbome.com/script.js',
-          'data-website-id': '52729fa7-57f4-43e9-a142-f3ec0be2f1b6',
-        },
-      ],
-      [
-        'script',
-        {
-          defer: '',
-          src: 'https://umami.ketbome.com/recorder.js',
           'data-website-id': '52729fa7-57f4-43e9-a142-f3ec0be2f1b6',
         },
       ],
@@ -298,7 +290,7 @@ export default withMermaid(
       ],
 
       footer: {
-        message: 'Released under the MIT License.',
+        message: 'Released under the MIT License. · Anonymous, cookieless analytics (self-hosted Umami).',
         copyright: 'Copyright © 2024-2026 Ketbome',
       },
 
