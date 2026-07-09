@@ -55,6 +55,7 @@ flowchart LR
 | -------------- | ------------------------ | ---------------- |
 | **Modrinth**   | Mods, datapacks, plugins | ❌ No            |
 | **CurseForge** | Modpacks, mods           | ✅ Yes           |
+| **Feed The Beast** | FTB modpacks          | ❌ No            |
 | **Spiget**     | Spigot/Paper plugins     | ❌ No            |
 
 ::: tip Learn More
@@ -377,6 +378,21 @@ Recommended workflow:
 1. Keep a fixed pack version such as `2.8.1`
 2. Leave update check enabled for the first install
 3. Only enable `SKIP_GTNH_UPDATE_CHECK` after the server has been installed once
+
+## Feed The Beast (FTBA) {#ftba}
+
+Minepanel supports [Feed The Beast](https://www.feed-the-beast.com/) modpacks through the dedicated **FTBA** server type. No CurseForge API key is needed — FTB serves the packs directly. The pack pins its own Minecraft and loader version, so you don't set a Minecraft version by hand.
+
+Available FTBA fields in Minepanel:
+
+- `FTB_MODPACK_ID` — the numeric modpack ID from the pack's page on feed-the-beast.com (required)
+- `FTB_MODPACK_VERSION_ID` — a specific version ID; leave it empty to always install the latest
+
+How to set it up:
+
+1. Create/edit a server and pick **Feed The Beast** as the server type (under **Others**)
+2. Open the **Mods** tab and enter the **FTB Modpack ID**
+3. Optionally set a **FTB Version ID** to lock the pack to a specific version
 
 ## CurseForge Files (Individual Mods) {#curseforge-files}
 
