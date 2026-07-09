@@ -27,7 +27,6 @@ const DOCKER_COMMANDS = {
   // Single command to get all running containers stats at once (much faster)
   STATS_ALL: String.raw`docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
-  LOGS_SINCE: (containerId: string, since: string) => `docker logs --since ${since} --timestamps ${containerId} 2>&1`,
   // Bedrock: TODO - commands disabled due to TTY/permission issues with send-command
   EXEC_BEDROCK: (_containerId: string, _command: string) => {
     return `echo "Commands not supported for Bedrock servers yet"`;
@@ -1241,14 +1240,14 @@ export class ServerManagementService {
         };
       }
 
-      let dockerCommand: string;
+      let logs: string;
       if (since) {
-        dockerCommand = `docker logs --since ${since} --timestamps ${containerId} 2>&1`;
+        const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--since', since, '--timestamps', containerId]);
+        logs = stdout + stderr;
       } else {
-        dockerCommand = `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`;
+        const result = await execAsync(`docker logs --tail ${lines} --timestamps ${containerId} 2>&1`);
+        logs = result.stdout;
       }
-
-      const { stdout: logs } = await execAsync(dockerCommand);
       const logAnalysis = this.analyzeLogs(logs);
 
       let lastTimestamp: string | undefined;
@@ -1323,7 +1322,8 @@ export class ServerManagementService {
         };
       }
 
-      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS_SINCE(containerId, timestamp));
+      const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--since', timestamp, '--timestamps', containerId]);
+      const logs = stdout + stderr;
       const hasNewContent = logs.trim().length > 0;
       const logAnalysis = this.analyzeLogs(logs);
 
