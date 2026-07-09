@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, Optional } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, InternalServerErrorException, Optional } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
@@ -92,7 +92,7 @@ export class ServerManagementController {
 
   private async requireAdmin(req): Promise<Users> {
     if (!this.usersService || !this.accessControlService) {
-      return null;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     if (!this.accessControlService.isAdmin(user)) {
@@ -104,7 +104,7 @@ export class ServerManagementController {
 
   private async requireServerAccess(req, serverId: string): Promise<Users> {
     if (!this.usersService || !this.accessControlService) {
-      return null;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertServerAccess(user, serverId);
@@ -149,7 +149,7 @@ export class ServerManagementController {
     }
 
     if (!this.usersService || !this.accessControlService) {
-      return allStatus;
+      throw new InternalServerErrorException('Access control is not available');
     }
 
     const user = await this.getCurrentUser(req);
@@ -161,7 +161,7 @@ export class ServerManagementController {
   async getAllServersResources(@Request() req) {
     const resources = await this.managementService.getAllServersResources();
     if (!this.usersService || !this.accessControlService) {
-      return resources;
+      throw new InternalServerErrorException('Access control is not available');
     }
     const user = await this.getCurrentUser(req);
     const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(resources)));
