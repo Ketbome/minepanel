@@ -1,27 +1,50 @@
 # Security Policy
 
+## Supported Versions
+
+Security fixes are applied to the latest release on the `main` branch.
+
+| Version        | Supported          |
+| -------------- | ------------------ |
+| `main` (latest)| :white_check_mark: |
+| older releases | :x:                |
+
 ## Reporting a Vulnerability
 
-Please **do not** open a public issue for security vulnerabilities.
+Please **do not** open a public issue, PR, or discussion for security vulnerabilities.
 
-Report privately through one of these channels:
+Report privately using **GitHub Private Vulnerability Reporting**:
+[open a new advisory](https://github.com/Ketbome/minepanel/security/advisories/new).
+This keeps the report private until a fix is released.
 
-1. **GitHub Private Vulnerability Reporting** (preferred) — open the
-   [Security Advisories](https://github.com/Ketbome/minepanel/security/advisories/new)
-   page of this repo and submit a report. This keeps the details private until a fix is released.
-2. **Email** — `<your-security-contact-email>`.
+Include as much as you can:
 
-Please include:
-
-- A description of the issue and its impact.
-- Steps to reproduce (a proof of concept helps a lot).
-- Affected version/commit and configuration if relevant.
+- Type of issue and its impact.
+- Affected version/commit and relevant configuration.
+- Step-by-step reproduction and, if possible, a proof of concept.
+- Any suggested mitigation.
 
 ## What to Expect
 
-- Acknowledgement of your report as soon as possible.
-- An assessment and, when confirmed, a fix on a private branch before public disclosure.
-- Credit in the release notes / advisory if you'd like (let us know your preferred name or handle, or if you prefer to stay anonymous).
+- **Acknowledgement** within 3 business days.
+- **Initial assessment** within 7 business days.
+- Confirmed issues are fixed on a private branch and released before public disclosure.
+  We aim to resolve high/critical issues within 30 days and will keep you updated on progress.
+
+## Disclosure Policy
+
+We follow **coordinated disclosure**: please give us reasonable time to release a fix
+before disclosing publicly. Once a fix is out, we'll publish an advisory and, if you'd
+like, credit you (tell us your preferred name/handle, or if you prefer to stay anonymous).
+
+## Safe Harbor
+
+We will not pursue or support legal action against researchers who, in good faith:
+
+- Only test against their **own** instances,
+- Avoid privacy violations, data destruction, and service degradation,
+- Do not access or modify data that isn't theirs, and
+- Report promptly and give us time to remediate before public disclosure.
 
 ## Scope
 
@@ -36,6 +59,6 @@ Areas of particular interest:
 - Path traversal in the files/world modules.
 - Privilege escalation between users or between a container and the host.
 
-## Supported Versions
-
-Security fixes are applied to the latest released version on the `main` branch.
+Generally **out of scope**: findings that require a pre-compromised host or Docker daemon,
+denial of service from unrealistic resource limits, and issues in third-party dependencies
+without a demonstrated impact on Minepanel (please report those upstream).
