@@ -4,6 +4,10 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not set. Generate one with: openssl rand -base64 32');
+  }
+
   const app = await NestFactory.create(AppModule, {
     cors: {
       origin: [process.env.FRONTEND_URL],
