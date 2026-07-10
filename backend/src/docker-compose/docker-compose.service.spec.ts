@@ -208,6 +208,20 @@ describe('DockerComposeService', () => {
       expect(config.motd).toBe('An incredible Minecraft server');
     });
 
+    it('should persist the default port when the configured port is empty', async () => {
+      const config = (service as any).createDefaultConfig('default-port');
+      config.port = '';
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.ports).toContain('25565:25565');
+      expect(config.port).toBe('25565');
+    });
+
     it('should generate mc service without container_name', async () => {
       const config = (service as any).createDefaultConfig('survival');
 

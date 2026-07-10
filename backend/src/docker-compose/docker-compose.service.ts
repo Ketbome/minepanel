@@ -1222,9 +1222,7 @@ export class DockerComposeService {
     const reserveProxyPort = (config.edition ?? 'JAVA') === 'JAVA' && !usesProxy && (proxyEnabled || await this.isMcRouterRunning());
     const reservedPorts = reserveProxyPort ? [Number.parseInt(defaultPort)] : [];
     const availablePort = await this.findAvailablePort(requestedPort, config.id, reservedPorts);
-    if (availablePort !== requestedPort) {
-      config.port = availablePort.toString();
-    }
+    config.port = availablePort.toString();
     return config.port;
   }
 
