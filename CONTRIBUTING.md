@@ -278,7 +278,19 @@ Want to add a new language?
    };
    ```
 
-3. Test it
+3. Add the language to `frontend/src/components/ui/language-selector.tsx`:
+
+   ```typescript
+   const languages = [
+     // ...
+     { code: 'fr' as const, label: 'french', flag: '🇫🇷', name: 'Français' },
+   ];
+   ```
+
+   The `code` must match the locale registered in `translations`. The selector
+   displays `flag` and `name` directly.
+
+4. Test it
 
 ## Documentation
 
