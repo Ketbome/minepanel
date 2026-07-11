@@ -1,4 +1,4 @@
-import { TranslationKey } from './en';
+import type { TranslationKey } from './en';
 
 export const es: Record<TranslationKey, string> = {
   // ===========================

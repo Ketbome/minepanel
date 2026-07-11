@@ -1,4 +1,6 @@
-export const ru = {
+import type { TranslationKey } from './en';
+
+export const ru: Record<TranslationKey, string> = {
   // ===========================
   // AUTHENTICATION
   // ===========================
@@ -1689,5 +1691,3 @@ export const ru = {
   tabGroupMonitoring: 'Мониторинг',
   back: 'Назад',
 };
-
-export type TranslationKey = keyof typeof ru;

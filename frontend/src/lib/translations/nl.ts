@@ -1,4 +1,4 @@
-import { TranslationKey } from '@/lib/translations/en';
+import type { TranslationKey } from './en';
 
 export const nl: Record<TranslationKey, string> = {
   // ===========================

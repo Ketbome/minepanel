@@ -152,7 +152,8 @@ Routing and data flow:
 
 i18n:
 
-- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`).
+- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`); the build fails if a dictionary is missing a key.
+- Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 
 UI base components:
