@@ -1,6 +1,6 @@
 import type { TranslationKey } from './en';
 
-export const pl: Partial<Record<TranslationKey, string>> = {
+export const pl: Record<TranslationKey, string> = {
   // ===========================
   // UWIERZYTELNIANIE
   // ===========================

@@ -263,13 +263,13 @@ Want to add a new language?
    ```typescript
    import type { TranslationKey } from './en';
 
-   export const fr: Partial<Record<TranslationKey, string>> = {
-     // Add only reviewed French translations.
+   export const fr: Record<TranslationKey, string> = {
+     // Copy from en.ts and translate every key.
    };
    ```
 
-   Missing keys fall back to English, so a translation group can add approved
-   phrases incrementally.
+   Dictionaries must be complete: the build fails if any key from `en.ts` is
+   missing.
 
 2. Register its dictionary and display metadata once in `frontend/src/lib/translations/index.ts`:
 
@@ -302,7 +302,6 @@ Want to add a new language?
    ```
 
    Also select the new locale on the login page and in **Settings → Preferences**.
-   In development, the browser console reports missing keys without failing the build.
 
 ## Documentation
 

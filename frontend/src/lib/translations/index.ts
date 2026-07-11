@@ -18,9 +18,6 @@ const locales = {
 
 export type Language = keyof typeof locales;
 export type TranslationKey = keyof typeof en;
-type LocaleDictionary = Partial<Record<TranslationKey, string>>;
-
-const translationKeys = Object.keys(en) as TranslationKey[];
 
 export const translations = Object.fromEntries(
   Object.entries(locales).map(([code, { dictionary }]) => [code, dictionary]),
@@ -31,11 +28,3 @@ export const languageOptions = Object.entries(locales).map(([code, { flag, name 
   flag,
   name,
 }));
-
-export function translate(dictionary: LocaleDictionary, key: TranslationKey): string {
-  return dictionary[key] ?? en[key] ?? key;
-}
-
-export function getMissingTranslationKeys(language: Language): TranslationKey[] {
-  return translationKeys.filter((key) => translations[language][key] === undefined);
-}
