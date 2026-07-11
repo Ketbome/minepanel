@@ -4,6 +4,7 @@ import { nl } from './nl';
 import { de } from './de';
 import { pl } from './pl';
 import { fr } from './fr';
+import { ru } from './ru';
 
 export const translations = {
   es,
@@ -12,6 +13,7 @@ export const translations = {
   de,
   pl,
   fr,
+  ru,
 };
 
 export type Language = keyof typeof translations;

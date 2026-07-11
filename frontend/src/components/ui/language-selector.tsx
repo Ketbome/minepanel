@@ -17,6 +17,7 @@ const languages = [
   { code: 'de' as const, label: 'german', flag: '🇩🇪', name: 'Deutsch' },
   { code: 'fr' as const, label: 'french', flag: '🇫🇷', name: 'Français' },
   { code: 'pl' as const, label: 'polish', flag: '🇵🇱', name: 'Polski' },
+  { code: 'ru' as const, label: 'russian', flag: '🇷🇺', name: 'Русский' },
 ];
 
 export function LanguageSelector() {
