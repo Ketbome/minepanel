@@ -118,7 +118,7 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/lib/store/servers-store.ts`
-- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`)
+- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
 - `next.config.ts` - Turbopack config, standalone output, image/compiler options.
 - `package.json`
@@ -152,7 +152,7 @@ Routing and data flow:
 
 i18n:
 
-- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`).
+- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`).
 - Keep key naming consistent; avoid one-off names that break translation structure.
 
 UI base components:

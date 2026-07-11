@@ -290,7 +290,15 @@ Want to add a new language?
    The `code` must match the locale registered in `translations`. The selector
    displays `flag` and `name` directly.
 
-4. Test it
+4. Add the code to the `AppLanguage` type in `frontend/src/services/settings/settings.service.ts`:
+
+   ```typescript
+   type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl' | 'ru';
+   ```
+
+   The build fails if the locale is missing here.
+
+5. Test it
 
 ## Documentation
 

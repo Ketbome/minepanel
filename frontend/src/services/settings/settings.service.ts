@@ -1,6 +1,6 @@
 import api from '../axios.service';
 
-type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl';
+type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl' | 'ru';
 
 export interface ProxySettings {
   enabled: boolean;
