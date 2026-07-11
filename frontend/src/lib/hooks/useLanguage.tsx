@@ -9,7 +9,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import { translations, Language, TranslationKey } from '../translations';
+import { getMissingTranslationKeys, translations, translate, Language, TranslationKey } from '../translations';
 import { getPublicEnv } from '@/lib/public-env';
 
 interface LanguageContextType {
@@ -34,6 +34,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      for (const locale of Object.keys(translations) as Language[]) {
+        const missingKeys = getMissingTranslationKeys(locale);
+        if (missingKeys.length) {
+          console.warn(
+            `[Minepanel] Missing ${locale} translations: ${missingKeys.join(', ')}. Falling back to English.`,
+          );
+        }
+      }
+    }
+
     // Load language from localStorage on mount
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && translations[savedLanguage]) {
@@ -48,7 +59,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: TranslationKey): string => {
-      return (translations[language] as Record<TranslationKey, string>)[key] || key;
+      return translate(translations[language], key);
     },
     [language],
   );

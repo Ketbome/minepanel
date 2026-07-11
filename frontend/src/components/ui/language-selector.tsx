@@ -2,6 +2,7 @@
 
 import { Check, Globe } from 'lucide-react';
 import { useLanguage } from '../../lib/hooks/useLanguage';
+import { languageOptions } from '../../lib/translations';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,19 +11,9 @@ import {
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
 
-const languages = [
-  { code: 'es' as const, label: 'spanish', flag: '🇪🇸', name: 'Español' },
-  { code: 'en' as const, label: 'english', flag: '🇺🇸', name: 'English' },
-  { code: 'nl' as const, label: 'dutch', flag: '🇳🇱', name: 'Nederlands' },
-  { code: 'de' as const, label: 'german', flag: '🇩🇪', name: 'Deutsch' },
-  { code: 'fr' as const, label: 'french', flag: '🇫🇷', name: 'Français' },
-  { code: 'pl' as const, label: 'polish', flag: '🇵🇱', name: 'Polski' },
-  { code: 'ru' as const, label: 'russian', flag: '🇷🇺', name: 'Русский' },
-];
-
 export function LanguageSelector() {
   const { language, setLanguage } = useLanguage();
-  const currentLanguage = languages.find((lang) => lang.code === language);
+  const currentLanguage = languageOptions.find((lang) => lang.code === language);
 
   return (
     <DropdownMenu>
@@ -39,7 +30,7 @@ export function LanguageSelector() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-gray-800 border-gray-700">
-        {languages.map((lang) => (
+        {languageOptions.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => setLanguage(lang.code)}

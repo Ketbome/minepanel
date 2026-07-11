@@ -1,4 +1,6 @@
-export const fr = {
+import type { TranslationKey } from './en';
+
+export const fr: Partial<Record<TranslationKey, string>> = {
   // ===========================
   // AUTHENTICATION
   // ===========================
@@ -907,7 +909,7 @@ export const fr = {
     'Configurez le port RCON dans l’onglet Général pour utiliser les commandes (le mot de passe est optionnel)',
   commandExecutedSuccessfully: 'Commande exécutée avec succès',
   errorExecutingCommand: 'Erreur lors de l’exécution de la commande',
-  
+
   // Command Labels
   cmdListPlayers: 'Lister les joueurs',
   cmdTeleportPlayer: 'Téléporter un joueur',
@@ -1690,5 +1692,3 @@ export const fr = {
   tabGroupMonitoring: 'Surveillance',
   back: 'Retour',
 };
-
-export type TranslationKey = keyof typeof fr;

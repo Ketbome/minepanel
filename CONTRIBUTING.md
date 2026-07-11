@@ -261,44 +261,48 @@ Want to add a new language?
 1. Create `frontend/src/lib/translations/fr.ts`:
 
    ```typescript
-   export const fr = {
-     // Copy from en.ts and translate
+   import type { TranslationKey } from './en';
+
+   export const fr: Partial<Record<TranslationKey, string>> = {
+     // Add only reviewed French translations.
    };
    ```
 
-2. Register it in `frontend/src/lib/translations/index.ts`:
+   Missing keys fall back to English, so a translation group can add approved
+   phrases incrementally.
+
+2. Register its dictionary and display metadata once in `frontend/src/lib/translations/index.ts`:
 
    ```typescript
    import { fr } from "./fr";
 
-   export const translations = {
-     en,
-     es,
-     fr,
+   const locales = {
+     // ...
+     fr: { dictionary: fr, flag: '🇫🇷', name: 'Français' },
    };
    ```
 
-3. Add the language to `frontend/src/components/ui/language-selector.tsx`:
+   `translations`, `Language`, and `languageOptions` are derived from this registry.
+   The locale code must match the dictionary import.
 
-   ```typescript
-   const languages = [
-     // ...
-     { code: 'fr' as const, label: 'french', flag: '🇫🇷', name: 'Français' },
-   ];
+3. Do not edit `LanguageSwitcher`, `LanguageSelector`, or the settings service.
+   Both selectors render `languageOptions`, and the settings API uses the canonical
+   `Language` type from the registry.
+
+   Discord webhook notifications are separate backend translations and currently
+   support only `en`, `es`, and `nl`. Add a backend translation only when the new
+   locale must also be used in notifications.
+
+4. Test it:
+
+   ```bash
+   cd frontend
+   npm run lint
+   npm run build
    ```
 
-   The `code` must match the locale registered in `translations`. The selector
-   displays `flag` and `name` directly.
-
-4. Add the code to the `AppLanguage` type in `frontend/src/services/settings/settings.service.ts`:
-
-   ```typescript
-   type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl' | 'ru';
-   ```
-
-   The build fails if the locale is missing here.
-
-5. Test it
+   Also select the new locale on the login page and in **Settings → Preferences**.
+   In development, the browser console reports missing keys without failing the build.
 
 ## Documentation
 

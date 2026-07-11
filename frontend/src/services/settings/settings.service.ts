@@ -1,6 +1,5 @@
+import type { Language } from '@/lib/translations';
 import api from '../axios.service';
-
-type AppLanguage = 'en' | 'es' | 'nl' | 'de' | 'fr' | 'pl' | 'ru';
 
 export interface ProxySettings {
   enabled: boolean;
@@ -39,7 +38,7 @@ export interface UserSettings {
   // Secrets are write-only: the API returns whether they are set, not the value.
   hasCfApiKey?: boolean;
   hasDiscordWebhook?: boolean;
-  language?: AppLanguage;
+  language?: Language;
   proxy?: ProxySettings;
   network?: NetworkSettings;
   javaServerDefaults?: JavaServerDefaults | null;
@@ -97,7 +96,7 @@ export interface UpdateIntegrationSettings {
 export interface UpdateUserSettings {
   cfApiKey?: string;
   discordWebhook?: string;
-  language?: AppLanguage;
+  language?: Language;
   proxy?: {
     proxyEnabled?: boolean;
     proxyBaseDomain?: string;

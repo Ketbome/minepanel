@@ -6,15 +6,36 @@ import { pl } from './pl';
 import { fr } from './fr';
 import { ru } from './ru';
 
-export const translations = {
-  es,
-  en,
-  nl,
-  de,
-  pl,
-  fr,
-  ru,
+const locales = {
+  es: { dictionary: es, flag: '🇪🇸', name: 'Español' },
+  en: { dictionary: en, flag: '🇺🇸', name: 'English' },
+  nl: { dictionary: nl, flag: '🇳🇱', name: 'Nederlands' },
+  de: { dictionary: de, flag: '🇩🇪', name: 'Deutsch' },
+  pl: { dictionary: pl, flag: '🇵🇱', name: 'Polski' },
+  fr: { dictionary: fr, flag: '🇫🇷', name: 'Français' },
+  ru: { dictionary: ru, flag: '🇷🇺', name: 'Русский' },
 };
 
-export type Language = keyof typeof translations;
+export type Language = keyof typeof locales;
 export type TranslationKey = keyof typeof en;
+type LocaleDictionary = Partial<Record<TranslationKey, string>>;
+
+const translationKeys = Object.keys(en) as TranslationKey[];
+
+export const translations = Object.fromEntries(
+  Object.entries(locales).map(([code, { dictionary }]) => [code, dictionary]),
+) as { [Code in Language]: (typeof locales)[Code]['dictionary'] };
+
+export const languageOptions = Object.entries(locales).map(([code, { flag, name }]) => ({
+  code: code as Language,
+  flag,
+  name,
+}));
+
+export function translate(dictionary: LocaleDictionary, key: TranslationKey): string {
+  return dictionary[key] ?? en[key] ?? key;
+}
+
+export function getMissingTranslationKeys(language: Language): TranslationKey[] {
+  return translationKeys.filter((key) => translations[language][key] === undefined);
+}

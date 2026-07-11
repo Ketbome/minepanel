@@ -189,9 +189,9 @@ Runs on `http://localhost:5173`
 ### Add a translation
 
 1. Create `frontend/src/lib/translations/[lang].ts`
-2. Copy from `en.ts` and translate
-3. Register in `index.ts`
-4. Test it
+2. Add only reviewed translations; missing keys fall back to English
+3. Register the dictionary, flag, and native name in `locales` in `index.ts`; both language selectors update automatically
+4. Test it; the development console reports missing keys without failing the build
 
 ### Debug
 
