@@ -1,5 +1,6 @@
 import { defineConfig, HeadConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
+import llmstxt from 'vitepress-plugin-llms';
 
 const hostname = 'https://minepanel.ketbome.com';
 
@@ -412,6 +413,7 @@ export default withMermaid(
     },
 
     vite: {
+      plugins: [llmstxt()],
       build: {
         minify: 'terser',
         terserOptions: {
