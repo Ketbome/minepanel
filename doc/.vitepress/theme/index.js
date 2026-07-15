@@ -1,4 +1,5 @@
-import DefaultTheme from 'vitepress/theme';
+// theme-without-fonts: skips VitePress's bundled Inter (we load Archivo/JetBrains Mono)
+import DefaultTheme from 'vitepress/theme-without-fonts';
 import CounterButton from './components/CounterButton.vue';
 import TerminalInstall from './components/TerminalInstall.vue';
 import TerminalCommand from './components/TerminalCommand.vue';
