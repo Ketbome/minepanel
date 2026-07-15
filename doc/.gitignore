@@ -2,5 +2,6 @@ doc/
 .vitepress/cache/
 .vitepress/dist/
 .vitepress/.temp/
+.redirect-dist/
 node_modules/
 .claude

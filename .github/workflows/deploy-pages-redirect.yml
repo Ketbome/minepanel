@@ -1,0 +1,46 @@
+name: Deploy GitHub Pages Redirect
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-pages-redirect.yml'
+      - 'doc/*.md'
+      - 'doc/scripts/build-pages-redirect.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Build redirect site
+        run: node scripts/build-pages-redirect.mjs
+        working-directory: doc
+
+      - name: Upload redirect site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: doc/.redirect-dist
+
+      - name: Deploy redirect
+        id: deployment
+        uses: actions/deploy-pages@v5
