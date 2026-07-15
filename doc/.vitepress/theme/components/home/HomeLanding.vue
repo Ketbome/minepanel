@@ -14,10 +14,11 @@ const root = ref(null);
 let mm;
 let alive = true;
 
-// Animations are decorative: load GSAP on idle so it never competes with
-// hydration, and skip entrance/reveals on mobile so the SSR-painted hero
-// is never hidden and re-shown (kills LCP on slow devices).
+// Animations are decorative: load GSAP on idle and only on desktop so it
+// never competes with the SSR-painted hero on slow mobile devices.
 onMounted(() => {
+  if (!window.matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)').matches) return;
+
   const start = async () => {
     const mods = await loadGsap();
     if (!mods || !alive) return;
@@ -84,7 +85,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="root" class="mp-landing">
+  <main ref="root" class="mp-landing">
     <div class="mp-ticker" aria-hidden="true">
       <div class="mp-ticker-track" data-gsap="ticker">
         <template v-for="n in 2">
@@ -102,7 +103,7 @@ onBeforeUnmount(() => {
     <HomePoweredBy />
     <HomeDocsMap />
     <HomeCta />
-  </div>
+  </main>
 </template>
 
 <style scoped>

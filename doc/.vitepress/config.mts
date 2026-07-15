@@ -1,12 +1,11 @@
 import { defineConfig, HeadConfig } from 'vitepress';
-import { withMermaid } from 'vitepress-plugin-mermaid';
+import { MermaidMarkdown } from 'vitepress-plugin-mermaid';
 import llmstxt from 'vitepress-plugin-llms';
 
 const hostname = 'https://minepanel.ketbome.com';
 
 // https://vitepress.dev/reference/site-config
-export default withMermaid(
-  defineConfig({
+export default defineConfig({
     lang: 'en-US',
     title: 'Minepanel',
     // Frontmatter titles already include the brand; avoid "… | Minepanel" duplication
@@ -330,6 +329,7 @@ export default withMermaid(
     lastUpdated: true,
 
     markdown: {
+      config: (md) => MermaidMarkdown(md),
       lineNumbers: true,
       image: {
         lazyLoading: true,
@@ -399,12 +399,25 @@ export default withMermaid(
       },
     },
 
-    mermaid: {
-      theme: 'dark',
-    },
-
     vite: {
-      plugins: [llmstxt()],
+      plugins: [
+        llmstxt(),
+        {
+          name: 'mermaid-config',
+          resolveId(id) {
+            if (id === 'virtual:mermaid-config') return '\0virtual:mermaid-config';
+          },
+          load(id) {
+            if (id === '\0virtual:mermaid-config') {
+              return `export default ${JSON.stringify({
+                securityLevel: 'loose',
+                startOnLoad: false,
+                theme: 'dark',
+              })}`;
+            }
+          },
+        },
+      ],
       build: {
         minify: 'terser',
         terserOptions: {
@@ -426,5 +439,4 @@ export default withMermaid(
     transformHtml: (code) => {
       return code;
     },
-  }),
-);
+});

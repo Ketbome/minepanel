@@ -18,7 +18,7 @@
   --mp-acid-soft: #c4ff7a;
   --mp-text: #eef3e4;
   --mp-muted: #a9b699;
-  --mp-dim: #67775a;
+  --mp-dim: #768868;
 
   /* Semantic accents (custom blocks, badges) */
   --mp-info: #5fd7ff;
@@ -648,6 +648,11 @@ html {
 .VPPage {
   padding: 0 !important;
   overflow-x: clip;
+}
+
+.mp-powered-copy p a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ============================================================

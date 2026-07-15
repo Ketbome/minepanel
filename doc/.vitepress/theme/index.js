@@ -1,4 +1,5 @@
 // theme-without-fonts: skips VitePress's bundled Inter (we load Archivo/JetBrains Mono)
+import { defineAsyncComponent } from 'vue';
 import DefaultTheme from 'vitepress/theme-without-fonts';
 import CounterButton from './components/CounterButton.vue';
 import TerminalInstall from './components/TerminalInstall.vue';
@@ -20,6 +21,10 @@ export default {
     app.component('EnvPresetTabs', EnvPresetTabs);
     app.component('NetworkPulseFlow', NetworkPulseFlow);
     app.component('HomeLanding', HomeLanding);
+    app.component(
+      'Mermaid',
+      defineAsyncComponent(() => import('vitepress-plugin-mermaid/Mermaid.vue')),
+    );
     if (DefaultTheme.enhanceApp) {
       DefaultTheme.enhanceApp(ctx);
     }
