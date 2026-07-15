@@ -57,15 +57,11 @@ const current = computed(() => presets.find((preset) => preset.key === active.va
 <style scoped>
 .env-tabs {
   margin: 20px 0 10px;
-  border: 3px solid rgba(73, 95, 60, 0.45);
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(250, 247, 239, 0.92), rgba(237, 231, 216, 0.95));
+  border: 2px solid var(--mp-border-strong);
+  border-radius: 0;
+  background: var(--mp-bg-elev);
+  box-shadow: var(--mp-shadow-acid);
   overflow: hidden;
-}
-
-.dark .env-tabs {
-  border-color: rgba(116, 150, 92, 0.5);
-  background: linear-gradient(180deg, rgba(31, 43, 26, 0.95), rgba(24, 33, 20, 0.95));
 }
 
 .tab-list {
@@ -73,34 +69,39 @@ const current = computed(() => presets.find((preset) => preset.key === active.va
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
-  border-bottom: 2px solid rgba(93, 118, 78, 0.3);
+  border-bottom: 2px solid var(--mp-border);
+  background: var(--mp-bg-panel);
 }
 
 .tab-btn {
-  border: 2px solid rgba(83, 113, 67, 0.5);
-  border-radius: 5px;
-  padding: 8px 10px;
-  font: 400 10px var(--minecraft-font-ui);
-  color: var(--vp-c-text-2);
-  background: rgba(166, 185, 149, 0.22);
+  border: 2px solid var(--mp-border-strong);
+  border-radius: 0;
+  padding: 8px 12px;
+  font: 700 11px var(--mp-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mp-muted);
+  background: transparent;
   cursor: pointer;
-  transition: transform 0.1s ease, background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .tab-btn:hover {
-  transform: translateY(-1px);
+  border-color: var(--mp-acid);
+  color: var(--mp-text);
 }
 
 .tab-btn.active {
-  color: #f4ffe9;
-  background: var(--vp-c-brand-3);
-  border-color: #2c4422;
+  color: var(--mp-bg);
+  background: var(--mp-acid);
+  border-color: var(--mp-acid);
 }
 
 .tab-desc {
   margin: 0;
-  padding: 10px 14px 2px;
+  padding: 12px 14px 2px;
   font-size: 14px;
+  color: var(--mp-muted);
 }
 
 .env-panel {
@@ -109,16 +110,16 @@ const current = computed(() => presets.find((preset) => preset.key === active.va
 
 .env-panel pre {
   margin: 0;
-  border: 2px solid rgba(72, 104, 55, 0.55);
-  border-radius: 6px;
-  background: #121810;
-  color: #e7f3df;
+  border: 2px solid var(--mp-border);
+  border-radius: 0;
+  background: var(--mp-bg);
+  color: var(--mp-text);
   padding: 12px;
   overflow-x: auto;
 }
 
 .env-panel code {
-  font: 400 13px/1.6 var(--vp-font-family-mono);
+  font: 400 13px/1.6 var(--mp-font-mono);
 }
 
 .panel-fade-enter-active,
@@ -134,7 +135,7 @@ const current = computed(() => presets.find((preset) => preset.key === active.va
 
 @media (max-width: 768px) {
   .tab-btn {
-    font-size: 9px;
+    font-size: 10px;
     padding: 7px 9px;
   }
 }

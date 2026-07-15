@@ -20,32 +20,28 @@
 
 .canvas {
   position: relative;
-  border: 3px solid rgba(73, 95, 60, 0.5);
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(248, 244, 233, 0.95), rgba(234, 227, 209, 0.96));
+  border: 2px solid var(--mp-border-strong);
+  border-radius: 0;
+  background: var(--mp-bg-panel);
+  background-image: linear-gradient(rgba(157, 255, 63, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(157, 255, 63, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  box-shadow: var(--mp-shadow-acid);
   min-height: 250px;
   overflow: hidden;
-}
-
-.dark .canvas {
-  border-color: rgba(116, 150, 92, 0.52);
-  background: linear-gradient(180deg, rgba(28, 39, 24, 0.96), rgba(21, 30, 18, 0.96));
 }
 
 .node {
   position: absolute;
   z-index: 2;
-  border: 2px solid rgba(56, 82, 45, 0.7);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid var(--mp-border-strong);
+  border-radius: 0;
+  background: var(--mp-bg);
   padding: 10px 12px;
-  font: 400 10px var(--minecraft-font-ui);
-  color: var(--vp-c-text-1);
-}
-
-.dark .node {
-  background: rgba(36, 48, 31, 0.9);
-  border-color: rgba(126, 166, 100, 0.5);
+  font: 700 11px var(--mp-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mp-text);
 }
 
 .user {
@@ -74,8 +70,8 @@
   position: absolute;
   z-index: 1;
   height: 4px;
-  background: rgba(103, 143, 79, 0.45);
-  border-radius: 999px;
+  background: rgba(157, 255, 63, 0.18);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -102,7 +98,7 @@
   position: absolute;
   inset: 0 auto 0 -20%;
   width: 20%;
-  background: linear-gradient(90deg, rgba(155, 220, 120, 0), rgba(155, 220, 120, 0.95));
+  background: linear-gradient(90deg, rgba(157, 255, 63, 0), rgba(157, 255, 63, 0.95));
   animation: move 2.2s linear infinite;
 }
 
@@ -152,7 +148,7 @@
     height: 42px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(103, 143, 79, 0.5);
+    background: rgba(157, 255, 63, 0.18);
   }
 
   .l1 {
@@ -172,7 +168,7 @@
     inset: -20% 0 auto 0;
     width: 100%;
     height: 20%;
-    background: linear-gradient(180deg, rgba(155, 220, 120, 0), rgba(155, 220, 120, 0.95));
+    background: linear-gradient(180deg, rgba(157, 255, 63, 0), rgba(157, 255, 63, 0.95));
     animation-name: move-vertical;
   }
 

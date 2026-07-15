@@ -20,6 +20,18 @@ npm run docs:preview  # Preview build
 
 ---
 
+## Theme & Design
+
+Neo-brutalist terminal aesthetic, dark-only (`appearance: 'force-dark'` in `.vitepress/config.mts`).
+
+- Design tokens (`--mp-*`) live in `.vitepress/theme/style.css`: bg `#0a0e08`, acid green `#9dff3f`, hard 2px borders, offset shadows, no border-radius.
+- Fonts: Archivo Black (display), Archivo (body), JetBrains Mono (mono/labels). Loaded via Google Fonts in `config.mts`.
+- Home page (`index.md`, `layout: page`) renders `<HomeLanding />` from `.vitepress/theme/components/home/` (hero, quick start, features, powered by, docs map, CTA).
+- Landing animations use GSAP + ScrollTrigger, loaded client-only via `.vitepress/theme/lib/gsap.js`. Always respect `prefers-reduced-motion` (gsap.matchMedia).
+- Reusable doc components: `TerminalCommand`, `TerminalSequence`, `TerminalInstall`, `EnvPresetTabs`, `NetworkPulseFlow` — styled with `--mp-*` tokens; keep new components on the same tokens.
+
+---
+
 ## Adding New Page
 
 1. Create `{page-name}.md` in `doc/`

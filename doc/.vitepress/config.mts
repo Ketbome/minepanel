@@ -26,14 +26,14 @@ export default withMermaid(
         {
           rel: 'preload',
           as: 'style',
-          href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&display=swap',
         },
       ],
       [
         'link',
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&display=swap',
           media: 'print',
           onload: "this.media='all'",
         },
@@ -41,15 +41,14 @@ export default withMermaid(
       [
         'noscript',
         {},
-        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Press+Start+2P&display=swap">',
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&display=swap">',
       ],
 
       // Icons & PWA
       ['link', { rel: 'icon', href: '/favicon.ico', sizes: '48x48' }],
       ['link', { rel: 'manifest', href: '/manifest.json' }],
       ['link', { rel: 'apple-touch-icon', href: '/cubo.webp', sizes: '512x512' }],
-      ['meta', { name: 'theme-color', content: '#4f7f3d', media: '(prefers-color-scheme: light)' }],
-      ['meta', { name: 'theme-color', content: '#11170f', media: '(prefers-color-scheme: dark)' }],
+      ['meta', { name: 'theme-color', content: '#0a0e08' }],
       ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
       ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }],
       ['meta', { name: 'apple-mobile-web-app-title', content: 'Minepanel' }],
@@ -165,14 +164,6 @@ export default withMermaid(
         pageData.frontmatter.description ||
         'Free open source Minecraft server management panel for Java and Bedrock Edition.';
 
-      if (canonicalPath === '/') {
-        // Hero logo is the LCP element on the landing page
-        head.push([
-          'link',
-          { rel: 'preload', as: 'image', href: '/cubo.webp', fetchpriority: 'high' },
-        ]);
-      }
-
       head.push(
         ['link', { rel: 'canonical', href: canonicalUrl }],
         ['meta', { property: 'og:url', content: canonicalUrl }],
@@ -198,6 +189,9 @@ export default withMermaid(
     },
 
     cleanUrls: true,
+
+    // The theme is designed dark-only (neo-brutalist terminal aesthetic)
+    appearance: 'force-dark',
 
     themeConfig: {
       // https://vitepress.dev/reference/default-theme-config
@@ -236,7 +230,7 @@ export default withMermaid(
 
       sidebar: [
         {
-          text: '🚀 Getting Started',
+          text: 'Getting Started',
           collapsed: false,
           items: [
             { text: 'Introduction', link: '/getting-started' },
@@ -246,7 +240,7 @@ export default withMermaid(
           ],
         },
         {
-          text: '⚙️ Server Management',
+          text: 'Server Management',
           collapsed: false,
           items: [
             { text: 'Server Types', link: '/server-types' },
@@ -257,7 +251,7 @@ export default withMermaid(
           ],
         },
         {
-          text: '🔧 Administration',
+          text: 'Administration',
           collapsed: false,
           items: [
             { text: 'Networking', link: '/networking' },
@@ -268,7 +262,7 @@ export default withMermaid(
           ],
         },
         {
-          text: '🛠️ Development',
+          text: 'Development',
           collapsed: false,
           items: [
             { text: 'API Reference', link: '/api' },
@@ -340,10 +334,7 @@ export default withMermaid(
       image: {
         lazyLoading: true,
       },
-      theme: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
+      theme: 'github-dark',
     },
 
     ignoreDeadLinks: [

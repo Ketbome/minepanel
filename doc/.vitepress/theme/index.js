@@ -5,6 +5,7 @@ import TerminalCommand from './components/TerminalCommand.vue';
 import TerminalSequence from './components/TerminalSequence.vue';
 import EnvPresetTabs from './components/EnvPresetTabs.vue';
 import NetworkPulseFlow from './components/NetworkPulseFlow.vue';
+import HomeLanding from './components/home/HomeLanding.vue';
 import './style.css';
 
 export default {
@@ -17,6 +18,7 @@ export default {
     app.component('TerminalSequence', TerminalSequence);
     app.component('EnvPresetTabs', EnvPresetTabs);
     app.component('NetworkPulseFlow', NetworkPulseFlow);
+    app.component('HomeLanding', HomeLanding);
     if (DefaultTheme.enhanceApp) {
       DefaultTheme.enhanceApp(ctx);
     }

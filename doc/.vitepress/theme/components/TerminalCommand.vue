@@ -105,10 +105,8 @@ onMounted(() => {
   <section ref="rootEl" class="terminal-wrap" aria-label="Terminal command demo">
     <div class="terminal" role="img" :aria-label="`Terminal animation showing ${command}`">
       <div class="terminal-bar">
-        <span class="dot red"></span>
-        <span class="dot yellow"></span>
-        <span class="dot green"></span>
-        <span class="label">{{ title }}</span>
+        <span class="label">~/{{ title }}</span>
+        <span class="status">● LIVE</span>
       </div>
 
       <div class="terminal-body">
@@ -160,51 +158,44 @@ onMounted(() => {
 }
 
 .terminal {
-  border: 3px solid rgba(53, 79, 42, 0.8);
-  border-radius: 8px;
+  border: 2px solid var(--mp-border-strong);
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 12px 28px rgba(20, 38, 16, 0.25);
-  background: #11170f;
+  box-shadow: var(--mp-shadow-acid);
+  background: var(--mp-bg-elev);
 }
 
 .terminal-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(180deg, #313f2d 0%, #1f291d 100%);
-  border-bottom: 2px solid rgba(122, 166, 93, 0.4);
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-}
-
-.red {
-  background: #d66b6b;
-}
-
-.yellow {
-  background: #dfc37f;
-}
-
-.green {
-  background: #82c763;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--mp-bg-panel);
+  border-bottom: 2px solid var(--mp-border);
 }
 
 .label {
-  margin-left: 8px;
-  color: #dbe8d4;
-  font: 400 11px var(--minecraft-font-ui);
+  color: var(--mp-dim);
+  font: 400 12px var(--mp-font-mono);
   letter-spacing: 0.01em;
+}
+
+.status {
+  color: var(--mp-acid);
+  font: 700 12px var(--mp-font-mono);
 }
 
 .terminal-body {
   padding: 14px 16px 16px;
-  color: #e9f2e4;
-  font: 400 14px/1.55 var(--vp-font-family-mono);
+  color: var(--mp-muted);
+  font: 400 14px/1.55 var(--mp-font-mono);
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(157, 255, 63, 0.02) 0px,
+    rgba(157, 255, 63, 0.02) 1px,
+    transparent 1px,
+    transparent 4px
+  );
 }
 
 .line-row {
@@ -231,7 +222,7 @@ onMounted(() => {
 }
 
 .prompt {
-  color: #7fbe5f;
+  color: var(--mp-acid);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -241,7 +232,8 @@ onMounted(() => {
   overflow: hidden;
   white-space: nowrap;
   width: 0;
-  border-right: 2px solid #a7e181;
+  border-right: 2px solid var(--mp-acid);
+  color: var(--mp-text);
 }
 
 .typed.run {
@@ -256,7 +248,7 @@ onMounted(() => {
 
 .output:first-of-type {
   margin-top: 10px;
-  color: #b9dca7;
+  color: var(--mp-dim);
 }
 
 .output {
@@ -283,8 +275,8 @@ onMounted(() => {
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  color: #7a9a6b;
+  border-radius: 0;
+  color: var(--mp-dim);
   cursor: pointer;
   opacity: 0.6;
   transition: all 0.15s ease;
@@ -292,13 +284,13 @@ onMounted(() => {
 
 .copy-btn:hover {
   opacity: 1;
-  background: rgba(122, 166, 93, 0.2);
-  color: #a7e181;
+  background: rgba(157, 255, 63, 0.15);
+  color: var(--mp-acid);
 }
 
 .copy-btn.copied {
   opacity: 1;
-  color: #82c763;
+  color: var(--mp-acid);
 }
 
 @keyframes typing {

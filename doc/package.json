@@ -25,6 +25,7 @@
     "vitepress-plugin-mermaid": "2.0.17"
   },
   "dependencies": {
+    "gsap": "^3.15.0",
     "vue-router": "^5.0.2"
   }
 }
