@@ -184,7 +184,7 @@ body {
 .VPNavBarMenu .VPNavBarMenuGroup > .button {
   font-family: var(--mp-font-mono);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .VPNavBarMenu .VPNavBarMenuLink.active {

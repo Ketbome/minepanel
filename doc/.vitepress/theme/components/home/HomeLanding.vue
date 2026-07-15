@@ -14,55 +14,67 @@ const root = ref(null);
 let mm;
 let alive = true;
 
-onMounted(async () => {
-  const mods = await loadGsap();
-  if (!mods || !alive) return;
-  const { gsap, ScrollTrigger } = mods;
+// Animations are decorative: load GSAP on idle so it never competes with
+// hydration, and skip entrance/reveals on mobile so the SSR-painted hero
+// is never hidden and re-shown (kills LCP on slow devices).
+onMounted(() => {
+  const start = async () => {
+    const mods = await loadGsap();
+    if (!mods || !alive) return;
+    const { gsap } = mods;
 
-  mm = gsap.matchMedia(root.value);
-  mm.add(
-    {
-      motionOk: '(prefers-reduced-motion: no-preference)',
-      reduceMotion: '(prefers-reduced-motion: reduce)',
-    },
-    (ctx) => {
-      if (ctx.conditions.reduceMotion) return;
+    mm = gsap.matchMedia(root.value);
+    mm.add(
+      {
+        desktop: '(min-width: 768px)',
+        motionOk: '(prefers-reduced-motion: no-preference)',
+      },
+      (ctx) => {
+        const { desktop, motionOk } = ctx.conditions;
+        if (!motionOk) return;
 
-      gsap.to('[data-gsap="ticker"]', { xPercent: -50, duration: 22, ease: 'none', repeat: -1 });
+        gsap.to('[data-gsap="ticker"]', { xPercent: -50, duration: 22, ease: 'none', repeat: -1 });
 
-      const tl = gsap.timeline({ defaults: { duration: 0.7, ease: 'power2.out' } });
-      tl.from('[data-gsap="hero-copy"] > *', { y: 34, autoAlpha: 0, stagger: 0.1 }).from(
-        '[data-gsap="hero-terminal"]',
-        { y: 50, autoAlpha: 0, rotate: 4, duration: 0.8 },
-        '-=0.45',
-      );
+        if (!desktop) return;
 
-      gsap.utils.toArray('[data-gsap="reveal"]').forEach((el) => {
-        gsap.from(el, {
-          y: 52,
-          autoAlpha: 0,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: { trigger: el, start: 'top 82%' },
+        const tl = gsap.timeline({ defaults: { duration: 0.7, ease: 'power2.out' } });
+        tl.from('[data-gsap="hero-copy"] > *', { y: 34, autoAlpha: 0, stagger: 0.1 }).from(
+          '[data-gsap="hero-terminal"]',
+          { y: 50, autoAlpha: 0, rotate: 4, duration: 0.8 },
+          '-=0.45',
+        );
+
+        gsap.utils.toArray('[data-gsap="reveal"]').forEach((el) => {
+          gsap.from(el, {
+            y: 52,
+            autoAlpha: 0,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: { trigger: el, start: 'top 82%' },
+          });
         });
-      });
 
-      gsap.utils.toArray('.mp-features-grid, .mp-docsmap-grid').forEach((grid) => {
-        const cards = grid.querySelectorAll('[data-gsap="card"]');
-        if (!cards.length) return;
-        gsap.from(cards, {
-          y: 30,
-          autoAlpha: 0,
-          duration: 0.55,
-          ease: 'power2.out',
-          stagger: 0.07,
-          scrollTrigger: { trigger: grid, start: 'top 80%' },
+        gsap.utils.toArray('.mp-features-grid, .mp-docsmap-grid').forEach((grid) => {
+          const cards = grid.querySelectorAll('[data-gsap="card"]');
+          if (!cards.length) return;
+          gsap.from(cards, {
+            y: 30,
+            autoAlpha: 0,
+            duration: 0.55,
+            ease: 'power2.out',
+            stagger: 0.07,
+            scrollTrigger: { trigger: grid, start: 'top 80%' },
+          });
         });
-      });
+      },
+    );
+  };
 
-      ScrollTrigger.refresh();
-    },
-  );
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => start(), { timeout: 1500 });
+  } else {
+    setTimeout(start, 200);
+  }
 });
 
 onBeforeUnmount(() => {
