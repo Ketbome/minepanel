@@ -11,10 +11,7 @@ head:
 
 Get Minepanel running in about 2 minutes.
 
-<video autoplay loop muted playsinline poster="/img/minepanel.png" width="980" height="482" aria-label="Animated demo of the Minepanel dashboard showing server stats, system status, and quick actions">
-  <source src="/img/dashboard-demo.mp4" type="video/mp4">
-  <img src="/img/minepanel.png" alt="Minepanel dashboard showing server stats, system status, and quick actions" width="980" height="482">
-</video>
+<img src="/img/dashboard.webp" alt="Minepanel dashboard showing server stats, system status, and quick actions" width="980" height="482">
 
 ::: warning
 Remember to change your password after the first login.

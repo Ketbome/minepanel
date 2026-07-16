@@ -9,7 +9,7 @@ head:
 
 # Installation
 
-![Minepanel installation wizard with Docker Compose setup](/img/minepanel.png)
+![Minepanel installation wizard with Docker Compose setup](/img/minepanel.webp)
 
 ## Quick Install (Recommended)
 

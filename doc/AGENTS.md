@@ -120,7 +120,7 @@ services:
 
 ### Screenshots
 
-- Format: WebP for screenshots. Keep PNG only for assets that do not have a WebP replacement, such as `minepanel.png` and `server-types.png`.
+- Format: WebP for screenshots. Keep PNG only for assets that do not have a WebP replacement, such as `minepanel.webp` and `modes.webp`.
 - Location: `public/img/`
 - Naming: `{feature}-{description}.webp` (e.g., `server-creation.webp`)
 - Keep file size reasonable (<500KB)
