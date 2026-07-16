@@ -1,33 +1,75 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, Settings as SettingsIcon, Zap, LayoutTemplate, Check, Coffee, Smartphone, Copy } from "lucide-react";
-import { fetchServerList, createServer, getAllServersStatus, deleteServer, cloneServer } from "@/services/docker/fetchs";
-import { mcToast } from "@/lib/utils/minecraft-toast";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import Link from "next/link";
-import { useLanguage } from "@/lib/hooks/useLanguage";
-import { getStatusBadgeClass, getStatusColor, getStatusIcon } from "@/lib/utils/server-status";
-import { useServersStore } from "@/lib/store/servers-store";
-import { getTemplatesByEdition, ServerTemplate } from "@/lib/server-templates";
-import { ServerEdition } from "@/lib/types/types";
-import { TranslationKey } from "@/lib/translations";
-import { getCurrentUser } from "@/services/users/users.service";
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Plus,
+  Loader2,
+  Trash2,
+  Settings as SettingsIcon,
+  Zap,
+  LayoutTemplate,
+  Check,
+  Coffee,
+  Smartphone,
+  Copy,
+} from 'lucide-react';
+import {
+  fetchServerList,
+  createServer,
+  getAllServersStatus,
+  deleteServer,
+  cloneServer,
+} from '@/services/docker/fetchs';
+import { mcToast } from '@/lib/utils/minecraft-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import Link from 'next/link';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import { getStatusBadgeClass, getStatusColor, getStatusIcon } from '@/lib/utils/server-status';
+import { useServersStore } from '@/lib/store/servers-store';
+import { getTemplatesByEdition, ServerTemplate } from '@/lib/server-templates';
+import { ServerEdition } from '@/lib/types/types';
+import { TranslationKey } from '@/lib/translations';
+import { getCurrentUser } from '@/services/users/users.service';
 
 type ServerInfo = {
   id: string;
   name: string;
   description: string;
   displayName: string;
-  status: "running" | "stopped" | "starting" | "not_found" | "loading";
+  status: 'running' | 'stopped' | 'starting' | 'not_found' | 'loading';
   port: string;
   containerName: string;
 };
@@ -40,17 +82,17 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeletingServer, setIsDeletingServer] = useState<string | null>(null);
   const [cloneSource, setCloneSource] = useState<string | null>(null);
-  const [cloneNewId, setCloneNewId] = useState("");
+  const [cloneNewId, setCloneNewId] = useState('');
   const [isCloning, setIsCloning] = useState(false);
-  const [createMode, setCreateMode] = useState<"quick" | "template">("quick");
+  const [createMode, setCreateMode] = useState<'quick' | 'template'>('quick');
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
-  const [selectedEdition, setSelectedEdition] = useState<ServerEdition>("JAVA");
+  const [selectedEdition, setSelectedEdition] = useState<ServerEdition>('JAVA');
   const [canCreateServers, setCanCreateServers] = useState(false);
   const availableTemplates = getTemplatesByEdition(selectedEdition);
 
   const form = useForm<{ id: string }>({
     defaultValues: {
-      id: "",
+      id: '',
     },
   });
 
@@ -62,7 +104,7 @@ export default function Dashboard() {
         try {
           const user = await getCurrentUser();
           if (isMounted) {
-            setCanCreateServers(user.role === "ADMIN" || user.access.permissions.accessAllServers);
+            setCanCreateServers(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
           }
         } catch {
           if (isMounted) {
@@ -93,21 +135,22 @@ export default function Dashboard() {
       if (serversList.length === 0) return [];
 
       try {
-        const allStatusData: { [key: string]: "running" | "stopped" | "starting" | "not_found" } = await getAllServersStatus();
+        const allStatusData: { [key: string]: 'running' | 'stopped' | 'starting' | 'not_found' } =
+          await getAllServersStatus();
         const updatedServers = serversList.map((server) => {
           return {
             ...server,
-            status: allStatusData[server.id] || "not_found",
+            status: allStatusData[server.id] || 'not_found',
           };
         });
         return updatedServers;
       } catch (error) {
-        console.error("Error processing server statuses:", error);
-        mcToast.error(t("errorProcessingStatuses"));
-        return serversList.map((server) => ({ ...server, status: "not_found" }));
+        console.error('Error processing server statuses:', error);
+        mcToast.error(t('errorProcessingStatuses'));
+        return serversList.map((server) => ({ ...server, status: 'not_found' }));
       }
     },
-    [t]
+    [t],
   );
 
   const fetchServersFromBackend = useCallback(async () => {
@@ -116,11 +159,11 @@ export default function Dashboard() {
       const serverList = await fetchServerList();
       const formattedServers: ServerInfo[] = serverList.map((server) => ({
         id: server.id,
-        name: server.serverName || `${t("serverDefaultName")} ${server.id}`,
-        description: server.motd || t("minecraftServer"),
+        name: server.serverName || `${t('serverDefaultName')} ${server.id}`,
+        description: server.motd || t('minecraftServer'),
         displayName: server.serverName || `minecraft-${server.id}`,
-        status: "loading",
-        port: server.port || "25565",
+        status: 'loading',
+        port: server.port || '25565',
         containerName: `${server.id}`,
       }));
 
@@ -128,8 +171,8 @@ export default function Dashboard() {
       const updatedServers = await processServerStatuses(formattedServers);
       setServers(updatedServers);
     } catch (error) {
-      console.error("Error fetching server list:", error);
-      mcToast.error(t("errorLoadingServerList"));
+      console.error('Error fetching server list:', error);
+      mcToast.error(t('errorLoadingServerList'));
     } finally {
       setIsLoading(false);
     }
@@ -142,16 +185,16 @@ export default function Dashboard() {
     try {
       const response = await deleteServer(serverId);
       if (response.success) {
-        mcToast.success(`${t("serverDeletedSuccess")} "${serverId}"`);
+        mcToast.success(`${t('serverDeletedSuccess')} "${serverId}"`);
         await fetchServersFromBackend();
         refreshGlobalServers();
       } else {
-        mcToast.error(`${t("errorDeletingServer")}: ${response.message}`);
+        mcToast.error(`${t('errorDeletingServer')}: ${response.message}`);
       }
     } catch (error) {
-      console.error("Error deleting server:", error);
+      console.error('Error deleting server:', error);
       const err = error as { response?: { data?: { message?: string } } };
-      mcToast.error(err.response?.data?.message || t("errorDeletingServer"));
+      mcToast.error(err.response?.data?.message || t('errorDeletingServer'));
     } finally {
       setIsDeletingServer(null);
     }
@@ -163,18 +206,18 @@ export default function Dashboard() {
     try {
       const response = await cloneServer(cloneSource, cloneNewId.trim());
       if (response.success) {
-        mcToast.success(`${t("serverClonedSuccess")} "${cloneNewId.trim()}"`);
+        mcToast.success(`${t('serverClonedSuccess')} "${cloneNewId.trim()}"`);
         setCloneSource(null);
-        setCloneNewId("");
+        setCloneNewId('');
         await fetchServersFromBackend();
         refreshGlobalServers();
       } else {
-        mcToast.error(`${t("errorCloningServer")}: ${response.message}`);
+        mcToast.error(`${t('errorCloningServer')}: ${response.message}`);
       }
     } catch (error) {
-      console.error("Error cloning server:", error);
+      console.error('Error cloning server:', error);
       const err = error as { response?: { data?: { message?: string } } };
-      mcToast.error(err.response?.data?.message || t("errorCloningServer"));
+      mcToast.error(err.response?.data?.message || t('errorCloningServer'));
     } finally {
       setIsCloning(false);
     }
@@ -186,8 +229,8 @@ export default function Dashboard() {
       const updatedServers = await processServerStatuses(servers);
       setServers(updatedServers);
     } catch (error) {
-      console.error("Error loading server information:", error);
-      mcToast.error(t("errorLoadingServerInfo"));
+      console.error('Error loading server information:', error);
+      mcToast.error(t('errorLoadingServerInfo'));
     }
   }, [servers, t, processServerStatuses]);
 
@@ -197,28 +240,30 @@ export default function Dashboard() {
       const baseConfig = {
         id: values.id,
         edition: selectedEdition,
-        port: selectedEdition === "BEDROCK" ? "19132" : "25565",
-        enableRcon: selectedEdition !== "BEDROCK",
-        minecraftVersion: selectedEdition === "BEDROCK" ? "LATEST" : "latest",
+        port: selectedEdition === 'BEDROCK' ? '19132' : '25565',
+        enableRcon: selectedEdition !== 'BEDROCK',
+        minecraftVersion: selectedEdition === 'BEDROCK' ? 'LATEST' : 'latest',
       };
-      const serverData = selectedTemplate ? { ...baseConfig, ...selectedTemplate.config } : baseConfig;
+      const serverData = selectedTemplate
+        ? { ...baseConfig, ...selectedTemplate.config }
+        : baseConfig;
       const response = await createServer(serverData);
       if (response.success) {
-        mcToast.success(`${t("serverCreatedSuccess")} "${values.id}"`);
+        mcToast.success(`${t('serverCreatedSuccess')} "${values.id}"`);
         setIsDialogOpen(false);
         form.reset();
         setSelectedTemplate(null);
-        setCreateMode("quick");
+        setCreateMode('quick');
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await fetchServersFromBackend();
         refreshGlobalServers();
       } else {
-        mcToast.error(`${t("errorCreatingServer")}: ${response.message}`);
+        mcToast.error(`${t('errorCreatingServer')}: ${response.message}`);
       }
     } catch (error) {
-      console.error("Error creating server:", error);
+      console.error('Error creating server:', error);
       const err = error as { response?: { data?: { message?: string } } };
-      mcToast.error(err.response?.data?.message || t("errorCreatingServer"));
+      mcToast.error(err.response?.data?.message || t('errorCreatingServer'));
     } finally {
       setIsCreatingServer(false);
     }
@@ -226,18 +271,18 @@ export default function Dashboard() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "running":
-        return t("active");
-      case "starting":
-        return t("starting2");
-      case "stopped":
-        return t("stopped2");
-      case "not_found":
-        return t("notFound");
-      case "loading":
-        return t("loading");
+      case 'running':
+        return t('active');
+      case 'starting':
+        return t('starting2');
+      case 'stopped':
+        return t('stopped2');
+      case 'not_found':
+        return t('notFound');
+      case 'loading':
+        return t('loading');
       default:
-        return t("unknown");
+        return t('unknown');
     }
   };
 
@@ -246,301 +291,410 @@ export default function Dashboard() {
       <div className="mc-panel animate-fade-in-up">
         <div className="mc-titlebar flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <Image src="/images/command-block.webp" alt="Dashboard" width={32} height={32} className="pixelated animate-float" />
+            <Image
+              src="/images/command-block.webp"
+              alt="Dashboard"
+              width={32}
+              height={32}
+              className="pixelated animate-float"
+            />
             <div>
-              <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("dashboardTitle")}</h1>
-              <p className="text-gray-300 text-xs">{t("dashboardDescription")}</p>
+              <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">
+                {t('dashboardTitle')}
+              </h1>
+              <p className="text-gray-300 text-xs">{t('dashboardDescription')}</p>
             </div>
           </div>
 
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setSelectedTemplate(null);
-              setCreateMode("quick");
-              setSelectedEdition("JAVA");
-            }
-          }}
-        >
-          {canCreateServers ? (
-            <DialogTrigger asChild>
-              <button className="mc-btn mc-btn-emerald px-4 py-2.5 self-start">
-                <Plus className="h-4 w-4" />
-                {t("createServer")}
-              </button>
-            </DialogTrigger>
-          ) : null}
-          <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700 text-white max-h-[85vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="font-minecraft">{t("createNewServer")}</DialogTitle>
-              <DialogDescription className="text-gray-400">{t("chooseCreationMethod")}</DialogDescription>
-            </DialogHeader>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setSelectedTemplate(null);
+                setCreateMode('quick');
+                setSelectedEdition('JAVA');
+              }
+            }}
+          >
+            {canCreateServers ? (
+              <DialogTrigger asChild>
+                <button className="mc-btn mc-btn-emerald px-4 py-2.5 self-start">
+                  <Plus className="h-4 w-4" />
+                  {t('createServer')}
+                </button>
+              </DialogTrigger>
+            ) : null}
+            <DialogContent className="sm:max-w-150 bg-gray-900 border-gray-700 text-white max-h-[85vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle className="font-minecraft">{t('createNewServer')}</DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  {t('chooseCreationMethod')}
+                </DialogDescription>
+              </DialogHeader>
 
-            {/* Tabs */}
-            <div className="flex gap-2 border-b border-gray-700 pb-2">
-              <Button
-                type="button"
-                variant={createMode === "quick" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  setCreateMode("quick");
-                  setSelectedTemplate(null);
-                }}
-                className={createMode === "quick" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}
-              >
-                <Zap className="h-4 w-4 mr-1" /> {t("quickCreate")}
-              </Button>
-              <Button type="button" variant={createMode === "template" ? "default" : "ghost"} size="sm" onClick={() => setCreateMode("template")} className={createMode === "template" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
-                <LayoutTemplate className="h-4 w-4 mr-1" /> {t("fromTemplate")}
-              </Button>
-            </div>
+              {/* Tabs */}
+              <div className="flex gap-2 border-b border-gray-700 pb-2">
+                <Button
+                  type="button"
+                  variant={createMode === 'quick' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setCreateMode('quick');
+                    setSelectedTemplate(null);
+                  }}
+                  className={
+                    createMode === 'quick'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }
+                >
+                  <Zap className="h-4 w-4 mr-1" /> {t('quickCreate')}
+                </Button>
+                <Button
+                  type="button"
+                  variant={createMode === 'template' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCreateMode('template')}
+                  className={
+                    createMode === 'template'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }
+                >
+                  <LayoutTemplate className="h-4 w-4 mr-1" /> {t('fromTemplate')}
+                </Button>
+              </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleCreateServer)} className="space-y-4 flex-1 overflow-hidden flex flex-col">
-                {createMode === "template" && (
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-                    <p className="text-sm text-gray-400 mb-2">{t("selectTemplate")}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableTemplates.map((template) => (
-                        <button key={template.id} type="button" onClick={() => setSelectedTemplate(template)} className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate?.id === template.id ? "border-emerald-500 bg-emerald-900/30" : "border-gray-700 bg-gray-800/50 hover:border-gray-600"}`}>
-                          <div className="flex items-start gap-2">
-                            <Image src={`/images/${template.icon}.webp`} alt={template.name} width={24} height={24} className="mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-minecraft text-sm text-white">{t(template.name as TranslationKey)}</span>
-                                {selectedTemplate?.id === template.id && <Check className="h-4 w-4 text-emerald-400" />}
-                              </div>
-                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t(template.description as TranslationKey)}</p>
-                              <div className="flex gap-1 mt-1">
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50">
-                                  {template.config.serverType}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50">
-                                  {template.config.gameMode}
-                                </Badge>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(handleCreateServer)}
+                  className="space-y-4 flex-1 overflow-hidden flex flex-col"
+                >
+                  {createMode === 'template' && (
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+                      <p className="text-sm text-gray-400 mb-2">{t('selectTemplate')}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {availableTemplates.map((template) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            onClick={() => setSelectedTemplate(template)}
+                            className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate?.id === template.id ? 'border-emerald-500 bg-emerald-900/30' : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'}`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <Image
+                                src={`/images/${template.icon}.webp`}
+                                alt={template.name}
+                                width={24}
+                                height={24}
+                                className="mt-0.5"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-minecraft text-sm text-white">
+                                    {t(template.name as TranslationKey)}
+                                  </span>
+                                  {selectedTemplate?.id === template.id && (
+                                    <Check className="h-4 w-4 text-emerald-400" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
+                                  {t(template.description as TranslationKey)}
+                                </p>
+                                <div className="flex gap-1 mt-1">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50"
+                                  >
+                                    {template.config.serverType}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1 py-0 border-gray-600 text-gray-300 bg-gray-800/50"
+                                  >
+                                    {template.config.gameMode}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {createMode === 'quick' && (
+                    <p className="text-sm text-gray-400">{t('quickCreateDesc')}</p>
+                  )}
+
+                  {/* Edition Selector */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-200">{t('serverEdition')}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEdition('JAVA');
+                          setSelectedTemplate(null);
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          selectedEdition === 'JAVA'
+                            ? 'border-emerald-500 bg-emerald-900/30'
+                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                        }`}
+                      >
+                        <Coffee className="h-5 w-5 text-orange-400" />
+                        <div className="text-left">
+                          <span className="text-sm font-minecraft text-white">Java Edition</span>
+                          <p className="text-xs text-gray-400">{t('javaEditionDesc')}</p>
+                        </div>
+                        {selectedEdition === 'JAVA' && (
+                          <Check className="h-4 w-4 text-emerald-400 ml-auto" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEdition('BEDROCK');
+                          setSelectedTemplate(null);
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          selectedEdition === 'BEDROCK'
+                            ? 'border-emerald-500 bg-emerald-900/30'
+                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                        }`}
+                      >
+                        <Smartphone className="h-5 w-5 text-green-400" />
+                        <div className="text-left">
+                          <span className="text-sm font-minecraft text-white">Bedrock</span>
+                          <p className="text-xs text-gray-400">{t('bedrockEditionDesc')}</p>
+                        </div>
+                        {selectedEdition === 'BEDROCK' && (
+                          <Check className="h-4 w-4 text-emerald-400 ml-auto" />
+                        )}
+                      </button>
                     </div>
                   </div>
-                )}
 
-                {createMode === "quick" && <p className="text-sm text-gray-400">{t("quickCreateDesc")}</p>}
-
-                {/* Edition Selector */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-200">{t("serverEdition")}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedEdition("JAVA");
-                        setSelectedTemplate(null);
-                      }}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                        selectedEdition === "JAVA"
-                          ? "border-emerald-500 bg-emerald-900/30"
-                          : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                      }`}
-                    >
-                      <Coffee className="h-5 w-5 text-orange-400" />
-                      <div className="text-left">
-                        <span className="text-sm font-minecraft text-white">Java Edition</span>
-                        <p className="text-xs text-gray-400">{t("javaEditionDesc")}</p>
-                      </div>
-                      {selectedEdition === "JAVA" && <Check className="h-4 w-4 text-emerald-400 ml-auto" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedEdition("BEDROCK");
-                        setSelectedTemplate(null);
-                      }}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                        selectedEdition === "BEDROCK"
-                          ? "border-emerald-500 bg-emerald-900/30"
-                          : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                      }`}
-                    >
-                      <Smartphone className="h-5 w-5 text-green-400" />
-                      <div className="text-left">
-                        <span className="text-sm font-minecraft text-white">Bedrock</span>
-                        <p className="text-xs text-gray-400">{t("bedrockEditionDesc")}</p>
-                      </div>
-                      {selectedEdition === "BEDROCK" && <Check className="h-4 w-4 text-emerald-400 ml-auto" />}
-                    </button>
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-200">{t("serverIdLabel")}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t("serverIdPlaceholder")} {...field} className="bg-gray-800 border-gray-700 text-white" />
-                      </FormControl>
-                      <FormDescription className="text-gray-400">{t("serverIdDescription")}</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {selectedTemplate && (
-                  <div className="p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg">
-                    <p className="text-sm text-emerald-400 font-minecraft">
-                      {t("templateSelected")}: {t(selectedTemplate.name as TranslationKey)}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">{t(selectedTemplate.description as TranslationKey)}</p>
-                  </div>
-                )}
-
-                <DialogFooter className="gap-3 sm:gap-2 pt-2">
-                  <button type="button" onClick={() => setIsDialogOpen(false)} className="mc-btn px-4 py-2.5">
-                    {t("cancel")}
-                  </button>
-                  <button type="submit" disabled={isCreatingServer || (createMode === "template" && !selectedTemplate)} className="mc-btn mc-btn-emerald px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isCreatingServer ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {t("creating")}
-                      </>
-                    ) : (
-                      t("createServer")
+                  <FormField
+                    control={form.control}
+                    name="id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-200">{t('serverIdLabel')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t('serverIdPlaceholder')}
+                            {...field}
+                            className="bg-gray-800 border-gray-700 text-white"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-400">
+                          {t('serverIdDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  />
+
+                  {selectedTemplate && (
+                    <div className="p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg">
+                      <p className="text-sm text-emerald-400 font-minecraft">
+                        {t('templateSelected')}: {t(selectedTemplate.name as TranslationKey)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {t(selectedTemplate.description as TranslationKey)}
+                      </p>
+                    </div>
+                  )}
+
+                  <DialogFooter className="gap-3 sm:gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDialogOpen(false)}
+                      className="mc-btn px-4 py-2.5"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={
+                        isCreatingServer || (createMode === 'template' && !selectedTemplate)
+                      }
+                      className="mc-btn mc-btn-emerald px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCreatingServer ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t('creating')}
+                        </>
+                      ) : (
+                        t('createServer')
+                      )}
+                    </button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       <div>
         {servers.length === 0 && !isLoading ? (
           <div className="mc-panel text-center py-16 px-6 animate-fade-in">
-            <Image src="/images/chest.webp" alt="Empty chest" width={80} height={80} className="pixelated mx-auto mb-6 opacity-70 animate-float" />
-            <h3 className="text-2xl font-minecraft text-gray-200 mb-4">{t("noServersAvailable")}</h3>
-            <p className="text-gray-400 mb-8 text-lg">{t("noServersAvailableDesc")}</p>
-            <button onClick={() => setIsDialogOpen(true)} className="mc-btn mc-btn-emerald text-lg px-8 py-3 mx-auto">
+            <Image
+              src="/images/chest.webp"
+              alt="Empty chest"
+              width={80}
+              height={80}
+              className="pixelated mx-auto mb-6 opacity-70 animate-float"
+            />
+            <h3 className="text-2xl font-minecraft text-gray-200 mb-4">
+              {t('noServersAvailable')}
+            </h3>
+            <p className="text-gray-400 mb-8 text-lg">{t('noServersAvailableDesc')}</p>
+            <button
+              onClick={() => setIsDialogOpen(true)}
+              className="mc-btn mc-btn-emerald text-lg px-8 py-3 mx-auto"
+            >
               <Plus className="h-5 w-5" />
-              {t("createFirstServer")}
+              {t('createFirstServer')}
             </button>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-4">
             {servers.map((server: ServerInfo, index: number) => (
-              <div key={server.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}>
-                <div className="mc-panel group transition-transform duration-200 hover:-translate-y-1 overflow-hidden flex flex-col gap-4 pb-5">
-                  <div className={`h-2 ${getStatusColor(server.status)}`}></div>
+              <div
+                key={server.id}
+                className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
+              >
+                <div className="mc-panel group overflow-hidden flex items-stretch transition-transform duration-200 hover:-translate-y-0.5">
+                  <div className={`w-2 shrink-0 ${getStatusColor(server.status)}`}></div>
 
-                  <CardHeader className="pb-0 pt-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="mc-slot relative w-14 h-14 flex items-center justify-center shrink-0">
-                          <Image src={getStatusIcon(server.status)} alt="Server Status" width={40} height={40} className="pixelated object-contain" />
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[var(--mc-frame)] ${getStatusColor(server.status)}`} />
-                        </div>
-                        <div>
-                          <CardTitle className="text-white font-minecraft text-lg group-hover:text-emerald-400 transition-colors">{server.id}</CardTitle>
-                          <CardDescription className="text-gray-400 text-sm">{server.description}</CardDescription>
-                        </div>
+                  <div className="flex flex-1 min-w-0 flex-wrap lg:flex-nowrap items-center gap-x-5 gap-y-3 px-4 py-4 sm:px-5">
+                    <div className="flex items-center gap-3 min-w-0 flex-1 basis-56">
+                      <div className="mc-slot relative w-12 h-12 flex items-center justify-center shrink-0">
+                        <Image
+                          src={getStatusIcon(server.status)}
+                          alt="Server Status"
+                          width={34}
+                          height={34}
+                          className="pixelated object-contain"
+                        />
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-(--mc-frame) ${getStatusColor(server.status)}`}
+                        />
                       </div>
-
-                      <Badge variant="outline" className={`px-3 py-1 ${getStatusBadgeClass(server.status)}`}>
-                        {server.status === "loading" || server.status === "starting" ? (
-                          <span className="flex items-center gap-1.5">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            {getStatusText(server.status)}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-current"></div>
-                            {getStatusText(server.status)}
-                          </span>
-                        )}
-                      </Badge>
+                      <div className="min-w-0">
+                        <p
+                          className="text-white font-minecraft text-base leading-tight group-hover:text-emerald-400 transition-colors truncate"
+                          title={server.id}
+                        >
+                          {server.id}
+                        </p>
+                        <p className="text-gray-400 text-sm truncate">{server.description}</p>
+                      </div>
                     </div>
-                  </CardHeader>
 
-                  <CardContent className="pb-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="hidden md:flex items-center gap-6 shrink-0 text-sm">
                       <div>
-                        <p className="text-gray-400">{t("port")}</p>
+                        <p className="text-gray-400 text-xs">{t('port')}</p>
                         <p className="text-white font-medium">{server.port}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-400">{t("container")}</p>
-                        <p className="text-white font-medium truncate">{server.containerName}</p>
+                      <div className="max-w-40">
+                        <p className="text-gray-400 text-xs">{t('container')}</p>
+                        <p className="text-white font-medium truncate" title={server.containerName}>
+                          {server.containerName}
+                        </p>
                       </div>
                     </div>
-                  </CardContent>
 
-                  <CardFooter className="flex gap-2 pt-0">
-                    <Link href={`/dashboard/servers/${server.id}`} className="flex-1">
-                      <button className="mc-btn mc-btn-emerald w-full py-2.5">
-                        <SettingsIcon className="h-4 w-4" />
-                        {t("configure")}
-                      </button>
-                    </Link>
+                    <Badge
+                      variant="outline"
+                      className={`px-3 py-1 shrink-0 ${getStatusBadgeClass(server.status)}`}
+                    >
+                      {server.status === 'loading' || server.status === 'starting' ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {getStatusText(server.status)}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-current"></div>
+                          {getStatusText(server.status)}
+                        </span>
+                      )}
+                    </Badge>
 
-                    {canCreateServers && (
-                      <button
-                        className="mc-btn px-3 py-2.5"
-                        title={t("cloneServer")}
-                        onClick={() => {
-                          setCloneNewId(`${server.id}-copy`);
-                          setCloneSource(server.id);
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    )}
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button className="mc-btn px-3 py-2.5 text-red-300" style={{ background: "linear-gradient(180deg,#b94a4a,#8f3636)" }}>
-                          <Trash2 className="h-4 w-4" />
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto sm:ml-auto">
+                      <Link href={`/dashboard/servers/${server.id}`} className="flex-1">
+                        <button className="mc-btn mc-btn-emerald w-full py-2.5 px-2">
+                          <SettingsIcon className="h-4 w-4" />
+                          {t('configure')}
                         </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="font-minecraft">{t("deleteServerTitle")}</AlertDialogTitle>
-                          <AlertDialogDescription className="text-gray-400">
-                            {t("deleteServerWarning")} &quot;{server.id}&quot;?
-                            <br />
-                            {t("cannotBeUndone")}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">{t("cancel")}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleDeleteServer(server.id);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                            disabled={isDeletingServer === server.id}
+                      </Link>
+
+                      {canCreateServers && (
+                        <button
+                          className="mc-btn px-3 py-2.5"
+                          title={t('cloneServer')}
+                          onClick={() => {
+                            setCloneNewId(`${server.id}-copy`);
+                            setCloneSource(server.id);
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            className="mc-btn px-3 py-2.5 text-red-300"
+                            style={{ background: 'linear-gradient(180deg,#b94a4a,#8f3636)' }}
                           >
-                            {isDeletingServer === server.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                {t("eliminating")}
-                              </>
-                            ) : (
-                              t("delete")
-                            )}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </CardFooter>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="font-minecraft">
+                              {t('deleteServerTitle')}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-400">
+                              {t('deleteServerWarning')} &quot;{server.id}&quot;?
+                              <br />
+                              {t('cannotBeUndone')}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">
+                              {t('cancel')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDeleteServer(server.id);
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                              disabled={isDeletingServer === server.id}
+                            >
+                              {isDeletingServer === server.id ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  {t('eliminating')}
+                                </>
+                              ) : (
+                                t('delete')
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -553,46 +707,52 @@ export default function Dashboard() {
         onOpenChange={(open) => {
           if (!open) {
             setCloneSource(null);
-            setCloneNewId("");
+            setCloneNewId('');
           }
         }}
       >
-        <DialogContent className="sm:max-w-[420px] bg-gray-900 border-gray-700 text-white">
+        <DialogContent className="sm:max-w-105 bg-gray-900 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle className="font-minecraft">{t("cloneServer")}</DialogTitle>
+            <DialogTitle className="font-minecraft">{t('cloneServer')}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {t("cloneServerDesc")} &quot;{cloneSource}&quot;. {t("cloneServerNote")}
+              {t('cloneServerDesc')} &quot;{cloneSource}&quot;. {t('cloneServerNote')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <p className="text-sm text-gray-200">{t("serverIdLabel")}</p>
+            <p className="text-sm text-gray-200">{t('serverIdLabel')}</p>
             <Input
               value={cloneNewId}
               onChange={(e) => setCloneNewId(e.target.value)}
-              placeholder={t("serverIdPlaceholder")}
+              placeholder={t('serverIdPlaceholder')}
               className="bg-gray-800 border-gray-700 text-white"
             />
-            {cloneNewId.trim() !== "" && !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim()) && (
-              <p className="text-xs text-amber-400">{t("serverIdDescription")}</p>
+            {cloneNewId.trim() !== '' && !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim()) && (
+              <p className="text-xs text-amber-400">{t('serverIdDescription')}</p>
             )}
           </div>
           <DialogFooter className="gap-3 sm:gap-2 pt-2">
-            <button type="button" onClick={() => setCloneSource(null)} className="mc-btn px-4 py-2.5">
-              {t("cancel")}
+            <button
+              type="button"
+              onClick={() => setCloneSource(null)}
+              className="mc-btn px-4 py-2.5"
+            >
+              {t('cancel')}
             </button>
             <button
               type="button"
               onClick={handleCloneServer}
-              disabled={isCloning || cloneNewId.trim() === "" || !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim())}
+              disabled={
+                isCloning || cloneNewId.trim() === '' || !/^[a-zA-Z0-9_-]+$/.test(cloneNewId.trim())
+              }
               className="mc-btn mc-btn-emerald px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCloning ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("cloning")}
+                  {t('cloning')}
                 </>
               ) : (
-                t("cloneServer")
+                t('cloneServer')
               )}
             </button>
           </DialogFooter>
@@ -602,13 +762,31 @@ export default function Dashboard() {
       {servers.length > 0 && (
         <div className="flex justify-center gap-8 pt-8">
           <div className="animate-float">
-            <Image src="/images/anvil.webp" alt="Anvil" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+            <Image
+              src="/images/anvil.webp"
+              alt="Anvil"
+              width={32}
+              height={32}
+              className="opacity-50 hover:opacity-80 transition-opacity"
+            />
           </div>
           <div className="animate-float-delay-1">
-            <Image src="/images/crafting-table.webp" alt="Crafting Table" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+            <Image
+              src="/images/crafting-table.webp"
+              alt="Crafting Table"
+              width={32}
+              height={32}
+              className="opacity-50 hover:opacity-80 transition-opacity"
+            />
           </div>
           <div className="animate-float-delay-2">
-            <Image src="/images/command-block.webp" alt="Command Block" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
+            <Image
+              src="/images/command-block.webp"
+              alt="Command Block"
+              width={32}
+              height={32}
+              className="opacity-50 hover:opacity-80 transition-opacity"
+            />
           </div>
         </div>
       )}

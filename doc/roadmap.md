@@ -49,7 +49,7 @@ Already available in the current stable line.
 
 ### ✅ Multi-language
 
-- 6 languages: English, Spanish, French, German, Dutch, Polish
+- 8 languages: English, Spanish, French, German, Dutch, Polish, Russian, Portuguese
 
 ### ✅ Mods & plugins
 

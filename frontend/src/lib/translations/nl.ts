@@ -254,6 +254,8 @@ export const nl: Record<TranslationKey, string> = {
   dangerEggWhisper1: 'Ik zie de speler die je bedoelt.',
   dangerEggWhisper2: 'En het universum zei: ik hou van je.',
   dangerEggWhisper3: 'Je hebt het spel goed gespeeld.',
+  dangerEggMission: 'Missie',
+  dangerEggMissionObjective: 'Vind het portaal naar de Overworld',
   settingsSaved: 'Instellingen succesvol opgeslagen',
   settingsSaveFailed: 'Instellingen opslaan mislukt',
   test: 'Test',

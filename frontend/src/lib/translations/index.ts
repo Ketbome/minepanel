@@ -5,6 +5,7 @@ import { de } from './de';
 import { pl } from './pl';
 import { fr } from './fr';
 import { ru } from './ru';
+import { pt } from './pt';
 
 const locales = {
   es: { dictionary: es, flag: '🇪🇸', name: 'Español' },
@@ -14,6 +15,7 @@ const locales = {
   pl: { dictionary: pl, flag: '🇵🇱', name: 'Polski' },
   fr: { dictionary: fr, flag: '🇫🇷', name: 'Français' },
   ru: { dictionary: ru, flag: '🇷🇺', name: 'Русский' },
+  pt: { dictionary: pt, flag: '🇧🇷', name: 'Português' },
 };
 
 export type Language = keyof typeof locales;

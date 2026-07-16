@@ -46,7 +46,7 @@ export function ServerLoadingSkeleton() {
           </div>
 
           <div className="mc-bar w-80">
-            <div className="mc-bar__fill animate-loading-bar" style={{ backgroundColor: "#34d399" }} />
+            <div className="mc-bar__fill animate-loading-bar" style={{ backgroundColor: "#9dff3f" }} />
           </div>
 
           <div className="flex gap-4 opacity-60">

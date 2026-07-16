@@ -17,7 +17,7 @@ head:
 
 Minepanel supports both **Java Edition** and **Bedrock Edition** servers.
 
-![Server Types](/img/server-types.png)
+![Server Types](/img/modes.webp)
 
 ## Server Editions
 
@@ -392,11 +392,11 @@ Install GT New Horizons using the dedicated **GTNH** server type.
 
 ### GTNH options
 
-| Option              | Variable                  | Description                                              | Default |
-| ------------------- | ------------------------- | -------------------------------------------------------- | ------- |
-| Pack Version        | `GTNH_PACK_VERSION`       | `latest`, `latest-dev`, or a fixed version like `2.8.1` | `2.8.1` |
-| Delete Backups      | `GTNH_DELETE_BACKUPS`     | Remove config backup folders created during upgrades     | `false` |
-| Skip Update Check   | `SKIP_GTNH_UPDATE_CHECK`  | Skip the GTNH update/install check after first install   | `false` |
+| Option            | Variable                 | Description                                             | Default |
+| ----------------- | ------------------------ | ------------------------------------------------------- | ------- |
+| Pack Version      | `GTNH_PACK_VERSION`      | `latest`, `latest-dev`, or a fixed version like `2.8.1` | `2.8.1` |
+| Delete Backups    | `GTNH_DELETE_BACKUPS`    | Remove config backup folders created during upgrades    | `false` |
+| Skip Update Check | `SKIP_GTNH_UPDATE_CHECK` | Skip the GTNH update/install check after first install  | `false` |
 
 ### Notes
 
@@ -481,9 +481,9 @@ environment:
 
 ### FTBA options
 
-| Option            | Variable                 | Description                                                    | Default  |
-| ----------------- | ------------------------ | ------------------------------------------------------------- | -------- |
-| Modpack ID        | `FTB_MODPACK_ID`         | Numeric modpack ID from the pack page on `feed-the-beast.com` | required |
+| Option             | Variable                 | Description                                                   | Default  |
+| ------------------ | ------------------------ | ------------------------------------------------------------- | -------- |
+| Modpack ID         | `FTB_MODPACK_ID`         | Numeric modpack ID from the pack page on `feed-the-beast.com` | required |
 | Modpack Version ID | `FTB_MODPACK_VERSION_ID` | Numeric version ID; omit to always install the latest         | `latest` |
 
 ### Notes

@@ -251,6 +251,8 @@ export const ru: Record<TranslationKey, string> = {
   dangerEggWhisper1: 'Я вижу игрока, о котором ты говорил.',
   dangerEggWhisper2: 'И Вселенная сказала: я люблю тебя.',
   dangerEggWhisper3: 'Ты хорошо сыграл в игру.',
+  dangerEggMission: 'Миссия',
+  dangerEggMissionObjective: 'Найдите портал в Верхний мир',
   settingsSaved: 'Настройки сохранены',
   settingsSaveFailed: 'Не удалось сохранить настройки',
   test: 'Проверить',

@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { AnimatePresence, m, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+
+const EndWorldScene = dynamic(() => import('./EndWorldScene'), { ssr: false });
 
 type Phase = 'idle' | 'warp' | 'end';
 
@@ -768,6 +771,15 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
   const lookRef = useRef<HTMLDivElement>(null);
   const starLayerRef = useRef<HTMLDivElement>(null);
   const midLayerRef = useRef<HTMLDivElement>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
+    const update = () => setIsDesktop(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const stars = useMemo(
     () =>
@@ -816,7 +828,8 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
       exit={{ opacity: 0, transition: { duration: 0.4 } }}
       onMouseMove={onMouseMove}
     >
-      <div className="absolute inset-0 [perspective:1400px]">
+      {!reducedMotion && isDesktop && <EndWorldScene onReturn={onReturn} />}
+      <div className="pointer-events-none absolute inset-0 [perspective:1400px]">
       <div ref={lookRef} className="absolute inset-0 transition-transform duration-300 ease-out will-change-transform">
       <div ref={starLayerRef} aria-hidden className="absolute -inset-8 transition-transform duration-300 ease-out">
         {stars.map((star) => (
@@ -913,7 +926,11 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
       <EndWhispers reducedMotion={reducedMotion} />
       </div>
       </div>
-      <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="pointer-events-none absolute left-5 top-5 z-30 border-2 border-fuchsia-400/70 bg-[#11091d]/85 px-4 py-3 text-left shadow-[4px_4px_0_rgba(0,0,0,0.35)]">
+        <p className="font-minecraft text-[10px] tracking-[0.18em] text-fuchsia-300">{t('dangerEggMission')}</p>
+        <p className="mt-1 font-minecraft text-sm text-purple-100">{t('dangerEggMissionObjective')}</p>
+      </div>
+      <div className="pointer-events-none relative flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
         <m.h2
           className="font-minecraft drop-shadow-glow text-4xl text-purple-200 md:text-5xl"
           initial={{ opacity: 0, y: 20 }}
@@ -930,7 +947,7 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
         >
           {t('dangerEggEndSubtitle')}
         </m.p>
-        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+        <m.div className="pointer-events-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
           <Button ref={returnButtonRef} variant="minepanel" className="font-minecraft" onClick={onReturn}>
             {t('dangerEggReturn')}
           </Button>

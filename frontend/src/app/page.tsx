@@ -31,6 +31,7 @@ import type { UserInvitation } from '@/services/users/users.service';
 import { healthService } from '@/services/health.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
 import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
 
@@ -293,8 +294,7 @@ function HomeContent() {
   return (
     <>
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-[url('/images/background.webp')] bg-cover bg-center">
-        <div className="absolute inset-0 bg-[#0a0d09]/75 backdrop-blur-sm" />
+      <div className="relative flex min-h-screen flex-col overflow-hidden mp-blueprint">
 
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <m.div
@@ -340,11 +340,14 @@ function HomeContent() {
                   priority
                 />
               </m.div>
-              <span className="font-minecraft text-xl text-transparent bg-linear-to-r from-green-400 to-emerald-600 bg-clip-text transition-all group-hover:from-emerald-400 group-hover:to-green-500">
+              <span className="hidden font-minecraft text-xl text-transparent bg-linear-to-r from-emerald-300 to-emerald-500 bg-clip-text transition-all group-hover:from-emerald-400 group-hover:to-emerald-500 sm:inline">
                 Minepanel
               </span>
             </Link>
-            <LanguageSwitcher />
+            <div className="flex items-center gap-3">
+              <GitHubStarButton label={t('github')} />
+              <LanguageSwitcher />
+            </div>
           </div>
         </header>
 
@@ -362,7 +365,7 @@ function HomeContent() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="font-minecraft text-5xl font-bold text-white"
                 style={{
-                  textShadow: '0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3)',
+                  textShadow: '0 0 20px rgba(157, 255, 63, 0.5), 0 0 40px rgba(157, 255, 63, 0.3)',
                 }}
               >
                 {t('welcome')}
