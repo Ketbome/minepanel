@@ -136,7 +136,7 @@ export default function HomePage() {
           label: "RAM",
           img: "/images/emerald.webp",
           icon: Activity,
-          color: "#34d399",
+          color: "#9dff3f",
           text: "text-emerald-300",
           percent: systemStats.memory.usagePercentage,
           value: `${formatBytes(systemStats.memory.used)} / ${formatBytes(systemStats.memory.total)}`,

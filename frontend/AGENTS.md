@@ -64,9 +64,15 @@ npm run lint --prefix frontend
 - Keep components focused; split large feature blocks into molecules/organisms.
 - Maintain existing visual/system patterns; do not redesign unrelated UI.
 
-Design system (Minecraft GUI):
+Design system (Minecraft GUI, converged with the docs brand):
 
-- The app uses a pixel/inventory "Minecraft GUI" look defined in `src/app/globals.css`.
+- The app uses a pixel/inventory "Minecraft GUI" look defined in `src/app/globals.css`, sharing
+  brand DNA with the docs site (`doc/.vitepress/theme/style.css`): acid green `#9dff3f` on
+  near-black `#0a0e08`, hard offset shadows, and a blueprint-grid backdrop (`mp-blueprint`).
+- Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo Black uppercase is the
+  display font (`font-minecraft`, `mc-btn`, `mc-tag`, `mc-count`); Archivo is the body font
+  (`--font-sans`); JetBrains Mono is the mono font (`--font-mono`, mono labels via `mp-tag`).
+  Do not reintroduce Mojang's proprietary Minecraft font or any pixel font.
 - Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
   slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).
   Segmented bars: `mc-bar` + `mc-bar__fill` (set fill color via inline `backgroundColor`).
@@ -76,6 +82,8 @@ Design system (Minecraft GUI):
   `mc-field`; `Badge` uses `mc-chip`; `Tabs` list/trigger are squared with emerald active state.
   Prefer plain `Card`/`Button`/`Input`/`Badge`/`Tabs` and let the skin apply; only reach for the raw
   `mc-*` classes for bespoke layouts (dashboards, headers).
+- The Tailwind `emerald-*`/`gray-*` scales are remapped in `globals.css` `@theme` onto the docs'
+  acid/green-tinted palette; prefer those utilities (or `--mc-*` vars) over new raw hex values.
 - Use the existing pixel item art in `public/images/*.webp` with the `pixelated` class for icons.
 
 Auth/session patterns:
@@ -118,7 +126,7 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/lib/store/servers-store.ts`
-- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`)
+- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
 - `next.config.ts` - Turbopack config, standalone output, image/compiler options.
 - `package.json`
@@ -152,7 +160,7 @@ Routing and data flow:
 
 i18n:
 
-- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`); the build fails if a dictionary is missing a key.
+- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`); the build fails if a dictionary is missing a key.
 - Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 

@@ -6,8 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'Fira Code', Consolas, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -41,6 +41,30 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Brand convergence with the docs site (doc/.vitepress/theme/style.css):
+   remap the emerald/gray scales used across feature files onto the docs'
+   acid-green palette so hardcoded utilities recolor without per-file edits. */
+@theme {
+  --color-emerald-300: #c4ff7a;
+  --color-emerald-400: #9dff3f;
+  --color-emerald-500: #7fd82f;
+  --color-emerald-600: #5da621;
+  --color-emerald-700: #3a5423;
+  --color-emerald-800: #24350f;
+  --color-emerald-900: #16200a;
+  --color-emerald-950: #0d1207;
+  --color-gray-100: #f5f8ee;
+  --color-gray-200: #eef3e4;
+  --color-gray-300: #cdd8bd;
+  --color-gray-400: #a9b699;
+  --color-gray-500: #768868;
+  --color-gray-600: #4d5f40;
+  --color-gray-700: #1c2716;
+  --color-gray-800: #101609;
+  --color-gray-900: #0d1207;
+  --color-gray-950: #0a0e08;
 }
 
 :root {
@@ -121,16 +145,18 @@
   }
 }
 
-@font-face {
-  font-family: "Minecraft";
-  src: url("/fonts/minecraft.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-.font-minecraft {
-  font-family: "Minecraft", sans-serif;
+/* Display font: Archivo Black uppercase (same voice as the docs), replacing
+   the old minecraft.woff2. Lives in the components layer so text and leading
+   utilities still win. */
+@layer components {
+  .font-minecraft,
+  .mc-count,
+  .mc-btn,
+  .mc-tag {
+    font-family: var(--font-archivo-black), sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
 }
 
 .drop-shadow-glow {
@@ -149,18 +175,18 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(52, 211, 153, 0.4);
+  background: rgba(157, 255, 63, 0.4);
   border-radius: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 211, 153, 0.6);
+  background: rgba(157, 255, 63, 0.6);
 }
 
 /* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(52, 211, 153, 0.4) rgba(31, 41, 55, 0.5);
+  scrollbar-color: rgba(157, 255, 63, 0.4) rgba(31, 41, 55, 0.5);
 }
 
 /* Hide scrollbar */
@@ -533,15 +559,34 @@
    on top of the fixed world background.
    ============================================================ */
 :root {
-  --mc-frame: #0a0d09;
-  --mc-stone: #2b3327;
-  --mc-stone-deep: #191e16;
-  --mc-emerald: #34d399;
-  --mc-diamond: #5eead4;
-  --mc-gold: #f5c542;
+  --mc-frame: #0a0e08;
+  --mc-stone: #101609;
+  --mc-stone-deep: #0d1207;
+  --mc-emerald: #9dff3f;
+  --mc-diamond: #5fd7ff;
+  --mc-gold: #ffd25f;
   --mc-lapis: #5b8dff;
-  --mc-redstone: #f05a5a;
+  --mc-redstone: #ff6b5f;
   --mc-amethyst: #b388ff;
+}
+
+/* Blueprint grid backdrop shared with the docs landing (replaces the old
+   world-screenshot + blur overlay). */
+.mp-blueprint {
+  background-color: var(--mc-frame);
+  background-image: linear-gradient(rgba(157, 255, 63, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(157, 255, 63, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-attachment: fixed;
+}
+
+/* Mono uppercase label, matching the docs' .mp-tag */
+.mp-tag {
+  font-family: var(--font-jetbrains-mono), 'Fira Code', Consolas, monospace;
+  color: var(--mc-emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
 }
 
 /* Raised stone panel (chest / inventory window) */
@@ -550,7 +595,7 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)), var(--mc-stone);
   border: 3px solid var(--mc-frame);
   border-radius: 0;
-  box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.1), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 0 6px 0 rgba(0, 0, 0, 0.35), 0 14px 28px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.1), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 6px 6px 0 rgba(157, 255, 63, 0.1);
   image-rendering: pixelated;
 }
 
@@ -589,12 +634,11 @@
 .mc-slot--active {
   outline: 3px solid var(--mc-emerald);
   outline-offset: -1px;
-  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 16px rgba(52, 211, 153, 0.55);
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 16px rgba(157, 255, 63, 0.55);
 }
 
 /* Stack-count number, bottom-right like real item stacks */
 .mc-count {
-  font-family: "Minecraft", sans-serif;
   color: #fff;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85);
   line-height: 1;
@@ -607,7 +651,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-family: "Minecraft", sans-serif;
   color: #f3fff8;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
   background: linear-gradient(180deg, #4d4d4d, #383838);
@@ -629,13 +672,17 @@
 }
 
 .mc-btn-emerald {
-  background: linear-gradient(180deg, #57a83f, #3c7e2a);
+  background: linear-gradient(180deg, #9dff3f, #7fd82f);
+  color: #0a0e08;
+  text-shadow: none;
 }
 .mc-btn-lapis {
   background: linear-gradient(180deg, #4f7bdd, #2f55ad);
 }
 .mc-btn-gold {
-  background: linear-gradient(180deg, #d9a52f, #a9781b);
+  background: linear-gradient(180deg, #ffd25f, #d9a52f);
+  color: #0a0e08;
+  text-shadow: none;
 }
 .mc-btn-amethyst {
   background: linear-gradient(180deg, #8a63d6, #5f3fa3);
@@ -669,7 +716,6 @@
 
 /* Pixel chip / tag (status badge) */
 .mc-tag {
-  font-family: "Minecraft", sans-serif;
   border: 2px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.2), inset -1px -1px 0 rgba(0, 0, 0, 0.4);
@@ -689,16 +735,16 @@
 }
 .mc-input:focus {
   outline: none;
-  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(52, 211, 153, 0.5);
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(157, 255, 63, 0.5);
 }
 
 @keyframes slot-glint {
   0%,
   100% {
-    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 0 rgba(52, 211, 153, 0);
+    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 0 rgba(157, 255, 63, 0);
   }
   50% {
-    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 18px rgba(52, 211, 153, 0.45);
+    box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06), 0 0 18px rgba(157, 255, 63, 0.45);
   }
 }
 
@@ -745,7 +791,7 @@
 .mc-field:focus,
 .mc-field:focus-visible {
   outline: none;
-  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(52, 211, 153, 0.5);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(157, 255, 63, 0.5);
 }
 
 /* Keep browser autofill on-theme instead of the default lavender/yellow */

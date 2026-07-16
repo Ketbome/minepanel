@@ -297,7 +297,7 @@ export const MetricsTab: FC<MetricsTabProps> = ({ serverId }) => {
                   <Cpu className="h-4 w-4 text-emerald-400" />
                   <span className="text-sm font-minecraft">{t("metricsCpu")}</span>
                 </div>
-                <SeriesChart points={points} accessor={(point) => point.cpuPercent} color="#34d399" unit="%" maxHint={100} />
+                <SeriesChart points={points} accessor={(point) => point.cpuPercent} color="#9dff3f" unit="%" maxHint={100} />
               </div>
 
               <div>
