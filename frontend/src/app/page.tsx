@@ -31,6 +31,7 @@ import type { UserInvitation } from '@/services/users/users.service';
 import { healthService } from '@/services/health.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
 import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
 
@@ -339,11 +340,14 @@ function HomeContent() {
                   priority
                 />
               </m.div>
-              <span className="font-minecraft text-xl text-transparent bg-linear-to-r from-emerald-300 to-emerald-500 bg-clip-text transition-all group-hover:from-emerald-400 group-hover:to-emerald-500">
+              <span className="hidden font-minecraft text-xl text-transparent bg-linear-to-r from-emerald-300 to-emerald-500 bg-clip-text transition-all group-hover:from-emerald-400 group-hover:to-emerald-500 sm:inline">
                 Minepanel
               </span>
             </Link>
-            <LanguageSwitcher />
+            <div className="flex items-center gap-3">
+              <GitHubStarButton label={t('github')} />
+              <LanguageSwitcher />
+            </div>
           </div>
         </header>
 

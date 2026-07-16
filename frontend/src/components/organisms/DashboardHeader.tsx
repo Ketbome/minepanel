@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { cn } from "@/lib/utils";
 import { getSessionUser, type SessionUser } from "@/services/auth/auth.service";
+import { GitHubStarButton } from "@/components/molecules/GitHubStarButton";
 
 export function DashboardHeader() {
   const { t } = useLanguage();
@@ -43,6 +44,8 @@ export function DashboardHeader() {
   return (
     <header className="sticky top-0 z-40 w-full mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md animate-fade-in">
       <div className="flex h-16 items-center justify-end px-6 gap-3">
+        <GitHubStarButton label={t("github")} />
+
         <div className="mc-slot hidden sm:flex items-center gap-2 px-3 py-1.5">
           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
           <span className="text-xs text-emerald-200 font-minecraft">{t("systemActive")}</span>
