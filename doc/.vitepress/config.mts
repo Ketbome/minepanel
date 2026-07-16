@@ -189,6 +189,12 @@ export default defineConfig({
 
     cleanUrls: true,
 
+    // Cloudflare Workers reject speculative requests with 503, which leaves
+    // VitePress page chunks unavailable during client-side navigation.
+    router: {
+      prefetchLinks: false,
+    },
+
     // The theme is designed dark-only (neo-brutalist terminal aesthetic)
     appearance: 'force-dark',
 
