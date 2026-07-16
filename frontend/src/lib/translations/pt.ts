@@ -252,6 +252,8 @@ export const pt: Record<TranslationKey, string> = {
   dangerEggWhisper1: 'Eu vejo o jogador a quem você se refere.',
   dangerEggWhisper2: 'E o universo disse eu te amo.',
   dangerEggWhisper3: 'Você jogou bem o jogo.',
+  dangerEggMission: 'Missão',
+  dangerEggMissionObjective: 'Encontre o portal para o Overworld',
   settingsSaved: 'Configurações salvas com sucesso',
   settingsSaveFailed: 'Erro ao salvar as configurações',
   test: 'Testar',

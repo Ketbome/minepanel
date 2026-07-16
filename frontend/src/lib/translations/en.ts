@@ -249,6 +249,8 @@ export const en = {
   dangerEggWhisper1: 'I see the player you mean.',
   dangerEggWhisper2: 'And the universe said I love you.',
   dangerEggWhisper3: 'You have played the game well.',
+  dangerEggMission: 'Mission',
+  dangerEggMissionObjective: 'Find the portal to the Overworld',
   settingsSaved: 'Settings saved successfully',
   settingsSaveFailed: 'Failed to save settings',
   test: 'Test',

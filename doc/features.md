@@ -242,6 +242,7 @@ Recommended approach:
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
 | MC Proxy Router  | Single port for Java servers via hostname |
+| End Portal expedition | Optional desktop-only 3D easter egg in Settings > Danger Zone; find and click the portal to return |
 
 ## Edition Comparison
 
