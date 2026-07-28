@@ -194,7 +194,7 @@ export default defineConfig({
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: '/cubo.webp',
+    logo: '/cubo.svg',
 
     nav: [
       { text: 'Home', link: '/' },

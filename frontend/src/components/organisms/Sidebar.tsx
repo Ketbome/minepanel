@@ -162,8 +162,8 @@ export function Sidebar() {
               )}
             >
               <Image
-                src="/images/minecraft-logo.webp"
-                alt="Logo"
+                src="/images/minepanel-logo.svg"
+                alt="Minepanel Logo"
                 width={32}
                 height={32}
                 className="object-contain shrink-0"

@@ -34,7 +34,7 @@ export function Header() {
       <div className="flex h-16 items-center justify-between px-6 sm:px-8 max-w-7xl mx-auto">
         <Link href="/dashboard/home" className="flex items-center gap-3 font-bold">
           <m.div whileHover={{ rotate: [0, -10, 10, -10, 0] }} transition={{ duration: 0.5 }}>
-            <Image src="/images/minecraft-logo.webp" alt="Minecraft Logo" width={40} height={40} className="rounded" />
+            <Image src="/images/minepanel-logo.svg" alt="Minepanel Logo" width={40} height={40} className="rounded" />
           </m.div>
           <span className="text-xl bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent font-minecraft">Minepanel</span>
         </Link>
