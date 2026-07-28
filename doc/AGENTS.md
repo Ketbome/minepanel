@@ -128,7 +128,7 @@ services:
 ### Brand assets
 
 - `public/cubo.svg` - transparent logo, used by `themeConfig.logo` (nav).
-- `public/cubo.webp` - 512x512 opaque logo on `#171e15`, used by `og:image`, `twitter:image`, `apple-touch-icon` and the maskable manifest icon. Keep it opaque; transparent icons break maskable/iOS rendering.
+- `public/cubo.webp` - 512x512 opaque logo on `--mp-bg` (`#0a0e08`), used by `og:image`, `twitter:image`, `apple-touch-icon` and the maskable manifest icon. Keep it opaque; transparent icons break maskable/iOS rendering.
 - `public/favicon.ico` - multi-size (16-256) transparent icon.
 - Source artwork lives in `public/img/mipanel.ai`; regenerate the assets above from it, do not edit them by hand.
 
