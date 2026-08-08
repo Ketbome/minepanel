@@ -271,6 +271,7 @@ export class ServerManagementController {
       extraPorts: [],
       proxyHostname: undefined,
       backupHostDir: undefined,
+      dockerVolumes: this.dockerComposeService.remapVolumesToServer(config.dockerVolumes, id, body.newId),
     };
     if (config.worldScope === 'local' && config.worldSource) {
       clonePayload.worldSource = '';

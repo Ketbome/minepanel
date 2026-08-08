@@ -1201,6 +1201,28 @@ export class DockerComposeService {
     return [host, target, ...options].join(':');
   }
 
+  remapVolumesToServer(dockerVolumes: string | undefined, sourceId: string, targetId: string): string | undefined {
+    if (!dockerVolumes) return dockerVolumes;
+
+    return dockerVolumes
+      .split('\n')
+      .map((line) => {
+        const volume = line.trim();
+        if (!volume) return line;
+
+        const [hostPath, ...containerParts] = volume.split(':');
+        if (containerParts.length === 0 || hostPath.startsWith('./')) return line;
+
+        const segments = hostPath.split('/');
+        const serverIdIndex = segments.findIndex((segment, index) => segment === 'servers' && segments[index + 1] === sourceId);
+        if (serverIdIndex === -1) return line;
+
+        segments[serverIdIndex + 1] = targetId;
+        return `${segments.join('/')}:${containerParts.join(':')}`;
+      })
+      .join('\n');
+  }
+
   private hasMountTarget(volume: string, target: string): boolean {
     const parts = volume.split(':');
     if (parts.length < 2) return false;
