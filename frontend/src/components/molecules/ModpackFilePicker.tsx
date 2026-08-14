@@ -34,14 +34,19 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
     [accept],
   );
 
+  // Responses that land after the picker moved to another server must be dropped.
+  const activeServerRef = useRef(serverId);
+  activeServerRef.current = serverId;
+
   const load = useCallback(async () => {
     try {
       const all = await modpacksService.list(serverId);
+      if (activeServerRef.current !== serverId) return;
       setFiles(all.filter((file) => matchesAccept(file.name)));
     } catch {
-      mcToast.error(t("modpackLoadError"));
+      if (activeServerRef.current === serverId) mcToast.error(t("modpackLoadError"));
     } finally {
-      setIsLoading(false);
+      if (activeServerRef.current === serverId) setIsLoading(false);
     }
   }, [serverId, matchesAccept, t]);
 
@@ -53,6 +58,12 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+
+    // accept= is only a hint in the file dialog, and the backend takes both formats.
+    if (!matchesAccept(file.name)) {
+      mcToast.error(`${t("modpackWrongFormat")} ${accept}`);
+      return;
+    }
 
     setIsUploading(true);
     try {

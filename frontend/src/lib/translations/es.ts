@@ -1274,6 +1274,7 @@ export const es: Record<TranslationKey, string> = {
   modpackDeleted: 'Modpack eliminado',
   modpackUploadError: 'No se pudo subir el modpack',
   modpackDeleteError: 'No se pudo eliminar el modpack',
+  modpackWrongFormat: 'Se esperaba un archivo:',
   modpackLoadError: 'No se pudieron cargar los archivos de modpack',
   modpackHint: 'Los archivos se guardan en la carpeta modpacks/ del servidor y se montan en /modpacks en solo lectura',
 

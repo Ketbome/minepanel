@@ -21,7 +21,8 @@ export class ModpacksController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  // Multer buffers the whole upload before the pipe runs, so the ceiling has to be here too.
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_MODPACK_SIZE } }))
   async upload(
     @Request() req,
     @Param('serverId') serverId: string,

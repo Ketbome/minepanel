@@ -1275,6 +1275,7 @@ export const en = {
   modpackDeleted: 'Modpack deleted',
   modpackUploadError: 'Could not upload the modpack',
   modpackDeleteError: 'Could not delete the modpack',
+  modpackWrongFormat: 'Expected file type:',
   modpackLoadError: 'Could not load the modpack files',
   modpackHint: 'Files are stored in the server modpacks/ folder and mounted read-only at /modpacks',
 

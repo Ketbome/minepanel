@@ -74,7 +74,14 @@ export class ModpacksService {
       throw new BadRequestException('Invalid server ID');
     }
 
-    const dir = path.join(this.SERVERS_DIR, serverId, 'modpacks');
+    // A folder name is not a server: require the compose file so reserved ids like
+    // "_root" can't be used to scatter directories through the servers dir.
+    const serverDir = path.join(this.SERVERS_DIR, serverId);
+    if (!(await fs.pathExists(path.join(serverDir, 'docker-compose.yml')))) {
+      throw new NotFoundException(`Server ${serverId} not found`);
+    }
+
+    const dir = path.join(serverDir, 'modpacks');
     await fs.ensureDir(dir);
     return dir;
   }

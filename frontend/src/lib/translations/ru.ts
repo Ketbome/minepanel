@@ -1277,6 +1277,7 @@ export const ru: Record<TranslationKey, string> = {
   modpackDeleted: 'Модпак удалён',
   modpackUploadError: 'Не удалось загрузить модпак',
   modpackDeleteError: 'Не удалось удалить модпак',
+  modpackWrongFormat: 'Ожидаемый тип файла:',
   modpackLoadError: 'Не удалось загрузить файлы модпака',
   modpackHint: 'Файлы хранятся в папке modpacks/ сервера и монтируются только для чтения в /modpacks',
 

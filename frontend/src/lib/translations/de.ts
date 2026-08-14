@@ -1292,6 +1292,7 @@ export const de: Record<TranslationKey, string> = {
   modpackDeleted: 'Modpack gelöscht',
   modpackUploadError: 'Modpack konnte nicht hochgeladen werden',
   modpackDeleteError: 'Modpack konnte nicht gelöscht werden',
+  modpackWrongFormat: 'Erwarteter Dateityp:',
   modpackLoadError: 'Modpack-Dateien konnten nicht geladen werden',
   modpackHint: 'Dateien liegen im Ordner modpacks/ des Servers und werden schreibgeschützt unter /modpacks eingebunden',
 

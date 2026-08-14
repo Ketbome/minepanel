@@ -1291,6 +1291,7 @@ export const nl: Record<TranslationKey, string> = {
   modpackDeleted: 'Modpack verwijderd',
   modpackUploadError: 'Kon de modpack niet uploaden',
   modpackDeleteError: 'Kon de modpack niet verwijderen',
+  modpackWrongFormat: 'Verwacht bestandstype:',
   modpackLoadError: 'Kon de modpack-bestanden niet laden',
   modpackHint: 'Bestanden staan in de map modpacks/ van de server en zijn alleen-lezen gekoppeld op /modpacks',
 

@@ -26,11 +26,12 @@ const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/Mod
 });
 
 interface ModsTabProps {
+  serverId: string;
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
+export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) => {
   const { t } = useLanguage();
   const [showApiKeyManual, setShowApiKeyManual] = useState(false);
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
@@ -693,7 +694,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                   <Image src="/images/book.webp" alt="Modpack" width={16} height={16} />
                   {t("modpackFiles")}
                 </Label>
-                <ModpackFilePicker serverId={config.id} value={config.cfModpackZip} onChange={(containerPath) => updateConfig("cfModpackZip", containerPath)} accept=".zip" />
+                <ModpackFilePicker serverId={serverId} value={config.cfModpackZip} onChange={(containerPath) => updateConfig("cfModpackZip", containerPath)} accept=".zip" />
               </div>
             )}
 
@@ -823,7 +824,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
               <div className="mt-4 border-t border-emerald-600/20 pt-4">
                 <Label className="text-emerald-400 font-minecraft text-sm">{t("modpackFiles")}</Label>
                 <div className="mt-2">
-                  <ModpackFilePicker serverId={config.id} value={config.modrinthModpack} onChange={(containerPath) => updateConfig("modrinthModpack", containerPath)} accept=".mrpack" />
+                  <ModpackFilePicker serverId={serverId} value={config.modrinthModpack} onChange={(containerPath) => updateConfig("modrinthModpack", containerPath)} accept=".mrpack" />
                 </div>
               </div>
             </div>

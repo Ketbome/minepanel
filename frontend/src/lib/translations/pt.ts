@@ -1274,6 +1274,7 @@ export const pt: Record<TranslationKey, string> = {
   modpackDeleted: 'Modpack excluído',
   modpackUploadError: 'Não foi possível enviar o modpack',
   modpackDeleteError: 'Não foi possível excluir o modpack',
+  modpackWrongFormat: 'Tipo de arquivo esperado:',
   modpackLoadError: 'Não foi possível carregar os arquivos de modpack',
   modpackHint: 'Os arquivos ficam na pasta modpacks/ do servidor e são montados somente leitura em /modpacks',
 
