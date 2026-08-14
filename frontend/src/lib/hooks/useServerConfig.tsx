@@ -115,6 +115,7 @@ const defaultConfig: ServerConfig = {
   cfForceInclude: '',
   cfExclude: '',
   cfFilenameMatcher: '',
+  cfModpackZip: '',
   cfParallelDownloads: '4',
   cfOverridesSkipExisting: false,
   cfSetLevelFrom: '',

@@ -1263,7 +1263,7 @@ export const de: Record<TranslationKey, string> = {
   methodSlug: 'Slug',
   methodSlugDesc: 'Eindeutiger Modpack-Bezeichner (z.B.: "all-the-mods-7")',
   methodFile: 'Datei',
-  methodFileDesc: 'Aus einer bereits auf den Server hochgeladenen .zip-Datei installieren',
+  methodFileDesc: 'Aus einer auf diesen Server hochgeladenen Modpack-Datei installieren',
   installFromUrl: 'Von direkter URL installieren',
   useIdSlug: 'Modpack-ID/Slug verwenden',
   useLocalFile: 'Lokale Datei auf dem Server verwenden',
@@ -1282,10 +1282,18 @@ export const de: Record<TranslationKey, string> = {
   fileIdDesc:
     'Spezifische Datei-ID zum Herunterladen. Wenn leer gelassen, wird die neueste Version verwendet.',
 
-  filePattern: 'Dateimuster (CF_FILENAME_MATCHER)',
-  filePatternHelp:
-    'Geben Sie einen Teilstring an, um die gewünschte Datei im /modpacks-Ordner zu finden.',
-  filePatternDesc: 'Muster zum Finden der Modpack-Datei im /modpacks-Ordner',
+  filePattern: 'Dateinamenfilter (CF_FILENAME_MATCHER)',
+  filePatternHelp: 'Optional. Teilzeichenkette oder /Regex/, die eingrenzt, welche veröffentlichte Datei geladen wird.',
+  filePatternDesc: 'Leer lassen, um immer die neueste kompatible Datei zu verwenden',
+  modpackFiles: 'Modpack-Dateien',
+  modpackUpload: 'Modpack hochladen',
+  modpackEmpty: 'Noch keine Modpack-Dateien hochgeladen',
+  modpackUploaded: 'Modpack hochgeladen',
+  modpackDeleted: 'Modpack gelöscht',
+  modpackUploadError: 'Modpack konnte nicht hochgeladen werden',
+  modpackDeleteError: 'Modpack konnte nicht gelöscht werden',
+  modpackLoadError: 'Modpack-Dateien konnten nicht geladen werden',
+  modpackHint: 'Dateien liegen im Ordner modpacks/ des Servers und werden schreibgeschützt unter /modpacks eingebunden',
 
   cfApiKey: 'CurseForge API-Schlüssel (CF_API_KEY)',
   cfApiKeyHelp:

@@ -28,6 +28,7 @@ frontend/src/
 |  |- world-discovery/          World import endpoints
 |  |- metrics/                  Per-server CPU/RAM history endpoints
 |  |- scheduler/                Scheduled tasks CRUD endpoints
+|  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
 |  |- store/                    Zustand stores
 |  |- translations/             i18n dictionaries
@@ -123,6 +124,7 @@ Tooling / build (Next.js 16):
 - `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
 - `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
+- `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the AUTO_CURSEFORGE "File" method and the Modrinth modpack field.
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/lib/store/servers-store.ts`
