@@ -20,6 +20,10 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// Own-property check: `'constructor' in translations` is true and would let a
+// hand-edited localStorage value through as a locale.
+const isKnownLanguage = (value: string) => Object.prototype.hasOwnProperty.call(translations, value);
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   // Always render "en" first: pages are prerendered at build time in English,
   // while NEXT_PUBLIC_DEFAULT_LANGUAGE is only known at runtime. Resolving it
@@ -28,7 +32,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && translations[savedLanguage]) {
+    if (savedLanguage && isKnownLanguage(savedLanguage)) {
       setLanguageState(savedLanguage);
       return;
     }
@@ -36,7 +40,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const envLang = getPublicEnv('NEXT_PUBLIC_DEFAULT_LANGUAGE');
     if (!envLang) return;
 
-    if (!(envLang in translations)) {
+    if (!isKnownLanguage(envLang)) {
       console.warn(
         `[Minepanel] Language "${envLang}" is not available. Available: ${Object.keys(translations).join(', ')}. Falling back to "en".`,
       );

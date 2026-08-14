@@ -181,7 +181,7 @@ sudo ufw allow 3000/tcp
 **Solutions:**
 
 1. Update to the latest Minepanel version. The panel now declares itself as non-translatable and its first render no longer depends on runtime settings.
-2. Disable automatic translation for the panel (Chrome: right click → **Translate to...** → **Never translate this site**).
+2. Disable automatic translation for the panel (Chrome: right-click → **Translate to...** → **Never translate this site**).
 3. Retry in a private window with extensions disabled to confirm the cause.
 4. Hard refresh with `Ctrl+Shift+R` after updating.
 
