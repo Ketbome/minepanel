@@ -421,6 +421,8 @@ export const ru: Record<TranslationKey, string> = {
   serverNotFound: 'Сервер не найден',
   connectionError: 'Ошибка подключения',
   unexpectedError: 'Непредвиденная ошибка',
+  unexpectedErrorDesc: 'Панель не смогла отобразить эту страницу. Обычно помогает перезагрузка.',
+  reloadPage: 'Перезагрузить страницу',
   NO_ACCESS_TOKEN: 'Не получен токен доступа',
   LOGIN_ERROR: 'Ошибка входа',
   SERVER_START_ERROR: 'Ошибка запуска сервера',

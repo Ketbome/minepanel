@@ -38,8 +38,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${archivo.variable} ${archivoBlack.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" translate="no" suppressHydrationWarning className={`${archivo.variable} ${archivoBlack.variable} ${jetbrainsMono.variable}`}>
       <head>
+        {/* The panel ships its own translations; browser translation rewrites
+            React-owned text nodes and breaks hydration. */}
+        <meta name="google" content="notranslate" />
         <PublicEnvScript />
       </head>
       <body>

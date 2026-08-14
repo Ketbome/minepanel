@@ -425,6 +425,8 @@ export const nl: Record<TranslationKey, string> = {
   serverNotFound: 'De server is niet gevonden',
   connectionError: 'Verbindingsfout',
   unexpectedError: 'Onverwachts probleem',
+  unexpectedErrorDesc: 'Het paneel kon deze pagina niet weergeven. Opnieuw laden lost dit meestal op.',
+  reloadPage: 'Pagina opnieuw laden',
   NO_ACCESS_TOKEN: 'Er is geen toegangstoken ontvangen',
   LOGIN_ERROR: 'Inlogfout',
   SERVER_START_ERROR: 'De server kon niet worden gestart vanwege een probleem.',

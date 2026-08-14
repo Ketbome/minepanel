@@ -419,6 +419,8 @@ export const en = {
   serverNotFound: 'Server not found',
   connectionError: 'Connection error',
   unexpectedError: 'Unexpected error',
+  unexpectedErrorDesc: 'The panel could not render this page. Reloading usually fixes it.',
+  reloadPage: 'Reload page',
   NO_ACCESS_TOKEN: 'No access token received',
   LOGIN_ERROR: 'Login error',
   SERVER_START_ERROR: 'Error starting server',

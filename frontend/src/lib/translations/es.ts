@@ -422,6 +422,8 @@ export const es: Record<TranslationKey, string> = {
   serverNotFound: 'Servidor no encontrado',
   connectionError: 'Error de conexión',
   unexpectedError: 'Error inesperado',
+  unexpectedErrorDesc: 'El panel no pudo mostrar esta página. Recargar suele solucionarlo.',
+  reloadPage: 'Recargar página',
   NO_ACCESS_TOKEN: 'No se recibió token de acceso',
   LOGIN_ERROR: 'Error al iniciar sesión',
   SERVER_START_ERROR: 'Error al iniciar el servidor',
