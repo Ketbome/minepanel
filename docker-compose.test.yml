@@ -27,6 +27,7 @@ services:
       - BASE_DIR=${BASE_DIR:-$PWD}
       - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}
       - BASE_PATH=${BASE_PATH:-}
+      - MC_PROXY_AUTOSCALE_TOKEN=${MC_PROXY_AUTOSCALE_TOKEN:-}
     volumes:
       - ${BASE_DIR:-$PWD}/servers:/app/servers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -53,7 +54,7 @@ services:
   # Note: mc-router only works with Java Edition (TCP). Bedrock uses UDP and doesn't support proxy routing.
   # Enable with: docker compose -f docker-compose.test.yml --profile proxy up -d
   mc-router:
-    image: itzg/mc-router:1.39.1
+    image: itzg/mc-router:1.46.2
     container_name: mc-router
     profiles:
       - proxy
@@ -62,6 +63,16 @@ services:
     environment:
       - ROUTES_CONFIG=/data/routes.json
       - ROUTES_CONFIG_WATCH=true
+      # Auto-scaling (optional): the router asks the panel to start a server on
+      # the first connection and to stop it once idle. Needs MC_PROXY_AUTOSCALE_TOKEN.
+      - AUTO_SCALE_UP=${MC_PROXY_AUTOSCALE:-false}
+      - AUTO_SCALE_DOWN=${MC_PROXY_AUTOSCALE:-false}
+      - AUTO_SCALE_DOWN_AFTER=${MC_PROXY_AUTOSCALE_DOWN_AFTER:-10m}
+      - AUTO_SCALE_WEBHOOK_URL=http://backend:8091${BASE_PATH:-}/servers/autoscale
+      - AUTO_SCALE_WEBHOOK_HEADERS=Authorization=Bearer ${MC_PROXY_AUTOSCALE_TOKEN:-}
+      - AUTO_SCALE_WEBHOOK_WAKE_TIMEOUT=${MC_PROXY_AUTOSCALE_WAKE_TIMEOUT:-180s}
+      - AUTO_SCALE_ASLEEP_MOTD=${MC_PROXY_AUTOSCALE_ASLEEP_MOTD:-Server is asleep. Join to wake it up!}
+      - AUTO_SCALE_LOADING_MOTD=${MC_PROXY_AUTOSCALE_LOADING_MOTD:-Server is starting...}
     volumes:
       - ${BASE_DIR:-$PWD}/data/proxy:/data
     networks:

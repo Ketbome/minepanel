@@ -104,6 +104,7 @@ Path and filesystem patterns (critical):
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
+- `src/server-management/auto-scale.controller.ts` - mc-router auto-scaling webhook.
 - `package.json` - backend scripts.
 
 ## Agent-Specific Instructions
@@ -115,6 +116,7 @@ General:
 - If API contract changes, update frontend usage and docs in `doc/`.
 - Backend auth is private-by-default through a global JWT guard; only explicitly `@Public()` routes should bypass auth.
 - Keep auth transport limited to `httpOnly` cookies and bearer headers; never add JWT support via query params.
+- `POST /servers/autoscale` (`src/server-management/auto-scale.controller.ts`) is the only `@Public()` route that controls servers. It is off unless `MC_PROXY_AUTOSCALE_TOKEN` is set, authenticates mc-router with a constant-time bearer comparison, and must keep accepting only servers present in `routes.json`.
 - Optional SSO is OpenID Connect via `auth/oidc/*` (provider-agnostic; configured by `OIDC_*` env in `config.ts`). It validates the IdP `id_token` then issues the same Minepanel session cookies via `auth/utils/auth-cookies.ts`; the `client_secret` stays server-side and is never exposed. `OIDC_DISABLE_PASSWORD_LOGIN=true` blocks password login server-side (only when SSO is fully configured).
 
 Server ID and directory safety:

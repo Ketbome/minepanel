@@ -197,6 +197,33 @@ docker compose --profile proxy up -d
 
 Java servers auto-get hostnames: `{server-id}.mc.example.com`
 
+### Auto-scaling (sleep when idle)
+
+mc-router can keep idle servers stopped and start them again on the first connection. The router does not talk to Docker: it calls the panel, which starts and stops the server the same way the UI does.
+
+1. **Generate a token** and enable the feature in `.env`:
+
+```bash
+# .env
+MC_PROXY_AUTOSCALE=true
+MC_PROXY_AUTOSCALE_TOKEN=<openssl rand -base64 32>
+MC_PROXY_AUTOSCALE_DOWN_AFTER=10m
+```
+
+2. **Recreate both services** so they pick up the token:
+
+```bash
+docker compose --profile proxy up -d
+```
+
+While a server is asleep, its MOTD shows `Server is asleep. Join to wake it up!`. Joining triggers the wake-up; the router waits up to `MC_PROXY_AUTOSCALE_WAKE_TIMEOUT` (180s by default) for the server to accept connections, so the first join on a heavy modpack may time out. Reconnect and it will be ready.
+
+::: warning This stops running servers
+With `MC_PROXY_AUTOSCALE=true`, any proxied Java server with no players for `MC_PROXY_AUTOSCALE_DOWN_AFTER` is stopped, including ones you started manually. Only servers listed in the proxy routes are affected; Bedrock servers are never touched.
+:::
+
+The panel exposes `POST /servers/autoscale` for this. It is the only unauthenticated endpoint that controls servers, it is rejected unless `MC_PROXY_AUTOSCALE_TOKEN` is set and sent as `Authorization: Bearer <token>`, and it only accepts servers that are currently in the proxy routes.
+
 ### Bedrock Connection
 
 Bedrock servers connect directly via IP and port:
