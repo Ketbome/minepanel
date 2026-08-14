@@ -423,6 +423,8 @@ export const pl: Record<TranslationKey, string> = {
   serverNotFound: 'Nie znaleziono serwera',
   connectionError: 'Błąd połączenia',
   unexpectedError: 'Nieoczekiwany błąd',
+  unexpectedErrorDesc: 'Panel nie mógł wyświetlić tej strony. Przeładowanie zwykle to naprawia.',
+  reloadPage: 'Przeładuj stronę',
   NO_ACCESS_TOKEN: 'Nie otrzymano tokena dostępu',
   LOGIN_ERROR: 'Błąd logowania',
   SERVER_START_ERROR: 'Błąd uruchamiania serwera',

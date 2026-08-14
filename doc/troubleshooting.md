@@ -172,6 +172,19 @@ curl http://localhost:3000
 sudo ufw allow 3000/tcp
 ```
 
+### Blank page or "Application error" while navigating
+
+**Symptoms:** A page fails to render (blank screen or a client-side exception) and DevTools shows a React hydration error (`#418`) followed by `NotFoundError: Failed to execute 'insertBefore' on 'Node'`. Usually only in one browser.
+
+**Cause:** Something rewrote the page HTML before React took over. The two known sources are the browser's automatic page translation and extensions that inject content into the page.
+
+**Solutions:**
+
+1. Update to the latest Minepanel version. The panel now declares itself as non-translatable and its first render no longer depends on runtime settings.
+2. Disable automatic translation for the panel (Chrome: right-click → **Translate to...** → **Never translate this site**).
+3. Retry in a private window with extensions disabled to confirm the cause.
+4. Hard refresh with `Ctrl+Shift+R` after updating.
+
 ### Can't Access from Remote
 
 **Symptoms:** Works on `localhost` but not from other devices

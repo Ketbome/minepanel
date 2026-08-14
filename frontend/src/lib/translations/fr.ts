@@ -421,6 +421,8 @@ export const fr: Record<TranslationKey, string> = {
   serverNotFound: 'Serveur introuvable',
   connectionError: 'Erreur de connexion',
   unexpectedError: 'Erreur inattendue',
+  unexpectedErrorDesc: "Le panneau n'a pas pu afficher cette page. Recharger règle généralement le problème.",
+  reloadPage: 'Recharger la page',
   NO_ACCESS_TOKEN: 'Aucun jeton d’accès reçu',
   LOGIN_ERROR: 'Erreur de connexion',
   SERVER_START_ERROR: 'Erreur lors du démarrage du serveur',
