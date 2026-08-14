@@ -117,6 +117,15 @@ Typical examples:
 - `POST /servers/:id/restart`
 - `GET /servers/:id/logs`
 
+Modpack files uploaded for a server (`.zip` for CurseForge, `.mrpack` for Modrinth). They are stored
+in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
+
+- `GET /servers/:id/modpacks`
+- `POST /servers/:id/modpacks` — multipart `file`
+- `DELETE /servers/:id/modpacks/:fileName`
+
+Uploads are capped at 256 MB and rejected unless the file ends in `.zip` or `.mrpack`.
+
 ### Files
 
 Server file browser API used by the dashboard.

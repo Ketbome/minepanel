@@ -242,7 +242,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               {showModsTab && (
                 <TabsContent value="mods" className="space-y-4 mt-0">
-                  <ModsTab config={config} updateConfig={updateConfig} />
+                  <ModsTab serverId={serverId} config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 

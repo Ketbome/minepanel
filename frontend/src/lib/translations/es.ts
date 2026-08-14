@@ -1247,7 +1247,7 @@ export const es: Record<TranslationKey, string> = {
   methodSlug: 'Slug',
   methodSlugDesc: 'Identificador único del modpack (ej: "all-the-mods-7")',
   methodFile: 'Archivo',
-  methodFileDesc: 'Instalar desde un archivo .zip ya subido al servidor',
+  methodFileDesc: 'Instalar desde un archivo de modpack subido a este servidor',
   installFromUrl: 'Instalar desde URL directa',
   useIdSlug: 'Usar ID/slug del modpack',
   useLocalFile: 'Usar archivo local en el servidor',
@@ -1266,10 +1266,19 @@ export const es: Record<TranslationKey, string> = {
   fileIdDesc:
     'ID específico del archivo a descargar. Si se deja en blanco, se usará la última versión.',
 
-  filePattern: 'Patrón de Archivo (CF_FILENAME_MATCHER)',
-  filePatternHelp:
-    'Especifica un substring para encontrar el archivo deseado en la carpeta /modpacks.',
-  filePatternDesc: 'Patrón para encontrar el archivo del modpack en la carpeta /modpacks',
+  filePattern: 'Filtro de nombre de archivo (CF_FILENAME_MATCHER)',
+  filePatternHelp: 'Opcional. Subcadena o /regex/ para acotar qué archivo publicado se descarga.',
+  filePatternDesc: 'Déjalo vacío para usar siempre el último archivo compatible',
+  modpackFiles: 'Archivos de modpack',
+  modpackUpload: 'Subir modpack',
+  modpackEmpty: 'Todavía no hay archivos de modpack subidos',
+  modpackUploaded: 'Modpack subido',
+  modpackDeleted: 'Modpack eliminado',
+  modpackUploadError: 'No se pudo subir el modpack',
+  modpackDeleteError: 'No se pudo eliminar el modpack',
+  modpackWrongFormat: 'Se esperaba un archivo:',
+  modpackLoadError: 'No se pudieron cargar los archivos de modpack',
+  modpackHint: 'Los archivos se guardan en la carpeta modpacks/ del servidor y se montan en /modpacks en solo lectura',
 
   cfApiKey: 'API Key de CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.',

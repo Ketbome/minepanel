@@ -257,6 +257,7 @@ When creating/editing a server with type **MODRINTH_MODPACK**, there is one meth
 | **Slug**              | ✅ Yes         | Always gets the latest compatible version |
 | **URL**               | ✅ Yes         | Always gets the latest compatible version |
 | **URL with verison**  | ✅ No          | Locks to the specified version            |
+| **Uploaded .mrpack**  | ❌ No          | Install a modpack that is not published   |
 
 **Slug**
 
@@ -273,6 +274,16 @@ When creating/editing a server with type **MODRINTH_MODPACK**, there is one meth
 1. Enter the modpack project URL for a specific version (e.g., `https://modrinth.com/modpack/surface-living/version/1.2.1`)
 2. On each server start, it will **ignore any updated version** of the modpack
 
+**Uploaded `.mrpack`**
+
+1. Click **Upload modpack** and pick the `.mrpack` file
+2. Select it in the list; the field is filled with its path (e.g., `/modpacks/my-pack.mrpack`)
+
+This is the way to run a pack that is not published on Modrinth. It also covers instances exported
+from **Prism Launcher**, MultiMC or the Modrinth app: mods that are not on Modrinth are bundled into
+the pack's `overrides`, so nothing is lost. Remove client-only mods before exporting, or exclude
+them with `MODRINTH_EXCLUDE_FILES` in the **Advanced** tab.
+
 ## CurseForge Modpacks {#curseforge-modpacks}
 
 Install complete modpacks from [CurseForge](https://www.curseforge.com) using the **AUTO_CURSEFORGE** server type.
@@ -285,11 +296,11 @@ You need a CurseForge API key. Get one from [CurseForge for Studios](https://con
 
 When creating/editing a server with type **AUTO_CURSEFORGE**, you can choose between 3 methods:
 
-| Method   | Auto-updates? | Use case                                 |
-| -------- | ------------- | ---------------------------------------- |
-| **URL**  | ✅ Yes         | Always get the latest compatible version |
-| **Slug** | ❌ No          | Lock to a specific file version          |
-| **File** | ❌ No          | Use a local modpack zip file             |
+| Method   | Auto-updates? | Use case                                     |
+| -------- | ------------- | -------------------------------------------- |
+| **URL**  | ✅ Yes         | Always get the latest compatible version     |
+| **Slug** | ❌ No          | Lock to a specific file version              |
+| **File** | ❌ No          | Install an unpublished modpack zip you upload |
 
 ### Method: URL (Recommended for auto-updates)
 
@@ -326,11 +337,22 @@ With Slug method, the version **never updates automatically**. You must manually
 
 ### Method: File (Local modpack)
 
-1. Select **File** as installation method
-2. Upload/mount your modpack zip to the server
-3. Enter the file pattern (e.g., `*.zip`)
+For modpacks that are not published on CurseForge: your own pack, one a friend sent you, or a
+private pack exported from the CurseForge app.
 
-Useful for modpacks downloaded manually or custom modpacks.
+1. Select **File** as installation method
+2. Click **Upload modpack** and pick the `.zip`
+3. Select the uploaded file in the list
+
+The file is stored in `servers/<server-id>/modpacks/` and mounted read-only at `/modpacks`, and the
+panel sets `CF_MODPACK_ZIP` to it. It must be a **client** modpack zip containing `manifest.json`;
+a server-files zip has no manifest and fails. A CurseForge API key is still required, because the
+mods listed in the manifest are downloaded from CurseForge.
+
+::: tip Not a CurseForge zip?
+Prism Launcher and MultiMC do not export CurseForge packs — they export Modrinth `.mrpack`. Use the
+[Modrinth modpack](#modrinth-modpacks) flow for those.
+:::
 
 ### Use the modpack URL, not the server-file URL
 

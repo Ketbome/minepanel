@@ -18,6 +18,7 @@ import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { CurseForgeModpack } from "@/services/curseforge/curseforge.service";
 import { ModsBrowserDialog } from "@/components/molecules/mods/ModsBrowserDialog";
+import { ModpackFilePicker } from "@/components/molecules/ModpackFilePicker";
 import { ModLoader, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 
 const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
@@ -25,11 +26,12 @@ const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/Mod
 });
 
 interface ModsTabProps {
+  serverId: string;
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
+export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) => {
   const { t } = useLanguage();
   const [showApiKeyManual, setShowApiKeyManual] = useState(false);
   const [showApiKeyAuto, setShowApiKeyAuto] = useState(false);
@@ -688,9 +690,19 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
 
             {config.cfMethod === "file" && (
               <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+                <Label className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/book.webp" alt="Modpack" width={16} height={16} />
+                  {t("modpackFiles")}
+                </Label>
+                <ModpackFilePicker serverId={serverId} value={config.cfModpackZip} onChange={(containerPath) => updateConfig("cfModpackZip", containerPath)} accept=".zip" />
+              </div>
+            )}
+
+            {config.cfMethod !== "file" && (
+              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="cfFilenameMatcher" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                    <Image src="/images/book.webp" alt="Archivo" width={16} height={16} />
+                    <Image src="/images/book.webp" alt="Filtro" width={16} height={16} />
                     {t("filePattern")}
                   </Label>
                   <TooltipProvider>
@@ -706,7 +718,7 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <Input id="cfFilenameMatcher" value={config.cfFilenameMatcher} onChange={(e) => updateConfig("cfFilenameMatcher", e.target.value)} placeholder="*.zip" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                <Input id="cfFilenameMatcher" value={config.cfFilenameMatcher} onChange={(e) => updateConfig("cfFilenameMatcher", e.target.value)} placeholder="1.20.1" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
                 <p className="text-xs text-gray-400">{t("filePatternDesc")}</p>
               </div>
             )}
@@ -808,6 +820,13 @@ export const ModsTab: FC<ModsTabProps> = ({ config, updateConfig }) => {
                 className="mt-2 bg-gray-800/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30"
               />
               <p className="text-xs text-gray-400 mt-1">{t("modrinthModpackDesc")}</p>
+
+              <div className="mt-4 border-t border-emerald-600/20 pt-4">
+                <Label className="text-emerald-400 font-minecraft text-sm">{t("modpackFiles")}</Label>
+                <div className="mt-2">
+                  <ModpackFilePicker serverId={serverId} value={config.modrinthModpack} onChange={(containerPath) => updateConfig("modrinthModpack", containerPath)} accept=".mrpack" />
+                </div>
+              </div>
             </div>
             <h3 className="text-sm font-minecraft text-gray-300 mb-4">Additional mods</h3>
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
