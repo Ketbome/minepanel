@@ -44,6 +44,22 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
   'foliaDownloadUrl',
 ] as const;
 
+// Creation has no persisted config to compare against, so these are rejected
+// outright for non-admins. `envVars` is missing on purpose: the bundled Geyser
+// template ships one, and blocking it would break server creation from templates.
+const ADMIN_ONLY_ON_CREATE_FIELDS = [
+  'dockerImage',
+  'dockerLabels',
+  'uid',
+  'gid',
+  'fabricLauncherUrl',
+  'paperDownloadUrl',
+  'bukkitDownloadUrl',
+  'spigotDownloadUrl',
+  'purpurDownloadUrl',
+  'foliaDownloadUrl',
+] as const;
+
 function normalizeConfigValue(value: unknown): string {
   if (value === undefined || value === null) return '';
   return String(value)
@@ -161,7 +177,7 @@ export class ServerManagementController {
     }
   }
 
-  private assertSafeHostMounts(user: Users | null, config: Partial<ServerConfig>): void {
+  private assertSafeNewServerConfig(user: Users | null, config: Partial<ServerConfig>): void {
     if (!this.accessControlService || this.accessControlService.isAdmin(user)) {
       return;
     }
@@ -176,6 +192,11 @@ export class ServerManagementController {
 
     if (normalizeConfigValue(config.backupHostDir)) {
       throw new ForbiddenException('Only admins can set a custom backup host directory');
+    }
+
+    const provided = ADMIN_ONLY_ON_CREATE_FIELDS.filter((field) => normalizeConfigValue(config[field]));
+    if (provided.length > 0) {
+      throw new ForbiddenException(`Only admins can set these settings: ${provided.join(', ')}`);
     }
   }
 
@@ -253,7 +274,7 @@ export class ServerManagementController {
       if (currentUser && this.accessControlService) {
         this.accessControlService.assertCreateServers(currentUser);
       }
-      this.assertSafeHostMounts(currentUser, data);
+      this.assertSafeNewServerConfig(currentUser, data);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {

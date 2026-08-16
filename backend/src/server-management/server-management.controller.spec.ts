@@ -392,6 +392,32 @@ describe('ServerManagementController', () => {
       expect(dockerComposeService.createServer).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['uid', { uid: '0' }],
+      ['gid', { gid: '0' }],
+      ['dockerImage', { dockerImage: 'attacker/evil:latest' }],
+      ['dockerLabels', { dockerLabels: 'traefik.enable=true' }],
+      ['paperDownloadUrl', { paperDownloadUrl: 'https://attacker.invalid/evil.jar' }],
+      ['fabricLauncherUrl', { fabricLauncherUrl: 'https://attacker.invalid/evil.jar' }],
+    ])('should reject a non-admin creating a server with %s', async (_field, overrides) => {
+      await expect(
+        controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', ...overrides } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+    });
+
+    it('should still allow template envVars and extraPorts', async () => {
+      await controller.createServer(mockReq, {
+        id: 'demo',
+        edition: 'JAVA',
+        envVars: 'PLUGINS=https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot',
+        extraPorts: ['19132:19132/udp'],
+      } as any);
+
+      expect(dockerComposeService.createServer).toHaveBeenCalled();
+    });
+
     it('should allow the default relative volumes', async () => {
       await controller.createServer(mockReq, {
         id: 'demo',
