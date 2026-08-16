@@ -281,9 +281,16 @@ export class JavaServerStrategy implements IServerStrategy {
       env['CF_SLUG'] = config.cfSlug;
       env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
       if (config.cfFile) env['CF_FILE_ID'] = config.cfFile;
-    } else if (config.cfMethod === 'file' && config.cfFilenameMatcher) {
-      env['CF_FILENAME_MATCHER'] = config.cfFilenameMatcher;
+    } else if (config.cfMethod === 'file' && config.cfModpackZip) {
+      // An unpublished zip still needs a slug; the image only uses it to name the install.
+      env['CF_MODPACK_ZIP'] = config.cfModpackZip;
+      env['CF_SLUG'] = config.cfSlug || 'custom';
       env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
+    }
+
+    // Narrows which published file to download; it never matches local files.
+    if (config.cfFilenameMatcher && config.cfMethod !== 'file') {
+      env['CF_FILENAME_MATCHER'] = config.cfFilenameMatcher;
     }
 
     if (config.cfSync) env['CF_FORCE_SYNCHRONIZE'] = 'true';

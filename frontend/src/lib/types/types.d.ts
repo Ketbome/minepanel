@@ -196,6 +196,7 @@ export interface ServerConfig {
   cfForceInclude?: string;
   cfExclude?: string;
   cfFilenameMatcher?: string;
+  cfModpackZip?: string;
   cfParallelDownloads?: string;
   cfOverridesSkipExisting?: boolean;
   cfSetLevelFrom?: string;

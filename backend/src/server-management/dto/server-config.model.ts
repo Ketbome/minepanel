@@ -508,6 +508,11 @@ export class ServerConfigDto {
   @IsOptional()
   cfFilenameMatcher?: string;
 
+  // Container path to an unpublished modpack zip, e.g. /modpacks/pack.zip
+  @IsString()
+  @IsOptional()
+  cfModpackZip?: string;
+
   @IsString()
   @IsOptional()
   cfParallelDownloads?: string;

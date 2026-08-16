@@ -24,6 +24,7 @@ backend/src/
 |- files/                   File browser API over server directories
 |- world-discovery/         World import/discovery into global world library
 |- proxy/                   mc-router routes.json generation
+|- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
 |- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
@@ -88,6 +89,7 @@ Path and filesystem patterns (critical):
   - `/app/servers/<serverId>/docker-compose.yml`
   - `/app/servers/<serverId>/mc-data/`
   - `/app/servers/<serverId>/worlds/`
+  - `/app/servers/<serverId>/modpacks/` (mounted read-only at `/modpacks`; `CF_MODPACK_ZIP` and local `.mrpack` paths point here)
   - `/app/servers/<serverId>/backups/` (if backup enabled, default location)
 - Backup host mount is configurable: `BACKUP_BASE_DIR` (`backupBaseDir`) sets a global host base, and per-server `backupHostDir` overrides it. When set, the backup mount's host side can point outside `${BASE_DIR}` (e.g. a NAS); the backend's `fs.ensureDir` for it is best-effort (Docker creates the bind source if unreachable). See `resolveBackupsHostPath`/`parseBackupHostDir` in `docker-compose.service.ts`.
 - Global world library is reserved under `/app/servers/.world/worlds/`.
@@ -104,6 +106,7 @@ Path and filesystem patterns (critical):
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
+- `src/server-management/auto-scale.controller.ts` - mc-router auto-scaling webhook.
 - `package.json` - backend scripts.
 
 ## Agent-Specific Instructions
@@ -115,6 +118,7 @@ General:
 - If API contract changes, update frontend usage and docs in `doc/`.
 - Backend auth is private-by-default through a global JWT guard; only explicitly `@Public()` routes should bypass auth.
 - Keep auth transport limited to `httpOnly` cookies and bearer headers; never add JWT support via query params.
+- `POST /servers/autoscale` (`src/server-management/auto-scale.controller.ts`) is the only `@Public()` route that controls servers. It is off unless `MC_PROXY_AUTOSCALE_TOKEN` is set, authenticates mc-router with a constant-time bearer comparison, and must keep accepting only servers present in `routes.json`.
 - Optional SSO is OpenID Connect via `auth/oidc/*` (provider-agnostic; configured by `OIDC_*` env in `config.ts`). It validates the IdP `id_token` then issues the same Minepanel session cookies via `auth/utils/auth-cookies.ts`; the `client_secret` stays server-side and is never exposed. `OIDC_DISABLE_PASSWORD_LOGIN=true` blocks password login server-side (only when SSO is fully configured).
 
 Server ID and directory safety:

@@ -20,26 +20,39 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// Own-property check: `'constructor' in translations` is true and would let a
+// hand-edited localStorage value through as a locale.
+const isKnownLanguage = (value: string) => Object.prototype.hasOwnProperty.call(translations, value);
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const envLang = getPublicEnv('NEXT_PUBLIC_DEFAULT_LANGUAGE');
-  const isValidLang = envLang && envLang in translations;
-
-  if (envLang && !isValidLang) {
-    console.warn(
-      `[Minepanel] Language "${envLang}" is not available. Available: ${Object.keys(translations).join(', ')}. Falling back to "en".`,
-    );
-  }
-
-  const defaultLanguage = isValidLang ? (envLang as Language) : 'en';
-  const [language, setLanguageState] = useState<Language>(defaultLanguage);
+  // Always render "en" first: pages are prerendered at build time in English,
+  // while NEXT_PUBLIC_DEFAULT_LANGUAGE is only known at runtime. Resolving it
+  // during render would break hydration on every non-English deployment.
+  const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    // Load language from localStorage on mount
     const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && translations[savedLanguage]) {
+    if (savedLanguage && isKnownLanguage(savedLanguage)) {
       setLanguageState(savedLanguage);
+      return;
     }
+
+    const envLang = getPublicEnv('NEXT_PUBLIC_DEFAULT_LANGUAGE');
+    if (!envLang) return;
+
+    if (!isKnownLanguage(envLang)) {
+      console.warn(
+        `[Minepanel] Language "${envLang}" is not available. Available: ${Object.keys(translations).join(', ')}. Falling back to "en".`,
+      );
+      return;
+    }
+
+    setLanguageState(envLang as Language);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);

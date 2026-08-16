@@ -71,6 +71,40 @@ describe('JavaServerStrategy', () => {
     expect(env.VERSION).toBe('1.21.1');
   });
 
+  it('should install an unpublished modpack zip with AUTO_CURSEFORGE', () => {
+    const config = {
+      ...baseConfig(),
+      serverType: 'AUTO_CURSEFORGE',
+      cfMethod: 'file',
+      cfModpackZip: '/modpacks/my-pack.zip',
+      cfFilenameMatcher: '1.20.1',
+    } as ServerConfig;
+
+    const env = strategy.buildEnvironment(config);
+
+    expect(env.CF_MODPACK_ZIP).toBe('/modpacks/my-pack.zip');
+    expect(env.CF_SLUG).toBe('custom');
+    expect(env.MODPACK_PLATFORM).toBe('AUTO_CURSEFORGE');
+    // The matcher only narrows published files, so it must not leak into this method
+    expect(env.CF_FILENAME_MATCHER).toBeUndefined();
+  });
+
+  it('should keep CF_FILENAME_MATCHER as a filter for published modpacks', () => {
+    const config = {
+      ...baseConfig(),
+      serverType: 'AUTO_CURSEFORGE',
+      cfMethod: 'slug',
+      cfSlug: 'all-the-mods-9',
+      cfFilenameMatcher: '1.20.1',
+    } as ServerConfig;
+
+    const env = strategy.buildEnvironment(config);
+
+    expect(env.CF_SLUG).toBe('all-the-mods-9');
+    expect(env.CF_FILENAME_MATCHER).toBe('1.20.1');
+    expect(env.CF_MODPACK_ZIP).toBeUndefined();
+  });
+
   it('should allow custom VERSION in envVars to override generated VERSION', () => {
     const config = {
       ...baseConfig(),

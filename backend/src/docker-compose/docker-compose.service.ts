@@ -315,7 +315,7 @@ export class DockerComposeService {
   }
 
   private extractCustomEnvVars(env: any): string {
-    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'MODRINTH_MODPACK', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
+    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'MODRINTH_MODPACK', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_MODPACK_ZIP', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
 
     const knownWorldVars = new Set(['LEVEL', 'LEVEL_NAME', 'WORLD', 'FORCE_WORLD_COPY']);
     const knownGtnhVars = new Set(['GTNH_PACK_VERSION', 'GTNH_DELETE_BACKUPS', 'SKIP_GTNH_UPDATE_CHECK']);
@@ -438,7 +438,7 @@ export class DockerComposeService {
       },
       AUTO_CURSEFORGE: () => {
         let cfMethod: 'url' | 'file' | 'slug' = 'url';
-        if (env.CF_SERVER_MOD) {
+        if (env.CF_MODPACK_ZIP) {
           cfMethod = 'file';
         } else if (env.CF_SLUG) {
           cfMethod = 'slug';
@@ -446,6 +446,7 @@ export class DockerComposeService {
         serverConfig.cfMethod = cfMethod;
         serverConfig.cfUrl = env.CF_PAGE_URL ?? '';
         serverConfig.cfSlug = env.CF_SLUG ?? '';
+        serverConfig.cfModpackZip = env.CF_MODPACK_ZIP ?? '';
         serverConfig.cfFile = env.CF_FILE_ID ?? '';
         serverConfig.cfSync = env.CF_FORCE_SYNCHRONIZE === 'true';
         serverConfig.cfForceInclude = env.CF_FORCE_INCLUDE_MODS ?? '';
@@ -658,6 +659,7 @@ export class DockerComposeService {
       cfForceInclude: '',
       cfExclude: '',
       cfFilenameMatcher: '',
+      cfModpackZip: '',
       cfParallelDownloads: '4',
       cfOverridesSkipExisting: false,
       cfSetLevelFrom: '',
@@ -821,6 +823,9 @@ export class DockerComposeService {
     const mcDataPath = path.join(serverPath, 'mc-data');
     await fs.ensureDir(mcDataPath);
     await fs.ensureDir(path.join(serverPath, 'worlds'));
+    // Mounted read-only at /modpacks by the default volumes; Docker would otherwise
+    // create it as root and leave no way to drop a modpack file in it.
+    await fs.ensureDir(path.join(serverPath, 'modpacks'));
     await fs.ensureDir(path.join(this.SERVERS_DIR, '.world', 'worlds'));
 
     if (serverExists) {
@@ -889,262 +894,6 @@ export class DockerComposeService {
     return updatedConfig;
   }
 
-  private buildBaseEnvironment(config: ServerConfig): Record<string, string> {
-    const env: Record<string, string> = {
-      ID_MANAGER: config.id,
-      EULA: 'TRUE',
-      MOTD: config.motd || config.serverName,
-      SERVER_NAME: config.serverName,
-      DIFFICULTY: config.difficulty,
-      MAX_PLAYERS: config.maxPlayers,
-      OPS: config.ops,
-      TZ: config.tz || 'UTC',
-      ONLINE_MODE: String(config.onlineMode),
-      PVP: String(config.pvp),
-      ENABLE_COMMAND_BLOCK: String(config.commandBlock),
-      ALLOW_FLIGHT: String(config.allowFlight),
-      VIEW_DISTANCE: config.viewDistance,
-      SIMULATION_DISTANCE: config.simulationDistance,
-      STOP_SERVER_ANNOUNCE_DELAY: config.stopDelay,
-      ENABLE_ROLLING_LOGS: String(config.enableRollingLogs),
-      EXEC_DIRECTLY: String(config.execDirectly),
-      PLAYER_IDLE_TIMEOUT: config.playerIdleTimeout,
-      ENTITY_BROADCAST_RANGE_PERCENTAGE: config.entityBroadcastRange,
-      LEVEL_TYPE: config.levelType,
-      MODE: config.gameMode,
-      HARDCORE: String(config.hardcore),
-      SPAWN_ANIMALS: String(config.spawnAnimals),
-      SPAWN_MONSTERS: String(config.spawnMonsters),
-      SPAWN_NPCS: String(config.spawnNpcs),
-      GENERATE_STRUCTURES: String(config.generateStructures),
-      ALLOW_NETHER: String(config.allowNether),
-      UID: config.uid,
-      GID: config.gid,
-      INIT_MEMORY: config.initMemory,
-      MAX_MEMORY: config.maxMemory,
-    };
-
-    if (config.seed) env['SEED'] = config.seed;
-    return env;
-  }
-
-  private addJvmOptions(env: Record<string, string>, config: ServerConfig): void {
-    if (config.useAikarFlags) env['USE_AIKAR_FLAGS'] = 'true';
-    if (config.enableJmx) {
-      env['ENABLE_JMX'] = 'true';
-      if (config.jmxHost) env['JMX_HOST'] = config.jmxHost;
-    }
-    if (config.jvmOpts) env['JVM_OPTS'] = config.jvmOpts;
-    if (config.jvmXxOpts) env['JVM_XX_OPTS'] = config.jvmXxOpts;
-    if (config.jvmDdOpts) env['JVM_DD_OPTS'] = config.jvmDdOpts;
-    if (config.extraArgs) env['EXTRA_ARGS'] = config.extraArgs;
-    if (config.logTimestamp) env['LOG_TIMESTAMP'] = 'true';
-  }
-
-  private addAutomationOptions(env: Record<string, string>, config: ServerConfig): void {
-    if (config.enableAutoStop) {
-      env['ENABLE_AUTOSTOP'] = 'true';
-      env['AUTOSTOP_TIMEOUT_EST'] = config.autoStopTimeoutEst;
-      env['AUTOSTOP_TIMEOUT_INIT'] = config.autoStopTimeoutInit;
-    }
-
-    if (config.enableAutoPause) {
-      env['ENABLE_AUTOPAUSE'] = 'true';
-      env['AUTOPAUSE_TIMEOUT_EST'] = config.autoPauseTimeoutEst;
-      env['AUTOPAUSE_TIMEOUT_INIT'] = config.autoPauseTimeoutInit;
-      env['AUTOPAUSE_KNOCK_INTERFACE'] = config.autoPauseKnockInterface;
-    }
-  }
-
-  private addRconConfig(env: Record<string, string>, config: ServerConfig): void {
-    if (config.enableRcon) {
-      env['ENABLE_RCON'] = 'true';
-      env['RCON_PORT'] = config.rconPort;
-      if (config.rconPassword) env['RCON_PASSWORD'] = config.rconPassword;
-      if (config.broadcastRconToOps) env['BROADCAST_RCON_TO_OPS'] = 'true';
-    } else {
-      env['ENABLE_RCON'] = 'false';
-    }
-  }
-
-  private addConnectivityOptions(env: Record<string, string>, config: ServerConfig): void {
-    if (config.preventProxyConnections) env['PREVENT_PROXY_CONNECTIONS'] = 'true';
-    if (config.opPermissionLevel) env['OP_PERMISSION_LEVEL'] = config.opPermissionLevel;
-  }
-
-  private addServerTypeConfig(env: Record<string, string>, config: ServerConfig): void {
-    env['TYPE'] = config.serverType === 'AUTO_CURSEFORGE' || config.serverType === 'CURSEFORGE' ? config.serverType : config.serverType.toUpperCase();
-
-    if (config.serverType === 'FORGE' && config.forgeBuild) {
-      env['FORGE_VERSION'] = config.forgeBuild;
-    }
-
-    if (config.serverType === 'NEOFORGE' && config.neoforgeBuild) {
-      env['NEOFORGE_VERSION'] = config.neoforgeBuild;
-    }
-
-    if (config.serverType === 'FABRIC') {
-      if (config.fabricLoaderVersion) env['FABRIC_LOADER_VERSION'] = config.fabricLoaderVersion;
-      if (config.fabricLauncherVersion) env['FABRIC_LAUNCHER_VERSION'] = config.fabricLauncherVersion;
-      if (config.fabricLauncher) env['FABRIC_LAUNCHER'] = config.fabricLauncher;
-      if (config.fabricLauncherUrl) env['FABRIC_LAUNCHER_URL'] = config.fabricLauncherUrl;
-      if (config.fabricForceReinstall) env['FABRIC_FORCE_REINSTALL'] = 'true';
-      env['VERSION'] = String(config.minecraftVersion);
-    }
-
-    // Add Modrinth config for compatible server types
-    this.addModrinthConfig(env, config);
-
-    // Add CurseForge files config for mod-compatible server types (FORGE, FABRIC, QUILT, AUTO_CURSEFORGE)
-    this.addCurseForgeFilesConfig(env, config);
-
-    const serverTypeHandlers = {
-      AUTO_CURSEFORGE: () => this.addAutoCurseForgeConfig(env, config),
-      CURSEFORGE: () => this.addManualCurseForgeConfig(env, config),
-      MODRINTH: () => this.addModrinthConfig(env, config),
-      SPIGOT: () => this.addPluginServerConfig(env, config),
-      PAPER: () => this.addPluginServerConfig(env, config),
-      BUKKIT: () => this.addPluginServerConfig(env, config),
-      PUFFERFISH: () => this.addPluginServerConfig(env, config),
-      PURPUR: () => this.addPluginServerConfig(env, config),
-      LEAF: () => this.addPluginServerConfig(env, config),
-      FOLIA: () => this.addPluginServerConfig(env, config),
-    };
-
-    const handler = serverTypeHandlers[config.serverType];
-    if (handler) {
-      handler();
-    } else if (config.serverType !== 'FABRIC') {
-      env['VERSION'] = String(config.minecraftVersion);
-    }
-  }
-
-  private addModrinthConfig(env: Record<string, string>, config: ServerConfig): void {
-    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'AUTO_CURSEFORGE', 'MODRINTH'];
-    if (!compatibleTypes.includes(config.serverType)) return;
-
-    if (config.serverType === 'MODRINTH') {
-      env['MODRINTH_MODPACK'] = config.modrinthModpack ?? '';
-      if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
-    } else if (config.modrinthLoader) {
-      env['MODRINTH_LOADER'] = config.modrinthLoader;
-    }
-
-    if (config.modrinthDownloadDependencies && config.modrinthDownloadDependencies !== 'none') {
-      env['MODRINTH_DOWNLOAD_DEPENDENCIES'] = config.modrinthDownloadDependencies;
-    }
-
-    if (config.modrinthDefaultVersionType && config.modrinthDefaultVersionType !== 'release') {
-      if (config.serverType === 'MODRINTH') {
-        env['MODRINTH_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
-      } else {
-        env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
-      }
-    }
-
-    if (config.modrinthProjects) {
-      env['MODRINTH_PROJECTS'] = config.modrinthProjects;
-    }
-  }
-
-  private addCurseForgeFilesConfig(env: Record<string, string>, config: ServerConfig): void {
-    // CURSEFORGE_FILES works with FORGE, FABRIC, QUILT, AUTO_CURSEFORGE, and NeoForge
-    const compatibleTypes = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT', 'AUTO_CURSEFORGE', 'MODRINTH'];
-    if (!compatibleTypes.includes(config.serverType)) return;
-
-    const apiKey = config.cfApiKey;
-    if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
-    if (config.cfFiles) env['CURSEFORGE_FILES'] = config.cfFiles;
-  }
-
-  private addAutoCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
-    if (config.cfMethod === 'url' && config.cfUrl) {
-      env['CF_PAGE_URL'] = config.cfUrl;
-      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-    } else if (config.cfMethod === 'slug' && config.cfSlug) {
-      env['CF_SLUG'] = config.cfSlug;
-      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-      if (config.cfFile) env['CF_FILE_ID'] = config.cfFile;
-    } else if (config.cfMethod === 'file' && config.cfFilenameMatcher) {
-      env['CF_FILENAME_MATCHER'] = config.cfFilenameMatcher;
-      env['MODPACK_PLATFORM'] = 'AUTO_CURSEFORGE';
-    }
-
-    if (config.cfSync) env['CF_FORCE_SYNCHRONIZE'] = 'true';
-    // cfFiles and cfApiKey are handled by addCurseForgeFilesConfig
-    if (config.cfForceInclude) env['CF_FORCE_INCLUDE_MODS'] = config.cfForceInclude;
-    if (config.cfExclude) env['CF_EXCLUDE_MODS'] = config.cfExclude;
-    if (config.cfParallelDownloads) env['CF_PARALLEL_DOWNLOADS'] = config.cfParallelDownloads;
-    if (config.cfOverridesSkipExisting) env['CF_OVERRIDES_SKIP_EXISTING'] = 'true';
-    if (config.cfSetLevelFrom) env['CF_SET_LEVEL_FROM'] = config.cfSetLevelFrom;
-  }
-
-  private addManualCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {
-    if (config.cfServerMod) env['CF_SERVER_MOD'] = config.cfServerMod;
-    if (config.cfBaseDir) env['CF_BASE_DIR'] = config.cfBaseDir;
-    if (config.useModpackStartScript === false) env['USE_MODPACK_START_SCRIPT'] = 'false';
-    if (config.ftbLegacyJavaFixer) env['FTB_LEGACYJAVAFIXER'] = 'true';
-  }
-
-  private addPluginServerConfig(env: Record<string, string>, config: ServerConfig): void {
-    env['VERSION'] = String(config.minecraftVersion);
-
-    if (config.spigetResources) env['SPIGET_RESOURCES'] = config.spigetResources;
-    if (config.skipDownloadDefaults) env['SKIP_DOWNLOAD_DEFAULTS'] = 'true';
-
-    const specificConfigs = {
-      PAPER: () => {
-        if (config.paperBuild) env['PAPER_BUILD'] = config.paperBuild;
-        if (config.paperChannel) env['PAPER_CHANNEL'] = config.paperChannel;
-        if (config.paperDownloadUrl) env['PAPER_DOWNLOAD_URL'] = config.paperDownloadUrl;
-      },
-      BUKKIT: () => {
-        if (config.bukkitDownloadUrl) env['BUKKIT_DOWNLOAD_URL'] = config.bukkitDownloadUrl;
-        if (config.buildFromSource) env['BUILD_FROM_SOURCE'] = 'true';
-      },
-      SPIGOT: () => {
-        if (config.spigotDownloadUrl) env['SPIGOT_DOWNLOAD_URL'] = config.spigotDownloadUrl;
-        if (config.buildFromSource) env['BUILD_FROM_SOURCE'] = 'true';
-      },
-      PUFFERFISH: () => {
-        if (config.pufferfishBuild) env['PUFFERFISH_BUILD'] = config.pufferfishBuild;
-        if (config.useFlareFlags) env['USE_FLARE_FLAGS'] = 'true';
-      },
-      PURPUR: () => {
-        if (config.purpurBuild) env['PURPUR_BUILD'] = config.purpurBuild;
-        if (config.purpurDownloadUrl) env['PURPUR_DOWNLOAD_URL'] = config.purpurDownloadUrl;
-        if (config.useFlareFlags) env['USE_FLARE_FLAGS'] = 'true';
-      },
-      LEAF: () => {
-        if (config.leafBuild) env['LEAF_BUILD'] = config.leafBuild;
-      },
-      FOLIA: () => {
-        if (config.foliaBuild) env['FOLIA_BUILD'] = config.foliaBuild;
-        if (config.foliaChannel) env['FOLIA_CHANNEL'] = config.foliaChannel;
-        if (config.foliaDownloadUrl) env['FOLIA_DOWNLOAD_URL'] = config.foliaDownloadUrl;
-      },
-    };
-
-    const specificConfig = specificConfigs[config.serverType];
-    if (specificConfig) specificConfig();
-  }
-
-  private addCustomEnvVars(env: Record<string, string>, config: ServerConfig): void {
-    if (!config.envVars) return;
-    const customVars = config.envVars
-      .split('\n')
-      .filter((line) => line.trim())
-      .reduce(
-        (acc, line) => {
-          const [key, value] = line.split('=').map((part) => part.trim());
-          if (key && value) acc[key] = value;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-    Object.assign(env, customVars);
-  }
-
   private parseVolumes(config: ServerConfig): string[] {
     const volumes = config.dockerVolumes
       .split('\n')
@@ -1199,6 +948,28 @@ export class DockerComposeService {
     }
 
     return [host, target, ...options].join(':');
+  }
+
+  remapVolumesToServer(dockerVolumes: string | undefined, sourceId: string, targetId: string): string | undefined {
+    if (!dockerVolumes) return dockerVolumes;
+
+    return dockerVolumes
+      .split('\n')
+      .map((line) => {
+        const volume = line.trim();
+        if (!volume) return line;
+
+        const [hostPath, ...containerParts] = volume.split(':');
+        if (containerParts.length === 0 || hostPath.startsWith('./')) return line;
+
+        const segments = hostPath.split('/');
+        const serverIdIndex = segments.findIndex((segment, index) => segment === 'servers' && segments[index + 1] === sourceId);
+        if (serverIdIndex === -1) return line;
+
+        segments[serverIdIndex + 1] = targetId;
+        return `${segments.join('/')}:${containerParts.join(':')}`;
+      })
+      .join('\n');
   }
 
   private hasMountTarget(volume: string, target: string): boolean {

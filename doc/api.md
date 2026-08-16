@@ -47,6 +47,7 @@ These routes do not require an authenticated session:
 | `POST` | `/auth/logout` | Clear session cookies and revoke refresh token when present |
 | `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
 | `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
+| `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless `MC_PROXY_AUTOSCALE_TOKEN` is set |
 
 All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
 
@@ -115,6 +116,15 @@ Typical examples:
 - `POST /servers/:id/stop`
 - `POST /servers/:id/restart`
 - `GET /servers/:id/logs`
+
+Modpack files uploaded for a server (`.zip` for CurseForge, `.mrpack` for Modrinth). They are stored
+in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
+
+- `GET /servers/:id/modpacks`
+- `POST /servers/:id/modpacks` — multipart `file`
+- `DELETE /servers/:id/modpacks/:fileName`
+
+Uploads are capped at 256 MB and rejected unless the file ends in `.zip` or `.mrpack`.
 
 ### Files
 
@@ -203,6 +213,16 @@ mc-router proxy status and mapping management:
 - `GET /proxy/server/:id/hostname`
 - `POST /proxy/server/:id`
 - `DELETE /proxy/server/:id`
+
+Auto-scaling webhook, called by mc-router (see [Networking](/networking#auto-scaling-sleep-when-idle)):
+
+- `POST /servers/autoscale`
+
+```json
+{ "action": "up", "serverAddress": "survival.mc.example.com", "backend": "survival:25565" }
+```
+
+Requires `Authorization: Bearer <MC_PROXY_AUTOSCALE_TOKEN>`. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`.
 
 ## Response Patterns
 
