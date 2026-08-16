@@ -26,6 +26,56 @@ function assertValidSince(since: string): void {
   }
 }
 
+// Fields that reach the Docker host or decide which code runs inside the container.
+// Being assigned to a server is enough to operate it, but not to change these.
+const ADMIN_ONLY_CONFIG_FIELDS = [
+  'dockerVolumes',
+  'backupHostDir',
+  'dockerImage',
+  'dockerLabels',
+  'uid',
+  'gid',
+  'envVars',
+  'fabricLauncherUrl',
+  'paperDownloadUrl',
+  'bukkitDownloadUrl',
+  'spigotDownloadUrl',
+  'purpurDownloadUrl',
+  'foliaDownloadUrl',
+] as const;
+
+// Creation has no persisted config to compare against, so these are rejected
+// outright for non-admins. `envVars` is missing on purpose: the bundled Geyser
+// template ships one, and blocking it would break server creation from templates.
+const ADMIN_ONLY_ON_CREATE_FIELDS = [
+  'dockerImage',
+  'dockerLabels',
+  'uid',
+  'gid',
+  'fabricLauncherUrl',
+  'paperDownloadUrl',
+  'bukkitDownloadUrl',
+  'spigotDownloadUrl',
+  'purpurDownloadUrl',
+  'foliaDownloadUrl',
+] as const;
+
+function normalizeConfigValue(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  return String(value)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+// Compose generation only rewrites `./` sources into the server's own directory.
+// Everything else (absolute paths, named volumes, `../` escapes) is a raw bind.
+function isSelfContainedVolume(volume: string): boolean {
+  const source = volume.split(':')[0];
+  return source.startsWith('./') && !source.split('/').includes('..');
+}
+
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
   'onlineMode',
   'maxPlayers',
@@ -111,6 +161,45 @@ export class ServerManagementController {
     return user;
   }
 
+  // The panel submits the whole server form on every save, so non-admins are only
+  // blocked when a host-affecting field actually differs from what is persisted.
+  private assertCanChangeAdvancedConfig(user: Users | null, incoming: Partial<ServerConfig>, current: ServerConfig): void {
+    if (!this.accessControlService || this.accessControlService.isAdmin(user)) {
+      return;
+    }
+
+    const changed = ADMIN_ONLY_CONFIG_FIELDS.filter(
+      (field) => incoming[field] !== undefined && normalizeConfigValue(incoming[field]) !== normalizeConfigValue(current[field]),
+    );
+
+    if (changed.length > 0) {
+      throw new ForbiddenException(`Only admins can change these settings: ${changed.join(', ')}`);
+    }
+  }
+
+  private assertSafeNewServerConfig(user: Users | null, config: Partial<ServerConfig>): void {
+    if (!this.accessControlService || this.accessControlService.isAdmin(user)) {
+      return;
+    }
+
+    const unsafe = normalizeConfigValue(config.dockerVolumes)
+      .split('\n')
+      .filter((volume) => volume && !isSelfContainedVolume(volume));
+
+    if (unsafe.length > 0) {
+      throw new ForbiddenException('Only admins can mount host paths into a server container');
+    }
+
+    if (normalizeConfigValue(config.backupHostDir)) {
+      throw new ForbiddenException('Only admins can set a custom backup host directory');
+    }
+
+    const provided = ADMIN_ONLY_ON_CREATE_FIELDS.filter((field) => normalizeConfigValue(config[field]));
+    if (provided.length > 0) {
+      throw new ForbiddenException(`Only admins can set these settings: ${provided.join(', ')}`);
+    }
+  }
+
   private resolveRequestAndId(reqOrId, id?: string) {
     if (typeof reqOrId === 'string' && id === undefined) {
       return { req: null, id: reqOrId };
@@ -185,6 +274,7 @@ export class ServerManagementController {
       if (currentUser && this.accessControlService) {
         this.accessControlService.assertCreateServers(currentUser);
       }
+      this.assertSafeNewServerConfig(currentUser, data);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
@@ -237,7 +327,7 @@ export class ServerManagementController {
         server: serverConfig,
       };
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) throw error;
       throw new BadRequestException(error.message || 'Failed to create server');
     }
   }
@@ -407,6 +497,12 @@ export class ServerManagementController {
   @Put(':id')
   async updateServer(@Request() req, @Param('id') id: string, @Body(new ValidationPipe()) config: UpdateServerConfigDto) {
     const currentUser = await this.requireServerAccess(req, id);
+    const currentConfig = await this.dockerComposeService.getServerConfig(id);
+    if (!currentConfig) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+    this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
+
     const user = req.user as PayloadToken;
     const settings = await this.settingsService.getSettings(user.userId);
     const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;

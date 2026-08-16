@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ServerManagementController } from './server-management.controller';
 import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
@@ -298,6 +298,134 @@ describe('ServerManagementController', () => {
       expect(accessControlService.assertCreateServers).toHaveBeenCalledWith(
         expect.objectContaining({ id: 1 }),
       );
+    });
+  });
+
+  describe('updateServer', () => {
+    const mockReq = { user: { userId: 1 } };
+    const persistedConfig = {
+      id: 'victim',
+      serverName: 'victim',
+      dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro',
+      uid: '1000',
+      gid: '1000',
+      envVars: '',
+      dockerImage: 'latest',
+    };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        role: 'USER',
+        permissions: { accessAllServers: false },
+        serverAccess: ['victim'],
+      });
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
+      dockerComposeService.getServerConfig.mockResolvedValue(persistedConfig as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue(persistedConfig as any);
+    });
+
+    it('should reject host bind mounts from a server-scoped user', async () => {
+      await expect(
+        controller.updateServer(mockReq, 'victim', {
+          dockerVolumes: '/:/host-root\n/var/run/docker.sock:/var/run/docker.sock',
+          uid: '0',
+          gid: '0',
+        } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+    });
+
+    it('should reject relative volume sources that escape the server directory', async () => {
+      await expect(
+        controller.updateServer(mockReq, 'victim', { dockerVolumes: './../../:/host-root' } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+    });
+
+    it('should allow a full-form save when advanced fields are unchanged', async () => {
+      await controller.updateServer(mockReq, 'victim', {
+        ...persistedConfig,
+        serverName: 'renamed',
+      } as any);
+
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith(
+        'victim',
+        expect.objectContaining({ serverName: 'renamed' }),
+        undefined,
+      );
+    });
+
+    it('should let an admin change advanced fields', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 2, role: 'ADMIN' });
+      accessControlService.isAdmin.mockReturnValue(true);
+
+      await controller.updateServer(mockReq, 'victim', {
+        dockerVolumes: '/network-disk/shared:/data/shared',
+      } as any);
+
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalled();
+    });
+  });
+
+  describe('createServer host mounts', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        role: 'USER',
+        permissions: { accessAllServers: true },
+        serverAccess: [],
+      });
+      settingsService.getSettings.mockResolvedValue({ preferences: {} } as any);
+      dockerComposeService.createServer.mockResolvedValue({ id: 'demo' } as any);
+    });
+
+    it('should reject a non-admin creating a server with a host bind mount', async () => {
+      await expect(
+        controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', dockerVolumes: '/:/host-root' } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['uid', { uid: '0' }],
+      ['gid', { gid: '0' }],
+      ['dockerImage', { dockerImage: 'attacker/evil:latest' }],
+      ['dockerLabels', { dockerLabels: 'traefik.enable=true' }],
+      ['paperDownloadUrl', { paperDownloadUrl: 'https://attacker.invalid/evil.jar' }],
+      ['fabricLauncherUrl', { fabricLauncherUrl: 'https://attacker.invalid/evil.jar' }],
+    ])('should reject a non-admin creating a server with %s', async (_field, overrides) => {
+      await expect(
+        controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', ...overrides } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+    });
+
+    it('should still allow template envVars and extraPorts', async () => {
+      await controller.createServer(mockReq, {
+        id: 'demo',
+        edition: 'JAVA',
+        envVars: 'PLUGINS=https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot',
+        extraPorts: ['19132:19132/udp'],
+      } as any);
+
+      expect(dockerComposeService.createServer).toHaveBeenCalled();
+    });
+
+    it('should allow the default relative volumes', async () => {
+      await controller.createServer(mockReq, {
+        id: 'demo',
+        edition: 'JAVA',
+        dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro',
+      } as any);
+
+      expect(dockerComposeService.createServer).toHaveBeenCalled();
     });
   });
 

@@ -147,6 +147,18 @@ For `USER` accounts, Minepanel can now control:
 
 If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands.
 
+### Admin-only container settings
+
+Operating an assigned server does not include changing how its container is built. Only `ADMIN` can modify:
+
+- Docker volumes and the custom backup host directory
+- Docker image and Docker labels
+- UID and GID
+- Custom environment variables
+- Custom server binary download URLs (Paper, Bukkit, Spigot, Purpur, Folia, Fabric)
+
+`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes relative to the server's own directory (`./mc-data:/data`), never host paths.
+
 ### Backend enforcement
 
 Minepanel does not trust permissions edited in the browser.
