@@ -1727,4 +1727,6 @@ export const es: Record<TranslationKey, string> = {
   tabGroupOperation: 'Operación',
   tabGroupMonitoring: 'Monitoreo',
   back: 'Volver',
+  pageNotFoundTitle: 'Página no encontrada',
+  pageNotFoundDesc: 'Esta página no existe o fue movida.',
 };

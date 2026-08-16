@@ -1702,6 +1702,8 @@ export const en = {
   tabGroupOperation: 'Operation',
   tabGroupMonitoring: 'Monitoring',
   back: 'Back',
+  pageNotFoundTitle: 'Page not found',
+  pageNotFoundDesc: 'This page does not exist or has been moved.',
 };
 
 export type TranslationKey = keyof typeof en;
