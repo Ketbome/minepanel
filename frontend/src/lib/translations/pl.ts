@@ -1729,4 +1729,6 @@ export const pl: Record<TranslationKey, string> = {
   tabGroupOperation: 'Obsługa',
   tabGroupMonitoring: 'Monitorowanie',
   back: 'Wstecz',
+  pageNotFoundTitle: 'Nie znaleziono strony',
+  pageNotFoundDesc: 'Ta strona nie istnieje lub została przeniesiona.',
 };

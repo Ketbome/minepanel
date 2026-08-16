@@ -1705,4 +1705,6 @@ export const fr: Record<TranslationKey, string> = {
   tabGroupOperation: 'Opération',
   tabGroupMonitoring: 'Surveillance',
   back: 'Retour',
+  pageNotFoundTitle: 'Page introuvable',
+  pageNotFoundDesc: "Cette page n'existe pas ou a été déplacée.",
 };

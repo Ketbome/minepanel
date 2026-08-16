@@ -8,7 +8,7 @@ import {
   Plus,
   Loader2,
   Trash2,
-  Settings as SettingsIcon,
+  ChevronRight,
   Zap,
   LayoutTemplate,
   Check,
@@ -319,7 +319,7 @@ export default function Dashboard() {
           >
             {canCreateServers ? (
               <DialogTrigger asChild>
-                <button className="mc-btn mc-btn-emerald px-4 py-2.5 self-start">
+                <button className="mc-btn mc-btn-emerald px-4 py-2 text-sm self-start">
                   <Plus className="h-4 w-4" />
                   {t('createServer')}
                 </button>
@@ -564,135 +564,138 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2.5">
             {servers.map((server: ServerInfo, index: number) => (
               <div
                 key={server.id}
                 className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
               >
-                <div className="mc-panel group overflow-hidden flex items-stretch transition-transform duration-200 hover:-translate-y-0.5">
-                  <div className={`w-2 shrink-0 ${getStatusColor(server.status)}`}></div>
+                <div className="mc-panel group overflow-hidden transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[inset_3px_3px_0_rgba(255,255,255,0.1),inset_-3px_-3px_0_rgba(0,0,0,0.5),6px_6px_0_rgba(157,255,63,0.28)] focus-within:shadow-[inset_3px_3px_0_rgba(255,255,255,0.1),inset_-3px_-3px_0_rgba(0,0,0,0.5),6px_6px_0_rgba(157,255,63,0.28)]">
+                  {/* Single direct child: `.mc-panel > *` forces position/z-index,
+                      which would break the stretched link if applied to it. */}
+                  <div className="flex items-stretch">
+                    <div className={`w-1.5 shrink-0 ${getStatusColor(server.status)}`}></div>
 
-                  <div className="flex flex-1 min-w-0 flex-wrap lg:flex-nowrap items-center gap-x-5 gap-y-3 px-4 py-4 sm:px-5">
-                    <div className="flex items-center gap-3 min-w-0 flex-1 basis-56">
-                      <div className="mc-slot relative w-12 h-12 flex items-center justify-center shrink-0">
-                        <Image
-                          src={getStatusIcon(server.status)}
-                          alt="Server Status"
-                          width={34}
-                          height={34}
-                          className="pixelated object-contain"
-                        />
-                        <div
-                          className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-(--mc-frame) ${getStatusColor(server.status)}`}
-                        />
+                    <Link
+                      href={`/dashboard/servers/${server.id}`}
+                      aria-label={`${t('configure')} ${server.id}`}
+                      className="absolute inset-0 z-10 focus:outline-none"
+                    />
+
+                    <div className="flex flex-1 min-w-0 flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-2 px-3 py-2.5 sm:px-4">
+                      <div className="flex items-center gap-3 min-w-0 flex-1 basis-56">
+                        <div className="mc-slot relative w-10 h-10 flex items-center justify-center shrink-0">
+                          <Image
+                            src={getStatusIcon(server.status)}
+                            alt="Server Status"
+                            width={26}
+                            height={26}
+                            className="pixelated object-contain"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className="text-white font-minecraft text-sm leading-tight group-hover:text-emerald-400 transition-colors truncate"
+                            title={server.id}
+                          >
+                            {server.id}
+                          </p>
+                          <p className="text-gray-400 text-xs truncate">{server.description}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p
-                          className="text-white font-minecraft text-base leading-tight group-hover:text-emerald-400 transition-colors truncate"
-                          title={server.id}
-                        >
-                          {server.id}
+
+                      <div className="hidden md:block shrink-0 text-right leading-tight font-mono text-xs">
+                        <p className="text-gray-300" title={t('port')}>
+                          :{server.port}
                         </p>
-                        <p className="text-gray-400 text-sm truncate">{server.description}</p>
-                      </div>
-                    </div>
-
-                    <div className="hidden md:flex items-center gap-6 shrink-0 text-sm">
-                      <div>
-                        <p className="text-gray-400 text-xs">{t('port')}</p>
-                        <p className="text-white font-medium">{server.port}</p>
-                      </div>
-                      <div className="max-w-40">
-                        <p className="text-gray-400 text-xs">{t('container')}</p>
-                        <p className="text-white font-medium truncate" title={server.containerName}>
+                        <p className="text-gray-500 truncate max-w-40" title={t('container')}>
                           {server.containerName}
                         </p>
                       </div>
-                    </div>
 
-                    <Badge
-                      variant="outline"
-                      className={`px-3 py-1 shrink-0 ${getStatusBadgeClass(server.status)}`}
-                    >
-                      {server.status === 'loading' || server.status === 'starting' ? (
-                        <span className="flex items-center gap-1.5">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          {getStatusText(server.status)}
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-current"></div>
-                          {getStatusText(server.status)}
-                        </span>
-                      )}
-                    </Badge>
+                      <Badge
+                        variant="outline"
+                        className={`px-2 py-0.5 text-[11px] shrink-0 ${getStatusBadgeClass(server.status)}`}
+                      >
+                        {server.status === 'loading' || server.status === 'starting' ? (
+                          <span className="flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            {getStatusText(server.status)}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
+                            {getStatusText(server.status)}
+                          </span>
+                        )}
+                      </Badge>
 
-                    <div className="flex gap-2 shrink-0 w-full sm:w-auto sm:ml-auto">
-                      <Link href={`/dashboard/servers/${server.id}`} className="flex-1">
-                        <button className="mc-btn mc-btn-emerald w-full py-2.5 px-2">
-                          <SettingsIcon className="h-4 w-4" />
-                          {t('configure')}
-                        </button>
-                      </Link>
-
-                      {canCreateServers && (
-                        <button
-                          className="mc-btn px-3 py-2.5"
-                          title={t('cloneServer')}
-                          onClick={() => {
-                            setCloneNewId(`${server.id}-copy`);
-                            setCloneSource(server.id);
-                          }}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </button>
-                      )}
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <div className="relative z-20 flex items-center gap-0.5 shrink-0 ml-auto">
+                        {canCreateServers && (
                           <button
-                            className="mc-btn px-3 py-2.5 text-red-300"
-                            style={{ background: 'linear-gradient(180deg,#b94a4a,#8f3636)' }}
+                            className="mc-iconbtn"
+                            title={t('cloneServer')}
+                            aria-label={t('cloneServer')}
+                            onClick={() => {
+                              setCloneNewId(`${server.id}-copy`);
+                              setCloneSource(server.id);
+                            }}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Copy className="h-4 w-4" />
                           </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="font-minecraft">
-                              {t('deleteServerTitle')}
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-gray-400">
-                              {t('deleteServerWarning')} &quot;{server.id}&quot;?
-                              <br />
-                              {t('cannotBeUndone')}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">
-                              {t('cancel')}
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleDeleteServer(server.id);
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              disabled={isDeletingServer === server.id}
+                        )}
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              className="mc-iconbtn mc-iconbtn--danger"
+                              title={t('delete')}
+                              aria-label={t('delete')}
                             >
-                              {isDeletingServer === server.id ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  {t('eliminating')}
-                                </>
-                              ) : (
-                                t('delete')
-                              )}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="font-minecraft">
+                                {t('deleteServerTitle')}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-400">
+                                {t('deleteServerWarning')} &quot;{server.id}&quot;?
+                                <br />
+                                {t('cannotBeUndone')}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">
+                                {t('cancel')}
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleDeleteServer(server.id);
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                                disabled={isDeletingServer === server.id}
+                              >
+                                {isDeletingServer === server.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    {t('eliminating')}
+                                  </>
+                                ) : (
+                                  t('delete')
+                                )}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+
+                      <ChevronRight
+                        className="hidden sm:block h-4 w-4 shrink-0 text-gray-600 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-emerald-400"
+                        aria-hidden="true"
+                      />
                     </div>
                   </div>
                 </div>

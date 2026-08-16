@@ -1704,4 +1704,6 @@ export const ru: Record<TranslationKey, string> = {
   tabGroupOperation: 'Управление',
   tabGroupMonitoring: 'Мониторинг',
   back: 'Назад',
+  pageNotFoundTitle: 'Страница не найдена',
+  pageNotFoundDesc: 'Эта страница не существует или была перемещена.',
 };

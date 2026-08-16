@@ -1738,4 +1738,6 @@ export const nl: Record<TranslationKey, string> = {
   tabGroupOperation: 'Beheer',
   tabGroupMonitoring: 'Monitoring',
   back: 'Terug',
+  pageNotFoundTitle: 'Pagina niet gevonden',
+  pageNotFoundDesc: 'Deze pagina bestaat niet of is verplaatst.',
 };

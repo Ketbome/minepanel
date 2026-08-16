@@ -688,6 +688,38 @@
   background: linear-gradient(180deg, #8a63d6, #5f3fa3);
 }
 
+/* Quiet square icon action for secondary row controls; only reveals its
+   slot bevel on hover so lists don't fill up with competing buttons. */
+.mc-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: rgba(234, 255, 242, 0.5);
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.mc-iconbtn:hover {
+  color: var(--mc-emerald);
+  background: var(--mc-stone-deep);
+  border-color: var(--mc-frame);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.55), inset -2px -2px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mc-iconbtn:focus-visible {
+  outline: 2px solid var(--mc-emerald);
+  outline-offset: -2px;
+}
+
+.mc-iconbtn--danger:hover {
+  color: var(--mc-redstone);
+}
+
 /* Segmented XP / resource bar */
 .mc-bar {
   position: relative;
