@@ -1385,6 +1385,11 @@ export const pl: Record<TranslationKey, string> = {
   curseforgeApiKeyNotConfigured:
     'Klucz API CurseForge nie jest Skonfigurowano. Dodaj to w Ustawieniach, aby korzystać z tej funkcji.',
   goToSettings: 'Przejdź do Ustawień',
+  cfApiKeyHowTo: 'Jak ją zdobyć',
+  cfApiKeyStep1: 'Zaloguj się na console.curseforge.com swoim kontem CurseForge.',
+  cfApiKeyStep2: 'Otwórz sekcję API Keys i skopiuj wyświetlony klucz.',
+  cfApiKeyStep3: 'Wklej go w Ustawienia > Integracje > Klucz API CurseForge i zapisz.',
+  getCurseforgeApiKey: 'Zdobądź klucz API',
   createServerFromModpack: 'Utwórz nowy serwer za pomocą tego modpacka',
   serverIdRequired: 'Identyfikator serwera jest wymagany',
   optional: 'opcjonalny',

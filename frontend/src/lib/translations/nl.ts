@@ -1412,6 +1412,11 @@ export const nl: Record<TranslationKey, string> = {
   curseforgeApiKeyNotConfigured:
     'CurseForge API Key is niet geconfigureerd. Voeg deze toe in Instellingen om deze functie te gebruiken.',
   goToSettings: 'Ga naar Instellingen',
+  cfApiKeyHowTo: 'Hoe krijg je er een',
+  cfApiKeyStep1: 'Log in op console.curseforge.com met je CurseForge-account.',
+  cfApiKeyStep2: 'Open het gedeelte API Keys en kopieer de sleutel die daar staat.',
+  cfApiKeyStep3: 'Plak hem in Instellingen > Integraties > CurseForge API Key en sla op.',
+  getCurseforgeApiKey: 'API-sleutel ophalen',
   createServerFromModpack: 'Maak een nieuwe server met dit modpack',
   serverIdRequired: 'Server ID is vereist',
   optional: 'optioneel',

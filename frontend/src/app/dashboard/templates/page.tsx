@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { Loader2, Package, AlertCircle, TrendingUp, Star } from "lucide-react";
+import { Loader2, Package, AlertCircle, Info, TrendingUp, Star } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import ModpackCard from "@/components/molecules/modpacks/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/molecules/modpacks/ModpackDetailsModalEnhanced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks } from "@/services/curseforge/curseforge.service";
+import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks, isCurseForgeApiKeyError } from "@/services/curseforge/curseforge.service";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 
 export default function TemplatesPage() {
@@ -20,6 +20,7 @@ export default function TemplatesPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedModpack, setSelectedModpack] = useState<CurseForgeModpack | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [needsApiKey, setNeedsApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState("popular");
   const [pagination, setPagination] = useState({
     index: 0,
@@ -34,6 +35,7 @@ export default function TemplatesPage() {
   const loadInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setNeedsApiKey(false);
 
     try {
       const [popularResponse, featuredResponse] = await Promise.all([getPopularModpacks(18), getFeaturedModpacks(12)]);
@@ -47,14 +49,13 @@ export default function TemplatesPage() {
       });
     } catch (err) {
       console.error("Error loading modpacks:", err);
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
-      if (errorMessage.includes("API key") || errorMessage.includes("403")) {
-        setError(t("curseforgeApiKeyNotConfigured"));
+      if (isCurseForgeApiKeyError(err)) {
+        setNeedsApiKey(true);
       } else {
         setError(t("errorLoadingModpacks"));
+        mcToast.error(t("errorLoadingModpacks"));
       }
-      mcToast.error(t("errorLoadingModpacks"));
     } finally {
       setIsLoading(false);
     }
@@ -163,6 +164,36 @@ export default function TemplatesPage() {
         </div>
       </div>
 
+      {needsApiKey && (
+        <div className="animate-fade-in">
+          <div className="mc-slot p-4 space-y-3" style={{ borderColor: "#f0b95a" }}>
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-minecraft text-amber-300 mb-1">{t("curseforgeApiKey")}</p>
+                <p className="text-gray-300">{t("curseforgeApiKeyNotConfigured")}</p>
+              </div>
+            </div>
+            <div className="space-y-2 sm:pl-8">
+              <p className="font-minecraft text-xs text-gray-200">{t("cfApiKeyHowTo")}</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs text-gray-300">
+                <li>{t("cfApiKeyStep1")}</li>
+                <li>{t("cfApiKeyStep2")}</li>
+                <li>{t("cfApiKeyStep3")}</li>
+              </ol>
+              <div className="flex flex-wrap gap-4 pt-1 font-minecraft text-xs">
+                <a href="https://console.curseforge.com/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                  {t("getCurseforgeApiKey")}
+                </a>
+                <a href="/dashboard/settings/integrations" className="text-emerald-400 hover:underline">
+                  {t("goToSettings")}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="animate-fade-in">
           <div className="mc-slot flex items-start gap-3 p-4" style={{ borderColor: "#f05a5a" }}>
@@ -170,17 +201,12 @@ export default function TemplatesPage() {
             <div className="text-sm">
               <p className="font-minecraft text-red-300 mb-1">{t("error")}</p>
               <p className="text-gray-300">{error}</p>
-              {error === t("curseforgeApiKeyNotConfigured") && (
-                <a href="/dashboard/settings" className="block mt-2 text-emerald-400 hover:underline font-minecraft">
-                  {t("goToSettings")}
-                </a>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      {!error && (
+      {!error && !needsApiKey && (
         <>
           <div className="animate-fade-in-up stagger-1">
             <ModpackSearch onSearch={handleSearch} isLoading={isSearching} />
