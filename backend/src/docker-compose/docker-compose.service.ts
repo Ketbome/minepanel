@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
-import { ServerConfig, ServerEdition, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 
 const execAsync = promisify(exec);
@@ -997,6 +997,15 @@ export class DockerComposeService {
     return config.port;
   }
 
+  // Docker kills the container after this, so it must outlast the itzg stop announcement plus the final save
+  private resolveStopGracePeriod(config: ServerConfig, edition: ServerEdition): number {
+    if (edition !== 'JAVA') {
+      return SHUTDOWN_BUFFER_SECONDS;
+    }
+    const announceDelay = Number.parseInt(config.stopDelay ?? '', 10);
+    return (Number.isFinite(announceDelay) && announceDelay > 0 ? announceDelay : 0) + SHUTDOWN_BUFFER_SECONDS;
+  }
+
   private buildDockerComposeConfig(
     config: ServerConfig,
     environment: Record<string, string>,
@@ -1020,6 +1029,7 @@ export class DockerComposeService {
       environment,
       volumes,
       restart: config.restartPolicy,
+      stop_grace_period: `${this.resolveStopGracePeriod(config, edition)}s`,
     };
 
     // Only add resource limits for Java (Bedrock doesn't use JVM)
@@ -1090,7 +1100,7 @@ export class DockerComposeService {
     return result;
   }
 
-  private buildBackupEnvironment(config: ServerConfig): Record<string, string> {
+  private buildBackupEnvironment(config: ServerConfig, useProxy: boolean): Record<string, string> {
     const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
 
     const env: Record<string, string> = {
@@ -1103,7 +1113,8 @@ export class DockerComposeService {
     };
 
     if (strategy.supportsRcon()) {
-      env.RCON_HOST = 'mc';
+      // On the shared proxy network every stack registers an "mc" alias, so target this server's own alias
+      env.RCON_HOST = useProxy ? config.id : 'mc';
       env.RCON_PORT = config.rconPort || '25575';
       if (config.rconPassword) env.RCON_PASSWORD = config.rconPassword;
       if (config.rconRetries) env.RCON_RETRIES = config.rconRetries;
@@ -1170,7 +1181,7 @@ export class DockerComposeService {
     serverDir: string,
     useProxy: boolean,
   ): Promise<void> {
-    const backupEnv = this.buildBackupEnvironment(config);
+    const backupEnv = this.buildBackupEnvironment(config, useProxy);
     this.addOptionalBackupEnv(backupEnv, config);
 
     const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');

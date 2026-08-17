@@ -3,6 +3,9 @@ import { PartialType } from '@nestjs/mapped-types';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
 
+// Seconds Docker must keep waiting after the stop announcement so Minecraft can flush its final save
+export const SHUTDOWN_BUFFER_SECONDS = 60;
+
 export class ServerConfigDto {
   @IsString()
   @IsNotEmpty()
