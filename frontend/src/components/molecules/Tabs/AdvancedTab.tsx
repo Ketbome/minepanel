@@ -139,6 +139,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -186,6 +187,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -344,6 +346,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -379,6 +382,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -416,6 +420,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -452,6 +457,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -487,6 +493,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -524,6 +531,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -563,6 +571,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -594,6 +603,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -621,6 +631,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -658,6 +669,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -692,6 +704,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -721,6 +734,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -767,6 +781,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -892,6 +907,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -929,6 +945,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -967,6 +984,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -1029,6 +1047,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -1066,6 +1085,7 @@ export const AdvancedTab: FC<AdvancedTabProps> = ({ config, updateConfig }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -1103,6 +1123,7 @@ MAX_TICK_TIME=60000"
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"

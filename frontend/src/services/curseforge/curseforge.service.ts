@@ -1,5 +1,6 @@
 import axios from "axios";
 import api from "../axios.service";
+import { ModVersionItem } from "../mods/mods-browser.service";
 
 export interface CurseForgeAuthor {
   id: number;
@@ -182,6 +183,18 @@ export const getModpack = async (id: number): Promise<CurseForgeModpack> => {
     console.error("Error fetching modpack:", error);
     throw error;
   }
+};
+
+export const resolveModpack = async (ref: string): Promise<CurseForgeModpack> => {
+  const response = await api.get<CurseForgeModpack>(`/curseforge/modpacks/${encodeURIComponent(ref)}`);
+  return response.data;
+};
+
+export const getModpackFiles = async (ref: string): Promise<ModVersionItem[]> => {
+  const response = await api.get<{ data: ModVersionItem[] }>(
+    `/curseforge/modpacks/${encodeURIComponent(ref)}/files`,
+  );
+  return response.data.data;
 };
 
 export const formatDownloadCount = (count: number): string => {

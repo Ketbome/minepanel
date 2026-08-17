@@ -176,6 +176,7 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
           </CardDescription>
         </div>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           onClick={handleDownloadLogs}

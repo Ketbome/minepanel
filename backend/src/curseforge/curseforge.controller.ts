@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { SettingsService } from '../users/services/settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { SearchCurseforgeModsQueryDto } from './dto/search-mods.query.dto';
+import { ModVersionsQueryDto } from './dto/mod-versions.query.dto';
 
 @Controller('curseforge')
 @UseGuards(JwtAuthGuard)
@@ -55,6 +56,63 @@ export class CurseforgeController {
       minecraftVersion: query.minecraftVersion,
       loader: query.loader,
     });
+  }
+
+  @Get('mods/resolve')
+  async resolveMods(@Request() req, @Query('refs') refs?: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    const parsed = (refs ?? '').split(',');
+
+    return { data: await this.curseforgeService.resolveMods(apiKey, parsed) };
+  }
+
+  @Get('modpacks/:ref')
+  async resolveModpack(@Request() req, @Param('ref') ref: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    return this.curseforgeService.resolveModpack(apiKey, ref);
+  }
+
+  @Get('modpacks/:ref/files')
+  async getModpackFiles(@Request() req, @Param('ref') ref: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    return { data: await this.curseforgeService.getModpackFiles(apiKey, ref) };
+  }
+
+  @Get('mods/latest')
+  async getLatestModVersions(@Request() req, @Query() query: ModVersionsQueryDto, @Query('refs') refs?: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+
+    return {
+      data: await this.curseforgeService.getLatestVersions(apiKey, (refs ?? '').split(','), {
+        minecraftVersion: query.minecraftVersion,
+        loader: query.loader,
+      }),
+    };
+  }
+
+  @Get('mods/files/resolve')
+  async resolveModFiles(@Request() req, @Query('ids') ids?: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+
+    return { data: await this.curseforgeService.resolveModFiles(apiKey, (ids ?? '').split(',')) };
+  }
+
+  @Get('mods/:ref/versions')
+  async getModVersions(@Request() req, @Param('ref') ref: string, @Query() query: ModVersionsQueryDto) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+
+    return {
+      data: await this.curseforgeService.getModVersions(apiKey, ref, {
+        minecraftVersion: query.minecraftVersion,
+        loader: query.loader,
+      }),
+    };
   }
 
   @Get(':id')

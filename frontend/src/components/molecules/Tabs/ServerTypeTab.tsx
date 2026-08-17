@@ -37,6 +37,60 @@ const getSuggestedJavaImage = (mcVersion: string): string => {
   return 'java21';
 };
 
+interface ServerTypeOptionProps {
+  value: ServerType;
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  selected: boolean;
+  accent?: 'emerald' | 'amber';
+  badge?: string;
+}
+
+const ServerTypeOption: FC<ServerTypeOptionProps> = ({
+  value,
+  id,
+  icon,
+  title,
+  description,
+  selected,
+  accent = 'emerald',
+  badge,
+}) => {
+  const selectedClasses =
+    accent === 'amber'
+      ? 'bg-amber-600/10 border border-amber-600/30'
+      : 'bg-emerald-600/10 border border-emerald-600/30';
+
+  return (
+    <label
+      htmlFor={id}
+      className={`flex items-start space-x-4 rounded-md p-4 cursor-pointer transition-transform duration-200 hover:scale-[1.01] ${selected ? selectedClasses : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
+    >
+      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
+        <Image src={icon} alt={title} width={24} height={24} />
+        {badge && (
+          <div className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs px-1 rounded text-[8px] font-bold">
+            {badge}
+          </div>
+        )}
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem
+            value={value}
+            id={id}
+            className={accent === 'amber' ? 'border-amber-600/50' : 'border-emerald-600/50'}
+          />
+          <span className="text-base font-medium text-gray-100 font-minecraft">{title}</span>
+        </div>
+        <p className="text-sm text-gray-300 mt-1">{description}</p>
+      </div>
+    </label>
+  );
+};
+
 export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const edition = config.edition ?? 'JAVA';
@@ -211,6 +265,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 p-0 bg-transparent hover:bg-emerald-700/30"
@@ -228,6 +283,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                   </Tooltip>
                 </TooltipProvider>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="h-6 text-xs bg-transparent hover:bg-emerald-700/30 text-emerald-400"
@@ -406,6 +462,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50"
@@ -420,6 +477,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 </TooltipProvider>
                 {!isModpack && (
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className="h-6 text-xs bg-transparent hover:bg-gray-700/50 text-gray-300"
@@ -477,98 +535,41 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               onValueChange={(value: ServerType) => handleServerTypeChange(value)}
               className="space-y-4"
             >
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'VANILLA' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/grass.webp" alt="Vanilla" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="VANILLA"
-                      id="vanilla"
-                      className="border-emerald-600/50"
-                    />
-                    <Label
-                      htmlFor="vanilla"
-                      className="text-base font-medium text-gray-100 font-minecraft"
-                    >
-                      Vanilla
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverVanilla')}</p>
-                </div>
-              </div>
+              <ServerTypeOption
+                value="VANILLA"
+                id="vanilla"
+                icon="/images/grass.webp"
+                title="Vanilla"
+                description={t('serverVanilla')}
+                selected={config.serverType === 'VANILLA'}
+              />
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'FORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/anvil.webp" alt="Forge" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="FORGE" id="forge" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="forge"
-                      className="text-base font-medium text-gray-100 font-minecraft"
-                    >
-                      Forge
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverForge')}</p>
-                </div>
-              </div>
+              <ServerTypeOption
+                value="FORGE"
+                id="forge"
+                icon="/images/anvil.webp"
+                title="Forge"
+                description={t('serverForge')}
+                selected={config.serverType === 'FORGE'}
+              />
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'FABRIC' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image src="/images/crafting-table.webp" alt="Fabric" width={24} height={24} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="FABRIC" id="fabric" className="border-emerald-600/50" />
-                    <Label
-                      htmlFor="fabric"
-                      className="text-base font-medium text-gray-100 font-minecraft"
-                    >
-                      Fabric
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverFabric')}</p>
-                </div>
-              </div>
+              <ServerTypeOption
+                value="FABRIC"
+                id="fabric"
+                icon="/images/crafting-table.webp"
+                title="Fabric"
+                description={t('serverFabric')}
+                selected={config.serverType === 'FABRIC'}
+              />
 
-              <div
-                className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'AUTO_CURSEFORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-              >
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                  <Image
-                    src="/images/enchanted-book.webp"
-                    alt="CurseForge"
-                    width={24}
-                    height={24}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="AUTO_CURSEFORGE"
-                      id="curseforge"
-                      className="border-emerald-600/50"
-                    />
-                    <Label
-                      htmlFor="curseforge"
-                      className="text-base font-medium text-gray-100 font-minecraft"
-                    >
-                      CurseForge Modpack
-                    </Label>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">{t('serverCurseForge')}</p>
-                </div>
-              </div>
+              <ServerTypeOption
+                value="AUTO_CURSEFORGE"
+                id="curseforge"
+                icon="/images/enchanted-book.webp"
+                title="CurseForge Modpack"
+                description={t('serverCurseForge')}
+                selected={config.serverType === 'AUTO_CURSEFORGE'}
+              />
 
               <Accordion
                 type="single"
@@ -582,144 +583,81 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                     {t('serverTypeOthers')}
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 px-4 pb-4 pt-1">
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'NEOFORGE' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/neoforged.png" alt="Neoforge" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="NEOFORGE" id="neoforge" className="border-emerald-600/50" />
-                          <Label htmlFor="neoforge" className="text-base font-medium text-gray-100 font-minecraft">
-                            Neoforge
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverNeoforge')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="NEOFORGE"
+                      id="neoforge"
+                      icon="/images/neoforged.png"
+                      title="Neoforge"
+                      description={t('serverNeoforge')}
+                      selected={config.serverType === 'NEOFORGE'}
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'CURSEFORGE' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/book.webp" alt="CurseForge Manual" width={24} height={24} />
-                        <div className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs px-1 rounded text-[8px] font-bold">
-                          LEGACY
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="CURSEFORGE" id="curseforge-manual" className="border-amber-600/50" />
-                          <Label htmlFor="curseforge-manual" className="text-base font-medium text-gray-100 font-minecraft">
-                            CurseForge Manual (Deprecated)
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverCurseForgeManual')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="CURSEFORGE"
+                      id="curseforge-manual"
+                      icon="/images/book.webp"
+                      title="CurseForge Manual (Deprecated)"
+                      description={t('serverCurseForgeManual')}
+                      selected={config.serverType === 'CURSEFORGE'}
+                      accent="amber"
+                      badge="LEGACY"
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'MODRINTH' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/modrinth.svg" alt="Modrinth" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="MODRINTH" id="modrinth" className="border-emerald-600/50" />
-                          <Label htmlFor="modrinth" className="text-base font-medium text-gray-100 font-minecraft">
-                            Modrinth Modpack
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverModrinth')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="MODRINTH"
+                      id="modrinth"
+                      icon="/images/modrinth.svg"
+                      title="Modrinth Modpack"
+                      description={t('serverModrinth')}
+                      selected={config.serverType === 'MODRINTH'}
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'GTNH' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/anvil.webp" alt="GTNH" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="GTNH" id="gtnh" className="border-amber-600/50" />
-                          <Label htmlFor="gtnh" className="text-base font-medium text-gray-100 font-minecraft">
-                            GT New Horizons
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverGtnh')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="GTNH"
+                      id="gtnh"
+                      icon="/images/anvil.webp"
+                      title="GT New Horizons"
+                      description={t('serverGtnh')}
+                      selected={config.serverType === 'GTNH'}
+                      accent="amber"
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'FTBA' ? 'bg-amber-600/10 border border-amber-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/chest.webp" alt="FTB" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="FTBA" id="ftba" className="border-amber-600/50" />
-                          <Label htmlFor="ftba" className="text-base font-medium text-gray-100 font-minecraft">
-                            Feed The Beast
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverFtba')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="FTBA"
+                      id="ftba"
+                      icon="/images/chest.webp"
+                      title="Feed The Beast"
+                      description={t('serverFtba')}
+                      selected={config.serverType === 'FTBA'}
+                      accent="amber"
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'SPIGOT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/redstone.webp" alt="Spigot" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="SPIGOT" id="spigot" className="border-emerald-600/50" />
-                          <Label htmlFor="spigot" className="text-base font-medium text-gray-100 font-minecraft">
-                            Spigot
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverSpigot')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="SPIGOT"
+                      id="spigot"
+                      icon="/images/redstone.webp"
+                      title="Spigot"
+                      description={t('serverSpigot')}
+                      selected={config.serverType === 'SPIGOT'}
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'PAPER' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/paper.webp" alt="Paper" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="PAPER" id="paper" className="border-emerald-600/50" />
-                          <Label htmlFor="paper" className="text-base font-medium text-gray-100 font-minecraft">
-                            Paper
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverPaper')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="PAPER"
+                      id="paper"
+                      icon="/images/paper.webp"
+                      title="Paper"
+                      description={t('serverPaper')}
+                      selected={config.serverType === 'PAPER'}
+                    />
 
-                    <div
-                      className={`flex items-start space-x-4 rounded-md p-4 transition-transform duration-200 hover:scale-[1.01] ${config.serverType === 'BUKKIT' ? 'bg-emerald-600/10 border border-emerald-600/30' : 'bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60'}`}
-                    >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-md bg-gray-800/70 border border-gray-700/50 shrink-0">
-                        <Image src="/images/emerald.webp" alt="Bukkit" width={24} height={24} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="BUKKIT" id="bukkit" className="border-emerald-600/50" />
-                          <Label htmlFor="bukkit" className="text-base font-medium text-gray-100 font-minecraft">
-                            Bukkit
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-300 mt-1">{t('serverBukkit')}</p>
-                      </div>
-                    </div>
+                    <ServerTypeOption
+                      value="BUKKIT"
+                      id="bukkit"
+                      icon="/images/emerald.webp"
+                      title="Bukkit"
+                      description={t('serverBukkit')}
+                      selected={config.serverType === 'BUKKIT'}
+                    />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

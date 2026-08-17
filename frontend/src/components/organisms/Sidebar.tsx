@@ -112,6 +112,27 @@ export function Sidebar() {
     },
   ];
 
+  const externalLinks = [
+    {
+      label: t('documentation'),
+      icon: BookOpen,
+      href: 'https://minepanel.ketbome.com',
+      hoverClass: 'hover:text-[var(--mc-emerald)]',
+    },
+    {
+      label: t('github'),
+      icon: GithubIcon,
+      href: 'https://github.com/Ketbome/minepanel',
+      hoverClass: 'hover:text-white',
+    },
+    {
+      label: t('reportBug'),
+      icon: Bug,
+      href: 'https://github.com/Ketbome/minepanel/issues/new/choose',
+      hoverClass: 'hover:text-amber-400',
+    },
+  ];
+
   if (!isHydrated) {
     return (
       <div className="fixed left-0 top-0 h-full w-64 bg-[var(--mc-stone)]/95 backdrop-blur-md z-50" style={{ borderRight: "3px solid var(--mc-frame)" }}>
@@ -197,108 +218,91 @@ export function Sidebar() {
         </div>
       ) : (
         <>
-          <div className="p-4 space-y-2">
+          <div className={cn('py-4', isCollapsed ? 'px-2' : 'px-3')}>
             <p
               className={cn(
-                'text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3 transition-opacity duration-200',
+                'text-[10px] text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
                 isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
               {t('navigation')}
             </p>
 
-            {navigationItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant="ghost"
+            <div className="space-y-0.5">
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={isCollapsed ? item.label : undefined}
                   className={cn(
-                    'w-full justify-start gap-3 h-10 px-3 rounded-none hover:bg-black/40 hover:text-white text-gray-200 transition-colors',
-                    item.isActive && 'bg-emerald-600/25 text-emerald-300 border-2 border-[var(--mc-frame)] shadow-[inset_2px_2px_0_rgba(255,255,255,0.12),inset_-2px_-2px_0_rgba(0,0,0,0.4)]',
-                    isCollapsed && 'justify-center px-0',
+                    'relative flex h-10 items-center gap-3 transition-colors',
+                    isCollapsed ? 'justify-center px-0' : 'px-3',
+                    item.isActive
+                      ? 'bg-[var(--mc-emerald)]/12 text-[var(--mc-emerald)] shadow-[inset_2px_2px_0_rgba(0,0,0,0.45),inset_-2px_-2px_0_rgba(255,255,255,0.05)]'
+                      : 'text-gray-300 hover:bg-black/35 hover:text-white',
                   )}
                 >
-                  <item.icon size={18} className={cn('shrink-0', item.isActive ? 'text-emerald-300' : 'text-gray-400')} />
+                  {item.isActive && (
+                    <span className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mc-emerald)]" />
+                  )}
+                  <item.icon
+                    size={18}
+                    className={cn('shrink-0', item.isActive ? 'text-[var(--mc-emerald)]' : 'text-gray-500')}
+                  />
                   <span
                     className={cn(
-                      'font-minecraft text-sm transition-all duration-200 overflow-hidden whitespace-nowrap',
-                      isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block',
+                      'font-minecraft text-sm whitespace-nowrap overflow-hidden',
+                      isCollapsed ? 'hidden' : 'block',
                     )}
                   >
                     {item.label}
                   </span>
-                </Button>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="flex-1" />
 
           {/* External Links */}
-          <div className="p-4 mt-auto shrink-0" style={{ borderTop: "3px solid var(--mc-frame)" }}>
-        <p
-          className={cn(
-            'text-xs text-gray-400 uppercase tracking-wider font-minecraft mb-3 transition-opacity duration-200',
-            isCollapsed ? 'opacity-0' : 'opacity-100',
-          )}
-        >
-          {t('links')}
-        </p>
-        <div className={cn('flex gap-2', isCollapsed ? 'flex-col items-center' : 'flex-wrap')}>
-          <a
-            href="https://minepanel.ketbome.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title={t('documentation')}
+          <div
+            className={cn('mt-auto shrink-0 py-3', isCollapsed ? 'px-2' : 'px-3')}
+            style={{ borderTop: '3px solid var(--mc-frame)' }}
           >
-            <Button
-              variant="ghost"
-              size="sm"
+            <p
               className={cn(
-                'gap-2 text-gray-400 hover:text-emerald-400 hover:bg-gray-800/60',
-                isCollapsed ? 'p-2' : 'px-3',
+                'text-[10px] text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
+                isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
-              <BookOpen size={16} />
-              {!isCollapsed && <span className="text-xs">{t('documentation')}</span>}
-            </Button>
-          </a>
-          <a
-            href="https://github.com/Ketbome/minepanel"
-            target="_blank"
-            rel="noopener noreferrer"
-            title={t('github')}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'gap-2 text-gray-400 hover:text-white hover:bg-gray-800/60',
-                isCollapsed ? 'p-2' : 'px-3',
-              )}
-            >
-              <GithubIcon size={16} />
-              {!isCollapsed && <span className="text-xs">{t('github')}</span>}
-            </Button>
-          </a>
-          <a
-            href="https://github.com/Ketbome/minepanel/issues/new/choose"
-            target="_blank"
-            rel="noopener noreferrer"
-            title={t('reportBug')}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'gap-2 text-gray-400 hover:text-amber-400 hover:bg-gray-800/60',
-                isCollapsed ? 'p-2' : 'px-3',
-              )}
-            >
-              <Bug size={16} />
-              {!isCollapsed && <span className="text-xs">{t('reportBug')}</span>}
-            </Button>
-          </a>
-        </div>
+              {t('links')}
+            </p>
+            <div className="space-y-0.5">
+              {externalLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={link.label}
+                  className={cn(
+                    'flex h-9 items-center gap-3 text-gray-500 transition-colors hover:bg-black/35',
+                    link.hoverClass,
+                    isCollapsed ? 'justify-center px-0' : 'px-3',
+                  )}
+                >
+                  <link.icon size={16} />
+                  <span
+                    className={cn(
+                      'font-minecraft text-xs whitespace-nowrap overflow-hidden',
+                      isCollapsed ? 'hidden' : 'block',
+                    )}
+                  >
+                    {link.label}
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         </>
       )}

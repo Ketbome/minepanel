@@ -42,7 +42,9 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
         title={collapsed ? item.label : undefined}
         className={cn(
           'flex w-full items-center gap-3 border-2 px-3 py-2.5 text-left font-minecraft transition-colors',
-          isActive ? 'border-[var(--mc-frame)] bg-emerald-600/25 text-emerald-300 shadow-[inset_2px_2px_0_rgba(255,255,255,0.12),inset_-2px_-2px_0_rgba(0,0,0,0.4)]' : 'border-transparent text-gray-300 hover:bg-black/40 hover:text-white',
+          isActive
+            ? 'border-transparent border-l-[3px] border-l-[var(--mc-emerald)] bg-[var(--mc-emerald)]/12 text-[var(--mc-emerald)] shadow-[inset_2px_2px_0_rgba(0,0,0,0.45),inset_-2px_-2px_0_rgba(255,255,255,0.05)]'
+            : 'border-transparent text-gray-300 hover:bg-black/35 hover:text-white',
           item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300',
           collapsed && 'justify-center px-0',
         )}
