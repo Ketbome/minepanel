@@ -1100,7 +1100,7 @@ export class DockerComposeService {
     return result;
   }
 
-  private buildBackupEnvironment(config: ServerConfig): Record<string, string> {
+  private buildBackupEnvironment(config: ServerConfig, useProxy: boolean): Record<string, string> {
     const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
 
     const env: Record<string, string> = {
@@ -1113,7 +1113,8 @@ export class DockerComposeService {
     };
 
     if (strategy.supportsRcon()) {
-      env.RCON_HOST = 'mc';
+      // On the shared proxy network every stack registers an "mc" alias, so target this server's own alias
+      env.RCON_HOST = useProxy ? config.id : 'mc';
       env.RCON_PORT = config.rconPort || '25575';
       if (config.rconPassword) env.RCON_PASSWORD = config.rconPassword;
       if (config.rconRetries) env.RCON_RETRIES = config.rconRetries;
@@ -1180,7 +1181,7 @@ export class DockerComposeService {
     serverDir: string,
     useProxy: boolean,
   ): Promise<void> {
-    const backupEnv = this.buildBackupEnvironment(config);
+    const backupEnv = this.buildBackupEnvironment(config, useProxy);
     this.addOptionalBackupEnv(backupEnv, config);
 
     const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');

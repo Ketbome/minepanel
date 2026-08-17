@@ -451,6 +451,8 @@ services:
       - ./backups:/backups
 ```
 
+When the server runs behind the proxy, Minepanel sets `RCON_HOST` to the server ID instead of `mc`. All proxied stacks share `minepanel-network`, where every server also answers to the generic `mc` alias, so the backup would otherwise reach another server.
+
 ### Manual Backup
 
 From the Minepanel UI:
