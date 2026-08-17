@@ -1383,6 +1383,11 @@ export const en = {
   curseforgeApiKeyNotConfigured:
     'CurseForge API Key is not configured. Please add it in Settings to use this feature.',
   goToSettings: 'Go to Settings',
+  cfApiKeyHowTo: 'How to get one',
+  cfApiKeyStep1: 'Sign in at console.curseforge.com with your CurseForge account.',
+  cfApiKeyStep2: 'Open the API Keys section and copy the key shown there.',
+  cfApiKeyStep3: 'Paste it in Settings > Integrations > CurseForge API Key and save.',
+  getCurseforgeApiKey: 'Get an API key',
   createServerFromModpack: 'Create a new server using this modpack',
   serverIdRequired: 'Server ID is required',
   optional: 'optional',

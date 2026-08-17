@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "../axios.service";
 
 export interface CurseForgeAuthor {
@@ -115,6 +116,15 @@ export interface CurseForgeSearchResponse {
 export interface CurseForgeModResponse {
   data: CurseForgeModpack;
 }
+
+// The backend answers 400 when no CurseForge key is stored in settings and 403
+// when the stored key is rejected upstream. Both mean "fix your API key".
+export const isCurseForgeApiKeyError = (error: unknown): boolean => {
+  if (!axios.isAxiosError(error)) return false;
+  if (error.response?.status === 403) return true;
+  const message = (error.response?.data as { message?: string } | undefined)?.message ?? "";
+  return error.response?.status === 400 && message.toLowerCase().includes("api key");
+};
 
 export const searchModpacks = async (
   searchFilter?: string,
