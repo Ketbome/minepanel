@@ -181,7 +181,20 @@ Host monitoring endpoints:
 
 - `GET /curseforge/search`
 - `GET /curseforge/featured`
+- `GET /curseforge/mods/search`
+- `GET /curseforge/mods/resolve` — `refs` is a comma-separated list of slugs/IDs; returns their metadata (name, icon, downloads)
+- `GET /curseforge/mods/:ref/versions` — files for a mod, filtered by `minecraftVersion` and `loader`
+- `GET /curseforge/mods/files/resolve` — `ids` is a comma-separated list of file IDs; returns their names
+- `GET /curseforge/mods/latest` — newest compatible version per `refs`, used to flag outdated pins
 - `GET /modrinth/mods/search`
+- `GET /modrinth/projects/resolve` — same `refs` contract as CurseForge
+- `GET /modrinth/projects/:ref/versions`
+- `GET /modrinth/versions/resolve` — same `ids` contract as CurseForge
+- `GET /modrinth/projects/latest` — same `refs` contract as CurseForge
+
+Search and version endpoints treat `minecraftVersion=latest` (or empty) as "no version
+filter" instead of returning zero results. CurseForge endpoints use the global API key
+from user settings; Modrinth needs no credentials.
 
 ### World Discovery
 

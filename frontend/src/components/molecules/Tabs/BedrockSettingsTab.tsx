@@ -46,7 +46,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -67,7 +67,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -107,7 +107,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -128,7 +128,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -159,7 +159,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -180,7 +180,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <HelpCircle className="h-4 w-4 text-gray-400" />
                       </Button>
                     </TooltipTrigger>
@@ -205,7 +205,7 @@ export const BedrockSettingsTab: FC<BedrockSettingsTabProps> = ({ config, update
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
                       <HelpCircle className="h-4 w-4 text-gray-400" />
                     </Button>
                   </TooltipTrigger>

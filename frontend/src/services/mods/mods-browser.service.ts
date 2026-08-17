@@ -26,6 +26,18 @@ export interface ModSearchResponse {
   };
 }
 
+export interface ModVersionItem {
+  provider: ModProvider;
+  versionId: string;
+  name: string;
+  versionNumber?: string;
+  releaseType: "release" | "beta" | "alpha";
+  fileName?: string;
+  datePublished?: string;
+  gameVersions: string[];
+  loaders: string[];
+}
+
 interface BaseSearchParams {
   q?: string;
   minecraftVersion: string;
@@ -48,6 +60,66 @@ export const searchModrinthMods = async (
     params,
   });
   return response.data;
+};
+
+export const resolveModsByProvider = async (
+  provider: ModProvider,
+  refs: string[],
+): Promise<ModSearchItem[]> => {
+  if (refs.length === 0) return [];
+
+  const path = provider === "curseforge" ? "/curseforge/mods/resolve" : "/modrinth/projects/resolve";
+  const response = await api.get<{ data: ModSearchItem[] }>(path, {
+    params: { refs: refs.join(",") },
+  });
+  return response.data.data;
+};
+
+export interface LatestModVersion {
+  ref: string;
+  version: ModVersionItem | null;
+}
+
+export const fetchLatestModVersions = async (
+  provider: ModProvider,
+  refs: string[],
+  params: { minecraftVersion?: string; loader?: ModLoader },
+): Promise<LatestModVersion[]> => {
+  if (refs.length === 0) return [];
+
+  const path = provider === "curseforge" ? "/curseforge/mods/latest" : "/modrinth/projects/latest";
+  const response = await api.get<{ data: LatestModVersion[] }>(path, {
+    params: { ...params, refs: refs.join(",") },
+  });
+  return response.data.data;
+};
+
+export const resolveModVersionsByProvider = async (
+  provider: ModProvider,
+  versionIds: string[],
+): Promise<ModVersionItem[]> => {
+  if (versionIds.length === 0) return [];
+
+  const path =
+    provider === "curseforge" ? "/curseforge/mods/files/resolve" : "/modrinth/versions/resolve";
+  const response = await api.get<{ data: ModVersionItem[] }>(path, {
+    params: { ids: versionIds.join(",") },
+  });
+  return response.data.data;
+};
+
+export const fetchModVersions = async (
+  provider: ModProvider,
+  ref: string,
+  params: { minecraftVersion?: string; loader?: ModLoader },
+): Promise<ModVersionItem[]> => {
+  const path =
+    provider === "curseforge"
+      ? `/curseforge/mods/${encodeURIComponent(ref)}/versions`
+      : `/modrinth/projects/${encodeURIComponent(ref)}/versions`;
+
+  const response = await api.get<{ data: ModVersionItem[] }>(path, { params });
+  return response.data.data;
 };
 
 export const searchModsByProvider = async (

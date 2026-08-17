@@ -88,6 +88,8 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 - Adds entries in one click as:
   - **Slug** (default)
   - **ID**
+- Pins the latest compatible version of the mod when adding it, so the server does
+  not silently change mod versions between restarts
 
 ### How to use it
 
@@ -98,6 +100,24 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 5. Click **Add mod**
 
 The selected entries are appended to the same existing fields (`CURSEFORGE_FILES` and `MODRINTH_PROJECTS`) using newline format, preserving manual entries and avoiding duplicates.
+
+### Mod list editor
+
+Both fields render their content as a list instead of raw text:
+
+- Each mod shows its icon, name and the pinned version
+- The version dropdown lists every compatible version and includes **Latest available**
+  (which removes the pin and lets the image resolve it at startup)
+- An **Update available** badge appears next to a pinned mod when a newer compatible
+  version exists; clicking it re-pins the mod to that version
+- The trash icon removes the mod
+- **Manual** switches back to the raw text area (`slug`, `slug:fileId`, URLs, `datapack:slug`),
+  which is still the way to paste a list or use formats the list editor does not model
+
+### CurseForge API key
+
+The key is read from **Settings -> Integrations** and injected into the generated compose
+on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no key at all.
 
 ---
 

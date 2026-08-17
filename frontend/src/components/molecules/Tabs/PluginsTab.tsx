@@ -253,7 +253,7 @@ export const PluginsTab: FC<PluginsTabProps> = ({ config, updateConfig, onOpenFi
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
+                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
                     <HelpCircle className="h-4 w-4 text-gray-400" />
                   </Button>
                 </TooltipTrigger>

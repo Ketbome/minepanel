@@ -1187,6 +1187,16 @@ export const fr: Record<TranslationKey, string> = {
   compatibilityFiltered: 'Affichage uniquement des mods compatibles avec votre configuration actuelle',
   loaderNotDetected: 'Loader non détecté. La compatibilité est filtrée uniquement par version Minecraft.',
   errorSearchingMods: 'Erreur lors de la recherche de mods',
+  modsListVisual: 'Visuel',
+  modsListManual: 'Manuel',
+  modsListEmpty: 'Aucun mod pour le moment',
+  modsListEmptyHint: 'Utilise "Rechercher des mods" pour les ajouter avec une version fixée.',
+  modsCount: 'mods',
+  modVersionLatest: 'Dernière disponible',
+  modVersionsEmpty: 'Aucune version pour cette version/loader',
+  modUpdateAvailable: 'Mise à jour disponible',
+  errorLoadingVersions: 'Erreur lors du chargement des versions du mod',
+  cfApiKeyFromSettings: "La clé API CurseForge provient de tes paramètres globaux.",
 
   // Modrinth Modpack Configuration
   modrinthModpack: 'Modpack Modrinth',
