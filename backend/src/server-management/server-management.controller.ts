@@ -45,8 +45,8 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
 ] as const;
 
 // Creation has no persisted config to compare against, so these are rejected
-// outright for non-admins. `envVars` is missing on purpose: the bundled Geyser
-// template ships one, and blocking it would break server creation from templates.
+// outright for non-admins. `envVars` is screened key by key in assertSafeEnvVars
+// instead, because the bundled Geyser template ships one.
 const ADMIN_ONLY_ON_CREATE_FIELDS = [
   'dockerImage',
   'dockerLabels',
@@ -59,6 +59,43 @@ const ADMIN_ONLY_ON_CREATE_FIELDS = [
   'purpurDownloadUrl',
   'foliaDownloadUrl',
 ] as const;
+
+const ADMIN_ONLY_ENV_KEYS = new Set([
+  'UID',
+  'GID',
+  'EXEC_DIRECTLY',
+  'JVM_OPTS',
+  'JVM_XX_OPTS',
+  'JVM_DD_OPTS',
+  'CUSTOM_SERVER',
+  'SERVER_JAR',
+  'RCON_PASSWORD',
+]);
+
+const ADMIN_ONLY_ENV_KEY_SUFFIXES = ['_DOWNLOAD_URL', '_LAUNCHER_URL'];
+
+const ARTIFACT_ENV_KEYS = new Set(['PLUGINS', 'MODS', 'MODPACK', 'DATAPACKS', 'GENERIC_PACKS']);
+
+const TRUSTED_ARTIFACT_HOSTS = new Set([
+  'download.geysermc.org',
+  'api.papermc.io',
+  'hangarcdn.papermc.io',
+  'cdn.modrinth.com',
+  'api.modrinth.com',
+  'mediafilez.forgecdn.net',
+  'edge.forgecdn.net',
+]);
+
+function isTrustedArtifactRef(value: string): boolean {
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return true;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && TRUSTED_ARTIFACT_HOSTS.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 function normalizeConfigValue(value: unknown): string {
   if (value === undefined || value === null) return '';
@@ -197,6 +234,34 @@ export class ServerManagementController {
     const provided = ADMIN_ONLY_ON_CREATE_FIELDS.filter((field) => normalizeConfigValue(config[field]));
     if (provided.length > 0) {
       throw new ForbiddenException(`Only admins can set these settings: ${provided.join(', ')}`);
+    }
+
+    this.assertSafeEnvVars(config.envVars);
+  }
+
+  private assertSafeEnvVars(envVars: string | undefined): void {
+    for (const entry of normalizeConfigValue(envVars).split('\n').filter(Boolean)) {
+      const separator = entry.indexOf('=');
+      if (separator === -1) continue;
+
+      const key = entry.slice(0, separator).trim().toUpperCase();
+      const value = entry.slice(separator + 1).trim();
+
+      if (ADMIN_ONLY_ENV_KEYS.has(key) || ADMIN_ONLY_ENV_KEY_SUFFIXES.some((suffix) => key.endsWith(suffix))) {
+        throw new ForbiddenException(`Only admins can set the ${key} environment variable`);
+      }
+
+      if (!ARTIFACT_ENV_KEYS.has(key)) continue;
+
+      const untrusted = value
+        .split(',')
+        .map((ref) => ref.trim())
+        .filter(Boolean)
+        .filter((ref) => !isTrustedArtifactRef(ref));
+
+      if (untrusted.length > 0) {
+        throw new ForbiddenException(`Only admins can load ${key} from an untrusted source: ${untrusted.join(', ')}`);
+      }
     }
   }
 
