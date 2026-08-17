@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
-import { ServerConfig, ServerEdition, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 
 const execAsync = promisify(exec);
@@ -997,6 +997,15 @@ export class DockerComposeService {
     return config.port;
   }
 
+  // Docker kills the container after this, so it must outlast the itzg stop announcement plus the final save
+  private resolveStopGracePeriod(config: ServerConfig, edition: ServerEdition): number {
+    if (edition !== 'JAVA') {
+      return SHUTDOWN_BUFFER_SECONDS;
+    }
+    const announceDelay = Number.parseInt(config.stopDelay ?? '', 10);
+    return (Number.isFinite(announceDelay) && announceDelay > 0 ? announceDelay : 0) + SHUTDOWN_BUFFER_SECONDS;
+  }
+
   private buildDockerComposeConfig(
     config: ServerConfig,
     environment: Record<string, string>,
@@ -1020,6 +1029,7 @@ export class DockerComposeService {
       environment,
       volumes,
       restart: config.restartPolicy,
+      stop_grace_period: `${this.resolveStopGracePeriod(config, edition)}s`,
     };
 
     // Only add resource limits for Java (Bedrock doesn't use JVM)
