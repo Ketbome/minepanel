@@ -1,3 +1,12 @@
+import type { ModProvider } from "@/services/mods/mods-browser.service";
+
+// itzg accepts a prefix so a project can target something other than the server
+// TYPE. Whitelisted because "fabric:fabric-api" (prefix + slug) and
+// "fabric-api:beta" (slug + release type) are otherwise indistinguishable.
+// CurseForge has no prefix syntax — there "jei:10.2.1.1005" is slug + file id,
+// so a mod whose slug happens to be "forge" must not be read as a prefix.
+const MODRINTH_PREFIXES = ["datapack", "fabric", "forge", "neoforge", "quilt", "paper", "spigot", "bukkit", "purpur", "folia"];
+
 export interface ModEntry {
   raw: string;
   prefix?: string;
@@ -13,7 +22,7 @@ export interface ModEntry {
   opaque: boolean;
 }
 
-export const parseModEntry = (raw: string): ModEntry => {
+export const parseModEntry = (raw: string, provider: ModProvider): ModEntry => {
   const trimmed = raw.trim();
   const lower = trimmed.toLowerCase();
 
@@ -23,9 +32,10 @@ export const parseModEntry = (raw: string): ModEntry => {
 
   let prefix: string | undefined;
   let rest = trimmed;
-  if (lower.startsWith("datapack:")) {
-    prefix = "datapack";
-    rest = trimmed.slice("datapack:".length);
+  const matched = provider === "modrinth" ? MODRINTH_PREFIXES.find((candidate) => lower.startsWith(`${candidate}:`)) : undefined;
+  if (matched) {
+    prefix = trimmed.slice(0, matched.length);
+    rest = trimmed.slice(matched.length + 1);
   }
 
   const colon = rest.indexOf(":");
@@ -47,12 +57,12 @@ export const parseModEntry = (raw: string): ModEntry => {
   };
 };
 
-export const parseModEntries = (value: string): ModEntry[] =>
+export const parseModEntries = (value: string, provider: ModProvider): ModEntry[] =>
   value
     .split(/[\n,]+/)
     .map((entry) => entry.trim())
     .filter(Boolean)
-    .map(parseModEntry);
+    .map((entry) => parseModEntry(entry, provider));
 
 export const serializeModEntry = (entry: ModEntry): string => {
   if (entry.opaque) return entry.raw;

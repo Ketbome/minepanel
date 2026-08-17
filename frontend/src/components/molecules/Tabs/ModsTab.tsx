@@ -87,7 +87,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
     setShowModsBrowser(true);
   };
 
-  const currentModEntries = () => parseModEntries(String(config[modsTargetField] || ""));
+  const currentModEntries = () => parseModEntries(String(config[modsTargetField] || ""), modsTargetField === "modrinthProjects" ? "modrinth" : "curseforge");
 
   const isModAlreadyAdded = (mod: ModSearchItem): boolean =>
     findModEntryIndex(currentModEntries(), [mod.slug, mod.projectId]) >= 0;

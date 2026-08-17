@@ -163,7 +163,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
   const requestedRefs = useRef<Set<string>>(new Set());
   const requestedVersions = useRef<Set<string>>(new Set());
 
-  const entries = useMemo(() => parseModEntries(value), [value]);
+  const entries = useMemo(() => parseModEntries(value, provider), [value, provider]);
 
   useEffect(() => {
     requestedRefs.current = new Set();
