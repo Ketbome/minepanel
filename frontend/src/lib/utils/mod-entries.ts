@@ -4,6 +4,10 @@ export interface ModEntry {
   ref: string;
   version?: string;
   separator: ":" | "@";
+  // itzg's "?" marker: the server logs a warning and keeps starting when no
+  // compatible version exists, and the mod is left out of the version
+  // calculation done by VERSION_FROM_MODRINTH_PROJECTS. Modrinth only.
+  optional: boolean;
   // URLs and "@file" references are passed through to itzg as-is, so they get
   // no version control in the UI.
   opaque: boolean;
@@ -14,7 +18,7 @@ export const parseModEntry = (raw: string): ModEntry => {
   const lower = trimmed.toLowerCase();
 
   if (lower.startsWith("http://") || lower.startsWith("https://") || trimmed.startsWith("@")) {
-    return { raw: trimmed, ref: trimmed, separator: ":", opaque: true };
+    return { raw: trimmed, ref: trimmed, separator: ":", optional: false, opaque: true };
   }
 
   let prefix: string | undefined;
@@ -27,18 +31,18 @@ export const parseModEntry = (raw: string): ModEntry => {
   const colon = rest.indexOf(":");
   const at = rest.indexOf("@");
   const positions = [colon, at].filter((index) => index > 0);
+  const cut = positions.length > 0 ? Math.min(...positions) : -1;
 
-  if (positions.length === 0) {
-    return { raw: trimmed, prefix, ref: rest, separator: ":", opaque: false };
-  }
+  const head = cut === -1 ? rest : rest.slice(0, cut);
+  const optional = head.endsWith("?");
 
-  const cut = Math.min(...positions);
   return {
     raw: trimmed,
     prefix,
-    ref: rest.slice(0, cut),
-    version: rest.slice(cut + 1) || undefined,
-    separator: rest[cut] === "@" ? "@" : ":",
+    ref: optional ? head.slice(0, -1) : head,
+    version: cut === -1 ? undefined : rest.slice(cut + 1) || undefined,
+    separator: cut !== -1 && rest[cut] === "@" ? "@" : ":",
+    optional,
     opaque: false,
   };
 };
@@ -53,8 +57,9 @@ export const parseModEntries = (value: string): ModEntry[] =>
 export const serializeModEntry = (entry: ModEntry): string => {
   if (entry.opaque) return entry.raw;
   const prefix = entry.prefix ? `${entry.prefix}:` : "";
+  const optional = entry.optional ? "?" : "";
   const version = entry.version ? `${entry.separator}${entry.version}` : "";
-  return `${prefix}${entry.ref}${version}`;
+  return `${prefix}${entry.ref}${optional}${version}`;
 };
 
 export const serializeModEntries = (entries: ModEntry[]): string =>

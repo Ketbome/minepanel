@@ -173,6 +173,7 @@ export interface ServerConfig {
   modrinthDownloadDependencies?: 'none' | 'required' | 'optional';
   modrinthDefaultVersionType?: 'release' | 'beta' | 'alpha';
   modrinthLoader?: string;
+  versionFromModrinthProjects?: boolean;
 
   modrinthModpack?: string;
 

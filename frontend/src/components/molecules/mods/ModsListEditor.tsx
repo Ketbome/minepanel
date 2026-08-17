@@ -282,6 +282,14 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
     );
   };
 
+  const toggleEntryOptional = (index: number) => {
+    updateEntries(
+      entries.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, optional: !entry.optional } : entry,
+      ),
+    );
+  };
+
   return (
     <div className={`space-y-3 p-4 rounded-md ${theme.panel}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -394,6 +402,21 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                   >
                     <ArrowUpCircle className="h-3.5 w-3.5" />
                     {t('modUpdateAvailable')}
+                  </button>
+                )}
+
+                {provider === 'modrinth' && !entry.opaque && (
+                  <button
+                    type="button"
+                    onClick={() => toggleEntryOptional(index)}
+                    title={t('modOptionalHelp')}
+                    className={`shrink-0 border-2 px-2 py-1 text-[10px] font-minecraft uppercase transition-colors ${
+                      entry.optional
+                        ? 'border-sky-500/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+                        : 'border-gray-700/60 bg-transparent text-gray-500 hover:border-gray-600 hover:text-gray-300'
+                    }`}
+                  >
+                    {t('modOptional')}
                   </button>
                 )}
 

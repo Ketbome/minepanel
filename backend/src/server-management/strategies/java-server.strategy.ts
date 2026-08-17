@@ -238,6 +238,7 @@ export class JavaServerStrategy implements IServerStrategy {
       env['MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE'] = config.modrinthDefaultVersionType;
     }
     if (config.modrinthLoader) env['MODRINTH_LOADER'] = config.modrinthLoader;
+    if (config.versionFromModrinthProjects) env['VERSION_FROM_MODRINTH_PROJECTS'] = 'true';
 
     // Only set MODPACK for pure MODRINTH server
     if (config.serverType === 'MODRINTH') {
