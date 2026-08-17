@@ -384,10 +384,10 @@
 @keyframes wing-flap {
   0%,
   100% {
-    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 55deg));
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * var(--flap-lo, 55deg)));
   }
   50% {
-    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * 125deg));
+    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * var(--flap-hi, 125deg)));
   }
 }
 

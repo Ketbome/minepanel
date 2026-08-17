@@ -49,8 +49,9 @@ interface CuboidPalette {
   readonly face: string;
 }
 
-const DRAGON_SCALES: CuboidPalette = { top: '#34343f', side: '#202028', face: '#15151b' };
-const DRAGON_DARK: CuboidPalette = { top: '#26262e', side: '#18181f', face: '#101015' };
+const DRAGON_SCALES: CuboidPalette = { top: '#2e2939', side: '#1e1a29', face: '#15121d' };
+const DRAGON_DARK: CuboidPalette = { top: '#211d2b', side: '#15121d', face: '#0d0b13' };
+const DRAGON_MEMBRANE = 'linear-gradient(150deg, #3a2f4e 0%, #291f3a 45%, #17121f 100%)';
 
 interface CuboidProps {
   readonly w: number;
@@ -279,32 +280,90 @@ function WarpOverlay() {
   );
 }
 
+const WING_BONE = '#15121d';
+
 function DragonWing({ front }: { readonly front: boolean }) {
+  const direction = front ? '1' : '-1';
   return (
     <div
-      className="animate-wing-flap motion-reduce:[animation-play-state:paused] absolute"
+      className="animate-wing-flap motion-reduce:[animation-play-state:paused] absolute [transform-style:preserve-3d]"
       style={
         {
-          width: 74,
-          height: 104,
-          left: 64,
-          top: 28,
-          '--wing-z': front ? '16px' : '-16px',
-          '--flap-dir': front ? '1' : '-1',
-          clipPath: 'polygon(12% 0, 55% 4%, 100% 34%, 88% 100%, 62% 66%, 38% 96%, 16% 58%, 0 78%, 2% 22%)',
-          background: 'linear-gradient(155deg, rgba(129,57,181,0.9), rgba(49,35,102,0.92) 45%, rgba(18,16,26,0.96) 85%)',
-          borderTop: '3px solid #26262e',
+          left: 106,
+          top: 46,
+          width: 72,
+          height: 94,
+          '--wing-z': front ? '17px' : '-17px',
+          '--flap-dir': direction,
+          '--flap-lo': '44deg',
+          '--flap-hi': '114deg',
         } as React.CSSProperties
       }
     >
-      <div className="absolute left-[6%] top-[2%] h-[3px] w-[92%] bg-[#26262e]" style={{ transform: 'rotate(20deg)', transformOrigin: 'left center' }} />
-      <div className="absolute left-[6%] top-[2%] h-[3px] w-[76%] bg-[#26262e]" style={{ transform: 'rotate(42deg)', transformOrigin: 'left center' }} />
-      <div className="absolute left-[6%] top-[2%] h-[3px] w-[62%] bg-[#26262e]" style={{ transform: 'rotate(64deg)', transformOrigin: 'left center' }} />
+      <div className="absolute left-0 top-0 h-[7px] w-full" style={{ background: WING_BONE }} />
+      <div
+        className="absolute left-0 top-[5px] h-[89px] w-[72px]"
+        style={{
+          background: DRAGON_MEMBRANE,
+          clipPath:
+            'polygon(0 0, 100% 0, 100% 18%, 86% 18%, 86% 36%, 70% 36%, 70% 54%, 52% 54%, 52% 70%, 32% 70%, 32% 86%, 14% 86%, 14% 100%, 0 100%)',
+        }}
+      />
+      {[
+        { rotate: 24, width: 66 },
+        { rotate: 46, width: 52 },
+        { rotate: 68, width: 40 },
+      ].map((bone) => (
+        <div
+          key={bone.rotate}
+          className="absolute left-[2px] top-[4px] h-[3px]"
+          style={{ width: bone.width, background: WING_BONE, transform: `rotate(${bone.rotate}deg)`, transformOrigin: 'left center' }}
+        />
+      ))}
+      <div
+        className="animate-wing-flap motion-reduce:[animation-play-state:paused] absolute [transform-style:preserve-3d]"
+        style={
+          {
+            left: 64,
+            top: 0,
+            width: 54,
+            height: 68,
+            animationDelay: '-0.22s',
+            transformOrigin: 'left top',
+            '--wing-z': '0px',
+            '--flap-dir': direction,
+            '--flap-lo': '10deg',
+            '--flap-hi': '40deg',
+          } as React.CSSProperties
+        }
+      >
+        <div className="absolute left-0 top-0 h-[6px] w-full" style={{ background: WING_BONE }} />
+        <div
+          className="absolute left-0 top-[4px] h-[64px] w-[54px]"
+          style={{
+            background: DRAGON_MEMBRANE,
+            clipPath: 'polygon(0 0, 100% 0, 100% 22%, 80% 22%, 80% 44%, 58% 44%, 58% 66%, 32% 66%, 32% 86%, 0 86%)',
+          }}
+        />
+      </div>
     </div>
   );
 }
 
-function TailSegment({ left, top, size, delay, swayDir }: { readonly left: number; readonly top: number; readonly size: number; readonly delay: number; readonly swayDir: 1 | -1 }) {
+interface SwaySegmentProps {
+  readonly left: number;
+  readonly top: number;
+  readonly w: number;
+  readonly h: number;
+  readonly d: number;
+  readonly delay: number;
+  readonly swayDir: 1 | -1;
+  readonly origin: string;
+  readonly palette?: CuboidPalette;
+  readonly children?: React.ReactNode;
+}
+
+function SwaySegment({ left, top, w, h, d, delay, swayDir, origin, palette = DRAGON_SCALES, children }: SwaySegmentProps) {
   return (
     <div
       className="animate-tail-sway motion-reduce:[animation-play-state:paused] absolute [transform-style:preserve-3d]"
@@ -312,16 +371,22 @@ function TailSegment({ left, top, size, delay, swayDir }: { readonly left: numbe
         {
           left,
           top,
-          width: size + 6,
-          height: size,
+          width: w,
+          height: h,
+          transformOrigin: origin,
           animationDelay: `${delay}s`,
           '--sway-dir': `${swayDir}`,
         } as React.CSSProperties
       }
     >
-      <Cuboid w={size + 6} h={size} d={size} palette={size < 14 ? DRAGON_DARK : DRAGON_SCALES} style={{ left: 0, top: 0 }} />
+      <Cuboid w={w} h={h} d={d} palette={palette} style={{ left: 0, top: 0 }} />
+      {children}
     </div>
   );
+}
+
+function DorsalSpike({ left, top, size = 1 }: { readonly left: number; readonly top: number; readonly size?: number }) {
+  return <Cuboid w={6 * size} h={9 * size} d={5 * size} palette={DRAGON_DARK} style={{ left, top }} />;
 }
 
 function DragonLeg({ left, top, length, z, delay }: { readonly left: number; readonly top: number; readonly length: number; readonly z: number; readonly delay: number }) {
@@ -347,55 +412,70 @@ function DragonLeg({ left, top, length, z, delay }: { readonly left: number; rea
 
 function VoxelEnderDragon() {
   return (
-    <div aria-hidden className="relative h-[120px] w-[210px] [perspective:900px]">
-      <div className="absolute left-1/2 top-1/2 h-24 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-600/25 blur-2xl" />
-      <div className="absolute inset-0 [transform-style:preserve-3d]" style={{ transform: 'rotateY(-32deg) rotateX(12deg)' }}>
-        {/* tail, thinning toward the back, wagging in a staggered wave */}
-        <TailSegment left={0} top={47} size={9} delay={0.6} swayDir={1} />
-        <TailSegment left={14} top={44} size={12} delay={0.4} swayDir={-1} />
-        <TailSegment left={36} top={40} size={15} delay={0.2} swayDir={1} />
-        {/* body */}
-        <Cuboid w={64} h={30} d={30} palette={DRAGON_SCALES} style={{ left: 64, top: 30 }} />
-        {/* dorsal spikes */}
-        <Cuboid w={6} h={7} d={4} palette={DRAGON_DARK} style={{ left: 74, top: 23 }} />
-        <Cuboid w={6} h={7} d={4} palette={DRAGON_DARK} style={{ left: 90, top: 23 }} />
-        <Cuboid w={6} h={7} d={4} palette={DRAGON_DARK} style={{ left: 106, top: 23 }} />
-        {/* legs */}
-        <DragonLeg left={80} top={58} length={20} z={10} delay={0.2} />
-        <DragonLeg left={80} top={58} length={20} z={-10} delay={0.7} />
-        <DragonLeg left={114} top={56} length={16} z={9} delay={0.5} />
-        <DragonLeg left={114} top={56} length={16} z={-9} delay={1} />
-        {/* neck + head + snout */}
-        <Cuboid w={24} h={14} d={14} palette={DRAGON_SCALES} style={{ left: 124, top: 30 }} />
-        <Cuboid w={5} h={6} d={4} palette={DRAGON_DARK} style={{ left: 130, top: 24 }} />
-        <Cuboid w={28} h={16} d={18} palette={DRAGON_SCALES} style={{ left: 146, top: 26 }}>
-          {/* glowing eyes on both sides of the head */}
-          <div
-            className="absolute"
-            style={{ width: 5, height: 3, left: 19, top: 5, transform: 'translateZ(10px)', background: '#e879f9', boxShadow: '0 0 8px #d946ef' }}
-          />
-          <div
-            className="absolute"
-            style={{ width: 5, height: 3, left: 19, top: 5, transform: 'rotateY(180deg) translateZ(10px)', background: '#e879f9', boxShadow: '0 0 8px #d946ef' }}
-          />
+    <div aria-hidden className="relative h-[150px] w-[270px] [perspective:1100px]">
+      <div className="absolute left-1/2 top-1/2 h-28 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-600/25 blur-2xl" />
+      <div className="absolute inset-0 [transform-style:preserve-3d]" style={{ transform: 'rotateY(-26deg) rotateX(10deg)' }}>
+        <SwaySegment left={0} top={72} w={16} h={7} d={7} delay={1} swayDir={-1} origin="100% 50%" palette={DRAGON_DARK}>
+          <div className="absolute" style={{ left: -4, top: -7, width: 11, height: 20, background: '#2a2338' }} />
+        </SwaySegment>
+        <SwaySegment left={14} top={69} w={18} h={10} d={10} delay={0.8} swayDir={1} origin="100% 50%" palette={DRAGON_DARK} />
+        <SwaySegment left={30} top={66} w={20} h={13} d={13} delay={0.6} swayDir={-1} origin="100% 50%">
+          <DorsalSpike left={7} top={-6} size={0.6} />
+        </SwaySegment>
+        <SwaySegment left={48} top={62} w={22} h={16} d={16} delay={0.4} swayDir={1} origin="100% 50%">
+          <DorsalSpike left={8} top={-7} size={0.75} />
+        </SwaySegment>
+        <SwaySegment left={68} top={58} w={24} h={20} d={20} delay={0.2} swayDir={-1} origin="100% 50%">
+          <DorsalSpike left={9} top={-8} size={0.85} />
+        </SwaySegment>
+        <Cuboid w={66} h={28} d={30} palette={DRAGON_SCALES} style={{ left: 90, top: 52 }} />
+        <Cuboid w={54} h={10} d={26} palette={DRAGON_DARK} style={{ left: 96, top: 72 }} />
+        <DorsalSpike left={100} top={44} />
+        <DorsalSpike left={116} top={43} />
+        <DorsalSpike left={132} top={44} />
+        <DorsalSpike left={146} top={46} size={0.85} />
+        <DragonLeg left={106} top={80} length={22} z={12} delay={0.2} />
+        <DragonLeg left={106} top={80} length={22} z={-12} delay={0.7} />
+        <DragonLeg left={138} top={78} length={17} z={11} delay={0.5} />
+        <DragonLeg left={138} top={78} length={17} z={-11} delay={1} />
+        <SwaySegment left={154} top={48} w={24} h={18} d={18} delay={0.15} swayDir={1} origin="0% 50%">
+          <DorsalSpike left={9} top={-6} size={0.6} />
+        </SwaySegment>
+        <SwaySegment left={176} top={42} w={22} h={15} d={15} delay={0.35} swayDir={-1} origin="0% 50%">
+          <DorsalSpike left={8} top={-6} size={0.55} />
+        </SwaySegment>
+        <SwaySegment left={196} top={37} w={20} h={13} d={13} delay={0.55} swayDir={1} origin="0% 50%" />
+        <Cuboid w={30} h={20} d={22} palette={DRAGON_SCALES} style={{ left: 212, top: 28 }}>
+          {[1, -1].map((side) => (
+            <div
+              key={side}
+              className="absolute"
+              style={{
+                width: 7,
+                height: 4,
+                left: 19,
+                top: 6,
+                transform: side === 1 ? 'translateZ(12px)' : 'rotateY(180deg) translateZ(12px)',
+                background: '#f0abfc',
+                boxShadow: '0 0 10px #d946ef',
+              }}
+            />
+          ))}
         </Cuboid>
-        <Cuboid w={12} h={7} d={12} palette={DRAGON_DARK} style={{ left: 172, top: 31 }} />
-        <Cuboid w={10} h={4} d={10} palette={DRAGON_DARK} style={{ left: 172, top: 40 }} />
-        {/* horns */}
-        <Cuboid w={9} h={4} d={4} palette={DRAGON_DARK} style={{ left: 148, top: 22, transform: 'translateZ(5px)' }} />
-        <Cuboid w={9} h={4} d={4} palette={DRAGON_DARK} style={{ left: 148, top: 22, transform: 'translateZ(-5px)' }} />
-        {/* wings */}
+        <Cuboid w={16} h={11} d={16} palette={DRAGON_DARK} style={{ left: 238, top: 32 }} />
+        <SwaySegment left={236} top={44} w={17} h={6} d={14} delay={0} swayDir={1} origin="0% 50%" palette={DRAGON_DARK} />
+        <Cuboid w={11} h={5} d={5} palette={DRAGON_DARK} style={{ left: 214, top: 22, transform: 'translateZ(7px) rotateZ(-14deg)' }} />
+        <Cuboid w={11} h={5} d={5} palette={DRAGON_DARK} style={{ left: 214, top: 22, transform: 'translateZ(-7px) rotateZ(-14deg)' }} />
         <DragonWing front />
         <DragonWing front={false} />
-        {/* dragon breath particles streaming from the snout */}
         {[0, 1, 2, 3].map((index) => (
           <div
             key={index}
             className="animate-dragon-breath motion-reduce:animate-none absolute h-[4px] w-[4px] rounded-[1px] bg-fuchsia-400"
             style={
               {
-                left: 186,
-                top: 32 + index * 2,
+                left: 254,
+                top: 36 + index * 2,
                 animationDelay: `${index * 0.4}s`,
                 boxShadow: '0 0 6px #d946ef',
                 '--breath-y': `${(index - 1.5) * 9}px`,
@@ -772,6 +852,7 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
   const starLayerRef = useRef<HTMLDivElement>(null);
   const midLayerRef = useRef<HTMLDivElement>(null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const scene3d = !reducedMotion && isDesktop;
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
@@ -828,24 +909,25 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
       exit={{ opacity: 0, transition: { duration: 0.4 } }}
       onMouseMove={onMouseMove}
     >
-      {!reducedMotion && isDesktop && <EndWorldScene onReturn={onReturn} />}
+      {scene3d && <EndWorldScene onReturn={onReturn} />}
       <div className="pointer-events-none absolute inset-0 [perspective:1400px]">
       <div ref={lookRef} className="absolute inset-0 transition-transform duration-300 ease-out will-change-transform">
       <div ref={starLayerRef} aria-hidden className="absolute -inset-8 transition-transform duration-300 ease-out">
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="animate-twinkle motion-reduce:animate-none absolute rounded-[1px] bg-purple-100/90"
-            style={{
-              top: `${star.top}%`,
-              left: `${star.left}%`,
-              width: `${star.size}px`,
-              height: `${star.size}px`,
-              animationDelay: `${star.delay}s`,
-              animationDuration: `${star.duration}s`,
-            }}
-          />
-        ))}
+        {!scene3d &&
+          stars.map((star) => (
+            <div
+              key={star.id}
+              className="animate-twinkle motion-reduce:animate-none absolute rounded-[1px] bg-purple-100/90"
+              style={{
+                top: `${star.top}%`,
+                left: `${star.left}%`,
+                width: `${star.size}px`,
+                height: `${star.size}px`,
+                animationDelay: `${star.delay}s`,
+                animationDuration: `${star.duration}s`,
+              }}
+            />
+          ))}
         {particles.map((particle) => (
           <div
             key={particle.id}
@@ -859,13 +941,15 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
         ))}
       </div>
       <div aria-hidden className="absolute inset-0">
-        <m.div
-          className="absolute top-[14%] left-0 scale-90 md:scale-110"
-          animate={reducedMotion ? undefined : { x: ['-30vw', '110vw'], y: [0, -70, 40, -30, 0], rotate: [0, -6, 5, -4, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        >
-          <VoxelEnderDragon />
-        </m.div>
+        {!scene3d && (
+          <m.div
+            className="absolute top-[14%] left-0 scale-90 md:scale-110"
+            animate={reducedMotion ? undefined : { x: ['-30vw', '110vw'], y: [0, -70, 40, -30, 0], rotate: [0, -6, 5, -4, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          >
+            <VoxelEnderDragon />
+          </m.div>
+        )}
         {/* enderman tumbling helplessly through the void, opposite direction to the dragon */}
         <m.div
           className="absolute top-[48%] left-0 scale-75 md:scale-90"
@@ -879,7 +963,7 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
           <VoxelEnderman />
         </m.div>
       </div>
-      <div ref={midLayerRef} aria-hidden className="absolute inset-0 transition-transform duration-300 ease-out">
+      <div ref={midLayerRef} aria-hidden className={`absolute inset-0 transition-transform duration-300 ease-out ${scene3d ? 'hidden' : ''}`}>
         <div className="absolute right-[24%] top-[5%] hidden md:block">
           <EndCityTower />
         </div>
@@ -930,7 +1014,11 @@ function EndScene({ onReturn, reducedMotion }: EndSceneProps) {
         <p className="font-minecraft text-[10px] tracking-[0.18em] text-fuchsia-300">{t('dangerEggMission')}</p>
         <p className="mt-1 font-minecraft text-sm text-purple-100">{t('dangerEggMissionObjective')}</p>
       </div>
-      <div className="pointer-events-none relative flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <div
+        className={`pointer-events-none relative flex h-full flex-col items-center gap-4 px-6 text-center ${
+          scene3d ? 'justify-end pb-12' : 'justify-center'
+        }`}
+      >
         <m.h2
           className="font-minecraft drop-shadow-glow text-4xl text-purple-200 md:text-5xl"
           initial={{ opacity: 0, y: 20 }}
