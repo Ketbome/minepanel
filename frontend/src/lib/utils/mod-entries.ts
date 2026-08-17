@@ -44,7 +44,10 @@ export const parseModEntry = (raw: string, provider: ModProvider): ModEntry => {
   const cut = positions.length > 0 ? Math.min(...positions) : -1;
 
   const head = cut === -1 ? rest : rest.slice(0, cut);
-  const optional = head.endsWith("?");
+  // CURSEFORGE_FILES has no optional syntax, so a "?" there is a typo rather
+  // than a marker. Leaving it in the ref keeps the entry unresolvable, which is
+  // the honest signal.
+  const optional = provider === "modrinth" && head.endsWith("?");
 
   return {
     raw: trimmed,
