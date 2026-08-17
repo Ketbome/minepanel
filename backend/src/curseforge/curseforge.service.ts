@@ -568,6 +568,61 @@ export class CurseforgeService {
     }
   }
 
+  async resolveModpack(apiKey: string, ref: string): Promise<CurseForgeModpack> {
+    if (!apiKey) {
+      throw new HttpException('CurseForge API key not configured', HttpStatus.BAD_REQUEST);
+    }
+
+    const client = this.getApiClient(apiKey);
+    const trimmed = ref.trim();
+
+    try {
+      if (/^\d+$/.test(trimmed)) {
+        const response = await client.get<CurseForgeModResponse>(`/mods/${trimmed}`);
+        return response.data.data;
+      }
+
+      const response = await client.get<CurseForgeSearchResponse>('/mods/search', {
+        params: {
+          gameId: this.MINECRAFT_GAME_ID,
+          classId: this.MODPACK_CLASS_ID,
+          slug: trimmed,
+          pageSize: 1,
+        },
+      });
+
+      const modpack = response.data.data[0];
+      if (!modpack) {
+        throw new HttpException(`Modpack "${trimmed}" not found on CurseForge`, HttpStatus.NOT_FOUND);
+      }
+      return modpack;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      console.error('Error resolving CurseForge modpack:', error);
+
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new HttpException('Invalid CurseForge API key', HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Error resolving modpack', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getModpackFiles(apiKey: string, ref: string): Promise<NormalizedModVersion[]> {
+    const modpack = await this.resolveModpack(apiKey, ref);
+    const client = this.getApiClient(apiKey);
+
+    try {
+      const response = await client.get<{ data: CurseForgeModpack['latestFiles'] }>(
+        `/mods/${modpack.id}/files`,
+        { params: { pageSize: 50 } },
+      );
+      return (response.data.data ?? []).map((file) => this.normalizeFile(file));
+    } catch (error) {
+      console.error('Error fetching CurseForge modpack files:', error);
+      throw new HttpException('Error fetching modpack files', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   private async resolveModId(client: AxiosInstance, ref: string): Promise<number> {
     const trimmed = ref.trim();
     if (/^\d+$/.test(trimmed)) return Number.parseInt(trimmed, 10);

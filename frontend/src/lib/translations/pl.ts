@@ -1194,6 +1194,9 @@ export const pl: Record<TranslationKey, string> = {
   modVersionLatest: 'Najnowsza dostępna',
   modVersionsEmpty: 'Brak wersji dla tej wersji Minecraft/loadera',
   modUpdateAvailable: 'Dostępna aktualizacja',
+  modpackNotSelected: 'Nie wybrano modpacka',
+  removeModpack: 'Usuń modpack',
+  modpackVersion: 'Wersja',
   errorLoadingVersions: 'Błąd podczas ładowania wersji moda',
   cfApiKeyFromSettings: 'Klucz API CurseForge pochodzi z ustawień globalnych.',
 

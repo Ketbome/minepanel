@@ -67,6 +67,20 @@ export class CurseforgeController {
     return { data: await this.curseforgeService.resolveMods(apiKey, parsed) };
   }
 
+  @Get('modpacks/:ref')
+  async resolveModpack(@Request() req, @Param('ref') ref: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    return this.curseforgeService.resolveModpack(apiKey, ref);
+  }
+
+  @Get('modpacks/:ref/files')
+  async getModpackFiles(@Request() req, @Param('ref') ref: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    return { data: await this.curseforgeService.getModpackFiles(apiKey, ref) };
+  }
+
   @Get('mods/latest')
   async getLatestModVersions(@Request() req, @Query() query: ModVersionsQueryDto, @Query('refs') refs?: string) {
     const user = req.user as PayloadToken;

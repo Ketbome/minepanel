@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Info, HelpCircle, BookOpen, Search } from "lucide-react";
+import { Info, HelpCircle, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { ServerConfig } from "@/lib/types/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,6 +20,7 @@ import { CurseForgeModpack } from "@/services/curseforge/curseforge.service";
 import { ModsBrowserDialog } from "@/components/molecules/mods/ModsBrowserDialog";
 import { ModsListEditor } from "@/components/molecules/mods/ModsListEditor";
 import { ModpackFilePicker } from "@/components/molecules/ModpackFilePicker";
+import { CurseForgeModpackSection } from "@/components/molecules/modpacks/CurseForgeModpackSection";
 import { ModLoader, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 import { findModEntryIndex, parseModEntries, serializeModEntries } from "@/lib/utils/mod-entries";
 
@@ -370,174 +371,12 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               </div>
             </div>
 
-            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cfMethod" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                  <Image src="/images/compass.webp" alt="Método" width={16} height={16} />
-                  {t("installationMethod")}
-                </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                        <HelpCircle className="h-4 w-4 text-gray-400" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-md bg-gray-800 border-gray-700 text-gray-200">
-                      <p>{t("installationMethodHelp")}</p>
-                      <ul className="list-disc pl-4 mt-1 text-xs">
-                        <li>
-                          <strong>{t("methodUrl")}:</strong> {t("methodUrlDesc")}
-                        </li>
-                        <li>
-                          <strong>{t("methodSlug")}:</strong> {t("methodSlugDesc")}
-                        </li>
-                        <li>
-                          <strong>{t("methodFile")}:</strong> {t("methodFileDesc")}
-                        </li>
-                      </ul>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
-                <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "url" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "url")}>
-                  <p className="font-minecraft text-sm text-gray-200">{t("methodUrl")}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t("installFromUrl")}</p>
-                </div>
-                <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "slug" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "slug")}>
-                  <p className="font-minecraft text-sm text-gray-200">{t("methodSlug")}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t("useIdSlug")}</p>
-                </div>
-                <div className={`p-4 border rounded-md cursor-pointer transition-colors hover:bg-gray-700/30 ${config.cfMethod === "file" ? "border-emerald-500/50 bg-emerald-600/10" : "border-gray-700/50"}`} onClick={() => updateConfig("cfMethod", "file")}>
-                  <p className="font-minecraft text-sm text-gray-200">{t("methodFile")}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t("useLocalFile")}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-md bg-linear-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-600/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-minecraft text-sm text-emerald-400">{t("browseModpacks")}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t("browseModpacksDesc")}</p>
-                </div>
-                <Button type="button" onClick={() => setShowModpackBrowser(true)} className="bg-emerald-600 hover:bg-emerald-500 gap-2">
-                  <Search className="h-4 w-4" />
-                  {t("browse")}
-                </Button>
-              </div>
-            </div>
-
-            {config.cfMethod === "url" && (
-              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="cfUrl" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                    <Image src="/images/ender-pearl.webp" alt="URL" width={16} height={16} />
-                    {t("modpackUrl")}
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                          <HelpCircle className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>{t("modpackUrlHelp")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input id="cfUrl" value={config.cfUrl} onChange={(e) => updateConfig("cfUrl", e.target.value)} placeholder="https://www.curseforge.com/minecraft/modpacks/all-the-mods-7/download/3855588" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                <p className="text-xs text-gray-400">{t("modpackUrlDesc")}</p>
-              </div>
-            )}
-
-            {config.cfMethod === "slug" && (
-              <>
-                <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="cfSlug" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/nether.webp" alt="Slug" width={16} height={16} />
-                      {t("curseForgeProject")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("curseForgeProjectHelp")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="cfSlug" value={config.cfSlug} onChange={(e) => updateConfig("cfSlug", e.target.value)} placeholder="all-the-mods-7" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">{t("projectNameOrSlug")}</p>
-                </div>
-
-                <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="cfFile" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                      <Image src="/images/paper.webp" alt="ID" width={16} height={16} />
-                      {t("fileId")}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                          <p>{t("fileIdHelp")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input id="cfFile" value={config.cfFile} onChange={(e) => updateConfig("cfFile", e.target.value)} placeholder="3855588" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                  <p className="text-xs text-gray-400">{t("fileIdDesc")}</p>
-                </div>
-              </>
-            )}
-
-            {config.cfMethod === "file" && (
-              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-                <Label className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                  <Image src="/images/book.webp" alt="Modpack" width={16} height={16} />
-                  {t("modpackFiles")}
-                </Label>
-                <ModpackFilePicker serverId={serverId} value={config.cfModpackZip} onChange={(containerPath) => updateConfig("cfModpackZip", containerPath)} accept=".zip" />
-              </div>
-            )}
-
-            {config.cfMethod !== "file" && (
-              <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="cfFilenameMatcher" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                    <Image src="/images/book.webp" alt="Filtro" width={16} height={16} />
-                    {t("filePattern")}
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0 bg-transparent hover:bg-gray-700/50">
-                          <HelpCircle className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
-                        <p>{t("filePatternHelp")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input id="cfFilenameMatcher" value={config.cfFilenameMatcher} onChange={(e) => updateConfig("cfFilenameMatcher", e.target.value)} placeholder="1.20.1" className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-                <p className="text-xs text-gray-400">{t("filePatternDesc")}</p>
-              </div>
-            )}
+            <CurseForgeModpackSection
+              serverId={serverId}
+              config={config}
+              updateConfig={updateConfig}
+              onBrowse={() => setShowModpackBrowser(true)}
+            />
 
             <div className="flex items-start gap-3 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
               <Image src="/images/diamond.webp" alt="API Key" width={16} height={16} className="mt-0.5 shrink-0" />

@@ -1193,6 +1193,9 @@ export const en = {
   modVersionLatest: 'Latest available',
   modVersionsEmpty: 'No versions for this Minecraft version/loader',
   modUpdateAvailable: 'Update available',
+  modpackNotSelected: 'No modpack selected',
+  removeModpack: 'Remove modpack',
+  modpackVersion: 'Version',
   errorLoadingVersions: 'Error loading mod versions',
   cfApiKeyFromSettings: 'The CurseForge API key is taken from your global settings.',
 
