@@ -439,6 +439,10 @@ export class ServerConfigDto {
   @IsOptional()
   modrinthLoader?: string;
 
+  @IsBoolean()
+  @IsOptional()
+  versionFromModrinthProjects?: boolean;
+
   @IsString()
   @IsOptional()
   modrinthModpack?: string;

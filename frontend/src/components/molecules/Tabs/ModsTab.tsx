@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useMinecraftVersions } from "@/lib/hooks/useMinecraftVersions";
 import Image from "next/image";
 import { LINK_MODS_PLUGINS } from "@/lib/providers/constants";
 import { mcToast } from "@/lib/utils/minecraft-toast";
@@ -48,6 +49,13 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
   const isForge = config.serverType === "FORGE";
   const isNeoforge = config.serverType === "NEOFORGE";
   const isFabric = config.serverType === "FABRIC";
+  const { latestRelease } = useMinecraftVersions({ filterType: "release" });
+  // itzg resolves "latest" inside the container, so the panel has to guess it to
+  // filter mods. Without a guess the providers return every Minecraft version.
+  const effectiveMinecraftVersion = useMemo(() => {
+    const current = config.minecraftVersion || "";
+    return current.toLowerCase() === "latest" && latestRelease ? latestRelease : current;
+  }, [config.minecraftVersion, latestRelease]);
   const resolvedLoader = useMemo<ModLoader | undefined>(() => {
     if (config.serverType === "FORGE") return "forge";
     if (config.serverType === "NEOFORGE") return "neoforge";
@@ -79,7 +87,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
     setShowModsBrowser(true);
   };
 
-  const currentModEntries = () => parseModEntries(String(config[modsTargetField] || ""));
+  const currentModEntries = () => parseModEntries(String(config[modsTargetField] || ""), modsTargetField === "modrinthProjects" ? "modrinth" : "curseforge");
 
   const isModAlreadyAdded = (mod: ModSearchItem): boolean =>
     findModEntryIndex(currentModEntries(), [mod.slug, mod.projectId]) >= 0;
@@ -94,7 +102,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
     }
 
     const ref = insertAs === "id" ? mod.projectId : mod.slug;
-    updateConfig(modsTargetField, serializeModEntries([...entries, { raw: ref, ref, version, separator: ":", opaque: false }]));
+    updateConfig(modsTargetField, serializeModEntries([...entries, { raw: ref, ref, version, separator: ":", optional: false, opaque: false }]));
     return "added";
   };
 
@@ -169,7 +177,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="jei, geckolib, aquaculture"
               browseUrl="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
               value={config.cfFiles || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("cfFiles", value)}
               onSearch={() => openModsBrowser("curseforge", "cfFiles")}
@@ -209,7 +217,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="jei, geckolib, aquaculture"
               browseUrl="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
               value={config.cfFiles || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("cfFiles", value)}
               onSearch={() => openModsBrowser("curseforge", "cfFiles")}
@@ -258,7 +266,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="jei, geckolib, aquaculture"
               browseUrl="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
               value={config.cfFiles || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("cfFiles", value)}
               onSearch={() => openModsBrowser("curseforge", "cfFiles")}
@@ -399,7 +407,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="jei, geckolib, aquaculture"
               browseUrl="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
               value={config.cfFiles || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("cfFiles", value)}
               onSearch={() => openModsBrowser("curseforge", "cfFiles")}
@@ -466,7 +474,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="jei, geckolib, aquaculture"
               browseUrl="https://www.curseforge.com/minecraft/search?page=1&pageSize=20&sortBy=relevancy&class=mc-mods"
               value={config.cfFiles || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("cfFiles", value)}
               onSearch={() => openModsBrowser("curseforge", "cfFiles")}
@@ -588,11 +596,22 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               placeholder="fabric-api, cloth-config, datapack:terralith"
               browseUrl="https://modrinth.com/mods"
               value={config.modrinthProjects || ""}
-              minecraftVersion={config.minecraftVersion}
+              minecraftVersion={effectiveMinecraftVersion}
               loader={resolvedLoader}
               onChange={(value) => updateConfig("modrinthProjects", value)}
               onSearch={() => openModsBrowser("modrinth", "modrinthProjects")}
             />
+
+            <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="versionFromModrinthProjects" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
+                  <Image src="/images/compass.webp" alt="Version" width={16} height={16} />
+                  {t("versionFromModrinthProjects")}
+                </Label>
+                <Switch id="versionFromModrinthProjects" checked={config.versionFromModrinthProjects || false} onCheckedChange={(checked) => updateConfig("versionFromModrinthProjects", checked)} />
+              </div>
+              <p className="text-xs text-gray-400">{t("versionFromModrinthProjectsDesc")}</p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -816,7 +835,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
         open={showModsBrowser}
         onClose={() => setShowModsBrowser(false)}
         provider={modsBrowserProvider}
-        minecraftVersion={config.minecraftVersion}
+        minecraftVersion={effectiveMinecraftVersion}
         loader={resolvedLoader}
         isAdded={isModAlreadyAdded}
         onToggle={toggleModFromBrowser}
