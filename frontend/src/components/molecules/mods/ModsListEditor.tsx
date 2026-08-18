@@ -14,6 +14,7 @@ import { ModEntry, parseModEntries, serializeModEntries } from '@/lib/utils/mod-
 import {
   ModLoader,
   ModProvider,
+  ModVersionLoader,
   ModSearchItem,
   ModVersionItem,
   fetchLatestModVersions,
@@ -23,6 +24,8 @@ import {
 } from '@/services/mods/mods-browser.service';
 
 const LATEST_VALUE = '__latest__';
+
+const isDatapackEntry = (entry: ModEntry): boolean => entry.prefix?.toLowerCase() === 'datapack';
 
 const ACCENT = {
   emerald: {
@@ -46,7 +49,7 @@ interface ModVersionPickerProps {
   entry: ModEntry;
   versionLabel?: string;
   minecraftVersion: string;
-  loader?: ModLoader;
+  loader?: ModVersionLoader;
   onChange: (version?: string) => void;
 }
 
@@ -176,21 +179,32 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
   // Only pinned entries can fall behind: unpinned ones always resolve to the
   // newest compatible version when the server starts.
   useEffect(() => {
-    const pinned = entries.filter((entry) => !entry.opaque && entry.version).map((entry) => entry.ref);
+    const pinned = entries.filter((entry) => !entry.opaque && entry.version);
     if (pinned.length === 0) return;
+
+    // Datapacks resolve against their own loader, so they need their own call.
+    const groups = [
+      { loader, refs: pinned.filter((entry) => !isDatapackEntry(entry)).map((entry) => entry.ref) },
+      { loader: 'datapack' as const, refs: pinned.filter(isDatapackEntry).map((entry) => entry.ref) },
+    ].filter((group) => group.refs.length > 0);
 
     let cancelled = false;
     // Debounced because manual edits change the list on every keystroke.
     const timeout = setTimeout(() => {
-      fetchLatestModVersions(provider, pinned, {
-        minecraftVersion: minecraftVersion && minecraftVersion !== 'latest' ? minecraftVersion : undefined,
-        loader,
-      })
-        .then((items) => {
+      Promise.all(
+        groups.map((group) =>
+          fetchLatestModVersions(provider, group.refs, {
+            minecraftVersion: minecraftVersion && minecraftVersion !== 'latest' ? minecraftVersion : undefined,
+            loader: group.loader,
+          }),
+        ),
+      )
+        .then((results) => {
           if (cancelled) return;
           setLatestVersions(
             Object.fromEntries(
-              items
+              results
+                .flat()
                 .filter((item) => item.version)
                 .map((item) => [item.ref.toLowerCase(), item.version as ModVersionItem]),
             ),
@@ -428,7 +442,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                     entry={entry}
                     versionLabel={entry.version ? versionNames[entry.version] : undefined}
                     minecraftVersion={minecraftVersion}
-                    loader={loader}
+                    loader={isDatapackEntry(entry) ? 'datapack' : loader}
                     onChange={(version) => setEntryVersion(index, version)}
                   />
                 )}

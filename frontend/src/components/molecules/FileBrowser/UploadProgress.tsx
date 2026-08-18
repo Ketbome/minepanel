@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect, useRef, useState } from "react";
-import { X, Upload, CheckCircle, AlertCircle, Zap } from "lucide-react";
+import { X, Upload, Download, CheckCircle, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -9,17 +9,24 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 export interface UploadItem {
   id: string;
   name: string;
+  // 0 while the size is unknown, which is the case for a folder being zipped
+  // on the fly.
   size: number;
   loaded: number;
-  status: "pending" | "uploading" | "completed" | "error";
+  status: "pending" | "uploading" | "downloading" | "completed" | "error";
   error?: string;
 }
 
 interface UploadProgressProps {
   uploads: UploadItem[];
+  mode?: "upload" | "download";
+  className?: string;
   onCancel?: () => void;
   onClose?: () => void;
 }
+
+const isTransferring = (item: UploadItem): boolean =>
+  item.status === "uploading" || item.status === "downloading";
 
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return "0 B";
@@ -35,16 +42,24 @@ const formatTime = (seconds: number): string => {
   return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
 };
 
-export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onClose }) => {
+export const UploadProgress: FC<UploadProgressProps> = ({
+  uploads,
+  mode = "upload",
+  className,
+  onCancel,
+  onClose,
+}) => {
   const { t } = useLanguage();
   const [speed, setSpeed] = useState(0);
   const [eta, setEta] = useState<number | null>(null);
   const lastLoadedRef = useRef(0);
   const lastTimeRef = useRef(Date.now());
 
+  const isDownload = mode === "download";
   const totalSize = uploads.reduce((acc, u) => acc + u.size, 0);
   const totalLoaded = uploads.reduce((acc, u) => acc + u.loaded, 0);
-  const overallProgress = totalSize > 0 ? Math.round((totalLoaded * 100) / totalSize) : 0;
+  const hasTotal = totalSize > 0;
+  const overallProgress = hasTotal ? Math.round((totalLoaded * 100) / totalSize) : 0;
 
   const completedCount = uploads.filter((u) => u.status === "completed").length;
   const errorCount = uploads.filter((u) => u.status === "error").length;
@@ -67,7 +82,7 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
       setSpeed(currentSpeed);
 
       const remaining = totalSize - totalLoaded;
-      if (currentSpeed > 0) {
+      if (currentSpeed > 0 && totalSize > 0) {
         setEta(remaining / currentSpeed);
       }
 
@@ -84,7 +99,11 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
   if (uploads.length === 0) return null;
 
   return (
-    <div className="absolute bottom-4 right-4 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+    <div
+      className={`w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden ${
+        className ?? "absolute bottom-4 right-4 z-50"
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-800/80 border-b border-gray-700">
         <div className="flex items-center gap-2">
@@ -94,15 +113,17 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
             ) : (
               <CheckCircle className="h-4 w-4 text-emerald-400" />
             )
+          ) : isDownload ? (
+            <Download className="h-4 w-4 text-emerald-400 animate-pulse" />
           ) : (
             <Upload className="h-4 w-4 text-emerald-400 animate-pulse" />
           )}
           <span className="text-sm font-medium text-gray-200">
             {isFinished
               ? hasErrors
-                ? t("uploadCompleteWithErrors")
-                : t("uploadComplete")
-              : t("uploadingFiles")}
+                ? t(isDownload ? "downloadCompleteWithErrors" : "uploadCompleteWithErrors")
+                : t(isDownload ? "downloadComplete" : "uploadComplete")
+              : t(isDownload ? "downloadingFiles" : "uploadingFiles")}
           </span>
         </div>
         {isFinished ? (
@@ -128,12 +149,21 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
             {completedCount}/{uploads.length} {t("files")}
           </span>
           <span className="text-xs font-mono text-emerald-400">
-            {formatBytes(totalLoaded)} / {formatBytes(totalSize)}
+            {hasTotal ? `${formatBytes(totalLoaded)} / ${formatBytes(totalSize)}` : formatBytes(totalLoaded)}
           </span>
         </div>
-        <Progress value={overallProgress} className="h-2" />
+        {hasTotal ? (
+          <Progress value={overallProgress} className="h-2" />
+        ) : (
+          // Zipping streams the archive, so only the transferred bytes are known.
+          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+            <div className="h-full w-1/3 animate-pulse rounded-full bg-emerald-500/80" />
+          </div>
+        )}
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-gray-500">{overallProgress}%</span>
+          <span className="text-xs text-gray-500">
+            {hasTotal ? `${overallProgress}%` : t("zippingFolder")}
+          </span>
           {!isFinished && speed > 0 && (
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span className="flex items-center gap-1">
@@ -158,17 +188,19 @@ export const UploadProgress: FC<UploadProgressProps> = ({ uploads, onCancel, onC
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-300 truncate">{upload.name}</p>
               <div className="flex items-center gap-2 mt-1">
-                {upload.status === "uploading" && (
-                  <>
-                    <Progress
-                      value={upload.size > 0 ? (upload.loaded * 100) / upload.size : 0}
-                      className="h-1 flex-1"
-                    />
-                    <span className="text-[10px] text-gray-500 font-mono w-8">
-                      {upload.size > 0 ? Math.round((upload.loaded * 100) / upload.size) : 0}%
+                {isTransferring(upload) &&
+                  (upload.size > 0 ? (
+                    <>
+                      <Progress value={(upload.loaded * 100) / upload.size} className="h-1 flex-1" />
+                      <span className="text-[10px] text-gray-500 font-mono w-8">
+                        {Math.round((upload.loaded * 100) / upload.size)}%
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      {formatBytes(upload.loaded)}
                     </span>
-                  </>
-                )}
+                  ))}
                 {upload.status === "completed" && (
                   <span className="text-[10px] text-emerald-400 flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />

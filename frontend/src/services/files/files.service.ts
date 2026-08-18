@@ -20,6 +20,18 @@ export interface UploadOptions {
   signal?: AbortSignal;
 }
 
+// A zipped folder is streamed while it is being compressed, so its total size is
+// unknown until the last byte arrives.
+export interface DownloadProgress {
+  loaded: number;
+  total?: number;
+}
+
+export interface DownloadOptions {
+  onProgress?: (progress: DownloadProgress) => void;
+  signal?: AbortSignal;
+}
+
 export const filesService = {
   async listFiles(serverId: string, path: string = ""): Promise<FileItem[]> {
     const { data } = await api.get(`/files/${serverId}/list`, {
@@ -95,18 +107,26 @@ export const filesService = {
     return data;
   },
 
-  async downloadFile(serverId: string, path: string): Promise<Blob> {
+  async downloadFile(serverId: string, path: string, options?: DownloadOptions): Promise<Blob> {
     const { data } = await api.get(`/files/${serverId}/download`, {
       params: { path },
       responseType: "blob",
+      signal: options?.signal,
+      onDownloadProgress: (progressEvent) => {
+        options?.onProgress?.({ loaded: progressEvent.loaded, total: progressEvent.total });
+      },
     });
     return data;
   },
 
-  async downloadZip(serverId: string, path: string): Promise<Blob> {
+  async downloadZip(serverId: string, path: string, options?: DownloadOptions): Promise<Blob> {
     const { data } = await api.get(`/files/${serverId}/download-zip`, {
       params: { path },
       responseType: "blob",
+      signal: options?.signal,
+      onDownloadProgress: (progressEvent) => {
+        options?.onProgress?.({ loaded: progressEvent.loaded, total: progressEvent.total });
+      },
     });
     return data;
   },

@@ -22,7 +22,7 @@ import { ModsBrowserDialog } from "@/components/molecules/mods/ModsBrowserDialog
 import { ModsListEditor } from "@/components/molecules/mods/ModsListEditor";
 import { ModpackFilePicker } from "@/components/molecules/ModpackFilePicker";
 import { CurseForgeModpackSection } from "@/components/molecules/modpacks/CurseForgeModpackSection";
-import { ModLoader, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
+import { ModLoader, ModProjectType, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 import { findModEntryIndex, parseModEntries, serializeModEntries } from "@/lib/utils/mod-entries";
 
 const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
@@ -92,7 +92,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
   const isModAlreadyAdded = (mod: ModSearchItem): boolean =>
     findModEntryIndex(currentModEntries(), [mod.slug, mod.projectId]) >= 0;
 
-  const toggleModFromBrowser = (mod: ModSearchItem, insertAs: "slug" | "id", version?: string): "added" | "removed" | "noop" => {
+  const toggleModFromBrowser = (mod: ModSearchItem, insertAs: "slug" | "id", version?: string, projectType?: ModProjectType): "added" | "removed" | "noop" => {
     const entries = currentModEntries();
     const index = findModEntryIndex(entries, [mod.slug, mod.projectId]);
 
@@ -102,7 +102,8 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
     }
 
     const ref = insertAs === "id" ? mod.projectId : mod.slug;
-    updateConfig(modsTargetField, serializeModEntries([...entries, { raw: ref, ref, version, separator: ":", optional: false, opaque: false }]));
+    const prefix = projectType === "datapack" ? "datapack" : undefined;
+    updateConfig(modsTargetField, serializeModEntries([...entries, { raw: ref, prefix, ref, version, separator: ":", optional: false, opaque: false }]));
     return "added";
   };
 

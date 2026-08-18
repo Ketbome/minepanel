@@ -86,6 +86,8 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
   - Minecraft version
   - Loader (Forge/Neoforge/Fabric/Quilt) when available
 - Accepts a mod name or a pasted slug (for example `moogs-end-structures`)
+- On Modrinth, a **Mods / Datapacks** selector switches the search to datapacks; picked
+  entries are written with the `datapack:` prefix and resolved against the datapack loader
 - Adds entries in one click as:
   - **Slug** (default)
   - **ID**
@@ -97,8 +99,9 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 1. Open **Create Server** or **Edit Server**
 2. Go to the **Mods** tab
 3. In either **CurseForge Files** or **Modrinth Projects**, click **Search mods**
-4. Pick insertion format (Slug or ID)
-5. Click **Add mod**
+4. On Modrinth, choose **Mods** or **Datapacks**
+5. Pick insertion format (Slug or ID)
+6. Click **Add mod**
 
 The selected entries are appended to the same existing fields (`CURSEFORGE_FILES` and `MODRINTH_PROJECTS`) using newline format, preserving manual entries and avoiding duplicates.
 
@@ -154,7 +157,10 @@ cloth-config
 
 ### Datapacks from Modrinth {#datapacks}
 
-Modrinth also hosts datapacks. To install them, use the `datapack:` prefix:
+Modrinth also hosts datapacks. The fastest way to add them is the integrated search:
+click **Search mods** in **Modrinth Projects** and switch the selector to **Datapacks**.
+Minepanel writes the entry with the `datapack:` prefix and pins the latest compatible
+datapack version. To write them by hand, use the same prefix:
 
 **In Minepanel (Modrinth Projects field):**
 
