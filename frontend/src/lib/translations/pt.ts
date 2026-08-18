@@ -170,6 +170,9 @@ export const pt: Record<TranslationKey, string> = {
   // Ações de Servidor
   startServer: 'Iniciar Servidor',
   stopServer: 'Parar Servidor',
+  forceStopServer: 'Forçar Parada',
+  forceStopConfirmTitle: 'Forçar a parada do servidor?',
+  forceStopConfirmDesc: 'Ignora o aviso de desligamento de 60s: salva o mundo via RCON e para o contêiner imediatamente. Se o servidor não responder, é encerrado após 10 segundos e alterações não salvas podem ser perdidas.',
   restart2: 'Reiniciar',
   consoleStatus: 'Console',
   manageServer: 'Gerenciar Servidor',

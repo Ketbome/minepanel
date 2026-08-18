@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
-import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer } from "@/services/docker/fetchs";
+import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer, forceStopServer as apiForceStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { useServersStore, ServerStatus } from "@/lib/store/servers-store";
 
@@ -78,11 +78,33 @@ export function useServerStatus(serverId: string) {
     }
   };
 
+  const forceStopServer = async () => {
+    setIsProcessingAction(true);
+    try {
+      const result = await apiForceStopServer(serverId);
+      if (result.success) {
+        mcToast.success(t("serverStopped"));
+        fetchStatus();
+        return true;
+      } else {
+        throw new Error(translateMessage(result.message || "SERVER_STOP_ERROR"));
+      }
+    } catch (error) {
+      console.error("Error force stopping server:", error);
+      const errorMessage = error instanceof Error ? translateMessage(error.message) : t("SERVER_STOP_ERROR");
+      mcToast.error(errorMessage);
+      return false;
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
   return {
     status,
     isProcessingAction,
     fetchStatus,
     startServer,
     stopServer,
+    forceStopServer,
   };
 }

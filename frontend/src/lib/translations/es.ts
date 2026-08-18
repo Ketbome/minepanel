@@ -170,6 +170,9 @@ export const es: Record<TranslationKey, string> = {
   // Acciones de Servidor
   startServer: 'Iniciar Servidor',
   stopServer: 'Detener Servidor',
+  forceStopServer: 'Forzar Detención',
+  forceStopConfirmTitle: '¿Forzar la detención del servidor?',
+  forceStopConfirmDesc: 'Salta el aviso de apagado de 60s: guarda el mundo por RCON y detiene el contenedor de inmediato. Si el servidor no responde se mata a los 10 segundos y se pueden perder los cambios sin guardar.',
   restart2: 'Reiniciar',
   consoleStatus: 'Consola',
   manageServer: 'Gestionar Servidor',

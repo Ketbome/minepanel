@@ -169,6 +169,9 @@ export const de: Record<TranslationKey, string> = {
   // Server Actions
   startServer: 'Server starten',
   stopServer: 'Server stoppen',
+  forceStopServer: 'Stopp erzwingen',
+  forceStopConfirmTitle: 'Server-Stopp erzwingen?',
+  forceStopConfirmDesc: 'Überspringt die 60-Sekunden-Ankündigung: Die Welt wird über RCON gespeichert und der Container stoppt sofort. Reagiert der Server nicht, wird er nach 10 Sekunden beendet und nicht gespeicherte Änderungen können verloren gehen.',
   restart2: 'Neustarten',
   consoleStatus: 'Konsole',
   manageServer: 'Server verwalten',

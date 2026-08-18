@@ -169,6 +169,9 @@ export const fr: Record<TranslationKey, string> = {
   // Server Actions
   startServer: 'Démarrer le serveur',
   stopServer: 'Arrêter le serveur',
+  forceStopServer: 'Arrêt forcé',
+  forceStopConfirmTitle: 'Forcer l\'arrêt du serveur ?',
+  forceStopConfirmDesc: 'Ignore l\'annonce d\'arrêt de 60 s : le monde est sauvegardé via RCON et le conteneur s\'arrête immédiatement. Si le serveur ne répond pas, il est tué au bout de 10 secondes et les modifications non sauvegardées peuvent être perdues.',
   restart2: 'Redémarrer',
   consoleStatus: 'Console',
   manageServer: 'Gérer le serveur',

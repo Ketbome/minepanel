@@ -114,6 +114,7 @@ Typical examples:
 - `PUT /servers/:id`
 - `POST /servers/:id/start`
 - `POST /servers/:id/stop`
+- `POST /servers/:id/stop/force` — skips the shutdown announcement (see below)
 - `POST /servers/:id/restart`
 - `GET /servers/:id/logs`
 

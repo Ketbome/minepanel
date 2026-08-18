@@ -167,6 +167,9 @@ export const en = {
   // Server Actions
   startServer: 'Start Server',
   stopServer: 'Stop Server',
+  forceStopServer: 'Force Stop',
+  forceStopConfirmTitle: 'Force stop the server?',
+  forceStopConfirmDesc: 'Skips the 60s shutdown announcement: the world is saved through RCON and the container stops right away. If the server does not respond it is killed after 10 seconds, and unsaved changes may be lost.',
   restart2: 'Restart',
   consoleStatus: 'Console',
   manageServer: 'Manage Server',

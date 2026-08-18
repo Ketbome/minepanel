@@ -102,6 +102,10 @@ export class ServerManagementService {
   private readonly COMPOSE_PROJECT?: string;
   private readonly RESERVED_SERVER_DIRS = new Set(['.world']);
 
+  private readonly FORCE_STOP_POLL_ATTEMPTS = 30;
+  private readonly FORCE_STOP_POLL_INTERVAL_MS = 500;
+  private readonly FORCE_STOP_GRACE_SECONDS = 10;
+
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(Settings)
@@ -1546,6 +1550,69 @@ export class ServerManagementService {
       this.logger.warn(`Could not fix permissions for ${serverId}: ${(error as Error).message}`);
       // Continue anyway - might work if permissions are already correct
     }
+  }
+
+  // A normal stop is slow by design: the itzg image announces the shutdown in
+  // chat and waits STOP_SERVER_ANNOUNCE_DELAY (60s by default) before stopping.
+  // RCON "stop" skips the announcement and still saves the world.
+  async forceStopServer(serverId: string): Promise<boolean> {
+    try {
+      if (!this.validateServerId(serverId)) {
+        this.logger.error(`Invalid server ID: ${serverId}`);
+        return false;
+      }
+
+      const dockerComposePath = this.getDockerComposePath(serverId);
+      if (!(await fs.pathExists(dockerComposePath))) {
+        this.logger.error(`Docker compose file does not exist for server ${serverId}`);
+        return false;
+      }
+
+      this.alertsService.markExpectedStop(serverId);
+
+      const edition = await this.getServerEdition(serverId);
+      if (edition !== 'BEDROCK') {
+        await this.requestRconStop(serverId);
+      }
+
+      // Anything still up gets a 10s grace period instead of the announce delay.
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(this.FORCE_STOP_GRACE_SECONDS));
+
+      this.logger.log(`Server ${serverId} force stopped`);
+      await this.sendDiscordNotification('stopped', serverId);
+
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to force stop server ${serverId}`, error);
+      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to force stop server' });
+      return false;
+    }
+  }
+
+  // rcon-cli reads RCON_PORT/RCON_PASSWORD from the container env, so the server
+  // config is not needed here. Returns true when the container exited on its own.
+  private async requestRconStop(serverId: string): Promise<boolean> {
+    const containerId = await this.findContainerId(serverId);
+    if (!containerId) return false;
+
+    try {
+      const { exitCode } = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', 'stop']);
+      if (exitCode !== 0) {
+        this.logger.warn(`RCON stop rejected for ${serverId}, falling back to compose shutdown`);
+        return false;
+      }
+    } catch (error) {
+      this.logger.warn(`RCON stop unavailable for ${serverId}: ${(error as Error).message}`);
+      return false;
+    }
+
+    for (let attempt = 0; attempt < this.FORCE_STOP_POLL_ATTEMPTS; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, this.FORCE_STOP_POLL_INTERVAL_MS));
+      if ((await this.getServerStatus(serverId)) !== 'running') return true;
+    }
+
+    this.logger.warn(`Server ${serverId} did not exit after RCON stop`);
+    return false;
   }
 
   async stopServer(serverId: string): Promise<boolean> {

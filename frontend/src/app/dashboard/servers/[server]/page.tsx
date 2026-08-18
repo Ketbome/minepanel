@@ -19,7 +19,7 @@ export default function ServerConfig() {
   const [refreshToken, setRefreshToken] = useState(0);
 
   const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId);
-  const { status, isProcessingAction, startServer, stopServer } = useServerStatus(serverId);
+  const { status, isProcessingAction, startServer, stopServer, forceStopServer } = useServerStatus(serverId);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function ServerConfig() {
   return (
     <div className="space-y-8">
       <div className="animate-fade-in-up">
-        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onRestartServer={restartServer} onClearData={handleClearServerData} />
+        <ServerPageHeader serverId={serverId} serverName={config.serverName} serverStatus={status} serverPort={config.port || "25565"} serverEdition={config.edition} isProcessing={isProcessingAction} onStartServer={startServer} onStopServer={stopServer} onForceStopServer={forceStopServer} onRestartServer={restartServer} onClearData={handleClearServerData} />
       </div>
 
       <div className="animate-fade-in stagger-1">
