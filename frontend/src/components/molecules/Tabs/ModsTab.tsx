@@ -24,6 +24,7 @@ import { ModpackFilePicker } from "@/components/molecules/ModpackFilePicker";
 import { CurseForgeModpackSection } from "@/components/molecules/modpacks/CurseForgeModpackSection";
 import { ModLoader, ModProjectType, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 import { findModEntryIndex, parseModEntries, serializeModEntries } from "@/lib/utils/mod-entries";
+import { findMinecraftVersion, getSuggestedJavaImage } from "@/lib/utils/java-image";
 
 const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
   ssr: false,
@@ -79,6 +80,16 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
       }
     }
     mcToast.success(`${t("modpackSelected")}: ${modpack.name}`);
+
+    // The docker image is manual for modpacks, so the java tag has to follow the
+    // pack's Minecraft version instead of the auto rule in the server type tab.
+    const detected = findMinecraftVersion(modpack.latestFiles?.[0]?.gameVersions);
+    if (!detected) return;
+
+    const javaImage = getSuggestedJavaImage(detected);
+    updateConfig("minecraftVersion", detected);
+    updateConfig("dockerImage", javaImage);
+    mcToast.success(`${t("modpackVersionDetected")}: ${detected} (${javaImage})`);
   };
 
   const openModsBrowser = (provider: ModProvider, field: "cfFiles" | "modrinthProjects") => {
