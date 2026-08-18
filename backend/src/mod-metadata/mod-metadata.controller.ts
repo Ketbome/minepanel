@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
@@ -7,6 +7,7 @@ import { Users } from 'src/users/entities/users.entity';
 import { ModMetadataService } from './mod-metadata.service';
 import { UpdateDesiredVersionDto } from './dto/update-desired-version.dto';
 import { UpdateModNoteDto } from './dto/update-mod-note.dto';
+import { QueueModChangeDto } from './dto/queue-mod-change.dto';
 
 @Controller('mod-metadata')
 @UseGuards(JwtAuthGuard)
@@ -49,5 +50,26 @@ export class ModMetadataController {
   ) {
     await this.requireServerAccess(req, serverId);
     return this.modMetadataService.setModNote(serverId, ref, body.note);
+  }
+
+  @Post(':serverId/queue')
+  async queueChange(
+    @Request() req,
+    @Param('serverId') serverId: string,
+    @Body(new ValidationPipe({ whitelist: true, transform: true })) body: QueueModChangeDto,
+  ) {
+    await this.requireServerAccess(req, serverId);
+    return this.modMetadataService.queueChange(serverId, body);
+  }
+
+  @Delete(':serverId/queue/:provider/:ref')
+  async cancelQueuedChange(
+    @Request() req,
+    @Param('serverId') serverId: string,
+    @Param('provider') provider: 'curseforge' | 'modrinth',
+    @Param('ref') ref: string,
+  ) {
+    await this.requireServerAccess(req, serverId);
+    return this.modMetadataService.cancelQueuedChange(serverId, provider, ref);
   }
 }

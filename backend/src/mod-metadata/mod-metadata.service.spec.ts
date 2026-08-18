@@ -25,7 +25,7 @@ describe('ModMetadataService', () => {
 
     const metadata = await service.getMetadata('srv');
 
-    expect(metadata).toEqual({ desiredMcVersion: null, notes: {} });
+    expect(metadata).toEqual({ desiredMcVersion: null, notes: {}, pendingChanges: [] });
   });
 
   it('getMetadata throws NotFoundException for a missing server directory', async () => {
@@ -68,5 +68,76 @@ describe('ModMetadataService', () => {
     await fs.ensureDir(path.join(tempDir, 'srv'));
 
     await expect(service.setModNote('srv', '   ', 'note')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  describe('queueChange / cancelQueuedChange / consumePendingQueue', () => {
+    it('queueChange adds an entry and upserts on a repeated ref', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'Sodium', action: 'add', version: 'v1', label: 'Sodium' });
+      let metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([{ provider: 'modrinth', ref: 'Sodium', action: 'add', version: 'v1', label: 'Sodium' }]);
+
+      // Same ref, different case and intent - replaces the prior entry rather than appending.
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'remove', label: 'Sodium' });
+      metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'remove', label: 'Sodium' }]);
+    });
+
+    it('queueChange rejects an empty ref', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      await expect(service.queueChange('srv', { provider: 'curseforge', ref: '  ', action: 'add', label: 'x' })).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('cancelQueuedChange removes only the matching provider+ref entry', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' });
+      await service.queueChange('srv', { provider: 'curseforge', ref: 'sodium', action: 'add', label: 'Sodium (CF)' });
+
+      await service.cancelQueuedChange('srv', 'modrinth', 'sodium');
+      const metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([{ provider: 'curseforge', ref: 'sodium', action: 'add', label: 'Sodium (CF)' }]);
+    });
+
+    it('consumePendingQueue returns null when empty, and clears the queue on read', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      expect(await service.consumePendingQueue('srv')).toBeNull();
+
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' });
+      const consumed = await service.consumePendingQueue('srv');
+      expect(consumed).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' }]);
+
+      const metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([]);
+    });
+  });
+
+  describe('applyQueueToConfig', () => {
+    it('adds a new ref and updates an existing pin', () => {
+      const result = service.applyQueueToConfig('jei:123', '', [
+        { provider: 'modrinth', ref: 'sodium', action: 'add', version: 'v2', label: 'Sodium' },
+        { provider: 'curseforge', ref: 'jei', action: 'add', version: '456', label: 'JEI' },
+      ]);
+
+      expect(result.modrinthProjects).toBe('sodium:v2');
+      expect(result.cfFiles).toBe('jei:456');
+    });
+
+    it('removes a matching ref and leaves everything else untouched', () => {
+      const result = service.applyQueueToConfig('jei:123\nfabric:fabric-api:v9', '', [
+        { provider: 'curseforge', ref: 'jei', action: 'remove', label: 'JEI' },
+      ]);
+
+      expect(result.cfFiles).toBe('fabric:fabric-api:v9');
+    });
+
+    it('adds an unpinned ref with no version', () => {
+      const result = service.applyQueueToConfig('', '', [{ provider: 'curseforge', ref: 'jei', action: 'add', label: 'JEI' }]);
+
+      expect(result.cfFiles).toBe('jei');
+    });
   });
 });

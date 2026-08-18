@@ -11,9 +11,10 @@ import { BedrockAddonsModule } from 'src/bedrock-addons/bedrock-addons.module';
 import { Settings } from 'src/users/entities/settings.entity';
 import { AlertsModule } from 'src/alerts/alerts.module';
 import { SettingsModule } from 'src/settings/settings.module';
+import { ModMetadataModule } from 'src/mod-metadata/mod-metadata.module';
 
 @Module({
-  imports: [DockerComposeModule, TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule, SettingsModule],
+  imports: [DockerComposeModule, TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule, SettingsModule, ModMetadataModule],
   controllers: [ServerManagementController, AutoScaleController],
   providers: [ServerManagementService],
   exports: [ServerManagementService],
