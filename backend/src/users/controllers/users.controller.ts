@@ -135,7 +135,7 @@ export class UsersController {
   async updateUserAccess(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUserAccessDto) {
     const currentUser = await this.getCurrentUser(req);
     this.accessControlService.assertManageUsers(currentUser);
-    const user = await this.usersService.updateUserAccess(id, dto);
+    const user = await this.usersService.updateUserAccess(id, dto, this.accessControlService.isAdmin(currentUser));
 
     await this.auditLogService.record({
       actorUserId: currentUser.id,

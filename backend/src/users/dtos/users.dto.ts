@@ -52,6 +52,10 @@ export class UserPermissionsDto {
   @IsOptional()
   @IsBoolean()
   useServerFiles?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  changeServerVersion?: boolean;
 }
 
 export class UpdateUserAccessDto {

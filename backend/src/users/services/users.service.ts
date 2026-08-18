@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { Settings } from '../entities/settings.entity';
 import { UserInvitation } from '../entities/user-invitation.entity';
 import { createHash, randomBytes } from 'node:crypto';
-import { DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState } from '../access-control.types';
+import { applyAdminGrantedPermissions, DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState } from '../access-control.types';
 import { ConfigService } from '@nestjs/config';
 import { PendingEmailChange } from '../entities/pending-email-change.entity';
 import { AuthMailService } from 'src/auth/auth-mail.service';
@@ -198,7 +198,7 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  async updateUserAccess(id: number, dto: UpdateUserAccessDto): Promise<Users> {
+  async updateUserAccess(id: number, dto: UpdateUserAccessDto, actorIsAdmin: boolean = false): Promise<Users> {
     const user = await this.getRequiredUserById(id);
 
     if (user.role === 'ADMIN') {
@@ -210,7 +210,8 @@ export class UsersService {
     }
 
     if (dto.permissions) {
-      const permissions = normalizePermissions({ ...user.permissions, ...dto.permissions });
+      const stored = normalizePermissions(user.permissions);
+      const permissions = applyAdminGrantedPermissions(normalizePermissions({ ...user.permissions, ...dto.permissions }), stored, actorIsAdmin);
       user.permissions = permissions;
       user.serverAccess = permissions.accessAllServers ? [] : normalizeServerAccess(dto.serverAccess ?? user.serverAccess);
     } else if (dto.serverAccess) {
@@ -344,7 +345,7 @@ export class UsersService {
     return validInvitations.filter((invitation) => !invitation.email || !registeredEmails.has(invitation.email));
   }
 
-  async createInvitation(dto: CreateUserInvitationDto): Promise<{ invitation: UserInvitation; token: string; inviteUrl: string }> {
+  async createInvitation(dto: CreateUserInvitationDto, actorIsAdmin: boolean = false): Promise<{ invitation: UserInvitation; token: string; inviteUrl: string }> {
     const normalizedEmail = this.normalizeEmail(dto.email);
     await this.ensureUniqueEmail(normalizedEmail);
 
@@ -352,7 +353,7 @@ export class UsersService {
       await this.invalidatePendingInvitationsForEmail(normalizedEmail);
     }
 
-    const permissions = normalizePermissions(dto.permissions);
+    const permissions = applyAdminGrantedPermissions(normalizePermissions(dto.permissions), DEFAULT_USER_PERMISSIONS, actorIsAdmin);
     const token = randomBytes(32).toString('hex');
     const invitation = this.invitationsRepo.create({
       tokenHash: this.hashToken(token),

@@ -96,7 +96,7 @@ export class AuthController {
       throw new ForbiddenException('Forbidden');
     }
 
-    return this.authService.createInvitation(body, req.user);
+    return this.authService.createInvitation(body, req.user, sessionUser.role === 'ADMIN');
   }
 
   @UseGuards(JwtAuthGuard)

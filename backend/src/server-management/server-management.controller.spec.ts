@@ -73,6 +73,7 @@ describe('ServerManagementController', () => {
       assertUseConsole: jest.fn(),
       getVisibleServerIds: jest.fn((_, ids) => ids),
       isAdmin: jest.fn(() => false),
+      canUsePermission: jest.fn(() => false),
     };
 
     const mockAuditLogService = {

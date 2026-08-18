@@ -15,6 +15,7 @@ export interface UserPermissions {
   useGlobalFiles: boolean;
   viewServerFiles: boolean;
   useServerFiles: boolean;
+  changeServerVersion: boolean;
 }
 
 export interface UserAccessState {

@@ -60,6 +60,12 @@ const ADMIN_ONLY_ON_CREATE_FIELDS = [
   'foliaDownloadUrl',
 ] as const;
 
+// `dockerImage` is only the tag of the fixed itzg image (see the server strategies),
+// and the panel derives it from the Minecraft version. These are the tags the
+// `changeServerVersion` permission unlocks; anything else stays admin-only.
+const VERSION_DOCKER_IMAGE_TAGS = /^(latest|stable|java\d{1,2})$/;
+
+
 const ADMIN_ONLY_ENV_KEYS = new Set([
   'UID',
   'GID',
@@ -205,9 +211,27 @@ export class ServerManagementController {
       return;
     }
 
-    const changed = ADMIN_ONLY_CONFIG_FIELDS.filter(
-      (field) => incoming[field] !== undefined && normalizeConfigValue(incoming[field]) !== normalizeConfigValue(current[field]),
-    );
+    const canChangeVersion = Boolean(user) && this.accessControlService.canUsePermission(user as Users, 'changeServerVersion');
+
+    // Bedrock stores its version in the same field, so this covers both editions.
+    const versionChanged =
+      incoming.minecraftVersion !== undefined && normalizeConfigValue(incoming.minecraftVersion) !== normalizeConfigValue(current.minecraftVersion);
+
+    if (!canChangeVersion && versionChanged) {
+      throw new ForbiddenException('You do not have permission to change the server version');
+    }
+
+    const changed = ADMIN_ONLY_CONFIG_FIELDS.filter((field) => {
+      if (incoming[field] === undefined) return false;
+
+      const next = normalizeConfigValue(incoming[field]);
+      if (next === normalizeConfigValue(current[field])) return false;
+      // The panel derives the java tag from the Minecraft version, so the version
+      // permission has to cover it or the whole save is rejected.
+      if (field === 'dockerImage') return !(canChangeVersion && VERSION_DOCKER_IMAGE_TAGS.test(next));
+
+      return true;
+    });
 
     if (changed.length > 0) {
       throw new ForbiddenException(`Only admins can change these settings: ${changed.join(', ')}`);
@@ -231,7 +255,15 @@ export class ServerManagementController {
       throw new ForbiddenException('Only admins can set a custom backup host directory');
     }
 
-    const provided = ADMIN_ONLY_ON_CREATE_FIELDS.filter((field) => normalizeConfigValue(config[field]));
+    const provided = ADMIN_ONLY_ON_CREATE_FIELDS.filter((field) => {
+      const value = normalizeConfigValue(config[field]);
+      if (!value) return false;
+      // Creating a server already requires access to every server, and the panel
+      // always sends the tag it derived for the chosen version.
+      if (field === 'dockerImage') return !VERSION_DOCKER_IMAGE_TAGS.test(value);
+
+      return true;
+    });
     if (provided.length > 0) {
       throw new ForbiddenException(`Only admins can set these settings: ${provided.join(', ')}`);
     }
