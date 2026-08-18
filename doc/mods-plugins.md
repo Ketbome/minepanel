@@ -162,9 +162,15 @@ the pinned mod list itself — that stays in the **Mods** tab.
   upgrading to, used only to check mod compatibility ahead of time. It does not change the server's
   live version
 - A compatibility badge per mod against the desired version, once one is set
-- An on-demand **changelog history** per mod, available at any time: every version released between
-  the currently pinned version and the latest (or desired-version-compatible) version, concatenated
-  so you can see everything you'd pick up on an update
+- An on-demand **changelog history** per mod, split into the two kinds of update you'd actually
+  decide between:
+  - **Same-version updates** — newer builds released for the Minecraft version the server is
+    already running (bug fixes and feature releases that don't require a version bump)
+  - **Minecraft version updates** — builds released for the desired version you're watching,
+    which may pull in a larger set of changes since it usually also means jumping several
+    same-version releases at once
+  Each lane concatenates every intervening version's changelog, newest first, so you see
+  everything you'd pick up rather than just the latest entry
 
 ### Where this data is stored
 
