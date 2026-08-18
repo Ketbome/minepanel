@@ -2,13 +2,23 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
+import { ModEntry, ModProvider, findModEntryIndex, parseModEntries, serializeModEntries } from './mod-entries.util';
+
+export interface PendingModChange {
+  provider: ModProvider;
+  ref: string;
+  action: 'add' | 'remove';
+  version?: string;
+  label: string;
+}
 
 export interface ModMetadataRecord {
   desiredMcVersion: string | null;
   notes: Record<string, string>;
+  pendingChanges: PendingModChange[];
 }
 
-const DEFAULT_METADATA: ModMetadataRecord = { desiredMcVersion: null, notes: {} };
+const DEFAULT_METADATA: ModMetadataRecord = { desiredMcVersion: null, notes: {}, pendingChanges: [] };
 
 @Injectable()
 export class ModMetadataService {
@@ -51,10 +61,76 @@ export class ModMetadataService {
     return data;
   }
 
+  async queueChange(serverId: string, change: PendingModChange): Promise<ModMetadataRecord> {
+    await this.ensureServerDirectory(serverId);
+    const ref = change.ref.trim();
+    if (!ref) {
+      throw new BadRequestException('Mod ref is required');
+    }
+
+    const data = await this.readMetadata(serverId);
+    const key = ref.toLowerCase();
+    data.pendingChanges = [
+      ...data.pendingChanges.filter((existing) => !(existing.provider === change.provider && existing.ref.toLowerCase() === key)),
+      { ...change, ref },
+    ];
+    await this.writeMetadata(serverId, data);
+    return data;
+  }
+
+  async cancelQueuedChange(serverId: string, provider: ModProvider, ref: string): Promise<ModMetadataRecord> {
+    await this.ensureServerDirectory(serverId);
+    const key = ref.trim().toLowerCase();
+    const data = await this.readMetadata(serverId);
+    data.pendingChanges = data.pendingChanges.filter((existing) => !(existing.provider === provider && existing.ref.toLowerCase() === key));
+    await this.writeMetadata(serverId, data);
+    return data;
+  }
+
+  // Reads and clears the queue in one step so it can only ever be applied once.
+  // Only the start/restart lifecycle should call this.
+  async consumePendingQueue(serverId: string): Promise<PendingModChange[] | null> {
+    const data = await this.readMetadata(serverId);
+    if (data.pendingChanges.length === 0) return null;
+
+    const queue = data.pendingChanges;
+    data.pendingChanges = [];
+    await this.writeMetadata(serverId, data);
+    return queue;
+  }
+
+  applyQueueToConfig(cfFiles: string, modrinthProjects: string, queue: PendingModChange[]): { cfFiles: string; modrinthProjects: string } {
+    const fields: Record<ModProvider, { value: string; provider: ModProvider }> = {
+      curseforge: { value: cfFiles, provider: 'curseforge' },
+      modrinth: { value: modrinthProjects, provider: 'modrinth' },
+    };
+
+    for (const provider of Object.keys(fields) as ModProvider[]) {
+      const relevant = queue.filter((change) => change.provider === provider);
+      if (relevant.length === 0) continue;
+
+      let entries: ModEntry[] = parseModEntries(fields[provider].value, provider);
+      for (const change of relevant) {
+        const index = findModEntryIndex(entries, [change.ref]);
+        if (change.action === 'remove') {
+          if (index >= 0) entries = entries.filter((_, entryIndex) => entryIndex !== index);
+          continue;
+        }
+
+        const nextEntry: ModEntry = { raw: change.ref, ref: change.ref, version: change.version, separator: ':', optional: false, opaque: false };
+        entries = index >= 0 ? entries.map((entry, entryIndex) => (entryIndex === index ? nextEntry : entry)) : [...entries, nextEntry];
+      }
+
+      fields[provider].value = serializeModEntries(entries);
+    }
+
+    return { cfFiles: fields.curseforge.value, modrinthProjects: fields.modrinth.value };
+  }
+
   private async readMetadata(serverId: string): Promise<ModMetadataRecord> {
     const metadataPath = this.getMetadataPath(serverId);
     if (!(await fs.pathExists(metadataPath))) {
-      return { ...DEFAULT_METADATA, notes: {} };
+      return { ...DEFAULT_METADATA, notes: {}, pendingChanges: [] };
     }
 
     try {
@@ -62,9 +138,10 @@ export class ModMetadataService {
       return {
         desiredMcVersion: typeof content?.desiredMcVersion === 'string' ? content.desiredMcVersion : null,
         notes: content?.notes && typeof content.notes === 'object' ? content.notes : {},
+        pendingChanges: Array.isArray(content?.pendingChanges) ? content.pendingChanges : [],
       };
     } catch {
-      return { ...DEFAULT_METADATA, notes: {} };
+      return { ...DEFAULT_METADATA, notes: {}, pendingChanges: [] };
     }
   }
 
