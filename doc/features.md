@@ -115,7 +115,9 @@ The current audit phase includes:
 
 Built-in browser for each server under `servers/<id>/mc-data`:
 
-- Upload/download files
+- Upload/download files, with a live transfer panel (speed, ETA, cancel); folders are
+  downloaded as a ZIP that streams while it is compressed, so only the transferred
+  bytes are shown until it finishes
 - Edit configs (syntax highlighting)
 - Create/delete/rename
 - Drag & drop support

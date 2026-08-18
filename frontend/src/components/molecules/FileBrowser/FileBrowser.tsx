@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect, useCallback, useRef } from "react";
-import { filesService, FileItem } from "@/services/files/files.service";
+import { filesService, FileItem, DownloadProgress } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { FileList } from "./FileList";
@@ -56,6 +56,17 @@ const TEXT_EXTENSIONS = [
   "sql",
 ];
 
+const saveBlob = (blob: Blob, name: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+
 const isEditableFile = (file: FileItem): boolean => {
   if (file.isDirectory) return false;
   if (!file.extension) return false;
@@ -71,7 +82,9 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [downloads, setDownloads] = useState<UploadItem[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const downloadAbortRef = useRef<AbortController | null>(null);
 
   const loadFiles = useCallback(
     async (path: string = "") => {
@@ -328,51 +341,67 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
     [serverId, currentPath, loadFiles, t]
   );
 
-  const handleDownload = useCallback(
-    async (file: FileItem) => {
-      try {
-        const blob = await filesService.downloadFile(serverId, file.path);
-        const url = window.URL.createObjectURL(blob);
+  // A big folder takes a while to zip and stream, so the transfer is tracked in
+  // the same panel used by uploads instead of leaving the UI silent.
+  const runDownload = useCallback(
+    async (name: string, size: number, download: (options: { onProgress: (progress: DownloadProgress) => void; signal: AbortSignal }) => Promise<Blob>) => {
+      const id = `${Date.now()}-${name}`;
+      downloadAbortRef.current = new AbortController();
+      setDownloads([{ id, name, size, loaded: 0, status: "downloading" }]);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+      try {
+        const blob = await download({
+          signal: downloadAbortRef.current.signal,
+          onProgress: (progress) => {
+            setDownloads((prev) => prev.map((item) => (item.id === id ? { ...item, loaded: progress.loaded, size: progress.total ?? item.size } : item)));
+          },
+        });
+
+        setDownloads((prev) => prev.map((item) => (item.id === id ? { ...item, loaded: blob.size, size: blob.size, status: "completed" } : item)));
+        saveBlob(blob, name);
+        return true;
       } catch (error) {
+        if ((error as Error).name === "CanceledError" || (error as Error).name === "AbortError") {
+          setDownloads([]);
+          return false;
+        }
+
         console.error("Error downloading file:", error);
+        setDownloads((prev) => prev.map((item) => (item.id === id ? { ...item, status: "error" } : item)));
         mcToast.error(t("errorLoadingFiles"));
+        return false;
+      } finally {
+        downloadAbortRef.current = null;
       }
     },
-    [serverId, t]
+    [t]
+  );
+
+  const handleDownload = useCallback(
+    async (file: FileItem) => {
+      await runDownload(file.name, file.size, (options) => filesService.downloadFile(serverId, file.path, options));
+    },
+    [serverId, runDownload]
   );
 
   const handleDownloadZip = useCallback(
     async (file: FileItem) => {
       if (!file.isDirectory) return;
 
-      try {
-        const blob = await filesService.downloadZip(serverId, file.path);
-        const url = window.URL.createObjectURL(blob);
-
-        mcToast.success(t("zipDownloaded"));
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${file.name}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading zip:", error);
-        mcToast.error(t("errorLoadingFiles"));
-      }
+      // The archive is compressed on the fly, so its size is only known at the end.
+      const done = await runDownload(`${file.name}.zip`, 0, (options) => filesService.downloadZip(serverId, file.path, options));
+      if (done) mcToast.success(t("zipDownloaded"));
     },
-    [serverId, t]
+    [serverId, runDownload, t]
   );
+
+  const handleCancelDownload = useCallback(() => {
+    downloadAbortRef.current?.abort();
+  }, []);
+
+  const handleCloseDownloadProgress = useCallback(() => {
+    setDownloads([]);
+  }, []);
 
   if (editingFile) {
     return <FileEditor path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} />;
@@ -409,7 +438,10 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           />
         )}
 
-        <UploadProgress uploads={uploads} onCancel={handleCancelUpload} onClose={handleCloseUploadProgress} />
+        <div className="absolute bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+          <UploadProgress uploads={uploads} className="relative" onCancel={handleCancelUpload} onClose={handleCloseUploadProgress} />
+          <UploadProgress uploads={downloads} mode="download" className="relative" onCancel={handleCancelDownload} onClose={handleCloseDownloadProgress} />
+        </div>
       </div>
     </DropZone>
   );
