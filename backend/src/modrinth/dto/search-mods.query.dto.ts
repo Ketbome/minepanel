@@ -26,4 +26,8 @@ export class SearchModrinthModsQueryDto {
   @IsOptional()
   @IsEnum(['forge', 'neoforge', 'fabric', 'quilt'])
   loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+
+  @IsOptional()
+  @IsEnum(['mod', 'datapack'])
+  projectType?: 'mod' | 'datapack';
 }

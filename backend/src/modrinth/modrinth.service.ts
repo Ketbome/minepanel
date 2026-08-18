@@ -78,13 +78,13 @@ export interface NormalizedModVersion {
   loaders: string[];
 }
 
-type ModLoaderName = 'forge' | 'neoforge' | 'fabric' | 'quilt';
+type ModLoaderName = 'forge' | 'neoforge' | 'fabric' | 'quilt' | 'datapack';
 
 @Injectable()
 export class ModrinthService {
   private readonly apiClient: AxiosInstance;
   private readonly MODRINTH_API_BASE = 'https://api.modrinth.com/v2';
-  private readonly KNOWN_LOADERS = ['forge', 'neoforge', 'fabric', 'quilt'];
+  private readonly KNOWN_LOADERS = ['forge', 'neoforge', 'fabric', 'quilt', 'datapack'];
   private readonly MAX_RESOLVE_REFS = 50;
 
   constructor() {
@@ -102,20 +102,27 @@ export class ModrinthService {
     limit?: number;
     offset?: number;
     minecraftVersion: string;
-    loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+    loader?: ModLoaderName;
+    projectType?: 'mod' | 'datapack';
   }): Promise<NormalizedModSearchResponse> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50);
     const offset = Math.max(query.offset ?? 0, 0);
 
     const versionFilter = this.resolveVersionFilter(query.minecraftVersion);
-    const facets: string[][] = [['project_type:mod']];
+    // Modrinth reports datapacks as project_type "mod" in the project payload,
+    // but the search facet still separates them.
+    const facets: string[][] = [[`project_type:${query.projectType ?? 'mod'}`]];
 
     if (versionFilter) {
       facets.push([`versions:${versionFilter}`]);
     }
 
-    if (query.loader) {
-      facets.push([`categories:${query.loader}`]);
+    // A datapack version carries the "datapack" loader, so filtering by the
+    // server loader on top of it drops projects that do ship a datapack.
+    const loaderFilter = query.projectType === 'datapack' ? undefined : query.loader;
+
+    if (loaderFilter) {
+      facets.push([`categories:${loaderFilter}`]);
     }
 
     try {
@@ -131,7 +138,7 @@ export class ModrinthService {
 
       const normalized = response.data.hits
         .map((hit) => this.normalizeHit(hit))
-        .filter((mod) => this.isCompatibleResult(mod, versionFilter, query.loader));
+        .filter((mod) => this.isCompatibleResult(mod, versionFilter, loaderFilter));
 
       return {
         data: normalized,
@@ -311,7 +318,7 @@ export class ModrinthService {
   private isCompatibleResult(
     mod: NormalizedModSearchResult,
     minecraftVersion?: string,
-    loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt',
+    loader?: ModLoaderName,
   ): boolean {
     if (minecraftVersion) {
       const hasVersion = mod.supportedVersions.some((version) => version === minecraftVersion);

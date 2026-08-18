@@ -2,6 +2,10 @@ import api from "../axios.service";
 
 export type ModProvider = "curseforge" | "modrinth";
 export type ModLoader = "forge" | "neoforge" | "fabric" | "quilt";
+// itzg installs Modrinth datapacks through the "datapack:" prefix, which maps to
+// the datapack loader on Modrinth's side.
+export type ModProjectType = "mod" | "datapack";
+export type ModVersionLoader = ModLoader | "datapack";
 
 export interface ModSearchItem {
   provider: ModProvider;
@@ -54,7 +58,7 @@ export const searchCurseforgeMods = async (
 };
 
 export const searchModrinthMods = async (
-  params: BaseSearchParams & { limit?: number; offset?: number },
+  params: BaseSearchParams & { limit?: number; offset?: number; projectType?: ModProjectType },
 ): Promise<ModSearchResponse> => {
   const response = await api.get<ModSearchResponse>("/modrinth/mods/search", {
     params,
@@ -83,7 +87,7 @@ export interface LatestModVersion {
 export const fetchLatestModVersions = async (
   provider: ModProvider,
   refs: string[],
-  params: { minecraftVersion?: string; loader?: ModLoader },
+  params: { minecraftVersion?: string; loader?: ModVersionLoader },
 ): Promise<LatestModVersion[]> => {
   if (refs.length === 0) return [];
 
@@ -111,7 +115,7 @@ export const resolveModVersionsByProvider = async (
 export const fetchModVersions = async (
   provider: ModProvider,
   ref: string,
-  params: { minecraftVersion?: string; loader?: ModLoader },
+  params: { minecraftVersion?: string; loader?: ModVersionLoader },
 ): Promise<ModVersionItem[]> => {
   const path =
     provider === "curseforge"
@@ -124,7 +128,13 @@ export const fetchModVersions = async (
 
 export const searchModsByProvider = async (
   provider: ModProvider,
-  params: BaseSearchParams & { pageSize?: number; index?: number; limit?: number; offset?: number },
+  params: BaseSearchParams & {
+    pageSize?: number;
+    index?: number;
+    limit?: number;
+    offset?: number;
+    projectType?: ModProjectType;
+  },
 ): Promise<ModSearchResponse> => {
   if (provider === "curseforge") {
     return searchCurseforgeMods({
@@ -142,5 +152,6 @@ export const searchModsByProvider = async (
     loader: params.loader,
     limit: params.limit,
     offset: params.offset,
+    projectType: params.projectType,
   });
 };

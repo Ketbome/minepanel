@@ -11,6 +11,6 @@ export class ProjectVersionsQueryDto {
   minecraftVersion?: string;
 
   @IsOptional()
-  @IsEnum(['forge', 'neoforge', 'fabric', 'quilt'])
-  loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+  @IsEnum(['forge', 'neoforge', 'fabric', 'quilt', 'datapack'])
+  loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt' | 'datapack';
 }

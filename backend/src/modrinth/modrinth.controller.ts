@@ -17,6 +17,7 @@ export class ModrinthController {
       offset: query.offset,
       minecraftVersion: query.minecraftVersion,
       loader: query.loader,
+      projectType: query.projectType,
     });
   }
 

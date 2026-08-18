@@ -18,6 +18,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import {
   ModLoader,
+  ModProjectType,
   ModProvider,
   ModSearchItem,
   ModVersionItem,
@@ -36,6 +37,7 @@ interface ModsBrowserDialogProps {
     mod: ModSearchItem,
     insertAs: 'slug' | 'id',
     version?: string,
+    projectType?: ModProjectType,
   ) => 'added' | 'removed' | 'noop';
 }
 
@@ -71,6 +73,7 @@ export function ModsBrowserDialog({
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [insertAs, setInsertAs] = useState<'slug' | 'id'>('slug');
+  const [projectType, setProjectType] = useState<ModProjectType>('mod');
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [results, setResults] = useState<ModSearchItem[]>([]);
@@ -79,6 +82,13 @@ export function ModsBrowserDialog({
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const pageSize = PAGE_SIZE_BY_PROVIDER[provider];
+  // CurseForge data packs are a separate class that itzg cannot install, so the
+  // type switch is Modrinth-only.
+  const supportsDatapacks = provider === 'modrinth';
+  const isDatapack = supportsDatapacks && projectType === 'datapack';
+  // A datapack is installed through its own loader, whatever the server runs.
+  const searchLoader = isDatapack ? undefined : loader;
+  const versionLoader = isDatapack ? 'datapack' : loader;
 
   const providerLabel = useMemo(() => {
     return provider === 'curseforge' ? 'CurseForge' : 'Modrinth';
@@ -98,7 +108,8 @@ export function ModsBrowserDialog({
         const response = await searchModsByProvider(provider, {
           q: query.trim() || undefined,
           minecraftVersion,
-          loader,
+          loader: searchLoader,
+          projectType: isDatapack ? 'datapack' : undefined,
           pageSize,
           index: nextPageIndex * pageSize,
           limit: pageSize,
@@ -134,8 +145,12 @@ export function ModsBrowserDialog({
         setIsLoadingMore(false);
       }
     },
-    [open, minecraftVersion, provider, query, loader, pageSize, t],
+    [open, minecraftVersion, provider, query, searchLoader, isDatapack, pageSize, t],
   );
+
+  useEffect(() => {
+    if (!open) setProjectType('mod');
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -146,7 +161,7 @@ export function ModsBrowserDialog({
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [open, query, provider, minecraftVersion, loader, fetchPage]);
+  }, [open, query, provider, minecraftVersion, loader, projectType, fetchPage]);
 
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -170,7 +185,7 @@ export function ModsBrowserDialog({
     const ref = insertAs === 'id' ? mod.projectId : mod.slug;
 
     if (isAdded(mod)) {
-      const status = onToggle(mod, insertAs);
+      const status = onToggle(mod, insertAs, undefined, isDatapack ? 'datapack' : 'mod');
       if (status === 'removed') mcToast.success(t('removeMod'));
       return;
     }
@@ -182,7 +197,7 @@ export function ModsBrowserDialog({
         await fetchModVersions(provider, ref, {
           minecraftVersion:
             minecraftVersion && minecraftVersion !== 'latest' ? minecraftVersion : undefined,
-          loader,
+          loader: versionLoader,
         }),
       );
     } catch (error) {
@@ -191,7 +206,7 @@ export function ModsBrowserDialog({
       setPinningId(null);
     }
 
-    const status = onToggle(mod, insertAs, version?.versionId);
+    const status = onToggle(mod, insertAs, version?.versionId, isDatapack ? 'datapack' : 'mod');
     if (status === 'added') {
       mcToast.success(`${t('addMod')}: ${ref}${version ? ` (${version.name})` : ''}`);
       return;
@@ -210,14 +225,18 @@ export function ModsBrowserDialog({
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <DialogTitle className="text-xl font-minecraft text-emerald-400 flex items-center gap-2">
               <Search className="h-5 w-5" />
-              {t('searchMods')} - {providerLabel}
+              {isDatapack ? t('searchDatapacks') : t('searchMods')} - {providerLabel}
             </DialogTitle>
             <p className="text-xs text-gray-400">
               {t('searchModsDesc')} <span className="text-gray-200">{minecraftVersion}</span>
-              {loader ? <span className="text-gray-200"> / {loader}</span> : ''}
+              {!isDatapack && loader ? <span className="text-gray-200"> / {loader}</span> : ''}
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-3">
+          <div
+            className={`grid grid-cols-1 gap-3 ${
+              supportsDatapacks ? 'md:grid-cols-[1fr_200px_240px]' : 'md:grid-cols-[1fr_240px]'
+            }`}
+          >
             <div className="relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
@@ -227,6 +246,20 @@ export function ModsBrowserDialog({
                 className="h-11 pl-10 bg-gray-800 border-gray-600/80 text-white font-minecraft tracking-wide focus:border-emerald-500/60"
               />
             </div>
+            {supportsDatapacks && (
+              <Select
+                value={projectType}
+                onValueChange={(value: ModProjectType) => setProjectType(value)}
+              >
+                <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                  <SelectItem value="mod">{t('searchTypeMods')}</SelectItem>
+                  <SelectItem value="datapack">{t('searchTypeDatapacks')}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Select value={insertAs} onValueChange={(value: 'slug' | 'id') => setInsertAs(value)}>
               <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
                 <SelectValue />
@@ -242,7 +275,10 @@ export function ModsBrowserDialog({
               <Filter className="h-3.5 w-3.5" />
               {t('compatibilityFiltered')}
             </span>
-            {!loader && <span className="text-amber-300/90">{t('loaderNotDetected')}</span>}
+            {!loader && !isDatapack && (
+              <span className="text-amber-300/90">{t('loaderNotDetected')}</span>
+            )}
+            {isDatapack && <span className="text-blue-300/90">{t('datapackPrefixHint')}</span>}
           </div>
         </div>
 
