@@ -96,7 +96,7 @@ const defaultConfig: ServerConfig = {
   enableSync: true,
   dockerImage: 'latest',
   minecraftVersion: 'latest',
-  restartPolicy: 'unless-stopped',
+  restartPolicy: 'no',
   stopDelay: '60',
   execDirectly: true,
   envVars: '',
