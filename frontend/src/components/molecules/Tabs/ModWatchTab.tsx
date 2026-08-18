@@ -455,6 +455,12 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                       </p>
 
                       <div className="flex flex-wrap gap-1.5">
+                        {provider === 'modrinth' && entry.optional && (
+                          <Badge variant="outline" className="border-violet-600 text-violet-300" title={t('modOptionalHelp')}>
+                            {t('modOptional')}
+                          </Badge>
+                        )}
+
                         {checkingSameVersion ? (
                           <Badge variant="outline" className="border-gray-600 text-gray-400">
                             {t('loading')}
