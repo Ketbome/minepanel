@@ -830,6 +830,21 @@ export class ServerManagementController {
     };
   }
 
+  @Post(':id/stop/force')
+  async forceStopServer(@Request() reqOrId, @Param('id') id?: string) {
+    const resolved = this.resolveRequestAndId(reqOrId, id);
+    let currentUser: Users | null = null;
+    if (resolved.req) {
+      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
+    }
+    const result = await this.managementService.forceStopServer(resolved.id);
+    await this.recordServerAudit(currentUser, 'force_stop_server', resolved.id, result ? `Force stopped server ${resolved.id}` : `Failed to force stop server ${resolved.id}`, result ? 'success' : 'error');
+    return {
+      success: result,
+      message: result ? 'Server force stopped successfully' : 'Failed to force stop server',
+    };
+  }
+
   @Post(':id/players/online')
   async getOnlinePlayers(@Request() req, @Param('id') id: string, @Body() body: { rconPort: string; rconPassword?: string }) {
     await this.requireServerAccess(req, id);

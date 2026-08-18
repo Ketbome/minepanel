@@ -170,6 +170,9 @@ export const nl: Record<TranslationKey, string> = {
   // Server Actions
   startServer: 'Server starten',
   stopServer: 'Server stoppen',
+  forceStopServer: 'Forceer stoppen',
+  forceStopConfirmTitle: 'Stoppen van de server forceren?',
+  forceStopConfirmDesc: 'Slaat de aankondiging van 60 s over: de wereld wordt via RCON opgeslagen en de container stopt direct. Reageert de server niet, dan wordt hij na 10 seconden afgebroken en kunnen niet-opgeslagen wijzigingen verloren gaan.',
   restart2: 'Herstarten',
   consoleStatus: 'Console',
   manageServer: 'Server beheren',

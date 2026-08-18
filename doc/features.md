@@ -50,6 +50,7 @@ flowchart LR
 | Feature        | Description                                               |
 | -------------- | --------------------------------------------------------- |
 | Basic controls | Start, Stop, Restart, Delete                              |
+| Force stop     | Stops now instead of waiting for the shutdown announcement (`STOP_SERVER_ANNOUNCE_DELAY`, 60s by default). Sends `stop` over RCON so the world is still saved, and kills the container after 10s if it does not exit |
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
 | Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone) |

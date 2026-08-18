@@ -170,6 +170,9 @@ export const pl: Record<TranslationKey, string> = {
   // Akcje server
   startServer: 'Uruchom',
   stopServer: 'Zatrzymaj',
+  forceStopServer: 'Wymuś zatrzymanie',
+  forceStopConfirmTitle: 'Wymusić zatrzymanie serwera?',
+  forceStopConfirmDesc: 'Pomija 60-sekundowe ogłoszenie wyłączenia: świat jest zapisywany przez RCON, a kontener zatrzymuje się natychmiast. Jeśli serwer nie odpowiada, zostaje ubity po 10 sekundach i niezapisane zmiany mogą przepaść.',
   restart2: 'Zrestartuj',
   consoleStatus: 'Konsola',
   manageServer: 'Zarządzaj',

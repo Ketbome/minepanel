@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2, Zap } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
@@ -19,12 +19,13 @@ interface ServerPageHeaderProps {
   readonly isProcessing: boolean;
   readonly onStartServer: () => Promise<boolean>;
   readonly onStopServer: () => Promise<boolean>;
+  readonly onForceStopServer: () => Promise<boolean>;
   readonly onRestartServer: () => Promise<boolean>;
   readonly onClearData: () => Promise<boolean>;
   readonly onOpenFiles?: () => void;
 }
 
-export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, serverEdition, isProcessing, onStartServer, onStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
+export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, serverEdition, isProcessing, onStartServer, onStopServer, onForceStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
   const { t } = useLanguage();
   const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
@@ -102,6 +103,29 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
               <PowerIcon className="h-4 w-4" />
               {t("startServer")}
             </Button>
+          )}
+
+          {(serverStatus === "running" || serverStatus === "starting") && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="outline" disabled={isProcessing} className="gap-2 border-amber-700/50 bg-gray-800/40 text-amber-300 hover:bg-amber-600/20 hover:text-amber-200 hover:border-amber-600/50 font-minecraft">
+                  <Zap className="h-4 w-4" />
+                  {t("forceStopServer")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-gray-900 border-gray-700">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-amber-400 font-minecraft">{t("forceStopConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription className="text-gray-300">{t("forceStopConfirmDesc")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600">{t("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={onForceStopServer} disabled={isProcessing} className="bg-amber-700 hover:bg-amber-800 text-white border-amber-900/50 font-minecraft">
+                    {t("forceStopServer")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
 
           <Button type="button" variant="outline" onClick={onRestartServer} disabled={isProcessing || serverStatus !== "running"} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-orange-600/20 hover:text-orange-400 hover:border-orange-600/50">

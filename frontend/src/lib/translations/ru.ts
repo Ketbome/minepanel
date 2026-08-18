@@ -169,6 +169,9 @@ export const ru: Record<TranslationKey, string> = {
   // Server Actions
   startServer: 'Запустить сервер',
   stopServer: 'Остановить сервер',
+  forceStopServer: 'Принудительная остановка',
+  forceStopConfirmTitle: 'Принудительно остановить сервер?',
+  forceStopConfirmDesc: 'Пропускает 60-секундное объявление об остановке: мир сохраняется через RCON, контейнер останавливается сразу. Если сервер не отвечает, он будет убит через 10 секунд и несохранённые изменения могут быть потеряны.',
   restart2: 'Перезапустить',
   consoleStatus: 'Консоль',
   manageServer: 'Управление сервером',

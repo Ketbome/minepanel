@@ -238,6 +238,24 @@ export const stopServer = async (
   }
 };
 
+export const forceStopServer = async (
+  serverId: string
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    const response = await api.post(`/servers/${serverId}/stop/force`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error force stopping server ${serverId}:`, error);
+    return {
+      success: false,
+      message: "SERVER_STOP_ERROR",
+    };
+  }
+};
+
 // ==================== PLAYER MANAGEMENT ====================
 
 export interface OnlinePlayersResponse {
