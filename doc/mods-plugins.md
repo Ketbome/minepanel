@@ -147,6 +147,31 @@ you do it. Editing the generated `docker-compose.yml` does not: it is rebuilt fr
 The key is read from **Settings -> Integrations** and injected into the generated compose
 on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no key at all.
 
+## Mod Watch tab
+
+For Java servers with mod pinning available (Forge/Neoforge/Fabric/AUTO_CURSEFORGE/CurseForge/Modrinth/GTNH/FTBA),
+Minepanel adds a **Mod Watch** tab that stays available even while the server is running (unlike the
+**Mods** tab, which locks while the server is up). It is a read/browse dashboard, not an editor for
+the pinned mod list itself — that stays in the **Mods** tab.
+
+### What it shows
+
+- Every currently pinned mod (parsed from `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`) with its pinned version
+- A free-text **note** per mod, saved automatically and independent of the docker-compose config
+- A **desired Minecraft version** for the whole server — a single target version you're considering
+  upgrading to, used only to check mod compatibility ahead of time. It does not change the server's
+  live version
+- A compatibility badge per mod against the desired version, once one is set
+- An on-demand **changelog history** per mod, available at any time: every version released between
+  the currently pinned version and the latest (or desired-version-compatible) version, concatenated
+  so you can see everything you'd pick up on an update
+
+### Where this data is stored
+
+Notes and the desired version are stored in `servers/<server-id>/mod-metadata.json`, separate from
+`docker-compose.yml`. Deleting a server removes this file with it; it has no effect on server startup
+or mod resolution.
+
 ---
 
 ## Modrinth

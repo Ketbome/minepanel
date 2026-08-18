@@ -213,10 +213,22 @@ Host monitoring endpoints:
 - `GET /modrinth/projects/:ref/versions`
 - `GET /modrinth/versions/resolve` — same `ids` contract as CurseForge
 - `GET /modrinth/projects/latest` — same `refs` contract as CurseForge
+- `GET /curseforge/mods/:ref/files/:fileId/changelog` — changelog text for one file, resolved lazily on demand
 
 Search and version endpoints treat `minecraftVersion=latest` (or empty) as "no version
 filter" instead of returning zero results. CurseForge endpoints use the global API key
-from user settings; Modrinth needs no credentials.
+from user settings; Modrinth needs no credentials. Modrinth version objects (from
+`/modrinth/projects/:ref/versions` and `/modrinth/versions/resolve`) carry their `changelog`
+inline at no extra request cost.
+
+### Mod Watch
+
+Per-server sidecar metadata backing the **Mod Watch** tab (notes, desired-version watcher) —
+stored in `servers/<serverId>/mod-metadata.json`, independent of the docker-compose config:
+
+- `GET /mod-metadata/:serverId`
+- `PUT /mod-metadata/:serverId/desired-version` — body `{ "desiredMcVersion": "1.21.4" | null }`
+- `PUT /mod-metadata/:serverId/notes/:ref` — body `{ "note": "..." }`; empty note deletes the entry
 
 ### World Discovery
 
