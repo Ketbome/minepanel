@@ -235,12 +235,19 @@ inline at no extra request cost.
 
 ### Mod Watch
 
-Per-server sidecar metadata backing the **Mod Watch** tab (notes, desired-version watcher) —
-stored in `servers/<serverId>/mod-metadata.json`, independent of the docker-compose config:
+Per-server sidecar metadata backing the **Mod Watch** tab (notes, desired-version watcher, queued
+mod add/remove) — stored in `servers/<serverId>/mod-metadata.json`, independent of the
+docker-compose config:
 
 - `GET /mod-metadata/:serverId`
 - `PUT /mod-metadata/:serverId/desired-version` — body `{ "desiredMcVersion": "1.21.4" | null }`
 - `PUT /mod-metadata/:serverId/notes/:ref` — body `{ "note": "..." }`; empty note deletes the entry
+- `POST /mod-metadata/:serverId/queue` — body `{ "provider": "curseforge"|"modrinth", "ref": "...", "action": "add"|"remove", "version"?: "...", "label": "..." }`; upserts by `(provider, ref)`
+- `DELETE /mod-metadata/:serverId/queue/:provider/:ref` — cancels a queued change
+
+Queued changes are applied into `CURSEFORGE_FILES`/`MODRINTH_PROJECTS` (and the queue cleared)
+automatically the next time the server starts or restarts — see
+`ServerManagementService.applyPendingModQueue`, called from both `startServer` and `restartServer`.
 
 ### World Discovery
 

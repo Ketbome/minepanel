@@ -151,12 +151,13 @@ on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no 
 
 For Java servers with mod pinning available (Forge/Neoforge/Fabric/AUTO_CURSEFORGE/CurseForge/Modrinth/GTNH/FTBA),
 Minepanel adds a **Mod Watch** tab that stays available even while the server is running (unlike the
-**Mods** tab, which locks while the server is up). It is a read/browse dashboard, not an editor for
-the pinned mod list itself — that stays in the **Mods** tab.
+**Mods** tab, which locks while the server is up).
 
 ### What it shows
 
-- Every currently pinned mod (parsed from `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`) with its pinned version
+- Every currently configured mod (parsed from `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`, pinned or not)
+  with its version. Manual entries (raw URLs, `@file` references) are listed separately, read-only —
+  there's no ref to search or diff for those
 - A free-text **note** per mod, saved automatically and independent of the docker-compose config
 - A **desired Minecraft version** for the whole server — a single target version you're considering
   upgrading to, used only to check mod compatibility ahead of time. It does not change the server's
@@ -172,11 +173,24 @@ the pinned mod list itself — that stays in the **Mods** tab.
   Each lane concatenates every intervening version's changelog, newest first, so you see
   everything you'd pick up rather than just the latest entry
 
+### Queuing mod add/remove
+
+**Search mods** buttons open the same search dialog the Mods tab uses, but instead of editing
+`CURSEFORGE_FILES`/`MODRINTH_PROJECTS` directly, adding or removing a mod here **queues** the
+change. Queued adds show up immediately as a placeholder row ("Queued — added on next restart");
+queued removals stay visible with a "Queued for removal" badge until they take effect, and either
+can be undone before that happens.
+
+The queue is applied automatically the next time the server actually starts — a manual start, a
+restart, or a scheduled-task restart all trigger it — never before. Nothing is pre-downloaded when
+you queue a change: itzg still resolves and downloads mods at container start exactly as it always
+has, so queuing while the server is stopped has no effect until you start it.
+
 ### Where this data is stored
 
-Notes and the desired version are stored in `servers/<server-id>/mod-metadata.json`, separate from
-`docker-compose.yml`. Deleting a server removes this file with it; it has no effect on server startup
-or mod resolution.
+Notes, the desired version, and the pending queue are stored in `servers/<server-id>/mod-metadata.json`,
+separate from `docker-compose.yml`. Deleting a server removes this file with it; it has no effect on
+server startup or mod resolution beyond applying whatever was still queued at the next start.
 
 ---
 
