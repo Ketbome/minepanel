@@ -29,6 +29,7 @@ backend/src/
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
 |- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
+|- mod-metadata/            Per-server mod notes + desired-version watcher, sidecar JSON under servers/<id>/mod-metadata.json
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
 |- common/crypto/           Secret encryption at rest (AES-GCM, key derived from JWT_SECRET)
