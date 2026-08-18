@@ -93,8 +93,9 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 - Adds entries in one click as:
   - **Slug** (default)
   - **ID**
-- Pins the latest compatible version of the mod when adding it, so the server does
-  not silently change mod versions between restarts
+- Adds mods unpinned (no `:fileId` suffix), so the image resolves the newest compatible
+  version on every start. Pinning a specific version is done afterwards from the mod list
+  editor, where every entry has a version dropdown
 
 ### How to use it
 

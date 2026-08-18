@@ -23,9 +23,7 @@ import {
   ModProvider,
   ModSearchItem,
   ModSortField,
-  ModVersionItem,
   fetchModCategories,
-  fetchModVersions,
   searchModsByProvider,
 } from '@/services/mods/mods-browser.service';
 
@@ -59,14 +57,6 @@ const SORT_LABELS: Record<ModSortField, 'sortRelevance' | 'sortDownloads' | 'sor
   updated: 'sortUpdated',
 };
 
-// Newest release first, so pinning picks the version a player would pick.
-const pickLatestVersion = (versions: ModVersionItem[]): ModVersionItem | undefined => {
-  const byDate = [...versions].sort(
-    (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
-  );
-  return byDate.find((version) => version.releaseType === 'release') ?? byDate[0];
-};
-
 const formatDownloads = (count?: number): string => {
   if (!count) return '0';
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -94,7 +84,6 @@ export function ModsBrowserDialog({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [results, setResults] = useState<ModSearchItem[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pinningId, setPinningId] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const pageSize = PAGE_SIZE_BY_PROVIDER[provider];
@@ -104,7 +93,6 @@ export function ModsBrowserDialog({
   const isDatapack = supportsDatapacks && projectType === 'datapack';
   // A datapack is installed through its own loader, whatever the server runs.
   const searchLoader = isDatapack ? undefined : loader;
-  const versionLoader = isDatapack ? 'datapack' : loader;
 
   const providerLabel = useMemo(() => {
     return provider === 'curseforge' ? 'CurseForge' : 'Modrinth';
@@ -224,34 +212,14 @@ export function ModsBrowserDialog({
     return () => observer.disconnect();
   }, [open, hasMore, isLoadingInitial, isLoadingMore, pageIndex, fetchPage]);
 
-  const handleToggleMod = async (mod: ModSearchItem) => {
+  const handleToggleMod = (mod: ModSearchItem) => {
     const ref = insertAs === 'id' ? mod.projectId : mod.slug;
+    // Added without a version, so the image resolves the newest compatible one on
+    // every start. Pinning stays a deliberate choice in the mod list editor.
+    const status = onToggle(mod, insertAs, undefined, isDatapack ? 'datapack' : 'mod');
 
-    if (isAdded(mod)) {
-      const status = onToggle(mod, insertAs, undefined, isDatapack ? 'datapack' : 'mod');
-      if (status === 'removed') mcToast.success(t('removeMod'));
-      return;
-    }
-
-    setPinningId(mod.projectId);
-    let version: ModVersionItem | undefined;
-    try {
-      version = pickLatestVersion(
-        await fetchModVersions(provider, ref, {
-          minecraftVersion:
-            minecraftVersion && minecraftVersion !== 'latest' ? minecraftVersion : undefined,
-          loader: versionLoader,
-        }),
-      );
-    } catch (error) {
-      console.error('Error resolving latest mod version:', error);
-    } finally {
-      setPinningId(null);
-    }
-
-    const status = onToggle(mod, insertAs, version?.versionId, isDatapack ? 'datapack' : 'mod');
     if (status === 'added') {
-      mcToast.success(`${t('addMod')}: ${ref}${version ? ` (${version.name})` : ''}`);
+      mcToast.success(`${t('addMod')}: ${ref}`);
       return;
     }
     if (status === 'removed') {
@@ -419,7 +387,7 @@ export function ModsBrowserDialog({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => void handleToggleMod(mod)}
+                        onClick={() => handleToggleMod(mod)}
                         className="w-full bg-rose-600 hover:bg-rose-500 text-white"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -429,15 +397,10 @@ export function ModsBrowserDialog({
                       <Button
                         type="button"
                         size="sm"
-                        disabled={pinningId === mod.projectId}
-                        onClick={() => void handleToggleMod(mod)}
+                        onClick={() => handleToggleMod(mod)}
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
                       >
-                        {pinningId === mod.projectId ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Plus className="h-4 w-4 mr-2" />
-                        )}
+                        <Plus className="h-4 w-4 mr-2" />
                         {t('addMod')}
                       </Button>
                     )}
