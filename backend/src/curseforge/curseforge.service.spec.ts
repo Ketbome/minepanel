@@ -394,4 +394,47 @@ describe('CurseforgeService', () => {
       expect(await service.getModVersions('key', '3', {})).toEqual([]);
     });
   });
+
+  describe('getFileChangelogByRef', () => {
+    it('resolves the mod id from a slug then fetches the changelog', async () => {
+      mockClient.get
+        .mockResolvedValueOnce({ data: { data: [{ id: 100, slug: 'fabric-api' }] } })
+        .mockResolvedValueOnce({ data: { data: '## Changes\n- Fixed a bug' } });
+
+      const changelog = await service.getFileChangelogByRef('api-key', 'fabric-api', '2001');
+
+      expect(mockClient.get).toHaveBeenLastCalledWith('/mods/100/files/2001/changelog');
+      expect(changelog).toBe('## Changes\n- Fixed a bug');
+    });
+
+    it('fetches the changelog directly when ref is already numeric', async () => {
+      mockClient.get.mockResolvedValueOnce({ data: { data: 'notes' } });
+
+      const changelog = await service.getFileChangelogByRef('api-key', '100', '2001');
+
+      expect(mockClient.get).toHaveBeenCalledWith('/mods/100/files/2001/changelog');
+      expect(changelog).toBe('notes');
+    });
+
+    it('returns null instead of throwing on a fetch error', async () => {
+      mockClient.get.mockRejectedValue(new Error('network error'));
+
+      const changelog = await service.getFileChangelogByRef('api-key', '100', '2001');
+
+      expect(changelog).toBeNull();
+    });
+
+    it('returns null for a non-numeric fileId without calling the API', async () => {
+      const changelog = await service.getFileChangelogByRef('api-key', '100', 'not-a-file-id');
+
+      expect(changelog).toBeNull();
+      expect(mockClient.get).not.toHaveBeenCalled();
+    });
+
+    it('throws when no api key is configured', async () => {
+      await expect(service.getFileChangelogByRef('', '100', '2001')).rejects.toMatchObject({
+        status: HttpStatus.BAD_REQUEST,
+      });
+    });
+  });
 });

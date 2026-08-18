@@ -666,6 +666,25 @@ export class CurseforgeService {
     }
   }
 
+  async getFileChangelogByRef(apiKey: string, ref: string, fileId: string): Promise<string | null> {
+    if (!apiKey) {
+      throw new HttpException('CurseForge API key not configured', HttpStatus.BAD_REQUEST);
+    }
+    if (!/^\d+$/.test(fileId)) {
+      return null;
+    }
+
+    try {
+      const client = this.getApiClient(apiKey);
+      const modId = await this.resolveModId(client, ref);
+      const response = await client.get<{ data: string }>(`/mods/${modId}/files/${fileId}/changelog`);
+      return response.data.data ?? null;
+    } catch (error) {
+      console.error(`Error fetching CurseForge changelog for "${ref}" file ${fileId}:`, error);
+      return null;
+    }
+  }
+
   private async resolveModId(client: AxiosInstance, ref: string): Promise<number> {
     const trimmed = ref.trim();
     if (/^\d+$/.test(trimmed)) return Number.parseInt(trimmed, 10);
