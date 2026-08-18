@@ -17,11 +17,14 @@ import {
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import {
+  ModCategory,
   ModLoader,
   ModProjectType,
   ModProvider,
   ModSearchItem,
+  ModSortField,
   ModVersionItem,
+  fetchModCategories,
   fetchModVersions,
   searchModsByProvider,
 } from '@/services/mods/mods-browser.service';
@@ -44,6 +47,16 @@ interface ModsBrowserDialogProps {
 const PAGE_SIZE_BY_PROVIDER: Record<ModProvider, number> = {
   curseforge: 9,
   modrinth: 9,
+};
+
+const ALL_CATEGORIES = '__all__';
+
+const SORT_OPTIONS: ModSortField[] = ['relevance', 'downloads', 'updated'];
+
+const SORT_LABELS: Record<ModSortField, 'sortRelevance' | 'sortDownloads' | 'sortUpdated'> = {
+  relevance: 'sortRelevance',
+  downloads: 'sortDownloads',
+  updated: 'sortUpdated',
 };
 
 // Newest release first, so pinning picks the version a player would pick.
@@ -74,6 +87,9 @@ export function ModsBrowserDialog({
   const [query, setQuery] = useState('');
   const [insertAs, setInsertAs] = useState<'slug' | 'id'>('slug');
   const [projectType, setProjectType] = useState<ModProjectType>('mod');
+  const [sort, setSort] = useState<ModSortField>('relevance');
+  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+  const [categories, setCategories] = useState<ModCategory[]>([]);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [results, setResults] = useState<ModSearchItem[]>([]);
@@ -109,6 +125,8 @@ export function ModsBrowserDialog({
           q: query.trim() || undefined,
           minecraftVersion,
           loader: searchLoader,
+          sort,
+          category: category === ALL_CATEGORIES ? undefined : category,
           projectType: isDatapack ? 'datapack' : undefined,
           pageSize,
           index: nextPageIndex * pageSize,
@@ -145,12 +163,37 @@ export function ModsBrowserDialog({
         setIsLoadingMore(false);
       }
     },
-    [open, minecraftVersion, provider, query, searchLoader, isDatapack, pageSize, t],
+    [open, minecraftVersion, provider, query, searchLoader, sort, category, isDatapack, pageSize, t],
   );
 
   useEffect(() => {
-    if (!open) setProjectType('mod');
+    if (!open) {
+      setProjectType('mod');
+      setSort('relevance');
+      setCategory(ALL_CATEGORIES);
+    }
   }, [open]);
+
+  // Category taxonomies are per provider and per project type, so a stale
+  // selection would silently return nothing.
+  useEffect(() => {
+    if (!open) return;
+    setCategory(ALL_CATEGORIES);
+
+    let cancelled = false;
+    fetchModCategories(provider, isDatapack ? 'datapack' : 'mod')
+      .then((items) => {
+        if (!cancelled) setCategories(items);
+      })
+      .catch((error) => {
+        console.error('Error loading mod categories:', error);
+        if (!cancelled) setCategories([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, provider, isDatapack]);
 
   useEffect(() => {
     if (!open) return;
@@ -161,7 +204,7 @@ export function ModsBrowserDialog({
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [open, query, provider, minecraftVersion, loader, projectType, fetchPage]);
+  }, [open, query, provider, minecraftVersion, loader, projectType, sort, category, fetchPage]);
 
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -232,11 +275,7 @@ export function ModsBrowserDialog({
               {!isDatapack && loader ? <span className="text-gray-200"> / {loader}</span> : ''}
             </p>
           </div>
-          <div
-            className={`grid grid-cols-1 gap-3 ${
-              supportsDatapacks ? 'md:grid-cols-[1fr_200px_240px]' : 'md:grid-cols-[1fr_240px]'
-            }`}
-          >
+          <div className="space-y-3">
             <div className="relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
@@ -246,29 +285,60 @@ export function ModsBrowserDialog({
                 className="h-11 pl-10 bg-gray-800 border-gray-600/80 text-white font-minecraft tracking-wide focus:border-emerald-500/60"
               />
             </div>
-            {supportsDatapacks && (
-              <Select
-                value={projectType}
-                onValueChange={(value: ModProjectType) => setProjectType(value)}
-              >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {supportsDatapacks && (
+                <Select
+                  value={projectType}
+                  onValueChange={(value: ModProjectType) => setProjectType(value)}
+                >
+                  <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <SelectItem value="mod">{t('searchTypeMods')}</SelectItem>
+                    <SelectItem value="datapack">{t('searchTypeDatapacks')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={sort} onValueChange={(value: ModSortField) => setSort(value)}>
                 <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <SelectItem value="mod">{t('searchTypeMods')}</SelectItem>
-                  <SelectItem value="datapack">{t('searchTypeDatapacks')}</SelectItem>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {t('sortBy')}: {t(SORT_LABELS[option])}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            )}
-            <Select value={insertAs} onValueChange={(value: 'slug' | 'id') => setInsertAs(value)}>
-              <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                <SelectItem value="slug">{t('insertAsSlug')}</SelectItem>
-                <SelectItem value="id">{t('insertAsId')}</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={category}
+                onValueChange={setCategory}
+                disabled={categories.length === 0}
+              >
+                <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-gray-200 max-h-72">
+                  <SelectItem value={ALL_CATEGORIES}>{t('allCategories')}</SelectItem>
+                  {categories.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={insertAs} onValueChange={(value: 'slug' | 'id') => setInsertAs(value)}>
+                <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                  <SelectItem value="slug">{t('insertAsSlug')}</SelectItem>
+                  <SelectItem value="id">{t('insertAsId')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="flex items-center gap-2 text-blue-300">

@@ -26,4 +26,12 @@ export class SearchCurseforgeModsQueryDto {
   @IsOptional()
   @IsEnum(['forge', 'neoforge', 'fabric', 'quilt'])
   loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+
+  @IsOptional()
+  @IsEnum(['relevance', 'downloads', 'updated'])
+  sort?: 'relevance' | 'downloads' | 'updated';
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

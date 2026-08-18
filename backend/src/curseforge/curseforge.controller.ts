@@ -55,7 +55,17 @@ export class CurseforgeController {
       index: query.index,
       minecraftVersion: query.minecraftVersion,
       loader: query.loader,
+      sort: query.sort,
+      category: query.category,
     });
+  }
+
+  @Get('mods/categories')
+  async getModCategories(@Request() req) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+
+    return { data: await this.curseforgeService.getModCategories(apiKey) };
   }
 
   @Get('mods/resolve')

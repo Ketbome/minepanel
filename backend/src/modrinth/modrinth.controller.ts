@@ -18,7 +18,14 @@ export class ModrinthController {
       minecraftVersion: query.minecraftVersion,
       loader: query.loader,
       projectType: query.projectType,
+      sort: query.sort,
+      category: query.category,
     });
+  }
+
+  @Get('mods/categories')
+  async getModCategories(@Query('projectType') projectType?: 'mod' | 'datapack') {
+    return { data: await this.modrinthService.getModCategories(projectType === 'datapack' ? 'datapack' : 'mod') };
   }
 
   @Get('projects/resolve')
