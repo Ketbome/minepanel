@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { mcToast } from '@/lib/utils/minecraft-toast';
+import { findMinecraftVersion, getSuggestedJavaImage } from '@/lib/utils/java-image';
 import { ServerConfig } from '@/lib/types/types';
 import { ModpackFilePicker } from '@/components/molecules/ModpackFilePicker';
 import {
@@ -102,7 +104,26 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
     }
   };
 
+  // Another modpack file often means another Minecraft version, and the docker
+  // image is manual for modpacks, so both have to follow the selection.
+  const applyFileGameVersion = (file?: ModVersionItem) => {
+    const detected = findMinecraftVersion(file?.gameVersions);
+    if (!detected || detected === config.minecraftVersion) return;
+
+    const javaImage = getSuggestedJavaImage(detected);
+    updateConfig('minecraftVersion', detected);
+    updateConfig('dockerImage', javaImage);
+    mcToast.success(`${t('modpackVersionDetected')}: ${detected} (${javaImage})`);
+  };
+
+  const newestFile = (): ModVersionItem | undefined =>
+    [...(files ?? [])].sort(
+      (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
+    )[0];
+
   const setFile = (nextFileId?: string) => {
+    applyFileGameVersion(nextFileId ? files?.find((file) => file.versionId === nextFileId) : newestFile());
+
     if (method === 'slug') {
       updateConfig('cfFile', nextFileId ?? '');
       return;
