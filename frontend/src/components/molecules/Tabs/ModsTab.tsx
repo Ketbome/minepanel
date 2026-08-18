@@ -71,12 +71,16 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
   }, [config.serverType, config.modrinthLoader]);
 
   const handleModpackSelect = (modpack: CurseForgeModpack) => {
+    const latestFileId = modpack.latestFiles?.[0]?.id;
+
     if (config.cfMethod === "url") {
-      updateConfig("cfUrl", modpack.links.websiteUrl);
+      // Pinned to a file on purpose: a modpack that updates itself can break the
+      // world, so moving to a newer release stays a manual step.
+      updateConfig("cfUrl", latestFileId ? `${modpack.links.websiteUrl}/download/${latestFileId}` : modpack.links.websiteUrl);
     } else if (config.cfMethod === "slug") {
       updateConfig("cfSlug", modpack.slug);
-      if (modpack.latestFiles?.[0]?.id) {
-        updateConfig("cfFile", modpack.latestFiles[0].id.toString());
+      if (latestFileId) {
+        updateConfig("cfFile", latestFileId.toString());
       }
     }
     mcToast.success(`${t("modpackSelected")}: ${modpack.name}`);

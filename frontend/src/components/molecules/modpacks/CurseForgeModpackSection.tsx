@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ExternalLink, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpCircle, ExternalLink, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,10 +104,26 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
     }
   };
 
+  // The full file list is only fetched when the dropdown opens, so the resolved
+  // modpack is the fallback source for a file's Minecraft version.
+  const gameVersionsForFile = (nextFileId?: string): string[] | undefined => {
+    if (!nextFileId) {
+      const newestListed = [...(files ?? [])].sort(
+        (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
+      )[0];
+      return newestListed?.gameVersions ?? newestRelease?.gameVersions;
+    }
+
+    return (
+      files?.find((file) => file.versionId === nextFileId)?.gameVersions ??
+      modpack?.latestFiles?.find((file) => String(file.id) === nextFileId)?.gameVersions
+    );
+  };
+
   // Another modpack file often means another Minecraft version, and the docker
   // image is manual for modpacks, so both have to follow the selection.
-  const applyFileGameVersion = (file?: ModVersionItem) => {
-    const detected = findMinecraftVersion(file?.gameVersions);
+  const applyFileGameVersion = (nextFileId?: string) => {
+    const detected = findMinecraftVersion(gameVersionsForFile(nextFileId));
     if (!detected || detected === config.minecraftVersion) return;
 
     const javaImage = getSuggestedJavaImage(detected);
@@ -116,13 +132,8 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
     mcToast.success(`${t('modpackVersionDetected')}: ${detected} (${javaImage})`);
   };
 
-  const newestFile = (): ModVersionItem | undefined =>
-    [...(files ?? [])].sort(
-      (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
-    )[0];
-
   const setFile = (nextFileId?: string) => {
-    applyFileGameVersion(nextFileId ? files?.find((file) => file.versionId === nextFileId) : newestFile());
+    applyFileGameVersion(nextFileId);
 
     if (method === 'slug') {
       updateConfig('cfFile', nextFileId ?? '');
@@ -145,6 +156,13 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
 
   const selectedFile = files?.find((file) => file.versionId === fileId);
   const fileLabel = fileId ? (selectedFile?.name ?? fileId) : t('modVersionLatest');
+
+  // A modpack is pinned on purpose, so the newest release is surfaced as a badge
+  // instead of being applied on its own.
+  const newestRelease = [...(modpack?.latestFiles ?? [])].sort(
+    (a, b) => new Date(b.fileDate ?? 0).getTime() - new Date(a.fileDate ?? 0).getTime(),
+  )[0];
+  const updateAvailable = Boolean(fileId && newestRelease && String(newestRelease.id) !== fileId);
 
   const methodOptions: Array<{ value: CfMethod; label: string; description: string }> = [
     { value: 'url', label: t('methodUrl'), description: t('installFromUrl') },
@@ -344,6 +362,17 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             <span className="font-minecraft text-[11px] uppercase tracking-wide text-gray-500">
               {t('modpackVersion')}
             </span>
+            {updateAvailable && (
+              <button
+                type="button"
+                onClick={() => setFile(String(newestRelease.id))}
+                title={`${t('modUpdateAvailable')}: ${newestRelease.displayName}`}
+                className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
+              >
+                <ArrowUpCircle className="h-3.5 w-3.5" />
+                {t('modUpdateAvailable')}
+              </button>
+            )}
             <Select
               value={fileId || LATEST_VALUE}
               onValueChange={(value) => setFile(value === LATEST_VALUE ? undefined : value)}

@@ -416,7 +416,12 @@ For `AUTO_CURSEFORGE`, `CF_SET_LEVEL_FROM` and the Java **Worlds** tab are alter
 Picking a modpack in the browser also reads the Minecraft version from the selected file
 and applies it to the server: it sets the Minecraft version and the matching java tag
 (`java8` up to 1.16, `java17` up to 1.20.4, `java21` above). Changing the **Modpack version**
-selector does the same, since another modpack file often targets another Minecraft version. The **Docker Image** field in
+selector does the same, since another modpack file often targets another Minecraft version.
+
+The modpack itself is always pinned to the file that was picked: a pack that updates on its
+own can break an existing world, so moving to a newer release is a manual step. When a newer
+file exists, an **Update available** badge appears next to the version selector and re-pins
+the modpack when clicked, the same way the mod list flags outdated pins. The **Docker Image** field in
 the **Server type** tab is a selector with the known tags plus an **Other tag (manual)**
 option for tags released after this version of the panel.
 
