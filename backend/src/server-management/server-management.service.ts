@@ -10,14 +10,13 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
-import { ServerEdition } from './dto/server-config.model';
+import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
 
 const execAsync = promisify(exec);
 
 const DOCKER_COMMANDS = {
-  COMPOSE_DOWN: 'docker compose down',
-  COMPOSE_DOWN_FAST: 'docker compose down --timeout 10',
+  COMPOSE_DOWN: (timeout: number) => `docker compose down --timeout ${timeout}`,
   COMPOSE_UP: 'docker compose up -d',
   COMPOSE_PS_SERVICE: 'docker compose ps -aq mc',
   PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
@@ -105,6 +104,7 @@ export class ServerManagementService {
 
   private readonly FORCE_STOP_POLL_ATTEMPTS = 30;
   private readonly FORCE_STOP_POLL_INTERVAL_MS = 500;
+  private readonly FORCE_STOP_GRACE_SECONDS = 10;
 
   constructor(
     private readonly configService: ConfigService,
@@ -322,6 +322,44 @@ export class ServerManagementService {
 
   private async execComposeCommand(serverId: string, command: string) {
     return execAsync(command, this.getComposeExecOptions(serverId));
+  }
+
+  private parseComposeSeconds(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return value;
+    }
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+    const match = /^(\d+)s?$/.exec(value.trim());
+    const seconds = match ? Number.parseInt(match[1], 10) : Number.NaN;
+    return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+  }
+
+  // Compose defaults to 10s, which SIGKILLs Minecraft mid-announcement and loses the final save
+  private async getStopTimeout(serverId: string): Promise<number> {
+    try {
+      const content = await fs.readFile(this.getDockerComposePath(serverId), 'utf-8');
+      const mc = (yaml.load(content) as any)?.services?.mc;
+
+      const grace = this.parseComposeSeconds(mc?.stop_grace_period);
+      if (grace !== undefined) {
+        return grace;
+      }
+
+      const announceDelay = this.parseComposeSeconds(mc?.environment?.STOP_SERVER_ANNOUNCE_DELAY);
+      if (announceDelay !== undefined) {
+        return announceDelay + SHUTDOWN_BUFFER_SECONDS;
+      }
+    } catch (error) {
+      this.logger.warn(`Could not read stop timeout for ${serverId}, using default`, error);
+    }
+
+    return SHUTDOWN_BUFFER_SECONDS;
+  }
+
+  private async execComposeDown(serverId: string) {
+    return this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(await this.getStopTimeout(serverId)));
   }
 
   private executeProcess(
@@ -707,7 +745,7 @@ export class ServerManagementService {
       }
 
       this.alertsService.markExpectedStop(serverId);
-      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+      await this.execComposeDown(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
@@ -733,7 +771,7 @@ export class ServerManagementService {
 
       if (await fs.pathExists(dockerComposePath)) {
         this.alertsService.markExpectedStop(serverId);
-        await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+        await this.execComposeDown(serverId);
       }
 
       if (await fs.pathExists(serverDataDir)) {
@@ -895,7 +933,7 @@ export class ServerManagementService {
       if (await fs.pathExists(dockerComposePath)) {
         try {
           this.alertsService.markExpectedStop(serverId);
-          await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+          await this.execComposeDown(serverId);
         } catch (error) {
           this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
         }
@@ -1460,7 +1498,7 @@ export class ServerManagementService {
       }
 
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
-        await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+        await this.execComposeDown(serverId);
       }
 
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
@@ -1538,7 +1576,7 @@ export class ServerManagementService {
       }
 
       // Anything still up gets a 10s grace period instead of the announce delay.
-      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN_FAST);
+      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(this.FORCE_STOP_GRACE_SECONDS));
 
       this.logger.log(`Server ${serverId} force stopped`);
       await this.sendDiscordNotification('stopped', serverId);
@@ -1591,7 +1629,7 @@ export class ServerManagementService {
       }
 
       this.alertsService.markExpectedStop(serverId);
-      await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN);
+      await this.execComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
       await this.sendDiscordNotification('stopped', serverId);
