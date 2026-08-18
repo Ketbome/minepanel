@@ -168,6 +168,12 @@ export class CurseforgeService {
     quilt: 5,
     neoforge: 6,
   };
+  private readonly LOADER_NAME: Record<number, ModLoaderName> = {
+    1: 'forge',
+    4: 'fabric',
+    5: 'quilt',
+    6: 'neoforge',
+  };
   private readonly RELEASE_TYPE: Record<number, 'release' | 'beta' | 'alpha'> = {
     1: 'release',
     2: 'beta',
@@ -312,62 +318,52 @@ export class CurseforgeService {
       );
     }
 
-    const requestedPageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 50);
-    const pageSize = requestedPageSize % 2 === 0
-      ? requestedPageSize
-      : Math.min(requestedPageSize + 1, 50);
+    const pageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 50);
     const index = Math.max(query.index ?? 0, 0);
-    const maxBatches = 8;
     const versionFilter = this.resolveVersionFilter(query.minecraftVersion);
+    // CurseForge only honours modLoaderType when it comes with a game version.
+    const loaderType = versionFilter && query.loader ? this.LOADER_TYPE[query.loader] : undefined;
 
     try {
       const client = this.getApiClient(apiKey);
-      const normalized: NormalizedModSearchResult[] = [];
-      const seen = new Set<string>();
-      let totalCount = 0;
-      let batchIndex = index;
-      let batches = 0;
-
-      while (normalized.length < pageSize && batches < maxBatches) {
+      const search = async (params: Record<string, unknown>) => {
         const response = await client.get<CurseForgeSearchResponse>('/mods/search', {
           params: {
             gameId: this.MINECRAFT_GAME_ID,
             classId: this.MODS_CLASS_ID,
-            searchFilter: query.q,
-            pageSize,
-            index: batchIndex,
             sortField: 2,
             sortOrder: 'desc',
-            gameVersion: versionFilter,
+            ...params,
           },
         });
+        return response.data;
+      };
 
-        totalCount = response.data.pagination.totalCount;
-        const compatibleBatch = response.data.data
-          .map((mod) => this.normalizeMod(mod))
-          .filter((mod) => this.isCompatibleResult(mod, versionFilter, query.loader));
+      let payload = await search({
+        searchFilter: query.q,
+        pageSize,
+        index,
+        gameVersion: versionFilter,
+        modLoaderType: loaderType,
+      });
 
-        for (const mod of compatibleBatch) {
-          if (normalized.length >= pageSize) break;
-          if (seen.has(mod.projectId)) continue;
-          normalized.push(mod);
-          seen.add(mod.projectId);
-        }
-
-        batchIndex += pageSize;
-        batches += 1;
-
-        if (batchIndex >= totalCount) break;
-        if (response.data.data.length === 0) break;
+      // searchFilter matches display names, so a pasted slug ("moogs-end-structures")
+      // finds nothing. Retry it as an exact slug lookup before giving up.
+      if (payload.data.length === 0 && index === 0 && this.looksLikeSlug(query.q)) {
+        payload = await search({ slug: query.q?.trim().toLowerCase(), pageSize: 1 });
       }
 
+      const data = payload.data
+        .map((mod) => this.normalizeMod(mod))
+        .filter((mod) => this.isCompatibleResult(mod, versionFilter, query.loader));
+
       return {
-        data: normalized,
+        data,
         pagination: {
           index,
           pageSize,
-          resultCount: normalized.length,
-          totalCount,
+          resultCount: data.length,
+          totalCount: payload.pagination?.totalCount ?? data.length,
         },
       };
     } catch (error) {
@@ -413,7 +409,8 @@ export class CurseforgeService {
     for (const [ref, mod] of mods) {
       const candidates = (mod.latestFilesIndexes ?? []).filter((index) => {
         if (versionFilter && index.gameVersion !== versionFilter) return false;
-        if (loaderType !== undefined && index.modLoader !== undefined && index.modLoader !== loaderType) return false;
+        // modLoader 0 (or missing) means the upload is untagged, not incompatible.
+        if (loaderType !== undefined && index.modLoader && index.modLoader !== loaderType) return false;
         return true;
       });
 
@@ -673,10 +670,26 @@ export class CurseforgeService {
     const versions = new Set<string>();
     const loaders = new Set<string>();
 
-    for (const file of mod.latestFiles ?? []) {
-      for (const version of file.gameVersions ?? []) {
-        versions.add(version);
-        this.extractLoadersFromGameVersion(version).forEach((loader) => loaders.add(loader));
+    // latestFilesIndexes holds one entry per game version/loader pair, so it is
+    // the only field that shows the full compatibility range. latestFiles only
+    // carries the newest uploads, which hides older game versions the mod still
+    // supports (a 1.20.1 mod updated for 1.21 looked incompatible).
+    for (const index of mod.latestFilesIndexes ?? []) {
+      if (index.gameVersion) versions.add(index.gameVersion);
+      const loader = this.LOADER_NAME[index.modLoader];
+      if (loader) loaders.add(loader);
+    }
+
+    if (versions.size === 0) {
+      for (const file of mod.latestFiles ?? []) {
+        for (const version of file.gameVersions ?? []) {
+          const fileLoaders = this.extractLoadersFromGameVersion(version);
+          if (fileLoaders.length > 0) {
+            fileLoaders.forEach((loader) => loaders.add(loader));
+            continue;
+          }
+          if (/^\d/.test(version)) versions.add(version);
+        }
       }
     }
 
@@ -702,6 +715,11 @@ export class CurseforgeService {
     if (normalized.includes('fabric')) loaders.push('fabric');
     if (normalized.includes('quilt')) loaders.push('quilt');
     return loaders;
+  }
+
+  private looksLikeSlug(query?: string): boolean {
+    const trimmed = (query ?? '').trim();
+    return trimmed.length > 0 && /^[a-z0-9]+(?:[-_][a-z0-9]+)+$/i.test(trimmed);
   }
 
   // "latest" (and an empty value) mean "whatever version the image resolves at

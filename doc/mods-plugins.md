@@ -85,6 +85,7 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 - Filters results by current server compatibility:
   - Minecraft version
   - Loader (Forge/Neoforge/Fabric/Quilt) when available
+- Accepts a mod name or a pasted slug (for example `moogs-end-structures`)
 - Adds entries in one click as:
   - **Slug** (default)
   - **ID**
