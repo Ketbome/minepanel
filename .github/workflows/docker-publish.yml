@@ -91,6 +91,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            APP_VERSION=${{ needs.changes.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -123,6 +125,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          build-args: |
+            APP_VERSION=${{ needs.changes.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

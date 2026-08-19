@@ -1381,6 +1381,7 @@ export const pt: Record<TranslationKey, string> = {
   modVersionLatest: 'Última disponível',
   modVersionsEmpty: 'Sem versões para esta versão/loader',
   modUpdateAvailable: 'Atualização disponível',
+  updateAvailable: 'Atualização disponível',
   modOptional: 'Opcional',
   modOptionalHelp: 'O itzg continua iniciando o servidor se não houver versão compatível, e deixa este mod fora do cálculo de versão',
   versionFromModrinthProjects: 'Versão a partir dos mods',

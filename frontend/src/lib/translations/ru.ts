@@ -1218,6 +1218,7 @@ export const ru: Record<TranslationKey, string> = {
   modVersionLatest: 'Последняя доступная',
   modVersionsEmpty: 'Нет версий для этой версии Minecraft/загрузчика',
   modUpdateAvailable: 'Доступно обновление',
+  updateAvailable: 'Доступно обновление',
   modOptional: 'Необязательный',
   modOptionalHelp: 'itzg продолжит запуск сервера, если совместимой версии нет, и исключит этот мод из расчёта версии',
   versionFromModrinthProjects: 'Версия по модам',

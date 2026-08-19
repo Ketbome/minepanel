@@ -10,6 +10,7 @@ import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import config from 'src/config';
 import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
+import { VersionModule } from './version/version.module';
 import { DiscordModule } from './discord/discord.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
@@ -35,6 +36,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     ServerManagementModule,
     AuthModule,
     SystemMonitoringModule,
+    VersionModule,
     DiscordModule,
     CurseforgeModule,
     ModrinthModule,

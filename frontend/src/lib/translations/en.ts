@@ -1216,6 +1216,7 @@ export const en = {
   modVersionLatest: 'Latest available',
   modVersionsEmpty: 'No versions for this Minecraft version/loader',
   modUpdateAvailable: 'Update available',
+  updateAvailable: 'Update available',
   modOptional: 'Optional',
   modOptionalHelp: 'itzg keeps the server starting when no compatible version exists, and leaves this mod out of the version calculation',
   versionFromModrinthProjects: 'Set version from mods',

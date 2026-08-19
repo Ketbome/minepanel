@@ -177,6 +177,8 @@ Host monitoring endpoints:
 
 - `GET /system/stats`
 - `GET /system/network`
+- `GET /version` — running version, newest release and whether an update is available; the
+  GitHub lookup is cached for an hour and never fails the request
 
 ### Mod Providers
 
