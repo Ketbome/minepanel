@@ -25,6 +25,7 @@ import { CurseForgeModpackSection } from "@/components/molecules/modpacks/CurseF
 import { ModLoader, ModProjectType, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 import { findModEntryIndex, parseModEntries, serializeModEntries } from "@/lib/utils/mod-entries";
 import { findMinecraftVersion, getSuggestedJavaImage } from "@/lib/utils/java-image";
+import { useCanChangeVersion } from "@/lib/hooks/useCanChangeVersion";
 
 const ModpackBrowser = dynamic(() => import("@/components/molecules/modpacks/ModpackBrowser").then(mod => mod.ModpackBrowser), {
   ssr: false,
@@ -51,6 +52,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
   const isNeoforge = config.serverType === "NEOFORGE";
   const isFabric = config.serverType === "FABRIC";
   const { latestRelease } = useMinecraftVersions({ filterType: "release" });
+  const canChangeVersion = useCanChangeVersion();
   // itzg resolves "latest" inside the container, so the panel has to guess it to
   // filter mods. Without a guess the providers return every Minecraft version.
   const effectiveMinecraftVersion = useMemo(() => {
@@ -87,6 +89,10 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
 
     // The docker image is manual for modpacks, so the java tag has to follow the
     // pack's Minecraft version instead of the auto rule in the server type tab.
+    // Both fields are gated by changeServerVersion, so staging them without the
+    // permission would only get the whole save rejected.
+    if (!canChangeVersion) return;
+
     const detected = findMinecraftVersion(modpack.latestFiles?.[0]?.gameVersions);
     if (!detected) return;
 

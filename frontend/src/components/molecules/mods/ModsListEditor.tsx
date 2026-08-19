@@ -188,7 +188,9 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
   const pageCount = Math.max(1, Math.ceil(visibleEntries.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const pagedEntries = visibleEntries.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
-  const showFilter = entries.length > FILTER_THRESHOLD;
+  // Kept visible while it has text, so removing entries cannot hide the only way
+  // to clear an active filter.
+  const showFilter = entries.length > FILTER_THRESHOLD || filter.trim().length > 0;
 
   useEffect(() => {
     setPage(0);
@@ -516,6 +518,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                   variant="outline"
                   size="sm"
                   disabled={currentPage === 0}
+                  aria-label={t('previous')}
                   onClick={() => setPage(currentPage - 1)}
                   className="h-8 px-2 bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
                 >
@@ -529,6 +532,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                   variant="outline"
                   size="sm"
                   disabled={currentPage >= pageCount - 1}
+                  aria-label={t('next')}
                   onClick={() => setPage(currentPage + 1)}
                   className="h-8 px-2 bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
                 >

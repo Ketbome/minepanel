@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { findMinecraftVersion, getSuggestedJavaImage } from '@/lib/utils/java-image';
+import { useCanChangeVersion } from '@/lib/hooks/useCanChangeVersion';
 import { ServerConfig } from '@/lib/types/types';
 import { ModpackFilePicker } from '@/components/molecules/ModpackFilePicker';
 import {
@@ -53,6 +54,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
   const [isResolving, setIsResolving] = useState(false);
   const [files, setFiles] = useState<ModVersionItem[] | null>(null);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const canChangeVersion = useCanChangeVersion();
 
   const method = (config.cfMethod as CfMethod) || 'url';
   const parsedUrl = parseModpackUrl(config.cfUrl || '');
@@ -123,12 +125,22 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
   // Another modpack file often means another Minecraft version, and the docker
   // image is manual for modpacks, so both have to follow the selection.
   const applyFileGameVersion = (nextFileId?: string) => {
-    const detected = findMinecraftVersion(gameVersionsForFile(nextFileId));
-    if (!detected || detected === config.minecraftVersion) return;
+    // Both fields are gated by changeServerVersion, so staging them without the
+    // permission would only get the whole save rejected.
+    if (!canChangeVersion) return;
 
+    const detected = findMinecraftVersion(gameVersionsForFile(nextFileId));
+    if (!detected) return;
+
+    // The image can be stale even when the version already matches, so each
+    // field is compared on its own.
     const javaImage = getSuggestedJavaImage(detected);
-    updateConfig('minecraftVersion', detected);
-    updateConfig('dockerImage', javaImage);
+    const versionChanged = detected !== config.minecraftVersion;
+    const imageChanged = javaImage !== config.dockerImage;
+    if (!versionChanged && !imageChanged) return;
+
+    if (versionChanged) updateConfig('minecraftVersion', detected);
+    if (imageChanged) updateConfig('dockerImage', javaImage);
     mcToast.success(`${t('modpackVersionDetected')}: ${detected} (${javaImage})`);
   };
 

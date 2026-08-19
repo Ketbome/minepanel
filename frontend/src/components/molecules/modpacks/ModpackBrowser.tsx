@@ -45,10 +45,15 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
   const [pageIndex, setPageIndex] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  // Filters change faster than the requests answer, so only the newest one may
+  // touch the results.
+  const requestIdRef = useRef(0);
 
   const fetchPage = useCallback(
     async (nextPageIndex: number, reset: boolean = false) => {
       if (!open) return;
+
+      const requestId = ++requestIdRef.current;
 
       if (reset) {
         setIsLoadingInitial(true);
@@ -58,6 +63,8 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
 
       try {
         const response = await searchModpacks(searchQuery.trim() || undefined, PAGE_SIZE, nextPageIndex * PAGE_SIZE, SORT_FIELDS[sort], "desc");
+
+        if (requestId !== requestIdRef.current) return;
 
         setModpacks((prev) => {
           if (reset) return response.data;
@@ -70,10 +77,13 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
         setHasMore(response.data.length > 0 && fetchedSoFar < response.pagination.totalCount);
         setPageIndex(nextPageIndex);
       } catch (err) {
+        if (requestId !== requestIdRef.current) return;
         console.error("Error searching modpacks:", err);
       } finally {
-        setIsLoadingInitial(false);
-        setIsLoadingMore(false);
+        if (requestId === requestIdRef.current) {
+          setIsLoadingInitial(false);
+          setIsLoadingMore(false);
+        }
       }
     },
     [open, searchQuery, sort]
@@ -122,8 +132,7 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
     }, 300);
   };
 
-  const handleExternalLink = (event: React.MouseEvent, modpack: CurseForgeModpack) => {
-    event.stopPropagation();
+  const handleExternalLink = (modpack: CurseForgeModpack) => {
     window.open(modpack.links.websiteUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -178,11 +187,9 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {modpacks.map((modpack) => (
-                <button
+                <div
                   key={modpack.id}
-                  type="button"
-                  onClick={() => handleSelect(modpack)}
-                  className={`flex flex-col text-left border-2 bg-gray-800/60 p-4 transition-colors ${selectedId === modpack.id ? "border-emerald-500 bg-emerald-900/20" : "border-[var(--mc-frame)] hover:bg-gray-800"}`}
+                  className={`flex flex-col border-2 bg-gray-800/60 p-4 transition-colors ${selectedId === modpack.id ? "border-emerald-500 bg-emerald-900/20" : "border-[var(--mc-frame)] hover:bg-gray-800"}`}
                 >
                   <div className="flex gap-3 items-start">
                     {modpack.logo?.url ? (
@@ -215,12 +222,14 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
                   </div>
 
                   <div className="mt-auto pt-4 flex gap-2">
-                    <span className="flex-1 inline-flex items-center justify-center bg-emerald-600 px-3 py-2 text-xs font-minecraft text-white">{t("selectModpack")}</span>
-                    <Button type="button" variant="outline" size="sm" onClick={(event) => handleExternalLink(event, modpack)} className="h-auto border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700">
+                    <Button type="button" size="sm" onClick={() => handleSelect(modpack)} className="h-auto flex-1 bg-emerald-600 px-3 py-2 text-xs font-minecraft text-white hover:bg-emerald-500">
+                      {t("selectModpack")}
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleExternalLink(modpack)} className="h-auto border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700">
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                </button>
+                </div>
               ))}
               <div ref={loadMoreRef} className="h-10 col-span-full flex items-center justify-center">
                 {isLoadingMore && (

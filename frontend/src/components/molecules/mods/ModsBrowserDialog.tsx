@@ -86,6 +86,9 @@ export function ModsBrowserDialog({
   const [pageIndex, setPageIndex] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  // Filters change faster than the requests answer, so only the newest one may
+  // touch the results.
+  const requestIdRef = useRef(0);
   const pageSize = PAGE_SIZE_BY_PROVIDER[provider];
   // CurseForge data packs are a separate class that itzg cannot install, so the
   // type switch is Modrinth-only.
@@ -101,6 +104,8 @@ export function ModsBrowserDialog({
   const fetchPage = useCallback(
     async (nextPageIndex: number, reset: boolean = false) => {
       if (!open || !minecraftVersion) return;
+
+      const requestId = ++requestIdRef.current;
 
       if (reset) {
         setIsLoadingInitial(true);
@@ -121,6 +126,8 @@ export function ModsBrowserDialog({
           limit: pageSize,
           offset: nextPageIndex * pageSize,
         });
+
+        if (requestId !== requestIdRef.current) return;
 
         setResults((prev) => {
           const incoming = response.data;
@@ -144,11 +151,14 @@ export function ModsBrowserDialog({
         setHasMore(more);
         setPageIndex(nextPageIndex);
       } catch (error) {
+        if (requestId !== requestIdRef.current) return;
         console.error('Error searching mods:', error);
         mcToast.error(t('errorSearchingMods'));
       } finally {
-        setIsLoadingInitial(false);
-        setIsLoadingMore(false);
+        if (requestId === requestIdRef.current) {
+          setIsLoadingInitial(false);
+          setIsLoadingMore(false);
+        }
       }
     },
     [open, minecraftVersion, provider, query, searchLoader, sort, category, isDatapack, pageSize, t],

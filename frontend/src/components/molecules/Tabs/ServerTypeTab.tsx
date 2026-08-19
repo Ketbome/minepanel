@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useMinecraftVersions } from '@/lib/hooks/useMinecraftVersions';
 import { getSuggestedJavaImage } from '@/lib/utils/java-image';
-import { getCurrentUser } from '@/services/users/users.service';
+import { useCanChangeVersion } from '@/lib/hooks/useCanChangeVersion';
 import {
   Select,
   SelectContent,
@@ -108,15 +108,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
   const [showManualInput, setShowManualInput] = useState(false);
   const [dockerImageMode, setDockerImageMode] = useState<'auto' | 'manual' | null>(null);
   const [customDockerImage, setCustomDockerImage] = useState(false);
-  // The backend is what actually enforces this; disabling the controls only
-  // avoids a save that would come back as 403.
-  const [canChangeVersion, setCanChangeVersion] = useState(true);
-
-  useEffect(() => {
-    getCurrentUser()
-      .then((user) => setCanChangeVersion(user.role === 'ADMIN' || user.access.permissions.changeServerVersion))
-      .catch(() => setCanChangeVersion(true));
-  }, []);
+  const canChangeVersion = useCanChangeVersion();
   const [serverTypeAccordion, setServerTypeAccordion] = useState<string | undefined>(
     OTHER_SERVER_TYPES.includes(config.serverType) ? 'others' : undefined,
   );
@@ -542,6 +534,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               <p className="text-xs text-gray-400">
                 {!isModpack && dockerImageAuto ? t('dockerImageAutoHint') : t('dockerImageHelp')}
               </p>
+              {!canChangeVersion && <p className="text-xs text-amber-300">{t('changeServerVersionDenied')}</p>}
               <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
                 <div className="shrink-0">
                   <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">

@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { ModrinthService } from './modrinth.service';
 import { SearchModrinthModsQueryDto } from './dto/search-mods.query.dto';
 import { ProjectVersionsQueryDto } from './dto/project-versions.query.dto';
+import { ModCategoriesQueryDto } from './dto/mod-categories.query.dto';
 
 @Controller('modrinth')
 @UseGuards(JwtAuthGuard)
@@ -24,8 +25,8 @@ export class ModrinthController {
   }
 
   @Get('mods/categories')
-  async getModCategories(@Query('projectType') projectType?: 'mod' | 'datapack') {
-    return { data: await this.modrinthService.getModCategories(projectType === 'datapack' ? 'datapack' : 'mod') };
+  async getModCategories(@Query(new ValidationPipe()) query: ModCategoriesQueryDto) {
+    return { data: await this.modrinthService.getModCategories(query.projectType ?? 'mod') };
   }
 
   @Get('projects/resolve')
