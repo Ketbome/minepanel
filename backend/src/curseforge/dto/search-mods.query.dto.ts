@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SearchCurseforgeModsQueryDto {
@@ -26,4 +26,15 @@ export class SearchCurseforgeModsQueryDto {
   @IsOptional()
   @IsEnum(['forge', 'neoforge', 'fabric', 'quilt'])
   loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+
+  @IsOptional()
+  @IsEnum(['relevance', 'downloads', 'updated'])
+  sort?: 'relevance' | 'downloads' | 'updated';
+
+  // CurseForge category ids are numeric, and a partial match like "12junk" would
+  // otherwise be parsed as category 12.
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d+$/)
+  category?: string;
 }

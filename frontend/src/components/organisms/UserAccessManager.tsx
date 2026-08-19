@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Copy, Loader2, Shield, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Loader2, Shield, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import {
   getInvitations,
   getUsers,
   updateUserAccess,
+  getCurrentUser,
   type CreateInvitationData,
   type User,
   type UserInvitation,
@@ -33,6 +34,7 @@ const emptyPermissions: UserPermissions = {
   useGlobalFiles: false,
   viewServerFiles: false,
   useServerFiles: false,
+  changeServerVersion: false,
 };
 
 const fullPermissions: UserPermissions = {
@@ -44,17 +46,21 @@ const fullPermissions: UserPermissions = {
   useGlobalFiles: true,
   viewServerFiles: true,
   useServerFiles: true,
+  changeServerVersion: true,
 };
 
-const permissionLabels: Array<{ key: keyof UserPermissions; label: string }> = [
+// Shown while the switch is on, for permissions that reach further than their
+// name suggests.
+const permissionLabels: Array<{ key: keyof UserPermissions; label: string; adminOnly?: boolean; warning?: string }> = [
   { key: 'manageUsers', label: 'manageUsersPermission' },
   { key: 'accessAllServers', label: 'accessAllServers' },
   { key: 'viewLogs', label: 'viewLogsPermission' },
   { key: 'useConsole', label: 'useConsolePermission' },
   { key: 'viewGlobalFiles', label: 'viewGlobalFilesPermission' },
-  { key: 'useGlobalFiles', label: 'manageGlobalFilesPermission' },
+  { key: 'useGlobalFiles', label: 'manageGlobalFilesPermission', warning: 'manageGlobalFilesWarning' },
   { key: 'viewServerFiles', label: 'viewServerFilesPermission' },
   { key: 'useServerFiles', label: 'manageServerFilesPermission' },
+  { key: 'changeServerVersion', label: 'changeServerVersionPermission', adminOnly: true },
 ];
 
 type EditableUser = User & {
@@ -68,6 +74,7 @@ export function UserAccessManager() {
   const [invitations, setInvitations] = useState<UserInvitation[]>([]);
   const [serverIds, setServerIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [copyingInvitationId, setCopyingInvitationId] = useState<number | null>(null);
   const [copiedInvitationId, setCopiedInvitationId] = useState<number | null>(null);
@@ -80,10 +87,11 @@ export function UserAccessManager() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [userList, inviteList, servers] = await Promise.all([getUsers(), getInvitations(), fetchServerList()]);
+      const [userList, inviteList, servers, currentUser] = await Promise.all([getUsers(), getInvitations(), fetchServerList(), getCurrentUser()]);
       setUsers(userList.map((user) => ({ ...user })));
       setInvitations(inviteList);
       setServerIds(servers.map((server) => server.id));
+      setIsAdmin(currentUser.role === 'ADMIN');
     } catch (error) {
       console.error('Error loading user access manager:', error);
       mcToast.error(t('errorLoadingServerInfo'));
@@ -106,7 +114,20 @@ export function UserAccessManager() {
     setUsers((current) => current.map((user) => (user.id === userId ? updater(user) : user)));
   };
 
-  const hasAllPermissions = (permissions: UserPermissions) => Object.values(permissions).every(Boolean);
+  const adminOnlyKeys = permissionLabels.filter((permission) => permission.adminOnly).map((permission) => permission.key);
+
+  // Only an admin can flip these, so a delegated manager toggling "grant all"
+  // must keep them exactly as the backend has them stored.
+  const grantablePermissions = (target: UserPermissions, granted: boolean): UserPermissions => {
+    const next = { ...(granted ? fullPermissions : emptyPermissions) };
+    if (!isAdmin) {
+      for (const key of adminOnlyKeys) next[key] = target[key];
+    }
+    return next;
+  };
+
+  const hasAllPermissions = (permissions: UserPermissions) =>
+    permissionLabels.every((permission) => isAdmin || !permission.adminOnly ? permissions[permission.key] : true);
 
   const handleInvite = async () => {
     setIsInviting(true);
@@ -221,14 +242,23 @@ export function UserAccessManager() {
               <p className="text-sm text-white">{t('grantAllPermissions')}</p>
               <p className="mt-1 text-xs text-gray-400">{t('grantAllPermissionsDesc')}</p>
             </div>
-            <Switch checked={hasAllPermissions(inviteForm.permissions)} onCheckedChange={(checked) => setInviteForm((current) => ({ ...current, permissions: checked ? fullPermissions : emptyPermissions, serverAccess: checked ? [] : current.serverAccess }))} />
+            <Switch checked={hasAllPermissions(inviteForm.permissions)} onCheckedChange={(checked) => setInviteForm((current) => ({ ...current, permissions: grantablePermissions(current.permissions, checked), serverAccess: checked ? [] : current.serverAccess }))} />
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             {permissionLabels.map((permission) => (
               <div key={permission.key} className="flex items-center justify-between rounded-lg border border-gray-700/60 bg-gray-800/40 px-4 py-3">
-                <span className="text-sm text-gray-200">{t(permission.label as never)}</span>
-                <Switch checked={inviteForm.permissions[permission.key]} onCheckedChange={(checked) => setInviteForm((current) => ({ ...current, permissions: { ...current.permissions, [permission.key]: checked }, serverAccess: permission.key === 'accessAllServers' && checked ? [] : current.serverAccess }))} />
+                <div className="pr-3">
+                  <span className="text-sm text-gray-200">{t(permission.label as never)}</span>
+                  {permission.adminOnly && !isAdmin ? <p className="mt-1 text-xs text-amber-300">{t('adminOnlyPermission')}</p> : null}
+                  {permission.warning && inviteForm.permissions[permission.key] ? (
+                    <p className="mt-1 flex items-start gap-1.5 text-xs text-amber-300">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      {t(permission.warning as never)}
+                    </p>
+                  ) : null}
+                </div>
+                <Switch disabled={permission.adminOnly && !isAdmin} checked={inviteForm.permissions[permission.key]} onCheckedChange={(checked) => setInviteForm((current) => ({ ...current, permissions: { ...current.permissions, [permission.key]: checked }, serverAccess: permission.key === 'accessAllServers' && checked ? [] : current.serverAccess }))} />
               </div>
             ))}
           </div>
@@ -298,7 +328,7 @@ export function UserAccessManager() {
                           <p className="text-sm text-gray-200">{t('grantAllPermissions')}</p>
                           <p className="mt-1 text-xs text-gray-500">{t('grantAllPermissionsDesc')}</p>
                         </div>
-                        <Switch checked={hasAllPermissions(user.access.permissions)} onCheckedChange={(checked) => updateLocalUser(user.id, (current) => ({ ...current, access: { ...current.access, permissions: checked ? fullPermissions : emptyPermissions, serverAccess: checked ? [] : current.access.serverAccess } }))} />
+                        <Switch checked={hasAllPermissions(user.access.permissions)} onCheckedChange={(checked) => updateLocalUser(user.id, (current) => ({ ...current, access: { ...current.access, permissions: grantablePermissions(current.access.permissions, checked), serverAccess: checked ? [] : current.access.serverAccess } }))} />
                       </div>
 
                       <div className="flex items-center justify-between rounded-lg border border-gray-700/60 bg-gray-900/40 px-4 py-3">
@@ -309,8 +339,17 @@ export function UserAccessManager() {
                       <div className="grid gap-3 md:grid-cols-2">
                         {permissionLabels.map((permission) => (
                           <div key={permission.key} className="flex items-center justify-between rounded-lg border border-gray-700/60 bg-gray-900/40 px-4 py-3">
-                            <span className="text-sm text-gray-200">{t(permission.label as never)}</span>
-                            <Switch checked={user.access.permissions[permission.key]} onCheckedChange={(checked) => updateLocalUser(user.id, (current) => ({ ...current, access: { ...current.access, permissions: { ...current.access.permissions, [permission.key]: checked }, serverAccess: permission.key === 'accessAllServers' && checked ? [] : current.access.serverAccess } }))} />
+                            <div className="pr-3">
+                              <span className="text-sm text-gray-200">{t(permission.label as never)}</span>
+                              {permission.adminOnly && !isAdmin ? <p className="mt-1 text-xs text-amber-300">{t('adminOnlyPermission')}</p> : null}
+                              {permission.warning && user.access.permissions[permission.key] ? (
+                                <p className="mt-1 flex items-start gap-1.5 text-xs text-amber-300">
+                                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                  {t(permission.warning as never)}
+                                </p>
+                              ) : null}
+                            </div>
+                            <Switch disabled={permission.adminOnly && !isAdmin} checked={user.access.permissions[permission.key]} onCheckedChange={(checked) => updateLocalUser(user.id, (current) => ({ ...current, access: { ...current.access, permissions: { ...current.access.permissions, [permission.key]: checked }, serverAccess: permission.key === 'accessAllServers' && checked ? [] : current.access.serverAccess } }))} />
                           </div>
                         ))}
                       </div>

@@ -30,4 +30,12 @@ export class SearchModrinthModsQueryDto {
   @IsOptional()
   @IsEnum(['mod', 'datapack'])
   projectType?: 'mod' | 'datapack';
+
+  @IsOptional()
+  @IsEnum(['relevance', 'downloads', 'updated'])
+  sort?: 'relevance' | 'downloads' | 'updated';
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

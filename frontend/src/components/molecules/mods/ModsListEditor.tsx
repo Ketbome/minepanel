@@ -2,7 +2,8 @@
 
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowUpCircle, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpCircle, ChevronLeft, ChevronRight, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +25,8 @@ import {
 } from '@/services/mods/mods-browser.service';
 
 const LATEST_VALUE = '__latest__';
+const FILTER_THRESHOLD = 8;
+const PAGE_SIZE = 10;
 
 const isDatapackEntry = (entry: ModEntry): boolean => entry.prefix?.toLowerCase() === 'datapack';
 
@@ -160,6 +163,8 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
   const { t } = useLanguage();
   const theme = ACCENT[accent];
   const [isManual, setIsManual] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(0);
   const [details, setDetails] = useState<Record<string, ModSearchItem>>({});
   const [versionNames, setVersionNames] = useState<Record<string, string>>({});
   const [latestVersions, setLatestVersions] = useState<Record<string, ModVersionItem>>({});
@@ -167,6 +172,29 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
   const requestedVersions = useRef<Set<string>>(new Set());
 
   const entries = useMemo(() => parseModEntries(value, provider), [value, provider]);
+
+  // Entry actions address the original index, so filtering and paging carry it along.
+  const visibleEntries = useMemo(() => {
+    const indexed = entries.map((entry, index) => ({ entry, index }));
+    const term = filter.trim().toLowerCase();
+    if (!term) return indexed;
+
+    return indexed.filter(({ entry }) => {
+      const name = details[entry.ref.toLowerCase()]?.name ?? '';
+      return entry.ref.toLowerCase().includes(term) || name.toLowerCase().includes(term);
+    });
+  }, [entries, filter, details]);
+
+  const pageCount = Math.max(1, Math.ceil(visibleEntries.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedEntries = visibleEntries.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  // Kept visible while it has text, so removing entries cannot hide the only way
+  // to clear an active filter.
+  const showFilter = entries.length > FILTER_THRESHOLD || filter.trim().length > 0;
+
+  useEffect(() => {
+    setPage(0);
+  }, [filter, provider]);
 
   useEffect(() => {
     requestedRefs.current = new Set();
@@ -375,7 +403,23 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
         </div>
       ) : (
         <div className="space-y-1.5">
-          {entries.map((entry, index) => {
+          {showFilter && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+              <Input
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder={t('filterModsPlaceholder')}
+                className="h-9 pl-9 bg-gray-900/70 border-gray-700/50 text-gray-200 text-xs"
+              />
+            </div>
+          )}
+
+          {visibleEntries.length === 0 ? (
+            <p className="py-6 text-center text-xs text-gray-500">{t('noModsMatchFilter')}</p>
+          ) : null}
+
+          {pagedEntries.map(({ entry, index }) => {
             const detail = details[entry.ref.toLowerCase()];
             const latest = latestVersions[entry.ref.toLowerCase()];
             const updateAvailable = Boolean(entry.version && latest && latest.versionId !== entry.version);
@@ -460,6 +504,43 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
               </div>
             );
           })}
+
+          {pageCount > 1 && (
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <span className="text-[11px] text-gray-500">
+                {t('showing')} {currentPage * PAGE_SIZE + 1}-
+                {Math.min((currentPage + 1) * PAGE_SIZE, visibleEntries.length)} {t('of')}{' '}
+                {visibleEntries.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 0}
+                  aria-label={t('previous')}
+                  onClick={() => setPage(currentPage - 1)}
+                  className="h-8 px-2 bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="font-minecraft text-[11px] text-gray-400">
+                  {currentPage + 1} / {pageCount}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= pageCount - 1}
+                  aria-label={t('next')}
+                  onClick={() => setPage(currentPage + 1)}
+                  className="h-8 px-2 bg-gray-800/70 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

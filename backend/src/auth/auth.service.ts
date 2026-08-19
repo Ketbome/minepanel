@@ -247,8 +247,8 @@ export class AuthService {
     await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
   }
 
-  async createInvitation(dto: CreateUserInvitationDto, actor: PayloadToken) {
-    const result = await this.usersService.createInvitation(dto);
+  async createInvitation(dto: CreateUserInvitationDto, actor: PayloadToken, actorIsAdmin: boolean = false) {
+    const result = await this.usersService.createInvitation(dto, actorIsAdmin);
     const shouldSendEmail = !!result.invitation.email && (await this.authMailService.isConfigured());
 
     if (shouldSendEmail) {

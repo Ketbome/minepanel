@@ -10,6 +10,8 @@ import { ServerConfig, ServerEdition, ServerType } from '@/lib/types/types';
 import Image from 'next/image';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useMinecraftVersions } from '@/lib/hooks/useMinecraftVersions';
+import { getSuggestedJavaImage } from '@/lib/utils/java-image';
+import { useCanChangeVersion } from '@/lib/hooks/useCanChangeVersion';
 import {
   Select,
   SelectContent,
@@ -27,15 +29,10 @@ interface ServerTypeTabProps {
 
 const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
 
-// Java requirements per Minecraft version (itzg/minecraft-server tags)
-const getSuggestedJavaImage = (mcVersion: string): string => {
-  if (!mcVersion || mcVersion.toLowerCase() === 'latest') return 'latest';
-  const [major, minor, patch] = mcVersion.split('.').map(Number);
-  if (major !== 1 || Number.isNaN(minor)) return 'latest';
-  if (minor <= 16) return 'java8';
-  if (minor < 20 || (minor === 20 && (patch || 0) <= 4)) return 'java17';
-  return 'java21';
-};
+// Tags the panel can pick on its own. Anything newer is still reachable through
+// the custom option, so a future java tag does not need a release.
+const KNOWN_JAVA_TAGS = ['latest', 'java8', 'java11', 'java17', 'java21'];
+const CUSTOM_JAVA_TAG = '__custom__';
 
 interface ServerTypeOptionProps {
   value: ServerType;
@@ -110,6 +107,8 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
 
   const [showManualInput, setShowManualInput] = useState(false);
   const [dockerImageMode, setDockerImageMode] = useState<'auto' | 'manual' | null>(null);
+  const [customDockerImage, setCustomDockerImage] = useState(false);
+  const canChangeVersion = useCanChangeVersion();
   const [serverTypeAccordion, setServerTypeAccordion] = useState<string | undefined>(
     OTHER_SERVER_TYPES.includes(config.serverType) ? 'others' : undefined,
   );
@@ -125,6 +124,9 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
       updateConfig('dockerImage', suggestedDockerImage);
     }
   }, [isJava, isModpack, dockerImageAuto, suggestedDockerImage, config.dockerImage, updateConfig]);
+  const showCustomDockerImage =
+    customDockerImage || Boolean(config.dockerImage && !KNOWN_JAVA_TAGS.includes(config.dockerImage));
+  const dockerImageSelectValue = showCustomDockerImage ? CUSTOM_JAVA_TAG : config.dockerImage || 'latest';
   const recommendedVersions = getRecommended();
 
   const filteredRecommendedVersions = recommendedVersions.filter((v) => v.id !== latestRelease);
@@ -300,13 +302,14 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 value={config.minecraftVersion}
                 onChange={(e) => updateConfig('minecraftVersion', e.target.value)}
                 placeholder="1.20.4"
-                className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white"
+                disabled={!canChangeVersion}
+                className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white disabled:opacity-70"
               />
             ) : (
               <Select
                 value={config.minecraftVersion}
                 onValueChange={(value) => updateConfig('minecraftVersion', value)}
-                disabled={loading}
+                disabled={loading || !canChangeVersion}
               >
                 <SelectTrigger className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 text-white">
                   <SelectValue placeholder={loading ? t('loadingVersions') : t('selectVersion')} />
@@ -382,6 +385,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               </Select>
             )}
             <p className="text-xs text-gray-400">{t('minecraftVersionDesc')}</p>
+            {!canChangeVersion && <p className="text-xs text-amber-300">{t('changeServerVersionDenied')}</p>}
             {!loading && versions.length > 0 && (
               <div className="flex items-center gap-2 text-xs text-emerald-400/70">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -406,6 +410,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
             <Select
               value={config.minecraftVersion || 'LATEST'}
               onValueChange={(value) => updateConfig('minecraftVersion', value)}
+              disabled={!canChangeVersion}
             >
               <SelectTrigger className="bg-gray-800/70 border-gray-700/50 focus:border-green-500/50 focus:ring-green-500/30 text-white">
                 <SelectValue />
@@ -443,6 +448,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-400">{t('bedrockVersionDesc')}</p>
+            {!canChangeVersion && <p className="text-xs text-amber-300">{t('changeServerVersionDenied')}</p>}
           </div>
         )}
 
@@ -488,18 +494,47 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                 )}
               </div>
             </div>
-            <Input
-              id="dockerImage"
-              value={config.dockerImage}
-              onChange={(e) => updateConfig('dockerImage', e.target.value)}
-              placeholder="java17"
-              disabled={!isModpack && dockerImageAuto}
-              className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 disabled:opacity-70"
-            />
+            <Select
+              value={dockerImageSelectValue}
+              disabled={(!isModpack && dockerImageAuto) || !canChangeVersion}
+              onValueChange={(value) => {
+                if (value === CUSTOM_JAVA_TAG) {
+                  setCustomDockerImage(true);
+                  return;
+                }
+                setCustomDockerImage(false);
+                updateConfig('dockerImage', value);
+              }}
+            >
+              <SelectTrigger
+                id="dockerImage"
+                className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 disabled:opacity-70"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                {KNOWN_JAVA_TAGS.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+                <SelectItem value={CUSTOM_JAVA_TAG}>{t('dockerImageCustom')}</SelectItem>
+              </SelectContent>
+            </Select>
+            {showCustomDockerImage && (
+              <Input
+                value={config.dockerImage}
+                onChange={(e) => updateConfig('dockerImage', e.target.value)}
+                placeholder="java25"
+                disabled={(!isModpack && dockerImageAuto) || !canChangeVersion}
+                className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 disabled:opacity-70"
+              />
+            )}
             <div className="space-y-1">
               <p className="text-xs text-gray-400">
                 {!isModpack && dockerImageAuto ? t('dockerImageAutoHint') : t('dockerImageHelp')}
               </p>
+              {!canChangeVersion && <p className="text-xs text-amber-300">{t('changeServerVersionDenied')}</p>}
               <div className="flex items-center gap-2 p-2 bg-blue-900/30 border border-blue-700/50 rounded">
                 <div className="shrink-0">
                   <svg className="h-4 w-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">

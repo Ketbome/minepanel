@@ -17,12 +17,13 @@ import {
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import {
+  ModCategory,
   ModLoader,
   ModProjectType,
   ModProvider,
   ModSearchItem,
-  ModVersionItem,
-  fetchModVersions,
+  ModSortField,
+  fetchModCategories,
   searchModsByProvider,
 } from '@/services/mods/mods-browser.service';
 
@@ -46,12 +47,14 @@ const PAGE_SIZE_BY_PROVIDER: Record<ModProvider, number> = {
   modrinth: 9,
 };
 
-// Newest release first, so pinning picks the version a player would pick.
-const pickLatestVersion = (versions: ModVersionItem[]): ModVersionItem | undefined => {
-  const byDate = [...versions].sort(
-    (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
-  );
-  return byDate.find((version) => version.releaseType === 'release') ?? byDate[0];
+const ALL_CATEGORIES = '__all__';
+
+const SORT_OPTIONS: ModSortField[] = ['relevance', 'downloads', 'updated'];
+
+const SORT_LABELS: Record<ModSortField, 'sortRelevance' | 'sortDownloads' | 'sortUpdated'> = {
+  relevance: 'sortRelevance',
+  downloads: 'sortDownloads',
+  updated: 'sortUpdated',
 };
 
 const formatDownloads = (count?: number): string => {
@@ -74,13 +77,18 @@ export function ModsBrowserDialog({
   const [query, setQuery] = useState('');
   const [insertAs, setInsertAs] = useState<'slug' | 'id'>('slug');
   const [projectType, setProjectType] = useState<ModProjectType>('mod');
+  const [sort, setSort] = useState<ModSortField>('relevance');
+  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+  const [categories, setCategories] = useState<ModCategory[]>([]);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [results, setResults] = useState<ModSearchItem[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pinningId, setPinningId] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  // Filters change faster than the requests answer, so only the newest one may
+  // touch the results.
+  const requestIdRef = useRef(0);
   const pageSize = PAGE_SIZE_BY_PROVIDER[provider];
   // CurseForge data packs are a separate class that itzg cannot install, so the
   // type switch is Modrinth-only.
@@ -88,7 +96,6 @@ export function ModsBrowserDialog({
   const isDatapack = supportsDatapacks && projectType === 'datapack';
   // A datapack is installed through its own loader, whatever the server runs.
   const searchLoader = isDatapack ? undefined : loader;
-  const versionLoader = isDatapack ? 'datapack' : loader;
 
   const providerLabel = useMemo(() => {
     return provider === 'curseforge' ? 'CurseForge' : 'Modrinth';
@@ -97,6 +104,8 @@ export function ModsBrowserDialog({
   const fetchPage = useCallback(
     async (nextPageIndex: number, reset: boolean = false) => {
       if (!open || !minecraftVersion) return;
+
+      const requestId = ++requestIdRef.current;
 
       if (reset) {
         setIsLoadingInitial(true);
@@ -109,12 +118,16 @@ export function ModsBrowserDialog({
           q: query.trim() || undefined,
           minecraftVersion,
           loader: searchLoader,
+          sort,
+          category: category === ALL_CATEGORIES ? undefined : category,
           projectType: isDatapack ? 'datapack' : undefined,
           pageSize,
           index: nextPageIndex * pageSize,
           limit: pageSize,
           offset: nextPageIndex * pageSize,
         });
+
+        if (requestId !== requestIdRef.current) return;
 
         setResults((prev) => {
           const incoming = response.data;
@@ -138,19 +151,47 @@ export function ModsBrowserDialog({
         setHasMore(more);
         setPageIndex(nextPageIndex);
       } catch (error) {
+        if (requestId !== requestIdRef.current) return;
         console.error('Error searching mods:', error);
         mcToast.error(t('errorSearchingMods'));
       } finally {
-        setIsLoadingInitial(false);
-        setIsLoadingMore(false);
+        if (requestId === requestIdRef.current) {
+          setIsLoadingInitial(false);
+          setIsLoadingMore(false);
+        }
       }
     },
-    [open, minecraftVersion, provider, query, searchLoader, isDatapack, pageSize, t],
+    [open, minecraftVersion, provider, query, searchLoader, sort, category, isDatapack, pageSize, t],
   );
 
   useEffect(() => {
-    if (!open) setProjectType('mod');
+    if (!open) {
+      setProjectType('mod');
+      setSort('relevance');
+      setCategory(ALL_CATEGORIES);
+    }
   }, [open]);
+
+  // Category taxonomies are per provider and per project type, so a stale
+  // selection would silently return nothing.
+  useEffect(() => {
+    if (!open) return;
+    setCategory(ALL_CATEGORIES);
+
+    let cancelled = false;
+    fetchModCategories(provider, isDatapack ? 'datapack' : 'mod')
+      .then((items) => {
+        if (!cancelled) setCategories(items);
+      })
+      .catch((error) => {
+        console.error('Error loading mod categories:', error);
+        if (!cancelled) setCategories([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, provider, isDatapack]);
 
   useEffect(() => {
     if (!open) return;
@@ -161,7 +202,7 @@ export function ModsBrowserDialog({
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [open, query, provider, minecraftVersion, loader, projectType, fetchPage]);
+  }, [open, query, provider, minecraftVersion, loader, projectType, sort, category, fetchPage]);
 
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -181,34 +222,14 @@ export function ModsBrowserDialog({
     return () => observer.disconnect();
   }, [open, hasMore, isLoadingInitial, isLoadingMore, pageIndex, fetchPage]);
 
-  const handleToggleMod = async (mod: ModSearchItem) => {
+  const handleToggleMod = (mod: ModSearchItem) => {
     const ref = insertAs === 'id' ? mod.projectId : mod.slug;
+    // Added without a version, so the image resolves the newest compatible one on
+    // every start. Pinning stays a deliberate choice in the mod list editor.
+    const status = onToggle(mod, insertAs, undefined, isDatapack ? 'datapack' : 'mod');
 
-    if (isAdded(mod)) {
-      const status = onToggle(mod, insertAs, undefined, isDatapack ? 'datapack' : 'mod');
-      if (status === 'removed') mcToast.success(t('removeMod'));
-      return;
-    }
-
-    setPinningId(mod.projectId);
-    let version: ModVersionItem | undefined;
-    try {
-      version = pickLatestVersion(
-        await fetchModVersions(provider, ref, {
-          minecraftVersion:
-            minecraftVersion && minecraftVersion !== 'latest' ? minecraftVersion : undefined,
-          loader: versionLoader,
-        }),
-      );
-    } catch (error) {
-      console.error('Error resolving latest mod version:', error);
-    } finally {
-      setPinningId(null);
-    }
-
-    const status = onToggle(mod, insertAs, version?.versionId, isDatapack ? 'datapack' : 'mod');
     if (status === 'added') {
-      mcToast.success(`${t('addMod')}: ${ref}${version ? ` (${version.name})` : ''}`);
+      mcToast.success(`${t('addMod')}: ${ref}`);
       return;
     }
     if (status === 'removed') {
@@ -232,11 +253,7 @@ export function ModsBrowserDialog({
               {!isDatapack && loader ? <span className="text-gray-200"> / {loader}</span> : ''}
             </p>
           </div>
-          <div
-            className={`grid grid-cols-1 gap-3 ${
-              supportsDatapacks ? 'md:grid-cols-[1fr_200px_240px]' : 'md:grid-cols-[1fr_240px]'
-            }`}
-          >
+          <div className="space-y-3">
             <div className="relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
@@ -246,29 +263,60 @@ export function ModsBrowserDialog({
                 className="h-11 pl-10 bg-gray-800 border-gray-600/80 text-white font-minecraft tracking-wide focus:border-emerald-500/60"
               />
             </div>
-            {supportsDatapacks && (
-              <Select
-                value={projectType}
-                onValueChange={(value: ModProjectType) => setProjectType(value)}
-              >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {supportsDatapacks && (
+                <Select
+                  value={projectType}
+                  onValueChange={(value: ModProjectType) => setProjectType(value)}
+                >
+                  <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                    <SelectItem value="mod">{t('searchTypeMods')}</SelectItem>
+                    <SelectItem value="datapack">{t('searchTypeDatapacks')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={sort} onValueChange={(value: ModSortField) => setSort(value)}>
                 <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                  <SelectItem value="mod">{t('searchTypeMods')}</SelectItem>
-                  <SelectItem value="datapack">{t('searchTypeDatapacks')}</SelectItem>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {t('sortBy')}: {t(SORT_LABELS[option])}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            )}
-            <Select value={insertAs} onValueChange={(value: 'slug' | 'id') => setInsertAs(value)}>
-              <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                <SelectItem value="slug">{t('insertAsSlug')}</SelectItem>
-                <SelectItem value="id">{t('insertAsId')}</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={category}
+                onValueChange={setCategory}
+                disabled={categories.length === 0}
+              >
+                <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-gray-200 max-h-72">
+                  <SelectItem value={ALL_CATEGORIES}>{t('allCategories')}</SelectItem>
+                  {categories.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={insertAs} onValueChange={(value: 'slug' | 'id') => setInsertAs(value)}>
+                <SelectTrigger className="h-11 w-full bg-gray-800 border-gray-600/80 text-gray-200 font-minecraft text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
+                  <SelectItem value="slug">{t('insertAsSlug')}</SelectItem>
+                  <SelectItem value="id">{t('insertAsId')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="flex items-center gap-2 text-blue-300">
@@ -349,7 +397,7 @@ export function ModsBrowserDialog({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => void handleToggleMod(mod)}
+                        onClick={() => handleToggleMod(mod)}
                         className="w-full bg-rose-600 hover:bg-rose-500 text-white"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -359,15 +407,10 @@ export function ModsBrowserDialog({
                       <Button
                         type="button"
                         size="sm"
-                        disabled={pinningId === mod.projectId}
-                        onClick={() => void handleToggleMod(mod)}
+                        onClick={() => handleToggleMod(mod)}
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
                       >
-                        {pinningId === mod.projectId ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Plus className="h-4 w-4 mr-2" />
-                        )}
+                        <Plus className="h-4 w-4 mr-2" />
                         {t('addMod')}
                       </Button>
                     )}

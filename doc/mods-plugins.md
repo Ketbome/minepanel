@@ -88,11 +88,14 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 - Accepts a mod name or a pasted slug (for example `moogs-end-structures`)
 - On Modrinth, a **Mods / Datapacks** selector switches the search to datapacks; picked
   entries are written with the `datapack:` prefix and resolved against the datapack loader
+- Sorts results by **Relevance**, **Downloads** or **Recently updated**
+- Filters by provider category (CurseForge and Modrinth expose their own category lists)
 - Adds entries in one click as:
   - **Slug** (default)
   - **ID**
-- Pins the latest compatible version of the mod when adding it, so the server does
-  not silently change mod versions between restarts
+- Adds mods unpinned (no `:fileId` suffix), so the image resolves the newest compatible
+  version on every start. Pinning a specific version is done afterward from the mod list
+  editor, where every entry has a version dropdown
 
 ### How to use it
 
@@ -100,8 +103,9 @@ Minepanel includes an integrated search dialog in the **Mods** tab for both **Cu
 2. Go to the **Mods** tab
 3. In either **CurseForge Files** or **Modrinth Projects**, click **Search mods**
 4. On Modrinth, choose **Mods** or **Datapacks**
-5. Pick insertion format (Slug or ID)
-6. Click **Add mod**
+5. Optionally narrow the results with the sort and category selectors
+6. Pick insertion format (Slug or ID)
+7. Click **Add mod**
 
 The selected entries are appended to the same existing fields (`CURSEFORGE_FILES` and `MODRINTH_PROJECTS`) using newline format, preserving manual entries and avoiding duplicates.
 
@@ -117,6 +121,7 @@ Both fields render their content as a list instead of raw text:
 - The trash icon removes the mod
 - **Manual** switches back to the raw text area (`slug`, `slug:fileId`, URLs, `datapack:slug`),
   which is still the way to paste a list or use formats the list editor does not model
+- Past 8 mods the list shows a filter box (matches name or ID) and paginates at 10 per page
 
 ### CurseForge API key
 
@@ -406,9 +411,28 @@ For `AUTO_CURSEFORGE`, `CF_SET_LEVEL_FROM` and the Java **Worlds** tab are alter
 - If you use the **Worlds** tab (`WORLD`/`LEVEL`), Minepanel clears `CF_SET_LEVEL_FROM`.
 - If you need modpack-provided world data (`WORLD_FILE` or `OVERRIDES`), keep using `CF_SET_LEVEL_FROM` and do not select an external world source.
 
+### Automatic version from the modpack
+
+Picking a modpack in the browser also reads the Minecraft version from the selected file
+and applies it to the server: it sets the Minecraft version and the matching java tag
+(`java8` up to 1.16, `java17` up to 1.20.4, `java21` above). Changing the **Modpack version**
+selector does the same, since another modpack file often targets another Minecraft version.
+
+Creating a server from the **Modpack templates** page does the same: the file chosen in the
+dialog decides the Minecraft version and the java tag of the new server.
+
+The modpack itself is always pinned to the file that was picked: a pack that updates on its
+own can break an existing world, so moving to a newer release is a manual step. When a newer
+file exists, an **Update available** badge appears next to the version selector and re-pins
+the modpack when clicked, the same way the mod list flags outdated pins. The **Docker Image** field in
+the **Server type** tab is a selector with the known tags plus an **Other tag (manual)**
+option for tags released after this version of the panel.
+
 ### Browse Modpacks
 
-Minepanel includes a **Browse** button to search CurseForge modpacks directly from the UI. Click it to find and select modpacks without leaving the panel.
+Minepanel includes a **Browse** button to search CurseForge modpacks directly from the UI.
+The browser uses the same layout as the mod search: a card grid, debounced search, a sort
+selector (Relevance / Downloads / Recently updated) and infinite scroll over the results.
 
 ## GTNH {#gtnh}
 

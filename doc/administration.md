@@ -144,6 +144,7 @@ For `USER` accounts, Minepanel can now control:
 - Global file management
 - Server file access
 - Server file management
+- Server version changes
 
 If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands.
 
@@ -158,6 +159,28 @@ Operating an assigned server does not include changing how its container is buil
 - Custom server binary download URLs (Paper, Bukkit, Spigot, Purpur, Folia, Fabric)
 
 `USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes relative to the server's own directory (`./mc-data:/data`), never host paths.
+
+### Changing the server version
+
+Being assigned to a server does not include changing which Minecraft build it runs.
+The `changeServerVersion` permission covers both halves of that change:
+
+- The Minecraft version (Java and Bedrock use the same field)
+- The Docker image when it is one of the official itzg java tags (`latest`, `stable`, `javaNN`),
+  because the panel derives that tag from the Minecraft version and sends both together
+
+Any other Docker image value stays admin-only. Without the permission the backend answers
+`403` and the version controls are disabled in the **Server type** tab.
+
+Global file management is a way around it: that permission reaches every server's
+`docker-compose.yml`, and editing it changes the image and version directly. The permission
+list warns about this next to the switch while it is on.
+
+This permission is **granted by `ADMIN` only**. An operator with `manageUsers` cannot turn it
+on for another account, for a new invitation, or for themselves: the backend keeps the stored
+value for that key when the actor is not an admin, so "Grant all permissions" does not hand it
+out either. Creating a server is unaffected — that already requires access to every server,
+and the version is chosen as part of the creation form.
 
 ### Backend enforcement
 

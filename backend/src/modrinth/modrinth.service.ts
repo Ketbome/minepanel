@@ -24,6 +24,11 @@ export interface NormalizedModSearchResponse {
   };
 }
 
+export interface ModCategory {
+  value: string;
+  label: string;
+}
+
 interface ModrinthSearchHit {
   project_id: string;
   slug: string;
@@ -79,6 +84,7 @@ export interface NormalizedModVersion {
 }
 
 type ModLoaderName = 'forge' | 'neoforge' | 'fabric' | 'quilt' | 'datapack';
+type ModSortField = 'relevance' | 'downloads' | 'updated';
 
 @Injectable()
 export class ModrinthService {
@@ -86,6 +92,15 @@ export class ModrinthService {
   private readonly MODRINTH_API_BASE = 'https://api.modrinth.com/v2';
   private readonly KNOWN_LOADERS = ['forge', 'neoforge', 'fabric', 'quilt', 'datapack'];
   private readonly MAX_RESOLVE_REFS = 50;
+  private readonly CATEGORIES_TTL_MS = 24 * 60 * 60 * 1000;
+
+  private readonly SORT_INDEX: Record<ModSortField, string> = {
+    relevance: 'relevance',
+    downloads: 'downloads',
+    updated: 'updated',
+  };
+
+  private modCategories = new Map<string, { data: ModCategory[]; expiresAt: number }>();
 
   constructor() {
     this.apiClient = axios.create({
@@ -104,6 +119,8 @@ export class ModrinthService {
     minecraftVersion: string;
     loader?: ModLoaderName;
     projectType?: 'mod' | 'datapack';
+    sort?: ModSortField;
+    category?: string;
   }): Promise<NormalizedModSearchResponse> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50);
     const offset = Math.max(query.offset ?? 0, 0);
@@ -125,13 +142,17 @@ export class ModrinthService {
       facets.push([`categories:${loaderFilter}`]);
     }
 
+    if (query.category) {
+      facets.push([`categories:${query.category}`]);
+    }
+
     try {
       const response = await this.apiClient.get<ModrinthSearchResponse>('/search', {
         params: {
           query: query.q,
           limit,
           offset,
-          index: 'relevance',
+          index: this.SORT_INDEX[query.sort ?? 'relevance'],
           facets: JSON.stringify(facets),
         },
       });
@@ -161,6 +182,35 @@ export class ModrinthService {
 
       throw new HttpException('Error searching mods', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  async getModCategories(projectType: 'mod' | 'datapack' = 'mod'): Promise<ModCategory[]> {
+    const cached = this.modCategories.get(projectType);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+    try {
+      const response = await this.apiClient.get<
+        Array<{ name: string; project_type: string; header: string }>
+      >('/tag/category');
+
+      const data = response.data
+        .filter((tag) => tag.project_type === projectType && !this.KNOWN_LOADERS.includes(tag.name))
+        .map((tag) => ({ value: tag.name, label: this.humanizeCategory(tag.name) }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.modCategories.set(projectType, { data, expiresAt: Date.now() + this.CATEGORIES_TTL_MS });
+      return data;
+    } catch (error) {
+      console.error('Error fetching Modrinth categories:', error);
+      return [];
+    }
+  }
+
+  private humanizeCategory(name: string): string {
+    return name
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   }
 
   async resolveProjects(refs: string[]): Promise<NormalizedModSearchResult[]> {

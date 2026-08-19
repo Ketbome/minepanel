@@ -139,6 +139,11 @@ export interface NormalizedModSearchResponse {
   };
 }
 
+export interface ModCategory {
+  value: string;
+  label: string;
+}
+
 export interface NormalizedModVersion {
   provider: 'curseforge' | 'modrinth';
   versionId: string;
@@ -152,6 +157,7 @@ export interface NormalizedModVersion {
 }
 
 type ModLoaderName = 'forge' | 'neoforge' | 'fabric' | 'quilt';
+type ModSortField = 'relevance' | 'downloads' | 'updated';
 
 @Injectable()
 export class CurseforgeService {
@@ -161,6 +167,17 @@ export class CurseforgeService {
   private readonly MODS_CLASS_ID = 6;
   private readonly MODPACK_CLASS_ID = 4471;
   private readonly MAX_RESOLVE_REFS = 50;
+  private readonly CATEGORIES_TTL_MS = 24 * 60 * 60 * 1000;
+
+  // 2 = Popularity, 3 = LastUpdated, 6 = TotalDownloads. CurseForge has no
+  // relevance sort, so popularity stands in for it.
+  private readonly SORT_FIELD: Record<ModSortField, number> = {
+    relevance: 2,
+    downloads: 6,
+    updated: 3,
+  };
+
+  private modCategories?: { data: ModCategory[]; expiresAt: number };
   // CurseForge modLoaderType enum
   private readonly LOADER_TYPE: Record<ModLoaderName, number> = {
     forge: 1,
@@ -309,6 +326,8 @@ export class CurseforgeService {
       index?: number;
       minecraftVersion: string;
       loader?: 'forge' | 'neoforge' | 'fabric' | 'quilt';
+      sort?: ModSortField;
+      category?: string;
     },
   ): Promise<NormalizedModSearchResponse> {
     if (!apiKey) {
@@ -323,6 +342,7 @@ export class CurseforgeService {
     const versionFilter = this.resolveVersionFilter(query.minecraftVersion);
     // CurseForge only honours modLoaderType when it comes with a game version.
     const loaderType = versionFilter && query.loader ? this.LOADER_TYPE[query.loader] : undefined;
+    const categoryFilter = query.category ? Number.parseInt(query.category, 10) : undefined;
 
     try {
       const client = this.getApiClient(apiKey);
@@ -331,7 +351,7 @@ export class CurseforgeService {
           params: {
             gameId: this.MINECRAFT_GAME_ID,
             classId: this.MODS_CLASS_ID,
-            sortField: 2,
+            sortField: this.SORT_FIELD[query.sort ?? 'relevance'],
             sortOrder: 'desc',
             ...params,
           },
@@ -345,6 +365,7 @@ export class CurseforgeService {
         index,
         gameVersion: versionFilter,
         modLoaderType: loaderType,
+        categoryId: categoryFilter,
       });
 
       // searchFilter matches display names, so a pasted slug ("moogs-end-structures")
@@ -386,6 +407,31 @@ export class CurseforgeService {
         'Error searching mods',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async getModCategories(apiKey: string): Promise<ModCategory[]> {
+    if (this.modCategories && this.modCategories.expiresAt > Date.now()) {
+      return this.modCategories.data;
+    }
+
+    try {
+      const client = this.getApiClient(apiKey);
+      const response = await client.get<{ data: Array<{ id: number; name: string; isClass?: boolean }> }>(
+        '/categories',
+        { params: { gameId: this.MINECRAFT_GAME_ID, classId: this.MODS_CLASS_ID } },
+      );
+
+      const data = response.data.data
+        .filter((category) => !category.isClass)
+        .map((category) => ({ value: String(category.id), label: category.name }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.modCategories = { data, expiresAt: Date.now() + this.CATEGORIES_TTL_MS };
+      return data;
+    } catch (error) {
+      console.error('Error fetching CurseForge categories:', error);
+      return [];
     }
   }
 

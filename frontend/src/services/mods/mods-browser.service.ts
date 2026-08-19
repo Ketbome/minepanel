@@ -6,6 +6,12 @@ export type ModLoader = "forge" | "neoforge" | "fabric" | "quilt";
 // the datapack loader on Modrinth's side.
 export type ModProjectType = "mod" | "datapack";
 export type ModVersionLoader = ModLoader | "datapack";
+export type ModSortField = "relevance" | "downloads" | "updated";
+
+export interface ModCategory {
+  value: string;
+  label: string;
+}
 
 export interface ModSearchItem {
   provider: ModProvider;
@@ -46,6 +52,8 @@ interface BaseSearchParams {
   q?: string;
   minecraftVersion: string;
   loader?: ModLoader;
+  sort?: ModSortField;
+  category?: string;
 }
 
 export const searchCurseforgeMods = async (
@@ -141,6 +149,8 @@ export const searchModsByProvider = async (
       q: params.q,
       minecraftVersion: params.minecraftVersion,
       loader: params.loader,
+      sort: params.sort,
+      category: params.category,
       pageSize: params.pageSize,
       index: params.index,
     });
@@ -150,8 +160,21 @@ export const searchModsByProvider = async (
     q: params.q,
     minecraftVersion: params.minecraftVersion,
     loader: params.loader,
+    sort: params.sort,
+    category: params.category,
     limit: params.limit,
     offset: params.offset,
     projectType: params.projectType,
   });
+};
+
+export const fetchModCategories = async (
+  provider: ModProvider,
+  projectType: ModProjectType = "mod",
+): Promise<ModCategory[]> => {
+  const path = provider === "curseforge" ? "/curseforge/mods/categories" : "/modrinth/mods/categories";
+  const response = await api.get<{ data: ModCategory[] }>(path, {
+    params: provider === "modrinth" ? { projectType } : undefined,
+  });
+  return response.data.data;
 };

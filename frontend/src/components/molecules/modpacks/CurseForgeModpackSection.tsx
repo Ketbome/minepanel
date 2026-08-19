@@ -2,13 +2,16 @@
 
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ExternalLink, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpCircle, ExternalLink, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { mcToast } from '@/lib/utils/minecraft-toast';
+import { findMinecraftVersion, getSuggestedJavaImage } from '@/lib/utils/java-image';
+import { useCanChangeVersion } from '@/lib/hooks/useCanChangeVersion';
 import { ServerConfig } from '@/lib/types/types';
 import { ModpackFilePicker } from '@/components/molecules/ModpackFilePicker';
 import {
@@ -51,6 +54,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
   const [isResolving, setIsResolving] = useState(false);
   const [files, setFiles] = useState<ModVersionItem[] | null>(null);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const canChangeVersion = useCanChangeVersion();
 
   const method = (config.cfMethod as CfMethod) || 'url';
   const parsedUrl = parseModpackUrl(config.cfUrl || '');
@@ -102,7 +106,47 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
     }
   };
 
+  // The full file list is only fetched when the dropdown opens, so the resolved
+  // modpack is the fallback source for a file's Minecraft version.
+  const gameVersionsForFile = (nextFileId?: string): string[] | undefined => {
+    if (!nextFileId) {
+      const newestListed = [...(files ?? [])].sort(
+        (a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime(),
+      )[0];
+      return newestListed?.gameVersions ?? newestRelease?.gameVersions;
+    }
+
+    return (
+      files?.find((file) => file.versionId === nextFileId)?.gameVersions ??
+      modpack?.latestFiles?.find((file) => String(file.id) === nextFileId)?.gameVersions
+    );
+  };
+
+  // Another modpack file often means another Minecraft version, and the docker
+  // image is manual for modpacks, so both have to follow the selection.
+  const applyFileGameVersion = (nextFileId?: string) => {
+    // Both fields are gated by changeServerVersion, so staging them without the
+    // permission would only get the whole save rejected.
+    if (!canChangeVersion) return;
+
+    const detected = findMinecraftVersion(gameVersionsForFile(nextFileId));
+    if (!detected) return;
+
+    // The image can be stale even when the version already matches, so each
+    // field is compared on its own.
+    const javaImage = getSuggestedJavaImage(detected);
+    const versionChanged = detected !== config.minecraftVersion;
+    const imageChanged = javaImage !== config.dockerImage;
+    if (!versionChanged && !imageChanged) return;
+
+    if (versionChanged) updateConfig('minecraftVersion', detected);
+    if (imageChanged) updateConfig('dockerImage', javaImage);
+    mcToast.success(`${t('modpackVersionDetected')}: ${detected} (${javaImage})`);
+  };
+
   const setFile = (nextFileId?: string) => {
+    applyFileGameVersion(nextFileId);
+
     if (method === 'slug') {
       updateConfig('cfFile', nextFileId ?? '');
       return;
@@ -124,6 +168,13 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
 
   const selectedFile = files?.find((file) => file.versionId === fileId);
   const fileLabel = fileId ? (selectedFile?.name ?? fileId) : t('modVersionLatest');
+
+  // A modpack is pinned on purpose, so the newest release is surfaced as a badge
+  // instead of being applied on its own.
+  const newestRelease = [...(modpack?.latestFiles ?? [])].sort(
+    (a, b) => new Date(b.fileDate ?? 0).getTime() - new Date(a.fileDate ?? 0).getTime(),
+  )[0];
+  const updateAvailable = Boolean(fileId && newestRelease && String(newestRelease.id) !== fileId);
 
   const methodOptions: Array<{ value: CfMethod; label: string; description: string }> = [
     { value: 'url', label: t('methodUrl'), description: t('installFromUrl') },
@@ -323,6 +374,17 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             <span className="font-minecraft text-[11px] uppercase tracking-wide text-gray-500">
               {t('modpackVersion')}
             </span>
+            {updateAvailable && (
+              <button
+                type="button"
+                onClick={() => setFile(String(newestRelease.id))}
+                title={`${t('modUpdateAvailable')}: ${newestRelease.displayName}`}
+                className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
+              >
+                <ArrowUpCircle className="h-3.5 w-3.5" />
+                {t('modUpdateAvailable')}
+              </button>
+            )}
             <Select
               value={fileId || LATEST_VALUE}
               onValueChange={(value) => setFile(value === LATEST_VALUE ? undefined : value)}
