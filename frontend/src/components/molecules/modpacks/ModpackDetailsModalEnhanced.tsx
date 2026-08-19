@@ -14,6 +14,7 @@ import { mcToast } from "@/lib/utils/minecraft-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { createServer } from "@/services/docker/fetchs";
+import { findMinecraftVersion, getSuggestedJavaImage } from "@/lib/utils/java-image";
 
 interface ModpackDetailsModalEnhancedProps {
   readonly modpack: CurseForgeModpack | null;
@@ -62,14 +63,20 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
     setIsCreating(true);
     try {
+      // Pinned to a file so the pack does not move on its own, and the Minecraft
+      // version comes from that same file.
+      const selectedFile = modpack.latestFiles?.find((file) => String(file.id) === fileId) ?? latestFile;
+      const detected = findMinecraftVersion(selectedFile?.gameVersions);
+
       const config = {
         id: serverId,
         serverName: serverName || modpack.name,
         serverType: "AUTO_CURSEFORGE" as const,
         cfMethod: installMethod,
-        cfUrl: installMethod === "url" ? modpack.links.websiteUrl : "",
+        cfUrl: installMethod === "url" ? (selectedFile ? `${modpack.links.websiteUrl}/download/${selectedFile.id}` : modpack.links.websiteUrl) : "",
         cfSlug: installMethod === "slug" ? modpack.slug : "",
-        cfFile: installMethod === "slug" && fileId ? fileId : "",
+        cfFile: installMethod === "slug" && selectedFile ? String(selectedFile.id) : "",
+        ...(detected ? { minecraftVersion: detected, dockerImage: getSuggestedJavaImage(detected) } : {}),
       };
 
       await createServer(config);
