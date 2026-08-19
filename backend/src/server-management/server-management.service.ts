@@ -135,14 +135,19 @@ export class ServerManagementService {
   // failure here should not block the actual start; it just leaves the queue for next time.
   private async applyPendingModQueue(serverId: string): Promise<void> {
     try {
-      const queue = await this.modMetadataService.consumePendingQueue(serverId);
-      if (!queue || queue.length === 0) return;
+      const queue = await this.modMetadataService.peekPendingQueue(serverId);
+      if (queue.length === 0) return;
 
       const config = await this.composeService.getServerConfig(serverId);
       if (!config) return;
 
       const { cfFiles, modrinthProjects } = this.modMetadataService.applyQueueToConfig(config.cfFiles ?? '', config.modrinthProjects ?? '', queue);
-      await this.composeService.updateServerConfig(serverId, { cfFiles, modrinthProjects });
+      const userSettings = await this.getUserSettings();
+      const proxyEnabled = userSettings.proxyEnabled && !!userSettings.proxyBaseDomain;
+      await this.composeService.updateServerConfig(serverId, { cfFiles, modrinthProjects }, proxyEnabled);
+      // Only clear the entries we actually applied, now that the write succeeded — a failed
+      // updateServerConfig above throws and leaves the whole queue for the next attempt.
+      await this.modMetadataService.acknowledgeQueue(serverId, queue);
       this.logger.log(`Applied ${queue.length} queued mod change(s) for server ${serverId}`);
     } catch (error) {
       this.logger.error(`Failed to apply pending mod queue for server ${serverId}`, error);
