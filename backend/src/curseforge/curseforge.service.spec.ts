@@ -208,6 +208,15 @@ describe('CurseforgeService', () => {
       expect(changelog).toBeNull();
     });
 
+    it('rethrows on a 403 instead of returning null, so an invalid key is distinguishable', async () => {
+      mockClient.get.mockRejectedValue({ response: { status: 403 } });
+      (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
+
+      await expect(service.getFileChangelogByRef('bad-key', '100', '2001')).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+    });
+
     it('returns null for a non-numeric fileId without calling the API', async () => {
       const changelog = await service.getFileChangelogByRef('api-key', '100', 'not-a-file-id');
 
