@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
@@ -22,7 +22,13 @@ const DEFAULT_METADATA: ModMetadataRecord = { desiredMcVersion: null, notes: {},
 
 @Injectable()
 export class ModMetadataService {
+  private readonly logger = new Logger(ModMetadataService.name);
   private readonly SERVERS_DIR: string;
+
+  // Serializes read-modify-write metadata operations per server, so e.g.
+  // toggling several mods in quick succession can't have one request's write
+  // clobber another's based on a stale read.
+  private readonly locks = new Map<string, Promise<unknown>>();
 
   constructor(private readonly configService: ConfigService) {
     this.SERVERS_DIR = this.configService.get<string>('serversDir');
@@ -36,11 +42,13 @@ export class ModMetadataService {
 
   async setDesiredVersion(serverId: string, desiredMcVersion: string | null): Promise<ModMetadataRecord> {
     await this.ensureServerDirectory(serverId);
-    const data = await this.readMetadata(serverId);
-    const trimmed = desiredMcVersion?.trim();
-    data.desiredMcVersion = trimmed ? trimmed : null;
-    await this.writeMetadata(serverId, data);
-    return data;
+    return this.withLock(serverId, async () => {
+      const data = await this.readMetadata(serverId);
+      const trimmed = desiredMcVersion?.trim();
+      data.desiredMcVersion = trimmed ? trimmed : null;
+      await this.writeMetadata(serverId, data);
+      return data;
+    });
   }
 
   async setModNote(serverId: string, ref: string, note: string): Promise<ModMetadataRecord> {
@@ -50,15 +58,17 @@ export class ModMetadataService {
       throw new BadRequestException('Mod ref is required');
     }
 
-    const data = await this.readMetadata(serverId);
-    const trimmed = note.trim();
-    if (trimmed) {
-      data.notes[key] = trimmed;
-    } else {
-      delete data.notes[key];
-    }
-    await this.writeMetadata(serverId, data);
-    return data;
+    return this.withLock(serverId, async () => {
+      const data = await this.readMetadata(serverId);
+      const trimmed = note.trim();
+      if (trimmed) {
+        data.notes[key] = trimmed;
+      } else {
+        delete data.notes[key];
+      }
+      await this.writeMetadata(serverId, data);
+      return data;
+    });
   }
 
   async queueChange(serverId: string, change: PendingModChange): Promise<ModMetadataRecord> {
@@ -68,35 +78,65 @@ export class ModMetadataService {
       throw new BadRequestException('Mod ref is required');
     }
 
-    const data = await this.readMetadata(serverId);
-    const key = ref.toLowerCase();
-    data.pendingChanges = [
-      ...data.pendingChanges.filter((existing) => !(existing.provider === change.provider && existing.ref.toLowerCase() === key)),
-      { ...change, ref },
-    ];
-    await this.writeMetadata(serverId, data);
-    return data;
+    return this.withLock(serverId, async () => {
+      const data = await this.readMetadata(serverId);
+      const key = ref.toLowerCase();
+      data.pendingChanges = [
+        ...data.pendingChanges.filter((existing) => !(existing.provider === change.provider && existing.ref.toLowerCase() === key)),
+        { ...change, ref },
+      ];
+      await this.writeMetadata(serverId, data);
+      return data;
+    });
   }
 
   async cancelQueuedChange(serverId: string, provider: ModProvider, ref: string): Promise<ModMetadataRecord> {
     await this.ensureServerDirectory(serverId);
     const key = ref.trim().toLowerCase();
-    const data = await this.readMetadata(serverId);
-    data.pendingChanges = data.pendingChanges.filter((existing) => !(existing.provider === provider && existing.ref.toLowerCase() === key));
-    await this.writeMetadata(serverId, data);
-    return data;
+    return this.withLock(serverId, async () => {
+      const data = await this.readMetadata(serverId);
+      data.pendingChanges = data.pendingChanges.filter((existing) => !(existing.provider === provider && existing.ref.toLowerCase() === key));
+      await this.writeMetadata(serverId, data);
+      return data;
+    });
   }
 
-  // Reads and clears the queue in one step so it can only ever be applied once.
-  // Only the start/restart lifecycle should call this.
-  async consumePendingQueue(serverId: string): Promise<PendingModChange[] | null> {
+  // Non-destructive: returns the current queue without clearing it, so the
+  // caller can only clear the entries it actually managed to apply (see
+  // acknowledgeQueue). Only the start/restart lifecycle should call this.
+  async peekPendingQueue(serverId: string): Promise<PendingModChange[]> {
     const data = await this.readMetadata(serverId);
-    if (data.pendingChanges.length === 0) return null;
+    return data.pendingChanges;
+  }
 
-    const queue = data.pendingChanges;
-    data.pendingChanges = [];
-    await this.writeMetadata(serverId, data);
-    return queue;
+  // Removes only the given changes from the queue, matched by provider+ref+action,
+  // so changes queued concurrently while the caller was applying `applied` are
+  // preserved rather than wiped out along with it.
+  async acknowledgeQueue(serverId: string, applied: PendingModChange[]): Promise<void> {
+    if (applied.length === 0) return;
+    const appliedKeys = new Set(applied.map((change) => `${change.provider}:${change.action}:${change.ref.toLowerCase()}`));
+
+    await this.withLock(serverId, async () => {
+      const data = await this.readMetadata(serverId);
+      data.pendingChanges = data.pendingChanges.filter(
+        (change) => !appliedKeys.has(`${change.provider}:${change.action}:${change.ref.toLowerCase()}`),
+      );
+      await this.writeMetadata(serverId, data);
+    });
+  }
+
+  private withLock<T>(serverId: string, fn: () => Promise<T>): Promise<T> {
+    const previous = this.locks.get(serverId) ?? Promise.resolve();
+    const run = previous.then(() => fn());
+    // Tail promise never rejects, so a failed operation doesn't wedge the next one queued behind it.
+    this.locks.set(
+      serverId,
+      run.then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
+    return run;
   }
 
   applyQueueToConfig(cfFiles: string, modrinthProjects: string, queue: PendingModChange[]): { cfFiles: string; modrinthProjects: string } {
@@ -117,8 +157,14 @@ export class ModMetadataService {
           continue;
         }
 
-        const nextEntry: ModEntry = { raw: change.ref, ref: change.ref, version: change.version, separator: ':', optional: false, opaque: false };
-        entries = index >= 0 ? entries.map((entry, entryIndex) => (entryIndex === index ? nextEntry : entry)) : [...entries, nextEntry];
+        if (index >= 0) {
+          // Update ref/version only, so loader prefix, the `?` optional marker,
+          // and opaque refs survive the round-trip (see mod-entries.util.ts).
+          entries = entries.map((entry, entryIndex) => (entryIndex === index ? { ...entry, ref: change.ref, version: change.version } : entry));
+        } else {
+          const nextEntry: ModEntry = { raw: change.ref, ref: change.ref, version: change.version, separator: ':', optional: false, opaque: false };
+          entries = [...entries, nextEntry];
+        }
       }
 
       fields[provider].value = serializeModEntries(entries);
@@ -140,7 +186,8 @@ export class ModMetadataService {
         notes: content?.notes && typeof content.notes === 'object' ? content.notes : {},
         pendingChanges: Array.isArray(content?.pendingChanges) ? content.pendingChanges : [],
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(`Failed to read mod metadata for server ${serverId}, falling back to defaults`, error as Error);
       return { ...DEFAULT_METADATA, notes: {}, pendingChanges: [] };
     }
   }

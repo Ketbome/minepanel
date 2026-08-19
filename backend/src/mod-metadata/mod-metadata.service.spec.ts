@@ -101,17 +101,32 @@ describe('ModMetadataService', () => {
       expect(metadata.pendingChanges).toEqual([{ provider: 'curseforge', ref: 'sodium', action: 'add', label: 'Sodium (CF)' }]);
     });
 
-    it('consumePendingQueue returns null when empty, and clears the queue on read', async () => {
+    it('peekPendingQueue returns an empty array when empty, without clearing anything', async () => {
       await fs.ensureDir(path.join(tempDir, 'srv'));
 
-      expect(await service.consumePendingQueue('srv')).toBeNull();
+      expect(await service.peekPendingQueue('srv')).toEqual([]);
 
       await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' });
-      const consumed = await service.consumePendingQueue('srv');
-      expect(consumed).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' }]);
+      const peeked = await service.peekPendingQueue('srv');
+      expect(peeked).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' }]);
 
       const metadata = await service.getMetadata('srv');
-      expect(metadata.pendingChanges).toEqual([]);
+      expect(metadata.pendingChanges).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' }]);
+    });
+
+    it('acknowledgeQueue removes only the applied entries, preserving concurrently queued ones', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', label: 'Sodium' });
+      const applied = await service.peekPendingQueue('srv');
+
+      // Simulate a change queued while `applied` was being processed.
+      await service.queueChange('srv', { provider: 'curseforge', ref: 'jei', action: 'add', label: 'JEI' });
+
+      await service.acknowledgeQueue('srv', applied);
+
+      const metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([{ provider: 'curseforge', ref: 'jei', action: 'add', label: 'JEI' }]);
     });
   });
 
@@ -138,6 +153,14 @@ describe('ModMetadataService', () => {
       const result = service.applyQueueToConfig('', '', [{ provider: 'curseforge', ref: 'jei', action: 'add', label: 'JEI' }]);
 
       expect(result.cfFiles).toBe('jei');
+    });
+
+    it('preserves the loader prefix and optional marker when updating an existing entry', () => {
+      const result = service.applyQueueToConfig('', 'fabric:bluemap?:abc123', [
+        { provider: 'modrinth', ref: 'bluemap', action: 'add', version: 'xyz789', label: 'BlueMap' },
+      ]);
+
+      expect(result.modrinthProjects).toBe('fabric:bluemap?:xyz789');
     });
   });
 });
