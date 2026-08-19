@@ -206,6 +206,18 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     };
   }, [serverId]);
 
+  // ServerConfigTabs doesn't remount this tab on server switch, so a mutation started against
+  // one server can resolve after the user has already navigated to another. Track the live
+  // serverId so those stale responses can be dropped instead of clobbering the new server's state.
+  const serverIdRef = useRef(serverId);
+  useEffect(() => {
+    serverIdRef.current = serverId;
+  }, [serverId]);
+
+  const applyMetadataFor = (requestServerId: string, next: ModMetadata) => {
+    if (serverIdRef.current === requestServerId) setMetadata(next);
+  };
+
   useEffect(() => {
     const byProvider: Record<ModProvider, string[]> = { curseforge: [], modrinth: [] };
     for (const { provider, entry } of configuredMods) {
@@ -221,8 +233,8 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           setDetails((prev) => {
             const next = { ...prev };
             for (const item of items) {
-              next[item.slug.toLowerCase()] = item;
-              next[item.projectId.toLowerCase()] = item;
+              next[`${item.provider}:${item.slug.toLowerCase()}`] = item;
+              next[`${item.provider}:${item.projectId.toLowerCase()}`] = item;
             }
             return next;
           });
@@ -237,7 +249,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           if (cancelled) return;
           setVersionNames((prev) => {
             const next = { ...prev };
-            for (const item of items) next[item.versionId] = item.name;
+            for (const item of items) next[`${item.provider}:${item.versionId}`] = item.name;
             return next;
           });
         })
@@ -271,14 +283,15 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
             fetchLatestModVersions(provider, byProvider[provider], {
               minecraftVersion: effectiveMinecraftVersion && effectiveMinecraftVersion !== 'latest' ? effectiveMinecraftVersion : undefined,
               loader: resolvedLoader,
-            }),
+            }).then((list) => ({ provider, list })),
           ),
       )
         .then((results) => {
           if (cancelled) return;
+          // Namespaced by provider — CurseForge and Modrinth can share the same ref.
           const next: Record<string, ModVersionItem | null> = {};
-          for (const list of results) {
-            for (const item of list) next[item.ref.toLowerCase()] = item.version;
+          for (const { provider, list } of results) {
+            for (const item of list) next[`${provider}:${item.ref.toLowerCase()}`] = item.version;
           }
           setSameVersionLatest(next);
         })
@@ -315,14 +328,15 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
             fetchLatestModVersions(provider, byProvider[provider], {
               minecraftVersion: metadata.desiredMcVersion || undefined,
               loader: resolvedLoader,
-            }),
+            }).then((list) => ({ provider, list })),
           ),
       )
         .then((results) => {
           if (cancelled) return;
+          // Namespaced by provider — CurseForge and Modrinth can share the same ref.
           const next: Record<string, ModVersionItem | null> = {};
-          for (const list of results) {
-            for (const item of list) next[item.ref.toLowerCase()] = item.version;
+          for (const { provider, list } of results) {
+            for (const item of list) next[`${provider}:${item.ref.toLowerCase()}`] = item.version;
           }
           setCompatibility(next);
         })
@@ -342,7 +356,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     setSavingDesiredVersion(true);
     try {
       const next = await updateDesiredVersion(serverId, desiredVersionInput.trim() || null);
-      setMetadata(next);
+      applyMetadataFor(serverId, next);
       mcToast.success(t('save'));
     } catch (error) {
       console.error('Error saving desired version:', error);
@@ -359,7 +373,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     if (noteTimers.current[key]) clearTimeout(noteTimers.current[key]);
     noteTimers.current[key] = setTimeout(() => {
       updateModNote(serverId, key, value)
-        .then((next) => setMetadata(next))
+        .then((next) => applyMetadataFor(serverId, next))
         .catch((error) => console.error('Error saving mod note:', error));
     }, 600);
   };
@@ -371,7 +385,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
   const handleQueueRemoveEntry = (provider: ModProvider, entry: ModEntry, label: string) => {
     queueModChange(serverId, { provider, ref: entry.ref, action: 'remove', label })
-      .then(setMetadata)
+      .then((next) => applyMetadataFor(serverId, next))
       .catch((error) => {
         console.error('Error queueing mod removal:', error);
         mcToast.error(t('error'));
@@ -380,7 +394,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
   const handleCancelQueued = (provider: ModProvider, ref: string) => {
     cancelQueuedModChange(serverId, provider, ref)
-      .then(setMetadata)
+      .then((next) => applyMetadataFor(serverId, next))
       .catch((error) => {
         console.error('Error cancelling queued mod change:', error);
         mcToast.error(t('error'));
@@ -406,16 +420,22 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     );
 
     if (isLive) {
-      queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'remove', label: mod.name }).then(setMetadata).catch((error) => console.error('Error queueing mod removal:', error));
+      queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'remove', label: mod.name })
+        .then((next) => applyMetadataFor(serverId, next))
+        .catch((error) => console.error('Error queueing mod removal:', error));
       return 'removed';
     }
 
     if (pendingAdd) {
-      cancelQueuedModChange(serverId, modsBrowserProvider, ref).then(setMetadata).catch((error) => console.error('Error cancelling queued mod add:', error));
+      cancelQueuedModChange(serverId, modsBrowserProvider, ref)
+        .then((next) => applyMetadataFor(serverId, next))
+        .catch((error) => console.error('Error cancelling queued mod add:', error));
       return 'removed';
     }
 
-    queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'add', version, label: mod.name }).then(setMetadata).catch((error) => console.error('Error queueing mod add:', error));
+    queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'add', version, label: mod.name })
+      .then((next) => applyMetadataFor(serverId, next))
+      .catch((error) => console.error('Error queueing mod add:', error));
     return 'added';
   };
 
@@ -468,7 +488,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     try {
       const full = sortNewestFirst(await fetchModVersions(provider, entry.ref, {}));
 
-      const sameVersionTargetId = sameVersionLatest[ref]?.versionId;
+      const sameVersionTargetId = sameVersionLatest[`${provider}:${ref}`]?.versionId;
       const sameVersionRange = sliceRange(full, entry, sameVersionTargetId);
       const sameVersion: ChangelogLane =
         sameVersionRange === null
@@ -479,7 +499,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
       let targetVersion: ChangelogLane = { status: 'no-desired-version', segments: [] };
       if (metadata.desiredMcVersion) {
-        const targetVersionId = compatibility[ref]?.versionId;
+        const targetVersionId = compatibility[`${provider}:${ref}`]?.versionId;
         const targetRange = sliceRange(full, entry, targetVersionId);
         targetVersion =
           targetRange === null
@@ -571,9 +591,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           ) : (
             <div className="space-y-1.5">
               {displayRows.map(({ provider, entry, pending }) => {
-                const detail = details[entry.ref.toLowerCase()];
-                const compatible = compatibility[entry.ref.toLowerCase()];
-                const sameVersionUpdate = sameVersionLatest[entry.ref.toLowerCase()];
+                const detail = details[`${provider}:${entry.ref.toLowerCase()}`];
+                const compatible = compatibility[`${provider}:${entry.ref.toLowerCase()}`];
+                const sameVersionUpdate = sameVersionLatest[`${provider}:${entry.ref.toLowerCase()}`];
                 // Unpinned entries always resolve to the newest build at startup, so they're
                 // never "behind" — only a pinned entry can meaningfully have an update available.
                 const hasSameVersionUpdate = Boolean(entry.version && sameVersionUpdate && sameVersionUpdate.versionId !== entry.version);
@@ -599,7 +619,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                     <div className="min-w-[160px] flex-1 space-y-1">
                       <p className="truncate font-minecraft text-sm text-gray-100">{displayName}</p>
                       <p className="truncate text-[11px] text-gray-500">
-                        {entry.version ? (versionNames[entry.version] ?? entry.version) : t('modVersionLatest')}
+                        {entry.version ? (versionNames[`${provider}:${entry.version}`] ?? entry.version) : t('modVersionLatest')}
                       </p>
 
                       <div className="flex flex-wrap gap-1.5">
