@@ -128,6 +128,22 @@ describe('ModMetadataService', () => {
       const metadata = await service.getMetadata('srv');
       expect(metadata.pendingChanges).toEqual([{ provider: 'curseforge', ref: 'jei', action: 'add', label: 'JEI' }]);
     });
+
+    it('acknowledgeQueue does not remove a same-ref replacement queued with a different version', async () => {
+      await fs.ensureDir(path.join(tempDir, 'srv'));
+
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', version: 'v1', label: 'Sodium' });
+      const applied = await service.peekPendingQueue('srv');
+
+      // Simulate the user re-queueing a newer version for the same ref while `applied` (v1) is
+      // being processed by the startup lifecycle.
+      await service.queueChange('srv', { provider: 'modrinth', ref: 'sodium', action: 'add', version: 'v2', label: 'Sodium' });
+
+      await service.acknowledgeQueue('srv', applied);
+
+      const metadata = await service.getMetadata('srv');
+      expect(metadata.pendingChanges).toEqual([{ provider: 'modrinth', ref: 'sodium', action: 'add', version: 'v2', label: 'Sodium' }]);
+    });
   });
 
   describe('applyQueueToConfig', () => {
