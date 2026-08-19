@@ -245,9 +245,11 @@ docker-compose config:
 - `POST /mod-metadata/:serverId/queue` — body `{ "provider": "curseforge"|"modrinth", "ref": "...", "action": "add"|"remove", "version"?: "...", "label": "..." }`; upserts by `(provider, ref)`
 - `DELETE /mod-metadata/:serverId/queue/:provider/:ref` — cancels a queued change
 
-Queued changes are applied into `CURSEFORGE_FILES`/`MODRINTH_PROJECTS` (and the queue cleared)
-automatically the next time the server starts or restarts — see
-`ServerManagementService.applyPendingModQueue`, called from both `startServer` and `restartServer`.
+Queued changes are applied into `CURSEFORGE_FILES`/`MODRINTH_PROJECTS` automatically the next time
+the server starts or restarts — see `ServerManagementService.applyPendingModQueue`, called from both
+`startServer` and `restartServer`. The proxy setting is preserved (read from settings, same as any
+other config update), and only the applied entries are cleared from the queue, and only after the
+compose config write succeeds — a failed write leaves the queue intact for the next attempt.
 
 ### World Discovery
 
