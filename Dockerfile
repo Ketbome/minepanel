@@ -39,6 +39,10 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 WORKDIR /app
 
+# Set by CI so the panel can tell which release it is running.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 

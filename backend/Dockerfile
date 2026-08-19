@@ -24,6 +24,10 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY --from=builder /app/dist ./dist
 
+# Set by CI so the panel can tell which release it is running.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 EXPOSE 8091
 
 CMD ["npm", "run", "start:prod"]

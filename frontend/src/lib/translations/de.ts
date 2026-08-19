@@ -1231,6 +1231,7 @@ export const de: Record<TranslationKey, string> = {
   modVersionLatest: 'Neueste verfügbare',
   modVersionsEmpty: 'Keine Versionen für diese Minecraft-Version/Loader',
   modUpdateAvailable: 'Update verfügbar',
+  updateAvailable: 'Update verfügbar',
   modOptional: 'Optional',
   modOptionalHelp: 'itzg startet den Server weiter, wenn keine kompatible Version existiert, und lässt diese Mod aus der Versionsberechnung heraus',
   versionFromModrinthProjects: 'Version aus Mods',

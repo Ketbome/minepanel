@@ -23,6 +23,7 @@ import { useUIStore, useServerNavStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, User } from '@/services/users/users.service';
 import { SidebarServerNav } from './SidebarServerNav';
+import { VersionBadge } from '../molecules/VersionBadge';
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -303,6 +304,8 @@ export function Sidebar() {
                 </a>
               ))}
             </div>
+
+            <VersionBadge isCollapsed={isCollapsed} />
           </div>
         </>
       )}

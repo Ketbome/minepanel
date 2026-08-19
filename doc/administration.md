@@ -520,6 +520,21 @@ docker compose up -d
 
 **Check for updates:**
 
+The sidebar shows the running version at the bottom. When a newer release exists, it turns
+into an amber **Update available** link pointing at that release's notes on GitHub.
+
+The version is baked into the image at build time, so a locally built image shows nothing.
+The panel asks the GitHub releases API at most once per hour and never fails a request over
+it: if GitHub is unreachable, the badge simply keeps showing the current version.
+
+`GET /version` returns the same data:
+
+```json
+{ "current": "1.11.33", "latest": "1.11.34", "updateAvailable": true, "releaseUrl": "...", "publishedAt": "..." }
+```
+
+From the shell:
+
 ```bash
 # Check current version
 docker images ketbom/minepanel
@@ -527,6 +542,24 @@ docker images ketbom/minepanel
 # Check latest version on Docker Hub
 https://hub.docker.com/r/ketbom/minepanel/tags
 ```
+
+**Updating automatically:**
+
+Minepanel does not update itself: it runs inside the stack it would have to recreate, and a
+failed self-update leaves the panel down with no way to roll back from the inside. Use
+[Watchtower](https://containrrr.dev/watchtower/) if you want it unattended:
+
+```yaml
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 86400 --cleanup minepanel-backend minepanel-frontend
+    restart: unless-stopped
+```
+
+Pin the panel to a specific tag instead of `latest` if you would rather approve each update
+yourself.
 
 ### Update Minecraft Server
 

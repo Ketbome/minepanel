@@ -1396,6 +1396,7 @@ export const nl: Record<TranslationKey, string> = {
   modVersionLatest: 'Laatste beschikbare',
   modVersionsEmpty: 'Geen versies voor deze Minecraft-versie/loader',
   modUpdateAvailable: 'Update beschikbaar',
+  updateAvailable: 'Update beschikbaar',
   modOptional: 'Optioneel',
   modOptionalHelp: 'itzg blijft de server starten als er geen compatibele versie is, en laat deze mod buiten de versieberekening',
   versionFromModrinthProjects: 'Versie op basis van mods',

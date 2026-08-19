@@ -1381,6 +1381,7 @@ export const es: Record<TranslationKey, string> = {
   modVersionLatest: 'Última disponible',
   modVersionsEmpty: 'Sin versiones para esta versión/loader',
   modUpdateAvailable: 'Actualización disponible',
+  updateAvailable: 'Actualización disponible',
   modOptional: 'Opcional',
   modOptionalHelp: 'itzg sigue arrancando el servidor si no hay versión compatible, y deja este mod fuera del cálculo de versión',
   versionFromModrinthProjects: 'Versión según los mods',
