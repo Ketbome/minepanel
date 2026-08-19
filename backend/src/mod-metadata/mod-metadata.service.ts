@@ -109,20 +109,24 @@ export class ModMetadataService {
     return data.pendingChanges;
   }
 
-  // Removes only the given changes from the queue, matched by provider+ref+action,
-  // so changes queued concurrently while the caller was applying `applied` are
-  // preserved rather than wiped out along with it.
+  // Removes only the given changes from the queue, matched by provider+ref+action+version,
+  // so changes queued concurrently while the caller was applying `applied` are preserved
+  // rather than wiped out along with it. Version is part of the identity: if the queue was
+  // re-armed with a newer version for the same ref while `applied` (an older version) was
+  // being processed, acknowledging `applied` must not remove that newer entry.
   async acknowledgeQueue(serverId: string, applied: PendingModChange[]): Promise<void> {
     if (applied.length === 0) return;
-    const appliedKeys = new Set(applied.map((change) => `${change.provider}:${change.action}:${change.ref.toLowerCase()}`));
+    const appliedKeys = new Set(applied.map((change) => this.changeIdentity(change)));
 
     await this.withLock(serverId, async () => {
       const data = await this.readMetadata(serverId);
-      data.pendingChanges = data.pendingChanges.filter(
-        (change) => !appliedKeys.has(`${change.provider}:${change.action}:${change.ref.toLowerCase()}`),
-      );
+      data.pendingChanges = data.pendingChanges.filter((change) => !appliedKeys.has(this.changeIdentity(change)));
       await this.writeMetadata(serverId, data);
     });
+  }
+
+  private changeIdentity(change: PendingModChange): string {
+    return `${change.provider}:${change.action}:${change.ref.toLowerCase()}:${change.version ?? ''}`;
   }
 
   private withLock<T>(serverId: string, fn: () => Promise<T>): Promise<T> {
