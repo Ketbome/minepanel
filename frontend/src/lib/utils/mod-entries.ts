@@ -1,5 +1,9 @@
 import type { ModProvider } from "@/services/mods/mods-browser.service";
 
+// Mirrored in backend/src/mod-metadata/mod-entries.util.ts — backend and frontend are
+// separate npm projects with no shared package, so this is a deliberate port rather
+// than an import. Keep both copies (and mod-entries.util.spec.ts) in sync by hand.
+
 // itzg accepts a prefix so a project can target something other than the server
 // TYPE. Whitelisted because "fabric:fabric-api" (prefix + slug) and
 // "fabric-api:beta" (slug + release type) are otherwise indistinguishable.

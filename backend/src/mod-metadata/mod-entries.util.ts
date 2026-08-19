@@ -3,6 +3,7 @@ export type ModProvider = 'curseforge' | 'modrinth';
 // Mirrors frontend/src/lib/utils/mod-entries.ts — the backend has no parser of its own for
 // CURSEFORGE_FILES/MODRINTH_PROJECTS (both fields are passed through to itzg as opaque strings),
 // so this is a straight port rather than a shared package, kept in sync deliberately.
+// See mod-entries.util.spec.ts for the cases this must keep passing when either copy changes.
 const MODRINTH_PREFIXES = ['datapack', 'fabric', 'forge', 'neoforge', 'quilt', 'paper', 'spigot', 'bukkit', 'purpur', 'folia'];
 
 export interface ModEntry {
@@ -11,7 +12,12 @@ export interface ModEntry {
   ref: string;
   version?: string;
   separator: ':' | '@';
+  // itzg's "?" marker: the server logs a warning and keeps starting when no
+  // compatible version exists, and the mod is left out of the version
+  // calculation done by VERSION_FROM_MODRINTH_PROJECTS. Modrinth only.
   optional: boolean;
+  // URLs and "@file" references are passed through to itzg as-is, so they get
+  // no version control in the UI.
   opaque: boolean;
 }
 
@@ -37,6 +43,9 @@ export const parseModEntry = (raw: string, provider: ModProvider): ModEntry => {
   const cut = positions.length > 0 ? Math.min(...positions) : -1;
 
   const head = cut === -1 ? rest : rest.slice(0, cut);
+  // CURSEFORGE_FILES has no optional syntax, so a "?" there is a typo rather
+  // than a marker. Leaving it in the ref keeps the entry unresolvable, which is
+  // the honest signal.
   const optional = provider === 'modrinth' && head.endsWith('?');
 
   return {
