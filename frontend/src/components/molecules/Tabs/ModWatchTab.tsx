@@ -419,9 +419,13 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     return 'added';
   };
 
+  // CurseForge has no batch changelog endpoint, so each version needs its own request; capping
+  // how many run per dialog open keeps a single open from bursting past the API key's rate limit.
+  const MAX_CHANGELOG_SEGMENTS = 10;
+
   const buildChangelogSegments = async (provider: ModProvider, ref: string, versions: ModVersionItem[]): Promise<ChangelogSegment[]> =>
     Promise.all(
-      versions.map(async (version) => ({
+      versions.slice(0, MAX_CHANGELOG_SEGMENTS).map(async (version) => ({
         versionId: version.versionId,
         name: version.name,
         versionNumber: version.versionNumber,
@@ -435,6 +439,14 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
   // the target — i.e. every release the server would pick up by moving there.
   const sliceRange = (full: ModVersionItem[], entry: ModEntry, targetVersionId: string | undefined): ModVersionItem[] | null => {
     if (!targetVersionId) return null;
+
+    // Unpinned entries are re-resolved to the newest matching build on every start, so there is
+    // no fixed "current" version to diff from — just surface the target release's own changelog.
+    if (!entry.version) {
+      const targetIndex = full.findIndex((version) => version.versionId === targetVersionId);
+      return targetIndex === -1 ? null : full.slice(targetIndex, targetIndex + 1);
+    }
+
     const currentIndex = full.findIndex((version) => version.versionId === entry.version);
     const targetIndex = full.findIndex((version) => version.versionId === targetVersionId);
     if (currentIndex === -1 || targetIndex === -1) return null;
@@ -480,7 +492,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
       setChangelogState((prev) => (prev ? { ...prev, loading: false, sameVersion, targetVersion } : prev));
     } catch (error) {
       console.error('Error loading changelog history:', error);
-      mcToast.error(t('changelogEmpty'));
+      mcToast.error(t('error'));
       setChangelogState((prev) =>
         prev ? { ...prev, loading: false, sameVersion: { status: 'no-target', segments: [] }, targetVersion: { status: 'no-target', segments: [] } } : prev,
       );
@@ -562,7 +574,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                 const detail = details[entry.ref.toLowerCase()];
                 const compatible = compatibility[entry.ref.toLowerCase()];
                 const sameVersionUpdate = sameVersionLatest[entry.ref.toLowerCase()];
-                const hasSameVersionUpdate = Boolean(sameVersionUpdate && sameVersionUpdate.versionId !== entry.version);
+                // Unpinned entries always resolve to the newest build at startup, so they're
+                // never "behind" — only a pinned entry can meaningfully have an update available.
+                const hasSameVersionUpdate = Boolean(entry.version && sameVersionUpdate && sameVersionUpdate.versionId !== entry.version);
                 const noteKey = entry.ref.toLowerCase();
                 const isPendingRemove = pending?.action === 'remove';
                 const isLive = configuredMods.some((mod) => mod.provider === provider && mod.entry.ref.toLowerCase() === entry.ref.toLowerCase());
