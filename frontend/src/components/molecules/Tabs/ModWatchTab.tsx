@@ -206,16 +206,23 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     };
   }, [serverId]);
 
-  // ServerConfigTabs doesn't remount this tab on server switch, so a mutation started against
-  // one server can resolve after the user has already navigated to another. Track the live
-  // serverId so those stale responses can be dropped instead of clobbering the new server's state.
-  const serverIdRef = useRef(serverId);
+  // ServerConfigTabs doesn't remount this tab on server switch, and metadata mutations aren't
+  // otherwise serialized on the client, so responses can land out of order (an older mutation's
+  // response resolving after a newer one) or belong to a server the user has since navigated away
+  // from. Both cases mean "this response no longer reflects the latest state we asked for" — a
+  // monotonic token, bumped on every new mutation and on server switch, catches both: only the
+  // response matching the most recently issued token is applied.
+  const metadataRequestRef = useRef(0);
+  const changelogRequestRef = useRef(0);
   useEffect(() => {
-    serverIdRef.current = serverId;
+    metadataRequestRef.current += 1;
+    changelogRequestRef.current += 1;
   }, [serverId]);
 
-  const applyMetadataFor = (requestServerId: string, next: ModMetadata) => {
-    if (serverIdRef.current === requestServerId) setMetadata(next);
+  const beginMetadataRequest = () => ++metadataRequestRef.current;
+
+  const applyMetadataFor = (requestToken: number, next: ModMetadata) => {
+    if (requestToken === metadataRequestRef.current) setMetadata(next);
   };
 
   useEffect(() => {
@@ -354,9 +361,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
   const handleSaveDesiredVersion = async () => {
     setSavingDesiredVersion(true);
+    const requestToken = beginMetadataRequest();
     try {
       const next = await updateDesiredVersion(serverId, desiredVersionInput.trim() || null);
-      applyMetadataFor(serverId, next);
+      applyMetadataFor(requestToken, next);
       mcToast.success(t('save'));
     } catch (error) {
       console.error('Error saving desired version:', error);
@@ -372,8 +380,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
     if (noteTimers.current[key]) clearTimeout(noteTimers.current[key]);
     noteTimers.current[key] = setTimeout(() => {
+      const requestToken = beginMetadataRequest();
       updateModNote(serverId, key, value)
-        .then((next) => applyMetadataFor(serverId, next))
+        .then((next) => applyMetadataFor(requestToken, next))
         .catch((error) => console.error('Error saving mod note:', error));
     }, 600);
   };
@@ -384,8 +393,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
   };
 
   const handleQueueRemoveEntry = (provider: ModProvider, entry: ModEntry, label: string) => {
+    const requestToken = beginMetadataRequest();
     queueModChange(serverId, { provider, ref: entry.ref, action: 'remove', label })
-      .then((next) => applyMetadataFor(serverId, next))
+      .then((next) => applyMetadataFor(requestToken, next))
       .catch((error) => {
         console.error('Error queueing mod removal:', error);
         mcToast.error(t('error'));
@@ -393,8 +403,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
   };
 
   const handleCancelQueued = (provider: ModProvider, ref: string) => {
+    const requestToken = beginMetadataRequest();
     cancelQueuedModChange(serverId, provider, ref)
-      .then((next) => applyMetadataFor(serverId, next))
+      .then((next) => applyMetadataFor(requestToken, next))
       .catch((error) => {
         console.error('Error cancelling queued mod change:', error);
         mcToast.error(t('error'));
@@ -420,21 +431,24 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     );
 
     if (isLive) {
+      const requestToken = beginMetadataRequest();
       queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'remove', label: mod.name })
-        .then((next) => applyMetadataFor(serverId, next))
+        .then((next) => applyMetadataFor(requestToken, next))
         .catch((error) => console.error('Error queueing mod removal:', error));
       return 'removed';
     }
 
     if (pendingAdd) {
+      const requestToken = beginMetadataRequest();
       cancelQueuedModChange(serverId, modsBrowserProvider, ref)
-        .then((next) => applyMetadataFor(serverId, next))
+        .then((next) => applyMetadataFor(requestToken, next))
         .catch((error) => console.error('Error cancelling queued mod add:', error));
       return 'removed';
     }
 
+    const requestToken = beginMetadataRequest();
     queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'add', version, label: mod.name })
-      .then((next) => applyMetadataFor(serverId, next))
+      .then((next) => applyMetadataFor(requestToken, next))
       .catch((error) => console.error('Error queueing mod add:', error));
     return 'added';
   };
@@ -475,6 +489,9 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
 
   const handleViewChangelog = async (provider: ModProvider, entry: ModEntry, label: string) => {
     const ref = entry.ref.toLowerCase();
+    // Opening another dialog (or switching servers) before this request resolves must not let
+    // this request's result land in what is now a different dialog.
+    const requestToken = ++changelogRequestRef.current;
     setChangelogState({
       open: true,
       provider,
@@ -509,9 +526,11 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
               : { status: 'has-updates', segments: await buildChangelogSegments(provider, entry.ref, targetRange) };
       }
 
+      if (requestToken !== changelogRequestRef.current) return;
       setChangelogState((prev) => (prev ? { ...prev, loading: false, sameVersion, targetVersion } : prev));
     } catch (error) {
       console.error('Error loading changelog history:', error);
+      if (requestToken !== changelogRequestRef.current) return;
       mcToast.error(t('error'));
       setChangelogState((prev) =>
         prev ? { ...prev, loading: false, sameVersion: { status: 'no-target', segments: [] }, targetVersion: { status: 'no-target', segments: [] } } : prev,
