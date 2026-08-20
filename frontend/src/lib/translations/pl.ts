@@ -508,6 +508,18 @@ export const pl: Record<TranslationKey, string> = {
   performanceSettings: 'Wydajność',
   connectivitySettings: 'Łączność',
 
+  // Server config tabs
+  game: 'Gra',
+  gameDesc: 'Jak gra się w świat: tożsamość, trudność, generowanie i zasięg widzenia',
+  access: 'Dostęp',
+  accessDesc: 'Kto może dołączyć i co może robić',
+  network: 'Sieć',
+  networkDesc: 'Porty, routing przez proxy i dodatkowe mapowania portów',
+  lifecycle: 'Cykl życia',
+  lifecycleDesc: 'Kiedy serwer sam się zatrzymuje, wstrzymuje i restartuje',
+  backups: 'Kopie zapasowe',
+  backupsDesc: 'Zaplanowane kopie świata i miejsce ich przechowywania',
+
   // ===========================
   // STRONA: USTAWIENIA PODSTAWOWE
   // ===========================

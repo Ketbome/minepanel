@@ -511,6 +511,18 @@ export const en = {
   performanceSettings: 'Performance',
   connectivitySettings: 'Connectivity',
 
+  // Server config tabs
+  game: 'Game',
+  gameDesc: 'How the world plays: identity, difficulty, generation and render distance',
+  access: 'Access',
+  accessDesc: 'Who can join and what they are allowed to do',
+  network: 'Network',
+  networkDesc: 'Ports, proxy routing and extra port mappings',
+  lifecycle: 'Lifecycle',
+  lifecycleDesc: 'When the server stops, pauses and restarts on its own',
+  backups: 'Backups',
+  backupsDesc: 'Scheduled world backups and where they are kept',
+
   // ===========================
   // BASIC SETTINGS TAB
   // ===========================

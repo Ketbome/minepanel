@@ -397,6 +397,28 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
           </div>
         )}
 
+        {/* The pack pins the version, so the selector above is hidden for modpacks.
+            Say why instead of leaving a gap. */}
+        {isModpack && isJava && (
+          <div className="space-y-2 p-4 rounded-md bg-blue-900/30 border border-blue-700/30">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/enchanted-book.webp"
+                alt="Info"
+                width={20}
+                height={20}
+                className="opacity-90"
+              />
+              <div>
+                <p className="text-sm font-medium text-blue-300 font-minecraft">
+                  {t('minecraftVersion')}
+                </p>
+                <p className="text-xs text-blue-200/80 mt-1">{t('curseforgeVersionAuto')}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bedrock Version Selector */}
         {isBedrock && (
           <div className="space-y-3 p-4 rounded-md bg-green-900/10 border-2 border-green-500/30">

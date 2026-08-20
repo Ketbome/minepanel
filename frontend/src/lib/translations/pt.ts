@@ -514,6 +514,18 @@ export const pt: Record<TranslationKey, string> = {
   performanceSettings: 'Desempenho',
   connectivitySettings: 'Conectividade',
 
+  // Server config tabs
+  game: 'Jogo',
+  gameDesc: 'Como o mundo se joga: identidade, dificuldade, geração e distância de renderização',
+  access: 'Acesso',
+  accessDesc: 'Quem pode entrar e o que pode fazer',
+  network: 'Rede',
+  networkDesc: 'Portas, roteamento por proxy e portas adicionais',
+  lifecycle: 'Ciclo de vida',
+  lifecycleDesc: 'Quando o servidor para, pausa e reinicia sozinho',
+  backups: 'Backups',
+  backupsDesc: 'Backups agendados do mundo e onde ficam guardados',
+
   // ===========================
   // ABA DE AJUSTES BÁSICOS
   // ===========================

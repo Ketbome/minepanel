@@ -1,13 +1,11 @@
 import { FC } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerConfig } from "@/lib/types/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { MemoryCpuTab } from "./ResourcesTabs/MemoryCpuTab";
 import { JvmOptionsTab } from "./ResourcesTabs/JvmOptionsTab";
-import { AdvancedResourcesTab } from "./ResourcesTabs/AdvancedResourcesTab";
 import { LINK_ADVANCED_CONFIGURATION } from "@/lib/providers/constants";
 
 interface ResourcesTabProps {
@@ -24,7 +22,7 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) =>
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
-              <Image src="/images/diamond-pickaxe.webp" alt="Recursos" width={24} height={24} className="opacity-90" />
+              <Image src="/images/diamond-pickaxe.webp" alt={t("serverResources")} width={24} height={24} className="opacity-90" />
               {t("serverResources")}
             </CardTitle>
             <CardDescription className="text-gray-300">{t("serverResourcesDesc")}</CardDescription>
@@ -36,37 +34,22 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) =>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <Tabs defaultValue="memory" className="w-full">
-          <div className="overflow-x-auto custom-scrollbar">
-            <TabsList className="grid grid-cols-3 mb-6 w-full bg-gray-800/70 border border-gray-700/50 rounded-md p-1 text-gray-200">
-              <TabsTrigger value="memory" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
-                <Image src="/images/emerald.webp" alt="Memoria" width={16} height={16} className="mr-2" />
-                {t("memoryCpu")}
-              </TabsTrigger>
-              <TabsTrigger value="jvm" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
-                <Image src="/images/diamond.webp" alt="JVM" width={16} height={16} className="mr-2" />
-                {t("jvmOptions")}
-              </TabsTrigger>
-              <TabsTrigger value="advanced" className="text-gray-200 font-minecraft text-sm data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 data-[state=active]:border-b-2 data-[state=active]:border-emerald-500">
-                <Image src="/images/observer.webp" alt="Avanzado" width={16} height={16} className="mr-2" />
-                {t("advancedResources")}
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <CardContent className="space-y-6 text-gray-200">
+        <div className="space-y-4">
+          <h3 className="text-lg text-emerald-400 font-minecraft flex items-center gap-2">
+            <Image src="/images/emerald.webp" alt={t("memoryCpu")} width={20} height={20} />
+            {t("memoryCpu")}
+          </h3>
+          <MemoryCpuTab config={config} updateConfig={updateConfig} />
+        </div>
 
-          <TabsContent value="memory" className="space-y-6 text-gray-200">
-            <MemoryCpuTab config={config} updateConfig={updateConfig} />
-          </TabsContent>
-
-          <TabsContent value="jvm" className="space-y-6 text-gray-200">
-            <JvmOptionsTab config={config} updateConfig={updateConfig} />
-          </TabsContent>
-
-          <TabsContent value="advanced" className="space-y-6 text-gray-200">
-            <AdvancedResourcesTab config={config} updateConfig={updateConfig} />
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          <h3 className="text-lg text-emerald-400 font-minecraft flex items-center gap-2">
+            <Image src="/images/diamond.webp" alt={t("jvmOptions")} width={20} height={20} />
+            {t("jvmOptions")}
+          </h3>
+          <JvmOptionsTab config={config} updateConfig={updateConfig} />
+        </div>
       </CardContent>
     </Card>
   );

@@ -1,6 +1,9 @@
 import { FC } from "react";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 import { ServerConfig } from "@/lib/types/types";
 import Image from "next/image";
 import { Slider } from "@/components/ui/slider";
@@ -36,32 +39,65 @@ export const PerformanceSettingsTab: FC<PerformanceSettingsTabProps> = ({ config
           <p className="text-xs text-gray-400">{t("viewDistanceDesc")}</p>
         </div>
 
-        {isJava && (
-          <>
+        {!isJava && (
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="simulation-distance" className="text-gray-200 font-minecraft text-sm">
-                  {t("simulationDistance")}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tickDistance" className="text-gray-200 font-minecraft text-sm">
+                  {t("tickDistance")}
                 </Label>
-                <span className="bg-gray-800/90 px-2 py-1 rounded text-xs font-mono">
-                  {config.simulationDistance || 10} {t("chunks")}
-                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
+                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t("tickDistanceDesc")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              <Slider id="simulation-distance" min={2} max={32} step={1} value={[Number(config.simulationDistance || 10)]} onValueChange={(value: number[]) => updateConfig("simulationDistance", String(value[0]))} className="my-4" />
-              <p className="text-xs text-gray-400">{t("simulationDistanceDesc")}</p>
+              <Input id="tickDistance" type="number" min="4" max="12" value={config.tickDistance ?? "4"} onChange={(e) => updateConfig("tickDistance", e.target.value)} className="bg-gray-800/70 border-gray-700/50 text-white" />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="commandBlock" className="text-gray-200 font-minecraft text-sm flex items-center gap-2">
-                  <Image src="/images/command-block.webp" alt={t("enableCommandBlocks")} width={16} height={16} />
-                  {t("enableCommandBlocks")}
+                <Label htmlFor="maxThreads" className="text-gray-200 font-minecraft text-sm">
+                  {t("maxThreads")}
                 </Label>
-                <Switch id="commandBlock" checked={config.commandBlock} onCheckedChange={(checked) => updateConfig("commandBlock", checked)} />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 p-0">
+                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200">
+                      <p>{t("maxThreadsDesc")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              <p className="text-xs text-gray-400">{t("enableCommandBlocksDesc")}</p>
+              <Input id="maxThreads" type="number" min="1" max="32" value={config.maxThreads ?? "8"} onChange={(e) => updateConfig("maxThreads", e.target.value)} className="bg-gray-800/70 border-gray-700/50 text-white" />
             </div>
-          </>
+          </div>
+        )}
+
+        {isJava && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="simulation-distance" className="text-gray-200 font-minecraft text-sm">
+                {t("simulationDistance")}
+              </Label>
+              <span className="bg-gray-800/90 px-2 py-1 rounded text-xs font-mono">
+                {config.simulationDistance || 10} {t("chunks")}
+              </span>
+            </div>
+            <Slider id="simulation-distance" min={2} max={32} step={1} value={[Number(config.simulationDistance || 10)]} onValueChange={(value: number[]) => updateConfig("simulationDistance", String(value[0]))} className="my-4" />
+            <p className="text-xs text-gray-400">{t("simulationDistanceDesc")}</p>
+          </div>
         )}
       </div>
     </div>

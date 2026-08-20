@@ -76,19 +76,22 @@ hostname -I | awk '{print $1}'
 (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet").IPAddress
 ```
 
-## Connectivity Tab (per server)
+## Network and Access tabs (per server)
 
-Minepanel server configuration includes **General -> Connectivity**.
+A server's connection settings are split across two tabs: **Network** for how the
+server is reached, **Access** for who is allowed in once they get there.
 
-Key fields:
-
-| Field | What it affects |
-| --- | --- |
-| `serverPort` | Published game port (`25565` Java, `19132` Bedrock by default) |
-| `onlineMode` | Mojang auth verification for Java servers |
-| `preventProxyConnections` | Blocks bypass connections when using Java proxy routing |
-| `ops` | Operator usernames |
-| `opPermissionLevel` | Java op permission level (1-4) |
+| Field | Tab | What it affects |
+| --- | --- | --- |
+| `serverPort` | Network | Published game port (`25565` Java, `19132` Bedrock by default) |
+| `serverPortV6` | Network | IPv6 port, Bedrock only |
+| `preventProxyConnections` | Network | Blocks bypass connections when using Java proxy routing |
+| `proxyHostname` / `useProxy` / `useAutoScale` | Network | Per-server proxy routing and auto-scaling |
+| `extraPorts` | Network | Extra host port mappings (voice chat, Dynmap, ...) |
+| `onlineMode` | Access | Mojang auth verification for Java servers |
+| `ops` | Access | Operator usernames |
+| `opPermissionLevel` | Access | Java op permission level (1-4) |
+| `enableRcon` / `rconPort` / `rconPassword` | Access | Remote console, required by backups |
 
 Notes:
 
@@ -197,7 +200,7 @@ Java servers auto-get hostnames: `{server-id}.mc.example.com`
 
 ::: tip Upgrading from 1.x
 Earlier versions shipped mc-router inside the panel's own `docker-compose.yml`
-behind a `proxy` profile. That service is gone in 2.0. Run
+behind a `proxy` profile. That service is gone in 1.12. Run
 `docker compose --profile proxy down` once to remove the old container; the panel
 will not stop a router it did not create, so until you do, both would fight over
 port 25565.
@@ -233,7 +236,7 @@ touched.
 ### Excluding a server
 
 Heavy modpacks take minutes to boot, which makes sleeping them a poor trade. Turn
-**Auto-scaling** off under **Server → Settings → Connectivity → Proxy Settings** to
+**Auto-scaling** off under **Server → Network → Proxy Settings** to
 leave that server out: the panel then ignores both wake-up and sleep requests for
 it, so it keeps running 24/7 while the rest still sleep. The switch only appears
 once auto-scaling is on, and it is on by default, so nothing changes for servers

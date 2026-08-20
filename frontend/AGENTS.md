@@ -93,6 +93,20 @@ Auth/session patterns:
 - Keep browser auth in `httpOnly` cookies; do not introduce token storage in `localStorage` or append JWTs to URLs.
 - SSO: `getSetupStatus()` returns an optional `sso` field; the login page (`app/page.tsx`) shows a "Sign in with {provider}" button and, when `sso.passwordLoginDisabled`, hides the password form. SSO starts via `startSsoLogin()` (top-level navigation to the backend `/auth/oidc/login`, not axios). A `?ssoError=1` query shows a toast.
 
+Server config tabs:
+
+- Tabs are grouped by the question the user is asking, not by where the value is
+  stored: `type`, `game`, `access`, `network`, `resources`, `lifecycle`, mods/plugins/addons,
+  `backups`, `advanced`. `advanced` holds only escape hatches handed straight to Docker
+  (`envVars`, `dockerVolumes`, `dockerLabels`, log options) - anything with a real home
+  belongs in its own tab.
+- A config field gets exactly one control. Two controls for the same field silently
+  disagree, so before adding one, grep for `updateConfig('<field>'`.
+- Bedrock has no tab of its own; its fields sit beside the Java equivalents, guarded by
+  `edition === 'BEDROCK'`.
+- Renaming or removing a tab value means adding an entry to `RENAMED_TABS` in
+  `ServerConfigTabs.tsx`: the tab value is the URL hash and people bookmark it.
+
 Java/Bedrock UI parity:
 
 - Preserve edition-aware behavior in tabs and settings.
@@ -118,8 +132,7 @@ Tooling / build (Next.js 16):
 - `src/app/dashboard/world-library/page.tsx` - world library entry (`.world`).
 - `src/app/dashboard/servers/[server]/page.tsx` - dynamic server route binding.
 - `src/components/molecules/Tabs/ServerTypeTab.tsx`
-- `src/components/molecules/Tabs/BedrockSettingsTab.tsx`
-- `src/components/organisms/ServerConfigTabs.tsx` - server view content. Owns the single tab metadata source + command-palette index (`paletteItems`); publishes the tab list/active tab to the global sidebar via `server-nav-store`.
+- `src/components/organisms/ServerConfigTabs.tsx` - server view content. Owns the single tab metadata source + command-palette index (`paletteItems`) + the `RENAMED_TABS` hash aliases; publishes the tab list/active tab to the global sidebar via `server-nav-store`.
 - `src/components/organisms/Sidebar.tsx` - global sidebar; drills into a per-server tab nav when on `/dashboard/servers/[server]` (back button + grouped tabs), otherwise shows the base navigation.
 - `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
 - `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.

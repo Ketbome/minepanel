@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -14,9 +14,12 @@ const AdvancedTab = dynamic(() => import("../molecules/Tabs/AdvancedTab").then(m
 const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mod.ModsTab));
 const PluginsTab = dynamic(() => import("../molecules/Tabs/PluginsTab").then(mod => mod.PluginsTab));
 const ResourcesTab = dynamic(() => import("../molecules/Tabs/ResourcesTab").then(mod => mod.ResourcesTab));
-const GeneralSettingsTab = dynamic(() => import("../molecules/Tabs/GeneralSettingsTab").then(mod => mod.GeneralSettingsTab));
+const GameTab = dynamic(() => import("../molecules/Tabs/GameTab").then(mod => mod.GameTab));
+const AccessTab = dynamic(() => import("../molecules/Tabs/AccessTab").then(mod => mod.AccessTab));
+const NetworkTab = dynamic(() => import("../molecules/Tabs/NetworkTab").then(mod => mod.NetworkTab));
+const LifecycleTab = dynamic(() => import("../molecules/Tabs/LifecycleTab").then(mod => mod.LifecycleTab));
+const BackupsTab = dynamic(() => import("../molecules/Tabs/BackupsTab").then(mod => mod.BackupsTab));
 const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").then(mod => mod.ServerTypeTab));
-const BedrockSettingsTab = dynamic(() => import("../molecules/Tabs/BedrockSettingsTab").then(mod => mod.BedrockSettingsTab));
 const BedrockAddonsTab = dynamic(() => import("../molecules/Tabs/BedrockAddonsTab").then(mod => mod.BedrockAddonsTab));
 const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
 const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
@@ -24,7 +27,16 @@ const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasks
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+const ALL_TAB_VALUES = ["type", "game", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+
+// Tabs that were split up or absorbed. People bookmark these hashes and the docs
+// link to them, so an old one lands on whichever tab took over its content.
+const RENAMED_TABS: Record<string, string> = { general: "game", bedrock: "game" };
+
+const resolveTab = (hash: string): string | null => {
+  const target = RENAMED_TABS[hash] ?? hash;
+  return ALL_TAB_VALUES.includes(target) ? target : null;
+};
 
 interface ServerConfigTabsProps {
   readonly serverId: string;
@@ -51,6 +63,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showPluginsTab = isJava && (config.serverType === "SPIGOT" || config.serverType === "PAPER" || config.serverType === "BUKKIT" || config.serverType === "PUFFERFISH" || config.serverType === "PURPUR" || config.serverType === "LEAF" || config.serverType === "FOLIA");
   const showResourcesTab = isJava; // JVM settings only apply to Java
   const showCommandsTab = isJava; // RCON only works with Java
+  const showBackupsTab = isJava; // mc-backup drives the world save over RCON
 
   const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
@@ -58,12 +71,15 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   // validation and the command-palette index, so there is no duplicated list.
   const tabsMeta: (ServerNavItem & { show: boolean })[] = [
     { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
-    { value: "general", label: t("general"), icon: Settings, group: "config", show: true, disabled: isServerRunning },
+    { value: "game", label: t("game"), icon: Gamepad2, group: "config", show: true, disabled: isServerRunning },
+    { value: "access", label: t("access"), icon: Shield, group: "config", show: true, disabled: isServerRunning },
+    { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning },
     { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
-    { value: "bedrock", label: t("bedrock"), icon: Smartphone, group: "config", show: isBedrock, disabled: isServerRunning },
+    { value: "lifecycle", label: t("lifecycle"), icon: Power, group: "config", show: true, disabled: isServerRunning },
     { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning },
     { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning },
     { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning },
+    { value: "backups", label: t("backups"), icon: Archive, group: "config", show: showBackupsTab, disabled: isServerRunning },
     { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning },
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
@@ -84,22 +100,25 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
       ? [
           { value: "set-memory", label: t("memoryCpu"), icon: Cpu, target: "resources", group: t("resources"), keywords: "ram memoria memory cpu nucleos cores xms xmx" },
           { value: "set-jvm", label: t("jvmOptions"), icon: Cpu, target: "resources", group: t("resources"), keywords: "jvm aikar flags java args argumentos garbage gc" },
-          { value: "set-runtime", label: t("advancedResources"), icon: Cpu, target: "resources", group: t("resources"), keywords: "autostop autopause auto stop pause pausa timezone zona horaria rolling logs" },
         ]
       : []),
-    { value: "set-basic", label: t("basicSettings"), icon: Settings, target: "general", group: t("general"), keywords: "motd nombre name dificultad difficulty gamemode modo de juego" },
-    { value: "set-world", label: t("worldSettings"), icon: Settings, target: "general", group: t("general"), keywords: "mundo world seed semilla pvp nivel level hardcore" },
-    { value: "set-connectivity", label: t("connectivitySettings"), icon: Settings, target: "general", group: t("general"), keywords: "puerto port online mode modo conexion ip" },
-    { value: "set-performance", label: t("performanceSettings"), icon: Settings, target: "general", group: t("general"), keywords: "jugadores players max view distance distancia render simulation simulacion" },
+    { value: "set-basic", label: t("basicSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "motd nombre name dificultad difficulty gamemode modo de juego jugadores players" },
+    { value: "set-world", label: t("worldSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "mundo world seed semilla pvp nivel level hardcore spawn mobs" },
+    { value: "set-performance", label: t("performanceSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "view distance distancia render simulation simulacion chunks" },
+    { value: "set-access", label: t("accessControl"), icon: Shield, target: "access", group: t("access"), keywords: "online mode ops operadores rcon permisos permissions whitelist lista blanca flight vuelo command block" },
+    { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), keywords: "puerto port proxy hostname ip conexion connection autoscale ipv6" },
+    { value: "set-lifecycle", label: t("lifecycle"), icon: Power, target: "lifecycle", group: t("lifecycle"), keywords: "autostop autopause auto stop pause pausa apagar reinicio restart timezone zona horaria" },
+    ...(showBackupsTab
+      ? [{ value: "set-backups", label: t("backups"), icon: Archive, target: "backups", group: t("backups"), keywords: "backup copia respaldo restic rclone rsync tar snapshot" }]
+      : []),
     ...(isBedrock
       ? [
-          { value: "set-bedrock-perf", label: t("performance"), icon: Cpu, target: "bedrock", group: t("bedrock"), keywords: "rendimiento performance threads hilos maxthreads ram memoria memory cpu" },
-          { value: "set-cheats", label: t("allowCheats"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "cheats trucos commands comandos" },
-          { value: "set-tick", label: t("tickDistance"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "tick distance distancia simulacion" },
-          { value: "set-permission", label: t("defaultPermissionLevel"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "permisos permission op operador" },
-          { value: "set-whitelist", label: t("whiteList"), icon: Smartphone, target: "bedrock", group: t("bedrock"), keywords: "whitelist lista blanca allow allowlist" },
+          { value: "set-bedrock-perf", label: t("performance"), icon: Gamepad2, target: "game", group: t("game"), keywords: "rendimiento performance threads hilos maxthreads tick distance distancia" },
+          { value: "set-cheats", label: t("allowCheats"), icon: Shield, target: "access", group: t("access"), keywords: "cheats trucos commands comandos" },
+          { value: "set-permission", label: t("defaultPermissionLevel"), icon: Shield, target: "access", group: t("access"), keywords: "permisos permission op operador" },
         ]
       : []),
+    { value: "set-advanced", label: t("advanced"), icon: Code, target: "advanced", group: t("advanced"), keywords: "env vars variables entorno labels volumes volumenes docker logs" },
     { value: "set-type", label: t("serverType"), icon: Server, target: "type", group: t("serverType"), keywords: "tipo type paper forge fabric purpur vanilla neoforge version" },
   ];
 
@@ -131,9 +150,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   }, [config, savedConfig]);
 
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (ALL_TAB_VALUES.includes(hash)) {
-      setActiveTab(hash);
+    const target = resolveTab(window.location.hash.slice(1));
+    if (target) {
+      setActiveTab(target);
     }
     setHashApplied(true);
   }, []);
@@ -145,9 +164,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      if (ALL_TAB_VALUES.includes(hash)) {
-        setActiveTab(hash);
+      const target = resolveTab(window.location.hash.slice(1));
+      if (target) {
+        setActiveTab(target);
       }
     };
 
@@ -186,7 +205,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     if (isServerRunning) {
-      const disabledTabs = ["type", "general", "resources", "bedrock", "addons", "mods", "plugins", "advanced", "files"];
+      const disabledTabs = ["type", "game", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "files"];
       if (disabledTabs.includes(activeTab)) {
         setActiveTab("logs");
       }
@@ -218,8 +237,16 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 <ServerTypeTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
-              <TabsContent value="general" className="space-y-4 mt-0">
-                <GeneralSettingsTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+              <TabsContent value="game" className="space-y-4 mt-0">
+                <GameTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+              </TabsContent>
+
+              <TabsContent value="access" className="space-y-4 mt-0">
+                <AccessTab config={config} updateConfig={updateConfig} />
+              </TabsContent>
+
+              <TabsContent value="network" className="space-y-4 mt-0">
+                <NetworkTab config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               {showResourcesTab && (
@@ -228,11 +255,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 </TabsContent>
               )}
 
-              {isBedrock && (
-                <TabsContent value="bedrock" className="space-y-4 mt-0">
-                  <BedrockSettingsTab config={config} updateConfig={updateConfig} />
-                </TabsContent>
-              )}
+              <TabsContent value="lifecycle" className="space-y-4 mt-0">
+                <LifecycleTab config={config} updateConfig={updateConfig} />
+              </TabsContent>
 
               {isBedrock && (
                 <TabsContent value="addons" className="space-y-4 mt-0">
@@ -249,6 +274,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               {showPluginsTab && (
                 <TabsContent value="plugins" className="space-y-4 mt-0">
                   <PluginsTab config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
+
+              {showBackupsTab && (
+                <TabsContent value="backups" className="space-y-4 mt-0">
+                  <BackupsTab config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 

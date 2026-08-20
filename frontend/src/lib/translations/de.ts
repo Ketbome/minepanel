@@ -513,6 +513,18 @@ export const de: Record<TranslationKey, string> = {
   performanceSettings: 'Leistung',
   connectivitySettings: 'Konnektivität',
 
+  // Server config tabs
+  game: 'Spiel',
+  gameDesc: 'Wie sich die Welt spielt: Identität, Schwierigkeit, Generierung und Sichtweite',
+  access: 'Zugriff',
+  accessDesc: 'Wer beitreten darf und was erlaubt ist',
+  network: 'Netzwerk',
+  networkDesc: 'Ports, Proxy-Routing und zusätzliche Port-Zuordnungen',
+  lifecycle: 'Lebenszyklus',
+  lifecycleDesc: 'Wann der Server von selbst stoppt, pausiert und neu startet',
+  backups: 'Backups',
+  backupsDesc: 'Geplante Welt-Backups und wo sie liegen',
+
   // ===========================
   // BASIC SETTINGS TAB
   // ===========================

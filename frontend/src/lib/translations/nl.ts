@@ -518,6 +518,18 @@ export const nl: Record<TranslationKey, string> = {
   performanceSettings: 'Prestaties',
   connectivitySettings: 'Connectiviteit',
 
+  // Server config tabs
+  game: 'Spel',
+  gameDesc: 'Hoe de wereld speelt: identiteit, moeilijkheid, generatie en weergaveafstand',
+  access: 'Toegang',
+  accessDesc: 'Wie mag deelnemen en wat ze mogen doen',
+  network: 'Netwerk',
+  networkDesc: 'Poorten, proxyroutering en extra poorttoewijzingen',
+  lifecycle: 'Levenscyclus',
+  lifecycleDesc: 'Wanneer de server vanzelf stopt, pauzeert en herstart',
+  backups: 'Back-ups',
+  backupsDesc: 'Geplande wereldback-ups en waar ze bewaard worden',
+
   // ===========================
   // BASISINSTELLINGEN TAB
   // ===========================

@@ -124,7 +124,7 @@ Pick a preset and copy it to your `.env` file:
 ## Network Settings
 
 Public IP, LAN IP and everything about the Java proxy are configured through the
-web UI, under **Settings → Network**. Since 2.0 the panel runs mc-router itself,
+web UI, under **Settings → Network**. Since 1.12 the panel runs mc-router itself,
 so none of this lives in `.env` any more:
 
 | Setting | What it does |
@@ -138,7 +138,7 @@ so none of this lives in `.env` any more:
 | Extra Docker networks | Existing external networks to attach the router to, one per line |
 
 Auto-scaling can be turned off for one server without turning it off for the
-rest, under **Server → Settings → Connectivity → Proxy Settings**.
+rest, under **Server → Network → Proxy Settings**.
 
 **→ More:** [Networking](/networking)
 
