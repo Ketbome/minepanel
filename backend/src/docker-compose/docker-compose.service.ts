@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -29,7 +29,7 @@ interface DockerComposeConfig {
 type DockerLabels = Record<string, string> | string[] | undefined;
 
 @Injectable()
-export class DockerComposeService {
+export class DockerComposeService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DockerComposeService.name);
   private readonly SERVERS_DIR: string;
   private readonly BASE_DIR: string;
@@ -45,6 +45,16 @@ export class DockerComposeService {
     this.BACKUP_BASE_DIR = this.configService.get('backupBaseDir');
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(path.join(this.SERVERS_DIR, '.world', 'worlds'));
+  }
+
+  // Pre-2.0 installs arrive with nothing but compose files. Import them once, at
+  // startup, so the first dashboard load is not what triggers it.
+  async onApplicationBootstrap(): Promise<void> {
+    try {
+      await this.migrateServersToStore();
+    } catch (error) {
+      this.logger.error('Could not migrate servers to server.json on startup', error);
+    }
   }
 
   private validateServerId(serverId: string): boolean {
@@ -104,17 +114,24 @@ export class DockerComposeService {
     }
   }
 
-  private async loadServerConfigFromDockerCompose(serverId: string): Promise<ServerConfig> {
+  /**
+   * Reads a pre-2.0 server's configuration out of its compose file.
+   *
+   * Returns null rather than a default config when the file cannot be read: this
+   * feeds the one-time import, and writing defaults would replace a server's real
+   * settings with blanks.
+   */
+  private async loadServerConfigFromDockerCompose(serverId: string): Promise<ServerConfig | null> {
     if (!this.validateServerId(serverId)) {
       this.logger.error(`Invalid server ID: ${serverId}`);
-      return this.createDefaultConfig(serverId);
+      return null;
     }
 
     const dockerComposePath = this.getDockerComposePath(serverId);
 
     if (!fs.existsSync(dockerComposePath)) {
       this.logger.error(`Docker compose file does not exist for server ${serverId}`);
-      return this.createDefaultConfig(serverId);
+      return null;
     }
 
     try {
@@ -122,7 +139,8 @@ export class DockerComposeService {
       const composeConfig = yaml.load(composeFileContent) as DockerComposeConfig;
 
       if (!composeConfig.services?.mc) {
-        return this.createDefaultConfig(serverId);
+        this.logger.error(`No "mc" service in the compose file for server ${serverId}`);
+        return null;
       }
 
       const mcService = composeConfig.services.mc;
@@ -289,7 +307,7 @@ export class DockerComposeService {
       return this.normalizeAutoStopRestartPolicy(serverConfig);
     } catch (error) {
       this.logger.error(`Error loading config for server ${serverId}`, error);
-      return this.createDefaultConfig(serverId);
+      return null;
     }
   }
 
@@ -774,6 +792,13 @@ export class DockerComposeService {
     }
 
     const config = await this.loadServerConfigFromDockerCompose(id);
+    if (!config) {
+      // Leave the compose file untouched so the server can be recovered by hand;
+      // writing a blank server.json here would make the loss permanent.
+      this.logger.error(`Could not import ${id}: its docker-compose.yml is unreadable, leaving it as is`);
+      return null;
+    }
+
     try {
       await this.store.writeConfig(config);
       this.logger.log(`Imported ${id} from docker-compose.yml into server.json`);
@@ -819,6 +844,45 @@ export class DockerComposeService {
 
   private withActiveFlag(entry: ServerIndexEntry): ServerIndexEntry {
     return { ...entry, active: fs.existsSync(this.getMcDataPath(entry.id)) };
+  }
+
+  /**
+   * Imports every pre-2.0 server up front instead of waiting for someone to open
+   * the dashboard, and reports what happened. Servers whose compose file cannot be
+   * read are counted and left alone rather than replaced with defaults.
+   */
+  async migrateServersToStore(): Promise<{ imported: string[]; alreadyStored: string[]; failed: string[] }> {
+    const serverIds = await this.store.listServerDirs();
+    const imported: string[] = [];
+    const alreadyStored: string[] = [];
+    const failed: string[] = [];
+
+    for (const id of serverIds) {
+      try {
+        if (await this.store.readConfig(id)) {
+          alreadyStored.push(id);
+          continue;
+        }
+
+        const config = await this.importFromDockerCompose(id);
+        (config ? imported : failed).push(id);
+      } catch (error) {
+        this.logger.error(`Could not migrate ${id} to server.json`, error);
+        failed.push(id);
+      }
+    }
+
+    if (imported.length) {
+      this.logger.log(`Migrated ${imported.length} server(s) to server.json: ${imported.join(', ')}`);
+    }
+    if (failed.length) {
+      this.logger.error(`Could not migrate ${failed.length} server(s); their docker-compose.yml was left untouched: ${failed.join(', ')}`);
+    }
+
+    // The index is rebuilt afterwards so it reflects everything that migrated.
+    await this.rebuildServerIndex(serverIds);
+
+    return { imported, alreadyStored, failed };
   }
 
   private async rebuildServerIndex(dirs?: string[]): Promise<ServerIndexEntry[]> {
@@ -877,8 +941,14 @@ export class DockerComposeService {
     const serverPath = path.join(this.SERVERS_DIR, id);
     const dockerComposePath = this.getDockerComposePath(id);
 
-    // Check if server already exists (has docker-compose.yml)
-    if (await fs.pathExists(dockerComposePath)) {
+    // Either file means the id is taken: a folder can hold a server.json without a
+    // compose file if a previous write was interrupted, and creating over it would
+    // silently discard that server's configuration.
+    const [hasCompose, hasStoredConfig] = await Promise.all([
+      fs.pathExists(dockerComposePath),
+      fs.pathExists(this.store.getConfigPath(id)),
+    ]);
+    if (hasCompose || hasStoredConfig) {
       throw new Error(`El servidor "${id}" ya existe`);
     }
 

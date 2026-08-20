@@ -259,10 +259,124 @@ describe('server index reconciliation', () => {
       });
     });
 
+    // Writing defaults here would replace a server's real settings with blanks,
+    // and the compose file would already have been overwritten by then.
+    it('refuses to import a server whose compose file cannot be parsed', async () => {
+      await fs.ensureDir(path.join(serversDir, 'broken'));
+      await fs.writeFile(path.join(serversDir, 'broken', 'docker-compose.yml'), 'services: [this is not: valid yaml');
+
+      expect(await service.getServerConfig('broken')).toBeNull();
+      expect(await fs.pathExists(store.getConfigPath('broken'))).toBe(false);
+    });
+
+    it('refuses to import a compose file with no mc service', async () => {
+      await fs.ensureDir(path.join(serversDir, 'headless'));
+      await fs.writeFile(path.join(serversDir, 'headless', 'docker-compose.yml'), yaml.dump({ services: { other: {} } }));
+
+      expect(await service.getServerConfig('headless')).toBeNull();
+      expect(await fs.pathExists(store.getConfigPath('headless'))).toBe(false);
+    });
+
     it('returns null for a folder that has neither file', async () => {
       await fs.ensureDir(path.join(serversDir, 'empty'));
 
       expect(await service.getServerConfig('empty')).toBeNull();
+    });
+  });
+
+  describe('migrating a pre-2.0 install at startup', () => {
+    it('imports every server without waiting for someone to open the dashboard', async () => {
+      await writeComposeOnlyServer('one');
+      await writeComposeOnlyServer('two');
+
+      const result = await service.migrateServersToStore();
+
+      expect(result.imported.sort()).toEqual(['one', 'two']);
+      expect(result.failed).toEqual([]);
+      expect(await fs.pathExists(store.getConfigPath('one'))).toBe(true);
+    });
+
+    it('leaves servers that were already migrated alone', async () => {
+      await writeServer('modern');
+
+      const result = await service.migrateServersToStore();
+
+      expect(result.alreadyStored).toEqual(['modern']);
+      expect(result.imported).toEqual([]);
+    });
+
+    it('does not overwrite a stored config with one re-read from the compose file', async () => {
+      await writeServer('modern', { serverName: 'edited by hand' });
+      await fs.writeFile(path.join(serversDir, 'modern', 'docker-compose.yml'), yaml.dump({
+        services: { mc: { image: 'itzg/minecraft-server:latest', environment: { SERVER_NAME: 'stale' } } },
+      }));
+
+      await service.migrateServersToStore();
+
+      expect((await service.getServerConfig('modern'))?.serverName).toBe('edited by hand');
+    });
+
+    it('reports the servers it could not migrate and keeps going', async () => {
+      await writeComposeOnlyServer('good');
+      await fs.ensureDir(path.join(serversDir, 'broken'));
+      await fs.writeFile(path.join(serversDir, 'broken', 'docker-compose.yml'), 'services: [not: valid');
+
+      const result = await service.migrateServersToStore();
+
+      expect(result.imported).toEqual(['good']);
+      expect(result.failed).toEqual(['broken']);
+    });
+
+    it('is safe to run twice', async () => {
+      await writeComposeOnlyServer('one');
+
+      await service.migrateServersToStore();
+      const second = await service.migrateServersToStore();
+
+      expect(second.imported).toEqual([]);
+      expect(second.alreadyStored).toEqual(['one']);
+    });
+
+    it('leaves the index matching what migrated', async () => {
+      await writeComposeOnlyServer('one');
+      await writeServer('two');
+
+      await service.migrateServersToStore();
+
+      expect(((await store.readIndex()) ?? []).map((entry) => entry.id)).toEqual(['one', 'two']);
+    });
+  });
+
+  describe('creating a server', () => {
+    it('refuses an id whose folder already holds a stored config', async () => {
+      await writeServer('taken');
+
+      await expect(service.createServer('taken', {})).rejects.toThrow(/ya existe/);
+    });
+
+    it('refuses an id that only has a compose file, so pre-2.0 servers are not overwritten', async () => {
+      await writeComposeOnlyServer('legacy');
+
+      await expect(service.createServer('legacy', {})).rejects.toThrow(/ya existe/);
+    });
+
+    it('writes both the stored config and the compose file for a new server', async () => {
+      await service.createServer('fresh', { serverName: 'Fresh' });
+
+      expect(await fs.pathExists(store.getConfigPath('fresh'))).toBe(true);
+      expect(await fs.pathExists(path.join(serversDir, 'fresh', 'docker-compose.yml'))).toBe(true);
+      expect((await service.getServerConfig('fresh'))?.serverName).toBe('Fresh');
+    });
+
+    it('keeps updates in the stored config', async () => {
+      await service.createServer('fresh', { serverName: 'Fresh' });
+
+      await service.updateServerConfig('fresh', { motd: 'changed', maxPlayers: '99' });
+
+      const stored = await store.readConfig('fresh');
+      expect(stored?.motd).toBe('changed');
+      expect(stored?.maxPlayers).toBe('99');
+      expect(stored?.serverName).toBe('Fresh');
     });
   });
 });

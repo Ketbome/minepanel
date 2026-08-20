@@ -17,10 +17,16 @@ docker compose up -d
 ## What happens on first start
 
 **Each server gets a `server.json`.** Until now a server's configuration was
-re-derived by parsing its `docker-compose.yml` on every read. The first time 2.0
-opens a server it parses that file once, writes the result to
+re-derived by parsing its `docker-compose.yml` on every read. On the first start,
+2.0 parses every server's compose file once, writes the result to
 `servers/<id>/server.json`, and never parses it again. A `servers/servers.json`
-index is written alongside it so listing servers no longer opens all of them.
+index is written alongside them so listing servers no longer opens all of them.
+
+The migration runs at startup and logs what it did. A server whose compose file
+cannot be parsed is **skipped and left exactly as it was** — no `server.json` is
+written for it, so nothing is lost and it can be fixed by hand and picked up on the
+next start. Check the backend log for `Could not migrate` if a server disappears
+from the dashboard.
 
 **Proxy and network settings move to the instance.** `proxyEnabled`,
 `proxyBaseDomain`, `publicIp`, `lanIp` and the Java server defaults used to live in
@@ -85,6 +91,13 @@ them.
 **Proxy routing is instance-wide.** It never depended on who was asking, but it
 was stored per user. If two admins had different proxy settings, the oldest
 account's values win.
+
+## Settings that stay in .env
+
+Not everything moved. These are read before the database exists, or define where
+it lives, so they stay environment variables: `JWT_SECRET`, `FRONTEND_URL`,
+`BASE_DIR`, `BASE_PATH`, `COMPOSE_PROJECT` and `BACKUP_BASE_DIR`. SMTP and OIDC
+still work from `.env` as a fallback, with the panel's values taking precedence.
 
 ## If something goes wrong
 
