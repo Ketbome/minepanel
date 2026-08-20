@@ -93,7 +93,10 @@ minepanel/
 ├── data/
 │   └── minepanel.db      # SQLite database
 └── servers/
+    ├── servers.json      # Derived index (cache, safe to delete)
     ├── server-1/
+    │   ├── server.json   # Source of truth for this server
+    │   ├── docker-compose.yml  # Generated from server.json
     │   ├── mc-data/      # World, plugins, mods
     │   │   └── worlds/   # World sources (folders, zip, tar)
     │   └── backups/

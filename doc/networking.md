@@ -187,50 +187,69 @@ flowchart LR
 
 1. **DNS:** Create wildcard record `*.mc.example.com → your-ip`
 
-2. **Settings:** Configure base domain in **Settings → Proxy Settings**
+2. **Settings:** Set the base domain in **Settings → Network** and turn the proxy on.
 
-3. **Start mc-router:**
-
-```bash
-docker compose --profile proxy up -d
-```
+That is the whole setup. Minepanel generates the router's compose file and starts
+the container itself, the same way it does for servers; there is no profile to
+enable and nothing to add to `.env`.
 
 Java servers auto-get hostnames: `{server-id}.mc.example.com`
 
+::: tip Upgrading from 1.x
+Earlier versions shipped mc-router inside the panel's own `docker-compose.yml`
+behind a `proxy` profile. That service is gone in 2.0. Run
+`docker compose --profile proxy down` once to remove the old container; the panel
+will not stop a router it did not create, so until you do, both would fight over
+port 25565.
+:::
+
+The router listens on **Router port** (25565 by default). If you route traffic
+through another stack, list its networks under **Extra Docker networks** so they
+survive when the file is regenerated.
+
 ### Auto-scaling (sleep when idle)
 
-mc-router can keep idle servers stopped and start them again on the first connection. The router does not talk to Docker: it calls the panel, which starts and stops the server the same way the UI does.
+mc-router can keep idle servers stopped and start them again on the first
+connection. The router does not talk to Docker: it calls the panel, which starts
+and stops the server the same way the UI does.
 
-1. **Generate a token** and enable the feature in `.env`:
+Turn on **Auto-scaling** in **Settings → Network**. The panel generates the shared
+secret the router authenticates with, so there is nothing to copy anywhere.
 
-```bash
-# .env
-MC_PROXY_AUTOSCALE=true
-MC_PROXY_AUTOSCALE_TOKEN=<openssl rand -base64 32>
-MC_PROXY_AUTOSCALE_DOWN_AFTER=10m
-```
+**Stop after** controls how long a server stays empty before it is stopped
+(`10m` by default).
 
-2. **Recreate both services** so they pick up the token:
-
-```bash
-docker compose --profile proxy up -d
-```
-
-While a server is asleep, its MOTD shows `Server is asleep. Join to wake it up!`. Joining triggers the wake-up; the router waits up to `MC_PROXY_AUTOSCALE_WAKE_TIMEOUT` (180s by default) for the server to accept connections, so the first join on a heavy modpack may time out. Reconnect and it will be ready.
+While a server is asleep, its MOTD shows `Server is asleep. Join to wake it up!`.
+Joining triggers the wake-up; the router waits up to 180s for the server to accept
+connections, so the first join on a heavy modpack may time out. Reconnect and it
+will be ready.
 
 ::: warning This stops running servers
-With `MC_PROXY_AUTOSCALE=true`, any proxied Java server with no players for `MC_PROXY_AUTOSCALE_DOWN_AFTER` is stopped, including ones you started manually. Only servers listed in the proxy routes are affected; Bedrock servers are never touched.
+With auto-scaling on, any proxied Java server with no players for the configured
+time is stopped, including ones you started manually. Bedrock servers are never
+touched.
 :::
 
 ### Excluding a server
 
-Heavy modpacks take minutes to boot, which makes sleeping them a poor trade. Turn **Auto-scaling** off under **Server → Settings → Connectivity → Proxy Settings** to leave that server out: the panel then ignores both wake-up and sleep requests for it, so it keeps running 24/7 while the rest still sleep. The switch only appears once `MC_PROXY_AUTOSCALE_TOKEN` is set, and it is on by default, so nothing changes for servers you never touch.
+Heavy modpacks take minutes to boot, which makes sleeping them a poor trade. Turn
+**Auto-scaling** off under **Server → Settings → Connectivity → Proxy Settings** to
+leave that server out: the panel then ignores both wake-up and sleep requests for
+it, so it keeps running 24/7 while the rest still sleep. The switch only appears
+once auto-scaling is on, and it is on by default, so nothing changes for servers
+you never touch.
 
 ::: tip The asleep MOTD is router-side
-mc-router prints `Server is asleep. Join to wake it up!` for any route whose backend is down, and it cannot be configured per route. An excluded server that you stopped yourself still shows that MOTD, but joining will not start it — start it from the panel.
+mc-router prints `Server is asleep. Join to wake it up!` for any route whose
+backend is down, and it cannot be configured per route. An excluded server that
+you stopped yourself still shows that MOTD, but joining will not start it — start
+it from the panel.
 :::
 
-The panel exposes `POST /servers/autoscale` for this. It is the only unauthenticated endpoint that controls servers, it is rejected unless `MC_PROXY_AUTOSCALE_TOKEN` is set and sent as `Authorization: Bearer <token>`, and it only accepts servers that are currently in the proxy routes.
+The panel exposes `POST /servers/autoscale` for this. It is the only
+unauthenticated endpoint that controls servers, it is rejected unless the
+auto-scale token matches, and it only accepts servers that are currently in the
+proxy routes.
 
 ### Bedrock Connection
 

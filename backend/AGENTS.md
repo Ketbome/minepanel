@@ -85,8 +85,19 @@ Path and filesystem patterns (critical):
   see `detectHostBaseDir` in `config.ts`); `BASE_DIR` env is only a fallback (local dev / no
   Docker). A mismatch between env and detected path is logged.
 - Never mix `serversDir` and `baseDir`; they are not interchangeable.
+- **`servers/<id>/server.json` is the source of truth for a server's config.**
+  `docker-compose.yml` is generated output; never parse it to read config. Reads go
+  through `ServerStoreService.readConfig`; a server with no `server.json` is imported
+  from its compose file once (`importFromDockerCompose`) and never parsed again.
+- `servers/servers.json` is a **derived index**, never authoritative. It exists so
+  the dashboard list and the routes regeneration do not open every server. Treat it
+  as a cache: reconcile against the folders, let `server.json` win, and never store
+  derived state (`active`, `serverExists`) in it.
+- Adding a config field means adding it to `ServerConfigDto` and to the compose
+  generator. There is no reader to update: that is the point of `server.json`.
 - Per-server canonical layout is:
-  - `/app/servers/<serverId>/docker-compose.yml`
+  - `/app/servers/<serverId>/server.json` (source of truth)
+  - `/app/servers/<serverId>/docker-compose.yml` (generated)
   - `/app/servers/<serverId>/mc-data/`
   - `/app/servers/<serverId>/worlds/`
   - `/app/servers/<serverId>/modpacks/` (mounted read-only at `/modpacks`; `CF_MODPACK_ZIP` and local `.mrpack` paths point here)
@@ -105,7 +116,14 @@ Path and filesystem patterns (critical):
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path.
+- `src/docker-compose/server-store.service.ts` - `server.json` and the server index.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
+- `src/proxy/proxy-router.service.ts` - generates and runs the mc-router compose project.
+- `src/common/docker/host-context.service.ts` - reads the panel's own compose labels;
+  used to find the panel's service name and the compose files to act on.
+- `src/settings/instance-settings.service.ts` - instance-wide settings (proxy, network,
+  router, Java defaults). Anything that affects every server belongs here, not in a
+  user's `Settings.preferences`.
 - `src/server-management/auto-scale.controller.ts` - mc-router auto-scaling webhook.
 - `package.json` - backend scripts.
 

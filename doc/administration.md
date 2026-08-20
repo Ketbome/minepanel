@@ -508,46 +508,43 @@ docker compose start mc
 
 ### Update Minepanel
 
-**Using Docker Compose:**
+The sidebar shows the running version at the bottom. When a newer release exists
+it turns amber; clicking it opens what changed between your version and the newest
+one, with a warning if any of those releases changes existing behaviour.
+
+**From the panel:** admins get an **Update now** button in that dialog. Minepanel
+does not recreate itself — that would kill the command halfway through. It starts
+a throwaway container that records the images you are running, pulls the new ones,
+recreates the stack, waits for the panel to answer again, and puts the old images
+back if it never does. The panel is unreachable for a moment and returns on its own.
+
+**From the shell**, or when the panel was not started by Docker Compose:
 
 ```bash
-# Pull latest image
 docker compose pull
-
-# Restart with new image
 docker compose up -d
 ```
 
-**Check for updates:**
+::: warning Read the notes on a major update
+Automatic rollback covers a version that fails to start. It cannot undo a version
+that starts fine but behaves differently, so read the breaking-change notes before
+updating across a major version.
+:::
 
-The sidebar shows the running version at the bottom. When a newer release exists, it turns
-into an amber **Update available** link pointing at that release's notes on GitHub.
+The version is baked into the image at build time, so a locally built image shows
+nothing. The panel asks the GitHub releases API at most once per hour and never
+fails a request over it: if GitHub is unreachable, the badge simply keeps showing
+the current version.
 
-The version is baked into the image at build time, so a locally built image shows nothing.
-The panel asks the GitHub releases API at most once per hour and never fails a request over
-it: if GitHub is unreachable, the badge simply keeps showing the current version.
-
-`GET /version` returns the same data:
+`GET /version` returns the same data, including the changelog:
 
 ```json
-{ "current": "1.11.33", "latest": "1.11.34", "updateAvailable": true, "releaseUrl": "...", "publishedAt": "..." }
+{ "current": "1.11.33", "latest": "2.0.0", "updateAvailable": true, "hasBreakingChanges": true, "canSelfUpdate": true, "changelog": [] }
 ```
 
-From the shell:
-
-```bash
-# Check current version
-docker images ketbom/minepanel
-
-# Check latest version on Docker Hub
-https://hub.docker.com/r/ketbom/minepanel/tags
-```
-
-**Updating automatically:**
-
-Minepanel does not update itself: it runs inside the stack it would have to recreate, and a
-failed self-update leaves the panel down with no way to roll back from the inside. Use
-[Watchtower](https://containrrr.dev/watchtower/) if you want it unattended:
+**Unattended updates:** use [Watchtower](https://containrrr.dev/watchtower/) if you
+want them without a human in the loop. It updates blindly, so nobody reads the
+changelog first:
 
 ```yaml
   watchtower:
@@ -558,8 +555,8 @@ failed self-update leaves the panel down with no way to roll back from the insid
     restart: unless-stopped
 ```
 
-Pin the panel to a specific tag instead of `latest` if you would rather approve each update
-yourself.
+Pin the panel to a specific tag instead of `latest` if you would rather approve
+each update yourself.
 
 ### Update Minecraft Server
 

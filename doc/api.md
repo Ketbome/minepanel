@@ -47,7 +47,7 @@ These routes do not require an authenticated session:
 | `POST` | `/auth/logout` | Clear session cookies and revoke refresh token when present |
 | `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
 | `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
-| `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless `MC_PROXY_AUTOSCALE_TOKEN` is set |
+| `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless auto-scaling is enabled in Settings |
 
 All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
 
@@ -177,8 +177,11 @@ Host monitoring endpoints:
 
 - `GET /system/stats`
 - `GET /system/network`
-- `GET /version` — running version, newest release and whether an update is available; the
-  GitHub lookup is cached for an hour and never fails the request
+- `GET /version` — running version, newest release, the release notes for everything
+  in between and whether any of it is breaking; the GitHub lookup is cached for an
+  hour and never fails the request
+- `POST /version/update` — starts a panel update in a throwaway container (admin
+  only). Answers `400` when the panel was not started by Docker Compose
 
 ### Mod Providers
 
@@ -240,7 +243,7 @@ Auto-scaling webhook, called by mc-router (see [Networking](/networking#auto-sca
 { "action": "up", "serverAddress": "survival.mc.example.com", "backend": "survival:25565" }
 ```
 
-Requires `Authorization: Bearer <MC_PROXY_AUTOSCALE_TOKEN>`. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`. When a server has auto-scaling turned off, `down` answers `200` with `{ "status": "skipped" }` and `up` is rejected with `503`.
+Requires `Authorization: Bearer <token>`, where the token is the one the panel generated when auto-scaling was enabled. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`. When a server has auto-scaling turned off, `down` answers `200` with `{ "status": "skipped" }` and `up` is rejected with `503`.
 
 ## Response Patterns
 
