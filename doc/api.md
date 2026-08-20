@@ -178,6 +178,7 @@ Examples:
 - `GET /users/one`
 - `POST /users`
 - `PATCH /users/:id`
+- `PATCH /users/:id/role` (admin only, `{ "role": "ADMIN" | "USER" }`)
 - `DELETE /users/:id`
 - `POST /users/change-password`
 

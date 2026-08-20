@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Key, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Key, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -175,8 +175,11 @@ export default function IntegrationsSettingsPage() {
       };
       applyIntegrations(await updateIntegrationSettings(payload));
       mcToast.success(t('settingsSaved'));
-    } catch {
-      mcToast.error(t('settingsSaveFailed'));
+    } catch (error) {
+      // The backend refuses SSO-only mode when it would lock everyone out, and
+      // that reason is the whole point of the message.
+      const err = error as { response?: { data?: { message?: string } } };
+      mcToast.error(err.response?.data?.message || t('settingsSaveFailed'));
     } finally {
       setSavingOidc(false);
     }
@@ -344,9 +347,17 @@ export default function IntegrationsSettingsPage() {
                   <Input value={oidc.providerName} onChange={(e) => setOidc({ ...oidc, providerName: e.target.value })} placeholder="SSO" className="bg-gray-800 border-gray-700 text-white" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={oidc.disablePasswordLogin} onCheckedChange={(v) => setOidc({ ...oidc, disablePasswordLogin: v })} />
-                <Label className="text-gray-200">{t('oidcDisablePasswordLogin')}</Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={oidc.disablePasswordLogin} onCheckedChange={(v) => setOidc({ ...oidc, disablePasswordLogin: v })} />
+                  <Label className="text-gray-200">{t('oidcDisablePasswordLogin')}</Label>
+                </div>
+                {oidc.disablePasswordLogin ? (
+                  <p className="flex items-start gap-1.5 text-xs text-amber-300">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {t('oidcDisablePasswordLoginWarning')}
+                  </p>
+                ) : null}
               </div>
               <Button onClick={saveOidc} disabled={savingOidc} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
                 {savingOidc ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

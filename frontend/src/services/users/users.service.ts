@@ -23,6 +23,8 @@ export interface UserAccessState {
   serverAccess: string[];
 }
 
+export type UserRole = 'ADMIN' | 'USER';
+
 export interface User {
   id: number;
   username: string;
@@ -126,6 +128,11 @@ export const updateUser = async (id: number, user: Partial<CreateUserData>): Pro
 
 export const updateUserAccess = async (id: number, data: UpdateUserAccessData): Promise<User> => {
   const response = await api.patch(`/users/${id}/access`, data);
+  return response.data;
+};
+
+export const updateUserRole = async (id: number, role: UserRole): Promise<User> => {
+  const response = await api.patch(`/users/${id}/role`, { role });
   return response.data;
 };
 

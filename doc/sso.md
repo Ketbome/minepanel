@@ -29,6 +29,9 @@ Minepanel**.
   with full access (bootstrap).
 - Every subsequent SSO user is created as a regular `USER` with **no permissions** until an
   admin grants access under **Settings → Access**.
+- To give an SSO account full rights, an admin flips the **Administrator** switch for it under
+  **Settings → Access**. Permissions alone do not unlock admin-only screens such as
+  **Settings → Integrations**.
 
 ## Configuration
 
@@ -92,8 +95,21 @@ password-reset flow. The backend also rejects `POST /auth/login` and `POST /auth
 so the restriction cannot be bypassed from the API. The first admin is still bootstrapped
 through the first SSO login.
 
-This flag is ignored unless SSO is fully configured, so a misconfiguration cannot lock you
-out of the panel.
+The flag is ignored unless SSO is fully configured. When it is switched on from
+**Settings → Integrations**, Minepanel also refuses the change until **at least one admin
+account is linked to the provider** (that is, an admin has already signed in through SSO at
+least once). Otherwise the panel would be left with admins that can only log in with a
+password that no longer works.
+
+::: warning Order matters
+Configure SSO first, sign in through it, make sure an **admin** account is on the SSO side
+(link it by email, or promote the SSO account under **Settings → Access**), and only then
+disable password login.
+:::
+
+The setting is stored in the database when saved from the panel, so it **overrides**
+`OIDC_DISABLE_PASSWORD_LOGIN` in `.env`. If a panel is already locked out, see
+[Locked out with SSO only](/administration#locked-out-with-sso-only).
 
 ## Troubleshooting
 

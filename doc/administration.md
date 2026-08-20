@@ -113,6 +113,22 @@ const hash = bcrypt.hashSync('your_new_password', 10);
 console.log(hash);
 ```
 
+### Locked Out With SSO Only
+
+If password login is disabled and no admin account can sign in through your identity
+provider, the panel cannot be recovered from the UI. Minepanel now refuses to enable SSO-only
+mode in that state, but a panel that already ended up there can be freed with SQL:
+
+```bash
+docker compose stop minepanel
+sqlite3 data/minepanel.db "UPDATE instance_settings SET oidc_disable_password_login = 0;"
+docker compose start minepanel
+```
+
+Setting `OIDC_DISABLE_PASSWORD_LOGIN=false` in `.env` does not help here: values saved from
+**Settings -> Integrations** are stored in the database and take precedence over the
+environment.
+
 ## Roles and User Access
 
 Minepanel now includes the **first phase** of user roles and access control.
@@ -121,6 +137,19 @@ Minepanel now includes the **first phase** of user roles and access control.
 
 - `ADMIN` has full access to the panel and is not restricted by user permissions.
 - `USER` can only access the features and servers explicitly assigned to them.
+
+### Promoting an account to admin
+
+An `ADMIN` can turn any account into an admin (and back) from **Settings -> Access**, with the
+**Administrator** switch on each user. This is the supported way to hand admin rights to an
+account created through SSO.
+
+- Only an `ADMIN` can change roles. The `manageUsers` permission is not enough, otherwise a
+  delegated operator could promote itself.
+- Promoting grants full access. Demoting resets the account to no permissions, so grant what
+  it needs afterwards.
+- The panel always keeps at least one active admin, and refuses to demote the last admin able
+  to sign in when password login is disabled.
 
 ### Delegated user management
 
