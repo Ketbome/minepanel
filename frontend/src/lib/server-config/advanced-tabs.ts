@@ -1,8 +1,10 @@
 import type { ServerConfig } from '@/lib/types/types';
 
-const DEFAULT_DOCKER_VOLUMES = './mc-data:/data\n./modpacks:/modpacks:ro';
-
 const isSet = (value: string | undefined | null) => !!value && value.trim() !== '';
+
+// Both of these are produced by the panel itself, depending on how the server was
+// created, so neither one says anything about what the user wanted.
+const DEFAULT_RESTART_POLICIES = ['no', 'unless-stopped'];
 
 /**
  * Whether an advanced tab holds anything other than its defaults.
@@ -27,16 +29,18 @@ export const ADVANCED_TAB_HAS_CUSTOM_VALUES: Record<string, (config: ServerConfi
   lifecycle: (config) =>
     config.enableAutoStop === true ||
     config.enableAutoPause === true ||
-    (isSet(config.restartPolicy) && config.restartPolicy !== 'no') ||
+    (isSet(config.restartPolicy) && !DEFAULT_RESTART_POLICIES.includes(config.restartPolicy)) ||
     (isSet(config.stopDelay) && config.stopDelay !== '60') ||
     (isSet(config.tz) && config.tz !== 'UTC'),
 
+  // `dockerVolumes` is deliberately not checked: the panel rewrites it to absolute
+  // paths and appends the world-library mounts on every server, so it never matches
+  // its own default and would keep this tab visible for everyone.
   advanced: (config) =>
     isSet(config.envVars) ||
     isSet(config.dockerLabels) ||
     config.enableRollingLogs === true ||
-    config.logTimestamp === true ||
-    (isSet(config.dockerVolumes) && config.dockerVolumes !== DEFAULT_DOCKER_VOLUMES),
+    config.logTimestamp === true,
 };
 
 export const advancedTabIsInUse = (tab: string, config: ServerConfig): boolean =>
