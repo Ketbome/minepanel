@@ -1217,6 +1217,23 @@ export const en = {
   modVersionsEmpty: 'No versions for this Minecraft version/loader',
   modUpdateAvailable: 'Update available',
   updateAvailable: 'Update available',
+  updateStarted:
+    'Update started. The panel will restart shortly and come back on its own',
+  updateFailed: 'Could not start the update',
+  updating: 'Updating...',
+  updateNow: 'Update now',
+  updateNowDesc:
+    'Pulls the new images and recreates the stack. The panel goes down for a moment and returns; if the new version does not come up, the previous one is restored automatically',
+  updateManually:
+    'This panel was not started by Docker Compose, so it cannot update itself. Run this where your compose file lives:',
+  changelogSince: 'What changed since {version}',
+  changelogUpToDate: 'You are running the latest release',
+  changelogBreaking: 'Breaking',
+  changelogBreakingWarning:
+    'This update changes existing behaviour. Read the notes below before updating.',
+  changelogNoNotes: 'No release notes',
+  changelogUnavailable:
+    'Release notes could not be loaded. Check GitHub for the details.',
   modOptional: 'Optional',
   modOptionalHelp: 'itzg keeps the server starting when no compatible version exists, and leaves this mod out of the version calculation',
   versionFromModrinthProjects: 'Set version from mods',

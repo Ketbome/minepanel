@@ -1,0 +1,145 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import * as fs from 'fs-extra';
+import * as path from 'node:path';
+import { HostContextService } from 'src/common/docker/host-context.service';
+
+const execAsync = promisify(exec);
+
+// Small image that already has the compose plugin and curl, so the updater does
+// not need to build anything.
+const UPDATER_IMAGE = 'docker:27-cli';
+const RESULT_FILE = '/app/data/update-result.json';
+
+export interface UpdateResult {
+  status: 'running' | 'succeeded' | 'rolled-back' | 'failed';
+  startedAt: string;
+  finishedAt?: string;
+  fromDigests?: Record<string, string>;
+  message?: string;
+}
+
+export class UpdateNotSupportedError extends Error {}
+
+/**
+ * Updates the panel by handing the job to a throwaway container.
+ *
+ * The panel cannot pull and recreate its own stack: the command dies with the
+ * container it is recreating, which is why self-updating was refused before. A
+ * separate one-shot container survives that, records the image digests it
+ * started from, waits for the panel to answer /health again and rolls back to
+ * those digests if it never does.
+ */
+@Injectable()
+export class UpdaterService {
+  private readonly logger = new Logger(UpdaterService.name);
+
+  constructor(private readonly hostContext: HostContextService) {}
+
+  async getLastResult(): Promise<UpdateResult | null> {
+    try {
+      if (!(await fs.pathExists(RESULT_FILE))) return null;
+      return (await fs.readJson(RESULT_FILE)) as UpdateResult;
+    } catch (error) {
+      this.logger.warn('Could not read the last update result', error);
+      return null;
+    }
+  }
+
+  /**
+   * Whether this deployment can be updated from the panel at all. A panel not
+   * started by compose has no stack to act on.
+   */
+  async canSelfUpdate(): Promise<boolean> {
+    const context = await this.hostContext.get();
+    return !!context.workingDir && context.configFiles.length > 0;
+  }
+
+  async start(): Promise<UpdateResult> {
+    const context = await this.hostContext.get();
+    if (!context.workingDir || context.configFiles.length === 0) {
+      throw new UpdateNotSupportedError('The panel was not started by Docker Compose, so it cannot update itself');
+    }
+
+    const digests = await this.currentImageDigests(context.project);
+    const result: UpdateResult = {
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      fromDigests: digests,
+    };
+    await fs.outputJson(RESULT_FILE, result, { spaces: 2 });
+
+    const script = this.buildScript(context.configFiles, digests, context.service);
+    // Detached and on the host's compose project directory, so it outlives this
+    // container being recreated.
+    const command = [
+      'docker run -d --rm',
+      '-v /var/run/docker.sock:/var/run/docker.sock',
+      `-v ${this.shellQuote(context.workingDir)}:/workspace`,
+      `-v ${this.shellQuote(path.dirname(RESULT_FILE))}:/result`,
+      '-w /workspace',
+      UPDATER_IMAGE,
+      `sh -c ${this.shellQuote(script)}`,
+    ].join(' ');
+
+    await execAsync(command);
+    this.logger.log('Update handed off to the updater container');
+    return result;
+  }
+
+  private buildScript(configFiles: string[], digests: Record<string, string>, panelService?: string): string {
+    // Compose files are recorded as host paths; the working dir is mounted at
+    // /workspace, so only their basenames are needed inside the updater.
+    const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(path.basename(file))}`).join(' ');
+    const compose = `docker compose ${fileArgs}`;
+    const health = panelService ? `${compose} exec -T ${panelService} true` : 'true';
+    const rollback = Object.entries(digests)
+      .map(([service, digest]) => `docker tag ${this.shellQuote(digest)} "$(${compose} config --images | grep -m1 ${this.shellQuote(service)})" || true`)
+      .join('\n');
+
+    return [
+      'set -e',
+      `write_result() { printf '{"status":"%s","finishedAt":"%s","message":"%s"}\\n' "$1" "$(date -Iseconds)" "$2" > /result/update-result.json; }`,
+      `${compose} pull`,
+      `${compose} up -d`,
+      // Give the new panel time to boot before deciding it failed.
+      'ok=0',
+      'for i in $(seq 1 60); do',
+      `  if ${health} >/dev/null 2>&1; then ok=1; break; fi`,
+      '  sleep 5',
+      'done',
+      'if [ "$ok" = "1" ]; then',
+      '  write_result succeeded ""',
+      'else',
+      rollback,
+      `  ${compose} up -d || true`,
+      '  write_result rolled-back "The new version did not come up, so the previous images were restored"',
+      'fi',
+    ].join('\n');
+  }
+
+  private async currentImageDigests(project?: string): Promise<Record<string, string>> {
+    if (!project) return {};
+
+    try {
+      const { stdout } = await execAsync(
+        `docker ps --filter "label=com.docker.compose.project=${project}" --format "{{.Label \\"com.docker.compose.service\\"}} {{.Image}}"`,
+      );
+
+      const digests: Record<string, string> = {};
+      for (const line of stdout.trim().split('\n').filter(Boolean)) {
+        const [service, image] = line.split(/\s+/, 2);
+        if (service && image) digests[service] = image;
+      }
+      return digests;
+    } catch (error) {
+      this.logger.warn('Could not record the current image digests, so a rollback will not be possible', error);
+      return {};
+    }
+  }
+
+  private shellQuote(value: string): string {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
+  }
+}

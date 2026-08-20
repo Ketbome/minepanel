@@ -1397,6 +1397,22 @@ export const nl: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Geen versies voor deze Minecraft-versie/loader',
   modUpdateAvailable: 'Update beschikbaar',
   updateAvailable: 'Update beschikbaar',
+  updateStarted: 'Update gestart. Het paneel herstart zo en komt vanzelf terug',
+  updateFailed: 'Kon de update niet starten',
+  updating: 'Bijwerken...',
+  updateNow: 'Nu bijwerken',
+  updateNowDesc:
+    'Haalt de nieuwe images op en maakt de stack opnieuw aan. Het paneel is even weg en komt terug; als de nieuwe versie niet opstart, wordt de vorige automatisch hersteld',
+  updateManually:
+    'Dit paneel is niet met Docker Compose gestart en kan zichzelf dus niet bijwerken. Voer dit uit waar je compose-bestand staat:',
+  changelogSince: 'Wat er is veranderd sinds {version}',
+  changelogUpToDate: 'Je draait de nieuwste versie',
+  changelogBreaking: 'Breekt',
+  changelogBreakingWarning:
+    'Deze update verandert bestaand gedrag. Lees de notities voordat je bijwerkt.',
+  changelogNoNotes: 'Geen release-notities',
+  changelogUnavailable:
+    'De release-notities konden niet worden geladen. Kijk op GitHub voor details.',
   modOptional: 'Optioneel',
   modOptionalHelp: 'itzg blijft de server starten als er geen compatibele versie is, en laat deze mod buiten de versieberekening',
   versionFromModrinthProjects: 'Versie op basis van mods',

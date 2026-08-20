@@ -10,6 +10,12 @@ changelog:
       - "dependabot[bot]"
 
   categories:
+    # Read by the panel: it flags an update as breaking when the release notes
+    # carry this heading, so the user sees it before updating.
+    - title: "⚠️ Breaking Changes"
+      labels:
+        - "breaking"
+
     - title: "🚀 Features"
       labels:
         - "enhancement"

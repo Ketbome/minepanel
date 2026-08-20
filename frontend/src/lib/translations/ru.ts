@@ -1219,6 +1219,22 @@ export const ru: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Нет версий для этой версии Minecraft/загрузчика',
   modUpdateAvailable: 'Доступно обновление',
   updateAvailable: 'Доступно обновление',
+  updateStarted:
+    'Обновление запущено. Панель скоро перезапустится и вернётся сама',
+  updateFailed: 'Не удалось запустить обновление',
+  updating: 'Обновление...',
+  updateNow: 'Обновить сейчас',
+  updateNowDesc:
+    'Загружает новые образы и пересоздаёт стек. Панель ненадолго пропадёт и вернётся; если новая версия не поднимется, предыдущая будет восстановлена автоматически',
+  updateManually:
+    'Эта панель запущена не через Docker Compose, поэтому не может обновить себя. Выполните это там, где лежит ваш compose-файл:',
+  changelogSince: 'Что изменилось с {version}',
+  changelogUpToDate: 'У вас последняя версия',
+  changelogBreaking: 'Ломающее',
+  changelogBreakingWarning:
+    'Это обновление меняет существующее поведение. Прочитайте заметки перед обновлением.',
+  changelogNoNotes: 'Нет заметок о выпуске',
+  changelogUnavailable: 'Не удалось загрузить заметки. Подробности на GitHub.',
   modOptional: 'Необязательный',
   modOptionalHelp: 'itzg продолжит запуск сервера, если совместимой версии нет, и исключит этот мод из расчёта версии',
   versionFromModrinthProjects: 'Версия по модам',

@@ -1218,6 +1218,23 @@ export const pl: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Brak wersji dla tej wersji Minecraft/loadera',
   modUpdateAvailable: 'Dostępna aktualizacja',
   updateAvailable: 'Dostępna aktualizacja',
+  updateStarted:
+    'Aktualizacja rozpoczęta. Panel zaraz się zrestartuje i wróci sam',
+  updateFailed: 'Nie udało się rozpocząć aktualizacji',
+  updating: 'Aktualizowanie...',
+  updateNow: 'Aktualizuj teraz',
+  updateNowDesc:
+    'Pobiera nowe obrazy i odtwarza stack. Panel na chwilę znika i wraca; jeśli nowa wersja nie wstanie, poprzednia zostanie automatycznie przywrócona',
+  updateManually:
+    'Ten panel nie został uruchomiony przez Docker Compose, więc nie może się sam zaktualizować. Uruchom to tam, gdzie jest twój plik compose:',
+  changelogSince: 'Co się zmieniło od {version}',
+  changelogUpToDate: 'Masz najnowszą wersję',
+  changelogBreaking: 'Zmiana łamiąca',
+  changelogBreakingWarning:
+    'Ta aktualizacja zmienia istniejące zachowanie. Przeczytaj notatki przed aktualizacją.',
+  changelogNoNotes: 'Brak notatek do wydania',
+  changelogUnavailable:
+    'Nie udało się wczytać notatek. Szczegóły znajdziesz na GitHubie.',
   modOptional: 'Opcjonalny',
   modOptionalHelp: 'itzg nadal uruchamia serwer, gdy nie ma zgodnej wersji, i pomija ten mod w obliczaniu wersji',
   versionFromModrinthProjects: 'Wersja na podstawie modów',

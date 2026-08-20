@@ -1232,6 +1232,23 @@ export const de: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Keine Versionen für diese Minecraft-Version/Loader',
   modUpdateAvailable: 'Update verfügbar',
   updateAvailable: 'Update verfügbar',
+  updateStarted:
+    'Update gestartet. Das Panel startet gleich neu und kommt von selbst zurück',
+  updateFailed: 'Das Update konnte nicht gestartet werden',
+  updating: 'Wird aktualisiert...',
+  updateNow: 'Jetzt aktualisieren',
+  updateNowDesc:
+    'Lädt die neuen Images und erstellt den Stack neu. Das Panel ist kurz weg und kommt zurück; kommt die neue Version nicht hoch, wird automatisch die vorherige wiederhergestellt',
+  updateManually:
+    'Dieses Panel wurde nicht mit Docker Compose gestartet und kann sich daher nicht selbst aktualisieren. Führe dies dort aus, wo deine Compose-Datei liegt:',
+  changelogSince: 'Was sich seit {version} geändert hat',
+  changelogUpToDate: 'Du nutzt die neueste Version',
+  changelogBreaking: 'Breaking',
+  changelogBreakingWarning:
+    'Dieses Update ändert bestehendes Verhalten. Lies die Hinweise vor dem Aktualisieren.',
+  changelogNoNotes: 'Keine Versionshinweise',
+  changelogUnavailable:
+    'Die Versionshinweise konnten nicht geladen werden. Details stehen auf GitHub.',
   modOptional: 'Optional',
   modOptionalHelp: 'itzg startet den Server weiter, wenn keine kompatible Version existiert, und lässt diese Mod aus der Versionsberechnung heraus',
   versionFromModrinthProjects: 'Version aus Mods',

@@ -1382,6 +1382,23 @@ export const es: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Sin versiones para esta versión/loader',
   modUpdateAvailable: 'Actualización disponible',
   updateAvailable: 'Actualización disponible',
+  updateStarted:
+    'Actualización iniciada. El panel se reiniciará en breve y volverá solo',
+  updateFailed: 'No se pudo iniciar la actualización',
+  updating: 'Actualizando...',
+  updateNow: 'Actualizar ahora',
+  updateNowDesc:
+    'Descarga las imágenes nuevas y recrea el stack. El panel se cae un momento y vuelve; si la versión nueva no levanta, se restaura la anterior automáticamente',
+  updateManually:
+    'Este panel no se inició con Docker Compose, así que no puede actualizarse solo. Ejecuta esto donde esté tu archivo compose:',
+  changelogSince: 'Qué cambió desde {version}',
+  changelogUpToDate: 'Estás en la última versión',
+  changelogBreaking: 'Rompe',
+  changelogBreakingWarning:
+    'Esta actualización cambia comportamiento existente. Lee las notas antes de actualizar.',
+  changelogNoNotes: 'Sin notas de versión',
+  changelogUnavailable:
+    'No se pudieron cargar las notas. Consulta GitHub para el detalle.',
   modOptional: 'Opcional',
   modOptionalHelp: 'itzg sigue arrancando el servidor si no hay versión compatible, y deja este mod fuera del cálculo de versión',
   versionFromModrinthProjects: 'Versión según los mods',
