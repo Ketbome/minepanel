@@ -9,17 +9,14 @@ import { FormField } from "@/components/ui/form-field";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { BookOpen } from "lucide-react";
-import { WorldsTab } from "../WorldsTab";
 import { LINK_WORLD_SETTINGS } from "@/lib/providers/constants";
 
 interface WorldSettingsTabProps {
-  serverId: string;
-  serverStatus: string;
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverStatus, config, updateConfig }) => {
+export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const isJava = config.edition !== "BEDROCK";
   const isGtnh = config.serverType === 'GTNH';
@@ -251,8 +248,6 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ serverId, serverSt
         </AccordionItem>
       </Accordion>
       )}
-
-      {isJava && <WorldsTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />}
     </div>
   );
 };

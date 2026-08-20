@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -18,6 +18,7 @@ const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mo
 const PluginsTab = dynamic(() => import("../molecules/Tabs/PluginsTab").then(mod => mod.PluginsTab));
 const ResourcesTab = dynamic(() => import("../molecules/Tabs/ResourcesTab").then(mod => mod.ResourcesTab));
 const GameTab = dynamic(() => import("../molecules/Tabs/GameTab").then(mod => mod.GameTab));
+const WorldsTab = dynamic(() => import("../molecules/Tabs/WorldsTab").then(mod => mod.WorldsTab));
 const AccessTab = dynamic(() => import("../molecules/Tabs/AccessTab").then(mod => mod.AccessTab));
 const NetworkTab = dynamic(() => import("../molecules/Tabs/NetworkTab").then(mod => mod.NetworkTab));
 const LifecycleTab = dynamic(() => import("../molecules/Tabs/LifecycleTab").then(mod => mod.LifecycleTab));
@@ -30,7 +31,7 @@ const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasks
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "game", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
 
 // Tabs that were split up or absorbed. People bookmark these hashes and the docs
 // link to them, so an old one lands on whichever tab took over its content.
@@ -68,6 +69,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showResourcesTab = isJava; // JVM settings only apply to Java
   const showCommandsTab = isJava; // RCON only works with Java
   const showBackupsTab = isJava; // mc-backup drives the world save over RCON
+  const showWorldsTab = isJava; // world switching is Java-only server side
 
   const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
@@ -78,6 +80,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const tabsMeta: (ServerNavItem & { show: boolean; advanced?: boolean })[] = [
     { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
     { value: "game", label: t("game"), icon: Gamepad2, group: "config", show: true, disabled: isServerRunning },
+    { value: "worlds", label: t("worlds"), icon: Globe, group: "config", show: showWorldsTab, disabled: false },
     { value: "access", label: t("access"), icon: Shield, group: "config", show: true, disabled: isServerRunning },
     { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
@@ -120,6 +123,9 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
       : []),
     { value: "set-basic", label: t("basicSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "motd nombre name dificultad difficulty gamemode modo de juego jugadores players" },
     { value: "set-world", label: t("worldSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "mundo world seed semilla pvp nivel level hardcore spawn mobs" },
+    ...(showWorldsTab
+      ? [{ value: "set-worlds", label: t("worlds"), icon: Globe, target: "worlds", group: t("worlds"), keywords: "mundo world biblioteca library importar import cambiar switch level name" }]
+      : []),
     { value: "set-performance", label: t("performanceSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "view distance distancia render simulation simulacion chunks" },
     { value: "set-access", label: t("accessControl"), icon: Shield, target: "access", group: t("access"), keywords: "online mode ops operadores rcon permisos permissions whitelist lista blanca flight vuelo command block" },
     { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), keywords: "red network puerto port proxy hostname ip conexion connection autoscale ipv6" },
@@ -274,8 +280,14 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               </TabsContent>
 
               <TabsContent value="game" className="space-y-4 mt-0">
-                <GameTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+                <GameTab config={config} updateConfig={updateConfig} />
               </TabsContent>
+
+              {showWorldsTab && (
+                <TabsContent value="worlds" className="space-y-4 mt-0">
+                  <WorldsTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
 
               <TabsContent value="access" className="space-y-4 mt-0">
                 <AccessTab config={config} updateConfig={updateConfig} />

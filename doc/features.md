@@ -137,6 +137,8 @@ Operational notes:
 - World switching supports folders with `level.dat` and archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`).
 - `WORLD` clone source is mounted read-only by Minepanel to avoid accidental source overwrites.
 - World Library includes **Discover Worlds** to search CurseForge worlds and import remote ZIP/TAR URLs directly into `servers/.world/worlds/`.
+- The World Library page lists what you already have as searchable cards, filterable by name and by the folder imports landed in. The file browser is still there, folded away, for uploading, renaming and deleting.
+- Each Java server has its own **Worlds** tab for picking which world it runs, with the same search across its local worlds and the shared library. It stays usable while the server is running: applying a world restarts it.
 
 ## Backups
 

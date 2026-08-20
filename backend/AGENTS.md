@@ -115,7 +115,11 @@ Path and filesystem patterns (critical):
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
-- `src/world-discovery/world-discovery.service.ts` - `.world` library import path.
+- `src/world-discovery/world-discovery.service.ts` - `.world` library import path and
+  `listLibraryWorlds()`, which the library page reads. A world is a folder holding a
+  `level.dat` or a supported archive; keep that rule in step with
+  `collectWorldSources` in `server-management.service.ts` or the two world lists
+  disagree about what counts.
 - `src/docker-compose/docker-compose.module.ts` - provides `DockerComposeService` and
   `ServerStoreService`. Import this module; never list them as providers again, or each
   module gets its own instance and the startup migration runs once per copy.

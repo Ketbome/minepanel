@@ -208,9 +208,16 @@ from user settings; Modrinth needs no credentials.
 
 Global world library search/import and CurseForge metadata lookup:
 
+- `GET /world-discovery/library` - lists what is already in the shared library
 - `GET /world-discovery/search`
 - `POST /world-discovery/import`
 - `GET /world-discovery/curseforge/:projectId`
+
+`GET /world-discovery/library` returns one entry per world - a folder holding a
+`level.dat` or a supported archive - with the path relative to the library root as
+`source`, which is what a server stores as `worldSource`. Folders that are not
+worlds are walked into, so imports grouped under `curseforge/` or `url/` show up.
+`sizeBytes` is `0` for folders: measuring one means walking every region file.
 
 ### Bedrock Addons
 

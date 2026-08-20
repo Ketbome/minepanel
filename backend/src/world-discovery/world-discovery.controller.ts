@@ -10,6 +10,11 @@ import { WorldDiscoveryService } from './world-discovery.service';
 export class WorldDiscoveryController {
   constructor(private readonly worldDiscoveryService: WorldDiscoveryService) {}
 
+  @Get('library')
+  async listLibraryWorlds() {
+    return this.worldDiscoveryService.listLibraryWorlds();
+  }
+
   @Get('search')
   async searchWorlds(@Request() req, @Query(new ValidationPipe({ transform: true })) query: SearchWorldsQueryDto) {
     const user = req.user as PayloadToken;

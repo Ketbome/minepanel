@@ -43,7 +43,22 @@ export interface ImportWorldResponse {
   bytes: number;
 }
 
+export interface LibraryWorld {
+  /** Path relative to the library root; what a server stores as `worldSource`. */
+  source: string;
+  name: string;
+  folder: string;
+  type: "directory" | "archive";
+  sizeBytes: number;
+  modifiedAt: string;
+}
+
 export const worldDiscoveryService = {
+  async listLibraryWorlds(): Promise<LibraryWorld[]> {
+    const { data } = await api.get("/world-discovery/library");
+    return data;
+  },
+
   async searchCurseforgeWorlds(params: { q?: string; pageSize?: number; index?: number }): Promise<DiscoverWorldsResponse> {
     const { data } = await api.get("/world-discovery/search", {
       params: {

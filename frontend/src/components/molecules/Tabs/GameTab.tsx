@@ -13,13 +13,11 @@ import { WorldSettingsTab } from './SettingsTabs/WorldSettingsTab';
 import { PerformanceSettingsTab } from './SettingsTabs/PerformanceSettingsTab';
 
 interface GameTabProps {
-  serverId: string;
-  serverStatus: string;
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const GameTab: FC<GameTabProps> = ({ serverId, serverStatus, config, updateConfig }) => {
+export const GameTab: FC<GameTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const isBedrock = config.edition === 'BEDROCK';
 
@@ -71,12 +69,7 @@ export const GameTab: FC<GameTabProps> = ({ serverId, serverStatus, config, upda
           </div>
         )}
 
-        <WorldSettingsTab
-          serverId={serverId}
-          serverStatus={serverStatus}
-          config={config}
-          updateConfig={updateConfig}
-        />
+        <WorldSettingsTab config={config} updateConfig={updateConfig} />
 
         <PerformanceSettingsTab config={config} updateConfig={updateConfig} />
       </CardContent>

@@ -15,6 +15,16 @@ import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { SettingsService } from 'src/users/services/settings.service';
 
+export interface LibraryWorld {
+  /** Path relative to the library root; what a server stores as `worldSource`. */
+  source: string;
+  name: string;
+  folder: string;
+  type: 'directory' | 'archive';
+  sizeBytes: number;
+  modifiedAt: string;
+}
+
 export interface DiscoverWorldResult {
   provider: 'curseforge';
   projectId: string;
@@ -344,6 +354,70 @@ export class WorldDiscoveryService {
     } catch {
       return undefined;
     }
+  }
+
+  /**
+   * Everything sitting in the shared world library.
+   *
+   * A world is a folder holding a `level.dat` or a supported archive, the same
+   * rule the per-server world picker uses, so both lists agree on what counts.
+   * Folders are walked into, which is how imports land: they are grouped under
+   * `curseforge/` or `url/`.
+   */
+  async listLibraryWorlds(): Promise<LibraryWorld[]> {
+    await fs.ensureDir(this.WORLD_LIBRARY_PATH);
+    const worlds = await this.collectLibraryWorlds(this.WORLD_LIBRARY_PATH);
+    worlds.sort((a, b) => a.source.localeCompare(b.source));
+    return worlds;
+  }
+
+  private async collectLibraryWorlds(basePath: string, relativePath = '', depth = 0): Promise<LibraryWorld[]> {
+    if (depth > 8) return [];
+
+    const entries = await fs.readdir(basePath, { withFileTypes: true });
+    const worlds: LibraryWorld[] = [];
+
+    for (const entry of entries) {
+      const source = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+      const fullPath = path.join(basePath, entry.name);
+
+      if (entry.isDirectory()) {
+        if (await fs.pathExists(path.join(fullPath, 'level.dat'))) {
+          worlds.push(await this.describeLibraryWorld(fullPath, source, entry.name, 'directory'));
+          continue;
+        }
+
+        worlds.push(...(await this.collectLibraryWorlds(fullPath, source, depth + 1)));
+        continue;
+      }
+
+      if (entry.isFile() && this.isSupportedArchive(entry.name)) {
+        worlds.push(await this.describeLibraryWorld(fullPath, source, entry.name, 'archive'));
+      }
+    }
+
+    return worlds;
+  }
+
+  private async describeLibraryWorld(
+    fullPath: string,
+    source: string,
+    name: string,
+    type: 'directory' | 'archive',
+  ): Promise<LibraryWorld> {
+    const stats = await fs.stat(fullPath);
+    const separator = source.lastIndexOf('/');
+
+    return {
+      source,
+      name,
+      folder: separator === -1 ? '' : source.slice(0, separator),
+      type,
+      // Directory sizes would mean walking every region file on every request,
+      // which is the expensive part of a world. Only archives report a size.
+      sizeBytes: type === 'archive' ? stats.size : 0,
+      modifiedAt: stats.mtime.toISOString(),
+    };
   }
 
   private sanitizeFileName(fileName: string): string {

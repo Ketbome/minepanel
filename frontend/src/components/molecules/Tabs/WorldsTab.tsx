@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { AvailableWorld, ServerConfig } from "@/lib/types/types";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { getServerWorlds, selectServerWorld } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
+import { Search } from "lucide-react";
 
 interface WorldsTabProps {
   serverId: string;
@@ -25,6 +26,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
   const [selectedScope, setSelectedScope] = useState<"local" | "global">(config.worldScope ?? "local");
   const [worldLevelName, setWorldLevelName] = useState(config.worldLevelName || "world");
   const [forceWorldCopy, setForceWorldCopy] = useState(config.forceWorldCopy ?? false);
+  const [query, setQuery] = useState("");
 
   const loadWorlds = useCallback(async () => {
     setLoading(true);
@@ -97,8 +99,23 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
   };
 
   const isServerRunning = serverStatus === "running" || serverStatus === "starting";
-  const localWorlds = worlds.filter((world) => world.scope === "local");
-  const globalWorlds = worlds.filter((world) => world.scope === "global");
+
+  // The selected world is never filtered out: hiding what the server is currently
+  // running would read as "nothing is selected".
+  const matching = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return worlds;
+    return worlds.filter(
+      (world) =>
+        world.displayPath.toLowerCase().includes(needle) ||
+        (selectedSource === world.source && selectedScope === world.scope),
+    );
+  }, [worlds, query, selectedSource, selectedScope]);
+
+  const localWorlds = matching.filter((world) => world.scope === "local");
+  const globalWorlds = matching.filter((world) => world.scope === "global");
+  const localTotal = worlds.filter((world) => world.scope === "local").length;
+  const globalTotal = worlds.filter((world) => world.scope === "global").length;
   const globalWorldGroups = globalWorlds.reduce<Record<string, AvailableWorld[]>>((acc, world) => {
     const [groupName, ...rest] = world.displayPath.split("/");
     const key = rest.length > 0 ? groupName : "_root";
@@ -167,11 +184,21 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
           {isServerRunning ? t("worldsRestartNoticeRunning") : t("worldsRestartNoticeStopped")}
         </div>
 
+        <div className="relative min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("searchWorlds")}
+            className="h-11 pl-10 bg-gray-800 border-gray-600/80 text-white font-minecraft tracking-wide focus:border-emerald-500/60"
+          />
+        </div>
+
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="space-y-2 rounded-md border border-gray-700/60 bg-gray-900/30 p-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-blue-300">{t("worldSourceLocal")}</h4>
-              <Badge variant="outline" className="border-blue-500/50 text-blue-300 bg-blue-950/20">{localWorlds.length}</Badge>
+              <Badge variant="outline" className="border-blue-500/50 text-blue-300 bg-blue-950/20">{query ? `${localWorlds.length}/${localTotal}` : localTotal}</Badge>
             </div>
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
               {renderWorldList(localWorlds)}
@@ -181,7 +208,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
           <div className="space-y-2 rounded-md border border-gray-700/60 bg-gray-900/30 p-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-cyan-300">{t("worldSourceLibrary")}</h4>
-              <Badge variant="outline" className="border-cyan-500/50 text-cyan-300 bg-cyan-950/20">{globalWorlds.length}</Badge>
+              <Badge variant="outline" className="border-cyan-500/50 text-cyan-300 bg-cyan-950/20">{query ? `${globalWorlds.length}/${globalTotal}` : globalTotal}</Badge>
             </div>
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
               {loading ? (
