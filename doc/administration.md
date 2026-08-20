@@ -173,8 +173,12 @@ Any other Docker image value stays admin-only. Without the permission the backen
 `403` and the version controls are disabled in the **Server type** tab.
 
 Global file management is a way around it: that permission reaches every server's
-`docker-compose.yml`, and editing it changes the image and version directly. The permission
-list warns about this next to the switch while it is on.
+`server.json`, which is the source of truth for its configuration, so editing it changes the
+image and version directly. The permission list warns about this next to the switch while it
+is on.
+
+(Editing a server's generated `docker-compose.yml` is not a way around it, since that file is
+rebuilt from `server.json` on the next start.)
 
 This permission is **granted by `ADMIN` only**. An operator with `manageUsers` cannot turn it
 on for another account, for a new invitation, or for themselves: the backend keeps the stored

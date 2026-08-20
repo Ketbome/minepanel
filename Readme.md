@@ -53,7 +53,8 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies
-- **Proxy support** — mc-router for single-port multi-server (Java), with optional auto-scaling (sleep when idle, wake on join)
+- **Proxy support** — mc-router for single-port multi-server (Java), started and configured by the panel, with optional auto-scaling (sleep when idle, wake on join) and a per-server opt-out
+- **Update notices** — release notes in the panel for every version between yours and the newest, and a one-click update for admins
 - **Discord webhooks** — Server events notifications
 - **Admin + user access control** — First phase with invitations and per-user permissions
 - **Multi-language** — English, Spanish, Dutch, German, Polish

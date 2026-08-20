@@ -366,6 +366,24 @@ If you previously hardcoded it to a wrong value, remove it (or fix it) and recre
 servers. If you set `BASE_DIR` and it differs from the detected path, the startup logs will warn
 you and the detected path wins. See [Configuration → Base Directory](/configuration#base-directory-host-path).
 
+### A server is missing from the dashboard
+
+The list is built from `servers/servers.json`, an index the panel rebuilds from the folders.
+Deleting it is safe and forces a rebuild:
+
+```bash
+rm servers/servers.json
+docker compose restart backend
+```
+
+If the server is still missing, check the backend log for `Could not migrate`: a server whose
+`docker-compose.yml` cannot be parsed is skipped on purpose and left untouched, rather than
+imported as a blank configuration. Fix the file and restart.
+
+A server's own configuration lives in `servers/<id>/server.json`. That one is **not**
+disposable — it is the source of truth, and the generated `docker-compose.yml` is rebuilt from
+it every time the server starts.
+
 ### Server Won't Start
 
 **Symptoms:** Server status shows "error" or "exited"

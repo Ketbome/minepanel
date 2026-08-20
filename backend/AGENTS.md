@@ -116,6 +116,9 @@ Path and filesystem patterns (critical):
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path.
+- `src/docker-compose/docker-compose.module.ts` - provides `DockerComposeService` and
+  `ServerStoreService`. Import this module; never list them as providers again, or each
+  module gets its own instance and the startup migration runs once per copy.
 - `src/docker-compose/server-store.service.ts` - `server.json` and the server index.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
 - `src/proxy/proxy-router.service.ts` - generates and runs the mc-router compose project.

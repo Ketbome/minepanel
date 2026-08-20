@@ -32,7 +32,8 @@ from the dashboard.
 `proxyBaseDomain`, `publicIp`, `lanIp` and the Java server defaults used to live in
 one user's preferences even though they decide how every server's compose file is
 generated. They are lifted into instance-wide settings once, taken from the oldest
-user account.
+user account, and then removed from every user's preferences so there is only one
+copy left.
 
 Nothing is removed: `docker-compose.yml` stays in place for every server, so
 rolling back to 1.11 works. You lose only the changes made while on 2.0.

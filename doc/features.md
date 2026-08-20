@@ -244,7 +244,10 @@ Recommended approach:
 | Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT            |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
-| MC Proxy Router  | Single port for Java servers via hostname |
+| MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
+| Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
+| Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
+| One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
 | End Portal expedition | Optional desktop-only 3D easter egg in Settings > Danger Zone; find and click the portal to return |
 
 ## Edition Comparison

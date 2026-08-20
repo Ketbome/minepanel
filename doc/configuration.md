@@ -123,9 +123,24 @@ Pick a preset and copy it to your `.env` file:
 
 ## Network Settings
 
-Public IP, LAN IP, and Proxy settings are configured through the web UI:
+Public IP, LAN IP and everything about the Java proxy are configured through the
+web UI, under **Settings → Network**. Since 2.0 the panel runs mc-router itself,
+so none of this lives in `.env` any more:
 
-**Settings → Network Settings** / **Settings → Proxy Settings**
+| Setting | What it does |
+| --- | --- |
+| Base domain | Wildcard domain servers get hostnames under (`<id>.mc.example.com`) |
+| Enable proxy | Starts or stops the mc-router container |
+| Router port | Host port the proxy listens on (25565 by default) |
+| Auto-scaling | Stops proxied Java servers while empty, starts them on the first connection |
+| Stop after | Idle time before a server is stopped (`10m` by default) |
+| Sleeping server message | MOTD shown while a server is stopped |
+| Extra Docker networks | Existing external networks to attach the router to, one per line |
+
+Auto-scaling can be turned off for one server without turning it off for the
+rest, under **Server → Settings → Connectivity → Proxy Settings**.
+
+**→ More:** [Networking](/networking)
 
 ## Advanced
 
