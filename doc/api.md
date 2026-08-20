@@ -121,6 +121,10 @@ Typical examples:
 Modpack files uploaded for a server (`.zip` for CurseForge, `.mrpack` for Modrinth). They are stored
 in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
 
+- `GET /servers/:id/worlds` — worlds available to this server, from its own library
+  and the shared one (Java only)
+- `PUT /servers/:id/worlds/select` — body `{ worldSource, worldScope, worldLevelName,
+  forceWorldCopy?, restartIfRunning? }`. `worldScope` is `local` | `global`
 - `GET /servers/:id/modpacks`
 - `POST /servers/:id/modpacks` — multipart `file`
 - `DELETE /servers/:id/modpacks/:fileName`
@@ -157,6 +161,12 @@ Examples:
 - `GET /settings`
 - `PATCH /settings`
 - `POST /settings/test-discord-webhook`
+- `POST /settings/proxy/power` — body `{ "enabled": true | false }`. Starts or stops
+  the mc-router container right away instead of waiting for a settings save
+- `GET /settings/integrations` — masked SMTP/OIDC config (admin only; secrets are
+  never returned)
+- `PATCH /settings/integrations` — write-only secrets: omit to keep, `""` to clear
+- `POST /settings/integrations/smtp/test`
 
 ### Users
 

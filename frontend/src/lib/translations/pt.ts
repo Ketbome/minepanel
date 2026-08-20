@@ -1721,7 +1721,6 @@ export const pt: Record<TranslationKey, string> = {
   worldsLoadError: 'Erro ao carregar os mundos disponíveis',
   worldsEmpty:
     'Nenhum mundo encontrado. Envie uma pasta (com level.dat) ou ZIP/TAR para servers/<id>/worlds local ou para a Biblioteca de mundos.',
-  worldsRestartNoticeRunning: 'O servidor está em execução. Ao aplicar um mundo, ele será reiniciado automaticamente.',
   worldsRestartNoticeStopped: 'O servidor está parado. O mundo selecionado será aplicado na próxima inicialização.',
   allLabel: 'Todos',
   worldSourceLocal: 'Local',

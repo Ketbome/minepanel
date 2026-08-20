@@ -1700,7 +1700,6 @@ export const fr: Record<TranslationKey, string> = {
   worldsDescription: 'Sélectionnez une source de monde parmi les mondes du serveur et basculez avec redémarrage automatique.',
   worldsLoadError: 'Erreur lors du chargement des mondes disponibles',
   worldsEmpty: 'Aucun monde trouvé. Téléversez un dossier (avec level.dat) ou un ZIP/TAR dans servers/<id>/worlds ou dans la bibliothèque de mondes.',
-  worldsRestartNoticeRunning: 'Le serveur est en cours d’exécution. L’application d’un monde redémarrera automatiquement le serveur.',
   worldsRestartNoticeStopped: 'Le serveur est arrêté. Le monde sélectionné sera appliqué au prochain démarrage.',
   allLabel: 'Tous',
   worldSourceLocal: 'Local',

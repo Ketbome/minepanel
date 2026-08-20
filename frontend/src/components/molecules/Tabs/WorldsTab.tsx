@@ -12,12 +12,11 @@ import { Search } from "lucide-react";
 
 interface WorldsTabProps {
   serverId: string;
-  serverStatus: string;
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, updateConfig }) => {
+export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }) => {
   const { t } = useLanguage();
   const [worlds, setWorlds] = useState<AvailableWorld[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,8 +96,6 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
       setSaving(false);
     }
   };
-
-  const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
   // The selected world is never filtered out: hiding what the server is currently
   // running would read as "nothing is selected".
@@ -181,7 +178,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, serverStatus, config, 
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-xs text-amber-300 bg-amber-900/20 border border-amber-700/50 rounded-md px-3 py-2">
-          {isServerRunning ? t("worldsRestartNoticeRunning") : t("worldsRestartNoticeStopped")}
+          {t("worldsRestartNoticeStopped")}
         </div>
 
         <div className="relative min-w-0">

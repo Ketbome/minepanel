@@ -1731,7 +1731,6 @@ export const nl: Record<TranslationKey, string> = {
   worldsLoadError: 'Fout bij laden van beschikbare werelden',
   worldsEmpty:
     'Geen werelden gevonden. Upload een map (met level.dat) of ZIP/TAR naar lokaal servers/<id>/worlds of naar de Wereldbibliotheek.',
-  worldsRestartNoticeRunning: 'De server draait. Toepassen van een wereld herstart de server automatisch.',
   worldsRestartNoticeStopped: 'De server is gestopt. De geselecteerde wereld wordt toegepast bij de volgende start.',
   allLabel: 'Alles',
   worldSourceLocal: 'Lokaal',

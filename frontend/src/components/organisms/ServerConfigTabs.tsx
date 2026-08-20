@@ -285,7 +285,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               {showWorldsTab && (
                 <TabsContent value="worlds" className="space-y-4 mt-0">
-                  <WorldsTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+                  <WorldsTab serverId={serverId} config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 

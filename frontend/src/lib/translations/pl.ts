@@ -1706,7 +1706,6 @@ export const pl: Record<TranslationKey, string> = {
   worldsLoadError: 'Błąd ładowania dostępnych światów',
   worldsEmpty:
     'Nie znaleziono światów. Wgraj folder (z level.dat) lub ZIP/TAR do lokalnego servers/<id>/worlds albo do Biblioteki światów.',
-  worldsRestartNoticeRunning: 'Serwer działa. Zastosowanie świata automatycznie zrestartuje serwer.',
   worldsRestartNoticeStopped: 'Serwer jest zatrzymany. Wybrany świat zostanie zastosowany przy następnym starcie.',
   allLabel: 'Wszystkie',
   worldSourceLocal: 'Lokalne',

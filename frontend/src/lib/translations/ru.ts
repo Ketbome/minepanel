@@ -1698,7 +1698,6 @@ export const ru: Record<TranslationKey, string> = {
   worldsDescription: 'Выберите источник мира из миров сервера и переключите его с автоматическим перезапуском.',
   worldsLoadError: 'Ошибка загрузки доступных миров',
   worldsEmpty: 'Миры не найдены. Загрузите папку с level.dat или ZIP/TAR в local servers/<id>/worlds либо World Library.',
-  worldsRestartNoticeRunning: 'Сервер запущен. Применение мира автоматически перезапустит сервер.',
   worldsRestartNoticeStopped: 'Сервер остановлен. Выбранный мир будет применён при следующем запуске.',
   allLabel: 'Все',
   worldSourceLocal: 'Локальный',

@@ -1697,7 +1697,6 @@ export const en = {
   worldsDescription: 'Select a world source from server worlds and switch with automatic restart.',
   worldsLoadError: 'Error loading available worlds',
   worldsEmpty: 'No worlds found. Upload a folder (with level.dat) or ZIP/TAR into local servers/<id>/worlds or World Library.',
-  worldsRestartNoticeRunning: 'The server is running. Applying a world will restart the server automatically.',
   worldsRestartNoticeStopped: 'The server is stopped. The selected world will apply on the next start.',
   allLabel: 'All',
   worldSourceLocal: 'Local',
