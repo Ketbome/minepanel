@@ -85,7 +85,9 @@ export async function getProxyStatus(): Promise<ProxyStatus> {
     const response = await api.get<ProxyStatus>('/proxy/status');
     return response.data;
   } catch {
-    return { available: false, enabled: false, baseDomain: null, autoScaleAvailable: false, running: false };
+    // `running` stays undefined: reporting false here would make the UI claim the
+    // router is stopped when it just could not be reached.
+    return { available: false, enabled: false, baseDomain: null, autoScaleAvailable: false };
   }
 }
 

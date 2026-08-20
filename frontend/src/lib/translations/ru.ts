@@ -1556,6 +1556,7 @@ export const ru: Record<TranslationKey, string> = {
   enableProxyDesc: 'Направлять весь трафик Minecraft через mc-router на порт 25565',
   proxyRunning: 'Proxy работает',
   proxyStoppedState: 'Proxy остановлен',
+  proxyStateUnknown: 'Состояние proxy неизвестно',
   startProxy: 'Запустить proxy',
   stopProxy: 'Остановить proxy',
   proxyStarted: 'Proxy запущен',

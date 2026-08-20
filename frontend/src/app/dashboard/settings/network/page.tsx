@@ -26,14 +26,15 @@ export default function NetworkSettingsPage() {
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
   const [router, setRouter] = useState<ProxyRouterSettings>({});
-  const [isRunning, setIsRunning] = useState(false);
+  // null means the state could not be read; the button must not guess.
+  const [isRunning, setIsRunning] = useState<boolean | null>(null);
   const [isPowering, setIsPowering] = useState(false);
   const proxyToggleChanged = proxySettings.enabled !== initialProxyEnabled;
 
   useEffect(() => {
     Promise.all([getSettings(), getCurrentUser(), getProxyStatus()])
       .then(([settings, user, status]) => {
-        setIsRunning(!!status.running);
+        setIsRunning(status.running ?? null);
         setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
         const nextProxy = settings.proxy || { enabled: false, baseDomain: null, available: false };
         setProxySettings(nextProxy);
@@ -81,6 +82,8 @@ export default function NetworkSettingsPage() {
         setInitialProxyDomain(proxyBaseDomain);
       }
 
+      // Saving can start or stop the router, so the indicator has to catch up.
+      setIsRunning((await getProxyStatus()).running ?? null);
       mcToast.success(t('settingsSaved'));
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -133,15 +136,17 @@ export default function NetworkSettingsPage() {
           <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-700/60 bg-gray-800/40 p-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className={cn('h-2 w-2 shrink-0 rounded-full', isRunning ? 'bg-emerald-400' : 'bg-gray-600')} />
-                <p className="text-sm font-medium text-gray-200">{isRunning ? t('proxyRunning') : t('proxyStoppedState')}</p>
+                <span className={cn('h-2 w-2 shrink-0 rounded-full', isRunning === null ? 'bg-amber-500' : isRunning ? 'bg-emerald-400' : 'bg-gray-600')} />
+                <p className="text-sm font-medium text-gray-200">
+                  {isRunning === null ? t('proxyStateUnknown') : isRunning ? t('proxyRunning') : t('proxyStoppedState')}
+                </p>
               </div>
               <p className="mt-1 text-xs text-gray-500">{t('enableProxyDesc')}</p>
             </div>
             <Button
               type="button"
               onClick={() => handlePower(!isRunning)}
-              disabled={isPowering || !proxyBaseDomain}
+              disabled={isPowering || !proxyBaseDomain || isRunning === null}
               className={cn('font-minecraft text-white', isRunning ? 'bg-red-700 hover:bg-red-800' : 'bg-emerald-600 hover:bg-emerald-700')}
             >
               {isPowering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Power className="mr-2 h-4 w-4" />}

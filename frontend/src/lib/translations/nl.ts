@@ -1586,6 +1586,7 @@ export const nl: Record<TranslationKey, string> = {
   enableProxyDesc: 'Routeer al het Minecraft verkeer via mc-router op poort 25565',
   proxyRunning: 'Proxy actief',
   proxyStoppedState: 'Proxy gestopt',
+  proxyStateUnknown: 'Proxystatus onbekend',
   startProxy: 'Proxy starten',
   stopProxy: 'Proxy stoppen',
   proxyStarted: 'Proxy gestart',

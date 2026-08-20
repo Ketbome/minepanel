@@ -1580,6 +1580,7 @@ export const de: Record<TranslationKey, string> = {
   enableProxyDesc: 'Leite den gesamten Minecraft-Verkehr über mc-router auf Port 25565',
   proxyRunning: 'Proxy läuft',
   proxyStoppedState: 'Proxy gestoppt',
+  proxyStateUnknown: 'Proxy-Status unbekannt',
   startProxy: 'Proxy starten',
   stopProxy: 'Proxy stoppen',
   proxyStarted: 'Proxy gestartet',

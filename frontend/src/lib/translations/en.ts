@@ -1555,6 +1555,7 @@ export const en = {
   enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
   proxyRunning: 'Proxy running',
   proxyStoppedState: 'Proxy stopped',
+  proxyStateUnknown: 'Proxy state unknown',
   startProxy: 'Start proxy',
   stopProxy: 'Stop proxy',
   proxyStarted: 'Proxy started',

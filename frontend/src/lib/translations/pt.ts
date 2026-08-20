@@ -1574,6 +1574,7 @@ export const pt: Record<TranslationKey, string> = {
   enableProxyDesc: 'Rotear todo o tráfego de Minecraft através do mc-router na porta 25565',
   proxyRunning: 'Proxy ligado',
   proxyStoppedState: 'Proxy desligado',
+  proxyStateUnknown: 'Estado do proxy desconhecido',
   startProxy: 'Ligar proxy',
   stopProxy: 'Desligar proxy',
   proxyStarted: 'Proxy ligado',
