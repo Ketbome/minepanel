@@ -156,6 +156,57 @@ describe('DockerComposeService', () => {
       expect(result?.proxyHostname).toBe('lobby');
     });
 
+    const loadFromCompose = async (id: string, compose: unknown) => {
+      (fs.existsSync as unknown as jest.Mock).mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/${id}` || target === `${SERVERS_DIR}/${id}/docker-compose.yml`
+      );
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue(yaml.dump(compose));
+      return service.getServerConfig(id);
+    };
+
+    it('should read back values the writer used to drop', async () => {
+      const result = await loadFromCompose('java-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'java-server',
+              TYPE: 'VANILLA',
+              SPAWN_PROTECTION: '16',
+            },
+          },
+        },
+      });
+
+      expect(result?.spawnProtection).toBe('16');
+      // and it no longer leaks into the user's custom env textarea
+      expect(result?.envVars ?? '').not.toContain('SPAWN_PROTECTION');
+    });
+
+    it('should read the Bedrock seed and game mode from the keys Bedrock writes', async () => {
+      const result = await loadFromCompose('bedrock-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-bedrock-server:latest',
+            environment: {
+              ID_MANAGER: 'bedrock-server',
+              GAMEMODE: 'creative',
+              LEVEL_SEED: '12345',
+              SERVER_PORT_V6: '19133',
+            },
+          },
+        },
+      });
+
+      expect(result?.edition).toBe('BEDROCK');
+      expect(result?.gameMode).toBe('creative');
+      expect(result?.seed).toBe('12345');
+      expect(result?.serverPortV6).toBe('19133');
+      const envVars = result?.envVars ?? '';
+      expect(envVars).not.toContain('LEVEL_SEED');
+      expect(envVars).not.toContain('SERVER_PORT_V6');
+    });
+
     it('should read the auto-scale opt-out label', async () => {
       const compose = {
         services: {

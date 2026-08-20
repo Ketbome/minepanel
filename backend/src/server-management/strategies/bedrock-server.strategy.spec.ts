@@ -20,4 +20,21 @@ describe('BedrockServerStrategy', () => {
 
     expect(env.LEVEL_NAME).toBe('world');
   });
+
+  it('should keep a custom env var whose value contains an equals sign', () => {
+    const env = strategy.buildEnvironment({
+      id: 'bedrock-test',
+      edition: 'BEDROCK',
+      serverType: 'VANILLA',
+      serverName: 'Bedrock Test',
+      difficulty: 'normal',
+      maxPlayers: '10',
+      onlineMode: true,
+      gameMode: 'survival',
+      viewDistance: '10',
+      envVars: 'SOME_FLAG=-Dfoo=bar=baz',
+    } as ServerConfig);
+
+    expect(env.SOME_FLAG).toBe('-Dfoo=bar=baz');
+  });
 });

@@ -115,4 +115,15 @@ describe('JavaServerStrategy', () => {
 
     expect(env.VERSION).toBe('1.20.6');
   });
+
+  it('should keep a custom env var whose value contains an equals sign', () => {
+    const config = {
+      ...baseConfig(),
+      envVars: 'JVM_EXTRA=-Dfoo=bar=baz',
+    } as ServerConfig;
+
+    const env = strategy.buildEnvironment(config);
+
+    expect(env.JVM_EXTRA).toBe('-Dfoo=bar=baz');
+  });
 });

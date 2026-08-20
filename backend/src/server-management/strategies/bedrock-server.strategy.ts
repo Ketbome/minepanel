@@ -138,7 +138,10 @@ export class BedrockServerStrategy implements IServerStrategy {
       .filter((line) => line.trim())
       .reduce(
         (acc, line) => {
-          const [key, value] = line.split('=').map((part) => part.trim());
+          const separator = line.indexOf('=');
+          if (separator === -1) return acc;
+          const key = line.slice(0, separator).trim();
+          const value = line.slice(separator + 1).trim();
           if (key && value) acc[key] = value;
           return acc;
         },

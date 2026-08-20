@@ -7,6 +7,7 @@ import * as yaml from 'js-yaml';
 import * as path from 'node:path';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
+import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 const execAsync = promisify(exec);
 
@@ -153,8 +154,8 @@ export class DockerComposeService {
         pvp: env.PVP === 'true',
         commandBlock: env.ENABLE_COMMAND_BLOCK === 'true',
         allowFlight: env.ALLOW_FLIGHT === 'true',
-        gameMode: env.MODE ?? 'survival',
-        seed: env.SEED,
+        gameMode: env.GAMEMODE ?? env.MODE ?? 'survival',
+        seed: env.LEVEL_SEED ?? env.SEED,
         worldSource: this.parseWorldSource(env.WORLD),
         worldScope: this.parseWorldScope(env.WORLD),
         worldLevelName: edition === 'BEDROCK' ? env.LEVEL_NAME ?? env.LEVEL : env.LEVEL ?? 'world',
@@ -179,6 +180,7 @@ export class DockerComposeService {
 
         preventProxyConnections: env.PREVENT_PROXY_CONNECTIONS === 'true',
         opPermissionLevel: env.OP_PERMISSION_LEVEL ?? '4',
+        spawnProtection: env.SPAWN_PROTECTION ?? '',
 
         enableRcon: env.ENABLE_RCON !== 'false',
         rconPort: env.RCON_PORT ?? '25575',
@@ -317,7 +319,7 @@ export class DockerComposeService {
   }
 
   private extractCustomEnvVars(env: any): string {
-    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'MODRINTH_MODPACK', 'VERSION_FROM_MODRINTH_PROJECTS', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_MODPACK_ZIP', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED']);
+    const knownEnvVars = new Set(['ID_MANAGER', 'EULA', 'MOTD', 'SERVER_NAME', 'DIFFICULTY', 'MAX_PLAYERS', 'OPS', 'TZ', 'ONLINE_MODE', 'PVP', 'ENABLE_COMMAND_BLOCK', 'ALLOW_FLIGHT', 'VIEW_DISTANCE', 'SIMULATION_DISTANCE', 'STOP_SERVER_ANNOUNCE_DELAY', 'ENABLE_ROLLING_LOGS', 'EXEC_DIRECTLY', 'PLAYER_IDLE_TIMEOUT', 'ENTITY_BROADCAST_RANGE_PERCENTAGE', 'LEVEL_TYPE', 'MODE', 'HARDCORE', 'SPAWN_ANIMALS', 'SPAWN_MONSTERS', 'SPAWN_NPCS', 'GENERATE_STRUCTURES', 'ALLOW_NETHER', 'UID', 'GID', 'INIT_MEMORY', 'MAX_MEMORY', 'SEED', 'VERSION', 'TYPE', 'ENABLE_AUTOSTOP', 'AUTOSTOP_TIMEOUT_EST', 'AUTOSTOP_TIMEOUT_INIT', 'ENABLE_AUTOPAUSE', 'AUTOPAUSE_TIMEOUT_EST', 'AUTOPAUSE_TIMEOUT_INIT', 'AUTOPAUSE_KNOCK_INTERFACE', 'PREVENT_PROXY_CONNECTIONS', 'OP_PERMISSION_LEVEL', 'ENABLE_RCON', 'RCON_PORT', 'RCON_PASSWORD', 'BROADCAST_RCON_TO_OPS', 'USE_AIKAR_FLAGS', 'ENABLE_JMX', 'JMX_HOST', 'JVM_OPTS', 'JVM_XX_OPTS', 'JVM_DD_OPTS', 'EXTRA_ARGS', 'LOG_TIMESTAMP', 'FORGE_VERSION', 'NEOFORGE_VERSION', 'FABRIC_LOADER_VERSION', 'FABRIC_LAUNCHER_VERSION', 'FABRIC_LAUNCHER', 'FABRIC_LAUNCHER_URL', 'FABRIC_FORCE_REINSTALL', 'MODRINTH_PROJECTS', 'MODRINTH_DOWNLOAD_DEPENDENCIES', 'MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE', 'MODRINTH_LOADER', 'MODRINTH_MODPACK', 'VERSION_FROM_MODRINTH_PROJECTS', 'CF_API_KEY', 'CURSEFORGE_FILES', 'CF_PAGE_URL', 'CF_SLUG', 'CF_FILE_ID', 'CF_FORCE_SYNCHRONIZE', 'CF_FORCE_INCLUDE_MODS', 'CF_EXCLUDE_MODS', 'CF_FILENAME_MATCHER', 'CF_MODPACK_ZIP', 'CF_PARALLEL_DOWNLOADS', 'CF_OVERRIDES_SKIP_EXISTING', 'CF_SET_LEVEL_FROM', 'MODPACK_PLATFORM', 'CF_SERVER_MOD', 'CF_BASE_DIR', 'USE_MODPACK_START_SCRIPT', 'FTB_LEGACYJAVAFIXER', 'SPIGET_RESOURCES', 'SKIP_DOWNLOAD_DEFAULTS', 'PAPER_BUILD', 'PAPER_CHANNEL', 'PAPER_DOWNLOAD_URL', 'BUKKIT_DOWNLOAD_URL', 'BUILD_FROM_SOURCE', 'SPIGOT_DOWNLOAD_URL', 'PUFFERFISH_BUILD', 'USE_FLARE_FLAGS', 'PURPUR_BUILD', 'PURPUR_DOWNLOAD_URL', 'LEAF_BUILD', 'FOLIA_BUILD', 'FOLIA_CHANNEL', 'FOLIA_DOWNLOAD_URL', 'GAMEMODE', 'WHITE_LIST', 'ALLOW_CHEATS', 'TICK_DISTANCE', 'MAX_THREADS', 'DEFAULT_PLAYER_PERMISSION_LEVEL', 'TEXTUREPACK_REQUIRED', 'SPAWN_PROTECTION', 'LEVEL_SEED', 'SERVER_PORT_V6']);
 
     const knownWorldVars = new Set(['LEVEL', 'LEVEL_NAME', 'WORLD', 'FORCE_WORLD_COPY']);
     const knownGtnhVars = new Set(['GTNH_PACK_VERSION', 'GTNH_DELETE_BACKUPS', 'SKIP_GTNH_UPDATE_CHECK']);
@@ -350,49 +352,17 @@ export class DockerComposeService {
   }
 
   private extractProxyHostname(labels: DockerLabels): string | undefined {
-    if (!labels) return undefined;
-
-    if (Array.isArray(labels)) {
-      const label = labels.find((l) => l.startsWith('minepanel.proxy.hostname='));
-      return label?.split('=')[1];
-    }
-
-    if (typeof labels === 'object') {
-      const hostname = labels['minepanel.proxy.hostname'];
-      return hostname === undefined ? undefined : String(hostname);
-    }
-
-    return undefined;
+    return getComposeLabel(labels, 'minepanel.proxy.hostname');
   }
 
+  // Both default to true so servers created before the label existed keep their
+  // current behaviour.
   private extractUseProxy(labels: DockerLabels): boolean {
-    if (!labels) return true; // Default to true when proxy is enabled globally
-
-    if (Array.isArray(labels)) {
-      const label = labels.find((l) => l.startsWith('minepanel.proxy.enabled='));
-      if (label) return label.split('=')[1] === 'true';
-    }
-
-    if (typeof labels === 'object' && 'minepanel.proxy.enabled' in labels) {
-      return String(labels['minepanel.proxy.enabled']) === 'true';
-    }
-
-    return true;
+    return getComposeLabelFlag(labels, 'minepanel.proxy.enabled', true);
   }
 
   private extractUseAutoScale(labels: DockerLabels): boolean {
-    if (!labels) return true; // Default to true so existing servers keep auto-scaling
-
-    if (Array.isArray(labels)) {
-      const label = labels.find((l) => l.startsWith('minepanel.autoscale.enabled='));
-      if (label) return label.split('=')[1] === 'true';
-    }
-
-    if (typeof labels === 'object' && 'minepanel.autoscale.enabled' in labels) {
-      return String(labels['minepanel.autoscale.enabled']) === 'true';
-    }
-
-    return true;
+    return getComposeLabelFlag(labels, 'minepanel.autoscale.enabled', true);
   }
 
   private parseDockerLabels(labelsString: string): string[] | undefined {

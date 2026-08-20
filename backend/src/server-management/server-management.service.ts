@@ -12,6 +12,7 @@ import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/
 import { ConfigService } from '@nestjs/config';
 import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
+import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 const execAsync = promisify(exec);
 
@@ -654,31 +655,13 @@ export class ServerManagementService {
         const config = yaml.load(content) as any;
         const labels = config?.services?.mc?.labels;
 
-        // Check if server has custom proxy hostname
-        if (Array.isArray(labels)) {
-          const hostnameLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.hostname='));
-          if (hostnameLabel) {
-            return hostnameLabel.split('=')[1];
-          }
-        }
-
-        if (labels && typeof labels === 'object') {
-          const hostnameLabel = labels['minepanel.proxy.hostname'];
-          if (typeof hostnameLabel === 'string' && hostnameLabel.length > 0) {
-            return hostnameLabel;
-          }
-        }
-
-        // Check if server has proxy disabled
-        if (Array.isArray(labels)) {
-          const enabledLabel = labels.find((l: string) => l.startsWith('minepanel.proxy.enabled='));
-          if (enabledLabel?.split('=')[1] === 'false') {
-            return null; // Server has proxy disabled
-          }
-        }
-
-        if (labels && typeof labels === 'object' && labels['minepanel.proxy.enabled'] === 'false') {
+        if (!getComposeLabelFlag(labels, 'minepanel.proxy.enabled', true)) {
           return null;
+        }
+
+        const hostname = getComposeLabel(labels, 'minepanel.proxy.hostname');
+        if (hostname) {
+          return hostname;
         }
       }
       // Default: generate hostname from serverId

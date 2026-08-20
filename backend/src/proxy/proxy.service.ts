@@ -6,6 +6,7 @@ import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import { Settings } from 'src/users/entities/settings.entity';
+import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 export interface ProxyMapping {
   host: string;
@@ -160,24 +161,12 @@ export class ProxyService {
       const content = await fs.readFile(dockerComposePath, 'utf8');
       const compose = yaml.load(content) as { services?: { mc?: { labels?: string[] | Record<string, string | boolean> } } };
       const labels = compose?.services?.mc?.labels;
-      const getLabel = (key: string): string | undefined => {
-        if (Array.isArray(labels)) {
-          return labels.find((label) => label.startsWith(`${key}=`))?.split('=').slice(1).join('=');
-        }
 
-        if (labels && typeof labels === 'object') {
-          const value = labels[key];
-          return value === undefined ? undefined : String(value);
-        }
-
-        return undefined;
-      };
-
-      if (getLabel('minepanel.proxy.enabled') === 'false') {
+      if (!getComposeLabelFlag(labels, 'minepanel.proxy.enabled', true)) {
         return null;
       }
 
-      return this.generateHostname(serverId, baseDomain, getLabel('minepanel.proxy.hostname'));
+      return this.generateHostname(serverId, baseDomain, getComposeLabel(labels, 'minepanel.proxy.hostname'));
     } catch (error) {
       this.logger.warn(`Failed to load configured proxy hostname for ${serverId}`, error);
       return this.generateHostname(serverId, baseDomain);
