@@ -33,14 +33,16 @@ export class SettingsController {
     ]);
 
     const { cfApiKey, discordWebhook, ...rest } = settings;
+    const { autoScaleToken: _autoScaleToken, ...routerSettings } = router;
 
     return {
       ...rest,
       hasCfApiKey: !!cfApiKey,
       hasDiscordWebhook: !!discordWebhook,
-      // The token is a shared secret with the router container; the UI only
-      // needs to know whether one exists.
-      proxy: { ...proxy, router: { ...router, autoScaleToken: undefined, hasAutoScaleToken: !!router.autoScaleToken } },
+      // The token is a shared secret with the router container and never leaves
+      // the server. Everything else round-trips, so what the UI reads back is
+      // exactly what it may send.
+      proxy: { ...proxy, router: routerSettings },
       network,
       javaServerDefaults: await this.instanceSettings.getJavaServerDefaults(),
       auditRetentionDays,

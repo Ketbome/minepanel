@@ -24,6 +24,16 @@ describe('SettingsController', () => {
             getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
             getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
             getJavaServerDefaults: jest.fn().mockResolvedValue(null),
+            getRouterSettings: jest.fn().mockResolvedValue({
+              proxyPort: '25565',
+              autoScaleEnabled: true,
+              autoScaleToken: 'super-secret-shared-with-the-router',
+              autoScaleDownAfter: '10m',
+              autoScaleWakeTimeout: '180s',
+              autoScaleAsleepMotd: 'asleep',
+              autoScaleLoadingMotd: 'starting',
+              extraNetworks: null,
+            }),
             setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
             setNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
             setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
@@ -151,5 +161,31 @@ describe('SettingsController', () => {
     ).rejects.toThrow(ForbiddenException);
 
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
+  });
+
+  describe('the settings it hands back', () => {
+    const readSettings = async () => {
+      settingsService.getSettings.mockResolvedValue({ language: 'en' } as any);
+      settingsService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com', available: true } as any);
+      settingsService.getNetworkSettings.mockResolvedValue({ publicIp: null, lanIp: null } as any);
+      settingsService.getAuditRetentionDays.mockResolvedValue(30 as any);
+      return controller.getSettings({ user: { userId: 1 } });
+    };
+
+    it('never sends the auto-scale token to the browser', async () => {
+      const result = await readSettings();
+
+      expect(JSON.stringify(result)).not.toContain('super-secret-shared-with-the-router');
+      expect(result.proxy.router).not.toHaveProperty('autoScaleToken');
+    });
+
+    // The UI sends the router object straight back when saving, so anything here
+    // that the write DTO rejects turns into a 400.
+    it('returns a router object that can be sent straight back to the update endpoint', async () => {
+      const result = await readSettings();
+
+      const writable = ['proxyPort', 'autoScaleEnabled', 'autoScaleDownAfter', 'autoScaleWakeTimeout', 'autoScaleAsleepMotd', 'autoScaleLoadingMotd', 'extraNetworks'];
+      expect(Object.keys(result.proxy.router).sort()).toEqual([...writable].sort());
+    });
   });
 });

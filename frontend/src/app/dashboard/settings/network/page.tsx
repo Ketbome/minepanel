@@ -233,12 +233,15 @@ export default function NetworkSettingsPage() {
             <Input id="lanIp" value={lanIp} onChange={(event) => setLanIp(event.target.value)} placeholder="192.168.1.100" className="bg-gray-800 border-gray-700 text-white" />
             <p className="text-xs text-gray-500">{t('lanIpDesc')}</p>
           </div>
-          <Button type="button" onClick={handleSave} disabled={isSaving} className="bg-cyan-600 hover:bg-cyan-700 text-white font-minecraft">
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            {isSaving ? t('saving') : t('saveChanges')}
-          </Button>
         </CardContent>
       </Card>
+
+      <div className="sticky bottom-0 z-10 -mx-1 border-t-2 border-gray-700/60 bg-gray-900/95 px-1 py-3 backdrop-blur-md">
+        <Button type="button" onClick={handleSave} disabled={isSaving} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-minecraft sm:w-auto">
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {isSaving ? t('saving') : t('saveChanges')}
+        </Button>
+      </div>
     </div>
   );
 }
