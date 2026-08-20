@@ -1,7 +1,10 @@
+import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { WorldDiscoveryService } from './world-discovery.service';
+
+jest.mock('axios');
 
 describe('WorldDiscoveryService library listing', () => {
   let tempDir: string;
@@ -97,5 +100,52 @@ describe('WorldDiscoveryService library listing', () => {
     const worlds = await service.listLibraryWorlds();
 
     expect(worlds.map((world) => world.source)).toEqual(['alpha', 'curseforge/bravo', 'zulu']);
+  });
+});
+
+describe('WorldDiscoveryService CurseForge credentials', () => {
+  let tempDir: string;
+
+  const buildService = (settingsService: Record<string, unknown>) => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'minepanel-world-cf-'));
+    return new WorldDiscoveryService(settingsService as any, {
+      get: jest.fn((key: string) => (key === 'serversDir' ? tempDir : undefined)),
+    } as any);
+  };
+
+  afterEach(async () => {
+    jest.clearAllMocks();
+    if (tempDir) await fs.remove(tempDir);
+  });
+
+  // The column holds the encrypted key. Reading it off the entity instead of
+  // decrypting it sent ciphertext as x-api-key, and CurseForge answered 403 --
+  // while the mods browser, which decrypts, worked from the same stored key.
+  it('sends the decrypted key, not the value stored in the column', async () => {
+    const create = jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue({ data: { data: [], pagination: { index: 0, pageSize: 0, resultCount: 0, totalCount: 0 } } }),
+    });
+    (axios.create as jest.Mock) = create;
+
+    const service = buildService({
+      getCfApiKey: jest.fn().mockResolvedValue('plaintext-key'),
+      getSettings: jest.fn().mockResolvedValue({ cfApiKey: 'v1:encrypted-blob' }),
+    });
+
+    await service.searchCurseForgeWorlds(1, {});
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: expect.objectContaining({ 'x-api-key': 'plaintext-key' }) }),
+    );
+  });
+
+  it('asks for a key to be configured instead of calling CurseForge without one', async () => {
+    const create = jest.fn();
+    (axios.create as jest.Mock) = create;
+
+    const service = buildService({ getCfApiKey: jest.fn().mockResolvedValue('') });
+
+    await expect(service.searchCurseForgeWorlds(1, {})).rejects.toThrow('CurseForge API key not configured');
+    expect(create).not.toHaveBeenCalled();
   });
 });

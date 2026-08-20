@@ -335,11 +335,13 @@ export class WorldDiscoveryService {
   }
 
   private async getCurseForgeApiKey(userId: number): Promise<string> {
-    const settings = await this.settingsService.getSettings(userId);
-    if (!settings?.cfApiKey) {
+    // Must go through getCfApiKey: the column holds the encrypted value, and
+    // reading it off the entity sends ciphertext to CurseForge as the key.
+    const apiKey = await this.settingsService.getCfApiKey(userId);
+    if (!apiKey) {
       throw new BadRequestException('CurseForge API key not configured. Please add it in settings.');
     }
-    return settings.cfApiKey;
+    return apiKey;
   }
 
   private pickLatestImportableFile(files: CurseForgeFile[]): CurseForgeFile | undefined {
