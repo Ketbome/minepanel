@@ -543,7 +543,7 @@ the current version.
 `GET /version` returns the same data, including the changelog:
 
 ```json
-{ "current": "1.11.33", "latest": "2.0.0", "updateAvailable": true, "hasBreakingChanges": true, "canSelfUpdate": true, "changelog": [] }
+{ "current": "1.11.35", "latest": "1.12.0", "updateAvailable": true, "hasBreakingChanges": true, "canSelfUpdate": true, "changelog": [] }
 ```
 
 **Unattended updates:** use [Watchtower](https://containrrr.dev/watchtower/) if you

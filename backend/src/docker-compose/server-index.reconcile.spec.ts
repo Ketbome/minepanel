@@ -146,7 +146,7 @@ describe('server index reconciliation', () => {
     expect(((await store.readIndex()) ?? []).every((entry) => entry.active === undefined)).toBe(true);
   });
 
-  describe('importing pre-2.0 servers', () => {
+  describe('importing pre-1.12 servers', () => {
     it('parses the compose file once and keeps the result as server.json', async () => {
       await writeComposeOnlyServer('legacy');
 
@@ -284,7 +284,7 @@ describe('server index reconciliation', () => {
     });
   });
 
-  describe('migrating a pre-2.0 install at startup', () => {
+  describe('migrating a pre-1.12 install at startup', () => {
     it('imports every server without waiting for someone to open the dashboard', async () => {
       await writeComposeOnlyServer('one');
       await writeComposeOnlyServer('two');
@@ -354,7 +354,7 @@ describe('server index reconciliation', () => {
       await expect(service.createServer('taken', {})).rejects.toThrow(/ya existe/);
     });
 
-    it('refuses an id that only has a compose file, so pre-2.0 servers are not overwritten', async () => {
+    it('refuses an id that only has a compose file, so pre-1.12 servers are not overwritten', async () => {
       await writeComposeOnlyServer('legacy');
 
       await expect(service.createServer('legacy', {})).rejects.toThrow(/ya existe/);

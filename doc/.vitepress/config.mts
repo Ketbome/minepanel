@@ -256,7 +256,7 @@ export default defineConfig({
           { text: 'Networking', link: '/networking' },
           { text: 'Single Sign-On (SSO)', link: '/sso' },
           { text: 'Administration', link: '/administration' },
-          { text: 'Upgrading to 2.0', link: '/upgrading-to-2' },
+          { text: 'Upgrading to 1.12', link: '/upgrading-to-1-12' },
           { text: 'Troubleshooting', link: '/troubleshooting' },
           { text: 'FAQ', link: '/faq' },
         ],
@@ -372,7 +372,7 @@ export default defineConfig({
         '/server-types': 0.85,
         '/networking': 0.85,
         '/troubleshooting': 0.85,
-        '/upgrading-to-2': 0.85,
+        '/upgrading-to-1-12': 0.85,
       };
 
       const changefreqMap: Record<string, string> = {

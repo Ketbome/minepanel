@@ -47,7 +47,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     fs.ensureDirSync(path.join(this.SERVERS_DIR, '.world', 'worlds'));
   }
 
-  // Pre-2.0 installs arrive with nothing but compose files. Import them once, at
+  // Pre-1.12 installs arrive with nothing but compose files. Import them once, at
   // startup, so the first dashboard load is not what triggers it.
   async onApplicationBootstrap(): Promise<void> {
     try {
@@ -115,7 +115,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
   }
 
   /**
-   * Reads a pre-2.0 server's configuration out of its compose file.
+   * Reads a pre-1.12 server's configuration out of its compose file.
    *
    * Returns null rather than a default config when the file cannot be read: this
    * feeds the one-time import, and writing defaults would replace a server's real
@@ -784,7 +784,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return this.importFromDockerCompose(id);
   }
 
-  // Servers created before 2.0 only have a compose file. Parse it once, keep the
+  // Servers created before 1.12 only have a compose file. Parse it once, keep the
   // result as server.json, and never parse that server again.
   private async importFromDockerCompose(id: string): Promise<ServerConfig | null> {
     if (!fs.existsSync(this.getDockerComposePath(id))) {
@@ -847,7 +847,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
   }
 
   /**
-   * Imports every pre-2.0 server up front instead of waiting for someone to open
+   * Imports every pre-1.12 server up front instead of waiting for someone to open
    * the dashboard, and reports what happened. Servers whose compose file cannot be
    * read are counted and left alone rather than replaced with defaults.
    */

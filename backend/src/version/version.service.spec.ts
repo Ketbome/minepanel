@@ -84,6 +84,18 @@ describe('VersionService', () => {
       expect(info.changelog[0].breaking).toBe(true);
     });
 
+    it('flags a minor bump when the notes say so, since no major number changes', async () => {
+      process.env.APP_VERSION = '1.11.35';
+      service = new VersionService();
+      mockedGet.mockResolvedValue({
+        data: [release('1.12.0', { body: '## \u26a0\ufe0f Breaking Changes\n- mc-router moved out of the root compose file' })],
+      });
+
+      const info = await service.getVersionInfo();
+
+      expect(info.hasBreakingChanges).toBe(true);
+    });
+
     it('does not flag an ordinary patch release', async () => {
       mockedGet.mockResolvedValue({ data: [release('1.11.31', { body: 'Just fixes' })] });
 
@@ -114,6 +126,14 @@ describe('VersionService', () => {
       process.env.APP_VERSION = '1.11.9';
       service = new VersionService();
       mockedGet.mockResolvedValue({ data: [release('1.11.10')] });
+
+      expect((await service.getVersionInfo()).updateAvailable).toBe(true);
+    });
+
+    it('sees a minor bump as newer, which text order would get backwards', async () => {
+      process.env.APP_VERSION = '1.11.35';
+      service = new VersionService();
+      mockedGet.mockResolvedValue({ data: [release('1.12.0')] });
 
       expect((await service.getVersionInfo()).updateAvailable).toBe(true);
     });

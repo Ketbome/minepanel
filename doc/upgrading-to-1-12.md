@@ -1,11 +1,11 @@
 ---
-title: Upgrading to 2.0
-description: What changes in Minepanel 2.0 - server.json as the source of truth, the panel-managed mc-router, and the settings that moved out of .env.
+title: Upgrading to 1.12
+description: What changes in Minepanel 1.12 - server.json as the source of truth, the panel-managed mc-router, and the settings that moved out of .env.
 ---
 
-# Upgrading to 2.0
+# Upgrading to 1.12
 
-2.0 changes where Minepanel keeps things: server configuration on disk, proxy
+1.12 changes where Minepanel keeps things: server configuration on disk, proxy
 settings in the database, and the mc-router container itself. Nothing is deleted,
 and the upgrade runs on its own the first time the panel starts.
 
@@ -18,7 +18,7 @@ docker compose up -d
 
 **Each server gets a `server.json`.** Until now a server's configuration was
 re-derived by parsing its `docker-compose.yml` on every read. On the first start,
-2.0 parses every server's compose file once, writes the result to
+1.12 parses every server's compose file once, writes the result to
 `servers/<id>/server.json`, and never parses it again. A `servers/servers.json`
 index is written alongside them so listing servers no longer opens all of them.
 
@@ -36,7 +36,7 @@ user account, and then removed from every user's preferences so there is only on
 copy left.
 
 Nothing is removed: `docker-compose.yml` stays in place for every server, so
-rolling back to 1.11 works. You lose only the changes made while on 2.0.
+rolling back to 1.11 works. You lose only the changes made while on 1.12.
 
 ## What you have to do yourself
 
@@ -89,6 +89,30 @@ without touching the UI.
 One thing this buys you: when a panel update changes how compose files are
 generated, servers pick it up on their next start. Earlier versions kept the old
 file until someone pressed save or ran "regenerate all".
+
+## The server tabs moved
+
+Server configuration was spread across tabs named after where the value was stored
+rather than what it does, and two of them were both called "Advanced". Settings are
+now grouped by the question you are asking:
+
+| Looking for | Was | Now |
+| --- | --- | --- |
+| Name, MOTD, difficulty, world, render distance | General | **Game** |
+| Online mode, ops, RCON, permissions | General → Connectivity | **Access** |
+| Port, proxy routing, extra ports | General → Connectivity, Advanced | **Network** |
+| Memory, CPU, JVM flags | Resources | **Resources** |
+| Auto-stop, auto-pause, restart policy, timezone | Resources → Advanced, Advanced | **Lifecycle** |
+| Backups | Advanced | **Backups** |
+| Env vars, Docker labels and volumes | Advanced | **Advanced** |
+| Everything in the Bedrock tab | Bedrock | Beside its Java equivalent |
+
+Two settings had a control in two different tabs and could disagree with each other:
+`commandBlock` (Performance and Connectivity) and `playerIdleTimeout` (Connectivity and
+Advanced). Each now has one control, in **Access**. The stored value is untouched — only
+the duplicate control is gone.
+
+Bookmarked tab links keep working: `#general` and `#bedrock` land on **Game**.
 
 ## Behaviour that changed
 

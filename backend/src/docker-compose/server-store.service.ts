@@ -113,7 +113,7 @@ export class ServerStoreService {
 
       const ids = await Promise.all(
         directories.map(async (dir) => {
-          // A compose file still counts: servers created before 2.0 have no
+          // A compose file still counts: servers created before 1.12 have no
           // server.json until they are imported.
           const [hasConfig, hasCompose] = await Promise.all([
             fs.pathExists(path.join(this.SERVERS_DIR, dir, CONFIG_FILE)),

@@ -164,7 +164,7 @@ describe('ServerStoreService', () => {
       expect(await service.listServerDirs()).toEqual(['new-style']);
     });
 
-    it('still counts folders that only have a compose file, so pre-2.0 servers survive', async () => {
+    it('still counts folders that only have a compose file, so pre-1.12 servers survive', async () => {
       await makeServer('old-style', ['docker-compose.yml']);
 
       expect(await service.listServerDirs()).toEqual(['old-style']);
