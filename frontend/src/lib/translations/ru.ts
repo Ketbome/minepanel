@@ -514,6 +514,10 @@ export const ru: Record<TranslationKey, string> = {
   connectivitySettings: 'Подключение',
 
   // Server config tabs
+  simpleMode: 'Простой',
+  advancedMode: 'Расширенный',
+  configModeHint: 'Простой режим скрывает вкладки, которые большинству серверов не нужны. То, что вы уже изменили, остаётся видимым в обоих режимах.',
+  showHiddenTabs: 'Показать ещё {count} вкладок',
   game: 'Игра',
   gameDesc: 'Как играется мир: название, сложность, генерация и дальность прорисовки',
   access: 'Доступ',

@@ -514,6 +514,10 @@ export const fr: Record<TranslationKey, string> = {
   connectivitySettings: 'Connectivité',
 
   // Server config tabs
+  simpleMode: 'Simple',
+  advancedMode: 'Avancé',
+  configModeHint: 'Le mode simple masque les onglets dont la plupart des serveurs n\'ont jamais besoin. Ce que vous avez déjà modifié reste visible dans les deux modes.',
+  showHiddenTabs: 'Afficher {count} onglets de plus',
   game: 'Jeu',
   gameDesc: 'Comment le monde se joue : identité, difficulté, génération et distance d\'affichage',
   access: 'Accès',

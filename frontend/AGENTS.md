@@ -106,6 +106,13 @@ Server config tabs:
   `edition === 'BEDROCK'`.
 - Renaming or removing a tab value means adding an entry to `RENAMED_TABS` in
   `ServerConfigTabs.tsx`: the tab value is the URL hash and people bookmark it.
+- Simple/Advanced mode is a filter over the same tabs, never a second tab tree.
+  Mark a tab `advanced: true` in `tabsMeta` and give it a predicate in
+  `src/lib/server-config/advanced-tabs.ts`. The predicate is not optional: simple
+  mode must never hide a setting that already has a non-default value, or the user
+  looks for it, fails to find it, and cannot tell it is still being applied.
+- Read the mode through `useConfigMode()`, not the store directly — it reports the
+  default until mount so the persisted value cannot break hydration.
 
 Java/Bedrock UI parity:
 

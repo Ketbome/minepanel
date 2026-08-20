@@ -7,6 +7,9 @@ import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, Fol
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
+import { useConfigMode } from "@/lib/hooks/useConfigMode";
+import { advancedTabIsInUse } from "@/lib/server-config/advanced-tabs";
+import { ConfigModeToggle } from "../molecules/ConfigModeToggle";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
@@ -50,6 +53,7 @@ interface ServerConfigTabsProps {
 
 export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, updateConfig, saveConfig, serverStatus, isSaving, refreshToken = 0 }) => {
   const { t } = useLanguage();
+  const { mode: configMode, setMode: setConfigMode } = useConfigMode();
   const setNav = useServerNavStore((state) => state.setNav);
   const setActiveNav = useServerNavStore((state) => state.setActive);
   const clearNav = useServerNavStore((state) => state.clear);
@@ -69,18 +73,20 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   // Single source of truth for the tab list. Drives the side nav, the hash
   // validation and the command-palette index, so there is no duplicated list.
-  const tabsMeta: (ServerNavItem & { show: boolean })[] = [
+  // `advanced` tabs are the ones a server can run its whole life without. Simple
+  // mode hides them unless this server already has something set in there.
+  const tabsMeta: (ServerNavItem & { show: boolean; advanced?: boolean })[] = [
     { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
     { value: "game", label: t("game"), icon: Gamepad2, group: "config", show: true, disabled: isServerRunning },
     { value: "access", label: t("access"), icon: Shield, group: "config", show: true, disabled: isServerRunning },
-    { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning },
+    { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
-    { value: "lifecycle", label: t("lifecycle"), icon: Power, group: "config", show: true, disabled: isServerRunning },
+    { value: "lifecycle", label: t("lifecycle"), icon: Power, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning },
     { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning },
     { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning },
     { value: "backups", label: t("backups"), icon: Archive, group: "config", show: showBackupsTab, disabled: isServerRunning },
-    { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning },
+    { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
     { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
@@ -88,9 +94,19 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
 
-  const navItems: ServerNavItem[] = tabsMeta.filter((tab) => tab.show).map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, group: tab.group, disabled: tab.disabled }));
+  // Two different reasons a tab can be missing: it does not apply to this server
+  // at all (Bedrock has no plugins), or simple mode is hiding it.
+  const applicableTabs = tabsMeta.filter((tab) => tab.show);
+  const visibleTabs = applicableTabs.filter(
+    (tab) => configMode === "advanced" || !tab.advanced || advancedTabIsInUse(tab.value, config),
+  );
+  const hiddenTabCount = applicableTabs.length - visibleTabs.length;
+
+  const navItems: ServerNavItem[] = visibleTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, group: tab.group, disabled: tab.disabled }));
   const navSignature = navItems.map((item) => `${item.value}:${item.disabled ? 1 : 0}:${item.label}`).join(",");
-  const tabItems: TabSearchItem[] = navItems.map((item) => ({ value: item.value, label: item.label, icon: item.icon, target: item.value }));
+  // Built from every applicable tab, not just the visible ones: a tab simple mode
+  // is hiding must still be reachable by name, and jumping to it reveals it.
+  const tabItems: TabSearchItem[] = applicableTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, target: tab.value }));
 
   // Curated index of individual settings -> the tab that holds them, so the
   // palette can answer searches like "ram", "cheats" or "puerto". Keywords are
@@ -106,7 +122,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "set-world", label: t("worldSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "mundo world seed semilla pvp nivel level hardcore spawn mobs" },
     { value: "set-performance", label: t("performanceSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "view distance distancia render simulation simulacion chunks" },
     { value: "set-access", label: t("accessControl"), icon: Shield, target: "access", group: t("access"), keywords: "online mode ops operadores rcon permisos permissions whitelist lista blanca flight vuelo command block" },
-    { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), keywords: "puerto port proxy hostname ip conexion connection autoscale ipv6" },
+    { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), keywords: "red network puerto port proxy hostname ip conexion connection autoscale ipv6" },
     { value: "set-lifecycle", label: t("lifecycle"), icon: Power, target: "lifecycle", group: t("lifecycle"), keywords: "autostop autopause auto stop pause pausa apagar reinicio restart timezone zona horaria" },
     ...(showBackupsTab
       ? [{ value: "set-backups", label: t("backups"), icon: Archive, target: "backups", group: t("backups"), keywords: "backup copia respaldo restic rclone rsync tar snapshot" }]
@@ -203,6 +219,24 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     return success;
   };
 
+  const applicableSignature = applicableTabs.map((tab) => tab.value).join(",");
+  const visibleSignature = visibleTabs.map((tab) => tab.value).join(",");
+  useEffect(() => {
+    if (!activeTab) return;
+
+    if (!applicableSignature.split(",").includes(activeTab)) {
+      setActiveTab("type");
+      return;
+    }
+
+    // The tab exists but simple mode is hiding it, which happens when the
+    // command palette or a link points straight at it. Asking for it counts as
+    // asking for advanced mode: bouncing back to another tab would look broken.
+    if (!visibleSignature.split(",").includes(activeTab)) {
+      setConfigMode("advanced");
+    }
+  }, [applicableSignature, visibleSignature, activeTab, setConfigMode]);
+
   useEffect(() => {
     if (isServerRunning) {
       const disabledTabs = ["type", "game", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "files"];
@@ -215,6 +249,8 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   return (
     <div className="space-y-4 pb-24 animate-fade-in">
       {!isServerRunning && <SaveModeControl onManualSave={handleSaveConfig} isSaving={isSaving} hasUnsavedChanges={hasUnsavedChanges} />}
+
+      <ConfigModeToggle mode={configMode} onChange={setConfigMode} hiddenCount={hiddenTabCount} />
 
       {isServerRunning && (
         <div className="mc-slot p-4 flex items-start gap-3 animate-fade-in-up" style={{ borderColor: "#f5c542" }}>

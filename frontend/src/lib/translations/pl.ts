@@ -509,6 +509,10 @@ export const pl: Record<TranslationKey, string> = {
   connectivitySettings: 'Łączność',
 
   // Server config tabs
+  simpleMode: 'Prosty',
+  advancedMode: 'Zaawansowany',
+  configModeHint: 'Tryb prosty ukrywa zakładki, których większość serwerów nigdy nie potrzebuje. To, co już zmieniłeś, pozostaje widoczne w obu trybach.',
+  showHiddenTabs: 'Pokaż jeszcze {count} zakładek',
   game: 'Gra',
   gameDesc: 'Jak gra się w świat: tożsamość, trudność, generowanie i zasięg widzenia',
   access: 'Dostęp',

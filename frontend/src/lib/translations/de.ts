@@ -514,6 +514,10 @@ export const de: Record<TranslationKey, string> = {
   connectivitySettings: 'Konnektivität',
 
   // Server config tabs
+  simpleMode: 'Einfach',
+  advancedMode: 'Erweitert',
+  configModeHint: 'Der einfache Modus blendet die Tabs aus, die die meisten Server nie brauchen. Was du bereits geändert hast, bleibt in beiden Modi sichtbar.',
+  showHiddenTabs: '{count} weitere Tabs anzeigen',
   game: 'Spiel',
   gameDesc: 'Wie sich die Welt spielt: Identität, Schwierigkeit, Generierung und Sichtweite',
   access: 'Zugriff',

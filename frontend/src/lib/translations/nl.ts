@@ -519,6 +519,10 @@ export const nl: Record<TranslationKey, string> = {
   connectivitySettings: 'Connectiviteit',
 
   // Server config tabs
+  simpleMode: 'Eenvoudig',
+  advancedMode: 'Geavanceerd',
+  configModeHint: 'De eenvoudige modus verbergt de tabbladen die de meeste servers nooit nodig hebben. Wat je al hebt gewijzigd blijft in beide modi zichtbaar.',
+  showHiddenTabs: 'Toon {count} tabbladen meer',
   game: 'Spel',
   gameDesc: 'Hoe de wereld speelt: identiteit, moeilijkheid, generatie en weergaveafstand',
   access: 'Toegang',

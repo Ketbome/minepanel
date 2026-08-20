@@ -7,6 +7,8 @@ import { BookOpen } from "lucide-react";
 import { MemoryCpuTab } from "./ResourcesTabs/MemoryCpuTab";
 import { JvmOptionsTab } from "./ResourcesTabs/JvmOptionsTab";
 import { LINK_ADVANCED_CONFIGURATION } from "@/lib/providers/constants";
+import { useConfigMode } from "@/lib/hooks/useConfigMode";
+import { jvmOptionsInUse } from "@/lib/server-config/advanced-tabs";
 
 interface ResourcesTabProps {
   config: ServerConfig;
@@ -15,6 +17,8 @@ interface ResourcesTabProps {
 
 export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
+  const { mode } = useConfigMode();
+  const showJvmOptions = mode === "advanced" || jvmOptionsInUse(config);
 
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
@@ -43,13 +47,15 @@ export const ResourcesTab: FC<ResourcesTabProps> = ({ config, updateConfig }) =>
           <MemoryCpuTab config={config} updateConfig={updateConfig} />
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg text-emerald-400 font-minecraft flex items-center gap-2">
-            <Image src="/images/diamond.webp" alt={t("jvmOptions")} width={20} height={20} />
-            {t("jvmOptions")}
-          </h3>
-          <JvmOptionsTab config={config} updateConfig={updateConfig} />
-        </div>
+        {showJvmOptions && (
+          <div className="space-y-4">
+            <h3 className="text-lg text-emerald-400 font-minecraft flex items-center gap-2">
+              <Image src="/images/diamond.webp" alt={t("jvmOptions")} width={20} height={20} />
+              {t("jvmOptions")}
+            </h3>
+            <JvmOptionsTab config={config} updateConfig={updateConfig} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

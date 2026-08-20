@@ -515,6 +515,10 @@ export const pt: Record<TranslationKey, string> = {
   connectivitySettings: 'Conectividade',
 
   // Server config tabs
+  simpleMode: 'Simples',
+  advancedMode: 'Avançado',
+  configModeHint: 'O modo simples esconde as abas que a maioria dos servidores nunca precisa. O que você já alterou continua visível nos dois modos.',
+  showHiddenTabs: 'Ver mais {count} abas',
   game: 'Jogo',
   gameDesc: 'Como o mundo se joga: identidade, dificuldade, geração e distância de renderização',
   access: 'Acesso',

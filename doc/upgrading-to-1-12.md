@@ -114,6 +114,20 @@ the duplicate control is gone.
 
 Bookmarked tab links keep working: `#general` and `#bedrock` land on **Game**.
 
+### Simple and Advanced mode
+
+A toggle above the tabs switches how much is shown. **Simple** hides Network,
+Lifecycle and Advanced, plus the JVM options inside Resources. **Advanced** shows
+everything.
+
+A tab you have already configured is never hidden, whichever mode you are in: if a
+server has extra ports, auto-stop or custom environment variables set, its tab stays
+put. The same goes for jumping straight to a hidden tab from the command palette
+(Ctrl/Cmd+K) or a link — the panel switches to Advanced rather than sending you
+somewhere else.
+
+The choice is per browser, applies to every server, and defaults to Simple.
+
 ## Behaviour that changed
 
 **Settings that used to be silently lost now survive.** `spawnProtection`, the

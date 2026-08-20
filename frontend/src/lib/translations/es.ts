@@ -515,6 +515,10 @@ export const es: Record<TranslationKey, string> = {
   connectivitySettings: 'Conectividad',
 
   // Server config tabs
+  simpleMode: 'Simple',
+  advancedMode: 'Avanzado',
+  configModeHint: 'El modo simple oculta las pestañas que la mayoría de los servidores no necesita. Lo que ya cambiaste sigue visible en ambos modos.',
+  showHiddenTabs: 'Ver {count} pestañas más',
   game: 'Juego',
   gameDesc: 'Cómo se juega el mundo: identidad, dificultad, generación y distancia de renderizado',
   access: 'Acceso',

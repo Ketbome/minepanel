@@ -512,6 +512,10 @@ export const en = {
   connectivitySettings: 'Connectivity',
 
   // Server config tabs
+  simpleMode: 'Simple',
+  advancedMode: 'Advanced',
+  configModeHint: 'Simple mode hides the tabs most servers never need. Anything you have already changed stays visible in both modes.',
+  showHiddenTabs: 'Show {count} more tabs',
   game: 'Game',
   gameDesc: 'How the world plays: identity, difficulty, generation and render distance',
   access: 'Access',
