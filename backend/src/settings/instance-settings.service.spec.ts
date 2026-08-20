@@ -10,7 +10,7 @@ describe('InstanceSettingsService', () => {
   const originalSecret = process.env.JWT_SECRET;
   let service: InstanceSettingsService;
   let repo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock };
-  let userSettingsRepo: { find: jest.Mock };
+  let userSettingsRepo: { find: jest.Mock; save: jest.Mock };
   let row: any;
   let env: Record<string, any>;
 
@@ -26,7 +26,7 @@ describe('InstanceSettingsService', () => {
     row = { id: 1 };
     env = {};
 
-    userSettingsRepo = { find: jest.fn().mockResolvedValue([]) };
+    userSettingsRepo = { find: jest.fn().mockResolvedValue([]), save: jest.fn(async (v) => v) };
 
     repo = {
       findOne: jest.fn(async () => row),
@@ -156,6 +156,38 @@ describe('InstanceSettingsService', () => {
       expect(row.proxyBaseDomain).toBe('mc.example.com');
       expect(row.publicIp).toBe('1.1.1.1');
       expect(row.preferencesMigrated).toBe(true);
+    });
+
+    it('removes the originals so there is only one copy left', async () => {
+      const userRow: any = {
+        preferences: { proxyBaseDomain: 'mc.example.com', publicIp: '1.1.1.1', language: 'es' },
+      };
+      userSettingsRepo.find.mockResolvedValue([userRow]);
+
+      await service.onModuleInit();
+
+      expect(userRow.preferences).toEqual({ language: 'es' });
+      expect(userSettingsRepo.save).toHaveBeenCalledWith(userRow);
+    });
+
+    it('leaves users with nothing to migrate untouched', async () => {
+      userSettingsRepo.find.mockResolvedValue([{ preferences: { language: 'es' } }]);
+
+      await service.onModuleInit();
+
+      expect(userSettingsRepo.save).not.toHaveBeenCalled();
+    });
+
+    // An install migrated by an earlier build still has the duplicates, so the
+    // cleanup cannot sit behind the migration flag.
+    it('still removes the duplicates when the migration itself already ran', async () => {
+      row.preferencesMigrated = true;
+      const userRow: any = { preferences: { proxyBaseDomain: 'mc.example.com', language: 'es' } };
+      userSettingsRepo.find.mockResolvedValue([userRow]);
+
+      await service.onModuleInit();
+
+      expect(userRow.preferences).toEqual({ language: 'es' });
     });
 
     it('does not run again, so clearing a value is not undone on the next boot', async () => {

@@ -44,6 +44,14 @@ export class InstanceSettingsService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.migrateProxyAndNetworkFromPreferences();
+
+    // Runs unguarded: it is a no-op once the keys are gone, and it also catches
+    // installs that were migrated by an earlier build which left them behind.
+    try {
+      await this.clearMigratedPreferences();
+    } catch (error) {
+      this.logger.error('Could not clear the migrated values from user preferences', error);
+    }
   }
 
   // Proxy, host IPs and the new-server defaults used to live in one user's
@@ -68,6 +76,24 @@ export class InstanceSettingsService implements OnModuleInit {
       this.logger.log('Moved proxy and network settings from user preferences to the instance settings');
     } catch (error) {
       this.logger.error('Could not migrate proxy and network settings from user preferences', error);
+    }
+  }
+
+  private async clearMigratedPreferences(): Promise<void> {
+    const moved = ['proxyEnabled', 'proxyBaseDomain', 'publicIp', 'lanIp', 'javaServerDefaults'];
+    const rows = await this.userSettingsRepo.find();
+
+    for (const settings of rows) {
+      if (!settings.preferences) continue;
+
+      const remaining = { ...settings.preferences };
+      const removed = moved.filter((key) => key in remaining);
+      if (removed.length === 0) continue;
+
+      for (const key of removed) delete remaining[key];
+      settings.preferences = remaining;
+      await this.userSettingsRepo.save(settings);
+      this.logger.log(`Removed ${removed.join(', ')} from user preferences; they live on the instance now`);
     }
   }
 
