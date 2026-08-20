@@ -1554,6 +1554,13 @@ export const ru: Record<TranslationKey, string> = {
     'Существующие внешние сети для подключения роутера, по одной в строке. Оставьте пустым, если трафик не идёт через другой стек',
   enableProxy: 'Включить proxy',
   enableProxyDesc: 'Направлять весь трафик Minecraft через mc-router на порт 25565',
+  proxyRunning: 'Proxy работает',
+  proxyStoppedState: 'Proxy остановлен',
+  startProxy: 'Запустить proxy',
+  stopProxy: 'Остановить proxy',
+  proxyStarted: 'Proxy запущен',
+  proxyStopped: 'Proxy остановлен',
+  proxyPowerFailed: 'Не удалось изменить состояние proxy',
   proxyToggleWarning:
     'Перед сохранением убедитесь, что все серверы остановлены. Изменение глобального proxy при работающих серверах может вызвать проблемы.',
   proxyRequiresDomain: 'Настройте базовый домен, чтобы включить proxy',

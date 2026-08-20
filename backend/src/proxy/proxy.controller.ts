@@ -1,20 +1,23 @@
 import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyService } from './proxy.service';
+import { ProxyRouterService } from './proxy-router.service';
 
 @Controller('proxy')
 export class ProxyController {
   constructor(
     private readonly proxyService: ProxyService,
     private readonly instanceSettings: InstanceSettingsService,
+    private readonly proxyRouter: ProxyRouterService,
   ) {}
 
   @Get('status')
   async getStatus() {
-    const [proxyStatus, settings, router] = await Promise.all([
-      this.proxyService.getProxyStatus(),
+    const [routes, settings, router, running] = await Promise.all([
+      this.proxyService.getRoutesStatus(),
       this.proxyService.getProxySettings(),
       this.instanceSettings.getRouterSettings(),
+      this.proxyRouter.isRunning(),
     ]);
 
     return {
@@ -22,7 +25,9 @@ export class ProxyController {
       enabled: settings.enabled && !!settings.baseDomain,
       baseDomain: settings.baseDomain,
       autoScaleAvailable: router.autoScaleEnabled,
-      ...proxyStatus,
+      // Whether the container is actually up, not whether a routes file exists.
+      running,
+      ...routes,
     };
   }
 

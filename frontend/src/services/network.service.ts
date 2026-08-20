@@ -75,6 +75,9 @@ export interface ProxyStatus {
   enabled: boolean;
   baseDomain: string | null;
   autoScaleAvailable?: boolean;
+  /** Whether the mc-router container is actually up. */
+  running?: boolean;
+  routesCount?: number;
 }
 
 export async function getProxyStatus(): Promise<ProxyStatus> {
@@ -82,7 +85,7 @@ export async function getProxyStatus(): Promise<ProxyStatus> {
     const response = await api.get<ProxyStatus>('/proxy/status');
     return response.data;
   } catch {
-    return { available: false, enabled: false, baseDomain: null, autoScaleAvailable: false };
+    return { available: false, enabled: false, baseDomain: null, autoScaleAvailable: false, running: false };
   }
 }
 

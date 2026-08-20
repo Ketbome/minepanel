@@ -1553,6 +1553,13 @@ export const en = {
     'Existing external networks to attach the router to, one per line. Leave empty unless you route traffic through another stack',
   enableProxy: 'Enable Proxy',
   enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
+  proxyRunning: 'Proxy running',
+  proxyStoppedState: 'Proxy stopped',
+  startProxy: 'Start proxy',
+  stopProxy: 'Stop proxy',
+  proxyStarted: 'Proxy started',
+  proxyStopped: 'Proxy stopped',
+  proxyPowerFailed: 'Could not change the proxy state',
   proxyToggleWarning:
     'Before saving, make sure all servers are stopped. Changing the global proxy while servers are running can cause issues.',
   proxyRequiresDomain: 'Configure a base domain to enable the proxy feature',

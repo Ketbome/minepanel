@@ -1,7 +1,8 @@
 import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { UpdateSettingsDto } from '../dtos/settings.dto';
+import { ProxyRouterService } from 'src/proxy/proxy-router.service';
+import { ProxyPowerDto, UpdateSettingsDto } from '../dtos/settings.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { DiscordService, SupportedLanguage } from 'src/discord/discord.service';
@@ -19,6 +20,7 @@ export class SettingsController {
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
     private readonly instanceSettings: InstanceSettingsService,
+    private readonly proxyRouter: ProxyRouterService,
   ) {}
 
   @Get()
@@ -47,6 +49,33 @@ export class SettingsController {
       javaServerDefaults: await this.instanceSettings.getJavaServerDefaults(),
       auditRetentionDays,
     };
+  }
+
+  /**
+   * Turns the mc-router container on or off straight away.
+   *
+   * Same flag the settings form saves, but as a direct action: the container is a
+   * thing you switch on, so it should not need a form save to react. Binding a
+   * host port is host-affecting, hence the same permission as the settings.
+   */
+  @Post('proxy/power')
+  async setProxyPower(@Request() req, @Body() body: ProxyPowerDto) {
+    const user = req.user as PayloadToken;
+    const currentUser = await this.usersService.getRequiredUserById(user.userId);
+    this.accessControlService.assertManageSystemSettings(currentUser);
+
+    const proxy = await this.instanceSettings.setProxy({ enabled: body.enabled });
+    await this.proxyRouter.reconcile();
+
+    await this.auditLogService.record({
+      actorUserId: user.userId,
+      actorUsername: user.username,
+      category: 'settings',
+      action: body.enabled ? 'start_proxy' : 'stop_proxy',
+      summary: body.enabled ? 'Started the mc-router proxy' : 'Stopped the mc-router proxy',
+    });
+
+    return { ...proxy, running: await this.proxyRouter.isRunning() };
   }
 
   @Patch()

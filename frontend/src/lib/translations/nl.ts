@@ -1584,6 +1584,13 @@ export const nl: Record<TranslationKey, string> = {
     'Bestaande externe netwerken om de router aan te koppelen, één per regel. Laat leeg tenzij je verkeer via een andere stack routeert',
   enableProxy: 'Proxy Inschakelen',
   enableProxyDesc: 'Routeer al het Minecraft verkeer via mc-router op poort 25565',
+  proxyRunning: 'Proxy actief',
+  proxyStoppedState: 'Proxy gestopt',
+  startProxy: 'Proxy starten',
+  stopProxy: 'Proxy stoppen',
+  proxyStarted: 'Proxy gestart',
+  proxyStopped: 'Proxy gestopt',
+  proxyPowerFailed: 'Kon de proxystatus niet wijzigen',
   proxyToggleWarning:
     'Zorg ervoor dat alle servers zijn gestopt voordat je opslaat. Het wijzigen van de globale proxy terwijl servers draaien kan problemen veroorzaken.',
   proxyRequiresDomain: 'Configureer een basisdomein om de proxyfunctie in te schakelen',

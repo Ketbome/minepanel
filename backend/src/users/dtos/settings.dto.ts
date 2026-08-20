@@ -33,6 +33,11 @@ export class ProxyRouterSettingsDto {
   extraNetworks?: string;
 }
 
+export class ProxyPowerDto {
+  @IsBoolean()
+  enabled: boolean;
+}
+
 export class ProxySettingsDto {
   @IsOptional()
   @IsBoolean()

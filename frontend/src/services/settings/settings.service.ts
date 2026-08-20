@@ -20,6 +20,19 @@ export interface ProxySettings {
   router?: ProxyRouterSettings;
 }
 
+export interface ProxyPowerResult {
+  enabled: boolean;
+  baseDomain: string | null;
+  running: boolean;
+}
+
+// Acts immediately: the router container is a thing you switch on, so it does
+// not wait for the settings form to be saved.
+export async function setProxyPower(enabled: boolean): Promise<ProxyPowerResult> {
+  const response = await api.post<ProxyPowerResult>('/settings/proxy/power', { enabled });
+  return response.data;
+}
+
 export interface NetworkSettings {
   publicIp: string | null;
   lanIp: string | null;

@@ -1,16 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Globe, Info, Loader2, Network, Save } from 'lucide-react';
+import { AlertTriangle, Globe, Info, Loader2, Network, Power, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { getSettings, ProxyRouterSettings, ProxySettings, updateSettings } from '@/services/settings/settings.service';
+import { getSettings, ProxyRouterSettings, ProxySettings, setProxyPower, updateSettings } from '@/services/settings/settings.service';
+import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { regenerateAllDockerCompose } from '@/services/network.service';
+import { getProxyStatus, regenerateAllDockerCompose } from '@/services/network.service';
 import { getCurrentUser } from '@/services/users/users.service';
 
 export default function NetworkSettingsPage() {
@@ -25,11 +26,14 @@ export default function NetworkSettingsPage() {
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
   const [router, setRouter] = useState<ProxyRouterSettings>({});
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPowering, setIsPowering] = useState(false);
   const proxyToggleChanged = proxySettings.enabled !== initialProxyEnabled;
 
   useEffect(() => {
-    Promise.all([getSettings(), getCurrentUser()])
-      .then(([settings, user]) => {
+    Promise.all([getSettings(), getCurrentUser(), getProxyStatus()])
+      .then(([settings, user, status]) => {
+        setIsRunning(!!status.running);
         setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
         const nextProxy = settings.proxy || { enabled: false, baseDomain: null, available: false };
         setProxySettings(nextProxy);
@@ -46,6 +50,21 @@ export default function NetworkSettingsPage() {
       })
       .finally(() => setIsLoading(false));
   }, [t]);
+
+  const handlePower = async (next: boolean) => {
+    setIsPowering(true);
+    try {
+      const result = await setProxyPower(next);
+      setIsRunning(result.running);
+      setProxySettings((current) => ({ ...current, enabled: result.enabled }));
+      setInitialProxyEnabled(result.enabled);
+      mcToast.success(result.running ? t('proxyStarted') : t('proxyStopped'));
+    } catch {
+      mcToast.error(t('proxyPowerFailed'));
+    } finally {
+      setIsPowering(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -111,12 +130,23 @@ export default function NetworkSettingsPage() {
             <Input id="proxyBaseDomain" value={proxyBaseDomain} onChange={(event) => setProxyBaseDomain(event.target.value)} placeholder="mc.example.com" className="bg-gray-800 border-gray-700 text-white" />
             <p className="text-xs text-gray-500">{t('proxyBaseDomainDesc')}</p>
           </div>
-          <div className="flex items-center justify-between pt-2">
-            <div>
-              <p className="text-sm font-medium text-gray-200">{t('enableProxy')}</p>
-              <p className="text-xs text-gray-500">{t('enableProxyDesc')}</p>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-700/60 bg-gray-800/40 p-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={cn('h-2 w-2 shrink-0 rounded-full', isRunning ? 'bg-emerald-400' : 'bg-gray-600')} />
+                <p className="text-sm font-medium text-gray-200">{isRunning ? t('proxyRunning') : t('proxyStoppedState')}</p>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">{t('enableProxyDesc')}</p>
             </div>
-            <Switch checked={proxySettings.enabled} onCheckedChange={(checked) => setProxySettings((current) => ({ ...current, enabled: checked }))} disabled={!proxyBaseDomain} />
+            <Button
+              type="button"
+              onClick={() => handlePower(!isRunning)}
+              disabled={isPowering || !proxyBaseDomain}
+              className={cn('font-minecraft text-white', isRunning ? 'bg-red-700 hover:bg-red-800' : 'bg-emerald-600 hover:bg-emerald-700')}
+            >
+              {isPowering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Power className="mr-2 h-4 w-4" />}
+              {isRunning ? t('stopProxy') : t('startProxy')}
+            </Button>
           </div>
           {proxyToggleChanged ? (
             <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">

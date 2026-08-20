@@ -1578,6 +1578,13 @@ export const de: Record<TranslationKey, string> = {
     'Vorhandene externe Netzwerke, mit denen der Router verbunden wird, eines pro Zeile. Leer lassen, sofern der Verkehr nicht über einen anderen Stack läuft',
   enableProxy: 'Proxy Aktivieren',
   enableProxyDesc: 'Leite den gesamten Minecraft-Verkehr über mc-router auf Port 25565',
+  proxyRunning: 'Proxy läuft',
+  proxyStoppedState: 'Proxy gestoppt',
+  startProxy: 'Proxy starten',
+  stopProxy: 'Proxy stoppen',
+  proxyStarted: 'Proxy gestartet',
+  proxyStopped: 'Proxy gestoppt',
+  proxyPowerFailed: 'Proxy-Status konnte nicht geändert werden',
   proxyToggleWarning:
     'Stelle vor dem Speichern sicher, dass alle Server gestoppt sind. Das Ändern des globalen Proxys während Server laufen kann Probleme verursachen.',
   proxyRequiresDomain: 'Konfiguriere eine Basis-Domain, um die Proxy-Funktion zu aktivieren',

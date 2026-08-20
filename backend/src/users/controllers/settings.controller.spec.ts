@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ForbiddenException } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
@@ -12,6 +13,8 @@ describe('SettingsController', () => {
   let controller: SettingsController;
   let settingsService: jest.Mocked<SettingsService>;
   let usersService: jest.Mocked<UsersService>;
+  let proxyRouter: any;
+  let instanceSettings: any;
   let accessControlService: jest.Mocked<AccessControlService>;
 
   beforeEach(async () => {
@@ -69,6 +72,10 @@ describe('SettingsController', () => {
           },
         },
         {
+          provide: ProxyRouterService,
+          useValue: { reconcile: jest.fn().mockResolvedValue(undefined), isRunning: jest.fn().mockResolvedValue(true) },
+        },
+        {
           provide: AuditLogService,
           useValue: {
             record: jest.fn(),
@@ -78,6 +85,8 @@ describe('SettingsController', () => {
     }).compile();
 
     controller = module.get(SettingsController);
+    proxyRouter = module.get(ProxyRouterService);
+    instanceSettings = module.get(InstanceSettingsService);
     settingsService = module.get(SettingsService);
     usersService = module.get(UsersService);
     accessControlService = module.get(AccessControlService);
@@ -186,6 +195,40 @@ describe('SettingsController', () => {
 
       const writable = ['proxyPort', 'autoScaleEnabled', 'autoScaleDownAfter', 'autoScaleWakeTimeout', 'autoScaleAsleepMotd', 'autoScaleLoadingMotd', 'extraNetworks'];
       expect(Object.keys(result.proxy.router).sort()).toEqual([...writable].sort());
+    });
+  });
+
+  describe('powering the proxy on and off', () => {
+    it('turns the container on and reports what it ended up as', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      proxyRouter.isRunning.mockResolvedValue(true);
+
+      const result = await controller.setProxyPower({ user: { userId: 1 } }, { enabled: true });
+
+      expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true });
+      expect(proxyRouter.reconcile).toHaveBeenCalled();
+      expect(result).toEqual({ enabled: true, baseDomain: 'mc.example.com', running: true });
+    });
+
+    it('turns it off', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: false, baseDomain: 'mc.example.com' });
+      proxyRouter.isRunning.mockResolvedValue(false);
+
+      const result = await controller.setProxyPower({ user: { userId: 1 } }, { enabled: false });
+
+      expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: false });
+      expect(result.running).toBe(false);
+    });
+
+    // Binding a host port is host-affecting, so it needs the same permission as
+    // the rest of the system settings.
+    it('refuses without the system settings permission', async () => {
+      accessControlService.assertManageSystemSettings.mockImplementation(() => {
+        throw new ForbiddenException();
+      });
+
+      await expect(controller.setProxyPower({ user: { userId: 1 } }, { enabled: true })).rejects.toBeInstanceOf(ForbiddenException);
+      expect(proxyRouter.reconcile).not.toHaveBeenCalled();
     });
   });
 });

@@ -193,11 +193,12 @@ export class ProxyService {
     await fs.writeJson(this.ROUTES_FILE, config, { spaces: 2 });
   }
 
-  async getProxyStatus(): Promise<{ running: boolean; routesCount: number }> {
+  // Deliberately not called "running": the presence of a routes file says nothing
+  // about whether the router container is up. Ask ProxyRouterService for that.
+  async getRoutesStatus(): Promise<{ hasRoutesFile: boolean; routesCount: number }> {
     const config = await this.loadRoutesConfig();
-    const routesExist = await fs.pathExists(this.ROUTES_FILE);
     return {
-      running: routesExist,
+      hasRoutesFile: await fs.pathExists(this.ROUTES_FILE),
       routesCount: Object.keys(config.mappings).length,
     };
   }
