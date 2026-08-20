@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Delete, Param, Body, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ProxyService } from './proxy.service';
-import { PayloadToken } from 'src/auth/models/token.model';
 
 @Controller('proxy')
 export class ProxyController {
@@ -11,11 +10,10 @@ export class ProxyController {
   ) {}
 
   @Get('status')
-  async getStatus(@Request() req) {
-    const user = req.user as PayloadToken;
+  async getStatus() {
     const [proxyStatus, settings] = await Promise.all([
       this.proxyService.getProxyStatus(),
-      this.proxyService.getProxySettings(user.userId),
+      this.proxyService.getProxySettings(),
     ]);
 
     return {
@@ -33,9 +31,8 @@ export class ProxyController {
   }
 
   @Get('server/:id/hostname')
-  async getServerHostname(@Request() req, @Param('id') serverId: string) {
-    const user = req.user as PayloadToken;
-    const hostname = await this.proxyService.getServerHostname(serverId, user.userId);
+  async getServerHostname(@Param('id') serverId: string) {
+    const hostname = await this.proxyService.getServerHostname(serverId);
     return { hostname };
   }
 

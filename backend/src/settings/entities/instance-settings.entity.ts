@@ -27,6 +27,29 @@ export class InstanceSettings {
   @Column({ type: 'text', nullable: true, name: 'smtp_from' })
   smtpFrom?: string | null;
 
+  // Proxy and host networking. These decide how every server's compose file is
+  // generated, so they belong to the instance rather than to whichever user
+  // happened to save them.
+  @Column({ type: 'boolean', nullable: true, name: 'proxy_enabled' })
+  proxyEnabled?: boolean | null;
+
+  @Column({ type: 'text', nullable: true, name: 'proxy_base_domain' })
+  proxyBaseDomain?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'public_ip' })
+  publicIp?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'lan_ip' })
+  lanIp?: string | null;
+
+  @Column({ type: 'json', nullable: true, name: 'java_server_defaults' })
+  javaServerDefaults?: Record<string, unknown> | null;
+
+  // Set once the values above have been lifted out of a user's preferences, so
+  // clearing one of them does not get undone on the next boot.
+  @Column({ type: 'boolean', default: false, name: 'preferences_migrated' })
+  preferencesMigrated: boolean;
+
   // OIDC
   @Column({ type: 'text', nullable: true, name: 'oidc_issuer' })
   oidcIssuer?: string | null;

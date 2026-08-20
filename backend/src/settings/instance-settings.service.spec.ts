@@ -3,12 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { InstanceSettingsService } from './instance-settings.service';
 import { InstanceSettings } from './entities/instance-settings.entity';
+import { Settings } from '../users/entities/settings.entity';
 import { decryptSecret, encryptSecret, isEncrypted } from '../common/crypto/secret-cipher';
 
 describe('InstanceSettingsService', () => {
   const originalSecret = process.env.JWT_SECRET;
   let service: InstanceSettingsService;
   let repo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock };
+  let userSettingsRepo: { find: jest.Mock };
   let row: any;
   let env: Record<string, any>;
 
@@ -24,6 +26,8 @@ describe('InstanceSettingsService', () => {
     row = { id: 1 };
     env = {};
 
+    userSettingsRepo = { find: jest.fn().mockResolvedValue([]) };
+
     repo = {
       findOne: jest.fn(async () => row),
       save: jest.fn(async (value) => value),
@@ -38,6 +42,7 @@ describe('InstanceSettingsService', () => {
       providers: [
         InstanceSettingsService,
         { provide: getRepositoryToken(InstanceSettings), useValue: repo },
+        { provide: getRepositoryToken(Settings), useValue: userSettingsRepo },
         { provide: ConfigService, useValue: configService },
       ],
     }).compile();
@@ -106,5 +111,61 @@ describe('InstanceSettingsService', () => {
     row.smtpHost = 'smtp.db';
     pub = await service.getPublic();
     expect(pub.smtp.source).toBe('db');
+  });
+
+  describe('proxy and network settings', () => {
+    it('clears the base domain and disables the proxy when the domain is blank', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+
+      const result = await service.setProxy({ enabled: true, baseDomain: null });
+
+      expect(result).toEqual({ enabled: false, baseDomain: null });
+    });
+
+    it('reports the proxy as disabled when there is no base domain to route by', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = null;
+
+      expect(await service.getProxy()).toEqual({ enabled: false, baseDomain: null });
+    });
+
+    it('keeps the base domain when only the toggle is sent', async () => {
+      row.proxyBaseDomain = 'mc.example.com';
+      row.proxyEnabled = false;
+
+      expect(await service.setProxy({ enabled: true })).toEqual({ enabled: true, baseDomain: 'mc.example.com' });
+    });
+
+    it('clears network values when they are blank', async () => {
+      row.publicIp = '1.1.1.1';
+      row.lanIp = '192.168.1.2';
+
+      expect(await service.setNetwork({ publicIp: '  ', lanIp: '' })).toEqual({ publicIp: null, lanIp: null });
+    });
+  });
+
+  describe('migrating away from user preferences', () => {
+    it('lifts proxy and network values out of the oldest user preferences once', async () => {
+      userSettingsRepo.find.mockResolvedValue([
+        { preferences: { proxyEnabled: true, proxyBaseDomain: 'mc.example.com', publicIp: '1.1.1.1', lanIp: '10.0.0.2' } },
+      ]);
+
+      await service.onModuleInit();
+
+      expect(row.proxyBaseDomain).toBe('mc.example.com');
+      expect(row.publicIp).toBe('1.1.1.1');
+      expect(row.preferencesMigrated).toBe(true);
+    });
+
+    it('does not run again, so clearing a value is not undone on the next boot', async () => {
+      row.preferencesMigrated = true;
+      row.proxyBaseDomain = null;
+      userSettingsRepo.find.mockResolvedValue([{ preferences: { proxyBaseDomain: 'mc.example.com' } }]);
+
+      await service.onModuleInit();
+
+      expect(row.proxyBaseDomain).toBeNull();
+    });
   });
 });

@@ -5,6 +5,7 @@ import { Settings } from '../entities/settings.entity';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { UsersService } from 'src/users/services/users.service';
 import { decryptSecret, encryptSecret } from 'src/common/crypto/secret-cipher';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 const DEFAULT_AUDIT_RETENTION_DAYS = 15;
 
@@ -36,6 +37,7 @@ export class SettingsService {
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
     private readonly usersService: UsersService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   private normalizeOptionalText(value: string | undefined | null): string | null | undefined {
@@ -75,40 +77,25 @@ export class SettingsService {
       throw new NotFoundException('Settings not found');
     }
 
-    // Handle proxy settings
+    // Proxy and network settings are instance-wide, not per user.
     if (dto.proxy) {
-      const hasProxyBaseDomain = dto.proxy.proxyBaseDomain !== undefined;
-      const proxyBaseDomain = this.normalizeOptionalText(dto.proxy.proxyBaseDomain);
-      const nextProxyBaseDomain = hasProxyBaseDomain ? (proxyBaseDomain ?? null) : (settings.preferences?.proxyBaseDomain ?? null);
-
-      settings.preferences = {
-        ...settings.preferences,
-        proxyEnabled: nextProxyBaseDomain ? (dto.proxy.proxyEnabled ?? settings.preferences?.proxyEnabled ?? false) : false,
-        proxyBaseDomain: nextProxyBaseDomain,
-      };
+      await this.instanceSettings.setProxy({
+        enabled: dto.proxy.proxyEnabled,
+        baseDomain: dto.proxy.proxyBaseDomain === undefined ? undefined : this.normalizeOptionalText(dto.proxy.proxyBaseDomain),
+      });
       delete (dto as any).proxy;
     }
 
-    // Handle network settings
     if (dto.network) {
-      const hasPublicIp = dto.network.publicIp !== undefined;
-      const hasLanIp = dto.network.lanIp !== undefined;
-      const publicIp = this.normalizeOptionalText(dto.network.publicIp);
-      const lanIp = this.normalizeOptionalText(dto.network.lanIp);
-
-      settings.preferences = {
-        ...settings.preferences,
-        publicIp: hasPublicIp ? (publicIp ?? null) : (settings.preferences?.publicIp ?? null),
-        lanIp: hasLanIp ? (lanIp ?? null) : (settings.preferences?.lanIp ?? null),
-      };
+      await this.instanceSettings.setNetwork({
+        publicIp: dto.network.publicIp === undefined ? undefined : this.normalizeOptionalText(dto.network.publicIp),
+        lanIp: dto.network.lanIp === undefined ? undefined : this.normalizeOptionalText(dto.network.lanIp),
+      });
       delete (dto as any).network;
     }
 
     if (dto.javaServerDefaults) {
-      settings.preferences = {
-        ...settings.preferences,
-        javaServerDefaults: this.sanitizeJavaServerDefaults(dto.javaServerDefaults),
-      };
+      await this.instanceSettings.setJavaServerDefaults(this.sanitizeJavaServerDefaults(dto.javaServerDefaults));
       delete (dto as any).javaServerDefaults;
     }
 
@@ -145,22 +132,13 @@ export class SettingsService {
     }, {} as Record<string, any>);
   }
 
-  async getProxySettings(userId: number): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean }> {
-    const settings = await this.getSettings(userId);
-    const baseDomain = settings.preferences?.proxyBaseDomain ?? null;
-    return {
-      enabled: settings.preferences?.proxyEnabled ?? false,
-      baseDomain,
-      available: !!baseDomain,
-    };
+  async getProxySettings(): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean }> {
+    const { enabled, baseDomain } = await this.instanceSettings.getProxy();
+    return { enabled, baseDomain, available: !!baseDomain };
   }
 
-  async getNetworkSettings(userId: number): Promise<{ publicIp: string | null; lanIp: string | null }> {
-    const settings = await this.getSettings(userId);
-    return {
-      publicIp: settings.preferences?.publicIp ?? null,
-      lanIp: settings.preferences?.lanIp ?? null,
-    };
+  async getNetworkSettings(): Promise<{ publicIp: string | null; lanIp: string | null }> {
+    return this.instanceSettings.getNetwork();
   }
 
   // Get first user's settings (for system-wide operations like Discord notifications)

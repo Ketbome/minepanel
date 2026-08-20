@@ -34,6 +34,7 @@ jest.mock('node:util', () => {
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from '../alerts/alerts.service';
 import { ServerStoreService } from '../docker-compose/server-store.service';
+import { InstanceSettingsService } from '../settings/instance-settings.service';
 import * as fs from 'fs-extra';
 
 // Get the mocked promisify result
@@ -78,6 +79,13 @@ describe('ServerManagementService', () => {
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
         { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined) } },
+        {
+          provide: InstanceSettingsService,
+          useValue: {
+            getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+            getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+          },
+        },
       ],
     }).compile();
 

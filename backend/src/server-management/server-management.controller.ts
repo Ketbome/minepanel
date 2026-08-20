@@ -5,6 +5,7 @@ import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ProxyService } from 'src/proxy/proxy.service';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
@@ -148,6 +149,7 @@ export class ServerManagementController {
     private readonly dockerComposeService: DockerComposeService,
     private readonly managementService: ServerManagementService,
     private readonly settingsService: SettingsService,
+    private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyService: ProxyService,
     private readonly bedrockAddonsService: BedrockAddonsService,
     @Optional()
@@ -393,7 +395,6 @@ export class ServerManagementController {
       }
 
       const user = req.user as PayloadToken;
-      const settings = await this.settingsService.getSettings(user.userId);
 
       // The global CurseForge API key is the only one the UI manages, so it
       // wins over any key stored on the server config by older versions. It is
@@ -403,11 +404,10 @@ export class ServerManagementController {
         data.cfApiKey = cfApiKey;
       }
 
-      const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
-      const baseDomain = settings.preferences?.proxyBaseDomain;
+      const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
       const javaServerDefaults =
         (data.edition ?? 'JAVA') === 'JAVA'
-          ? this.sanitizeJavaServerDefaults(settings.preferences?.javaServerDefaults)
+          ? this.sanitizeJavaServerDefaults(await this.instanceSettings.getJavaServerDefaults())
           : {};
 
       const createPayload = {
@@ -450,10 +450,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    const user = req.user as PayloadToken;
-    const settings = await this.settingsService.getSettings(user.userId);
-    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
-    const baseDomain = settings.preferences?.proxyBaseDomain;
+    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
     const clonePayload = {
       ...config,
@@ -491,10 +488,7 @@ export class ServerManagementController {
   @Post('regenerate-all')
   async regenerateAllDockerCompose(@Request() req) {
     await this.requireAdmin(req);
-    const user = req.user as PayloadToken;
-    const settings = await this.settingsService.getSettings(user.userId);
-    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
-    const baseDomain = settings.preferences?.proxyBaseDomain;
+    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
     const result = await this.dockerComposeService.regenerateAllDockerCompose(proxyEnabled);
 
@@ -524,10 +518,7 @@ export class ServerManagementController {
 
     // Regenerate routes.json to remove deleted server
     if (result) {
-      const user = req.user as PayloadToken;
-      const settings = await this.settingsService.getSettings(user.userId);
-      const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
-      const baseDomain = settings.preferences?.proxyBaseDomain;
+      const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
       if (proxyEnabled && baseDomain) {
         await this.regenerateProxyRoutes(baseDomain);
@@ -579,10 +570,7 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
 
-    const user = req.user as PayloadToken;
-    const settings = await this.settingsService.getSettings(user.userId);
-    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
-    const baseDomain = settings.preferences?.proxyBaseDomain;
+    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
     const updatedConfig = await this.dockerComposeService.updateServerConfig(id, config, proxyEnabled);
     if (!updatedConfig) {
@@ -642,9 +630,7 @@ export class ServerManagementController {
       throw new BadRequestException('Selected world source was not found in local or world library sources');
     }
 
-    const user = req.user as PayloadToken;
-    const settings = await this.settingsService.getSettings(user.userId);
-    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    const { enabled: proxyEnabled } = await this.proxyService.getProxySettings();
 
     const nextConfig: Partial<ServerConfig> = {
       worldSource: body.worldSource,
@@ -698,9 +684,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    const user = req.user as PayloadToken;
-    const settings = await this.settingsService.getSettings(user.userId);
-    const proxyEnabled = settings.preferences?.proxyEnabled && !!settings.preferences?.proxyBaseDomain;
+    const { enabled: proxyEnabled } = await this.proxyService.getProxySettings();
     await this.dockerComposeService.updateServerConfig(id, {}, proxyEnabled);
 
     const result = await this.managementService.clearServerData(id);

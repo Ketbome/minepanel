@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import { ProxyService } from './proxy.service';
-import { Settings } from 'src/users/entities/settings.entity';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 jest.mock('fs-extra', () => ({
   ensureDir: jest.fn().mockResolvedValue(undefined),
@@ -16,9 +15,14 @@ jest.mock('fs-extra', () => ({
 
 describe('ProxyService', () => {
   let service: ProxyService;
+  let instanceSettings: any;
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    instanceSettings = {
+      getProxy: jest.fn().mockResolvedValue({ enabled: true, baseDomain: 'proxy.test' }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,11 +37,8 @@ describe('ProxyService', () => {
           },
         },
         {
-          provide: getRepositoryToken(Settings),
-          useValue: {
-            find: jest.fn().mockResolvedValue([{ preferences: { proxyEnabled: true, proxyBaseDomain: 'proxy.test' } }]),
-            findOne: jest.fn().mockResolvedValue(null),
-          },
+          provide: InstanceSettingsService,
+          useValue: instanceSettings,
         },
       ],
     }).compile();
@@ -118,9 +119,8 @@ describe('ProxyService', () => {
     expect(hostname).toBe('lobby.proxy.test');
   });
 
-  it('uses current user proxy settings for hostname fallback', async () => {
-    const settingsRepo = (service as any).settingsRepo;
-    settingsRepo.findOne.mockResolvedValue({ preferences: { proxyEnabled: true, proxyBaseDomain: 'user.test' } });
+  it('falls back to the instance base domain when the compose file names no hostname', async () => {
+    instanceSettings.getProxy.mockResolvedValue({ enabled: true, baseDomain: 'instance.test' });
 
     (fs.pathExists as jest.Mock).mockImplementation(async (target: string) => target === '/app/servers/survival/docker-compose.yml');
     (fs.readFile as unknown as jest.Mock).mockResolvedValue(
@@ -133,8 +133,8 @@ describe('ProxyService', () => {
       }),
     );
 
-    const hostname = await service.getServerHostname('survival', 42);
+    const hostname = await service.getServerHostname('survival');
 
-    expect(hostname).toBe('survival.user.test');
+    expect(hostname).toBe('survival.instance.test');
   });
 });

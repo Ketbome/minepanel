@@ -1,11 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
-import { Settings } from 'src/users/entities/settings.entity';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 export interface ProxyMapping {
@@ -34,8 +32,7 @@ export class ProxyService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(Settings)
-    private readonly settingsRepo: Repository<Settings>,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     // Use /app/data for files written by backend (not BASE_DIR which is for host paths)
@@ -43,28 +40,20 @@ export class ProxyService {
     this.ROUTES_FILE = path.join(this.PROXY_DIR, 'routes.json');
   }
 
-  async getProxySettings(userId?: number): Promise<{ enabled: boolean; baseDomain: string | null }> {
-    let settings;
-    if (userId) {
-      settings = await this.settingsRepo.findOne({ where: { userId } });
-    } else {
-      const [first] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
-      settings = first;
-    }
-    return {
-      enabled: settings?.preferences?.proxyEnabled ?? false,
-      baseDomain: settings?.preferences?.proxyBaseDomain ?? null,
-    };
+  // Proxy routing is instance-wide: it decides how every server's compose file is
+  // generated, so it no longer depends on which user is asking.
+  async getProxySettings(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    return this.instanceSettings.getProxy();
   }
 
-  async isProxyAvailable(userId?: number): Promise<boolean> {
-    const { baseDomain } = await this.getProxySettings(userId);
+  async isProxyAvailable(): Promise<boolean> {
+    const { baseDomain } = await this.getProxySettings();
     return !!baseDomain;
   }
 
-  async isProxyEnabled(userId?: number): Promise<boolean> {
-    const { enabled, baseDomain } = await this.getProxySettings(userId);
-    return enabled && !!baseDomain;
+  async isProxyEnabled(): Promise<boolean> {
+    const { enabled } = await this.getProxySettings();
+    return enabled;
   }
 
   generateHostname(serverId: string, baseDomain: string, customHostname?: string): string {
@@ -132,7 +121,7 @@ export class ProxyService {
     this.logger.log('Cleared proxy routes.json');
   }
 
-  async getServerHostname(serverId: string, userId?: number): Promise<string | null> {
+  async getServerHostname(serverId: string): Promise<string | null> {
     const config = await this.loadRoutesConfig();
     const backend = `${serverId}:25565`;
 
@@ -143,7 +132,7 @@ export class ProxyService {
       }
     }
 
-    const proxySettings = await this.getProxySettings(userId);
+    const proxySettings = await this.getProxySettings();
     if (proxySettings.enabled && proxySettings.baseDomain) {
       return this.getConfiguredServerHostname(serverId, proxySettings.baseDomain);
     }

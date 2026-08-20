@@ -1,5 +1,6 @@
 import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
@@ -17,6 +18,7 @@ export class SettingsController {
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   @Get()
@@ -24,8 +26,8 @@ export class SettingsController {
     const user = req.user as PayloadToken;
     const [settings, proxy, network, auditRetentionDays] = await Promise.all([
       this.settingsService.getSettings(user.userId),
-      this.settingsService.getProxySettings(user.userId),
-      this.settingsService.getNetworkSettings(user.userId),
+      this.settingsService.getProxySettings(),
+      this.settingsService.getNetworkSettings(),
       this.settingsService.getAuditRetentionDays(),
     ]);
 
@@ -37,7 +39,7 @@ export class SettingsController {
       hasDiscordWebhook: !!discordWebhook,
       proxy,
       network,
-      javaServerDefaults: settings.preferences?.javaServerDefaults ?? null,
+      javaServerDefaults: await this.instanceSettings.getJavaServerDefaults(),
       auditRetentionDays,
     };
   }

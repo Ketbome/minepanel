@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstanceSettings } from './entities/instance-settings.entity';
+import { Settings } from '../users/entities/settings.entity';
 import { UpdateIntegrationSettingsDto } from './dto/update-integration-settings.dto';
 import { decryptSecret, encryptSecret } from '../common/crypto/secret-cipher';
 
@@ -28,14 +29,91 @@ export interface ResolvedOidc {
 }
 
 @Injectable()
-export class InstanceSettingsService {
+export class InstanceSettingsService implements OnModuleInit {
+  private readonly logger = new Logger(InstanceSettingsService.name);
   private resetHandlers: Array<() => void> = [];
 
   constructor(
     @InjectRepository(InstanceSettings)
     private readonly repo: Repository<InstanceSettings>,
+    @InjectRepository(Settings)
+    private readonly userSettingsRepo: Repository<Settings>,
     private readonly configService: ConfigService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.migrateProxyAndNetworkFromPreferences();
+  }
+
+  // Proxy, host IPs and the new-server defaults used to live in one user's
+  // preferences JSON even though they drive every server's compose file. Lift
+  // the first user's values into the instance row, once.
+  private async migrateProxyAndNetworkFromPreferences(): Promise<void> {
+    try {
+      const row = await this.getRow();
+      if (row.preferencesMigrated) return;
+
+      const [oldest] = await this.userSettingsRepo.find({ order: { id: 'ASC' }, take: 1 });
+      const preferences = oldest?.preferences ?? {};
+
+      row.proxyEnabled = preferences.proxyEnabled ?? null;
+      row.proxyBaseDomain = preferences.proxyBaseDomain ?? null;
+      row.publicIp = preferences.publicIp ?? null;
+      row.lanIp = preferences.lanIp ?? null;
+      row.javaServerDefaults = preferences.javaServerDefaults ?? null;
+      row.preferencesMigrated = true;
+      await this.repo.save(row);
+
+      this.logger.log('Moved proxy and network settings from user preferences to the instance settings');
+    } catch (error) {
+      this.logger.error('Could not migrate proxy and network settings from user preferences', error);
+    }
+  }
+
+  async getProxy(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    const row = await this.getRow();
+    const baseDomain = row.proxyBaseDomain?.trim() || null;
+    return { enabled: (row.proxyEnabled ?? false) && !!baseDomain, baseDomain };
+  }
+
+  async setProxy(update: { enabled?: boolean; baseDomain?: string | null }): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    const row = await this.getRow();
+    if (update.baseDomain !== undefined) {
+      row.proxyBaseDomain = update.baseDomain?.trim() || null;
+    }
+    if (update.enabled !== undefined) {
+      row.proxyEnabled = update.enabled;
+    }
+    // Routing by hostname is meaningless without a base domain.
+    if (!row.proxyBaseDomain) {
+      row.proxyEnabled = false;
+    }
+    await this.repo.save(row);
+    return this.getProxy();
+  }
+
+  async getNetwork(): Promise<{ publicIp: string | null; lanIp: string | null }> {
+    const row = await this.getRow();
+    return { publicIp: row.publicIp ?? null, lanIp: row.lanIp ?? null };
+  }
+
+  async setNetwork(update: { publicIp?: string | null; lanIp?: string | null }): Promise<{ publicIp: string | null; lanIp: string | null }> {
+    const row = await this.getRow();
+    if (update.publicIp !== undefined) row.publicIp = update.publicIp?.trim() || null;
+    if (update.lanIp !== undefined) row.lanIp = update.lanIp?.trim() || null;
+    await this.repo.save(row);
+    return this.getNetwork();
+  }
+
+  async getJavaServerDefaults(): Promise<Record<string, unknown> | null> {
+    return (await this.getRow()).javaServerDefaults ?? null;
+  }
+
+  async setJavaServerDefaults(defaults: Record<string, unknown> | null): Promise<void> {
+    const row = await this.getRow();
+    row.javaServerDefaults = defaults;
+    await this.repo.save(row);
+  }
 
   // Consumers (mailer, OIDC) register a callback to drop their cached client
   // when integration settings change.

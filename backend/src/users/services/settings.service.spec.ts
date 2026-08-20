@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SettingsService } from './settings.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { Settings } from '../entities/settings.entity';
 import { UsersService } from './users.service';
 import { isEncrypted } from 'src/common/crypto/secret-cipher';
@@ -9,6 +10,7 @@ describe('SettingsService', () => {
   const originalSecret = process.env.JWT_SECRET;
   let service: SettingsService;
   let settingsRepo: { findOne: jest.Mock; save: jest.Mock };
+  let instanceSettings: any;
 
   beforeAll(() => {
     process.env.JWT_SECRET = 'settings-service-test-secret';
@@ -24,6 +26,15 @@ describe('SettingsService', () => {
       save: jest.fn(async (value) => value),
     };
 
+    instanceSettings = {
+      setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      setNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+      setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
+      getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+      getJavaServerDefaults: jest.fn().mockResolvedValue(null),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SettingsService,
@@ -37,40 +48,38 @@ describe('SettingsService', () => {
             getUserById: jest.fn().mockResolvedValue({ id: 1 }),
           },
         },
+        { provide: InstanceSettingsService, useValue: instanceSettings },
       ],
     }).compile();
 
     service = module.get(SettingsService);
   });
 
-  it('clears proxy domain and disables proxy when domain is blank', async () => {
-    settingsRepo.findOne.mockResolvedValue({
-      userId: 1,
-      preferences: {
-        proxyEnabled: true,
-        proxyBaseDomain: 'mc.example.com',
-      },
-    });
+  // Proxy and network settings describe the instance, not the user, so this
+  // service only forwards them; the behaviour lives in InstanceSettingsService.
+  it('forwards proxy settings to the instance settings, normalising blanks to null', async () => {
+    settingsRepo.findOne.mockResolvedValue({ userId: 1, preferences: {} });
 
-    const result = await service.updateSettings({ proxy: { proxyEnabled: true, proxyBaseDomain: '   ' } }, 1);
+    await service.updateSettings({ proxy: { proxyEnabled: true, proxyBaseDomain: '   ' } }, 1);
 
-    expect(result.preferences.proxyBaseDomain).toBeNull();
-    expect(result.preferences.proxyEnabled).toBe(false);
+    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true, baseDomain: null });
   });
 
-  it('clears network values when inputs are blank', async () => {
-    settingsRepo.findOne.mockResolvedValue({
-      userId: 1,
-      preferences: {
-        publicIp: '1.1.1.1',
-        lanIp: '192.168.1.2',
-      },
-    });
+  it('forwards network settings to the instance settings, normalising blanks to null', async () => {
+    settingsRepo.findOne.mockResolvedValue({ userId: 1, preferences: {} });
 
-    const result = await service.updateSettings({ network: { publicIp: ' ', lanIp: '' } }, 1);
+    await service.updateSettings({ network: { publicIp: ' ', lanIp: '' } }, 1);
 
-    expect(result.preferences.publicIp).toBeNull();
-    expect(result.preferences.lanIp).toBeNull();
+    expect(instanceSettings.setNetwork).toHaveBeenCalledWith({ publicIp: null, lanIp: null });
+  });
+
+  it('does not keep proxy or network values in the user preferences', async () => {
+    settingsRepo.findOne.mockResolvedValue({ userId: 1, preferences: {} });
+
+    const result = await service.updateSettings({ proxy: { proxyEnabled: true, proxyBaseDomain: 'mc.example.com' } }, 1);
+
+    expect(result.preferences?.proxyBaseDomain).toBeUndefined();
+    expect(result.preferences?.proxyEnabled).toBeUndefined();
   });
 
   it('stores the CurseForge API key encrypted and decrypts it for server-side use', async () => {

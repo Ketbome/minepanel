@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ServerManagementController } from './server-management.controller';
 import { ServerManagementService } from './server-management.service';
@@ -15,6 +16,7 @@ describe('ServerManagementController', () => {
   let serverService: jest.Mocked<ServerManagementService>;
   let dockerComposeService: jest.Mocked<DockerComposeService>;
   let settingsService: jest.Mocked<SettingsService>;
+  let mockInstanceSettings: any;
   let bedrockAddonsService: jest.Mocked<BedrockAddonsService>;
   let accessControlService: jest.Mocked<AccessControlService>;
 
@@ -54,8 +56,17 @@ describe('ServerManagementController', () => {
     const mockProxyService = {
       generateRoutesFile: jest.fn(),
       clearRoutesFile: jest.fn(),
-      getProxySettings: jest.fn(),
+      getProxySettings: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
       getServerHostname: jest.fn(),
+    };
+
+    mockInstanceSettings = {
+      getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+      getJavaServerDefaults: jest.fn().mockResolvedValue(null),
+      setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      setNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+      setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
     };
 
     const mockBedrockAddonsService = {
@@ -83,6 +94,7 @@ describe('ServerManagementController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ServerManagementController],
       providers: [
+        { provide: InstanceSettingsService, useValue: mockInstanceSettings },
         { provide: ServerManagementService, useValue: mockServerService },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: SettingsService, useValue: mockSettingsService },
@@ -241,18 +253,12 @@ describe('ServerManagementController', () => {
     });
 
     it('should apply global java defaults when creating JAVA server', async () => {
-      settingsService.getSettings.mockResolvedValue({
-        preferences: {
-          proxyEnabled: false,
-          proxyBaseDomain: null,
-          javaServerDefaults: {
-            onlineMode: false,
-            maxMemory: '3G',
-            cpuLimit: '1',
-            ignoredField: 'ignored',
-          },
-        },
-      } as any);
+      mockInstanceSettings.getJavaServerDefaults.mockResolvedValue({
+        onlineMode: false,
+        maxMemory: '3G',
+        cpuLimit: '1',
+        ignoredField: 'ignored',
+      });
       dockerComposeService.createServer.mockResolvedValue({ id: 'demo' } as any);
 
       await controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', maxMemory: '4G' } as any);
@@ -355,7 +361,7 @@ describe('ServerManagementController', () => {
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith(
         'victim',
         expect.objectContaining({ serverName: 'renamed' }),
-        undefined,
+        false,
       );
     });
 

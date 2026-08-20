@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 const execAsync = promisify(exec);
@@ -115,6 +116,7 @@ export class ServerManagementService {
     private readonly discordService: DiscordService,
     private readonly alertsService: AlertsService,
     private readonly store: ServerStoreService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
@@ -562,13 +564,17 @@ export class ServerManagementService {
         where: { discordWebhook: Not(IsNull()) },
         order: { id: 'ASC' },
       });
+      // The webhook and language are per user; the rest describes the host and
+      // lives on the instance.
+      const [network, proxy] = await Promise.all([this.instanceSettings.getNetwork(), this.instanceSettings.getProxy()]);
+
       return {
         webhook: settings?.discordWebhook || null,
         lang: (settings?.language as SupportedLanguage) || 'es',
-        publicIp: settings?.preferences?.publicIp || null,
-        lanIp: settings?.preferences?.lanIp || null,
-        proxyEnabled: settings?.preferences?.proxyEnabled || false,
-        proxyBaseDomain: settings?.preferences?.proxyBaseDomain || null,
+        publicIp: network.publicIp,
+        lanIp: network.lanIp,
+        proxyEnabled: proxy.enabled,
+        proxyBaseDomain: proxy.baseDomain,
       };
     } catch (error) {
       this.logger.warn('Failed to get user settings', error);

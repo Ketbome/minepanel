@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ForbiddenException } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from '../services/settings.service';
@@ -17,6 +18,17 @@ describe('SettingsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SettingsController],
       providers: [
+        {
+          provide: InstanceSettingsService,
+          useValue: {
+            getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+            getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+            getJavaServerDefaults: jest.fn().mockResolvedValue(null),
+            setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+            setNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+            setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         {
           provide: SettingsService,
           useValue: {
