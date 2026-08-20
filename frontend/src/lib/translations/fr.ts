@@ -1520,6 +1520,23 @@ export const fr: Record<TranslationKey, string> = {
   proxySettingsDesc: 'Configure mc-router pour utiliser un seul port pour tous les serveurs',
   proxyBaseDomain: 'Domaine de base',
   proxyBaseDomainDesc: 'Le domaine qui sera utilisé pour les sous-domaines des serveurs (ex. mc.example.com)',
+  proxyPort: 'Port du routeur',
+  proxyPortDesc:
+    'Port de l’hôte sur lequel le proxy écoute. Les joueurs s’y connectent ; 25565 est celui de Minecraft par défaut',
+  autoScale: 'Mise à l’échelle automatique',
+  autoScaleDesc:
+    'Arrête les serveurs derrière le proxy tant qu’ils sont vides et les redémarre à la première connexion',
+  autoScaleDownAfter: 'Arrêter après',
+  autoScaleDownAfterDesc:
+    'Durée pendant laquelle un serveur reste vide avant d’être arrêté, par exemple 10m ou 1h',
+  autoScaleAsleepMotd: 'Message de serveur endormi',
+  autoScaleAsleepMotdDesc:
+    'Affiché dans la liste des serveurs tant qu’un serveur est arrêté',
+  autoScaleWarning:
+    'Tout serveur Java derrière le proxy est arrêté lorsqu’il est vide, sauf si vous désactivez la mise à l’échelle automatique dans ses paramètres de connectivité. Réveiller un modpack lourd peut prendre plus de temps que le client n’attend, la première connexion peut donc échouer. Bedrock n’est jamais concerné.',
+  proxyExtraNetworks: 'Réseaux Docker supplémentaires',
+  proxyExtraNetworksDesc:
+    'Réseaux externes existants auxquels rattacher le routeur, un par ligne. Laissez vide sauf si le trafic passe par une autre stack',
   enableProxy: 'Activer le proxy',
   enableProxyDesc: 'Redirige tout le trafic Minecraft via mc-router sur le port 25565',
   proxyToggleWarning:

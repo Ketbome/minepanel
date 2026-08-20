@@ -1,10 +1,24 @@
 import type { Language } from '@/lib/translations';
 import api from '../axios.service';
 
+// mc-router container settings. Minepanel generates and runs the router itself,
+// so these replaced the MC_PROXY_* variables that used to live in .env.
+export interface ProxyRouterSettings {
+  proxyPort?: string;
+  autoScaleEnabled?: boolean;
+  autoScaleDownAfter?: string;
+  autoScaleWakeTimeout?: string;
+  autoScaleAsleepMotd?: string;
+  autoScaleLoadingMotd?: string;
+  extraNetworks?: string | null;
+  hasAutoScaleToken?: boolean;
+}
+
 export interface ProxySettings {
   enabled: boolean;
   baseDomain: string | null;
   available: boolean;
+  router?: ProxyRouterSettings;
 }
 
 export interface NetworkSettings {
@@ -100,6 +114,7 @@ export interface UpdateUserSettings {
   proxy?: {
     proxyEnabled?: boolean;
     proxyBaseDomain?: string;
+    router?: ProxyRouterSettings;
   };
   network?: {
     publicIp?: string;

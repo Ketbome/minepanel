@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
+import { InstanceSettingsService } from '../settings/instance-settings.service';
 import { NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { AutoScaleController } from './auto-scale.controller';
 import { ServerManagementService } from './server-management.service';
@@ -22,7 +22,7 @@ describe('AutoScaleController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AutoScaleController],
       providers: [
-        { provide: ConfigService, useValue: { get: jest.fn(() => token) } },
+        { provide: InstanceSettingsService, useValue: { getAutoScaleToken: jest.fn(async () => token ?? null) } },
         {
           provide: ServerManagementService,
           useValue: { getServerStatus: jest.fn(), startServer: jest.fn(), stopServer: jest.fn() },

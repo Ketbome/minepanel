@@ -1,26 +1,27 @@
 import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyService } from './proxy.service';
 
 @Controller('proxy')
 export class ProxyController {
   constructor(
     private readonly proxyService: ProxyService,
-    private readonly configService: ConfigService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   @Get('status')
   async getStatus() {
-    const [proxyStatus, settings] = await Promise.all([
+    const [proxyStatus, settings, router] = await Promise.all([
       this.proxyService.getProxyStatus(),
       this.proxyService.getProxySettings(),
+      this.instanceSettings.getRouterSettings(),
     ]);
 
     return {
       available: !!settings.baseDomain,
       enabled: settings.enabled && !!settings.baseDomain,
       baseDomain: settings.baseDomain,
-      autoScaleAvailable: !!this.configService.get<string>('autoScaleToken'),
+      autoScaleAvailable: router.autoScaleEnabled,
       ...proxyStatus,
     };
   }

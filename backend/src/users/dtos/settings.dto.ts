@@ -1,6 +1,38 @@
 import { IsOptional, IsString, IsBoolean, IsEnum, ValidateNested, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
+// mc-router container settings. The panel generates the router's compose file,
+// so these replaced the MC_PROXY_* variables that used to live in .env.
+export class ProxyRouterSettingsDto {
+  @IsOptional()
+  @IsString()
+  proxyPort?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  autoScaleEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  autoScaleDownAfter?: string;
+
+  @IsOptional()
+  @IsString()
+  autoScaleWakeTimeout?: string;
+
+  @IsOptional()
+  @IsString()
+  autoScaleAsleepMotd?: string;
+
+  @IsOptional()
+  @IsString()
+  autoScaleLoadingMotd?: string;
+
+  @IsOptional()
+  @IsString()
+  extraNetworks?: string;
+}
+
 export class ProxySettingsDto {
   @IsOptional()
   @IsBoolean()
@@ -9,6 +41,11 @@ export class ProxySettingsDto {
   @IsOptional()
   @IsString()
   proxyBaseDomain?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProxyRouterSettingsDto)
+  router?: ProxyRouterSettingsDto;
 }
 
 export class NetworkSettingsDto {

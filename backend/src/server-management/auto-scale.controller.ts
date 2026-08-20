@@ -1,5 +1,5 @@
 import { Body, Controller, Headers, HttpCode, Logger, NotFoundException, Post, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { timingSafeEqual } from 'node:crypto';
 import { connect } from 'node:net';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -18,7 +18,7 @@ export class AutoScaleController {
   private readonly logger = new Logger(AutoScaleController.name);
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly instanceSettings: InstanceSettingsService,
     private readonly managementService: ServerManagementService,
     private readonly proxyService: ProxyService,
     private readonly composeService: DockerComposeService,
@@ -28,7 +28,7 @@ export class AutoScaleController {
   @Post('autoscale')
   @HttpCode(200)
   async autoScale(@Headers('authorization') authorization: string, @Body() body: AutoScaleDto) {
-    this.assertAuthorized(authorization);
+    await this.assertAuthorized(authorization);
 
     const { serverId, port } = await this.resolveBackend(body);
 
@@ -70,8 +70,10 @@ export class AutoScaleController {
     return { serverId, status: 'running' };
   }
 
-  private assertAuthorized(authorization?: string): void {
-    const token = this.configService.get<string>('autoScaleToken');
+  private async assertAuthorized(authorization?: string): Promise<void> {
+    // The panel mints this when auto-scaling is switched on, so the endpoint
+    // simply does not exist until then.
+    const token = await this.instanceSettings.getAutoScaleToken();
     if (!token) {
       throw new NotFoundException();
     }

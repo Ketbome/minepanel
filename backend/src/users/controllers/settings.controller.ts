@@ -24,10 +24,11 @@ export class SettingsController {
   @Get()
   async getSettings(@Request() req) {
     const user = req.user as PayloadToken;
-    const [settings, proxy, network, auditRetentionDays] = await Promise.all([
+    const [settings, proxy, network, router, auditRetentionDays] = await Promise.all([
       this.settingsService.getSettings(user.userId),
       this.settingsService.getProxySettings(),
       this.settingsService.getNetworkSettings(),
+      this.instanceSettings.getRouterSettings(),
       this.settingsService.getAuditRetentionDays(),
     ]);
 
@@ -37,7 +38,9 @@ export class SettingsController {
       ...rest,
       hasCfApiKey: !!cfApiKey,
       hasDiscordWebhook: !!discordWebhook,
-      proxy,
+      // The token is a shared secret with the router container; the UI only
+      // needs to know whether one exists.
+      proxy: { ...proxy, router: { ...router, autoScaleToken: undefined, hasAutoScaleToken: !!router.autoScaleToken } },
       network,
       javaServerDefaults: await this.instanceSettings.getJavaServerDefaults(),
       auditRetentionDays,

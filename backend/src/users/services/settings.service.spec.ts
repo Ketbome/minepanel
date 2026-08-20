@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SettingsService } from './settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { Settings } from '../entities/settings.entity';
 import { UsersService } from './users.service';
 import { isEncrypted } from 'src/common/crypto/secret-cipher';
@@ -49,6 +50,7 @@ describe('SettingsService', () => {
           },
         },
         { provide: InstanceSettingsService, useValue: instanceSettings },
+        { provide: ProxyRouterService, useValue: { reconcile: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

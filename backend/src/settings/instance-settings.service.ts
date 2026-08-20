@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'node:crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstanceSettings } from './entities/instance-settings.entity';
@@ -103,6 +104,65 @@ export class InstanceSettingsService implements OnModuleInit {
     if (update.lanIp !== undefined) row.lanIp = update.lanIp?.trim() || null;
     await this.repo.save(row);
     return this.getNetwork();
+  }
+
+  async getRouterSettings(): Promise<{
+    proxyPort: string;
+    autoScaleEnabled: boolean;
+    autoScaleToken: string | null;
+    autoScaleDownAfter: string;
+    autoScaleWakeTimeout: string;
+    autoScaleAsleepMotd: string;
+    autoScaleLoadingMotd: string;
+    extraNetworks: string | null;
+  }> {
+    const row = await this.getRow();
+    return {
+      proxyPort: row.proxyPort?.trim() || '25565',
+      autoScaleEnabled: row.autoScaleEnabled ?? false,
+      autoScaleToken: row.autoScaleTokenEnc ? decryptSecret(row.autoScaleTokenEnc) : null,
+      autoScaleDownAfter: row.autoScaleDownAfter?.trim() || '10m',
+      autoScaleWakeTimeout: row.autoScaleWakeTimeout?.trim() || '180s',
+      autoScaleAsleepMotd: row.autoScaleAsleepMotd?.trim() || 'Server is asleep. Join to wake it up!',
+      autoScaleLoadingMotd: row.autoScaleLoadingMotd?.trim() || 'Server is starting...',
+      extraNetworks: row.proxyExtraNetworks ?? null,
+    };
+  }
+
+  async updateRouterSettings(update: {
+    proxyPort?: string;
+    autoScaleEnabled?: boolean;
+    autoScaleDownAfter?: string;
+    autoScaleWakeTimeout?: string;
+    autoScaleAsleepMotd?: string;
+    autoScaleLoadingMotd?: string;
+    extraNetworks?: string | null;
+  }): Promise<void> {
+    const row = await this.getRow();
+
+    if (update.proxyPort !== undefined) row.proxyPort = update.proxyPort.trim() || null;
+    if (update.autoScaleDownAfter !== undefined) row.autoScaleDownAfter = update.autoScaleDownAfter.trim() || null;
+    if (update.autoScaleWakeTimeout !== undefined) row.autoScaleWakeTimeout = update.autoScaleWakeTimeout.trim() || null;
+    if (update.autoScaleAsleepMotd !== undefined) row.autoScaleAsleepMotd = update.autoScaleAsleepMotd.trim() || null;
+    if (update.autoScaleLoadingMotd !== undefined) row.autoScaleLoadingMotd = update.autoScaleLoadingMotd.trim() || null;
+    if (update.extraNetworks !== undefined) row.proxyExtraNetworks = update.extraNetworks?.trim() || null;
+
+    if (update.autoScaleEnabled !== undefined) {
+      row.autoScaleEnabled = update.autoScaleEnabled;
+      // The router authenticates to the panel with this; mint it on first use so
+      // nobody has to run openssl and copy it into two places.
+      if (update.autoScaleEnabled && !row.autoScaleTokenEnc) {
+        row.autoScaleTokenEnc = encryptSecret(randomBytes(32).toString('base64'));
+      }
+    }
+
+    await this.repo.save(row);
+  }
+
+  async getAutoScaleToken(): Promise<string | null> {
+    const row = await this.getRow();
+    if (!row.autoScaleEnabled || !row.autoScaleTokenEnc) return null;
+    return decryptSecret(row.autoScaleTokenEnc);
   }
 
   async getJavaServerDefaults(): Promise<Record<string, unknown> | null> {

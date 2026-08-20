@@ -1550,6 +1550,22 @@ export const nl: Record<TranslationKey, string> = {
   proxyBaseDomain: 'Basis Domein',
   proxyBaseDomainDesc:
     'Het domein dat wordt gebruikt voor server subdomeinen (bijv. mc.example.com)',
+  proxyPort: 'Routerpoort',
+  proxyPortDesc:
+    'Hostpoort waarop de proxy luistert. Spelers verbinden hier; 25565 is de Minecraft-standaard',
+  autoScale: 'Automatisch schalen',
+  autoScaleDesc:
+    'Stopt servers achter de proxy zolang ze leeg zijn en start ze weer bij de eerste verbinding',
+  autoScaleDownAfter: 'Stoppen na',
+  autoScaleDownAfterDesc:
+    'Hoe lang een server leeg blijft voordat die wordt gestopt, bijvoorbeeld 10m of 1h',
+  autoScaleAsleepMotd: 'Bericht bij slapende server',
+  autoScaleAsleepMotdDesc: 'Wordt in de serverlijst getoond zolang een server gestopt is',
+  autoScaleWarning:
+    'Elke Java-server achter de proxy wordt gestopt wanneer die leeg is, tenzij je automatisch schalen uitzet in de connectiviteitsinstellingen van die server. Een zware modpack wakker maken kan langer duren dan de client wacht, dus de eerste verbinding kan mislukken. Bedrock wordt nooit geraakt.',
+  proxyExtraNetworks: 'Extra Docker-netwerken',
+  proxyExtraNetworksDesc:
+    'Bestaande externe netwerken om de router aan te koppelen, één per regel. Laat leeg tenzij je verkeer via een andere stack routeert',
   enableProxy: 'Proxy Inschakelen',
   enableProxyDesc: 'Routeer al het Minecraft verkeer via mc-router op poort 25565',
   proxyToggleWarning:

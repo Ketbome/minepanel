@@ -6,6 +6,7 @@ import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { UsersService } from 'src/users/services/users.service';
 import { decryptSecret, encryptSecret } from 'src/common/crypto/secret-cipher';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 
 const DEFAULT_AUDIT_RETENTION_DAYS = 15;
 
@@ -38,6 +39,7 @@ export class SettingsService {
     private readonly settingsRepo: Repository<Settings>,
     private readonly usersService: UsersService,
     private readonly instanceSettings: InstanceSettingsService,
+    private readonly proxyRouter: ProxyRouterService,
   ) {}
 
   private normalizeOptionalText(value: string | undefined | null): string | null | undefined {
@@ -83,6 +85,11 @@ export class SettingsService {
         enabled: dto.proxy.proxyEnabled,
         baseDomain: dto.proxy.proxyBaseDomain === undefined ? undefined : this.normalizeOptionalText(dto.proxy.proxyBaseDomain),
       });
+      if (dto.proxy.router) {
+        await this.instanceSettings.updateRouterSettings(dto.proxy.router);
+      }
+      // The panel owns the router container, so saving is what starts or stops it.
+      await this.proxyRouter.reconcile();
       delete (dto as any).proxy;
     }
 

@@ -1537,6 +1537,22 @@ export const pt: Record<TranslationKey, string> = {
   proxyBaseDomain: 'Domínio Base',
   proxyBaseDomainDesc:
     'O domínio que será usado para os subdomínios dos servidores (ex: mc.example.com)',
+  proxyPort: 'Porta do router',
+  proxyPortDesc:
+    'Porta do host onde o proxy escuta. Os jogadores conectam aí; 25565 é a padrão do Minecraft',
+  autoScale: 'Auto-escalonamento',
+  autoScaleDesc:
+    'Para os servidores com proxy enquanto estão vazios e os inicia novamente na primeira conexão',
+  autoScaleDownAfter: 'Parar após',
+  autoScaleDownAfterDesc:
+    'Quanto tempo um servidor fica vazio antes de ser parado, por exemplo 10m ou 1h',
+  autoScaleAsleepMotd: 'Mensagem de servidor adormecido',
+  autoScaleAsleepMotdDesc: 'Mostrada na lista de servidores enquanto um está parado',
+  autoScaleWarning:
+    'Todos os servidores Java com proxy param quando ficam vazios, a menos que você desative o auto-escalonamento nas configurações de Conectividade de cada um. Acordar um modpack pesado pode demorar mais do que o cliente espera, então a primeira conexão pode falhar. Bedrock nunca é afetado.',
+  proxyExtraNetworks: 'Redes Docker adicionais',
+  proxyExtraNetworksDesc:
+    'Redes externas existentes às quais conectar o router, uma por linha. Deixe vazio a menos que roteie o tráfego por outro stack',
   enableProxy: 'Habilitar Proxy',
   enableProxyDesc: 'Rotear todo o tráfego de Minecraft através do mc-router na porta 25565',
   proxyToggleWarning:

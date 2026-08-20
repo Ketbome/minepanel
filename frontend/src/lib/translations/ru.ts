@@ -1520,6 +1520,22 @@ export const ru: Record<TranslationKey, string> = {
   proxySettingsDesc: 'Настройте mc-router для использования одного порта всеми серверами',
   proxyBaseDomain: 'Базовый домен',
   proxyBaseDomainDesc: 'Домен для поддоменов серверов, например mc.example.com',
+  proxyPort: 'Порт роутера',
+  proxyPortDesc:
+    'Порт хоста, на котором слушает proxy. Игроки подключаются сюда; 25565 — порт Minecraft по умолчанию',
+  autoScale: 'Автомасштабирование',
+  autoScaleDesc:
+    'Останавливает серверы за proxy, пока они пусты, и запускает их снова при первом подключении',
+  autoScaleDownAfter: 'Остановить через',
+  autoScaleDownAfterDesc:
+    'Сколько сервер остаётся пустым до остановки, например 10m или 1h',
+  autoScaleAsleepMotd: 'Сообщение спящего сервера',
+  autoScaleAsleepMotdDesc: 'Показывается в списке серверов, пока сервер остановлен',
+  autoScaleWarning:
+    'Любой Java-сервер за proxy останавливается, когда он пуст, если не отключить автомасштабирование в его настройках подключения. Пробуждение тяжёлого модпака может занять больше времени, чем ждёт клиент, поэтому первое подключение может не пройти. Bedrock это никогда не затрагивает.',
+  proxyExtraNetworks: 'Дополнительные сети Docker',
+  proxyExtraNetworksDesc:
+    'Существующие внешние сети для подключения роутера, по одной в строке. Оставьте пустым, если трафик не идёт через другой стек',
   enableProxy: 'Включить proxy',
   enableProxyDesc: 'Направлять весь трафик Minecraft через mc-router на порт 25565',
   proxyToggleWarning:

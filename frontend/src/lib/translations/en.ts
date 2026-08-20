@@ -1518,6 +1518,22 @@ export const en = {
   proxySettingsDesc: 'Configure mc-router to use a single port for all servers',
   proxyBaseDomain: 'Base Domain',
   proxyBaseDomainDesc: 'The domain that will be used for server subdomains (e.g., mc.example.com)',
+  proxyPort: 'Router port',
+  proxyPortDesc:
+    'Host port the proxy listens on. Players connect here; 25565 is the Minecraft default',
+  autoScale: 'Auto-scaling',
+  autoScaleDesc:
+    'Stop proxied servers while they are empty and start them again on the first connection',
+  autoScaleDownAfter: 'Stop after',
+  autoScaleDownAfterDesc:
+    'How long a server stays empty before it is stopped, e.g. 10m or 1h',
+  autoScaleAsleepMotd: 'Sleeping server message',
+  autoScaleAsleepMotdDesc: 'Shown in the server list while a server is stopped',
+  autoScaleWarning:
+    'Every proxied Java server is stopped when empty unless you turn auto-scaling off for it in its Connectivity settings. Waking a heavy modpack can take longer than the client waits, so the first join may time out. Bedrock is never affected.',
+  proxyExtraNetworks: 'Extra Docker networks',
+  proxyExtraNetworksDesc:
+    'Existing external networks to attach the router to, one per line. Leave empty unless you route traffic through another stack',
   enableProxy: 'Enable Proxy',
   enableProxyDesc: 'Route all Minecraft traffic through mc-router on port 25565',
   proxyToggleWarning:

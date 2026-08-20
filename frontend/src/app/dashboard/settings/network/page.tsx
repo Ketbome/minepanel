@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { getSettings, ProxySettings, updateSettings } from '@/services/settings/settings.service';
+import { getSettings, ProxyRouterSettings, ProxySettings, updateSettings } from '@/services/settings/settings.service';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { regenerateAllDockerCompose } from '@/services/network.service';
@@ -24,6 +24,7 @@ export default function NetworkSettingsPage() {
   const [publicIp, setPublicIp] = useState('');
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
+  const [router, setRouter] = useState<ProxyRouterSettings>({});
   const proxyToggleChanged = proxySettings.enabled !== initialProxyEnabled;
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function NetworkSettingsPage() {
         setProxyBaseDomain(nextProxy.baseDomain || '');
         setInitialProxyEnabled(nextProxy.enabled);
         setInitialProxyDomain(nextProxy.baseDomain || '');
+        setRouter(nextProxy.router || {});
         setPublicIp(settings.network?.publicIp || '');
         setLanIp(settings.network?.lanIp || '');
       })
@@ -49,7 +51,7 @@ export default function NetworkSettingsPage() {
     setIsSaving(true);
     try {
       await updateSettings({
-        proxy: { proxyEnabled: proxySettings.enabled, proxyBaseDomain },
+        proxy: { proxyEnabled: proxySettings.enabled, proxyBaseDomain, router },
         network: { publicIp, lanIp },
       });
 
@@ -137,6 +139,74 @@ export default function NetworkSettingsPage() {
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-4 border-t border-gray-700/60 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="proxyPort" className="text-gray-200">{t('proxyPort')}</Label>
+              <Input
+                id="proxyPort"
+                value={router.proxyPort ?? ''}
+                onChange={(event) => setRouter((current) => ({ ...current, proxyPort: event.target.value }))}
+                placeholder="25565"
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+              <p className="text-xs text-gray-500">{t('proxyPortDesc')}</p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-200">{t('autoScale')}</p>
+                <p className="text-xs text-gray-500">{t('autoScaleDesc')}</p>
+              </div>
+              <Switch
+                checked={router.autoScaleEnabled ?? false}
+                onCheckedChange={(checked) => setRouter((current) => ({ ...current, autoScaleEnabled: checked }))}
+                disabled={!proxySettings.enabled}
+              />
+            </div>
+
+            {router.autoScaleEnabled ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="autoScaleDownAfter" className="text-gray-200">{t('autoScaleDownAfter')}</Label>
+                  <Input
+                    id="autoScaleDownAfter"
+                    value={router.autoScaleDownAfter ?? ''}
+                    onChange={(event) => setRouter((current) => ({ ...current, autoScaleDownAfter: event.target.value }))}
+                    placeholder="10m"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500">{t('autoScaleDownAfterDesc')}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="autoScaleAsleepMotd" className="text-gray-200">{t('autoScaleAsleepMotd')}</Label>
+                  <Input
+                    id="autoScaleAsleepMotd"
+                    value={router.autoScaleAsleepMotd ?? ''}
+                    onChange={(event) => setRouter((current) => ({ ...current, autoScaleAsleepMotd: event.target.value }))}
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500">{t('autoScaleAsleepMotdDesc')}</p>
+                </div>
+                <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  <p className="text-xs text-amber-300">{t('autoScaleWarning')}</p>
+                </div>
+              </>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label htmlFor="proxyExtraNetworks" className="text-gray-200">{t('proxyExtraNetworks')}</Label>
+              <Input
+                id="proxyExtraNetworks"
+                value={router.extraNetworks ?? ''}
+                onChange={(event) => setRouter((current) => ({ ...current, extraNetworks: event.target.value }))}
+                placeholder="shared_proxy_net"
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+              <p className="text-xs text-gray-500">{t('proxyExtraNetworksDesc')}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
