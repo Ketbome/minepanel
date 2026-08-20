@@ -14,6 +14,7 @@ import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.mode
 import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 const execAsync = promisify(exec);
@@ -117,6 +118,7 @@ export class ServerManagementService {
     private readonly alertsService: AlertsService,
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
+    private readonly composeService: DockerComposeService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
@@ -735,6 +737,12 @@ export class ServerManagementService {
         return false;
       }
 
+      // The compose file is derived from server.json, so refresh it here instead
+      // of trusting whatever was written the last time someone pressed save. This
+      // covers every way a server runs: the UI, the scheduler, and the mc-router
+      // wake-up webhook.
+      await this.refreshComposeFile(serverId);
+
       this.alertsService.markExpectedStop(serverId);
       await this.execComposeDown(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
@@ -904,6 +912,11 @@ export class ServerManagementService {
         error: (error as Error).message,
       };
     }
+  }
+
+  private async refreshComposeFile(serverId: string): Promise<void> {
+    const { enabled: proxyEnabled } = await this.instanceSettings.getProxy();
+    await this.composeService.refreshComposeFile(serverId, proxyEnabled);
   }
 
   async deleteServer(serverId: string): Promise<boolean> {
@@ -1474,6 +1487,12 @@ export class ServerManagementService {
         this.logger.error(`Docker compose file does not exist for server ${serverId}`);
         return false;
       }
+
+      // The compose file is derived from server.json, so refresh it here instead
+      // of trusting whatever was written the last time someone pressed save. This
+      // covers every way a server runs: the UI, the scheduler, and the mc-router
+      // wake-up webhook.
+      await this.refreshComposeFile(serverId);
 
       const mcDataPath = this.getMcDataPath(serverId);
       if (await fs.pathExists(mcDataPath)) {

@@ -34,6 +34,7 @@ jest.mock('node:util', () => {
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from '../alerts/alerts.service';
 import { ServerStoreService } from '../docker-compose/server-store.service';
+import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { InstanceSettingsService } from '../settings/instance-settings.service';
 import * as fs from 'fs-extra';
 
@@ -79,6 +80,7 @@ describe('ServerManagementService', () => {
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
         { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined) } },
+        { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },
         {
           provide: InstanceSettingsService,
           useValue: {

@@ -905,6 +905,31 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return entries;
   }
 
+  /**
+   * Rewrites a server's compose file from its stored config.
+   *
+   * Called just before the server runs, so what starts always matches
+   * server.json: hand edits to the compose file are discarded, and a panel
+   * upgrade that changes how compose files are generated takes effect on the
+   * next start instead of waiting for someone to press save.
+   */
+  async refreshComposeFile(id: string, proxyEnabled: boolean): Promise<boolean> {
+    try {
+      const config = await this.getServerConfig(id);
+      if (!config?.serverExists) {
+        return false;
+      }
+
+      await this.generateDockerComposeFile(config, proxyEnabled, true);
+      return true;
+    } catch (error) {
+      // The existing compose file is still usable, so a failure here must not
+      // block starting the server.
+      this.logger.error(`Could not refresh the compose file for ${id}, starting with the existing one`, error);
+      return false;
+    }
+  }
+
   async saveServerConfigs(configs: ServerConfig[], proxyEnabled = false): Promise<void> {
     for (const config of configs) {
       await this.generateDockerComposeFile(config, proxyEnabled);
@@ -1358,7 +1383,14 @@ export class DockerComposeService implements OnApplicationBootstrap {
     }
   }
 
-  async generateDockerComposeFile(config: ServerConfig, proxyEnabled: boolean = false): Promise<void> {
+  /**
+   * Writes the compose file from a config, and stores that config.
+   *
+   * `keepPort` skips port allocation: the port was already resolved when the
+   * config was saved, so regenerating before a start must not move the server to
+   * a different one.
+   */
+  async generateDockerComposeFile(config: ServerConfig, proxyEnabled: boolean = false, keepPort = false): Promise<void> {
     const normalizedConfig = this.normalizeAutoStopRestartPolicy(config);
 
     const serverDir = path.join(this.SERVERS_DIR, config.id);
@@ -1373,7 +1405,14 @@ export class DockerComposeService implements OnApplicationBootstrap {
     // When proxy is enabled, servers don't expose ports to host, so no need to find available port
     // Note: Proxy only works with Java edition (mc-router doesn't support Bedrock)
     const useProxy = proxyEnabled && normalizedConfig.useProxy !== false && edition === 'JAVA';
-    const availablePort = useProxy ? strategy.getInternalPort() : await this.ensurePortAvailable(normalizedConfig, proxyEnabled);
+    let availablePort: string;
+    if (useProxy) {
+      availablePort = strategy.getInternalPort();
+    } else if (keepPort && normalizedConfig.port) {
+      availablePort = normalizedConfig.port;
+    } else {
+      availablePort = await this.ensurePortAvailable(normalizedConfig, proxyEnabled);
+    }
     const volumes = this.parseVolumes(normalizedConfig);
     const dockerComposeConfig = this.buildDockerComposeConfig(normalizedConfig, environment, volumes, availablePort, proxyEnabled, strategy);
 

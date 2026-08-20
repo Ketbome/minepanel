@@ -379,4 +379,49 @@ describe('server index reconciliation', () => {
       expect(stored?.serverName).toBe('Fresh');
     });
   });
+
+  // This is what makes server.json the source of truth rather than just a second
+  // copy: the compose file is rebuilt from it right before the server runs.
+  describe('refreshing the compose file from the stored config', () => {
+    it('discards hand edits to the generated compose file', async () => {
+      await service.createServer('fresh', { serverName: 'Fresh', motd: 'from the panel' });
+      const composePath = path.join(serversDir, 'fresh', 'docker-compose.yml');
+      await fs.writeFile(composePath, 'services:\n  mc:\n    image: tampered\n');
+
+      await service.refreshComposeFile('fresh', false);
+
+      const compose = yaml.load(await fs.readFile(composePath, 'utf8')) as any;
+      expect(compose.services.mc.image).not.toBe('tampered');
+      expect(compose.services.mc.environment.MOTD).toBe('from the panel');
+    });
+
+    it('applies a change written straight into server.json', async () => {
+      await service.createServer('fresh', { serverName: 'Fresh' });
+      const stored = await store.readConfig('fresh');
+      await store.writeConfig({ ...stored, motd: 'edited in server.json' } as never);
+
+      await service.refreshComposeFile('fresh', false);
+
+      const compose = yaml.load(await fs.readFile(path.join(serversDir, 'fresh', 'docker-compose.yml'), 'utf8')) as any;
+      expect(compose.services.mc.environment.MOTD).toBe('edited in server.json');
+    });
+
+    // Reassigning the port here would silently move a server that the UI still
+    // shows on the old one.
+    it('keeps the stored port instead of reallocating it', async () => {
+      await service.createServer('a', {});
+      await service.createServer('b', {});
+      const portBefore = (await store.readConfig('b'))?.port;
+
+      await service.refreshComposeFile('b', false);
+
+      expect((await store.readConfig('b'))?.port).toBe(portBefore);
+      const compose = yaml.load(await fs.readFile(path.join(serversDir, 'b', 'docker-compose.yml'), 'utf8')) as any;
+      expect(compose.services.mc.ports[0]).toBe(`${portBefore}:25565`);
+    });
+
+    it('reports failure instead of throwing when the server does not exist', async () => {
+      expect(await service.refreshComposeFile('missing', false)).toBe(false);
+    });
+  });
 });

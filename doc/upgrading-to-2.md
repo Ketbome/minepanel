@@ -77,8 +77,17 @@ overwrites hand edits.
 ## Editing compose files by hand is no longer supported
 
 `servers/<id>/docker-compose.yml` is now generated output and carries a header
-saying so. Edit `server.json` instead, or use the fields that already exist for
-this: custom environment variables, Docker labels, extra volumes and extra ports.
+saying so. It is rebuilt from `server.json` every time a server starts or
+restarts, so hand edits are discarded the moment the server runs. Edit
+`server.json` instead, or use the fields that already exist for this: custom
+environment variables, Docker labels, extra volumes and extra ports.
+
+Editing `server.json` directly works: the change takes effect on the next start,
+without touching the UI.
+
+One thing this buys you: when a panel update changes how compose files are
+generated, servers pick it up on their next start. Earlier versions kept the old
+file until someone pressed save or ran "regenerate all".
 
 ## Behaviour that changed
 
