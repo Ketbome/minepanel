@@ -33,6 +33,7 @@ jest.mock('node:util', () => {
 // Import after mocks
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from '../alerts/alerts.service';
+import { ServerStoreService } from '../docker-compose/server-store.service';
 import * as fs from 'fs-extra';
 
 // Get the mocked promisify result
@@ -76,6 +77,7 @@ describe('ServerManagementService', () => {
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
+        { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

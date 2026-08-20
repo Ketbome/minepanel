@@ -1,3 +1,4 @@
+import { ServerIndexEntry } from 'src/docker-compose/server-store.service';
 import { ServerConfig } from './server-config.model';
 
 export class ServerListItemDto {
@@ -21,5 +22,16 @@ export class ServerListItemDto {
 
   static fromServerConfigs(configs: ServerConfig[]): ServerListItemDto[] {
     return configs.map((config) => this.fromServerConfig(config));
+  }
+
+  static fromIndexEntries(entries: ServerIndexEntry[]): ServerListItemDto[] {
+    return entries.map((entry) => ({
+      id: entry.id,
+      serverName: entry.serverName || entry.id,
+      motd: entry.motd || 'A Minecraft server',
+      port: entry.port || '25565',
+      serverType: (entry.serverType as ServerListItemDto['serverType']) || 'VANILLA',
+      active: entry.active ?? false,
+    }));
   }
 }

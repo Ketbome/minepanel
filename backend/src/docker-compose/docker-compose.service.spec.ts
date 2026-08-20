@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DockerComposeService } from './docker-compose.service';
+import { ServerStoreService } from './server-store.service';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 
@@ -14,11 +15,27 @@ jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
   ensureDir: jest.fn().mockResolvedValue(undefined),
   writeFile: jest.fn().mockResolvedValue(undefined),
+  writeJson: jest.fn().mockResolvedValue(undefined),
+  readJson: jest.fn().mockResolvedValue({}),
+  move: jest.fn().mockResolvedValue(undefined),
+  remove: jest.fn().mockResolvedValue(undefined),
   pathExists: jest.fn().mockResolvedValue(false),
   readFile: jest.fn(),
   existsSync: jest.fn().mockReturnValue(false),
   readdir: jest.fn().mockResolvedValue([]),
 }));
+
+// The store is exercised in its own spec; here it only has to stay out of the
+// way so these tests keep covering compose generation and parsing.
+const makeStoreStub = () => ({
+  readConfig: jest.fn().mockResolvedValue(null),
+  writeConfig: jest.fn().mockResolvedValue(undefined),
+  readIndex: jest.fn().mockResolvedValue(null),
+  writeIndex: jest.fn().mockResolvedValue(undefined),
+  removeFromIndex: jest.fn().mockResolvedValue(undefined),
+  listServerDirs: jest.fn().mockResolvedValue([]),
+  toIndexEntry: jest.fn((config) => ({ id: config.id, port: config.port })),
+});
 
 describe('DockerComposeService', () => {
   let service: DockerComposeService;
@@ -41,6 +58,7 @@ describe('DockerComposeService', () => {
       providers: [
         DockerComposeService,
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: ServerStoreService, useValue: makeStoreStub() },
       ],
     }).compile();
 
@@ -61,6 +79,7 @@ describe('DockerComposeService', () => {
       providers: [
         DockerComposeService,
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: ServerStoreService, useValue: makeStoreStub() },
       ],
     }).compile();
 

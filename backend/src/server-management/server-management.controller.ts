@@ -321,10 +321,24 @@ export class ServerManagementController {
 
   @Get()
   async getAllServers(@Request() req): Promise<ServerListItemDto[]> {
-    const serverConfigs = await this.dockerComposeService.getAllServerConfigs();
+    const index = await this.dockerComposeService.getServerIndex();
     const user = await this.getCurrentUser(req);
-    const visibleIds = this.accessControlService.getVisibleServerIds(user, serverConfigs.map((server) => server.id));
-    return ServerListItemDto.fromServerConfigs(serverConfigs.filter((server) => visibleIds.includes(server.id)));
+    const visibleIds = this.accessControlService.getVisibleServerIds(user, index.map((server) => server.id));
+    return ServerListItemDto.fromIndexEntries(index.filter((server) => visibleIds.includes(server.id)));
+  }
+
+  // Routing depends on a handful of fields, so this reads the server index
+  // instead of opening every server's config.
+  private async regenerateProxyRoutes(baseDomain: string): Promise<void> {
+    const index = await this.dockerComposeService.getServerIndex();
+    const proxyServers = index
+      .filter((server) => server.useProxy !== false && server.edition !== 'BEDROCK')
+      .map((server) => ({
+        id: server.id,
+        hostname: server.proxyHostname,
+        useProxy: true,
+      }));
+    await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
   }
 
   @Get('all-status')
@@ -405,15 +419,7 @@ export class ServerManagementController {
 
       // Regenerate routes.json if proxy is enabled (Java only, mc-router doesn't support Bedrock)
       if (proxyEnabled && baseDomain) {
-        const servers = await this.dockerComposeService.getAllServerConfigs();
-        const proxyServers = servers
-          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
-          .map((s) => ({
-            id: s.id,
-            hostname: s.proxyHostname,
-            useProxy: true,
-          }));
-        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+        await this.regenerateProxyRoutes(baseDomain);
       }
 
       return {
@@ -467,15 +473,7 @@ export class ServerManagementController {
       const serverConfig = await this.dockerComposeService.createServer(body.newId, clonePayload, proxyEnabled);
 
       if (proxyEnabled && baseDomain) {
-        const servers = await this.dockerComposeService.getAllServerConfigs();
-        const proxyServers = servers
-          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
-          .map((s) => ({
-            id: s.id,
-            hostname: s.proxyHostname,
-            useProxy: true,
-          }));
-        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+        await this.regenerateProxyRoutes(baseDomain);
       }
 
       await this.recordServerAudit(currentUser, 'clone_server', body.newId, `Cloned server ${id} to ${body.newId}`, 'success', { sourceServerId: id });
@@ -502,15 +500,7 @@ export class ServerManagementController {
 
     // Generate routes.json for mc-router if proxy is enabled (Java only)
     if (proxyEnabled && baseDomain) {
-      const servers = await this.dockerComposeService.getAllServerConfigs();
-      const proxyServers = servers
-        .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
-        .map((s) => ({
-          id: s.id,
-          hostname: s.proxyHostname,
-          useProxy: true,
-        }));
-      await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+      await this.regenerateProxyRoutes(baseDomain);
     } else {
       await this.proxyService.clearRoutesFile();
     }
@@ -540,16 +530,7 @@ export class ServerManagementController {
       const baseDomain = settings.preferences?.proxyBaseDomain;
 
       if (proxyEnabled && baseDomain) {
-        const servers = await this.dockerComposeService.getAllServerConfigs();
-        
-        const proxyServers = servers
-          .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
-          .map((s) => ({
-            id: s.id,
-            hostname: s.proxyHostname,
-            useProxy: true,
-          }));
-        await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+        await this.regenerateProxyRoutes(baseDomain);
       }
     }
 
@@ -610,15 +591,7 @@ export class ServerManagementController {
 
     // Regenerate routes.json if proxy settings changed (Java only)
     if (proxyEnabled && baseDomain && (config.proxyHostname !== undefined || config.useProxy !== undefined)) {
-      const servers = await this.dockerComposeService.getAllServerConfigs();
-      const proxyServers = servers
-        .filter((s) => s.useProxy !== false && s.edition !== 'BEDROCK')
-        .map((s) => ({
-          id: s.id,
-          hostname: s.proxyHostname,
-          useProxy: true,
-        }));
-      await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+      await this.regenerateProxyRoutes(baseDomain);
     }
 
     await this.recordServerAudit(currentUser, 'update_server_config', id, `Updated server configuration for ${id}`);

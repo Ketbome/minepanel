@@ -12,6 +12,7 @@ import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/
 import { ConfigService } from '@nestjs/config';
 import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
+import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 
 const execAsync = promisify(exec);
@@ -113,6 +114,7 @@ export class ServerManagementService {
     private readonly settingsRepo: Repository<Settings>,
     private readonly discordService: DiscordService,
     private readonly alertsService: AlertsService,
+    private readonly store: ServerStoreService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.BASE_DIR = this.configService.get('baseDir');
@@ -923,6 +925,7 @@ export class ServerManagementService {
       }
 
       await fs.remove(serverDir);
+      await this.store.removeFromIndex(serverId);
 
       try {
         const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(serverId));

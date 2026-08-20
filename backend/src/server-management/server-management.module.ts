@@ -4,6 +4,7 @@ import { ServerManagementController } from './server-management.controller';
 import { AutoScaleController } from './auto-scale.controller';
 import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
+import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { UsersModule } from 'src/users/users.module';
 import { ProxyModule } from 'src/proxy/proxy.module';
@@ -14,7 +15,7 @@ import { AlertsModule } from 'src/alerts/alerts.module';
 @Module({
   imports: [TypeOrmModule.forFeature([Settings]), DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule],
   controllers: [ServerManagementController, AutoScaleController],
-  providers: [ServerManagementService, DockerComposeService],
-  exports: [ServerManagementService, DockerComposeService],
+  providers: [ServerManagementService, DockerComposeService, ServerStoreService],
+  exports: [ServerManagementService, DockerComposeService, ServerStoreService],
 })
 export class ServerManagementModule {}
