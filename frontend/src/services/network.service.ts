@@ -74,6 +74,7 @@ export interface ProxyStatus {
   available: boolean;
   enabled: boolean;
   baseDomain: string | null;
+  autoScaleAvailable?: boolean;
 }
 
 export async function getProxyStatus(): Promise<ProxyStatus> {
@@ -81,7 +82,7 @@ export async function getProxyStatus(): Promise<ProxyStatus> {
     const response = await api.get<ProxyStatus>('/proxy/status');
     return response.data;
   } catch {
-    return { available: false, enabled: false, baseDomain: null };
+    return { available: false, enabled: false, baseDomain: null, autoScaleAvailable: false };
   }
 }
 

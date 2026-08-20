@@ -1531,6 +1531,9 @@ export const fr: Record<TranslationKey, string> = {
     'Nom d’hôte personnalisé optionnel pour ce serveur. Laissez vide pour le générer automatiquement à partir de l’ID du serveur',
   useProxy: 'Utiliser le proxy',
   useProxyDesc: 'Active le routage proxy pour ce serveur. Si désactivé, utilise l’accès direct par port',
+  useAutoScale: 'Mise à l’échelle automatique',
+  useAutoScaleDesc:
+    'Laisse le proxy arrêter ce serveur lorsqu’il est vide et le redémarrer à la première connexion. Désactivez pour garder le serveur allumé 24h/24. Ne s’applique que si la mise à l’échelle automatique du proxy est activée pour tout le panneau',
   proxySettingsServerDesc: 'Configure la façon dont ce serveur se connecte via le proxy mc-router',
   proxyServerInfo: 'Les paramètres de proxy ne prennent effet que lorsque le proxy global est activé dans les paramètres',
 

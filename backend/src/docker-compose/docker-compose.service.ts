@@ -258,6 +258,7 @@ export class DockerComposeService {
         // Proxy config from labels or env
         proxyHostname: this.extractProxyHostname(mcService.labels),
         useProxy: this.extractUseProxy(mcService.labels),
+        useAutoScale: this.extractUseAutoScale(mcService.labels),
 
         // Bedrock-specific
         allowCheats: env.ALLOW_CHEATS === 'true',
@@ -374,6 +375,21 @@ export class DockerComposeService {
 
     if (typeof labels === 'object' && 'minepanel.proxy.enabled' in labels) {
       return String(labels['minepanel.proxy.enabled']) === 'true';
+    }
+
+    return true;
+  }
+
+  private extractUseAutoScale(labels: DockerLabels): boolean {
+    if (!labels) return true; // Default to true so existing servers keep auto-scaling
+
+    if (Array.isArray(labels)) {
+      const label = labels.find((l) => l.startsWith('minepanel.autoscale.enabled='));
+      if (label) return label.split('=')[1] === 'true';
+    }
+
+    if (typeof labels === 'object' && 'minepanel.autoscale.enabled' in labels) {
+      return String(labels['minepanel.autoscale.enabled']) === 'true';
     }
 
     return true;
@@ -1078,6 +1094,9 @@ export class DockerComposeService {
       }
       if (config.proxyHostname) {
         proxyLabels.push(`minepanel.proxy.hostname=${config.proxyHostname}`);
+      }
+      if (config.useAutoScale !== undefined) {
+        proxyLabels.push(`minepanel.autoscale.enabled=${config.useAutoScale}`);
       }
     }
 

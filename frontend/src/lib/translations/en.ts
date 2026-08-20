@@ -1529,6 +1529,9 @@ export const en = {
     'Optional custom hostname for this server. Leave empty to auto-generate from server ID',
   useProxy: 'Use Proxy',
   useProxyDesc: 'Enable proxy routing for this server. If disabled, uses direct port access',
+  useAutoScale: 'Auto-scaling',
+  useAutoScaleDesc:
+    'Let the proxy stop this server when it is empty and start it again on the first connection. Turn it off to keep the server running 24/7. Only applies when proxy auto-scaling is enabled panel-wide',
   proxySettingsServerDesc: 'Configure how this server connects through the mc-router proxy',
   proxyServerInfo: 'Proxy settings only take effect when the global proxy is enabled in Settings',
 

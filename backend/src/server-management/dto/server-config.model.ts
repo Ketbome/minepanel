@@ -630,6 +630,10 @@ export class ServerConfigDto {
   @IsOptional()
   useProxy?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  useAutoScale?: boolean;
+
   // Bedrock-specific configuration
   @IsBoolean()
   @IsOptional()

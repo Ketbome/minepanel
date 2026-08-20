@@ -222,6 +222,14 @@ While a server is asleep, its MOTD shows `Server is asleep. Join to wake it up!`
 With `MC_PROXY_AUTOSCALE=true`, any proxied Java server with no players for `MC_PROXY_AUTOSCALE_DOWN_AFTER` is stopped, including ones you started manually. Only servers listed in the proxy routes are affected; Bedrock servers are never touched.
 :::
 
+### Excluding a server
+
+Heavy modpacks take minutes to boot, which makes sleeping them a poor trade. Turn **Auto-scaling** off under **Server → Settings → Connectivity → Proxy Settings** to leave that server out: the panel then ignores both wake-up and sleep requests for it, so it keeps running 24/7 while the rest still sleep. The switch only appears once `MC_PROXY_AUTOSCALE_TOKEN` is set, and it is on by default, so nothing changes for servers you never touch.
+
+::: tip The asleep MOTD is router-side
+mc-router prints `Server is asleep. Join to wake it up!` for any route whose backend is down, and it cannot be configured per route. An excluded server that you stopped yourself still shows that MOTD, but joining will not start it — start it from the panel.
+:::
+
 The panel exposes `POST /servers/autoscale` for this. It is the only unauthenticated endpoint that controls servers, it is rejected unless `MC_PROXY_AUTOSCALE_TOKEN` is set and sent as `Authorization: Bearer <token>`, and it only accepts servers that are currently in the proxy routes.
 
 ### Bedrock Connection

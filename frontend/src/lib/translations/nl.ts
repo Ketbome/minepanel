@@ -1562,6 +1562,9 @@ export const nl: Record<TranslationKey, string> = {
   useProxy: 'Proxy Gebruiken',
   useProxyDesc:
     'Schakel proxy routing in voor deze server. Indien uitgeschakeld, wordt directe poort toegang gebruikt',
+  useAutoScale: 'Automatisch schalen',
+  useAutoScaleDesc:
+    'Laat de proxy deze server stoppen wanneer die leeg is en weer starten bij de eerste verbinding. Zet dit uit om de server 24/7 te laten draaien. Geldt alleen als proxy-autoschaling paneelbreed is ingeschakeld',
   proxySettingsServerDesc: 'Configureer hoe deze server verbinding maakt via de mc-router proxy',
   proxyServerInfo:
     'Proxy instellingen werken alleen wanneer de globale proxy is ingeschakeld in Instellingen',

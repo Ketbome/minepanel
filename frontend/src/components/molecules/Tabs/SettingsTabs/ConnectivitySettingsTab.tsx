@@ -36,11 +36,18 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({
 }) => {
   const { t } = useLanguage();
   const [proxyEnabled, setProxyEnabled] = useState(false);
+  const [autoScaleAvailable, setAutoScaleAvailable] = useState(false);
 
   useEffect(() => {
     getProxyStatus()
-      .then((status) => setProxyEnabled(status.enabled))
-      .catch(() => setProxyEnabled(false));
+      .then((status) => {
+        setProxyEnabled(status.enabled);
+        setAutoScaleAvailable(!!status.autoScaleAvailable);
+      })
+      .catch(() => {
+        setProxyEnabled(false);
+        setAutoScaleAvailable(false);
+      });
   }, []);
 
   const isJava = config.edition !== 'BEDROCK';
@@ -424,6 +431,22 @@ export const ConnectivitySettingsTab: FC<ConnectivitySettingsTabProps> = ({
                 </div>
                 <p className="text-xs text-gray-400">{t('useProxyDesc')}</p>
               </div>
+
+              {autoScaleAvailable && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useAutoScale" className="text-gray-200 font-minecraft text-sm">
+                      {t('useAutoScale')}
+                    </Label>
+                    <Switch
+                      id="useAutoScale"
+                      checked={config.useAutoScale !== false}
+                      onCheckedChange={(checked) => updateConfig('useAutoScale', checked)}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">{t('useAutoScaleDesc')}</p>
+                </div>
+              )}
 
               <Alert className="bg-cyan-900/30 border-cyan-800 text-cyan-200 mt-2">
                 <Network className="h-4 w-4" />

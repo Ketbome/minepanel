@@ -1,10 +1,14 @@
 import { Controller, Get, Post, Delete, Param, Body, Request } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ProxyService } from './proxy.service';
 import { PayloadToken } from 'src/auth/models/token.model';
 
 @Controller('proxy')
 export class ProxyController {
-  constructor(private readonly proxyService: ProxyService) {}
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('status')
   async getStatus(@Request() req) {
@@ -18,6 +22,7 @@ export class ProxyController {
       available: !!settings.baseDomain,
       enabled: settings.enabled && !!settings.baseDomain,
       baseDomain: settings.baseDomain,
+      autoScaleAvailable: !!this.configService.get<string>('autoScaleToken'),
       ...proxyStatus,
     };
   }

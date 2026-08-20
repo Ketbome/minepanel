@@ -1534,6 +1534,9 @@ export const pl: Record<TranslationKey, string> = {
   useProxy: 'Użyj proxy',
   useProxyDesc:
     'Włącz routing proxy dla tego serwera. Jeśli wyłączone, używa bezpośredniego dostępu do portu',
+  useAutoScale: 'Automatyczne skalowanie',
+  useAutoScaleDesc:
+    'Pozwala proxy zatrzymać ten serwer, gdy jest pusty, i uruchomić go ponownie przy pierwszym połączeniu. Wyłącz, aby serwer działał 24/7. Działa tylko, gdy automatyczne skalowanie proxy jest włączone w całym panelu',
   proxySettingsServerDesc: 'Skonfiguruj sposób łączenia się tego serwera przez proxy mc-router',
   proxyServerInfo:
     'Ustawienia proxy obowiązują tylko wtedy, gdy globalny proxy jest włączony w Ustawieniach',

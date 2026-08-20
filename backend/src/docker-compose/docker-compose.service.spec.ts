@@ -156,6 +156,62 @@ describe('DockerComposeService', () => {
       expect(result?.proxyHostname).toBe('lobby');
     });
 
+    it('should read the auto-scale opt-out label', async () => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'proxy-server',
+              TYPE: 'VANILLA',
+            },
+            expose: ['25565'],
+            labels: ['minepanel.proxy.enabled=true', 'minepanel.autoscale.enabled=false'],
+          },
+        },
+      };
+
+      const existsSyncMock = fs.existsSync as unknown as jest.Mock;
+      existsSyncMock.mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/proxy-server` || target === `${SERVERS_DIR}/proxy-server/docker-compose.yml`
+      );
+
+      const readFileMock = fs.readFile as unknown as jest.Mock;
+      readFileMock.mockResolvedValue(yaml.dump(compose));
+
+      const result = await service.getServerConfig('proxy-server');
+
+      expect(result?.useAutoScale).toBe(false);
+    });
+
+    it('should default auto-scaling to enabled when the label is absent', async () => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'proxy-server',
+              TYPE: 'VANILLA',
+            },
+            expose: ['25565'],
+            labels: ['minepanel.proxy.enabled=true'],
+          },
+        },
+      };
+
+      const existsSyncMock = fs.existsSync as unknown as jest.Mock;
+      existsSyncMock.mockImplementation((target: string) =>
+        target === `${SERVERS_DIR}/proxy-server` || target === `${SERVERS_DIR}/proxy-server/docker-compose.yml`
+      );
+
+      const readFileMock = fs.readFile as unknown as jest.Mock;
+      readFileMock.mockResolvedValue(yaml.dump(compose));
+
+      const result = await service.getServerConfig('proxy-server');
+
+      expect(result?.useAutoScale).toBe(true);
+    });
+
     const loadWithBackupVolume = async (svc: DockerComposeService, id: string, hostPath: string) => {
       const compose = {
         services: {

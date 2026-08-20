@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'node:crypto';
 import { connect } from 'node:net';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ProxyService } from 'src/proxy/proxy.service';
 import { ServerManagementService } from './server-management.service';
 import { AutoScaleDto } from './dto/auto-scale.dto';
@@ -20,6 +21,7 @@ export class AutoScaleController {
     private readonly configService: ConfigService,
     private readonly managementService: ServerManagementService,
     private readonly proxyService: ProxyService,
+    private readonly composeService: DockerComposeService,
   ) {}
 
   @Public()
@@ -29,6 +31,20 @@ export class AutoScaleController {
     this.assertAuthorized(authorization);
 
     const { serverId, port } = await this.resolveBackend(body);
+
+    // Servers can opt out individually: the router scales every route it knows
+    // about, so the panel is the only place that can leave one alone.
+    const config = await this.composeService.getServerConfig(serverId);
+    if (config?.useAutoScale === false) {
+      this.logger.log(`Auto-scale ${body.action}: ${serverId} has auto-scaling disabled`);
+      // A rejected scale-down is retried on every idle cycle, so answer 200 and
+      // keep the router quiet. A scale-up must fail so the connection aborts now
+      // instead of waiting out the wake timeout for a server we will not start.
+      if (body.action === 'down') {
+        return { serverId, status: 'skipped' };
+      }
+      throw new ServiceUnavailableException(`Auto-scaling is disabled for server ${serverId}`);
+    }
 
     if (body.action === 'down') {
       this.logger.log(`Auto-scale down: stopping ${serverId}`);

@@ -1549,6 +1549,9 @@ export const es: Record<TranslationKey, string> = {
   useProxy: 'Usar Proxy',
   useProxyDesc:
     'Habilitar enrutamiento por proxy para este servidor. Si está deshabilitado, usa acceso directo por puerto',
+  useAutoScale: 'Auto-escalado',
+  useAutoScaleDesc:
+    'Permite que el proxy detenga este servidor cuando esté vacío y lo arranque de nuevo en la primera conexión. Desactívalo para mantenerlo encendido 24/7. Solo aplica si el auto-escalado del proxy está activado en el panel',
   proxySettingsServerDesc: 'Configura cómo este servidor se conecta a través del proxy mc-router',
   proxyServerInfo:
     'La configuración de proxy solo tiene efecto cuando el proxy global está habilitado en Ajustes',

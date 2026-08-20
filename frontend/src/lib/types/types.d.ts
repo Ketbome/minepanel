@@ -243,6 +243,7 @@ export interface ServerConfig {
   // Proxy configuration
   proxyHostname?: string;
   useProxy?: boolean;
+  useAutoScale?: boolean;
 
   // Bedrock-specific configuration
   allowCheats?: boolean;

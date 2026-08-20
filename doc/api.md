@@ -240,7 +240,7 @@ Auto-scaling webhook, called by mc-router (see [Networking](/networking#auto-sca
 { "action": "up", "serverAddress": "survival.mc.example.com", "backend": "survival:25565" }
 ```
 
-Requires `Authorization: Bearer <MC_PROXY_AUTOSCALE_TOKEN>`. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`.
+Requires `Authorization: Bearer <MC_PROXY_AUTOSCALE_TOKEN>`. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`. When a server has auto-scaling turned off, `down` answers `200` with `{ "status": "skipped" }` and `up` is rejected with `503`.
 
 ## Response Patterns
 
