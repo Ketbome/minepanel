@@ -86,6 +86,14 @@ describe('DockerComposeService', () => {
     return module.get<DockerComposeService>(DockerComposeService);
   };
 
+  const generateMcVolumes = async (svc: DockerComposeService, config: any): Promise<string[]> => {
+    await svc.generateDockerComposeFile(config, false);
+    const writeFileMock = fs.writeFile as unknown as jest.Mock;
+    const [, yamlContent] = writeFileMock.mock.calls[writeFileMock.mock.calls.length - 1];
+    const parsed = yaml.load(yamlContent as string) as any;
+    return parsed.services.mc.volumes as string[];
+  };
+
   const generateBackupVolumes = async (svc: DockerComposeService, config: any): Promise<string[]> => {
     await svc.generateDockerComposeFile(config, false);
     const writeFileMock = fs.writeFile as unknown as jest.Mock;
@@ -377,10 +385,81 @@ describe('DockerComposeService', () => {
       expect(result?.dockerVolumes).toBe('./mc-data:/data\n/mnt/nas/shared:/shared:ro');
     });
 
+    it('leaves a deliberate bind on a managed target alone when it lives elsewhere', async () => {
+      const result = await importLegacyServer([`${BASE_DIR}/servers/legacy/modpacks:/modpacks:ro`, '/mnt/bigdisk/minecraft/legacy:/data']);
+
+      expect(result?.dockerVolumes).toBe('./modpacks:/modpacks:ro\n/mnt/bigdisk/minecraft/legacy:/data');
+    });
+
     it('does not mistake the old default backup path for a custom one', async () => {
       const result = await importLegacyServer([`${BASE_DIR}/servers/legacy/mc-data:/data`, `${BASE_DIR}/servers/legacy/backups:/backups`], NAMED_VOLUME_HOST_DIR);
 
       expect(result?.backupHostDir).toBeUndefined();
+    });
+  });
+
+  // Most servers upgraded from pre-1.12 already have absolute paths sitting in server.json,
+  // written against whatever the host dir resolved to at import time. Generation has to
+  // re-derive the panel's own mounts instead of trusting them, or the host-dir detection
+  // never reaches those servers.
+  describe('rebasing stored absolute mounts on generation', () => {
+    const NAMED_VOLUME_HOST_DIR = '/var/lib/docker/volumes/minepanel_servers/_data';
+
+    const configWithVolumes = (svc: DockerComposeService, id: string, dockerVolumes: string) => {
+      const config = (svc as any).createDefaultConfig(id);
+      config.dockerVolumes = dockerVolumes;
+      return config;
+    };
+
+    it('re-derives the panel mounts from the current host dir', async () => {
+      const svc = await makeService(undefined, NAMED_VOLUME_HOST_DIR);
+      const config = configWithVolumes(svc, 'stale', `/old/base/servers/stale/mc-data:/data\n/old/base/servers/stale/modpacks:/modpacks:ro`);
+
+      const volumes = await generateMcVolumes(svc, config);
+
+      expect(volumes).toContain(`${NAMED_VOLUME_HOST_DIR}/stale/mc-data:/data`);
+      expect(volumes).toContain(`${NAMED_VOLUME_HOST_DIR}/stale/modpacks:/modpacks:ro`);
+      expect(volumes.some((volume) => volume.startsWith('/old/base'))).toBe(false);
+    });
+
+    it('re-derives both world library mounts', async () => {
+      const svc = await makeService(undefined, NAMED_VOLUME_HOST_DIR);
+      const config = configWithVolumes(
+        svc,
+        'stale',
+        `/old/base/servers/stale/mc-data:/data\n/old/base/servers/stale/worlds:/data/.world-library/local:ro\n/old/base/servers/.world/worlds:/data/.world-library/global:ro`,
+      );
+
+      const volumes = await generateMcVolumes(svc, config);
+
+      expect(volumes).toContain(`${NAMED_VOLUME_HOST_DIR}/stale/worlds:/data/.world-library/local:ro`);
+      expect(volumes).toContain(`${NAMED_VOLUME_HOST_DIR}/.world/worlds:/data/.world-library/global:ro`);
+    });
+
+    it('leaves a deliberate bind on a managed target where the operator put it', async () => {
+      const svc = await makeService(undefined, NAMED_VOLUME_HOST_DIR);
+      const config = configWithVolumes(svc, 'bigworld', '/mnt/bigdisk/minecraft/bigworld:/data');
+
+      const volumes = await generateMcVolumes(svc, config);
+
+      expect(volumes).toContain('/mnt/bigdisk/minecraft/bigworld:/data');
+    });
+
+    it('leaves a bind on an unmanaged target alone even inside the server directory', async () => {
+      const svc = await makeService(undefined, NAMED_VOLUME_HOST_DIR);
+      const config = configWithVolumes(svc, 'stale', '/old/base/servers/stale/scripts:/scripts:ro');
+
+      const volumes = await generateMcVolumes(svc, config);
+
+      expect(volumes).toContain('/old/base/servers/stale/scripts:/scripts:ro');
+    });
+
+    it('is a no-op once the stored paths already match the host dir', async () => {
+      const config = configWithVolumes(service, 'current', `${BASE_DIR}/servers/current/mc-data:/data`);
+
+      const volumes = await generateMcVolumes(service, config);
+
+      expect(volumes).toContain(`${BASE_DIR}/servers/current/mc-data:/data`);
     });
   });
 

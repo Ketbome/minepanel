@@ -98,11 +98,13 @@ Path and filesystem patterns (critical):
   `docker-compose.yml` is generated output; never parse it to read config. Reads go
   through `ServerStoreService.readConfig`; a server with no `server.json` is imported
   from its compose file once (`importFromDockerCompose`) and never parsed again.
-  That import must store the **authored** form, not the generated one: absolute mount
-  sources under the server's own directory are rewritten back to `./`
-  (`relativizeImportedVolumes`) so `parseVolumes` re-expands them from the current
-  `serversHostDir`. Storing a generated absolute path pins the server to whatever the
-  host dir resolved to at import time.
+- The panel owns the container paths `/data`, `/modpacks` and the two world-library
+  targets, and re-derives their host side from `serversHostDir` on every generation
+  (`rebaseManagedVolume`). A stored absolute source for one of them is a leftover from
+  an older host dir and is rewritten; a bind on any other target, or one pointing
+  outside `servers/<id>/`, is left exactly as the operator configured it. Never store a
+  generated absolute path as if it were config: it outlives the host dir it was written
+  against, which is what broke named volumes in 1.12.0.
 - `servers/servers.json` is a **derived index**, never authoritative. It exists so
   the dashboard list and the routes regeneration do not open every server. Treat it
   as a cache: reconcile against the folders, let `server.json` win, and never store

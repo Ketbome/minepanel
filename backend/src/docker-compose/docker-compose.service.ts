@@ -263,7 +263,12 @@ export class DockerComposeService implements OnApplicationBootstrap {
 
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
         minecraftVersion: env.VERSION ? String(env.VERSION) : defaultVersion,
-        dockerVolumes: Array.isArray(mcService.volumes) ? this.relativizeImportedVolumes(mcService.volumes, serverId).join('\n') : undefined,
+        dockerVolumes: Array.isArray(mcService.volumes)
+          ? mcService.volumes
+              .map((volume) => this.rebaseManagedVolume(String(volume).trim(), serverId))
+              .filter(Boolean)
+              .join('\n')
+          : undefined,
         restartPolicy: mcService.restart ?? 'no',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
         execDirectly: env.EXEC_DIRECTLY === 'true',
@@ -1062,8 +1067,9 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const volumes = config.dockerVolumes
       .split('\n')
       .filter((line) => line.trim())
-      .map((line) => {
-        const volume = line.trim();
+      .map((line) => this.rebaseManagedVolume(line.trim(), config.id))
+      .filter(Boolean)
+      .map((volume) => {
         if (volume.startsWith('./')) {
           const [hostPath, ...containerParts] = volume.split(':');
           const containerPath = containerParts.join(':');
@@ -1125,25 +1131,28 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return rest.length > 0 ? rest.join('/') : undefined;
   }
 
-  // A pre-1.12 compose file holds the absolute host paths the panel generated back then,
-  // so importing them verbatim pins the server to whatever BASE_DIR resolved to at the
-  // time and the named-volume fix can never reach it. Anything under the server's own
-  // directory goes back to the `./` form the panel authors, which parseVolumes re-expands
-  // from the current serversHostDir on every generation. The global world library is
-  // panel-wide rather than per-server, so it is dropped and re-added the same way.
-  private relativizeImportedVolumes(volumes: unknown, serverId: string): string[] {
-    if (!Array.isArray(volumes)) return [];
+  // Container paths the panel owns: it generates all of them and re-derives their host side
+  // from serversHostDir every time it writes a compose file. A stored *absolute* source for
+  // one of them is a leftover -- from a pre-1.12 import, or from an install whose host dir
+  // has since changed -- and outliving the host dir it was written against is exactly the
+  // 1.12.0 named-volume bug. Rewrite it back to the `./` form so the expansion below picks
+  // up the current path; the panel-wide global library is dropped and re-added instead.
+  //
+  // Both conditions have to hold, the managed target *and* a source inside this server's own
+  // directory, so a deliberate bind stays untouched: a different target is never considered,
+  // and neither is a path that lives somewhere else.
+  private rebaseManagedVolume(volume: string, serverId: string): string {
+    const [hostPath, ...containerParts] = volume.split(':');
+    if (containerParts.length === 0 || !hostPath.startsWith('/')) return volume;
 
-    return volumes
-      .map((volume) => String(volume).trim())
-      .filter((volume) => volume && !this.hasMountTarget(volume, '/data/.world-library/global'))
-      .map((volume) => {
-        const [hostPath, ...containerParts] = volume.split(':');
-        if (containerParts.length === 0 || !hostPath.startsWith('/')) return volume;
+    if (this.hasMountTarget(volume, '/data/.world-library/global')) return '';
 
-        const relative = this.stripServerDirPrefix(hostPath, serverId);
-        return relative ? `./${relative}:${containerParts.join(':')}` : volume;
-      });
+    const target = containerParts[0];
+    const isManaged = target === '/data' || target === '/modpacks' || this.hasMountTarget(volume, '/data/.world-library/local');
+    if (!isManaged) return volume;
+
+    const relative = this.stripServerDirPrefix(hostPath, serverId);
+    return relative ? `./${relative}:${containerParts.join(':')}` : volume;
   }
 
   remapVolumesToServer(dockerVolumes: string | undefined, sourceId: string, targetId: string): string | undefined {
