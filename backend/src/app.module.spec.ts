@@ -31,7 +31,7 @@ describe('AppModule wiring', () => {
         // falls through to the real configuration.
         get: (key: string) => {
           if (key === 'serversDir') return path.join(workDir, 'servers');
-          if (key === 'baseDir') return workDir;
+          if (key === 'serversHostDir') return `${workDir}/servers`;
           if (key === 'database') return { path: path.join(workDir, 'data', 'test.db') };
           if (key === 'jwtSecret') return 'test-secret-for-module-compilation';
           return realConfig.get(key);

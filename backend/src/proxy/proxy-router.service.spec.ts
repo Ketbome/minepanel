@@ -62,7 +62,7 @@ describe('ProxyRouterService', () => {
         ProxyRouterService,
         {
           provide: ConfigService,
-          useValue: { get: jest.fn((key: string) => (key === 'baseDir' ? '/host/minepanel' : null)) },
+          useValue: { get: jest.fn((key: string) => (key === 'dataHostDir' ? '/host/minepanel/data' : null)) },
         },
         { provide: InstanceSettingsService, useValue: instanceSettings },
         { provide: HostContextService, useValue: hostContext },

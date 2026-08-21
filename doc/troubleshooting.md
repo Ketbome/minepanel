@@ -360,11 +360,25 @@ the data, or the generated `docker-compose.yml` points at a path that doesn't ex
 **Cause:** `BASE_DIR` (the host path that maps to `/app`) didn't match where you actually
 mounted the data. Generated server compose files use host paths derived from it.
 
-**Solution:** This is now auto-detected — Minepanel reads the real host source of the
-`/app/servers` mount at startup, so you can leave `BASE_DIR` unset and it will match your mount.
-If you previously hardcoded it to a wrong value, remove it (or fix it) and recreate the affected
-servers. If you set `BASE_DIR` and it differs from the detected path, the startup logs will warn
-you and the detected path wins. See [Configuration → Base Directory](/configuration#base-directory-host-path).
+**Solution:** This is now auto-detected — Minepanel reads the real host source of its own
+`/app/servers` and `/app/data` mounts at startup, so you can leave `BASE_DIR` unset and it will
+match your mounts. If you previously hardcoded it to a wrong value, remove it (or fix it) and
+recreate the affected servers. If you set `BASE_DIR` and it differs from the detected path, the
+startup logs warn you and the detected path wins.
+See [Configuration → Base Directory](/configuration#base-directory-host-path).
+
+::: tip Named volumes
+Mounting `minepanel_data:/app/servers` instead of a host directory works: the panel resolves
+the volume to its real location (`/var/lib/docker/volumes/<name>/_data`) and mounts from there.
+
+Before 1.12.1 it derived the parent of that path instead, dropping `_data`, so every generated
+mount pointed at an empty directory Docker then created — servers came up blank and mc-router
+could not read `routes.json`. If you ran a named-volume install on 1.12.0, check that your
+servers are reading the data you expect before starting them again.
+
+Volumes on a non-local driver (NFS, CIFS) cannot be resolved this way. The panel says so at
+startup and falls back to `BASE_DIR`; use a bind mount for those.
+:::
 
 ### A server is missing from the dashboard
 

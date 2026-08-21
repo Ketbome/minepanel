@@ -31,7 +31,7 @@ const GENERATED_HEADER = [
 @Injectable()
 export class ProxyRouterService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ProxyRouterService.name);
-  private readonly BASE_DIR: string;
+  private readonly DATA_HOST_DIR: string;
   private readonly PROJECT_DIR = '/app/data/proxy';
 
   constructor(
@@ -39,7 +39,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     private readonly instanceSettings: InstanceSettingsService,
     private readonly hostContext: HostContextService,
   ) {
-    this.BASE_DIR = this.configService.get('baseDir');
+    this.DATA_HOST_DIR = this.configService.get('dataHostDir');
   }
 
   // On boot the container may be missing (host restarted) or stale (settings
@@ -59,7 +59,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
   // Host path, because compose mounts are resolved by the Docker daemon on the
   // host and not inside this container.
   private getHostDataDir(): string {
-    return path.join(this.BASE_DIR, 'data', 'proxy');
+    return path.join(this.DATA_HOST_DIR, 'proxy');
   }
 
   async isRunning(): Promise<boolean> {

@@ -52,7 +52,7 @@ describe('ServerManagementService', () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
         if (key === 'serversDir') return SERVERS_DIR;
-        if (key === 'baseDir') return '/app';
+        if (key === 'serversHostDir') return '/app/servers';
         return null;
       }),
     };

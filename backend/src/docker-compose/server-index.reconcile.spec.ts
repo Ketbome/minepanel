@@ -62,7 +62,7 @@ describe('server index reconciliation', () => {
           useValue: {
             get: (key: string) => {
               if (key === 'serversDir') return serversDir;
-              if (key === 'baseDir') return serversDir;
+              if (key === 'serversHostDir') return serversDir;
               return null;
             },
           },

@@ -49,8 +49,9 @@ Integration settings & secrets:
 Primary runtime relationship:
 
 - API reads/writes local paths under `/app/servers` inside the backend container.
-- Docker mounts host `${BASE_DIR}/servers` into backend `/app/servers`.
-- Generated server compose files must use host absolute paths (`${BASE_DIR}/...`) for volume mounts.
+- Docker mounts a host directory (or a named volume) into backend `/app/servers`.
+- Generated server compose files must use host absolute paths for volume mounts, taken from
+  `serversHostDir`, never rebuilt from `BASE_DIR`.
 
 ## Key Commands
 
@@ -80,11 +81,19 @@ npm run test --prefix backend
 Path and filesystem patterns (critical):
 
 - `serversDir` is container-side path (`/app/servers`) from `backend/src/config.ts`.
-- `baseDir` is host-side path used in generated compose mounts. It is auto-detected at startup
-  from the host `Source` of the `/app/servers` bind (via `docker inspect` on the own container,
-  see `detectHostBaseDir` in `config.ts`); `BASE_DIR` env is only a fallback (local dev / no
-  Docker). A mismatch between env and detected path is logged.
-- Never mix `serversDir` and `baseDir`; they are not interchangeable.
+- `serversHostDir` and `dataHostDir` are the host-side paths used in generated compose mounts.
+  Each is auto-detected at startup from the `Source` of the panel's own mount for that
+  destination (`docker inspect` on the own container, see `resolveHostPath` in `config.ts`);
+  `${BASE_DIR}/servers` and `${BASE_DIR}/data` are only fallbacks (local dev / no Docker).
+  A mismatch between env and detected path is logged.
+- There is no `baseDir` any more, on purpose. Deriving one meant taking the *parent* of a
+  mount source, which is only correct for binds: a named volume reports
+  `/var/lib/docker/volumes/<name>/_data`, and the parent silently dropped `_data`. Resolve
+  each destination from its own mount and never do arithmetic on a mount source.
+- Sources are used verbatim. Docker Desktop rewrites bind sources (`/host_mnt/...` on macOS,
+  `/run/desktop/mnt/host/...` on Windows) and the daemon resolves them back; reshaping them
+  breaks that.
+- Never mix `serversDir` with the host dirs; they are not interchangeable.
 - **`servers/<id>/server.json` is the source of truth for a server's config.**
   `docker-compose.yml` is generated output; never parse it to read config. Reads go
   through `ServerStoreService.readConfig`; a server with no `server.json` is imported
@@ -108,7 +117,7 @@ Path and filesystem patterns (critical):
 
 ## Critical Files
 
-- `src/config.ts` - source of `serversDir` and `baseDir` behavior.
+- `src/config.ts` - source of `serversDir`, `serversHostDir` and `dataHostDir` behavior.
 - `src/main.ts` - CORS/cookies/bootstrap behavior.
 - `src/server-management/server-management.service.ts` - lifecycle, status, command execution, world selection.
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
@@ -156,8 +165,8 @@ Path model and volume mapping:
 
 - Keep this distinction explicit in code changes:
   - Container path for backend IO: `/app/servers/...`
-  - Host path for compose mount lines: `${BASE_DIR}/servers/...`
-- In compose generation, `./` volume entries are expanded to host absolute paths under `${BASE_DIR}/servers/<serverId>/...`.
+  - Host path for compose mount lines: `<serversHostDir>/...`
+- In compose generation, `./` volume entries are expanded to host absolute paths under `<serversHostDir>/<serverId>/...`.
 - Java world library mounts must remain read-only (`:ro`) when mapped to `/data/.world-library/local` and `/data/.world-library/global`.
 
 Files module behavior:

@@ -32,7 +32,7 @@ type DockerLabels = Record<string, string> | string[] | undefined;
 export class DockerComposeService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DockerComposeService.name);
   private readonly SERVERS_DIR: string;
-  private readonly BASE_DIR: string;
+  private readonly SERVERS_HOST_DIR: string;
   private readonly BACKUP_BASE_DIR?: string;
   private readonly RESERVED_SERVER_DIRS = new Set(['.world']);
 
@@ -41,7 +41,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     private readonly store: ServerStoreService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
-    this.BASE_DIR = this.configService.get('baseDir');
+    this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
     this.BACKUP_BASE_DIR = this.configService.get('backupBaseDir');
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(path.join(this.SERVERS_DIR, '.world', 'worlds'));
@@ -1067,7 +1067,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
         if (volume.startsWith('./')) {
           const [hostPath, ...containerParts] = volume.split(':');
           const containerPath = containerParts.join(':');
-          const absoluteHostPath = path.join(this.BASE_DIR, 'servers', config.id, hostPath.substring(2));
+          const absoluteHostPath = path.join(this.SERVERS_HOST_DIR, config.id, hostPath.substring(2));
           return `${absoluteHostPath}:${containerPath}`;
         }
         return volume;
@@ -1080,11 +1080,11 @@ export class DockerComposeService implements OnApplicationBootstrap {
       const hasGlobalWorldsMount = volumes.some((volume) => this.hasMountTarget(volume, '/data/.world-library/global'));
 
       if (!hasLocalWorldsMount) {
-        volumes.push(`${path.join(this.BASE_DIR, 'servers', config.id, 'worlds')}:/data/.world-library/local:ro`);
+        volumes.push(`${path.join(this.SERVERS_HOST_DIR, config.id, 'worlds')}:/data/.world-library/local:ro`);
       }
 
       if (!hasGlobalWorldsMount) {
-        volumes.push(`${path.join(this.BASE_DIR, 'servers', '.world', 'worlds')}:/data/.world-library/global:ro`);
+        volumes.push(`${path.join(this.SERVERS_HOST_DIR, '.world', 'worlds')}:/data/.world-library/global:ro`);
       }
     }
 
@@ -1339,7 +1339,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     if (this.BACKUP_BASE_DIR) {
       return path.join(this.BACKUP_BASE_DIR, serverId);
     }
-    return path.join(this.BASE_DIR, 'servers', serverId, 'backups');
+    return path.join(this.SERVERS_HOST_DIR, serverId, 'backups');
   }
 
   private async addBackupService(
@@ -1351,8 +1351,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const backupEnv = this.buildBackupEnvironment(config, useProxy);
     this.addOptionalBackupEnv(backupEnv, config);
 
-    const mcDataPath = path.join(this.BASE_DIR, 'servers', config.id, 'mc-data');
-    const defaultBackupsPath = path.join(this.BASE_DIR, 'servers', config.id, 'backups');
+    const mcDataPath = path.join(this.SERVERS_HOST_DIR, config.id, 'mc-data');
+    const defaultBackupsPath = path.join(this.SERVERS_HOST_DIR, config.id, 'backups');
     const backupsPath = this.resolveBackupsHostPath(config.id, config.backupHostDir);
 
     dockerComposeConfig.services.backup = {
