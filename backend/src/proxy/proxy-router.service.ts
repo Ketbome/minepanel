@@ -32,6 +32,7 @@ const GENERATED_HEADER = [
 export class ProxyRouterService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ProxyRouterService.name);
   private readonly DATA_HOST_DIR: string;
+  private readonly DATA_HOST_DIR_IS_A_GUESS: boolean;
   private readonly PROJECT_DIR = '/app/data/proxy';
 
   constructor(
@@ -40,6 +41,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     private readonly hostContext: HostContextService,
   ) {
     this.DATA_HOST_DIR = this.configService.get('dataHostDir');
+    this.DATA_HOST_DIR_IS_A_GUESS = (this.configService.get<string[]>('unresolvedHostPaths') ?? []).includes('/app/data');
   }
 
   // On boot the container may be missing (host restarted) or stale (settings
@@ -153,6 +155,16 @@ export class ProxyRouterService implements OnApplicationBootstrap {
   }
 
   async start(): Promise<boolean> {
+    // The router reads routes.json off a bind mount, so an unknown host path would put it
+    // in a crash loop against an empty directory. Failing here at least says why.
+    if (this.DATA_HOST_DIR_IS_A_GUESS) {
+      this.logger.error(
+        `Refusing to start mc-router: nothing is mounted at /app/data, so "${this.getHostDataDir()}" is a guess and the router would find no routes.json. ` +
+          'Mount a host directory or a named volume at /app/data.',
+      );
+      return false;
+    }
+
     try {
       await this.generateComposeFile();
       await execAsync('docker compose up -d', { cwd: this.PROJECT_DIR });

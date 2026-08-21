@@ -66,9 +66,24 @@ export function resolveHostPath(mounts: DockerMount[], containerPath: string): s
   return path.join(mount.Source, remainder);
 }
 
+// Container paths we are running in Docker but could not resolve to a host path. The
+// fallback used for these is a guess, so anything about to write a bind mount with one
+// should refuse rather than hand the daemon a path that does not exist.
+const unresolvedHostPaths: string[] = [];
+
 function detectHostDir(mounts: DockerMount[], containerPath: string, fallback: string): string {
   const detected = resolveHostPath(mounts, containerPath);
   if (!detected) {
+    // No mounts at all means we are not in a container (local dev), where BASE_DIR is a
+    // real host path and the right answer. Having mounts but not this one is a
+    // misconfiguration: the fallback is a path inside this container.
+    if (mounts.length > 0) {
+      unresolvedHostPaths.push(containerPath);
+      console.warn(
+        `[config] nothing is mounted at ${containerPath}, so its host path is unknown. Falling back to "${fallback}", ` +
+          'which is almost certainly wrong on the host. Mount a directory or a named volume there.',
+      );
+    }
     return fallback;
   }
 
@@ -79,8 +94,12 @@ function detectHostDir(mounts: DockerMount[], containerPath: string, fallback: s
   return detected;
 }
 
+// Resolved once at import: the factory below can be called more than once, and detection
+// shells out to `docker inspect` and warns on the way.
 const ownMounts = readOwnMounts();
 const envBaseDir = process.env.BASE_DIR || '/app';
+const serversHostDir = detectHostDir(ownMounts, '/app/servers', path.join(envBaseDir, 'servers'));
+const dataHostDir = detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 'data'));
 
 export default () => ({
   jwtSecret: process.env.JWT_SECRET,
@@ -115,8 +134,9 @@ export default () => ({
     from: process.env.SMTP_FROM,
   },
   serversDir: '/app/servers',
-  serversHostDir: detectHostDir(ownMounts, '/app/servers', path.join(envBaseDir, 'servers')),
-  dataHostDir: detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 'data')),
+  serversHostDir,
+  dataHostDir,
+  unresolvedHostPaths,
   backupBaseDir: process.env.BACKUP_BASE_DIR || undefined,
   database: {
     path: '/app/data/minepanel.db',
