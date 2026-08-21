@@ -363,8 +363,9 @@ mounted the data. Generated server compose files use host paths derived from it.
 **Solution:** This is now auto-detected — Minepanel reads the real host source of its own
 `/app/servers` and `/app/data` mounts at startup, so you can leave `BASE_DIR` unset and it will
 match your mounts. If you previously hardcoded it to a wrong value, remove it (or fix it) and
-recreate the affected servers. If you set `BASE_DIR` and it differs from the detected path, the
-startup logs warn you and the detected path wins.
+**restart each affected server** — the compose file is regenerated from `server.json` on every
+start, so there is nothing to recreate and no data to move. If you set `BASE_DIR` and it differs
+from the detected path, the startup logs warn you and the detected path wins.
 See [Configuration → Base Directory](/configuration#base-directory-host-path).
 
 ::: tip Named volumes

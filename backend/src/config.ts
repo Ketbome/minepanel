@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as path from 'node:path';
 import * as os from 'node:os';
 
@@ -23,7 +23,9 @@ export interface DockerMount {
 function readOwnMounts(): DockerMount[] {
   try {
     const containerId = process.env.HOSTNAME || os.hostname();
-    const stdout = execSync(`docker inspect ${containerId} --format '{{json .Mounts}}'`, {
+    // execFileSync, not execSync: HOSTNAME is whatever the container spec says, and there is
+    // no reason to hand it to a shell to reinterpret.
+    const stdout = execFileSync('docker', ['inspect', containerId, '--format', '{{json .Mounts}}'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
       timeout: 5000,

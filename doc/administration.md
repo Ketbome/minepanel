@@ -119,14 +119,28 @@ If password login is disabled and no admin account can sign in through your iden
 provider, the panel cannot be recovered from the UI. Minepanel now refuses to enable SSO-only
 mode in that state, but a panel that already ended up there can be freed with SQL:
 
+If `/app/data` is a **bind mount**, the database is at `data/minepanel.db` under the directory
+Compose runs from:
+
 ```bash
 docker compose stop backend
 sqlite3 data/minepanel.db "UPDATE instance_settings SET oidc_disable_password_login = 0;"
 docker compose start backend
 ```
 
-The database is at `data/minepanel.db` under the directory Compose runs from, or under
-`BASE_DIR` if you set one.
+If it is a **named volume** there is no `data/` folder next to your compose file. Run the update
+inside a throwaway container mounted on the same volume:
+
+```bash
+docker compose stop backend
+docker run --rm -v minepanel_data:/data alpine \
+  sh -c "apk add --no-cache sqlite >/dev/null && \
+         sqlite3 /data/minepanel.db 'UPDATE instance_settings SET oidc_disable_password_login = 0;'"
+docker compose start backend
+```
+
+Replace `minepanel_data` with your volume name (`docker volume ls`). To find where the panel
+resolved its own data mount either way, check the startup logs.
 
 Setting `OIDC_DISABLE_PASSWORD_LOGIN=false` in `.env` does not help here: values saved from
 **Settings -> Integrations** are stored in the database and take precedence over the

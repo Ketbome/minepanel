@@ -8,7 +8,9 @@ import { FC, memo } from "react";
 
 interface ModpackCardProps {
   readonly modpack: CurseForgeModpack;
-  readonly onSelect?: (modpack: CurseForgeModpack) => void;
+  // Required: the whole card is a click target, so a card without a handler would
+  // be a focusable control that does nothing.
+  readonly onSelect: (modpack: CurseForgeModpack) => void;
 }
 
 const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
@@ -31,7 +33,7 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
         <div className="relative flex h-full items-start gap-4 p-4">
           <button
             type="button"
-            onClick={() => onSelect?.(modpack)}
+            onClick={() => onSelect(modpack)}
             aria-label={`${t("selectModpack")}: ${modpack.name}`}
             className="absolute inset-0 cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-[-4px] focus-visible:outline-[var(--mc-emerald)]"
           />

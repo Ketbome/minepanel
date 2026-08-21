@@ -18,8 +18,9 @@ instead of moving to named Docker volumes, and the direction for running servers
 
 ## Context & problem
 
-Today every server's data lives as **bind mounts** under `${BASE_DIR}/servers/<id>/...` on the
-host, and Docker is controlled through the **local socket** (`/var/run/docker.sock`).
+Today every server's data lives under `<serversHostDir>/<id>/...` on the host — a **bind mount**
+in the recommended setup — and Docker is controlled through the **local socket**
+(`/var/run/docker.sock`).
 
 Two path concepts drive the whole model (`backend/src/config.ts`):
 
@@ -30,11 +31,12 @@ Two path concepts drive the whole model (`backend/src/config.ts`):
   `${BASE_DIR}/data`. The source is used verbatim, which is what makes **named volumes** work:
   there it is `/var/lib/docker/volumes/<name>/_data`. It works unchanged on a network
   filesystem too, since `docker inspect` reports the host-side mountpoint path.
-- `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `${BASE_DIR}/servers/<id>/backups`.
+- `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `<serversHostDir>/<id>/backups`.
 
 When a server is generated, `./` volume entries are expanded to absolute host paths under
-`${BASE_DIR}/servers/<id>/...` (`backend/src/docker-compose/docker-compose.service.ts`,
-`parseVolumes`). A typical generated mount:
+`<serversHostDir>/<id>/...` (`backend/src/docker-compose/docker-compose.service.ts`,
+`parseVolumes`). Because the expansion happens on every generation, moving the panel to a
+different mount is picked up on the next server start. A typical generated mount:
 
 ```yaml
 volumes:
