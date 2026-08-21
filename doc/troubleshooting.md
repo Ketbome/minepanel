@@ -39,7 +39,7 @@ Before diving into specific problems, try these:
 docker compose ps
 
 # View logs
-docker compose logs minepanel
+docker compose logs backend
 docker compose logs --tail 100
 
 # Check Docker daemon
@@ -155,7 +155,7 @@ docker compose ps
 2. **Check logs:**
 
 ```bash
-docker compose logs minepanel
+docker compose logs backend
 ```
 
 3. **Verify port:**
@@ -349,7 +349,7 @@ df -h
 4. **View detailed error:**
 
 ```bash
-docker compose logs minepanel | grep -i error
+docker compose logs backend | grep -i error
 ```
 
 ### Server Data Goes to the Wrong Host Folder

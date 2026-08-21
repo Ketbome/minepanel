@@ -84,8 +84,8 @@ After that, Minepanel will show the initial setup screen again so you can regist
 If you know SQL and want to keep your servers:
 
 ```bash
-# Stop minepanel
-docker compose stop minepanel
+# Stop the panel backend
+docker compose stop backend
 
 # Install sqlite3 if needed
 sudo apt install sqlite3
@@ -100,8 +100,8 @@ UPDATE users SET password = 'your_bcrypt_hash_here' WHERE username = 'admin';
 # Exit sqlite
 .exit
 
-# Start minepanel
-docker compose start minepanel
+# Start the panel backend
+docker compose start backend
 ```
 
 To generate a bcrypt hash:
@@ -120,10 +120,13 @@ provider, the panel cannot be recovered from the UI. Minepanel now refuses to en
 mode in that state, but a panel that already ended up there can be freed with SQL:
 
 ```bash
-docker compose stop minepanel
+docker compose stop backend
 sqlite3 data/minepanel.db "UPDATE instance_settings SET oidc_disable_password_login = 0;"
-docker compose start minepanel
+docker compose start backend
 ```
+
+The database is at `data/minepanel.db` under the directory Compose runs from, or under
+`BASE_DIR` if you set one.
 
 Setting `OIDC_DISABLE_PASSWORD_LOGIN=false` in `.env` does not help here: values saved from
 **Settings -> Integrations** are stored in the database and take precedence over the
@@ -649,7 +652,7 @@ docker system prune -a --volumes
 docker compose logs
 
 # Specific service
-docker compose logs minepanel
+docker compose logs backend
 
 # Follow logs
 docker compose logs -f
@@ -720,11 +723,11 @@ docker compose start
 Or stop specific services:
 
 ```bash
-# Stop only Minepanel (keeps servers running)
-docker compose stop minepanel
+# Stop only the panel (keeps servers running)
+docker compose stop backend frontend
 
 # Restart
-docker compose start minepanel
+docker compose start backend frontend
 ```
 
 ## Health Checks
@@ -739,7 +742,7 @@ docker compose ps
 docker inspect minepanel
 
 # Check logs for errors
-docker compose logs minepanel | grep -i error
+docker compose logs backend | grep -i error
 ```
 
 ### Service Health

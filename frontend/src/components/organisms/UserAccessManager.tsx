@@ -200,7 +200,7 @@ export function UserAccessManager() {
   const handleRoleChange = async (user: EditableUser, role: UserRole) => {
     updateLocalUser(user.id, (current) => ({ ...current, isSavingRole: true }));
     try {
-      await updateUserRole(user.id, role);
+      const updatedUser = await updateUserRole(user.id, role);
       invalidateCurrentUserCache();
       // Losing your own admin role changes the whole shell (sidebar, settings
       // nav), and this page is not even readable without `manageUsers`.
@@ -208,6 +208,9 @@ export function UserAccessManager() {
         window.location.reload();
         return;
       }
+      // Applied before the refresh so a failing reload cannot leave the switch
+      // showing the old role, stuck mid-save.
+      updateLocalUser(user.id, () => ({ ...updatedUser }));
       await loadData();
       mcToast.success(`${t('roleUpdated')}: ${user.username}`);
     } catch (error) {
@@ -355,7 +358,7 @@ export function UserAccessManager() {
                         <p className="text-sm text-gray-200">{t('administratorRole')}</p>
                         <p className="mt-1 text-xs text-gray-500">{t('administratorRoleDesc')}</p>
                       </div>
-                      <Switch checked={user.role === 'ADMIN'} disabled={user.isSavingRole} onCheckedChange={(checked) => handleRoleChange(user, checked ? 'ADMIN' : 'USER')} />
+                      <Switch aria-label={`${t('administratorRole')}: ${user.username}`} checked={user.role === 'ADMIN'} disabled={user.isSavingRole} onCheckedChange={(checked) => handleRoleChange(user, checked ? 'ADMIN' : 'USER')} />
                     </div>
                   ) : null}
 
