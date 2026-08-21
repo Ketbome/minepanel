@@ -111,16 +111,16 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[88vh] max-w-5xl overflow-y-auto border-2 border-gray-700 bg-gray-900 p-0 text-white scrollbar-hide">
+      <DialogContent className="max-h-[90vh] w-[96vw] max-w-[1600px] overflow-y-auto border-2 border-gray-700 bg-gray-900 p-0 text-white scrollbar-hide">
         <div className="sticky top-0 z-10 border-b-2 border-gray-700 bg-gray-900/95 px-6 py-4 backdrop-blur-sm">
           <div className="flex items-start gap-4">
             <ModpackLogo modpack={modpack} />
             <div className="min-w-0 flex-1">
               <DialogTitle className="font-minecraft text-xl leading-tight font-bold text-white">{modpack.name}</DialogTitle>
-              <DialogDescription className="mt-1 line-clamp-2 text-sm text-gray-400">{modpack.summary}</DialogDescription>
+              <DialogDescription className="mt-1 max-w-4xl text-sm text-gray-400">{modpack.summary}</DialogDescription>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {modpack.isFeatured ? <span className="mc-tag bg-yellow-500 px-1.5 py-0.5 text-[10px] font-bold text-black">{t("featured")}</span> : null}
-                {modpack.categories?.slice(0, 4).map((category) => (
+                {modpack.categories?.slice(0, 8).map((category) => (
                   <span key={category.id} className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] text-gray-300">
                     {category.name}
                   </span>
@@ -131,7 +131,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
         </div>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="mx-6 mt-4 grid w-auto grid-cols-2 bg-gray-800">
+          <TabsList className="mx-6 mt-4 grid w-full max-w-lg grid-cols-2 bg-gray-800">
             <TabsTrigger value="info" className="text-white data-[state=active]:bg-emerald-600">
               <Package className="mr-2 h-4 w-4" />
               {t("modpackDetails")}
@@ -160,8 +160,8 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
               </div>
             ) : null}
 
-            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-              <div className="space-y-4">
+            <div className="grid gap-5 lg:grid-cols-3">
+              <div className="space-y-4 lg:col-span-2">
                 <Gallery modpack={modpack} />
 
                 <div>
@@ -200,7 +200,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                 <p className="text-sm text-gray-400">{t("createServerFromModpack")}</p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <div className="space-y-3">
                   <div>
                     <Label className="text-sm font-semibold text-white">
@@ -259,18 +259,18 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                     </Button>
                   </div>
                 </div>
-              </div>
 
-              {/* What the form is actually about to write, since the version and
-                  the Java image are picked from the file, not typed by hand. */}
-              <div className="rounded-lg border border-gray-700 bg-gray-800/40 p-3">
-                <p className="mb-2 font-minecraft text-[11px] tracking-wide text-emerald-300">{t("modpackWillCreate")}</p>
-                <dl className="grid gap-1 text-xs sm:grid-cols-2">
-                  <SummaryRow label={t("serverType")} value="AUTO_CURSEFORGE" />
-                  <SummaryRow label={t("fileName")} value={selectedFile?.fileName ?? "-"} />
-                  <SummaryRow label={t("minecraftVersion")} value={detectedVersion ?? "-"} />
-                  <SummaryRow label={t("dockerImage")} value={detectedVersion ? `itzg/minecraft-server:${getSuggestedJavaImage(detectedVersion)}` : "-"} />
-                </dl>
+                {/* What the form is actually about to write, since the version and
+                    the Java image are picked from the file, not typed by hand. */}
+                <div className="h-fit rounded-lg border border-gray-700 bg-gray-800/40 p-3 md:col-span-2 xl:col-span-1">
+                  <p className="mb-2 font-minecraft text-[11px] tracking-wide text-emerald-300">{t("modpackWillCreate")}</p>
+                  <dl className="grid gap-1 text-xs">
+                    <SummaryRow label={t("serverType")} value="AUTO_CURSEFORGE" />
+                    <SummaryRow label={t("fileName")} value={selectedFile?.fileName ?? "-"} />
+                    <SummaryRow label={t("minecraftVersion")} value={detectedVersion ?? "-"} />
+                    <SummaryRow label={t("dockerImage")} value={detectedVersion ? `itzg/minecraft-server:${getSuggestedJavaImage(detectedVersion)}` : "-"} />
+                  </dl>
+                </div>
               </div>
 
               <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 font-minecraft hover:from-emerald-500 hover:to-emerald-600">
@@ -338,8 +338,8 @@ const Gallery: FC<{ readonly modpack: CurseForgeModpack }> = ({ modpack }) => {
   return (
     <div>
       <SectionTitle icon={<Package className="h-4 w-4 text-emerald-400" />} label="Screenshots" />
-      <div className="relative aspect-video w-full overflow-hidden rounded border-2 border-gray-700 bg-gray-800">
-        <Image unoptimized src={current.url} alt={current.title} fill sizes="600px" className="object-cover" />
+      <div className="relative aspect-video max-h-[420px] w-full overflow-hidden rounded border-2 border-gray-700 bg-gray-800">
+        <Image unoptimized src={current.url} alt={current.title} fill sizes="(max-width: 1024px) 90vw, 60vw" className="object-cover" />
       </div>
       {screenshots.length > 1 ? (
         <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
