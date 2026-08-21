@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
@@ -35,7 +36,10 @@ export class UpdateNotSupportedError extends Error {}
 export class UpdaterService {
   private readonly logger = new Logger(UpdaterService.name);
 
-  constructor(private readonly hostContext: HostContextService) {}
+  constructor(
+    private readonly hostContext: HostContextService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getLastResult(): Promise<UpdateResult | null> {
     try {
@@ -70,14 +74,17 @@ export class UpdaterService {
     };
     await fs.outputJson(RESULT_FILE, result, { spaces: 2 });
 
-    const script = this.buildScript(context.configFiles, digests, context.service);
+    const script = this.buildScript(context.configFiles, digests, result.startedAt, context.service);
     // Detached and on the host's compose project directory, so it outlives this
     // container being recreated.
     const command = [
       'docker run -d --rm',
       '-v /var/run/docker.sock:/var/run/docker.sock',
       `-v ${this.shellQuote(context.workingDir)}:/workspace`,
-      `-v ${this.shellQuote(path.dirname(RESULT_FILE))}:/result`,
+      // The daemon resolves this path on the host, so the panel's own container
+      // path would land the outcome in a directory the panel cannot read, and
+      // the update would look stuck at "running" forever.
+      `-v ${this.shellQuote(this.resultHostDir())}:/result`,
       '-w /workspace',
       UPDATER_IMAGE,
       `sh -c ${this.shellQuote(script)}`,
@@ -88,7 +95,20 @@ export class UpdaterService {
     return result;
   }
 
-  private buildScript(configFiles: string[], digests: Record<string, string>, panelService?: string): string {
+  // Where /app/data comes from on the host, detected from the panel's own mounts.
+  private resultHostDir(): string {
+    const detected = this.configService.get<string>('dataHostDir');
+    if (detected) return detected;
+
+    // Only reachable with the config module's detection missing. The update
+    // still runs, but the daemon resolves this path on the host, where it is
+    // not the panel's data directory, so the outcome never makes it back and
+    // the panel has to fall back to noticing that its own version moved.
+    this.logger.warn('No host path is known for /app/data, so the outcome of this update will not be recorded');
+    return path.dirname(RESULT_FILE);
+  }
+
+  private buildScript(configFiles: string[], digests: Record<string, string>, startedAt: string, panelService?: string): string {
     // Compose files are recorded as host paths; the working dir is mounted at
     // /workspace, so only their basenames are needed inside the updater.
     const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(path.basename(file))}`).join(' ');
@@ -100,7 +120,11 @@ export class UpdaterService {
 
     return [
       'set -e',
-      `write_result() { printf '{"status":"%s","finishedAt":"%s","message":"%s"}\\n' "$1" "$(date -Iseconds)" "$2" > /result/update-result.json; }`,
+      `write_result() { printf '{"status":"%s","startedAt":"%s","finishedAt":"%s","message":"%s"}\\n' "$1" "${startedAt}" "$(date -Iseconds)" "$2" > /result/update-result.json; }`,
+      // Anything that kills the script before it decides (a failed pull, a
+      // daemon restart) must still leave an outcome behind: without it the
+      // panel keeps reporting an update that is no longer running.
+      `trap 'write_result failed "The update stopped before it could finish"' EXIT`,
       `${compose} pull`,
       `${compose} up -d`,
       // Give the new panel time to boot before deciding it failed.
@@ -109,6 +133,7 @@ export class UpdaterService {
       `  if ${health} >/dev/null 2>&1; then ok=1; break; fi`,
       '  sleep 5',
       'done',
+      'trap - EXIT',
       'if [ "$ok" = "1" ]; then',
       '  write_result succeeded ""',
       'else',

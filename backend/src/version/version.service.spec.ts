@@ -105,6 +105,93 @@ describe('VersionService', () => {
     });
   });
 
+  describe('release notes', () => {
+    // What the release workflow actually publishes: the image-pull preamble,
+    // then GitHub's generated categories, then the compare link.
+    const body = [
+      '## 🐳 Docker Images',
+      '',
+      '```bash',
+      'docker pull ketbom/minepanel:1.11.31',
+      '```',
+      '',
+      'Platforms: `linux/amd64`, `linux/arm64`',
+      '',
+      "<!-- Release notes generated using configuration in .github/release.yml -->",
+      '',
+      "## What's Changed",
+      '### 🐛 Bug Fixes',
+      '* fix: stop the worlds tab lying by @Ketbome in https://github.com/Ketbome/minepanel/pull/204',
+      '',
+      '**Full Changelog**: https://github.com/Ketbome/minepanel/compare/v1.11.30...v1.11.31',
+    ].join('\n');
+
+    it('groups the changes under the category they were published in', async () => {
+      mockedGet.mockResolvedValue({ data: [release('1.11.31', { body })] });
+
+      const [entry] = (await service.getVersionInfo()).changelog;
+
+      expect(entry.sections).toEqual([
+        {
+          title: '🐛 Bug Fixes',
+          important: false,
+          changes: [
+            {
+              text: 'fix: stop the worlds tab lying',
+              author: 'Ketbome',
+              pr: 204,
+              prUrl: 'https://github.com/Ketbome/minepanel/pull/204',
+            },
+          ],
+        },
+      ]);
+    });
+
+    // The panel prints its own update instructions, so repeating the workflow's
+    // pull block would say the same thing twice.
+    it('drops the image-pull preamble and keeps the compare link', async () => {
+      mockedGet.mockResolvedValue({ data: [release('1.11.31', { body })] });
+
+      const [entry] = (await service.getVersionInfo()).changelog;
+
+      expect(entry.notes).toBe('');
+      expect(entry.compareUrl).toBe('https://github.com/Ketbome/minepanel/compare/v1.11.30...v1.11.31');
+    });
+
+    it('keeps hand-written notes that list nothing', async () => {
+      mockedGet.mockResolvedValue({ data: [release('1.11.31', { body: 'Rebuilt against the new base image.' })] });
+
+      const [entry] = (await service.getVersionInfo()).changelog;
+
+      expect(entry.sections).toEqual([]);
+      expect(entry.notes).toBe('Rebuilt against the new base image.');
+    });
+
+    it('lists changes published without a category', async () => {
+      mockedGet.mockResolvedValue({ data: [release('1.11.31', { body: "## What's Changed\n* Something happened" })] });
+
+      const [entry] = (await service.getVersionInfo()).changelog;
+
+      expect(entry.sections).toEqual([
+        { title: '', important: false, changes: [{ text: 'Something happened', author: null, pr: null, prUrl: null }] },
+      ]);
+    });
+
+    // These are the ones the panel shows above the changelog, before the update
+    // button, because they are steps rather than news.
+    it('marks the categories the user has to act on', async () => {
+      const notes = ['## ⚠️ Breaking Changes', '* mc-router moved out of the root compose file', '### 🚀 Features', '* something new'].join('\n');
+      mockedGet.mockResolvedValue({ data: [release('1.11.31', { body: notes })] });
+
+      const [entry] = (await service.getVersionInfo()).changelog;
+
+      expect(entry.sections.map((section) => [section.title, section.important])).toEqual([
+        ['⚠️ Breaking Changes', true],
+        ['🚀 Features', false],
+      ]);
+    });
+  });
+
   describe('version comparison', () => {
     it('does not treat a prerelease as newer than the final release of the same version', async () => {
       process.env.APP_VERSION = '2.0.0';

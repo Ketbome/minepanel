@@ -27,6 +27,17 @@ export class VersionController {
     return { ...info, canSelfUpdate, lastUpdate };
   }
 
+  // Polled while an update is in flight. It answers from the recorded outcome
+  // alone, so the panel can be asked every few seconds without spending the
+  // hourly GitHub budget that GET /version does.
+  @Get('update-status')
+  async getUpdateStatus() {
+    return {
+      current: this.versionService.getCurrentVersion(),
+      lastUpdate: await this.updaterService.getLastResult(),
+    };
+  }
+
   // Recreating the whole stack is an admin action, and it is irreversible from
   // inside the panel once it starts.
   @Post('update')

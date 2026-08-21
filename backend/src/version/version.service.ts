@@ -1,11 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
+export interface ReleaseChange {
+  /** The change itself, with the "by @author in <url>" tail and markdown removed. */
+  text: string;
+  author: string | null;
+  pr: number | null;
+  prUrl: string | null;
+}
+
+export interface ReleaseSection {
+  /** Category from .github/release.yml, e.g. "🐛 Bug Fixes". Empty when the notes list changes without one. */
+  title: string;
+  /** Something to read or do before updating, not just a list of what changed. */
+  important: boolean;
+  changes: ReleaseChange[];
+}
+
 export interface ReleaseNote {
   version: string;
   url: string;
   publishedAt: string;
+  /** The listed changes, grouped the way the release notes group them. */
+  sections: ReleaseSection[];
+  /** Whatever did not parse into a section, so hand-written notes are not dropped. */
   notes: string;
+  /** GitHub's "Full Changelog" compare link, when the notes carry one. */
+  compareUrl: string | null;
   breaking: boolean;
 }
 
@@ -32,6 +53,15 @@ interface GithubRelease {
 
 // Matches the "Breaking Changes" category configured in .github/release.yml.
 const BREAKING_HEADING = /^#{1,4}\s*.*breaking changes/im;
+// The release workflow opens every body with the image tags to pull; the panel
+// prints its own update instructions instead, so that block is dropped.
+const DOCKER_HEADING = /docker images/i;
+// GitHub's wrapper around the generated categories, not a category itself.
+const WHATS_CHANGED = /what'?s changed/i;
+// Categories the user has to act on rather than just read: what breaks, and
+// what the release expects them to edit in compose or .env by hand. The panel
+// lifts these above the changelog, where they are seen before updating.
+const ACTION_HEADING = /breaking changes|manual steps?|action required|upgrade notes/i;
 
 @Injectable()
 export class VersionService {
@@ -63,7 +93,7 @@ export class VersionService {
 
   // Injected at build time. A local run has no version, and comparing against a
   // release would only produce a false update notice.
-  private getCurrentVersion(): string | null {
+  getCurrentVersion(): string | null {
     const version = (process.env.APP_VERSION ?? '').trim();
     return version && version !== 'dev' ? version : null;
   }
@@ -84,16 +114,108 @@ export class VersionService {
       .filter((release) => this.isNewer(this.toVersion(release), current))
       .map((release) => {
         const version = this.toVersion(release);
-        const notes = release.body?.trim() ?? '';
+        const body = release.body?.trim() ?? '';
+        const { sections, notes, compareUrl } = this.parseBody(body);
         return {
           version,
           url: release.html_url,
           publishedAt: release.published_at,
+          sections,
           notes,
-          breaking: this.isBreaking(version, current, notes),
+          compareUrl,
+          breaking: this.isBreaking(version, current, body),
         };
       })
       .sort((a, b) => this.compare(b.version, a.version));
+  }
+
+  /**
+   * Turns a release body into the changes it lists.
+   *
+   * The panel renders the changelog itself rather than printing markdown at the
+   * user, so the body is read once here: categories become sections, bullets
+   * become changes, and the parts the panel replaces (the image-pull preamble,
+   * the compare link) are pulled out instead of shown twice.
+   */
+  private parseBody(body: string): { sections: ReleaseSection[]; notes: string; compareUrl: string | null } {
+    const sections: ReleaseSection[] = [];
+    const leftover: string[] = [];
+    let compareUrl: string | null = null;
+    let current: ReleaseSection | null = null;
+    // The image-pull preamble, whose lines are dropped until the next heading.
+    let skipping = false;
+    let inFence = false;
+
+    for (const raw of body.replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (line.startsWith('```')) {
+        inFence = !inFence;
+        continue;
+      }
+      if (inFence) continue;
+
+      // A collapsed category (release.yml's `collapse: true`) is a <summary>
+      // rather than a heading, but it means the same thing.
+      const title = /^#{2,4}\s+(.*)$/.exec(line)?.[1] ?? /^<summary>(.*)<\/summary>$/.exec(line)?.[1];
+      if (title !== undefined) {
+        skipping = DOCKER_HEADING.test(title);
+        current =
+          skipping || WHATS_CHANGED.test(title)
+            ? null
+            : { title: this.stripMarkdown(title), important: ACTION_HEADING.test(title), changes: [] };
+        if (current) sections.push(current);
+        continue;
+      }
+
+      const compare = /^\*\*Full Changelog\*\*:\s*(\S+)/i.exec(line);
+      if (compare) {
+        compareUrl = compare[1];
+        continue;
+      }
+
+      if (skipping) continue;
+      if (line.startsWith('<details') || line.startsWith('</details')) continue;
+
+      const bullet = /^[*-]\s+(.*)$/.exec(line)?.[1];
+      if (bullet) {
+        if (!current) {
+          current = { title: '', important: false, changes: [] };
+          sections.push(current);
+        }
+        current.changes.push(this.parseChange(bullet));
+        continue;
+      }
+
+      leftover.push(line);
+    }
+
+    return {
+      sections: sections.filter((section) => section.changes.length > 0),
+      notes: leftover.join('\n').trim(),
+      compareUrl,
+    };
+  }
+
+  // Generated entries read "<title> by @<author> in <pull request url>".
+  private parseChange(entry: string): ReleaseChange {
+    const match = /^(.*?)\s+by\s+@([\w-]+)\s+in\s+(\S+)$/.exec(entry);
+    const prUrl = match?.[3] ?? null;
+    const pr = Number.parseInt(/\/pull\/(\d+)/.exec(prUrl ?? '')?.[1] ?? '', 10);
+
+    return {
+      text: this.stripMarkdown(match?.[1] ?? entry),
+      author: match?.[2] ?? null,
+      pr: Number.isNaN(pr) ? null : pr,
+      prUrl,
+    };
+  }
+
+  private stripMarkdown(value: string): string {
+    return value
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_`]/g, '')
+      .trim();
   }
 
   // Either the release notes carry the breaking-changes section, or the major
