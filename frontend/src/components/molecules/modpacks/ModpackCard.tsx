@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Download, Calendar, ExternalLink, Star, Sparkles } from "lucide-react";
+import { Download, Calendar, ExternalLink, Star } from "lucide-react";
 import { CurseForgeModpack, formatDownloadCount } from "@/services/curseforge/curseforge.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { FC, memo } from "react";
@@ -24,50 +24,60 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
   };
 
   return (
-    <div className="h-full animate-fade-in-up transition-transform duration-200 hover:-translate-y-1">
-      <div className="mc-panel group relative flex h-full flex-col overflow-hidden">
-        <div className="relative h-40 w-full overflow-hidden" style={{ borderBottom: "3px solid var(--mc-frame)" }}>
+    <div className="h-full animate-fade-in-up transition-transform duration-200 hover:-translate-y-0.5">
+      <div className="mc-panel group h-full">
+        {/* `.mc-panel > *` forces position: relative, so the stretched click
+            target has to live one level deeper to stay absolute. */}
+        <div className="relative flex h-full items-start gap-4 p-4">
+          <button
+            type="button"
+            onClick={() => onSelect?.(modpack)}
+            aria-label={`${t("selectModpack")}: ${modpack.name}`}
+            className="absolute inset-0 cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-[-4px] focus-visible:outline-[var(--mc-emerald)]"
+          />
+
+          {/* CurseForge artwork is square; a square box shows all of it. */}
           {modpack.logo?.url ? (
-            <Image src={modpack.logo.url} alt={modpack.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="400px" />
+            <Image
+              src={modpack.logo.url}
+              alt={modpack.name}
+              width={96}
+              height={96}
+              sizes="96px"
+              className="h-20 w-20 shrink-0 border-2 border-[var(--mc-frame)] object-cover sm:h-24 sm:w-24"
+            />
           ) : (
-            <div className="flex h-full items-center justify-center bg-[var(--mc-stone-deep)]">
-              <Image src="/images/grass.webp" alt="Default" width={64} height={64} className="pixelated opacity-40" />
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center border-2 border-[var(--mc-frame)] bg-[var(--mc-stone-deep)] sm:h-24 sm:w-24">
+              <Image src="/images/grass.webp" alt="Default" width={40} height={40} className="pixelated opacity-40" />
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
+            <div className="flex items-start gap-2">
+              <h3 className="line-clamp-2 flex-1 font-minecraft text-sm font-bold leading-tight text-white group-hover:text-emerald-400">{modpack.name}</h3>
+              {modpack.isFeatured && (
+                <span className="mc-tag flex shrink-0 items-center bg-yellow-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
+                  <Star className="mr-1 h-3 w-3 fill-black" />
+                  {t("featured")}
+                </span>
+              )}
+            </div>
 
-          {modpack.isFeatured && (
-            <span className="mc-tag absolute right-2 top-2 flex items-center bg-yellow-500 text-[10px] font-bold text-black px-2 py-0.5">
-              <Star className="mr-1 h-3 w-3 fill-black" />
-              {t("featured")}
-            </span>
-          )}
+            <p className="line-clamp-2 text-xs leading-relaxed text-gray-400">{modpack.summary}</p>
 
-          <span className="mc-tag absolute bottom-2 left-2 flex items-center bg-emerald-600 text-[10px] font-semibold text-white px-2 py-0.5">
-            <Download className="mr-1 h-3 w-3" />
-            {formatDownloadCount(modpack.downloadCount)}
-          </span>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-3 p-4">
-          <h3 className="line-clamp-2 min-h-[2.5rem] font-minecraft text-base font-bold leading-tight text-white group-hover:text-emerald-400">{modpack.name}</h3>
-
-          <p className="line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-gray-400">{modpack.summary}</p>
-
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Calendar className="h-3 w-3" />
-            <span>{getLatestVersion()}</span>
-          </div>
-
-          <div className="mt-auto flex gap-2">
-            <button onClick={() => onSelect?.(modpack)} className="mc-btn mc-btn-emerald flex-1 px-3 py-2 text-xs">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t("selectModpack")}
-            </button>
-            <button onClick={handleExternalLink} className="mc-btn px-3 py-2">
-              <ExternalLink className="h-3.5 w-3.5" />
-            </button>
+            <div className="mt-auto flex flex-wrap items-center gap-1.5">
+              <span className="mc-tag flex items-center bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                <Download className="mr-1 h-3 w-3" />
+                {formatDownloadCount(modpack.downloadCount)}
+              </span>
+              <span className="mc-tag flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] font-semibold text-gray-300">
+                <Calendar className="mr-1 h-3 w-3" />
+                {getLatestVersion()}
+              </span>
+              <button onClick={handleExternalLink} aria-label={`${t("viewOnCurseForge")}: ${modpack.name}`} className="mc-btn relative ml-auto px-2 py-1">
+                <ExternalLink className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
