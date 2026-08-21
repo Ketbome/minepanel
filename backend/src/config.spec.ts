@@ -9,6 +9,10 @@ describe('resolveHostPath', () => {
     Source: `/var/lib/docker/volumes/${name}/_data`,
     Destination: destination,
   });
+  const subpathVolume = (name: string, destination: string, subpath: string): DockerMount => ({
+    ...volume(name, destination),
+    Subpath: subpath,
+  });
 
   it('returns the bind source as the host path', () => {
     const mounts = [bind('/srv/minepanel/servers', '/app/servers'), bind('/srv/minepanel/data', '/app/data')];
@@ -28,6 +32,21 @@ describe('resolveHostPath', () => {
 
     expect(resolveHostPath(mounts, '/app/servers')).toBe('/var/lib/docker/volumes/minepanel_all/_data/servers');
     expect(resolveHostPath(mounts, '/app/data')).toBe('/var/lib/docker/volumes/minepanel_all/_data/data');
+  });
+
+  // `docker inspect .Mounts` reports the volume root as Source even when only a subpath is
+  // mounted, so without the subpath the router bind landed next to the real data.
+  it('appends the subpath a volume was mounted with', () => {
+    const mounts = [subpathVolume('minepanel_data', '/app/servers', 'servers'), subpathVolume('minepanel_data', '/app/data', 'data')];
+
+    expect(resolveHostPath(mounts, '/app/servers')).toBe('/var/lib/docker/volumes/minepanel_data/_data/servers');
+    expect(resolveHostPath(mounts, '/app/data')).toBe('/var/lib/docker/volumes/minepanel_data/_data/data');
+  });
+
+  it('appends the subpath before the remainder', () => {
+    expect(resolveHostPath([subpathVolume('minepanel_data', '/app', 'panel')], '/app/data')).toBe(
+      '/var/lib/docker/volumes/minepanel_data/_data/panel/data',
+    );
   });
 
   it('prefers the deepest mount containing the path', () => {

@@ -29,8 +29,10 @@ Two path concepts drive the whole model (`backend/src/config.ts`):
   Each is auto-detected from the `Source` of the panel's own mount for that destination via
   `docker inspect` (`backend/src/config.ts`), falling back to `${BASE_DIR}/servers` and
   `${BASE_DIR}/data`. The source is used verbatim, which is what makes **named volumes** work:
-  there it is `/var/lib/docker/volumes/<name>/_data`. It works unchanged on a network
-  filesystem too, since `docker inspect` reports the host-side mountpoint path.
+  there it is `/var/lib/docker/volumes/<name>/_data`. If the volume was mounted with a
+  `subpath`, that is appended too — `docker inspect` reports only the volume root. It works
+  unchanged on a network filesystem too, since `docker inspect` reports the host-side
+  mountpoint path.
 - `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `<serversHostDir>/<id>/backups`.
 
 When a server is generated, `./` volume entries are expanded to absolute host paths under

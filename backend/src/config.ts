@@ -8,6 +8,15 @@ export interface DockerMount {
   Source?: string;
   Destination?: string;
   Driver?: string;
+  // Not reported by `docker inspect .Mounts`: a volume mounted with a subpath still lists the
+  // volume root as its Source, so readOwnMounts copies it in from .HostConfig.Mounts.
+  Subpath?: string;
+}
+
+// The mount request that produced a .Mounts entry, matched back to it by Target.
+interface MountSpec {
+  Target?: string;
+  VolumeOptions?: { Subpath?: string };
 }
 
 // The generated server compose files and the chown helper run against the host Docker
@@ -15,24 +24,37 @@ export interface DockerMount {
 // own /app/servers and /app/data actually come from instead of trusting BASE_DIR, so a
 // misconfigured env var cannot send servers to the wrong folder.
 //
-// Each mount's own Source is read verbatim, with no arithmetic on it. That is what makes
-// named volumes work: there the source is /var/lib/docker/volumes/<name>/_data, which no
-// amount of deriving from BASE_DIR would ever produce. It also keeps whatever path shape
-// the platform reports (Docker Desktop rewrites binds to /host_mnt/... and /run/desktop/...)
-// intact, since the daemon is the one resolving it back.
+// Each mount's own Source is what gets read, with no arithmetic beyond the subpath the
+// daemon itself applied. That is what makes named volumes work: there the source is
+// /var/lib/docker/volumes/<name>/_data, which no amount of deriving from BASE_DIR would
+// ever produce. It also keeps whatever path shape the platform reports (Docker Desktop
+// rewrites binds to /host_mnt/... and /run/desktop/...) intact, since the daemon is the
+// one resolving it back.
 function readOwnMounts(): DockerMount[] {
   try {
     const containerId = process.env.HOSTNAME || os.hostname();
     // execFileSync, not execSync: HOSTNAME is whatever the container spec says, and there is
     // no reason to hand it to a shell to reinterpret.
-    const stdout = execFileSync('docker', ['inspect', containerId, '--format', '{{json .Mounts}}'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 5000,
-    }).trim();
+    // .Mounts says what is mounted where; .HostConfig.Mounts is the request that produced it
+    // and the only place a volume subpath survives.
+    const stdout = execFileSync(
+      'docker',
+      ['inspect', containerId, '--format', '{"mounts":{{json .Mounts}},"spec":{{json .HostConfig.Mounts}}}'],
+      {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+        timeout: 5000,
+      },
+    ).trim();
 
-    const parsed: unknown = JSON.parse(stdout || '[]');
-    return Array.isArray(parsed) ? (parsed as DockerMount[]) : [];
+    const parsed = JSON.parse(stdout || '{}') as { mounts?: unknown; spec?: unknown };
+    const mounts = Array.isArray(parsed.mounts) ? (parsed.mounts as DockerMount[]) : [];
+    const spec = Array.isArray(parsed.spec) ? (parsed.spec as MountSpec[]) : [];
+
+    return mounts.map((mount) => {
+      const subpath = spec.find((entry) => entry.Target === mount.Destination)?.VolumeOptions?.Subpath;
+      return subpath ? { ...mount, Subpath: subpath } : mount;
+    });
   } catch {
     // Docker unavailable (e.g. local dev outside Docker) -> fall back to BASE_DIR.
     return [];
@@ -64,8 +86,12 @@ export function resolveHostPath(mounts: DockerMount[], containerPath: string): s
     return undefined;
   }
 
+  // With a subpath the container sees <Source>/<Subpath> at the destination, while Source
+  // alone points at the volume root. Handing the daemon that root makes it create the
+  // directory the compose file asks for, empty, next to the real data.
+  const source = mount.Subpath ? path.join(mount.Source, mount.Subpath) : mount.Source;
   const remainder = containerPath.slice(mount.Destination!.replace(/\/+$/, '').length);
-  return path.join(mount.Source, remainder);
+  return path.join(source, remainder);
 }
 
 // Container paths we are running in Docker but could not resolve to a host path. The
