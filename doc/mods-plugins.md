@@ -439,7 +439,19 @@ and applies it to the server: it sets the Minecraft version and the matching jav
 selector does the same, since another modpack file often targets another Minecraft version.
 
 Creating a server from the **Modpack templates** page does the same: the file chosen in the
-dialog decides the Minecraft version and the java tag of the new server.
+dialog decides the Minecraft version and the java tag of the new server. Its **Create server**
+tab shows exactly what it is about to write — server type, file, Minecraft version and Docker
+image — before you press the button.
+
+The dialog's **Modpack details** tab reads the rest of what CurseForge publishes about the
+pack: downloads, likes, popularity rank, categories, every Minecraft version it has a build
+for, and the newest file with its release channel, size and date.
+
+::: warning Packs that block automatic downloads
+Some authors opt their pack out of the CurseForge API. The dialog says so, because
+`AUTO_CURSEFORGE` cannot download those: the install fails partway through provisioning.
+Download the `.zip` yourself and upload it from the server's **Mods** tab instead.
+:::
 
 The modpack itself is always pinned to the file that was picked: a pack that updates on its
 own can break an existing world, so moving to a newer release is a manual step. When a newer
