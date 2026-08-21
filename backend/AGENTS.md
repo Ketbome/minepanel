@@ -93,6 +93,10 @@ Path and filesystem patterns (critical):
 - Sources are used verbatim. Docker Desktop rewrites bind sources (`/host_mnt/...` on macOS,
   `/run/desktop/mnt/host/...` on Windows) and the daemon resolves them back; reshaping them
   breaks that.
+- The one exception is the volume subpath, which `docker inspect .Mounts` does not report:
+  a mount with `volume: subpath:` still lists the volume root as its `Source`. `readOwnMounts`
+  reads `.HostConfig.Mounts` in the same inspect and copies `VolumeOptions.Subpath` onto the
+  mount so `resolveHostPath` can append it. Any new mount lookup must go through that helper.
 - Never mix `serversDir` with the host dirs; they are not interchangeable.
 - **`servers/<id>/server.json` is the source of truth for a server's config.**
   `docker-compose.yml` is generated output; never parse it to read config. Reads go

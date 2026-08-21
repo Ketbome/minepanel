@@ -377,6 +377,11 @@ mount pointed at an empty directory Docker then created — servers came up blan
 could not read `routes.json`. If you ran a named-volume install on 1.12.0, check that your
 servers are reading the data you expect before starting them again.
 
+Mounting a **subpath** of a volume (`volume: subpath: data` in the long syntax) works from
+1.12.4. `docker inspect` reports the volume root as the mount source even then, so before that
+the panel wrote its files to `_data/<subpath>/...` while the generated mounts pointed at
+`_data/...` — mc-router found an empty `proxy/` folder next to the real one and crash-looped.
+
 Volumes on a non-local driver (NFS, CIFS) cannot be resolved this way. The panel says so at
 startup and falls back to `BASE_DIR`; use a bind mount for those.
 :::
