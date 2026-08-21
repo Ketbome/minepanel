@@ -30,9 +30,11 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
   const { t } = useLanguage();
   const [info, setInfo] = useState<VersionInfo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  // The update being waited on, with the version it started from, or null when
-  // none is in flight.
-  const [update, setUpdate] = useState<{ startedAt: number; from: string | null } | null>(null);
+  // The update being waited on: when it was started here, the startedAt the
+  // panel recorded for it, and the version it started from. Null when none is
+  // in flight.
+  const [update, setUpdate] = useState<{ startedAt: number; id: string | null; from: string | null } | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     getVersionInfo()
@@ -40,7 +42,9 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
         setInfo(data);
         // Picks the wait back up after a reload, since the update outlives the tab.
         const running = data.lastUpdate?.status === 'running' ? Date.parse(data.lastUpdate.startedAt) : Number.NaN;
-        if (!Number.isNaN(running) && Date.now() - running < STALE_RUN_MS) setUpdate({ startedAt: running, from: data.current });
+        if (!Number.isNaN(running) && Date.now() - running < STALE_RUN_MS) {
+          setUpdate({ startedAt: running, id: data.lastUpdate?.startedAt ?? null, from: data.current });
+        }
       })
       .catch(() => setInfo(null));
   }, []);
@@ -76,9 +80,12 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
       try {
         const status = await getUpdateStatus();
         const restarted = !!status.current && !!update.from && status.current !== update.from;
+        if (restarted) return finish('succeeded');
 
-        if (restarted || status.lastUpdate?.status === 'succeeded') return finish('succeeded');
-        if (status.lastUpdate && status.lastUpdate.status !== 'running') return finish(status.lastUpdate.status);
+        // The result file keeps the last update's outcome forever, so only the
+        // one carrying this update's startedAt says anything about this update.
+        const result = status.lastUpdate && (!update.id || status.lastUpdate.startedAt === update.id) ? status.lastUpdate : null;
+        if (result && result.status !== 'running') return finish(result.status);
       } catch {
         // The panel is restarting; keep asking until it answers again.
       }
@@ -91,20 +98,25 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
   }, [update, t]);
 
   const handleUpdate = async () => {
-    setUpdate({ startedAt: Date.now(), from: info?.current ?? null });
+    setIsStarting(true);
     try {
-      await startUpdate();
+      const started = await startUpdate();
       mcToast.success(t('updateStarted'));
+      // Only now: until the panel answers, the recorded outcome is still the
+      // previous update's, and reading it would call this one finished before
+      // it had begun.
+      setUpdate({ startedAt: Date.now(), id: started.startedAt, from: info?.current ?? null });
     } catch {
-      setUpdate(null);
       mcToast.error(t('updateFailed'));
+    } finally {
+      setIsStarting(false);
     }
   };
 
   // A local run has no version baked into the image, so there is nothing to show.
   if (!info?.current) return null;
 
-  const isUpdating = update !== null;
+  const isUpdating = update !== null || isStarting;
   const canUpdate = info.updateAvailable && info.canSelfUpdate;
   // Steps rather than news: a compose file to edit, a variable to add. They are
   // shown above the changelog so they are read before the update button.

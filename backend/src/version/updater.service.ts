@@ -97,7 +97,15 @@ export class UpdaterService {
 
   // Where /app/data comes from on the host, detected from the panel's own mounts.
   private resultHostDir(): string {
-    return this.configService.get<string>('dataHostDir') ?? path.dirname(RESULT_FILE);
+    const detected = this.configService.get<string>('dataHostDir');
+    if (detected) return detected;
+
+    // Only reachable with the config module's detection missing. The update
+    // still runs, but the daemon resolves this path on the host, where it is
+    // not the panel's data directory, so the outcome never makes it back and
+    // the panel has to fall back to noticing that its own version moved.
+    this.logger.warn('No host path is known for /app/data, so the outcome of this update will not be recorded');
+    return path.dirname(RESULT_FILE);
   }
 
   private buildScript(configFiles: string[], digests: Record<string, string>, startedAt: string, panelService?: string): string {

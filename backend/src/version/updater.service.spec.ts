@@ -113,6 +113,15 @@ describe('UpdaterService', () => {
       expect(runCommand()).toContain('write_result failed');
     });
 
+    it('says so instead of quietly mounting a container path when the host data dir is unknown', async () => {
+      config.get.mockReturnValue(undefined);
+      const warn = jest.spyOn(service['logger'], 'warn').mockImplementation();
+
+      await service.start();
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('/app/data'));
+    });
+
     it('waits for the panel to answer before calling it a success', async () => {
       await service.start();
 

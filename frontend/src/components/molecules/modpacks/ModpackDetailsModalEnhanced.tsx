@@ -67,7 +67,11 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
   const files = modpack.latestFiles ?? [];
   const latestFile: CurseForgeFile | undefined = files[0];
   const selectedFile = files.find((file) => String(file.id) === fileId) ?? latestFile;
+  // Without latestFiles the id is typed by hand, and it is the only thing that
+  // pins the install to a file.
+  const selectedFileId = selectedFile ? String(selectedFile.id) : fileId.trim();
   const detectedVersion = findMinecraftVersion(selectedFile?.gameVersions);
+  const distributionBlocked = modpack.allowModDistribution === false;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -91,9 +95,9 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
         serverName: serverName || modpack.name,
         serverType: "AUTO_CURSEFORGE" as const,
         cfMethod: installMethod,
-        cfUrl: installMethod === "url" ? (selectedFile ? `${modpack.links.websiteUrl}/download/${selectedFile.id}` : modpack.links.websiteUrl) : "",
+        cfUrl: installMethod === "url" ? (selectedFileId ? `${modpack.links.websiteUrl}/download/${selectedFileId}` : modpack.links.websiteUrl) : "",
         cfSlug: installMethod === "slug" ? modpack.slug : "",
-        cfFile: installMethod === "slug" && selectedFile ? String(selectedFile.id) : "",
+        cfFile: installMethod === "slug" ? selectedFileId : "",
         ...(detectedVersion ? { minecraftVersion: detectedVersion, dockerImage: getSuggestedJavaImage(detectedVersion) } : {}),
       };
 
@@ -153,7 +157,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
             {/* itzg cannot download a pack whose author opted out of the API, so
                 the install would fail halfway through provisioning. */}
-            {modpack.allowModDistribution === false ? (
+            {distributionBlocked ? (
               <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <p className="text-xs text-amber-200">{t("modpackNoDistribution")}</p>
@@ -199,6 +203,13 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                 <h3 className="font-minecraft text-lg font-bold text-emerald-400">{t("createServer")}</h3>
                 <p className="text-sm text-gray-400">{t("createServerFromModpack")}</p>
               </div>
+
+              {distributionBlocked ? (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  <p className="text-xs text-amber-200">{t("modpackNoDistribution")}</p>
+                </div>
+              ) : null}
 
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <div className="space-y-3">
