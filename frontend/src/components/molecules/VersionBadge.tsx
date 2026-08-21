@@ -131,7 +131,7 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-hidden border-2 border-gray-700 bg-gray-900 text-gray-200">
+        <DialogContent className="max-h-[80vh] w-[min(96vw,52rem)] overflow-hidden border-2 border-gray-700 bg-gray-900 text-gray-200 sm:max-w-none">
           <DialogHeader>
             <DialogTitle className="font-minecraft text-emerald-400">
               {info.updateAvailable ? `${t('updateAvailable')} · v${info.latest}` : `Minepanel v${info.current}`}
