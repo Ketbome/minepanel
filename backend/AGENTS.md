@@ -98,6 +98,11 @@ Path and filesystem patterns (critical):
   `docker-compose.yml` is generated output; never parse it to read config. Reads go
   through `ServerStoreService.readConfig`; a server with no `server.json` is imported
   from its compose file once (`importFromDockerCompose`) and never parsed again.
+  That import must store the **authored** form, not the generated one: absolute mount
+  sources under the server's own directory are rewritten back to `./`
+  (`relativizeImportedVolumes`) so `parseVolumes` re-expands them from the current
+  `serversHostDir`. Storing a generated absolute path pins the server to whatever the
+  host dir resolved to at import time.
 - `servers/servers.json` is a **derived index**, never authoritative. It exists so
   the dashboard list and the routes regeneration do not open every server. Treat it
   as a cache: reconcile against the folders, let `server.json` win, and never store

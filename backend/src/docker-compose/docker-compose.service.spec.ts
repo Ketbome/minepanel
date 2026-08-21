@@ -65,11 +65,11 @@ describe('DockerComposeService', () => {
     service = module.get<DockerComposeService>(DockerComposeService);
   });
 
-  const makeService = async (backupBaseDir?: string): Promise<DockerComposeService> => {
+  const makeService = async (backupBaseDir?: string, serversHostDir?: string): Promise<DockerComposeService> => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
         if (key === 'serversDir') return SERVERS_DIR;
-        if (key === 'serversHostDir') return `${BASE_DIR}/servers`;
+        if (key === 'serversHostDir') return serversHostDir ?? `${BASE_DIR}/servers`;
         if (key === 'backupBaseDir') return backupBaseDir ?? null;
         return null;
       }),
@@ -322,6 +322,63 @@ describe('DockerComposeService', () => {
       const svc = await makeService('/nas/minepanel');
 
       const result = await loadWithBackupVolume(svc, 'rt-global', '/nas/minepanel/rt-global');
+
+      expect(result?.backupHostDir).toBeUndefined();
+    });
+  });
+
+  // Servers created before 1.12 are imported from their compose file, which holds the
+  // absolute host paths the panel generated at the time. Keeping those verbatim would pin
+  // the server to the old BASE_DIR, and a named volume resolves somewhere else entirely.
+  describe('importing a pre-1.12 compose file', () => {
+    const NAMED_VOLUME_HOST_DIR = '/var/lib/docker/volumes/minepanel_servers/_data';
+
+    const importLegacyServer = async (volumes: string[], serversHostDir?: string) => {
+      const compose = {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: 'legacy', TYPE: 'VANILLA' },
+            expose: ['25565'],
+            volumes,
+          },
+        },
+      };
+
+      const existsSyncMock = fs.existsSync as unknown as jest.Mock;
+      existsSyncMock.mockImplementation((target: string) => target === `${SERVERS_DIR}/legacy` || target === `${SERVERS_DIR}/legacy/docker-compose.yml`);
+
+      const readFileMock = fs.readFile as unknown as jest.Mock;
+      readFileMock.mockResolvedValue(yaml.dump(compose));
+
+      const svc = await makeService(undefined, serversHostDir);
+      return svc.getServerConfig('legacy');
+    };
+
+    it('rewrites the old absolute paths so the detected host dir wins', async () => {
+      const result = await importLegacyServer([`${BASE_DIR}/servers/legacy/mc-data:/data`, `${BASE_DIR}/servers/legacy/modpacks:/modpacks:ro`], NAMED_VOLUME_HOST_DIR);
+
+      expect(result?.dockerVolumes).toBe('./mc-data:/data\n./modpacks:/modpacks:ro');
+    });
+
+    it('drops the global world library mount, which is panel-wide and re-added on generation', async () => {
+      const result = await importLegacyServer([
+        `${BASE_DIR}/servers/legacy/mc-data:/data`,
+        `${BASE_DIR}/servers/legacy/worlds:/data/.world-library/local:ro`,
+        `${BASE_DIR}/servers/.world/worlds:/data/.world-library/global:ro`,
+      ]);
+
+      expect(result?.dockerVolumes).toBe('./mc-data:/data\n./worlds:/data/.world-library/local:ro');
+    });
+
+    it('leaves a host path outside the server directory alone', async () => {
+      const result = await importLegacyServer([`${BASE_DIR}/servers/legacy/mc-data:/data`, '/mnt/nas/shared:/shared:ro']);
+
+      expect(result?.dockerVolumes).toBe('./mc-data:/data\n/mnt/nas/shared:/shared:ro');
+    });
+
+    it('does not mistake the old default backup path for a custom one', async () => {
+      const result = await importLegacyServer([`${BASE_DIR}/servers/legacy/mc-data:/data`, `${BASE_DIR}/servers/legacy/backups:/backups`], NAMED_VOLUME_HOST_DIR);
 
       expect(result?.backupHostDir).toBeUndefined();
     });

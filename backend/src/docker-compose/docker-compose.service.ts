@@ -263,7 +263,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
 
         dockerImage: mcService.image ? (mcService.image.split(':')[1] ?? 'latest') : 'latest',
         minecraftVersion: env.VERSION ? String(env.VERSION) : defaultVersion,
-        dockerVolumes: Array.isArray(mcService.volumes) ? mcService.volumes.join('\n') : undefined,
+        dockerVolumes: Array.isArray(mcService.volumes) ? this.relativizeImportedVolumes(mcService.volumes, serverId).join('\n') : undefined,
         restartPolicy: mcService.restart ?? 'no',
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
         execDirectly: env.EXEC_DIRECTLY === 'true',
@@ -1114,6 +1114,38 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return [host, target, ...options].join(':');
   }
 
+  // The path relative to this server's own directory, or undefined when the path is not
+  // inside it. Same segment search remapVolumesToServer does.
+  private stripServerDirPrefix(hostPath: string, serverId: string): string | undefined {
+    const segments = hostPath.replace(/\/+$/, '').split('/');
+    const index = segments.findIndex((segment, position) => segment === 'servers' && segments[position + 1] === serverId);
+    if (index === -1) return undefined;
+
+    const rest = segments.slice(index + 2);
+    return rest.length > 0 ? rest.join('/') : undefined;
+  }
+
+  // A pre-1.12 compose file holds the absolute host paths the panel generated back then,
+  // so importing them verbatim pins the server to whatever BASE_DIR resolved to at the
+  // time and the named-volume fix can never reach it. Anything under the server's own
+  // directory goes back to the `./` form the panel authors, which parseVolumes re-expands
+  // from the current serversHostDir on every generation. The global world library is
+  // panel-wide rather than per-server, so it is dropped and re-added the same way.
+  private relativizeImportedVolumes(volumes: unknown, serverId: string): string[] {
+    if (!Array.isArray(volumes)) return [];
+
+    return volumes
+      .map((volume) => String(volume).trim())
+      .filter((volume) => volume && !this.hasMountTarget(volume, '/data/.world-library/global'))
+      .map((volume) => {
+        const [hostPath, ...containerParts] = volume.split(':');
+        if (containerParts.length === 0 || !hostPath.startsWith('/')) return volume;
+
+        const relative = this.stripServerDirPrefix(hostPath, serverId);
+        return relative ? `./${relative}:${containerParts.join(':')}` : volume;
+      });
+  }
+
   remapVolumesToServer(dockerVolumes: string | undefined, sourceId: string, targetId: string): string | undefined {
     if (!dockerVolumes) return dockerVolumes;
 
@@ -1329,7 +1361,14 @@ export class DockerComposeService implements OnApplicationBootstrap {
       return undefined;
     }
     const hostPath = entry.slice(0, -suffix.length);
-    return hostPath === this.resolveBackupsHostPath(serverId) ? undefined : hostPath;
+    if (hostPath === this.resolveBackupsHostPath(serverId)) {
+      return undefined;
+    }
+
+    // A pre-1.12 compose file carries the old absolute default here. Kept as an override it
+    // would pin backups to a path the host-dir detection can no longer correct, so recognise
+    // the default by its shape and let resolveBackupsHostPath decide again.
+    return this.stripServerDirPrefix(hostPath, serverId) === 'backups' ? undefined : hostPath;
   }
 
   private resolveBackupsHostPath(serverId: string, override?: string): string {
