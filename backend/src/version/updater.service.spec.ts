@@ -1,4 +1,5 @@
 import * as fs from 'fs-extra';
+import { ConfigService } from '@nestjs/config';
 import { HostContextService } from 'src/common/docker/host-context.service';
 import { UpdateNotSupportedError, UpdaterService } from './updater.service';
 
@@ -18,6 +19,7 @@ jest.mock('fs-extra', () => ({
 describe('UpdaterService', () => {
   let service: UpdaterService;
   let hostContext: jest.Mocked<HostContextService>;
+  let config: jest.Mocked<ConfigService>;
 
   const composeContext = {
     project: 'minepanel',
@@ -36,7 +38,8 @@ describe('UpdaterService', () => {
       command.startsWith('docker ps') ? 'backend ketbom/minepanel-backend:1.11.30\nfrontend ketbom/minepanel-frontend:1.11.30' : '',
     );
     hostContext = { get: jest.fn().mockResolvedValue(composeContext) } as never;
-    service = new UpdaterService(hostContext);
+    config = { get: jest.fn().mockReturnValue('/opt/minepanel/data') } as never;
+    service = new UpdaterService(hostContext, config);
   });
 
   describe('canSelfUpdate', () => {
@@ -93,6 +96,21 @@ describe('UpdaterService', () => {
 
       expect(runCommand()).toContain('docker-compose.yml');
       expect(runCommand()).toContain('override.yml');
+    });
+
+    // The daemon resolves this mount on the host: the panel's own /app/data
+    // would send the outcome to a directory it cannot read back.
+    it('writes the outcome to the host directory behind /app/data', async () => {
+      await service.start();
+
+      expect(runCommand()).toContain(`-v '/opt/minepanel/data':/result`);
+    });
+
+    it('leaves an outcome behind when the updater dies before deciding', async () => {
+      await service.start();
+
+      expect(runCommand()).toContain('trap');
+      expect(runCommand()).toContain('write_result failed');
     });
 
     it('waits for the panel to answer before calling it a success', async () => {

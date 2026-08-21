@@ -189,8 +189,10 @@ Host monitoring endpoints:
 - `GET /system/stats`
 - `GET /system/network`
 - `GET /version` — running version, newest release, the release notes for everything
-  in between and whether any of it is breaking; the GitHub lookup is cached for an
-  hour and never fails the request
+  in between parsed into sections, and whether any of it is breaking; the GitHub
+  lookup is cached for an hour and never fails the request
+- `GET /version/update-status` — `current` plus the outcome of the last update.
+  Polled while one is running; answers from disk, without calling GitHub
 - `POST /version/update` — starts a panel update in a throwaway container (admin
   only). Answers `400` when the panel was not started by Docker Compose
 

@@ -559,14 +559,26 @@ docker compose start mc
 ### Update Minepanel
 
 The sidebar shows the running version at the bottom. When a newer release exists
-it turns amber; clicking it opens what changed between your version and the newest
-one, with a warning if any of those releases changes existing behaviour.
+it turns amber; clicking it opens the changes between your version and the newest
+one, grouped by category and linked to the pull request each came from.
 
-**From the panel:** admins get an **Update now** button in that dialog. Minepanel
-does not recreate itself — that would kill the command halfway through. It starts
-a throwaway container that records the images you are running, pulls the new ones,
-recreates the stack, waits for the panel to answer again, and puts the old images
-back if it never does. The panel is unreachable for a moment and returns on its own.
+Anything you have to do by hand — a compose service to add, a variable to set — is
+lifted out of those notes into a **Before you update** panel at the top of the
+dialog, above the update button. It collects the "Breaking Changes" and
+"Manual Steps" categories of every release you are behind, so the steps are read
+before the update rather than after it.
+
+**From the panel:** admins get an **Update now** button at the bottom of that
+dialog, under the update instructions. Minepanel does not recreate itself — that
+would kill the command halfway through. It starts a throwaway container that
+records the images you are running, pulls the new ones, recreates the stack, waits
+for the panel to answer again, and puts the old images back if it never does.
+
+The panel is unreachable for a moment and returns on its own: the dialog keeps
+asking `GET /version/update-status` while that happens, ignores the requests that
+fail in between, and reloads the page once the new version answers. If the updater
+stops before finishing, or takes more than eight minutes, the panel says so instead
+of spinning forever.
 
 **From the shell**, or when the panel was not started by Docker Compose:
 
@@ -586,11 +598,35 @@ nothing. The panel asks the GitHub releases API at most once per hour and never
 fails a request over it: if GitHub is unreachable, the badge simply keeps showing
 the current version.
 
-`GET /version` returns the same data, including the changelog:
+`GET /version` returns the same data, including the parsed changelog. Each release
+carries its changes grouped in `sections`, and a section is `important` when it is
+one the panel lifts into **Before you update**:
 
 ```json
-{ "current": "1.11.35", "latest": "1.12.0", "updateAvailable": true, "hasBreakingChanges": true, "canSelfUpdate": true, "changelog": [] }
+{
+  "current": "1.11.35",
+  "latest": "1.12.0",
+  "updateAvailable": true,
+  "hasBreakingChanges": true,
+  "canSelfUpdate": true,
+  "changelog": [
+    {
+      "version": "1.12.0",
+      "sections": [
+        {
+          "title": "⚠️ Breaking Changes",
+          "important": true,
+          "changes": [{ "text": "mc-router moved out of the root compose file", "author": "Ketbome", "pr": 190, "prUrl": "..." }]
+        }
+      ],
+      "compareUrl": "https://github.com/Ketbome/minepanel/compare/v1.11.35...v1.12.0"
+    }
+  ]
+}
 ```
+
+`GET /version/update-status` is the smaller endpoint the dialog polls while an
+update runs: it returns only `current` and `lastUpdate`, and never calls GitHub.
 
 **Unattended updates:** use [Watchtower](https://containrrr.dev/watchtower/) if you
 want them without a human in the loop. It updates blindly, so nobody reads the

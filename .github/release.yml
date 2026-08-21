@@ -16,6 +16,12 @@ changelog:
       labels:
         - "breaking"
 
+    # Read by the panel too: these land in the "Before you update" panel, above
+    # the update button, for steps the user has to take by hand.
+    - title: "🛠️ Manual Steps"
+      labels:
+        - "manual-steps"
+
     - title: "🚀 Features"
       labels:
         - "enhancement"
