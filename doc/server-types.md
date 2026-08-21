@@ -133,7 +133,7 @@ Command output appears in server logs, not as a direct response. Check the Logs 
 
 ### World Sources (Folders/ZIP/TAR)
 
-Minepanel includes world source management in **General -> World** for Java servers. It uses `WORLD`, `LEVEL`, and `FORCE_WORLD_COPY` from `itzg/docker-minecraft-server`.
+Minepanel includes world source management in the **Worlds** tab for Java servers. It uses `WORLD`, `LEVEL`, and `FORCE_WORLD_COPY` from `itzg/docker-minecraft-server`.
 
 - Local world sources per server: `servers/<server-id>/worlds/`
 - Global world library shared by all servers: `servers/.world/worlds/`
@@ -143,7 +143,9 @@ Minepanel includes world source management in **General -> World** for Java serv
 - The panel checks if the target level was already copied by looking for:
   `servers/<server-id>/mc-data/<LEVEL>/level.dat`
 
-When a world is selected from **General -> World**, Minepanel updates compose config and restarts the server automatically if it is running.
+The **Worlds** tab needs the server stopped, like every other configuration tab. Selecting a world updates the server config; the world is copied on the next start.
+
+**→ Full guide:** [Worlds](/worlds)
 
 You can classify worlds using subfolders (for example `minigames/`, `skyblock/`, `modded/`) in both local and global libraries.
 
@@ -155,7 +157,7 @@ World Library also includes a **Discover Worlds** panel:
 
 ### World Type (level-type)
 
-The world type is set in **General -> World** via `LEVEL_TYPE`. Besides the standard
+The world type is set in the **Game** tab via `LEVEL_TYPE`. Besides the standard
 presets (default, flat, large biomes, amplified, single biome surface), Java servers
 offer a **Custom** option to enter any `level-type` provided by a mod or modpack.
 

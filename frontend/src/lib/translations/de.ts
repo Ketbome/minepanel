@@ -299,6 +299,7 @@ export const de: Record<TranslationKey, string> = {
   oidcScopes: 'Scopes',
   oidcProviderName: 'Provider name',
   oidcDisablePasswordLogin: 'Disable password login (SSO only)',
+  oidcDisablePasswordLoginWarning: 'Verknüpfe zuerst ein Admin-Konto mit deinem Provider. Ohne Passwort-Login erreichen nur Konten das Panel, die sich per SSO anmelden können.',
   userInvitationsTitle: 'Benutzereinladungen',
   userInvitationsDesc: 'Erstelle einen Einladungslink für einen neuen Benutzer und sende ihn optional per E-Mail.',
   existingUsersTitle: 'Benutzer',
@@ -321,6 +322,10 @@ export const de: Record<TranslationKey, string> = {
   saveAccess: 'Zugriff speichern',
   deleteUserAction: 'Benutzer löschen',
   adminAccessUnrestricted: 'Der Admin-Zugriff ist immer uneingeschränkt.',
+  administratorRole: 'Administrator',
+  administratorRoleDesc: 'Voller Zugriff auf alle Server und die Panel-Einstellungen, einschließlich Integrationen. Nur ein Admin kann das vergeben.',
+  roleUpdated: 'Rolle aktualisiert',
+  roleUpdateFailed: 'Rolle konnte nicht geändert werden',
   accessAllServers: 'Zugriff auf alle Server',
   serverAccess: 'Serverzugriff',
   viewLogsPermission: 'Logs anzeigen',
@@ -1723,11 +1728,10 @@ export const de: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Welten',
-  worldsDescription: 'Weltquelle aus den Server-Welten wählen und mit automatischem Neustart wechseln.',
+  worldsDescription: 'Wähle, welche Welt dieser Server spielt — aus seinen eigenen oder der gemeinsamen Bibliothek.',
   worldsLoadError: 'Fehler beim Laden verfügbarer Welten',
   worldsEmpty:
     'Keine Welten gefunden. Lade einen Ordner (mit level.dat) oder ZIP/TAR in lokales servers/<id>/worlds oder in die Weltenbibliothek hoch.',
-  worldsRestartNoticeRunning: 'Der Server läuft. Beim Anwenden wird der Server automatisch neu gestartet.',
   worldsRestartNoticeStopped: 'Der Server ist gestoppt. Die ausgewählte Welt wird beim nächsten Start angewendet.',
   allLabel: 'Alle',
   worldSourceLocal: 'Lokal',

@@ -80,7 +80,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const tabsMeta: (ServerNavItem & { show: boolean; advanced?: boolean })[] = [
     { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
     { value: "game", label: t("game"), icon: Gamepad2, group: "config", show: true, disabled: isServerRunning },
-    { value: "worlds", label: t("worlds"), icon: Globe, group: "config", show: showWorldsTab, disabled: false },
+    { value: "worlds", label: t("worlds"), icon: Globe, group: "config", show: showWorldsTab, disabled: isServerRunning },
     { value: "access", label: t("access"), icon: Shield, group: "config", show: true, disabled: isServerRunning },
     { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
@@ -245,7 +245,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     if (isServerRunning) {
-      const disabledTabs = ["type", "game", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "files"];
+      const disabledTabs = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "files"];
       if (disabledTabs.includes(activeTab)) {
         setActiveTab("logs");
       }
@@ -285,7 +285,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               {showWorldsTab && (
                 <TabsContent value="worlds" className="space-y-4 mt-0">
-                  <WorldsTab serverId={serverId} serverStatus={serverStatus} config={config} updateConfig={updateConfig} />
+                  <WorldsTab serverId={serverId} config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 

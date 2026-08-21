@@ -119,8 +119,8 @@ Bookmarked tab links keep working: `#general` and `#bedrock` land on **Game**.
 Picking which world a Java server runs used to be a card at the bottom of
 **General → World**, below every world-generation setting. It is a top-level
 **Worlds** tab now, with a search across the server's own worlds and the shared
-library, and unlike the other config tabs it stays usable while the server is
-running — applying a world already restarts it.
+library. Like every other configuration tab it needs the server stopped: the world
+is copied into place on the next start.
 
 The **World Library** page leads with a searchable list of the worlds you have
 instead of a bare file browser. The file browser is still there, folded away, for

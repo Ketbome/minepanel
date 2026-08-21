@@ -24,10 +24,12 @@ host, and Docker is controlled through the **local socket** (`/var/run/docker.so
 Two path concepts drive the whole model (`backend/src/config.ts`):
 
 - `serversDir` (`/app/servers`) — container-side path the backend reads/writes.
-- `baseDir` (`BASE_DIR`) — host-side path written into the generated compose mounts. It is
-  auto-detected from the `/app/servers` mount source via `docker inspect` (`backend/src/config.ts`),
-  with the `BASE_DIR` env var as fallback. This works unchanged when the mount source is a
-  network filesystem: `docker inspect` reports the host-side mountpoint path.
+- `serversHostDir` / `dataHostDir` — host-side paths written into the generated compose mounts.
+  Each is auto-detected from the `Source` of the panel's own mount for that destination via
+  `docker inspect` (`backend/src/config.ts`), falling back to `${BASE_DIR}/servers` and
+  `${BASE_DIR}/data`. The source is used verbatim, which is what makes **named volumes** work:
+  there it is `/var/lib/docker/volumes/<name>/_data`. It works unchanged on a network
+  filesystem too, since `docker inspect` reports the host-side mountpoint path.
 - `backupBaseDir` (`BACKUP_BASE_DIR`, optional) — host path for backups, letting them live outside `${BASE_DIR}` (e.g. a NAS). A per-server `backupHostDir` override takes precedence. Empty falls back to `${BASE_DIR}/servers/<id>/backups`.
 
 When a server is generated, `./` volume entries are expanded to absolute host paths under

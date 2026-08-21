@@ -49,7 +49,7 @@ describe('DockerComposeService', () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
         if (key === 'serversDir') return SERVERS_DIR;
-        if (key === 'baseDir') return BASE_DIR;
+        if (key === 'serversHostDir') return `${BASE_DIR}/servers`;
         return null;
       }),
     };
@@ -69,7 +69,7 @@ describe('DockerComposeService', () => {
     const mockConfigService = {
       get: jest.fn((key: string) => {
         if (key === 'serversDir') return SERVERS_DIR;
-        if (key === 'baseDir') return BASE_DIR;
+        if (key === 'serversHostDir') return `${BASE_DIR}/servers`;
         if (key === 'backupBaseDir') return backupBaseDir ?? null;
         return null;
       }),

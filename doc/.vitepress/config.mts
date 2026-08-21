@@ -244,6 +244,7 @@ export default defineConfig({
         items: [
           { text: 'Server Types', link: '/server-types' },
           { text: 'Mods & Plugins', link: '/mods-plugins' },
+          { text: 'Worlds', link: '/worlds' },
           { text: 'Features', link: '/features' },
           { text: 'Backups', link: '/features#backups' },
           { text: 'Player Management', link: '/features#player-management' },
@@ -370,6 +371,7 @@ export default defineConfig({
         '/configuration': 0.9,
         '/features': 0.9,
         '/server-types': 0.85,
+        '/worlds': 0.85,
         '/networking': 0.85,
         '/troubleshooting': 0.85,
         '/upgrading-to-1-12': 0.85,

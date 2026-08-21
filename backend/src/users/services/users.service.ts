@@ -7,10 +7,11 @@ import * as bcrypt from 'bcrypt';
 import { Settings } from '../entities/settings.entity';
 import { UserInvitation } from '../entities/user-invitation.entity';
 import { createHash, randomBytes } from 'node:crypto';
-import { applyAdminGrantedPermissions, DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState } from '../access-control.types';
+import { applyAdminGrantedPermissions, DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState, UserRole } from '../access-control.types';
 import { ConfigService } from '@nestjs/config';
 import { PendingEmailChange } from '../entities/pending-email-change.entity';
 import { AuthMailService } from 'src/auth/auth-mail.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 @Injectable()
 export class UsersService {
@@ -25,6 +26,7 @@ export class UsersService {
     private readonly pendingEmailChangesRepo: Repository<PendingEmailChange>,
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   async getUsers(): Promise<Users[]> {
@@ -196,6 +198,55 @@ export class UsersService {
       email: dto.email === undefined ? user.email : this.normalizeEmail(dto.email),
     });
     return this.usersRepo.save(user);
+  }
+
+  async updateUserRole(id: number, role: UserRole): Promise<Users> {
+    const user = await this.getRequiredUserById(id);
+    if (user.role === role) {
+      return user;
+    }
+
+    if (role === 'USER') {
+      await this.assertDemotionKeepsPanelReachable(user);
+    }
+
+    user.role = role;
+    // Admins bypass the stored permission set, so it only matters again once the
+    // account goes back to USER. Reset it instead of leaving stale grants behind.
+    user.permissions = role === 'ADMIN' ? FULL_ACCESS_PERMISSIONS : DEFAULT_USER_PERMISSIONS;
+    user.serverAccess = [];
+
+    return this.usersRepo.save(user);
+  }
+
+  // A panel with no reachable admin cannot be recovered from the UI at all, so
+  // the last one standing is never allowed to lose the role.
+  private async assertDemotionKeepsPanelReachable(user: Users): Promise<void> {
+    const remaining = (await this.getActiveAdmins()).filter((admin) => admin.id !== user.id);
+
+    if (remaining.length === 0) {
+      throw new BadRequestException('The panel must keep at least one active admin');
+    }
+
+    const oidc = await this.instanceSettings.getOidc();
+    if (oidc.enabled && oidc.disablePasswordLogin && !remaining.some((admin) => this.canSignInWithSso(admin))) {
+      throw new BadRequestException('Password login is disabled, so at least one admin must be able to sign in through single sign-on');
+    }
+  }
+
+  async hasSsoCapableAdmin(): Promise<boolean> {
+    return (await this.getActiveAdmins()).some((admin) => this.canSignInWithSso(admin));
+  }
+
+  private getActiveAdmins(): Promise<Users[]> {
+    return this.usersRepo.find({ where: { role: 'ADMIN', isActive: true } });
+  }
+
+  // Only a linked subject counts. Matching by email happens on the first SSO
+  // login and depends on the provider returning the very same address, which
+  // cannot be checked from here.
+  private canSignInWithSso(user: Users): boolean {
+    return !!user.oidcSubject;
   }
 
   async updateUserAccess(id: number, dto: UpdateUserAccessDto, actorIsAdmin: boolean = false): Promise<Users> {

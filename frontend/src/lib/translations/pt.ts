@@ -300,6 +300,7 @@ export const pt: Record<TranslationKey, string> = {
   oidcScopes: 'Scopes',
   oidcProviderName: 'Nome do provedor',
   oidcDisablePasswordLogin: 'Desabilitar login com senha (somente SSO)',
+  oidcDisablePasswordLoginWarning: 'Vincule primeiro uma conta de admin ao seu provedor. Com o login por senha desativado, só entram as contas que conseguem entrar via SSO.',
   userInvitationsTitle: 'Convites de Usuário',
   userInvitationsDesc: 'Crie um link de convite para um novo usuário e, opcionalmente, envie por e-mail.',
   existingUsersTitle: 'Usuários',
@@ -322,6 +323,10 @@ export const pt: Record<TranslationKey, string> = {
   saveAccess: 'Salvar acesso',
   deleteUserAction: 'Excluir usuário',
   adminAccessUnrestricted: 'O acesso de admin é sempre ilimitado.',
+  administratorRole: 'Administrador',
+  administratorRoleDesc: 'Acesso total a todos os servidores e às configurações do painel, incluindo integrações. Só um admin pode conceder.',
+  roleUpdated: 'Cargo atualizado',
+  roleUpdateFailed: 'Não foi possível alterar o cargo',
   accessAllServers: 'Acesso a todos os servidores',
   serverAccess: 'Acesso a servidores',
   viewLogsPermission: 'Ver logs',
@@ -1717,11 +1722,10 @@ export const pt: Record<TranslationKey, string> = {
 
   // Aba de mundos
   worlds: 'Mundos',
-  worldsDescription: 'Selecione uma origem de mundo em worlds do servidor e troque com reinício automático.',
+  worldsDescription: 'Escolha qual mundo este servidor executa, entre os seus e a biblioteca compartilhada.',
   worldsLoadError: 'Erro ao carregar os mundos disponíveis',
   worldsEmpty:
     'Nenhum mundo encontrado. Envie uma pasta (com level.dat) ou ZIP/TAR para servers/<id>/worlds local ou para a Biblioteca de mundos.',
-  worldsRestartNoticeRunning: 'O servidor está em execução. Ao aplicar um mundo, ele será reiniciado automaticamente.',
   worldsRestartNoticeStopped: 'O servidor está parado. O mundo selecionado será aplicado na próxima inicialização.',
   allLabel: 'Todos',
   worldSourceLocal: 'Local',

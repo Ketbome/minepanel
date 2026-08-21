@@ -106,8 +106,11 @@ Server config tabs:
   `edition === 'BEDROCK'`.
 - Renaming or removing a tab value means adding an entry to `RENAMED_TABS` in
   `ServerConfigTabs.tsx`: the tab value is the URL hash and people bookmark it.
-- The `worlds` tab is deliberately not disabled while the server runs: applying a
-  world restarts it, which is what `worldsRestartNoticeRunning` already promises.
+- Every `config` tab is disabled while the server runs, `worlds` included: a world
+  swapped underneath a live server is a data hazard, and the rule only holds if it
+  has no exceptions. Adding a config tab means adding it to `tabsMeta` with
+  `disabled: isServerRunning` **and** to the `disabledTabs` list that bounces you
+  off a tab the server just made unreachable.
 - Simple/Advanced mode is a filter over the same tabs, never a second tab tree.
   Mark a tab `advanced: true` in `tabsMeta` and give it a predicate in
   `src/lib/server-config/advanced-tabs.ts`. The predicate is not optional: simple

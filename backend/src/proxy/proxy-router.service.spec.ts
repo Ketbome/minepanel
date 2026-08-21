@@ -48,6 +48,30 @@ describe('ProxyRouterService', () => {
     return yaml.load(lastWrittenCompose());
   };
 
+  // The host paths are read in the constructor, so a test that needs different ones
+  // builds its own instance.
+  const build = async (unresolvedHostPaths: string[] = []): Promise<ProxyRouterService> => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProxyRouterService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'dataHostDir') return '/host/minepanel/data';
+              if (key === 'unresolvedHostPaths') return unresolvedHostPaths;
+              return null;
+            }),
+          },
+        },
+        { provide: InstanceSettingsService, useValue: instanceSettings },
+        { provide: HostContextService, useValue: hostContext },
+      ],
+    }).compile();
+
+    return module.get(ProxyRouterService);
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -57,19 +81,7 @@ describe('ProxyRouterService', () => {
     };
     hostContext = { get: jest.fn().mockResolvedValue({ service: 'backend', configFiles: [] }) };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ProxyRouterService,
-        {
-          provide: ConfigService,
-          useValue: { get: jest.fn((key: string) => (key === 'baseDir' ? '/host/minepanel' : null)) },
-        },
-        { provide: InstanceSettingsService, useValue: instanceSettings },
-        { provide: HostContextService, useValue: hostContext },
-      ],
-    }).compile();
-
-    service = module.get(ProxyRouterService);
+    service = await build();
   });
 
   describe('generated compose file', () => {
@@ -84,6 +96,13 @@ describe('ProxyRouterService', () => {
       const compose = await generatedCompose();
 
       expect(compose.services['mc-router'].volumes).toEqual(['/host/minepanel/data/proxy:/data']);
+    });
+
+    it('refuses to start when nothing is mounted at /app/data, instead of binding a guess', async () => {
+      const unmounted = await build(['/app/data']);
+
+      await expect(unmounted.start()).resolves.toBe(false);
+      expect(execMock).not.toHaveBeenCalled();
     });
 
     it('publishes the configured port', async () => {

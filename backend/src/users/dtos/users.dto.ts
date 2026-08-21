@@ -117,3 +117,8 @@ export class ChangePasswordDto {
   @IsString()
   newPassword: string;
 }
+
+export class UpdateUserRoleDto {
+  @IsIn(['ADMIN', 'USER'], { message: 'Role must be ADMIN or USER' })
+  role: UserRole;
+}

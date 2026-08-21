@@ -2,7 +2,7 @@ import { Controller, Get, UseGuards, Request, ValidationPipe, Body, Post, Param,
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UsersService } from '../services/users.service';
-import { ChangePasswordDto, ConfirmEmailChangeDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
+import { ChangePasswordDto, ConfirmEmailChangeDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUserRoleDto, UpdateUsersDto } from '../dtos/users.dto';
 import { AccessControlService } from '../services/access-control.service';
 import { Request as ExpressRequest } from 'express';
 import { AuditLogService } from '../services/audit-log.service';
@@ -129,6 +129,26 @@ export class UsersController {
   async updateUser(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
     this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
     return this.usersService.updateUser(id, dto).then((user) => this.usersService.serializeUser(user));
+  }
+
+  // Role changes are admin-only on purpose: `manageUsers` is delegated, and a
+  // delegate able to hand out ADMIN could escalate itself past every check.
+  @Patch(':id/role')
+  async updateUserRole(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUserRoleDto) {
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertIsAdmin(currentUser);
+    const user = await this.usersService.updateUserRole(id, dto.role);
+
+    await this.auditLogService.record({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      category: 'users',
+      action: 'update_user_role',
+      summary: `Changed role of ${user.username} to ${user.role}`,
+      metadata: { targetUserId: user.id, targetUsername: user.username, role: user.role },
+    });
+
+    return this.usersService.serializeUser(user);
   }
 
   @Patch(':id/access')

@@ -121,7 +121,26 @@ Both fields render their content as a list instead of raw text:
 - The trash icon removes the mod
 - **Manual** switches back to the raw text area (`slug`, `slug:fileId`, URLs, `datapack:slug`),
   which is still the way to paste a list or use formats the list editor does not model
+- **Optional** (Modrinth only) marks a mod with itzg's `?` suffix: the server logs a
+  warning and keeps starting when no compatible version exists, and the mod is left out
+  of the version calculation done by `VERSION_FROM_MODRINTH_PROJECTS`
 - Past 8 mods the list shows a filter box (matches name or ID) and paginates at 10 per page
+
+### Where the list is stored
+
+There is no separate mods file. The list is one string per provider —
+`modrinthProjects` and `cfFiles` — inside `servers/<server-id>/server.json`, written in
+itzg's own comma-separated syntax and passed to the container as `MODRINTH_PROJECTS` and
+`CURSEFORGE_FILES`.
+
+The list editor is a view over that string: pinning a version writes `slug:version`,
+unpinning drops the suffix. Anything the editor cannot model — a URL, an `@file`
+reference — is left exactly as typed and shown as-is, which is why **Manual** is always
+one click away.
+
+Editing `server.json` by hand works and survives, as long as the panel is stopped while
+you do it. Editing the generated `docker-compose.yml` does not: it is rebuilt from
+`server.json` on the next start.
 
 ### CurseForge API key
 
@@ -206,6 +225,7 @@ The **Modrinth Projects** field accepts multiple formats:
 | Project ID          | `P7dR8mSH`                  | Using Modrinth ID |
 | Loader override     | `fabric:fabric-api`         | Force loader type |
 | Datapack            | `datapack:terralith`        | Install datapack  |
+| Optional            | `fabric-api?`               | Never blocks startup |
 
 ### Configuration Options
 

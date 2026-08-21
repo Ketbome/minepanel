@@ -210,6 +210,15 @@ The router listens on **Router port** (25565 by default). If you route traffic
 through another stack, list its networks under **Extra Docker networks** so they
 survive when the file is regenerated.
 
+**Settings → Network** shows whether the router container is actually up, and has a
+button to start or stop it there and then. It flips the same **proxy enabled**
+setting the form saves and reconciles the container immediately, so there is no save
+step in between. Stopping it frees port 25565 — useful when something else needs the
+port, or to find out whether the router is what is breaking a connection.
+
+The panel never touches a router container it did not create; if it finds an
+unmanaged one it leaves it running and says so in the backend log.
+
 ### Auto-scaling (sleep when idle)
 
 mc-router can keep idle servers stopped and start them again on the first

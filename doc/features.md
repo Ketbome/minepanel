@@ -138,7 +138,9 @@ Operational notes:
 - `WORLD` clone source is mounted read-only by Minepanel to avoid accidental source overwrites.
 - World Library includes **Discover Worlds** to search CurseForge worlds and import remote ZIP/TAR URLs directly into `servers/.world/worlds/`.
 - The World Library page lists what you already have as searchable cards, filterable by name and by the folder imports landed in. The file browser is still there, folded away, for uploading, renaming and deleting.
-- Each Java server has its own **Worlds** tab for picking which world it runs, with the same search across its local worlds and the shared library. It stays usable while the server is running: applying a world restarts it.
+- Each Java server has its own **Worlds** tab for picking which world it runs, with the same search across its local worlds and the shared library. Like every configuration tab, it needs the server stopped.
+
+**→ Full guide:** [Worlds](/worlds)
 
 ## Backups
 
@@ -225,13 +227,27 @@ Edit from UI:
 - Spawn protection radius (Java, `SPAWN_PROTECTION`; `0` disables it)
 - JVM arguments, extra flags
 
+Settings are grouped by the question you are asking, not by where the value is
+stored: **Type**, **Game**, **Worlds**, **Access**, **Network**, **Resources**,
+**Lifecycle**, mods/plugins/addons, **Backups** and **Advanced**. Configuration tabs
+are disabled while the server is running — stop it to change anything there. Logs,
+metrics and scheduled tasks stay available; commands need the server up.
+
+A **Simple / Advanced** toggle above the tabs decides how much is shown. Simple
+hides Network, Lifecycle and Advanced plus the JVM options, unless the server
+already has something set in one of them — a tab you have configured is never
+hidden. The choice is per browser and applies to every server. Ctrl/Cmd+K opens a
+palette that jumps straight to any tab or setting by name.
+
 ## Server Resources (Java)
 
 In **Resources** tab:
 
 - **Memory/CPU:** set `INIT_MEMORY`, `MAX_MEMORY`, and CPU limits per server
 - **JVM Options:** use `JVM_OPTS`, `JVM_XX_OPTS`, `JVM_DD_OPTS`, `EXTRA_ARGS`
-- **Advanced Runtime:** timezone, auto-stop, auto-pause, rolling logs
+
+Timezone, auto-stop, auto-pause, restart policy and rolling logs live in the
+**Lifecycle** tab.
 
 Recommended approach:
 

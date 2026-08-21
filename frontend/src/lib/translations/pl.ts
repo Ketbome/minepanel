@@ -300,6 +300,7 @@ export const pl: Record<TranslationKey, string> = {
   oidcScopes: 'Scopes',
   oidcProviderName: 'Provider name',
   oidcDisablePasswordLogin: 'Disable password login (SSO only)',
+  oidcDisablePasswordLoginWarning: 'Najpierw powiąż konto administratora ze swoim dostawcą. Bez logowania hasłem do panelu wejdą tylko konta, które mogą zalogować się przez SSO.',
   userInvitationsTitle: 'Zaproszenia użytkowników',
   userInvitationsDesc: 'Utwórz link z zaproszeniem dla nowego użytkownika i opcjonalnie wyślij go e-mailem.',
   existingUsersTitle: 'Użytkownicy',
@@ -322,6 +323,10 @@ export const pl: Record<TranslationKey, string> = {
   saveAccess: 'Zapisz dostęp',
   deleteUserAction: 'Usuń użytkownika',
   adminAccessUnrestricted: 'Dostęp administratora jest zawsze nieograniczony.',
+  administratorRole: 'Administrator',
+  administratorRoleDesc: 'Pełny dostęp do wszystkich serwerów i ustawień panelu, w tym integracji. Tylko admin może to nadać.',
+  roleUpdated: 'Rola zaktualizowana',
+  roleUpdateFailed: 'Nie udało się zmienić roli',
   accessAllServers: 'Dostęp do wszystkich serwerów',
   serverAccess: 'Dostęp do serwerów',
   viewLogsPermission: 'Przeglądaj logi',
@@ -1702,11 +1707,10 @@ export const pl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Światy',
-  worldsDescription: 'Wybierz źródło świata z folderu światów serwera i przełącz z automatycznym restartem.',
+  worldsDescription: 'Wybierz, który świat uruchamia ten serwer — z jego własnych lub ze wspólnej biblioteki.',
   worldsLoadError: 'Błąd ładowania dostępnych światów',
   worldsEmpty:
     'Nie znaleziono światów. Wgraj folder (z level.dat) lub ZIP/TAR do lokalnego servers/<id>/worlds albo do Biblioteki światów.',
-  worldsRestartNoticeRunning: 'Serwer działa. Zastosowanie świata automatycznie zrestartuje serwer.',
   worldsRestartNoticeStopped: 'Serwer jest zatrzymany. Wybrany świat zostanie zastosowany przy następnym starcie.',
   allLabel: 'Wszystkie',
   worldSourceLocal: 'Lokalne',

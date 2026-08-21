@@ -300,6 +300,7 @@ export const es: Record<TranslationKey, string> = {
   oidcScopes: 'Scopes',
   oidcProviderName: 'Nombre del proveedor',
   oidcDisablePasswordLogin: 'Deshabilitar login con contraseña (solo SSO)',
+  oidcDisablePasswordLoginWarning: 'Vincula primero una cuenta de admin con tu proveedor. Con el login por contraseña desactivado, solo entrarán las cuentas que puedan iniciar sesión por SSO.',
   userInvitationsTitle: 'Invitaciones de Usuario',
   userInvitationsDesc: 'Crea un enlace de invitación para un nuevo usuario y opcionalmente envíalo por correo.',
   existingUsersTitle: 'Usuarios',
@@ -322,6 +323,10 @@ export const es: Record<TranslationKey, string> = {
   saveAccess: 'Guardar acceso',
   deleteUserAction: 'Eliminar usuario',
   adminAccessUnrestricted: 'El acceso de admin siempre es ilimitado.',
+  administratorRole: 'Administrador',
+  administratorRoleDesc: 'Acceso completo a todos los servidores y a los ajustes del panel, incluidas las integraciones. Solo un admin puede otorgarlo.',
+  roleUpdated: 'Rol actualizado',
+  roleUpdateFailed: 'No se pudo cambiar el rol',
   accessAllServers: 'Acceso a todos los servidores',
   serverAccess: 'Acceso a servidores',
   viewLogsPermission: 'Ver logs',
@@ -1718,11 +1723,10 @@ export const es: Record<TranslationKey, string> = {
 
   // Pestaña de mundos
   worlds: 'Mundos',
-  worldsDescription: 'Selecciona un origen de mundo desde worlds del servidor y cambia con reinicio automático.',
+  worldsDescription: 'Elige qué mundo corre este servidor, entre los suyos y la biblioteca compartida.',
   worldsLoadError: 'Error cargando mundos disponibles',
   worldsEmpty:
     'No se encontraron mundos. Sube una carpeta (con level.dat) o ZIP/TAR a servers/<id>/worlds local o a la Biblioteca de mundos.',
-  worldsRestartNoticeRunning: 'El servidor está en ejecución. Al aplicar un mundo se reiniciará automáticamente.',
   worldsRestartNoticeStopped: 'El servidor está detenido. El mundo seleccionado se aplicará en el próximo inicio.',
   allLabel: 'Todos',
   worldSourceLocal: 'Local',

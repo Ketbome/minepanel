@@ -302,6 +302,7 @@ export const nl: Record<TranslationKey, string> = {
   oidcScopes: 'Scopes',
   oidcProviderName: 'Provider name',
   oidcDisablePasswordLogin: 'Disable password login (SSO only)',
+  oidcDisablePasswordLoginWarning: 'Koppel eerst een beheerdersaccount aan je provider. Zonder wachtwoordlogin bereiken alleen accounts het paneel die via SSO kunnen inloggen.',
   userInvitationsTitle: 'Gebruikersuitnodigingen',
   userInvitationsDesc: 'Maak een uitnodigingslink voor een nieuwe gebruiker en verstuur deze optioneel per e-mail.',
   existingUsersTitle: 'Gebruikers',
@@ -324,6 +325,10 @@ export const nl: Record<TranslationKey, string> = {
   saveAccess: 'Toegang opslaan',
   deleteUserAction: 'Gebruiker verwijderen',
   adminAccessUnrestricted: 'Admin-toegang is altijd onbeperkt.',
+  administratorRole: 'Beheerder',
+  administratorRoleDesc: 'Volledige toegang tot alle servers en de panelinstellingen, inclusief integraties. Alleen een admin kan dit toekennen.',
+  roleUpdated: 'Rol bijgewerkt',
+  roleUpdateFailed: 'Rol kon niet worden gewijzigd',
   accessAllServers: 'Toegang tot alle servers',
   serverAccess: 'Servertoegang',
   viewLogsPermission: 'Logs bekijken',
@@ -1727,11 +1732,10 @@ export const nl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Werelden',
-  worldsDescription: 'Selecteer een wereldbron uit serverwerelden en wissel met automatische herstart.',
+  worldsDescription: 'Kies welke wereld deze server draait, uit zijn eigen werelden of de gedeelde bibliotheek.',
   worldsLoadError: 'Fout bij laden van beschikbare werelden',
   worldsEmpty:
     'Geen werelden gevonden. Upload een map (met level.dat) of ZIP/TAR naar lokaal servers/<id>/worlds of naar de Wereldbibliotheek.',
-  worldsRestartNoticeRunning: 'De server draait. Toepassen van een wereld herstart de server automatisch.',
   worldsRestartNoticeStopped: 'De server is gestopt. De geselecteerde wereld wordt toegepast bij de volgende start.',
   allLabel: 'Alles',
   worldSourceLocal: 'Lokaal',

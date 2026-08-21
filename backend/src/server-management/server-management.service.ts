@@ -102,7 +102,7 @@ export interface AvailableWorld {
 export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
-  private readonly BASE_DIR: string;
+  private readonly SERVERS_HOST_DIR: string;
   private readonly COMPOSE_PROJECT?: string;
   private readonly RESERVED_SERVER_DIRS = new Set(['.world']);
 
@@ -121,7 +121,7 @@ export class ServerManagementService {
     private readonly composeService: DockerComposeService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
-    this.BASE_DIR = this.configService.get('baseDir');
+    this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
     this.COMPOSE_PROJECT = this.configService.get<string>('composeProject')?.trim() || undefined;
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(this.getGlobalWorldsPath());
@@ -1532,8 +1532,8 @@ export class ServerManagementService {
         return;
       }
 
-      // Use host path for docker volume mount (BASE_DIR resolves to host path)
-      const hostMcDataPath = path.join(this.BASE_DIR, 'servers', serverId, 'mc-data');
+      // Host path: the mount is resolved by the daemon, not inside this container.
+      const hostMcDataPath = path.join(this.SERVERS_HOST_DIR, serverId, 'mc-data');
 
       // Read UID/GID from docker-compose if available, default to 1000
       let uid = '1000';

@@ -18,11 +18,14 @@ import {
   getInvitations,
   getUsers,
   updateUserAccess,
+  updateUserRole,
   getCurrentUser,
+  invalidateCurrentUserCache,
   type CreateInvitationData,
   type User,
   type UserInvitation,
   type UserPermissions,
+  type UserRole,
 } from '@/services/users/users.service';
 
 const emptyPermissions: UserPermissions = {
@@ -66,6 +69,7 @@ const permissionLabels: Array<{ key: keyof UserPermissions; label: string; admin
 type EditableUser = User & {
   isSaving?: boolean;
   isDeleting?: boolean;
+  isSavingRole?: boolean;
 };
 
 export function UserAccessManager() {
@@ -75,6 +79,7 @@ export function UserAccessManager() {
   const [serverIds, setServerIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [copyingInvitationId, setCopyingInvitationId] = useState<number | null>(null);
   const [copiedInvitationId, setCopiedInvitationId] = useState<number | null>(null);
@@ -92,6 +97,7 @@ export function UserAccessManager() {
       setInvitations(inviteList);
       setServerIds(servers.map((server) => server.id));
       setIsAdmin(currentUser.role === 'ADMIN');
+      setCurrentUserId(currentUser.id);
     } catch (error) {
       console.error('Error loading user access manager:', error);
       mcToast.error(t('errorLoadingServerInfo'));
@@ -185,6 +191,33 @@ export function UserAccessManager() {
       console.error('Error updating user access:', error);
       updateLocalUser(user.id, (current) => ({ ...current, isSaving: false }));
       mcToast.error(t('settingsSaveFailed'));
+    }
+  };
+
+  // Applied straight away instead of waiting for "save access": the backend
+  // refuses changes that would leave the panel without a reachable admin, and
+  // that answer is only useful right when the switch is flipped.
+  const handleRoleChange = async (user: EditableUser, role: UserRole) => {
+    updateLocalUser(user.id, (current) => ({ ...current, isSavingRole: true }));
+    try {
+      const updatedUser = await updateUserRole(user.id, role);
+      invalidateCurrentUserCache();
+      // Losing your own admin role changes the whole shell (sidebar, settings
+      // nav), and this page is not even readable without `manageUsers`.
+      if (user.id === currentUserId) {
+        window.location.reload();
+        return;
+      }
+      // Applied before the refresh so a failing reload cannot leave the switch
+      // showing the old role, stuck mid-save.
+      updateLocalUser(user.id, () => ({ ...updatedUser }));
+      await loadData();
+      mcToast.success(`${t('roleUpdated')}: ${user.username}`);
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      updateLocalUser(user.id, (current) => ({ ...current, isSavingRole: false }));
+      const err = error as { response?: { data?: { message?: string } } };
+      mcToast.error(err.response?.data?.message || t('roleUpdateFailed'));
     }
   };
 
@@ -319,6 +352,16 @@ export function UserAccessManager() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 px-4 pb-4 pt-1">
+                  {isAdmin ? (
+                    <div className="flex items-center justify-between rounded-lg border border-gray-700/60 bg-gray-900/40 px-4 py-3">
+                      <div className="pr-3">
+                        <p className="text-sm text-gray-200">{t('administratorRole')}</p>
+                        <p className="mt-1 text-xs text-gray-500">{t('administratorRoleDesc')}</p>
+                      </div>
+                      <Switch aria-label={`${t('administratorRole')}: ${user.username}`} checked={user.role === 'ADMIN'} disabled={user.isSavingRole} onCheckedChange={(checked) => handleRoleChange(user, checked ? 'ADMIN' : 'USER')} />
+                    </div>
+                  ) : null}
+
                   {user.role === 'ADMIN' ? (
                     <p className="text-sm text-amber-300">{t('adminAccessUnrestricted')}</p>
                   ) : (
