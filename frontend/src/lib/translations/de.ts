@@ -1728,7 +1728,7 @@ export const de: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Welten',
-  worldsDescription: 'Weltquelle aus den Server-Welten wählen und mit automatischem Neustart wechseln.',
+  worldsDescription: 'Wähle, welche Welt dieser Server spielt — aus seinen eigenen oder der gemeinsamen Bibliothek.',
   worldsLoadError: 'Fehler beim Laden verfügbarer Welten',
   worldsEmpty:
     'Keine Welten gefunden. Lade einen Ordner (mit level.dat) oder ZIP/TAR in lokales servers/<id>/worlds oder in die Weltenbibliothek hoch.',

@@ -1732,7 +1732,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Werelden',
-  worldsDescription: 'Selecteer een wereldbron uit serverwerelden en wissel met automatische herstart.',
+  worldsDescription: 'Kies welke wereld deze server draait, uit zijn eigen werelden of de gedeelde bibliotheek.',
   worldsLoadError: 'Fout bij laden van beschikbare werelden',
   worldsEmpty:
     'Geen werelden gevonden. Upload een map (met level.dat) of ZIP/TAR naar lokaal servers/<id>/worlds of naar de Wereldbibliotheek.',

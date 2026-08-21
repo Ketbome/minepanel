@@ -1723,7 +1723,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Pestaña de mundos
   worlds: 'Mundos',
-  worldsDescription: 'Selecciona un origen de mundo desde worlds del servidor y cambia con reinicio automático.',
+  worldsDescription: 'Elige qué mundo corre este servidor, entre los suyos y la biblioteca compartida.',
   worldsLoadError: 'Error cargando mundos disponibles',
   worldsEmpty:
     'No se encontraron mundos. Sube una carpeta (con level.dat) o ZIP/TAR a servers/<id>/worlds local o a la Biblioteca de mundos.',

@@ -1722,7 +1722,7 @@ export const pt: Record<TranslationKey, string> = {
 
   // Aba de mundos
   worlds: 'Mundos',
-  worldsDescription: 'Selecione uma origem de mundo em worlds do servidor e troque com reinício automático.',
+  worldsDescription: 'Escolha qual mundo este servidor executa, entre os seus e a biblioteca compartilhada.',
   worldsLoadError: 'Erro ao carregar os mundos disponíveis',
   worldsEmpty:
     'Nenhum mundo encontrado. Envie uma pasta (com level.dat) ou ZIP/TAR para servers/<id>/worlds local ou para a Biblioteca de mundos.',

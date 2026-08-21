@@ -1702,7 +1702,7 @@ export const fr: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Mondes',
-  worldsDescription: 'Sélectionnez une source de monde parmi les mondes du serveur et basculez avec redémarrage automatique.',
+  worldsDescription: 'Choisissez le monde que ce serveur exécute, parmi les siens ou la bibliothèque partagée.',
   worldsLoadError: 'Erreur lors du chargement des mondes disponibles',
   worldsEmpty: 'Aucun monde trouvé. Téléversez un dossier (avec level.dat) ou un ZIP/TAR dans servers/<id>/worlds ou dans la bibliothèque de mondes.',
   worldsRestartNoticeStopped: 'Le serveur est arrêté. Le monde sélectionné sera appliqué au prochain démarrage.',

@@ -1699,7 +1699,7 @@ export const en = {
 
   // Worlds tab
   worlds: 'Worlds',
-  worldsDescription: 'Select a world source from server worlds and switch with automatic restart.',
+  worldsDescription: 'Pick which world this server runs, from its own worlds or the shared library.',
   worldsLoadError: 'Error loading available worlds',
   worldsEmpty: 'No worlds found. Upload a folder (with level.dat) or ZIP/TAR into local servers/<id>/worlds or World Library.',
   worldsRestartNoticeStopped: 'The server is stopped. The selected world will apply on the next start.',

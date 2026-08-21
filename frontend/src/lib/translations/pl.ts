@@ -1707,7 +1707,7 @@ export const pl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Światy',
-  worldsDescription: 'Wybierz źródło świata z folderu światów serwera i przełącz z automatycznym restartem.',
+  worldsDescription: 'Wybierz, który świat uruchamia ten serwer — z jego własnych lub ze wspólnej biblioteki.',
   worldsLoadError: 'Błąd ładowania dostępnych światów',
   worldsEmpty:
     'Nie znaleziono światów. Wgraj folder (z level.dat) lub ZIP/TAR do lokalnego servers/<id>/worlds albo do Biblioteki światów.',
