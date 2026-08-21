@@ -33,6 +33,7 @@ export interface UpdateResult {
 export interface VersionInfo {
   current: string | null;
   latest: string | null;
+  checkedAt: string | null;
   updateAvailable: boolean;
   releaseUrl: string | null;
   publishedAt: string | null;
@@ -47,8 +48,10 @@ export interface UpdateStatus {
   lastUpdate: UpdateResult | null;
 }
 
-export const getVersionInfo = async (): Promise<VersionInfo> => {
-  const response = await api.get<VersionInfo>("/version");
+// `refresh` skips the panel's hourly cache of the GitHub answer, which is what
+// the check button in the dialog is for.
+export const getVersionInfo = async (refresh = false): Promise<VersionInfo> => {
+  const response = await api.get<VersionInfo>("/version", { params: refresh ? { refresh: true } : undefined });
   return response.data;
 };
 

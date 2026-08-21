@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, ForbiddenException, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { PayloadToken } from '../auth/models/token.model';
 import { AccessControlService } from '../users/services/access-control.service';
@@ -16,10 +16,12 @@ export class VersionController {
     private readonly accessControlService: AccessControlService,
   ) {}
 
+  // `refresh=true` is the panel's "check now": it skips the hourly cache, though
+  // never more than once a minute.
   @Get()
-  async getVersion() {
+  async getVersion(@Query('refresh') refresh?: string) {
     const [info, canSelfUpdate, lastUpdate] = await Promise.all([
-      this.versionService.getVersionInfo(),
+      this.versionService.getVersionInfo({ refresh: refresh === 'true' }),
       this.updaterService.canSelfUpdate(),
       this.updaterService.getLastResult(),
     ]);

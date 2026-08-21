@@ -1412,6 +1412,9 @@ export const pt: Record<TranslationKey, string> = {
     'Baixa as novas imagens e recria o stack. O painel cai por um momento e volta; se a nova versão não subir, a anterior é restaurada automaticamente',
   updateManually:
     'Este painel não foi iniciado com Docker Compose, então não pode se atualizar. Execute isto onde está o seu arquivo compose:',
+  checkForUpdates: 'Procurar atualizações',
+  checkForUpdatesFailed: 'Não foi possível procurar atualizações',
+  versionLastChecked: 'Última verificação: {time}',
   updateHowTo: 'Como atualizar',
   updateOrManually: 'Ou execute você mesmo onde está o seu arquivo compose:',
   updateInProgress: 'Baixando as imagens e recriando a stack. O painel cai por um instante e recarrega sozinho; deixe esta aba aberta.',

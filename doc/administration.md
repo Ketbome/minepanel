@@ -596,9 +596,16 @@ updating across a major version.
 The version is baked into the image at build time, so a locally built image shows
 nothing. The panel asks the GitHub releases API at most once per hour and never
 fails a request over it: if GitHub is unreachable, the badge simply keeps showing
-the current version.
+the current version, and that miss is only held for five minutes rather than the
+full hour.
 
-`GET /version` returns the same data, including the parsed changelog. Each release
+That hour is also why a release published minutes ago may not show up yet. The
+dialog has a **Check for updates** button that skips the cache — no more than
+once a minute, since the 60 unauthenticated calls per hour are shared by every
+panel behind the same address — and prints when GitHub was last asked.
+
+`GET /version` returns the same data, including the parsed changelog. Add
+`?refresh=true` for the forced check the button performs. Each release
 carries its changes grouped in `sections`, and a section is `important` when it is
 one the panel lifts into **Before you update**:
 

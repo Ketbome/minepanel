@@ -1412,6 +1412,9 @@ export const es: Record<TranslationKey, string> = {
     'Descarga las imágenes nuevas y recrea el stack. El panel se cae un momento y vuelve; si la versión nueva no levanta, se restaura la anterior automáticamente',
   updateManually:
     'Este panel no se inició con Docker Compose, así que no puede actualizarse solo. Ejecuta esto donde esté tu archivo compose:',
+  checkForUpdates: 'Buscar actualizaciones',
+  checkForUpdatesFailed: 'No se pudo consultar si hay actualizaciones',
+  versionLastChecked: 'Última comprobación: {time}',
   updateHowTo: 'Cómo actualizar',
   updateOrManually: 'O ejecútalo tú donde esté tu archivo compose:',
   updateInProgress: 'Descargando las imágenes y recreando el stack. El panel se cae un momento y se recarga solo; deja esta pestaña abierta.',

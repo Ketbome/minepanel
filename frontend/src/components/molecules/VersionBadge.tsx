@@ -1,7 +1,7 @@
 'use client';
 
 import { FC, useEffect, useState } from 'react';
-import { AlertTriangle, ArrowUpCircle, ExternalLink, GitPullRequest, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ArrowUpCircle, ExternalLink, GitPullRequest, Loader2, RefreshCcw, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
   // in flight.
   const [update, setUpdate] = useState<{ startedAt: number; id: string | null; from: string | null } | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     getVersionInfo()
@@ -97,6 +98,25 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
     return () => clearInterval(timer);
   }, [update, t]);
 
+  /** The panel holds GitHub's answer for an hour, so a release published since
+   *  the last look is invisible until this asks again. */
+  const handleCheck = async () => {
+    setIsChecking(true);
+    try {
+      const data = await getVersionInfo(true);
+      setInfo(data);
+      if (data.updateAvailable) {
+        mcToast.success(`${t('updateAvailable')}: v${data.latest}`);
+      } else {
+        mcToast.success(t('changelogUpToDate'));
+      }
+    } catch {
+      mcToast.error(t('checkForUpdatesFailed'));
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   const handleUpdate = async () => {
     setIsStarting(true);
     try {
@@ -152,6 +172,25 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
               {info.updateAvailable ? t('changelogSince').replace('{version}', `v${info.current}`) : t('changelogUpToDate')}
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex flex-wrap items-center gap-3 border-b border-gray-700/60 pb-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCheck}
+              disabled={isChecking}
+              className="border-gray-700 bg-gray-800 text-gray-300 hover:border-emerald-500 hover:bg-gray-700 hover:text-emerald-300"
+            >
+              <RefreshCcw className={cn('mr-2 h-3.5 w-3.5', isChecking && 'animate-spin')} />
+              {t('checkForUpdates')}
+            </Button>
+            {info.checkedAt ? (
+              <span className="text-[11px] text-gray-500">
+                {t('versionLastChecked').replace('{time}', new Date(info.checkedAt).toLocaleTimeString())}
+              </span>
+            ) : null}
+          </div>
 
           {actionRequired.length > 0 || info.hasBreakingChanges ? (
             <div className="rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">

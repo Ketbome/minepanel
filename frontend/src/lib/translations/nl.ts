@@ -1426,6 +1426,9 @@ export const nl: Record<TranslationKey, string> = {
     'Haalt de nieuwe images op en maakt de stack opnieuw aan. Het paneel is even weg en komt terug; als de nieuwe versie niet opstart, wordt de vorige automatisch hersteld',
   updateManually:
     'Dit paneel is niet met Docker Compose gestart en kan zichzelf dus niet bijwerken. Voer dit uit waar je compose-bestand staat:',
+  checkForUpdates: 'Controleren op updates',
+  checkForUpdatesFailed: 'Kon niet controleren op updates',
+  versionLastChecked: 'Laatst gecontroleerd: {time}',
   updateHowTo: 'Zo werk je bij',
   updateOrManually: 'Of voer het zelf uit waar je compose-bestand staat:',
   updateInProgress: 'Images worden opgehaald en de stack opnieuw opgebouwd. Het paneel valt even weg en herlaadt zichzelf; laat dit tabblad open.',

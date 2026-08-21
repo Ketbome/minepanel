@@ -1262,6 +1262,9 @@ export const de: Record<TranslationKey, string> = {
     'Lädt die neuen Images und erstellt den Stack neu. Das Panel ist kurz weg und kommt zurück; kommt die neue Version nicht hoch, wird automatisch die vorherige wiederhergestellt',
   updateManually:
     'Dieses Panel wurde nicht mit Docker Compose gestartet und kann sich daher nicht selbst aktualisieren. Führe dies dort aus, wo deine Compose-Datei liegt:',
+  checkForUpdates: 'Nach Updates suchen',
+  checkForUpdatesFailed: 'Suche nach Updates fehlgeschlagen',
+  versionLastChecked: 'Zuletzt geprüft: {time}',
   updateHowTo: 'So aktualisierst du',
   updateOrManually: 'Oder führe es selbst dort aus, wo deine Compose-Datei liegt:',
   updateInProgress: 'Images werden geladen und der Stack neu erstellt. Das Panel ist kurz weg und lädt sich selbst neu; lass diesen Tab offen.',

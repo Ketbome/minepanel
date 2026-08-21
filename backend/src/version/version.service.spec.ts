@@ -244,6 +244,53 @@ describe('VersionService', () => {
       expect(info).toMatchObject({ latest: null, updateAvailable: false, changelog: [] });
     });
 
+    it('retries a failed lookup long before it would retry a good one', async () => {
+      jest.useFakeTimers({ now: new Date('2026-08-21T19:00:00Z') });
+      mockedGet.mockRejectedValue(new Error('network down'));
+      await service.getVersionInfo();
+
+      // Six minutes later: nowhere near the hour a successful answer is held.
+      jest.setSystemTime(new Date('2026-08-21T19:06:00Z'));
+      mockedGet.mockResolvedValue({ data: [release('1.11.34')] });
+      const info = await service.getVersionInfo();
+
+      expect(info.updateAvailable).toBe(true);
+      jest.useRealTimers();
+    });
+
+    it('asks again when the panel forces a check', async () => {
+      jest.useFakeTimers({ now: new Date('2026-08-21T19:00:00Z') });
+      mockedGet.mockResolvedValue({ data: [release('1.11.34')] });
+      await service.getVersionInfo();
+
+      jest.setSystemTime(new Date('2026-08-21T19:02:00Z'));
+      await service.getVersionInfo({ refresh: true });
+
+      expect(mockedGet).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
+    });
+
+    // 60 calls per hour, per IP, shared by every panel behind it.
+    it('does not let a forced check run more than once a minute', async () => {
+      jest.useFakeTimers({ now: new Date('2026-08-21T19:00:00Z') });
+      mockedGet.mockResolvedValue({ data: [release('1.11.34')] });
+      await service.getVersionInfo();
+
+      jest.setSystemTime(new Date('2026-08-21T19:00:30Z'));
+      await service.getVersionInfo({ refresh: true });
+
+      expect(mockedGet).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
+    });
+
+    it('reports when it last asked', async () => {
+      jest.useFakeTimers({ now: new Date('2026-08-21T19:00:00Z') });
+      mockedGet.mockResolvedValue({ data: [release('1.11.34')] });
+
+      expect((await service.getVersionInfo()).checkedAt).toBe('2026-08-21T19:00:00.000Z');
+      jest.useRealTimers();
+    });
+
     it('does not retry a failed lookup on every request', async () => {
       mockedGet.mockRejectedValue(new Error('network down'));
 
