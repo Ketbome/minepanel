@@ -111,7 +111,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] w-[min(96vw,88rem)] overflow-y-auto border-2 border-gray-700 bg-gray-900 p-0 text-white sm:max-w-none scrollbar-hide">
+      <DialogContent className="max-h-[90vh] w-[min(94vw,76rem)] overflow-y-auto border-2 border-gray-700 bg-gray-900 p-0 text-white sm:max-w-none scrollbar-hide">
         <div className="sticky top-0 z-10 border-b-2 border-gray-700 bg-gray-900/95 px-6 py-4 backdrop-blur-sm">
           <div className="flex items-start gap-4">
             <ModpackLogo modpack={modpack} />
