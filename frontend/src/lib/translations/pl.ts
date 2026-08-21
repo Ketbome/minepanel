@@ -1248,6 +1248,9 @@ export const pl: Record<TranslationKey, string> = {
     'Pobiera nowe obrazy i odtwarza stack. Panel na chwilę znika i wraca; jeśli nowa wersja nie wstanie, poprzednia zostanie automatycznie przywrócona',
   updateManually:
     'Ten panel nie został uruchomiony przez Docker Compose, więc nie może się sam zaktualizować. Uruchom to tam, gdzie jest twój plik compose:',
+  checkForUpdates: 'Sprawdź aktualizacje',
+  checkForUpdatesFailed: 'Nie udało się sprawdzić aktualizacji',
+  versionLastChecked: 'Ostatnie sprawdzenie: {time}',
   updateHowTo: 'Jak zaktualizować',
   updateOrManually: 'Albo uruchom to sam tam, gdzie leży plik compose:',
   updateInProgress: 'Pobieram obrazy i odtwarzam stack. Panel na chwilę zniknie i przeładuje się sam; zostaw tę kartę otwartą.',

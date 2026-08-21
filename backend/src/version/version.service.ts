@@ -33,6 +33,8 @@ export interface ReleaseNote {
 export interface VersionInfo {
   current: string | null;
   latest: string | null;
+  /** When GitHub was last asked, so the panel can say how old this answer is. */
+  checkedAt: string | null;
   updateAvailable: boolean;
   releaseUrl: string | null;
   publishedAt: string | null;
@@ -70,12 +72,19 @@ export class VersionService {
   // GitHub allows 60 unauthenticated calls per hour and per IP, shared by every
   // panel behind the same address, so the answer is held for an hour.
   private readonly CACHE_TTL_MS = 60 * 60 * 1000;
+  // A lookup that failed is worth retrying long before a good one: a blip of
+  // network would otherwise mean an hour of "you are up to date".
+  private readonly FAILURE_TTL_MS = 5 * 60 * 1000;
+  // Floor between forced checks, so the refresh button cannot be leaned on
+  // until GitHub starts refusing.
+  private readonly MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 
-  private cache?: { releases: GithubRelease[]; expiresAt: number };
+  private cache?: { releases: GithubRelease[]; expiresAt: number; checkedAt: string };
+  private lastFetchAt = 0;
 
-  async getVersionInfo(): Promise<VersionInfo> {
+  async getVersionInfo(options: { refresh?: boolean } = {}): Promise<VersionInfo> {
     const current = this.getCurrentVersion();
-    const releases = await this.getReleases();
+    const releases = await this.getReleases(options.refresh === true);
     const newest = releases[0];
     const latest = newest ? this.toVersion(newest) : null;
     const changelog = this.buildChangelog(releases, current);
@@ -83,6 +92,7 @@ export class VersionService {
     return {
       current,
       latest,
+      checkedAt: this.cache?.checkedAt ?? null,
       updateAvailable: this.isNewer(latest, current),
       releaseUrl: newest?.html_url ?? null,
       publishedAt: newest?.published_at ?? null,
@@ -229,10 +239,17 @@ export class VersionService {
     return Number.parseInt(version.split('.')[0], 10) || 0;
   }
 
-  private async getReleases(): Promise<GithubRelease[]> {
-    if (this.cache && this.cache.expiresAt > Date.now()) {
-      return this.cache.releases;
+  private async getReleases(force = false): Promise<GithubRelease[]> {
+    const cached = this.cache && this.cache.expiresAt > Date.now();
+    // A forced check still respects the floor: holding the button down must not
+    // be able to spend the hourly budget.
+    const tooSoon = Date.now() - this.lastFetchAt < this.MIN_REFRESH_INTERVAL_MS;
+    if (cached && (!force || tooSoon)) {
+      return this.cache!.releases;
     }
+
+    this.lastFetchAt = Date.now();
+    const checkedAt = new Date().toISOString();
 
     try {
       const response = await axios.get<GithubRelease[]>(this.RELEASES_URL, {
@@ -240,11 +257,12 @@ export class VersionService {
         headers: { Accept: 'application/vnd.github+json' },
       });
       const releases = Array.isArray(response.data) ? response.data : [];
-      this.cache = { releases, expiresAt: Date.now() + this.CACHE_TTL_MS };
+      this.cache = { releases, expiresAt: Date.now() + this.CACHE_TTL_MS, checkedAt };
     } catch (error) {
       this.logger.warn(`Could not check for updates: ${error instanceof Error ? error.message : error}`);
-      // Cached as a miss too, so an unreachable GitHub is not retried on every request.
-      this.cache = { releases: [], expiresAt: Date.now() + this.CACHE_TTL_MS };
+      // Cached as a miss too, so an unreachable GitHub is not retried on every
+      // request, but only briefly: this answer is wrong, not just old.
+      this.cache = { releases: [], expiresAt: Date.now() + this.FAILURE_TTL_MS, checkedAt };
     }
 
     return this.cache.releases;

@@ -1247,6 +1247,9 @@ export const en = {
     'Pulls the new images and recreates the stack. The panel goes down for a moment and returns; if the new version does not come up, the previous one is restored automatically',
   updateManually:
     'This panel was not started by Docker Compose, so it cannot update itself. Run this where your compose file lives:',
+  checkForUpdates: 'Check for updates',
+  checkForUpdatesFailed: 'Could not check for updates',
+  versionLastChecked: 'Last checked at {time}',
   updateHowTo: 'How to update',
   updateOrManually: 'Or run it yourself where your compose file lives:',
   updateInProgress: 'Pulling the images and recreating the stack. The panel goes down for a moment and reloads on its own; keep this tab open.',

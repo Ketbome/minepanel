@@ -1249,6 +1249,9 @@ export const fr: Record<TranslationKey, string> = {
     'Télécharge les nouvelles images et recrée la stack. Le panneau s’absente un instant puis revient ; si la nouvelle version ne démarre pas, la précédente est restaurée automatiquement',
   updateManually:
     'Ce panneau n’a pas été démarré par Docker Compose, il ne peut donc pas se mettre à jour. Lancez ceci là où se trouve votre fichier compose :',
+  checkForUpdates: 'Rechercher des mises à jour',
+  checkForUpdatesFailed: 'Impossible de vérifier les mises à jour',
+  versionLastChecked: 'Dernière vérification : {time}',
   updateHowTo: 'Comment mettre à jour',
   updateOrManually: 'Ou lance-le toi-même là où se trouve ton fichier compose :',
   updateInProgress: 'Téléchargement des images et recréation de la stack. Le panneau tombe un instant puis se recharge seul ; garde cet onglet ouvert.',
