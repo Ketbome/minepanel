@@ -26,7 +26,7 @@ export class ServerStoreService {
   private readonly logger = new Logger(ServerStoreService.name);
   private readonly SERVERS_DIR: string;
   private indexWrites: Promise<unknown> = Promise.resolve();
-  private configWrites: Promise<unknown> = Promise.resolve();
+  private readonly configWrites = new Map<string, Promise<unknown>>();
   private tempWrites = 0;
 
   constructor(private readonly configService: ConfigService) {
@@ -56,25 +56,42 @@ export class ServerStoreService {
   }
 
   async writeConfig(config: ServerConfig): Promise<void> {
-    if (!config?.id) {
-      throw new Error(`Refusing to write ${CONFIG_FILE} without a server id`);
-    }
-    await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
-    await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
-    await this.upsertIndexEntry(config);
+    return this.serializeConfigWrite(config?.id, () => this.writeConfigUnlocked(config));
   }
 
-  // Serialised against configWrites so a partial update can't lose to an overlapping one.
+  // Holds this server's write lock across the read and the write, so a full save can't
+  // slip in between and clobber a partial update (or vice versa).
   async updateConfig(serverId: string, mutate: (config: ServerConfig) => void): Promise<ServerConfig | null> {
-    const run = this.configWrites.then(async () => {
+    return this.serializeConfigWrite(serverId, async () => {
       const config = await this.readConfig(serverId);
       if (!config) return null;
       mutate(config);
-      await this.writeConfig(config);
+      await this.writeConfigUnlocked(config);
       return config;
     });
-    this.configWrites = run.catch(() => undefined);
-    return run;
+  }
+
+  private serializeConfigWrite<T>(serverId: string, operation: () => Promise<T>): Promise<T> {
+    if (!serverId) {
+      return Promise.reject(new Error(`Refusing to write ${CONFIG_FILE} without a server id`));
+    }
+
+    const previous = this.configWrites.get(serverId) ?? Promise.resolve();
+    const next = previous.then(operation, operation);
+
+    const tracked: Promise<unknown> = next.catch(() => undefined);
+    this.configWrites.set(serverId, tracked);
+    void tracked.then(() => {
+      if (this.configWrites.get(serverId) === tracked) this.configWrites.delete(serverId);
+    });
+
+    return next;
+  }
+
+  private async writeConfigUnlocked(config: ServerConfig): Promise<void> {
+    await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
+    await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
+    await this.upsertIndexEntry(config);
   }
 
   private stripDerived(config: ServerConfig): Omit<ServerConfig, 'active' | 'serverExists'> {

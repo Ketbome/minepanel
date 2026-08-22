@@ -554,9 +554,16 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
 
+    // The Mod Watch fields have their own endpoint and are edited while the server runs,
+    // so the whole-form save must not carry them: the panel submits the entire config it
+    // loaded, and a page opened before a note was written would otherwise put its stale
+    // copy back. updateServerConfig merges over a fresh read, so dropping them here means
+    // whatever is on disk survives.
+    const { modNotes: _modNotes, modWatchTargetVersion: _modWatchTargetVersion, ...configWithoutModWatch } = config;
+
     const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
-    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, config, proxyEnabled);
+    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, configWithoutModWatch, proxyEnabled);
     if (!updatedConfig) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
