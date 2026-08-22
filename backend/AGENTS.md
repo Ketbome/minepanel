@@ -144,6 +144,12 @@ Path and filesystem patterns (critical):
   `ServerStoreService`. Import this module; never list them as providers again, or each
   module gets its own instance and the startup migration runs once per copy.
 - `src/docker-compose/server-store.service.ts` - `server.json` and the server index.
+  Both are written temp-then-`rename(2)`, with the temp file fsynced before the rename
+  and the directory fsynced after. Do not reach for `fs.move` here: with `overwrite` it
+  unlinks the destination first, leaving a window with no file at all. That matters more
+  than it looks for `server.json` — `readConfig` cannot tell an empty one from a server
+  that never had one, so the caller re-imports from the generated `docker-compose.yml`
+  and silently drops everything compose does not round-trip.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
 - `src/proxy/proxy-router.service.ts` - generates and runs the mc-router compose project.
 - `src/common/docker/host-context.service.ts` - reads the panel's own compose labels;
