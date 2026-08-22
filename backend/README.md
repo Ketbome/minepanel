@@ -39,7 +39,6 @@ npm run test:e2e
 - `src/files/` - file operations
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
-- `src/mod-metadata/` - per-server mod notes, desired-version tracking, and the queued mod add/remove changes applied at the next server start/restart
 
 ## References
 

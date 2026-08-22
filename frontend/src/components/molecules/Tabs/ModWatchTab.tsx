@@ -9,34 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Eye, FileText, HelpCircle, Loader2, Search, Trash2, Undo2 } from 'lucide-react';
+import { Eye, FileText, HelpCircle, Info, Loader2 } from 'lucide-react';
 import { ServerConfig } from '@/lib/types/types';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { TranslationKey } from '@/lib/translations';
 import { useMinecraftVersions } from '@/lib/hooks/useMinecraftVersions';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { ModEntry, parseModEntries } from '@/lib/utils/mod-entries';
-import { ModsBrowserDialog } from '@/components/molecules/mods/ModsBrowserDialog';
+import { updateModWatch } from '@/services/docker/fetchs';
 import {
   ModLoader,
   ModProvider,
   ModSearchItem,
   ModVersionItem,
+  fetchCurseforgeChangelog,
   fetchLatestModVersions,
   fetchModVersions,
   resolveModVersionsByProvider,
   resolveModsByProvider,
 } from '@/services/mods/mods-browser.service';
-import {
-  ModMetadata,
-  PendingModChange,
-  cancelQueuedModChange,
-  fetchCurseforgeChangelog,
-  fetchModMetadata,
-  queueModChange,
-  updateDesiredVersion,
-  updateModNote,
-} from '@/services/mod-metadata/mod-metadata.service';
 
 interface ConfiguredMod {
   provider: ModProvider;
@@ -51,7 +42,7 @@ interface ChangelogSegment {
   changelog: string | null;
 }
 
-type ChangelogLaneStatus = 'no-desired-version' | 'no-target' | 'up-to-date' | 'has-updates';
+type ChangelogLaneStatus = 'no-target-version' | 'no-target' | 'up-to-date' | 'has-updates';
 
 interface ChangelogLane {
   status: ChangelogLaneStatus;
@@ -72,9 +63,10 @@ const sortNewestFirst = (versions: ModVersionItem[]): ModVersionItem[] =>
   [...versions].sort((a, b) => new Date(b.datePublished ?? 0).getTime() - new Date(a.datePublished ?? 0).getTime());
 
 const LANE_STATUS_MESSAGE: Record<Exclude<ChangelogLaneStatus, 'has-updates'>, TranslationKey> = {
-  'no-desired-version': 'changelogNoDesiredVersion',
+  'no-target-version': 'changelogNoTargetVersion',
   'no-target': 'changelogNoCompatibleTarget',
-  'up-to-date': 'modChangelogUpToDate',
+  // Shared with the panel's own release changelog — same sentence, same meaning.
+  'up-to-date': 'changelogUpToDate',
 };
 
 const ChangelogLaneSection: FC<{ title: string; lane: ChangelogLane; t: (key: TranslationKey) => string }> = ({ title, lane, t }) => (
@@ -94,7 +86,7 @@ const ChangelogLaneSection: FC<{ title: string; lane: ChangelogLane; t: (key: Tr
               {segment.versionNumber ? ` (${segment.versionNumber})` : ''}
             </p>
             {segment.datePublished && <p className="text-[11px] text-gray-500">{new Date(segment.datePublished).toLocaleDateString()}</p>}
-            <p className="mt-1 whitespace-pre-wrap text-xs text-gray-300">{segment.changelog || t('changelogEmpty')}</p>
+            <p className="mt-1 whitespace-pre-wrap text-xs text-gray-300">{segment.changelog || t('changelogNoNotes')}</p>
           </div>
         ))}
       </div>
@@ -105,25 +97,43 @@ const ChangelogLaneSection: FC<{ title: string; lane: ChangelogLane; t: (key: Tr
 interface ModWatchTabProps {
   serverId: string;
   config: ServerConfig;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
+export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConfig }) => {
   const { t } = useLanguage();
   const { latestRelease } = useMinecraftVersions({ filterType: 'release' });
-  const [metadata, setMetadata] = useState<ModMetadata>({ desiredMcVersion: null, notes: {}, pendingChanges: [] });
-  const [desiredVersionInput, setDesiredVersionInput] = useState('');
-  const [savingDesiredVersion, setSavingDesiredVersion] = useState(false);
+  const [targetVersionInput, setTargetVersionInput] = useState(config.modWatchTargetVersion ?? '');
+  const [savingTargetVersion, setSavingTargetVersion] = useState(false);
   const [details, setDetails] = useState<Record<string, ModSearchItem>>({});
   const [versionNames, setVersionNames] = useState<Record<string, string>>({});
   const [compatibility, setCompatibility] = useState<Record<string, ModVersionItem | null>>({});
   const [checkingCompatibility, setCheckingCompatibility] = useState(false);
   const [sameVersionLatest, setSameVersionLatest] = useState<Record<string, ModVersionItem | null>>({});
   const [checkingSameVersion, setCheckingSameVersion] = useState(false);
-  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>(config.modNotes ?? {});
   const [changelogState, setChangelogState] = useState<ChangelogDialogState | null>(null);
-  const [showModsBrowser, setShowModsBrowser] = useState(false);
-  const [modsBrowserProvider, setModsBrowserProvider] = useState<ModProvider>('modrinth');
   const noteTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const targetVersion = config.modWatchTargetVersion ?? '';
+
+  // Switching servers reuses this component, so the inputs have to be re-seeded from
+  // the config that belongs to the server now on screen.
+  useEffect(() => {
+    setTargetVersionInput(config.modWatchTargetVersion ?? '');
+    setNoteDrafts(config.modNotes ?? {});
+    // Only on server switch: re-seeding on every config change would fight the note drafts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverId]);
+
+  // A debounced note save that is still pending when the tab unmounts would fire against
+  // a server the user has left, so drop the timers on the way out.
+  useEffect(() => {
+    const timers = noteTimers.current;
+    return () => {
+      for (const timer of Object.values(timers)) clearTimeout(timer);
+    };
+  }, []);
 
   const effectiveMinecraftVersion = useMemo(() => {
     const current = config.minecraftVersion || '';
@@ -165,65 +175,6 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
       .map((entry) => ({ provider: 'modrinth' as const, entry }));
     return [...curseforge, ...modrinth];
   }, [config.cfFiles, config.modrinthProjects]);
-
-  const pendingByKey = useMemo(() => {
-    const map: Record<string, PendingModChange> = {};
-    for (const change of metadata.pendingChanges) {
-      map[`${change.provider}:${change.ref.toLowerCase()}`] = change;
-    }
-    return map;
-  }, [metadata.pendingChanges]);
-
-  // Live entries plus placeholder rows for queued adds that aren't live yet, so a mod
-  // queued for addition is visible right away rather than only appearing after a restart.
-  const displayRows = useMemo<Array<ConfiguredMod & { pending?: PendingModChange }>>(() => {
-    const rows = configuredMods.map((mod) => ({ ...mod, pending: pendingByKey[`${mod.provider}:${mod.entry.ref.toLowerCase()}`] }));
-    const liveKeys = new Set(configuredMods.map((mod) => `${mod.provider}:${mod.entry.ref.toLowerCase()}`));
-    const placeholders = metadata.pendingChanges
-      .filter((change) => change.action === 'add' && !liveKeys.has(`${change.provider}:${change.ref.toLowerCase()}`))
-      .map((change) => ({
-        provider: change.provider,
-        entry: { raw: change.ref, ref: change.ref, version: change.version, separator: ':' as const, optional: false, opaque: false },
-        pending: change,
-      }));
-    return [...rows, ...placeholders];
-  }, [configuredMods, pendingByKey, metadata.pendingChanges]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchModMetadata(serverId)
-      .then((data) => {
-        if (cancelled) return;
-        setMetadata(data);
-        setDesiredVersionInput(data.desiredMcVersion || '');
-        setNoteDrafts(data.notes);
-      })
-      .catch((error) => {
-        console.error('Error loading mod metadata:', error);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [serverId]);
-
-  // ServerConfigTabs doesn't remount this tab on server switch, and metadata mutations aren't
-  // otherwise serialized on the client, so responses can land out of order (an older mutation's
-  // response resolving after a newer one) or belong to a server the user has since navigated away
-  // from. Both cases mean "this response no longer reflects the latest state we asked for" — a
-  // monotonic token, bumped on every new mutation and on server switch, catches both: only the
-  // response matching the most recently issued token is applied.
-  const metadataRequestRef = useRef(0);
-  const changelogRequestRef = useRef(0);
-  useEffect(() => {
-    metadataRequestRef.current += 1;
-    changelogRequestRef.current += 1;
-  }, [serverId]);
-
-  const beginMetadataRequest = () => ++metadataRequestRef.current;
-
-  const applyMetadataFor = (requestToken: number, next: ModMetadata) => {
-    if (requestToken === metadataRequestRef.current) setMetadata(next);
-  };
 
   useEffect(() => {
     const byProvider: Record<ModProvider, string[]> = { curseforge: [], modrinth: [] };
@@ -269,7 +220,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
   }, [configuredMods]);
 
   // Same-version release improvements: is there a newer build for the MC
-  // version the server is already running, independent of any desired-version
+  // version the server is already running, independent of any target-version
   // watch. Mirrors the "update available" check ModsListEditor does for pins.
   useEffect(() => {
     if (configuredMods.length === 0) {
@@ -314,10 +265,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     };
   }, [configuredMods, effectiveMinecraftVersion, resolvedLoader]);
 
-  // Minecraft version updates: the newest build compatible with the desired
-  // version being watched, which may be well ahead of the live server version.
+  // Minecraft version updates: the newest build compatible with the version
+  // being evaluated, which may be well ahead of the live server version.
   useEffect(() => {
-    if (!metadata.desiredMcVersion || configuredMods.length === 0) {
+    if (!targetVersion || configuredMods.length === 0) {
       setCompatibility({});
       return;
     }
@@ -333,7 +284,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           .filter((provider) => byProvider[provider].length > 0)
           .map((provider) =>
             fetchLatestModVersions(provider, byProvider[provider], {
-              minecraftVersion: metadata.desiredMcVersion || undefined,
+              minecraftVersion: targetVersion,
               loader: resolvedLoader,
             }).then((list) => ({ provider, list })),
           ),
@@ -357,100 +308,49 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [metadata.desiredMcVersion, configuredMods, resolvedLoader]);
+  }, [targetVersion, configuredMods, resolvedLoader]);
 
-  const handleSaveDesiredVersion = async () => {
-    setSavingDesiredVersion(true);
-    const requestToken = beginMetadataRequest();
+  // Notes are stored as a whole map, so the save is also what prunes: a note whose mod is
+  // no longer configured is simply not in what gets sent. Blank drafts drop out too.
+  const collectNotes = (drafts: Record<string, string>): Record<string, string> => {
+    const live = new Set(configuredMods.map((mod) => mod.entry.ref.toLowerCase()));
+    return Object.fromEntries(Object.entries(drafts).filter(([ref, note]) => live.has(ref) && note.trim().length > 0));
+  };
+
+  const applySaved = (saved: ServerConfig) => {
+    // Keep the page's copy of the config in step, or the next whole-form save from
+    // another tab would PUT the stale notes back over these.
+    updateConfig('modNotes', saved.modNotes);
+    updateConfig('modWatchTargetVersion', saved.modWatchTargetVersion);
+  };
+
+  const handleSaveTargetVersion = async () => {
+    setSavingTargetVersion(true);
     try {
-      const next = await updateDesiredVersion(serverId, desiredVersionInput.trim() || null);
-      applyMetadataFor(requestToken, next);
+      applySaved(await updateModWatch(serverId, { targetVersion: targetVersionInput.trim() || null }));
       mcToast.success(t('save'));
     } catch (error) {
-      console.error('Error saving desired version:', error);
+      console.error('Error saving the target version:', error);
       mcToast.error(t('error'));
     } finally {
-      setSavingDesiredVersion(false);
+      setSavingTargetVersion(false);
     }
   };
 
   const handleNoteChange = (ref: string, value: string) => {
     const key = ref.toLowerCase();
-    setNoteDrafts((prev) => ({ ...prev, [key]: value }));
+    const drafts = { ...noteDrafts, [key]: value };
+    setNoteDrafts(drafts);
 
     if (noteTimers.current[key]) clearTimeout(noteTimers.current[key]);
     noteTimers.current[key] = setTimeout(() => {
-      const requestToken = beginMetadataRequest();
-      updateModNote(serverId, key, value)
-        .then((next) => applyMetadataFor(requestToken, next))
-        .catch((error) => console.error('Error saving mod note:', error));
+      updateModWatch(serverId, { notes: collectNotes(drafts) })
+        .then(applySaved)
+        .catch((error) => {
+          console.error('Error saving mod note:', error);
+          mcToast.error(t('error'));
+        });
     }, 600);
-  };
-
-  const openModsBrowser = (provider: ModProvider) => {
-    setModsBrowserProvider(provider);
-    setShowModsBrowser(true);
-  };
-
-  const handleQueueRemoveEntry = (provider: ModProvider, entry: ModEntry, label: string) => {
-    const requestToken = beginMetadataRequest();
-    queueModChange(serverId, { provider, ref: entry.ref, action: 'remove', label })
-      .then((next) => applyMetadataFor(requestToken, next))
-      .catch((error) => {
-        console.error('Error queueing mod removal:', error);
-        mcToast.error(t('error'));
-      });
-  };
-
-  const handleCancelQueued = (provider: ModProvider, ref: string) => {
-    const requestToken = beginMetadataRequest();
-    cancelQueuedModChange(serverId, provider, ref)
-      .then((next) => applyMetadataFor(requestToken, next))
-      .catch((error) => {
-        console.error('Error cancelling queued mod change:', error);
-        mcToast.error(t('error'));
-      });
-  };
-
-  const isAddedInBrowser = (mod: ModSearchItem): boolean => {
-    const candidates = [mod.slug.toLowerCase(), mod.projectId.toLowerCase()];
-    const isLive = configuredMods.some((entry) => entry.provider === modsBrowserProvider && candidates.includes(entry.entry.ref.toLowerCase()));
-    const isPendingAdd = metadata.pendingChanges.some(
-      (change) => change.provider === modsBrowserProvider && change.action === 'add' && candidates.includes(change.ref.toLowerCase()),
-    );
-    return isLive || isPendingAdd;
-  };
-
-  // Runs the network call in the background and returns the optimistic status the
-  // dialog needs immediately for its toast — reconciles `metadata` when the response lands.
-  const handleToggleFromBrowser = (mod: ModSearchItem, insertAs: 'slug' | 'id', version?: string): 'added' | 'removed' | 'noop' => {
-    const ref = insertAs === 'id' ? mod.projectId : mod.slug;
-    const isLive = configuredMods.some((entry) => entry.provider === modsBrowserProvider && entry.entry.ref.toLowerCase() === ref.toLowerCase());
-    const pendingAdd = metadata.pendingChanges.find(
-      (change) => change.provider === modsBrowserProvider && change.action === 'add' && change.ref.toLowerCase() === ref.toLowerCase(),
-    );
-
-    if (isLive) {
-      const requestToken = beginMetadataRequest();
-      queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'remove', label: mod.name })
-        .then((next) => applyMetadataFor(requestToken, next))
-        .catch((error) => console.error('Error queueing mod removal:', error));
-      return 'removed';
-    }
-
-    if (pendingAdd) {
-      const requestToken = beginMetadataRequest();
-      cancelQueuedModChange(serverId, modsBrowserProvider, ref)
-        .then((next) => applyMetadataFor(requestToken, next))
-        .catch((error) => console.error('Error cancelling queued mod add:', error));
-      return 'removed';
-    }
-
-    const requestToken = beginMetadataRequest();
-    queueModChange(serverId, { provider: modsBrowserProvider, ref, action: 'add', version, label: mod.name })
-      .then((next) => applyMetadataFor(requestToken, next))
-      .catch((error) => console.error('Error queueing mod add:', error));
-    return 'added';
   };
 
   // CurseForge has no batch changelog endpoint, so each version needs its own request; capping
@@ -487,10 +387,15 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
     return targetIndex < currentIndex ? full.slice(targetIndex, currentIndex) : [];
   };
 
+  // Opening another dialog (or switching servers) before a request resolves must not let
+  // that request's result land in what is now a different dialog.
+  const changelogRequestRef = useRef(0);
+  useEffect(() => {
+    changelogRequestRef.current += 1;
+  }, [serverId]);
+
   const handleViewChangelog = async (provider: ModProvider, entry: ModEntry, label: string) => {
     const ref = entry.ref.toLowerCase();
-    // Opening another dialog (or switching servers) before this request resolves must not let
-    // this request's result land in what is now a different dialog.
     const requestToken = ++changelogRequestRef.current;
     setChangelogState({
       open: true,
@@ -499,7 +404,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
       label,
       loading: true,
       sameVersion: { status: 'no-target', segments: [] },
-      targetVersion: { status: 'no-desired-version', segments: [] },
+      targetVersion: { status: 'no-target-version', segments: [] },
     });
 
     try {
@@ -514,11 +419,11 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
             ? { status: 'up-to-date', segments: [] }
             : { status: 'has-updates', segments: await buildChangelogSegments(provider, entry.ref, sameVersionRange) };
 
-      let targetVersion: ChangelogLane = { status: 'no-desired-version', segments: [] };
-      if (metadata.desiredMcVersion) {
+      let targetVersionLane: ChangelogLane = { status: 'no-target-version', segments: [] };
+      if (targetVersion) {
         const targetVersionId = compatibility[`${provider}:${ref}`]?.versionId;
         const targetRange = sliceRange(full, entry, targetVersionId);
-        targetVersion =
+        targetVersionLane =
           targetRange === null
             ? { status: 'no-target', segments: [] }
             : targetRange.length === 0
@@ -527,7 +432,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
       }
 
       if (requestToken !== changelogRequestRef.current) return;
-      setChangelogState((prev) => (prev ? { ...prev, loading: false, sameVersion, targetVersion } : prev));
+      setChangelogState((prev) => (prev ? { ...prev, loading: false, sameVersion, targetVersion: targetVersionLane } : prev));
     } catch (error) {
       console.error('Error loading changelog history:', error);
       if (requestToken !== changelogRequestRef.current) return;
@@ -549,67 +454,49 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           <CardDescription className="text-gray-400">{t('modWatchDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => openModsBrowser('modrinth')}
-              className="h-8 gap-1 border-blue-500/50 bg-blue-600/20 text-xs text-blue-300 hover:bg-blue-500/30 hover:text-blue-200"
-            >
-              <Search className="h-3.5 w-3.5" />
-              {t('searchMods')} · Modrinth
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => openModsBrowser('curseforge')}
-              className="h-8 gap-1 border-emerald-500/50 bg-emerald-600/20 text-xs text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200"
-            >
-              <Search className="h-3.5 w-3.5" />
-              {t('searchMods')} · CurseForge
-            </Button>
+          <div className="space-y-2 rounded-md border border-gray-700/50 bg-gray-800/50 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-[220px] flex-1 space-y-1">
+                <Label htmlFor="mod-watch-target-version" className="font-minecraft text-sm text-gray-200">
+                  {t('modWatchTargetVersion')}
+                </Label>
+                <Input
+                  id="mod-watch-target-version"
+                  value={targetVersionInput}
+                  onChange={(event) => setTargetVersionInput(event.target.value)}
+                  placeholder="1.21.4"
+                  className="bg-gray-900/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+                />
+                <p className="text-xs text-gray-400">{t('modWatchTargetVersionDesc')}</p>
+              </div>
+              <Button
+                type="button"
+                onClick={handleSaveTargetVersion}
+                disabled={savingTargetVersion}
+                className="h-9 border border-emerald-500/40 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200"
+              >
+                {savingTargetVersion ? t('saving') : t('save')}
+              </Button>
+            </div>
+
+            {/* itzg resolves the version from the Modrinth list at startup when this is on, so
+                say so rather than let the box look like it is doing the same job. */}
+            {config.versionFromModrinthProjects && (
+              <div className="flex items-start gap-2 border-t border-gray-700/50 pt-2 text-xs text-gray-400">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
+                <span>{t('modWatchVersionFromModsHint')}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-end gap-3 rounded-md border border-gray-700/50 bg-gray-800/50 p-4">
-            <div className="min-w-[220px] flex-1 space-y-1">
-              <Label htmlFor="desired-mc-version" className="font-minecraft text-sm text-gray-200">
-                {t('desiredMcVersion')}
-              </Label>
-              <Input
-                id="desired-mc-version"
-                value={desiredVersionInput}
-                onChange={(event) => setDesiredVersionInput(event.target.value)}
-                placeholder="1.21.4"
-                className="bg-gray-900/70 border-gray-700/50 text-gray-200 focus:border-emerald-500/50 focus:ring-emerald-500/30"
-              />
-              <p className="text-xs text-gray-400">{t('desiredMcVersionDesc')}</p>
-            </div>
-            <Button
-              type="button"
-              onClick={handleSaveDesiredVersion}
-              disabled={savingDesiredVersion}
-              className="h-9 border border-emerald-500/40 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200"
-            >
-              {savingDesiredVersion ? t('saving') : t('save')}
-            </Button>
-          </div>
-
-          {metadata.pendingChanges.length > 0 && (
-            <div className="rounded-md border border-sky-700/50 bg-sky-950/20 px-4 py-2 text-xs text-sky-300">
-              {t('modWatchPendingBanner').replace('{count}', String(metadata.pendingChanges.length))}
-            </div>
-          )}
-
-          {displayRows.length === 0 && manualEntries.length === 0 ? (
+          {configuredMods.length === 0 && manualEntries.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-700/60 bg-gray-900/30 px-4 py-8 text-center">
               <p className="font-minecraft text-sm text-gray-300">{t('modWatchEmpty')}</p>
               <p className="text-xs text-gray-500">{t('modWatchEmptyHint')}</p>
             </div>
           ) : (
             <div className="space-y-1.5">
-              {displayRows.map(({ provider, entry, pending }) => {
+              {configuredMods.map(({ provider, entry }) => {
                 const detail = details[`${provider}:${entry.ref.toLowerCase()}`];
                 const compatible = compatibility[`${provider}:${entry.ref.toLowerCase()}`];
                 const sameVersionUpdate = sameVersionLatest[`${provider}:${entry.ref.toLowerCase()}`];
@@ -617,18 +504,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                 // never "behind" — only a pinned entry can meaningfully have an update available.
                 const hasSameVersionUpdate = Boolean(entry.version && sameVersionUpdate && sameVersionUpdate.versionId !== entry.version);
                 const noteKey = entry.ref.toLowerCase();
-                const isPendingRemove = pending?.action === 'remove';
-                const isLive = configuredMods.some((mod) => mod.provider === provider && mod.entry.ref.toLowerCase() === entry.ref.toLowerCase());
-                const isPlaceholder = pending?.action === 'add' && !isLive;
-                const displayName = detail?.name ?? pending?.label ?? entry.ref;
+                const displayName = detail?.name ?? entry.ref;
 
                 return (
-                  <div
-                    key={`${provider}-${entry.ref}`}
-                    className={`flex flex-wrap items-start gap-3 border-2 px-3 py-2.5 ${
-                      isPlaceholder ? 'border-sky-700/60 bg-sky-950/20' : isPendingRemove ? 'border-amber-700/60 bg-amber-950/10' : 'border-[var(--mc-frame)] bg-gray-900/50'
-                    }`}
-                  >
+                  <div key={`${provider}-${entry.ref}`} className="flex flex-wrap items-start gap-3 border-2 border-[var(--mc-frame)] bg-gray-900/50 px-3 py-2.5">
                     {detail?.iconUrl ? (
                       <Image src={detail.iconUrl} alt={displayName} width={32} height={32} className="h-8 w-8 shrink-0 object-cover" />
                     ) : (
@@ -642,37 +521,25 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                       </p>
 
                       <div className="flex flex-wrap gap-1.5">
-                        {isPlaceholder && (
-                          <Badge variant="outline" className="border-sky-600 text-sky-300">
-                            {t('modWatchQueuedAdd')}
-                          </Badge>
-                        )}
-                        {isPendingRemove && (
-                          <Badge variant="outline" className="border-amber-600 text-amber-300">
-                            {t('modWatchQueuedRemove')}
-                          </Badge>
-                        )}
-
-                        {!isPlaceholder && provider === 'modrinth' && entry.optional && (
+                        {provider === 'modrinth' && entry.optional && (
                           <Badge variant="outline" className="border-violet-600 text-violet-300" title={t('modOptionalHelp')}>
                             {t('modOptional')}
                           </Badge>
                         )}
 
-                        {!isPlaceholder &&
-                          (checkingSameVersion ? (
-                            <Badge variant="outline" className="border-gray-600 text-gray-400">
-                              {t('loading')}
+                        {checkingSameVersion ? (
+                          <Badge variant="outline" className="border-gray-600 text-gray-400">
+                            {t('loading')}
+                          </Badge>
+                        ) : (
+                          hasSameVersionUpdate && (
+                            <Badge variant="outline" className="border-sky-600 text-sky-300">
+                              {t('modUpdateAvailable')}
                             </Badge>
-                          ) : (
-                            hasSameVersionUpdate && (
-                              <Badge variant="outline" className="border-sky-600 text-sky-300">
-                                {t('modUpdateAvailable')}
-                              </Badge>
-                            )
-                          ))}
+                          )
+                        )}
 
-                        {!isPlaceholder && metadata.desiredMcVersion && (
+                        {targetVersion && (
                           <Badge
                             variant="outline"
                             className={
@@ -687,9 +554,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                           </Badge>
                         )}
                       </div>
-                      {!isPlaceholder && !metadata.desiredMcVersion && (
-                        <p className="text-[11px] text-gray-500">{t('modCompatibilityUnknown')}</p>
-                      )}
+                      {!targetVersion && <p className="text-[11px] text-gray-500">{t('modCompatibilityUnknown')}</p>}
                     </div>
 
                     <Textarea
@@ -699,44 +564,16 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
                       className="min-h-16 min-w-[200px] flex-1 basis-64 bg-gray-800/70 border-gray-700/50 text-gray-200 text-xs"
                     />
 
-                    <div className="flex shrink-0 items-center gap-2">
-                      {!isPlaceholder && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewChangelog(provider, entry, displayName)}
-                          className="h-8 gap-1 border-gray-700/50 bg-gray-800/70 text-xs text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                          {t('viewChangelog')}
-                        </Button>
-                      )}
-
-                      {isPlaceholder || isPendingRemove ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCancelQueued(provider, entry.ref)}
-                          className="h-8 gap-1 border-gray-700/50 bg-gray-800/70 text-xs text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
-                        >
-                          <Undo2 className="h-3.5 w-3.5" />
-                          {t('modWatchUndo')}
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          title={t('removeMod')}
-                          onClick={() => handleQueueRemoveEntry(provider, entry, displayName)}
-                          className="h-8 w-8 shrink-0 bg-transparent text-gray-500 hover:bg-rose-900/30 hover:text-rose-400"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewChangelog(provider, entry, displayName)}
+                      className="h-8 shrink-0 gap-1 border-gray-700/50 bg-gray-800/70 text-xs text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      {t('viewChangelog')}
+                    </Button>
                   </div>
                 );
               })}
@@ -755,16 +592,6 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config }) => {
           )}
         </CardContent>
       </Card>
-
-      <ModsBrowserDialog
-        open={showModsBrowser}
-        onClose={() => setShowModsBrowser(false)}
-        provider={modsBrowserProvider}
-        minecraftVersion={effectiveMinecraftVersion}
-        loader={resolvedLoader}
-        isAdded={isAddedInBrowser}
-        onToggle={handleToggleFromBrowser}
-      />
 
       <Dialog open={changelogState?.open ?? false} onOpenChange={(open) => !open && setChangelogState(null)}>
         <DialogContent className="max-h-[80vh] w-[min(92vw,42rem)] overflow-y-auto bg-gray-900 border border-gray-700 text-white">

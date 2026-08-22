@@ -22,7 +22,6 @@ import { ModpacksModule } from './modpacks/modpacks.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { ScheduledTasksModule } from './scheduled-tasks/scheduled-tasks.module';
 import { AlertsModule } from './alerts/alerts.module';
-import { ModMetadataModule } from './mod-metadata/mod-metadata.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -47,7 +46,6 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     MetricsModule,
     ScheduledTasksModule,
     AlertsModule,
-    ModMetadataModule,
     FilesModule,
     ProxyModule,
   ],

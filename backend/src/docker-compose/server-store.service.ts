@@ -42,6 +42,8 @@ export class ServerStoreService {
   // The panel is the only writer, but two requests can still race, so index
   // writes are serialised through this chain.
   private indexWrites: Promise<unknown> = Promise.resolve();
+  // Same reasoning as `indexWrites`, for partial updates to a single server.json.
+  private configWrites: Promise<unknown> = Promise.resolve();
   // Only to keep two temp files in the same directory apart.
   private tempWrites = 0;
 
@@ -82,6 +84,30 @@ export class ServerStoreService {
     await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
     await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
     await this.upsertIndexEntry(config);
+  }
+
+  /**
+   * Read-modify-write of one `server.json`, serialised against every other call here.
+   *
+   * A plain read-then-write loses one of two updates that overlap, and the panel does
+   * issue overlapping partial writes — two debounced note edits landing together, for
+   * instance. Anything updating a subset of a server's config should go through this
+   * rather than reading, mutating and writing on its own.
+   *
+   * Returns null when the server has no `server.json` yet.
+   */
+  async updateConfig(serverId: string, mutate: (config: ServerConfig) => void): Promise<ServerConfig | null> {
+    const run = this.configWrites.then(async () => {
+      const config = await this.readConfig(serverId);
+      if (!config) return null;
+      mutate(config);
+      await this.writeConfig(config);
+      return config;
+    });
+    // Keep the chain alive even when this call throws, or one failure would reject
+    // every write queued behind it.
+    this.configWrites = run.catch(() => undefined);
+    return run;
   }
 
   // `active` and `serverExists` are probed from the filesystem on every read, so

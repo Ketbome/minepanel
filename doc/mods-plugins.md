@@ -159,38 +159,34 @@ Minepanel adds a **Mod Watch** tab that stays available even while the server is
   with its version. Manual entries (raw URLs, `@file` references) are listed separately, read-only —
   there's no ref to search or diff for those
 - A free-text **note** per mod, saved automatically and independent of the docker-compose config
-- A **desired Minecraft version** for the whole server — a single target version you're considering
-  upgrading to, used only to check mod compatibility ahead of time. It does not change the server's
-  live version
-- A compatibility badge per mod against the desired version, once one is set
+- A **target Minecraft version** for the whole server — a single version you're considering moving
+  to, used only to check mod compatibility ahead of time. It does not change the version the server
+  runs. If **Set version from mods** (`VERSION_FROM_MODRINTH_PROJECTS`) is enabled, the tab says so:
+  itzg already resolves the newest version all your non-optional Modrinth mods support at startup,
+  so this box is for evaluating a *different* target, and for CurseForge lists that flag doesn't cover
+- A compatibility badge per mod against the target version, once one is set
 - An on-demand **changelog history** per mod, split into the two kinds of update you'd actually
   decide between:
   - **Same-version updates** — newer builds released for the Minecraft version the server is
     already running (bug fixes and feature releases that don't require a version bump)
-  - **Minecraft version updates** — builds released for the desired version you're watching,
+  - **Minecraft version updates** — builds released for the target version you're watching,
     which may pull in a larger set of changes since it usually also means jumping several
     same-version releases at once
   Each lane concatenates every intervening version's changelog, newest first, so you see
   everything you'd pick up rather than just the latest entry
 
-### Queuing mod add/remove
+### What it does not do
 
-**Search mods** buttons open the same search dialog the Mods tab uses, but instead of editing
-`CURSEFORGE_FILES`/`MODRINTH_PROJECTS` directly, adding or removing a mod here **queues** the
-change. Queued adds show up immediately as a placeholder row ("Queued — added on next restart");
-queued removals stay visible with a "Queued for removal" badge until they take effect, and either
-can be undone before that happens.
-
-The queue is applied automatically the next time the server actually starts — a manual start, a
-restart, or a scheduled-task restart all trigger it — never before. Nothing is pre-downloaded when
-you queue a change: itzg still resolves and downloads mods at container start exactly as it always
-has, so queuing while the server is stopped has no effect until you start it.
+Mod Watch is read-only with respect to your mod list. It never adds, removes, or updates a mod —
+the **Mods** tab is the only thing that edits `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`, so there is
+exactly one writer and one source of truth for which mods a server runs.
 
 ### Where this data is stored
 
-Notes, the desired version, and the pending queue are stored in `servers/<server-id>/mod-metadata.json`,
-separate from `docker-compose.yml`. Deleting a server removes this file with it; it has no effect on
-server startup or mod resolution beyond applying whatever was still queued at the next start.
+Notes and the target version are fields on `servers/<server-id>/server.json` (`modNotes` and
+`modWatchTargetVersion`), alongside the rest of the server's config rather than in a file of their
+own. Cloning a server carries them; deleting a server removes them with it. Neither field reaches
+the generated `docker-compose.yml`, so neither has any effect on server startup or mod resolution.
 
 ---
 

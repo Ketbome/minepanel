@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -10,13 +10,12 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
-import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
+import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
-import { ModMetadataService } from 'src/mod-metadata/mod-metadata.service';
 
 const execAsync = promisify(exec);
 
@@ -120,7 +119,6 @@ export class ServerManagementService {
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly composeService: DockerComposeService,
-    private readonly modMetadataService: ModMetadataService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
@@ -129,29 +127,33 @@ export class ServerManagementService {
     fs.ensureDirSync(this.getGlobalWorldsPath());
   }
 
-  // Applies any mods queued from the Mod Watch tab into CURSEFORGE_FILES/MODRINTH_PROJECTS right
-  // before the container comes up, so the queue always reflects "at the next restart" regardless
-  // of which path triggered it (manual start, restart, or a scheduled task). Never throws — a
-  // failure here should not block the actual start; it just leaves the queue for next time.
-  private async applyPendingModQueue(serverId: string): Promise<void> {
-    try {
-      const queue = await this.modMetadataService.peekPendingQueue(serverId);
-      if (queue.length === 0) return;
+  /**
+   * Writes the Mod Watch annotations — per-mod notes and the version being evaluated.
+   *
+   * Deliberately does not go through `DockerComposeService.updateServerConfig`: that
+   * regenerates the compose file, and regeneration re-runs `ensurePortAvailable`. Mod Watch
+   * is the one tab that stays usable while the server is running, so typing in a note box
+   * must not be able to move a running server's published port. Neither field is compose
+   * input, so writing `server.json` directly is the whole job.
+   */
+  async updateModWatch(serverId: string, update: { targetVersion?: string | null; notes?: Record<string, string> }): Promise<ServerConfig> {
+    const config = await this.store.updateConfig(serverId, (current) => {
+      if (update.targetVersion !== undefined) {
+        const trimmed = update.targetVersion?.trim();
+        current.modWatchTargetVersion = trimmed ? trimmed : undefined;
+      }
+      if (update.notes !== undefined) {
+        // Notes arrive as the whole map, already pruned to the mods still configured, so
+        // dropping an entry is how a note for a removed mod stops being stored.
+        const kept = Object.entries(update.notes).filter(([, note]) => note.trim().length > 0);
+        current.modNotes = kept.length > 0 ? Object.fromEntries(kept) : undefined;
+      }
+    });
 
-      const config = await this.composeService.getServerConfig(serverId);
-      if (!config) return;
-
-      const { cfFiles, modrinthProjects } = this.modMetadataService.applyQueueToConfig(config.cfFiles ?? '', config.modrinthProjects ?? '', queue);
-      const userSettings = await this.getUserSettings();
-      const proxyEnabled = userSettings.proxyEnabled && !!userSettings.proxyBaseDomain;
-      await this.composeService.updateServerConfig(serverId, { cfFiles, modrinthProjects }, proxyEnabled);
-      // Only clear the entries we actually applied, now that the write succeeded — a failed
-      // updateServerConfig above throws and leaves the whole queue for the next attempt.
-      await this.modMetadataService.acknowledgeQueue(serverId, queue);
-      this.logger.log(`Applied ${queue.length} queued mod change(s) for server ${serverId}`);
-    } catch (error) {
-      this.logger.error(`Failed to apply pending mod queue for server ${serverId}`, error);
+    if (!config) {
+      throw new NotFoundException(`Server with ID "${serverId}" not found`);
     }
+    return config;
   }
 
   private validateServerId(serverId: string): boolean {
@@ -771,7 +773,6 @@ export class ServerManagementService {
       await this.refreshComposeFile(serverId);
 
       this.alertsService.markExpectedStop(serverId);
-      await this.applyPendingModQueue(serverId);
       await this.execComposeDown(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
@@ -1535,8 +1536,6 @@ export class ServerManagementService {
       if (edition === 'BEDROCK') {
         await this.fixBedrockPermissions(serverId);
       }
-
-      await this.applyPendingModQueue(serverId);
 
       if ((await this.getServerStatus(serverId)) !== 'not_found') {
         await this.execComposeDown(serverId);

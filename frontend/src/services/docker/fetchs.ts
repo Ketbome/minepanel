@@ -21,6 +21,17 @@ export const updateServerConfig = async (serverId: string, config: Partial<Serve
   return response.data;
 };
 
+// Mod Watch annotations only. Separate from updateServerConfig because this endpoint writes
+// server.json without regenerating the compose file, which is what makes it safe to use while
+// the server is running. `notes` is the whole map: send it pruned to the mods still configured.
+export const updateModWatch = async (
+  serverId: string,
+  update: { targetVersion?: string | null; notes?: Record<string, string> },
+): Promise<ServerConfig> => {
+  const response = await api.put(`/servers/${serverId}/mod-watch`, update);
+  return response.data;
+};
+
 export const getServerWorlds = async (serverId: string): Promise<AvailableWorld[]> => {
   const response = await api.get(`/servers/${serverId}/worlds`);
   return response.data;
