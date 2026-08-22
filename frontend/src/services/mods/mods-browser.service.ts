@@ -179,3 +179,10 @@ export const fetchModCategories = async (
   });
   return response.data.data;
 };
+
+// Modrinth returns a version's changelog inline with the version, so only CurseForge
+// needs a call of its own — one per file id.
+export const fetchCurseforgeChangelog = async (ref: string, fileId: string): Promise<string | null> => {
+  const response = await api.get<{ changelog: string | null }>(`/curseforge/mods/${encodeURIComponent(ref)}/files/${encodeURIComponent(fileId)}/changelog`);
+  return response.data.changelog;
+};

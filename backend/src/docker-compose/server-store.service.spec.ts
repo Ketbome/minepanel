@@ -117,6 +117,54 @@ describe('ServerStoreService', () => {
     });
   });
 
+  describe('updateConfig', () => {
+    it('applies a partial change and leaves the rest of the config alone', async () => {
+      await service.writeConfig(config('survival', { maxPlayers: '42' }));
+
+      const updated = await service.updateConfig('survival', (current) => {
+        current.modNotes = { sodium: 'waiting on Iris' };
+      });
+
+      expect(updated?.maxPlayers).toBe('42');
+      expect((await service.readConfig('survival'))?.modNotes).toEqual({ sodium: 'waiting on Iris' });
+    });
+
+    it('returns null for a server that has no server.json', async () => {
+      expect(await service.updateConfig('missing', () => {})).toBeNull();
+    });
+
+    it('does not lose either of two overlapping updates', async () => {
+      await service.writeConfig(config('survival'));
+
+      // Unserialised, both callers read the same config and the second write wins,
+      // silently discarding the first note. This is the case the chain exists for.
+      await Promise.all([
+        service.updateConfig('survival', (current) => {
+          current.modNotes = { ...(current.modNotes ?? {}), sodium: 'first' };
+        }),
+        service.updateConfig('survival', (current) => {
+          current.modNotes = { ...(current.modNotes ?? {}), jei: 'second' };
+        }),
+      ]);
+
+      expect((await service.readConfig('survival'))?.modNotes).toEqual({ sodium: 'first', jei: 'second' });
+    });
+
+    it('keeps serving later updates after one of them throws', async () => {
+      await service.writeConfig(config('survival'));
+
+      const failed = service.updateConfig('survival', () => {
+        throw new Error('mutator blew up');
+      });
+      const next = service.updateConfig('survival', (current) => {
+        current.modWatchTargetVersion = '1.21.4';
+      });
+
+      await expect(failed).rejects.toThrow('mutator blew up');
+      expect((await next)?.modWatchTargetVersion).toBe('1.21.4');
+    });
+  });
+
   describe('index', () => {
     it('carries the fields the dashboard and the proxy routes need', async () => {
       await service.writeConfig(

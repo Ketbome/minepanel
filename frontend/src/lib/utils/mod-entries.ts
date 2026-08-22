@@ -1,8 +1,8 @@
 import type { ModProvider } from "@/services/mods/mods-browser.service";
 
-// Mirrored in backend/src/mod-metadata/mod-entries.util.ts — backend and frontend are
-// separate npm projects with no shared package, so this is a deliberate port rather
-// than an import. Keep both copies (and mod-entries.util.spec.ts) in sync by hand.
+// The only parser for CURSEFORGE_FILES / MODRINTH_PROJECTS entries. The backend stores
+// those fields verbatim and hands them to itzg, so it has no reason to parse them —
+// keep it that way rather than porting a second copy that can drift.
 
 // itzg accepts a prefix so a project can target something other than the server
 // TYPE. Whitelisted because "fabric:fabric-api" (prefix + slug) and

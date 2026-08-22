@@ -36,7 +36,6 @@ import { AlertsService } from '../alerts/alerts.service';
 import { ServerStoreService } from '../docker-compose/server-store.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { InstanceSettingsService } from '../settings/instance-settings.service';
-import { ModMetadataService } from '../mod-metadata/mod-metadata.service';
 import * as fs from 'fs-extra';
 
 // Get the mocked promisify result
@@ -45,9 +44,9 @@ const mockExec = jest.requireMock('node:util').promisify();
 describe('ServerManagementService', () => {
   let service: ServerManagementService;
   let mockDockerComposeService: { getServerConfig: jest.Mock; updateServerConfig: jest.Mock; refreshComposeFile: jest.Mock };
-  let mockModMetadataService: { peekPendingQueue: jest.Mock; applyQueueToConfig: jest.Mock; acknowledgeQueue: jest.Mock };
   let mockSettingsRepo: { findOne: jest.Mock };
   let mockInstanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock };
+  let mockStore: { removeFromIndex: jest.Mock; updateConfig: jest.Mock; readConfig: jest.Mock };
 
   const SERVERS_DIR = '/app/servers';
 
@@ -80,15 +79,20 @@ describe('ServerManagementService', () => {
       refreshComposeFile: jest.fn().mockResolvedValue(true),
     };
 
+    mockStore = {
+      removeFromIndex: jest.fn().mockResolvedValue(undefined),
+      readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }),
+      // Mirrors the real store: hand the mutator a config, return what it produced.
+      updateConfig: jest.fn(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver' } as any;
+        mutate(config);
+        return config;
+      }),
+    };
+
     mockInstanceSettings = {
       getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
       getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
-    };
-
-    mockModMetadataService = {
-      peekPendingQueue: jest.fn().mockResolvedValue([]),
-      applyQueueToConfig: jest.fn().mockReturnValue({ cfFiles: '', modrinthProjects: '' }),
-      acknowledgeQueue: jest.fn().mockResolvedValue(undefined),
     };
 
     (fs.ensureDirSync as jest.Mock).mockImplementation(() => {});
@@ -101,10 +105,9 @@ describe('ServerManagementService', () => {
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
-        { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) } },
+        { provide: ServerStoreService, useValue: mockStore },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: InstanceSettingsService, useValue: mockInstanceSettings },
-        { provide: ModMetadataService, useValue: mockModMetadataService },
       ],
     }).compile();
 
@@ -202,6 +205,45 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('updateModWatch', () => {
+    it('writes notes and the target version without regenerating the compose file', async () => {
+      const config = await service.updateModWatch('myserver', { targetVersion: ' 1.21.4 ', notes: { sodium: 'waiting on Iris' } });
+
+      expect(config.modWatchTargetVersion).toBe('1.21.4');
+      expect(config.modNotes).toEqual({ sodium: 'waiting on Iris' });
+      // The whole point of the separate path: Mod Watch is usable while the server runs,
+      // and regenerating compose there can reassign the published port.
+      expect(mockDockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(mockDockerComposeService.refreshComposeFile).not.toHaveBeenCalled();
+    });
+
+    it('drops blank notes and clears an emptied target version', async () => {
+      const config = await service.updateModWatch('myserver', { targetVersion: '', notes: { sodium: '   ', jei: 'keep' } });
+
+      expect(config.modWatchTargetVersion).toBeUndefined();
+      expect(config.modNotes).toEqual({ jei: 'keep' });
+    });
+
+    it('leaves a field alone when it is not in the request', async () => {
+      mockStore.updateConfig.mockImplementation(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver', modWatchTargetVersion: '1.20.1', modNotes: { sodium: 'existing' } } as any;
+        mutate(config);
+        return config;
+      });
+
+      const config = await service.updateModWatch('myserver', { notes: {} });
+
+      expect(config.modWatchTargetVersion).toBe('1.20.1');
+      expect(config.modNotes).toBeUndefined();
+    });
+
+    it('throws when the server has no server.json', async () => {
+      mockStore.updateConfig.mockResolvedValue(null);
+
+      await expect(service.updateModWatch('ghost', { notes: {} })).rejects.toThrow('not found');
+    });
+  });
+
   describe('startServer', () => {
     it('should fail for invalid server ID', async () => {
       const result = await service.startServer('invalid;id');
@@ -216,72 +258,9 @@ describe('ServerManagementService', () => {
       expect(result).toBe(false);
     });
 
-    it('should apply a pending mod queue before starting', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['world']);
-      mockExec.mockResolvedValue({ stdout: '' });
 
-      const queue = [{ provider: 'modrinth' as const, ref: 'sodium', action: 'add' as const, version: 'v1', label: 'Sodium' }];
-      mockModMetadataService.peekPendingQueue.mockResolvedValue(queue);
-      mockDockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver', cfFiles: '', modrinthProjects: '' });
-      mockModMetadataService.applyQueueToConfig.mockReturnValue({ cfFiles: '', modrinthProjects: 'sodium:v1' });
 
-      const result = await service.startServer('myserver');
 
-      expect(result).toBe(true);
-      expect(mockModMetadataService.peekPendingQueue).toHaveBeenCalledWith('myserver');
-      expect(mockModMetadataService.applyQueueToConfig).toHaveBeenCalledWith('', '', queue);
-      expect(mockDockerComposeService.updateServerConfig).toHaveBeenCalledWith('myserver', { cfFiles: '', modrinthProjects: 'sodium:v1' }, false);
-      expect(mockModMetadataService.acknowledgeQueue).toHaveBeenCalledWith('myserver', queue);
-    });
-
-    it('should preserve an enabled proxy setting when applying a pending mod queue', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['world']);
-      mockExec.mockResolvedValue({ stdout: '' });
-
-      const queue = [{ provider: 'modrinth' as const, ref: 'sodium', action: 'add' as const, version: 'v1', label: 'Sodium' }];
-      mockModMetadataService.peekPendingQueue.mockResolvedValue(queue);
-      mockDockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver', cfFiles: '', modrinthProjects: '' });
-      mockModMetadataService.applyQueueToConfig.mockReturnValue({ cfFiles: '', modrinthProjects: 'sodium:v1' });
-      mockInstanceSettings.getProxy.mockResolvedValue({ enabled: true, baseDomain: 'example.com' });
-
-      const result = await service.startServer('myserver');
-
-      expect(result).toBe(true);
-      expect(mockDockerComposeService.updateServerConfig).toHaveBeenCalledWith('myserver', { cfFiles: '', modrinthProjects: 'sodium:v1' }, true);
-    });
-
-    it('does not acknowledge the queue when updateServerConfig fails', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['world']);
-      mockExec.mockResolvedValue({ stdout: '' });
-
-      const queue = [{ provider: 'modrinth' as const, ref: 'sodium', action: 'add' as const, version: 'v1', label: 'Sodium' }];
-      mockModMetadataService.peekPendingQueue.mockResolvedValue(queue);
-      mockDockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver', cfFiles: '', modrinthProjects: '' });
-      mockModMetadataService.applyQueueToConfig.mockReturnValue({ cfFiles: '', modrinthProjects: 'sodium:v1' });
-      mockDockerComposeService.updateServerConfig.mockRejectedValue(new Error('disk full'));
-
-      const result = await service.startServer('myserver');
-
-      // applyPendingModQueue swallows its own errors so a mod-queue failure never blocks startup.
-      expect(result).toBe(true);
-      expect(mockModMetadataService.acknowledgeQueue).not.toHaveBeenCalled();
-    });
-
-    it('should skip config updates when there is no pending mod queue', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['world']);
-      mockExec.mockResolvedValue({ stdout: '' });
-      mockModMetadataService.peekPendingQueue.mockResolvedValue([]);
-
-      const result = await service.startServer('myserver');
-
-      expect(result).toBe(true);
-      expect(mockDockerComposeService.getServerConfig).not.toHaveBeenCalled();
-      expect(mockDockerComposeService.updateServerConfig).not.toHaveBeenCalled();
-    });
   });
 
   describe('stopServer', () => {
@@ -312,38 +291,7 @@ describe('ServerManagementService', () => {
       expect(result).toBe(true);
     });
 
-    it('should apply a pending mod queue before restarting', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      mockExec.mockResolvedValue({ stdout: '' });
 
-      const queue = [{ provider: 'curseforge' as const, ref: 'jei', action: 'remove' as const, label: 'JEI' }];
-      mockModMetadataService.peekPendingQueue.mockResolvedValue(queue);
-      mockDockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver', cfFiles: 'jei:123', modrinthProjects: '' });
-      mockModMetadataService.applyQueueToConfig.mockReturnValue({ cfFiles: '', modrinthProjects: '' });
-
-      const result = await service.restartServer('myserver');
-
-      expect(result).toBe(true);
-      expect(mockModMetadataService.peekPendingQueue).toHaveBeenCalledWith('myserver');
-      expect(mockDockerComposeService.updateServerConfig).toHaveBeenCalledWith('myserver', { cfFiles: '', modrinthProjects: '' }, false);
-      expect(mockModMetadataService.acknowledgeQueue).toHaveBeenCalledWith('myserver', queue);
-    });
-
-    it('should preserve an enabled proxy setting when applying a pending mod queue on restart', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
-      mockExec.mockResolvedValue({ stdout: '' });
-
-      const queue = [{ provider: 'curseforge' as const, ref: 'jei', action: 'remove' as const, label: 'JEI' }];
-      mockModMetadataService.peekPendingQueue.mockResolvedValue(queue);
-      mockDockerComposeService.getServerConfig.mockResolvedValue({ id: 'myserver', cfFiles: 'jei:123', modrinthProjects: '' });
-      mockModMetadataService.applyQueueToConfig.mockReturnValue({ cfFiles: '', modrinthProjects: '' });
-      mockInstanceSettings.getProxy.mockResolvedValue({ enabled: true, baseDomain: 'example.com' });
-
-      const result = await service.restartServer('myserver');
-
-      expect(result).toBe(true);
-      expect(mockDockerComposeService.updateServerConfig).toHaveBeenCalledWith('myserver', { cfFiles: '', modrinthProjects: '' }, true);
-    });
   });
 
   describe('deleteServer', () => {

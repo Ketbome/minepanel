@@ -235,21 +235,21 @@ inline at no extra request cost.
 
 ### Mod Watch
 
-Per-server sidecar metadata backing the **Mod Watch** tab (notes, desired-version watcher, queued
-mod add/remove) — stored in `servers/<serverId>/mod-metadata.json`, independent of the
-docker-compose config:
+The **Mod Watch** tab's annotations live on the server's own config (`servers/<serverId>/server.json`)
+as `modNotes` and `modWatchTargetVersion`, so there is no second per-server state file and
+`POST /servers/:id/clone` carries them:
 
-- `GET /mod-metadata/:serverId`
-- `PUT /mod-metadata/:serverId/desired-version` — body `{ "desiredMcVersion": "1.21.4" | null }`
-- `PUT /mod-metadata/:serverId/notes/:ref` — body `{ "note": "..." }`; empty note deletes the entry
-- `POST /mod-metadata/:serverId/queue` — body `{ "provider": "curseforge"|"modrinth", "ref": "...", "action": "add"|"remove", "version"?: "...", "label": "..." }`; upserts by `(provider, ref)`
-- `DELETE /mod-metadata/:serverId/queue/:provider/:ref` — cancels a queued change
+- `PUT /servers/:id/mod-watch` — body `{ "targetVersion"?: "1.21.4" | null, "notes"?: { "<mod-ref>": "..." } }`
 
-Queued changes are applied into `CURSEFORGE_FILES`/`MODRINTH_PROJECTS` automatically the next time
-the server starts or restarts — see `ServerManagementService.applyPendingModQueue`, called from both
-`startServer` and `restartServer`. The proxy setting is preserved (read from settings, same as any
-other config update), and only the applied entries are cleared from the queue, and only after the
-compose config write succeeds — a failed write leaves the queue intact for the next attempt.
+`notes` is the complete map, not a patch: the tab sends it pruned to the mods still configured, which
+is how a note for a removed mod stops being stored. Blank notes are dropped, and `targetVersion: null`
+clears the watch. Omitting either field leaves it untouched.
+
+This is deliberately separate from `PUT /servers/:id`: that regenerates `docker-compose.yml`, and
+regeneration re-runs port allocation. Mod Watch is the one tab that stays usable while the server is
+running, so it writes `server.json` directly and never touches the compose file. Neither field is
+compose input. Access control and the `servers` audit log are the same as any other server config
+change (action `update_mod_watch`).
 
 ### World Discovery
 

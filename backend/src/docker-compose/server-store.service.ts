@@ -26,6 +26,7 @@ export class ServerStoreService {
   private readonly logger = new Logger(ServerStoreService.name);
   private readonly SERVERS_DIR: string;
   private indexWrites: Promise<unknown> = Promise.resolve();
+  private configWrites: Promise<unknown> = Promise.resolve();
   private tempWrites = 0;
 
   constructor(private readonly configService: ConfigService) {
@@ -61,6 +62,19 @@ export class ServerStoreService {
     await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
     await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
     await this.upsertIndexEntry(config);
+  }
+
+  // Serialised against configWrites so a partial update can't lose to an overlapping one.
+  async updateConfig(serverId: string, mutate: (config: ServerConfig) => void): Promise<ServerConfig | null> {
+    const run = this.configWrites.then(async () => {
+      const config = await this.readConfig(serverId);
+      if (!config) return null;
+      mutate(config);
+      await this.writeConfig(config);
+      return config;
+    });
+    this.configWrites = run.catch(() => undefined);
+    return run;
   }
 
   private stripDerived(config: ServerConfig): Omit<ServerConfig, 'active' | 'serverExists'> {

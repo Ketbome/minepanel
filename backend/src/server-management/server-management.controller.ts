@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadR
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
+import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -566,6 +567,25 @@ export class ServerManagementController {
     }
 
     await this.recordServerAudit(currentUser, 'update_server_config', id, `Updated server configuration for ${id}`);
+
+    return updatedConfig;
+  }
+
+  // Separate from PUT :id because this is the one config write that must not regenerate the
+  // compose file: the Mod Watch tab stays open while the server runs. Same access check and
+  // the same audit log as every other server config change.
+  @Put(':id/mod-watch')
+  async updateModWatch(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: UpdateModWatchDto,
+  ) {
+    const currentUser = await this.requireServerAccess(req, id);
+
+    const updatedConfig = await this.managementService.updateModWatch(id, body);
+
+    const changed = [body.notes !== undefined ? 'notes' : null, body.targetVersion !== undefined ? 'target version' : null].filter(Boolean).join(' and ');
+    await this.recordServerAudit(currentUser, 'update_mod_watch', id, `Updated Mod Watch ${changed || 'annotations'} for ${id}`);
 
     return updatedConfig;
   }
