@@ -1283,7 +1283,7 @@ export const fr: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Définissez une version souhaitée pour vérifier la compatibilité',
   viewChangelog: 'Voir le journal des modifications',
   changelogEmpty: 'Aucun journal de modifications fourni',
-  changelogUpToDate: 'Déjà à jour avec la dernière version',
+  modChangelogUpToDate: 'Déjà à jour avec la dernière version',
   changelogSameVersionTitle: 'Mises à jour de la même version',
   changelogMcVersionTitle: 'Mises à jour de version Minecraft',
   changelogNoDesiredVersion: 'Définissez une version souhaitée ci-dessus pour vérifier les mises à jour de version Minecraft',

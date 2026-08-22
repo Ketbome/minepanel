@@ -1281,7 +1281,7 @@ export const en = {
   modCompatibilityUnknown: 'Set a desired version to check compatibility',
   viewChangelog: 'View changelog',
   changelogEmpty: 'No changelog provided',
-  changelogUpToDate: 'Already on the newest version',
+  modChangelogUpToDate: 'Already on the newest version',
   changelogSameVersionTitle: 'Same-version updates',
   changelogMcVersionTitle: 'Minecraft version updates',
   changelogNoDesiredVersion: 'Set a desired version above to check for Minecraft version updates',

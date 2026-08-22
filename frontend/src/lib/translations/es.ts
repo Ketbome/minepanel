@@ -1446,7 +1446,7 @@ export const es: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Define una versión deseada para comprobar la compatibilidad',
   viewChangelog: 'Ver registro de cambios',
   changelogEmpty: 'No se proporcionó registro de cambios',
-  changelogUpToDate: 'Ya está en la versión más reciente',
+  modChangelogUpToDate: 'Ya está en la versión más reciente',
   changelogSameVersionTitle: 'Actualizaciones de la misma versión',
   changelogMcVersionTitle: 'Actualizaciones de versión de Minecraft',
   changelogNoDesiredVersion: 'Define una versión deseada arriba para comprobar actualizaciones de versión de Minecraft',

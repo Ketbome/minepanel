@@ -74,7 +74,7 @@ const sortNewestFirst = (versions: ModVersionItem[]): ModVersionItem[] =>
 const LANE_STATUS_MESSAGE: Record<Exclude<ChangelogLaneStatus, 'has-updates'>, TranslationKey> = {
   'no-desired-version': 'changelogNoDesiredVersion',
   'no-target': 'changelogNoCompatibleTarget',
-  'up-to-date': 'changelogUpToDate',
+  'up-to-date': 'modChangelogUpToDate',
 };
 
 const ChangelogLaneSection: FC<{ title: string; lane: ChangelogLane; t: (key: TranslationKey) => string }> = ({ title, lane, t }) => (

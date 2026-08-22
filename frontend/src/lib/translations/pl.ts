@@ -1282,7 +1282,7 @@ export const pl: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Ustaw docelową wersję, aby sprawdzić zgodność',
   viewChangelog: 'Pokaż dziennik zmian',
   changelogEmpty: 'Brak dziennika zmian',
-  changelogUpToDate: 'Już na najnowszej wersji',
+  modChangelogUpToDate: 'Już na najnowszej wersji',
   changelogSameVersionTitle: 'Aktualizacje w tej samej wersji',
   changelogMcVersionTitle: 'Aktualizacje wersji Minecrafta',
   changelogNoDesiredVersion: 'Ustaw powyżej docelową wersję, aby sprawdzić aktualizacje wersji Minecrafta',
