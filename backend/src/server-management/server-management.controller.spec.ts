@@ -420,6 +420,31 @@ describe('ServerManagementController', () => {
 
       expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
     });
+
+    // The panel submits the whole config it loaded on every save. A page opened before
+    // a note was written still holds the old modNotes, so letting PUT /servers/:id carry
+    // these fields would put that stale copy back — no lock can prevent it, because the
+    // stale write is complete and self-consistent.
+    it('is the only way in: the whole-form save drops the Mod Watch fields', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        role: 'ADMIN',
+        permissions: { accessAllServers: true },
+        serverAccess: [],
+      });
+      accessControlService.isAdmin.mockReturnValue(true);
+      dockerComposeService.getServerConfig.mockResolvedValue({ id: 'survival', dockerVolumes: '', envVars: '' } as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue({ id: 'survival' } as any);
+
+      await controller.updateServer(mockReq, 'survival', {
+        maxPlayers: '40',
+        modNotes: { sodium: 'stale copy' },
+        modWatchTargetVersion: '1.16.5',
+      } as any);
+
+      const [, forwarded] = dockerComposeService.updateServerConfig.mock.calls[0];
+      expect(forwarded).toEqual({ maxPlayers: '40' });
+    });
   });
 
   describe('createServer host mounts', () => {

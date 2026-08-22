@@ -233,6 +233,10 @@ as `modNotes` and `modWatchTargetVersion`, so there is no second per-server stat
 is how a note for a removed mod stops being stored. Blank notes are dropped, and `targetVersion: null`
 clears the watch. Omitting either field leaves it untouched.
 
+This is the **only** way to write either field. `PUT /servers/:id` drops them: the panel submits the
+whole config it loaded, so a page opened before a note was written would otherwise put its stale copy
+back.
+
 This is deliberately separate from `PUT /servers/:id`: that regenerates `docker-compose.yml`, and
 regeneration re-runs port allocation. Mod Watch is the one tab that stays usable while the server is
 running, so it writes `server.json` directly and never touches the compose file. Neither field is

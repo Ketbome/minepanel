@@ -42,9 +42,10 @@ export class ServerStoreService {
   // The panel is the only writer, but two requests can still race, so index
   // writes are serialised through this chain.
   private indexWrites: Promise<unknown> = Promise.resolve();
-  // Same reasoning as `indexWrites`, for partial updates to a single server.json.
-  private configWrites: Promise<unknown> = Promise.resolve();
-  // Only to keep two temp files in the same directory apart.
+  // Same reasoning as `indexWrites`, per server: every write of a `server.json`
+  // queues here, so a read-modify-write cannot interleave with a full save.
+  private readonly configWrites = new Map<string, Promise<unknown>>();
+  // Only to keep two temp files apart; the lock above already prevents overlap.
   private tempWrites = 0;
 
   constructor(private readonly configService: ConfigService) {
@@ -76,38 +77,57 @@ export class ServerStoreService {
   }
 
   async writeConfig(config: ServerConfig): Promise<void> {
-    // Without an id this lands in `servers/undefined/server.json`, where the next
-    // reconcile reads it back as a server called "undefined".
-    if (!config?.id) {
-      throw new Error(`Refusing to write ${CONFIG_FILE} without a server id`);
-    }
-    await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
-    await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
-    await this.upsertIndexEntry(config);
+    return this.serializeConfigWrite(config?.id, () => this.writeConfigUnlocked(config));
   }
 
   /**
-   * Read-modify-write of one `server.json`, serialised against every other call here.
+   * Read-modify-write of one `server.json`, holding that server's write lock across
+   * both halves so nothing can slip a full save in between.
    *
    * A plain read-then-write loses one of two updates that overlap, and the panel does
    * issue overlapping partial writes — two debounced note edits landing together, for
-   * instance. Anything updating a subset of a server's config should go through this
+   * instance. Anything updating a subset of a server's config must go through this
    * rather than reading, mutating and writing on its own.
    *
    * Returns null when the server has no `server.json` yet.
    */
   async updateConfig(serverId: string, mutate: (config: ServerConfig) => void): Promise<ServerConfig | null> {
-    const run = this.configWrites.then(async () => {
+    return this.serializeConfigWrite(serverId, async () => {
       const config = await this.readConfig(serverId);
       if (!config) return null;
       mutate(config);
-      await this.writeConfig(config);
+      await this.writeConfigUnlocked(config);
       return config;
     });
-    // Keep the chain alive even when this call throws, or one failure would reject
-    // every write queued behind it.
-    this.configWrites = run.catch(() => undefined);
-    return run;
+  }
+
+  // Queues per server rather than globally: writes to different servers touch
+  // different files and have no reason to wait on each other.
+  private serializeConfigWrite<T>(serverId: string, operation: () => Promise<T>): Promise<T> {
+    if (!serverId) {
+      return Promise.reject(new Error(`Refusing to write ${CONFIG_FILE} without a server id`));
+    }
+
+    const previous = this.configWrites.get(serverId) ?? Promise.resolve();
+    // Run whether or not the previous write settled cleanly: one failure must not
+    // reject everything queued behind it.
+    const next = previous.then(operation, operation);
+
+    const tracked: Promise<unknown> = next.catch(() => undefined);
+    this.configWrites.set(serverId, tracked);
+    // Drop the entry once nothing is queued behind it, so the map does not keep a
+    // dead promise per server for the life of the process.
+    void tracked.then(() => {
+      if (this.configWrites.get(serverId) === tracked) this.configWrites.delete(serverId);
+    });
+
+    return next;
+  }
+
+  private async writeConfigUnlocked(config: ServerConfig): Promise<void> {
+    await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
+    await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
+    await this.upsertIndexEntry(config);
   }
 
   // `active` and `serverExists` are probed from the filesystem on every read, so

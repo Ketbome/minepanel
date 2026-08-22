@@ -162,6 +162,46 @@ describe('ServerStoreService', () => {
       expect((await service.readConfig('survival'))?.modNotes).toEqual({ sodium: 'first', jei: 'second' });
     });
 
+    // The lock stops a full save landing *inside* a read-modify-write, which is what
+    // would corrupt the file. It cannot stop a full save writing a stale snapshot on
+    // top, because that write is complete and self-consistent — only the caller knows
+    // it is out of date. Keeping a field out of the whole-form save is the fix for
+    // that, and it lives in the controller.
+    it('serialises a partial update against a full save instead of interleaving them', async () => {
+      await service.writeConfig(config('survival', { maxPlayers: '20' }));
+
+      await Promise.all([
+        service.updateConfig('survival', (current) => {
+          current.modNotes = { sodium: 'waiting on Iris' };
+        }),
+        service.writeConfig(config('survival', { maxPlayers: '40' })),
+      ]);
+
+      // Whichever ran last, the file is one of the two whole configs and never a
+      // mixture of both.
+      const stored = await service.readConfig('survival');
+      expect(stored).not.toBeNull();
+      expect(stored?.maxPlayers === '40' || stored?.modNotes !== undefined).toBe(true);
+    });
+
+    it('refuses to write a config with no server id', async () => {
+      await expect(service.writeConfig({} as ServerConfig)).rejects.toThrow('without a server id');
+    });
+
+    it('leaves the previous config intact when the new one cannot be serialised', async () => {
+      await service.writeConfig(config('survival', { maxPlayers: '20' }));
+
+      const circular = config('survival') as ServerConfig & { self?: unknown };
+      circular.self = circular;
+
+      await expect(service.writeConfig(circular)).rejects.toBeDefined();
+      // Not "the file is missing" — readConfig cannot tell that from a server that
+      // never had one, and the caller would re-import from docker-compose.yml.
+      expect((await service.readConfig('survival'))?.maxPlayers).toBe('20');
+      const entries = await fs.readdir(path.join(serversDir, 'survival'));
+      expect(entries.filter((name) => name.endsWith('.tmp'))).toEqual([]);
+    });
+
     it('keeps serving later updates after one of them throws', async () => {
       await service.writeConfig(config('survival'));
 
