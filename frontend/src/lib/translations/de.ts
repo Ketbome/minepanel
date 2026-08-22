@@ -1297,7 +1297,7 @@ export const de: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Legen Sie eine gewünschte Version fest, um die Kompatibilität zu prüfen',
   viewChangelog: 'Änderungsprotokoll anzeigen',
   changelogEmpty: 'Kein Änderungsprotokoll vorhanden',
-  changelogUpToDate: 'Bereits auf der neuesten Version',
+  modChangelogUpToDate: 'Bereits auf der neuesten Version',
   changelogSameVersionTitle: 'Updates derselben Version',
   changelogMcVersionTitle: 'Minecraft-Versions-Updates',
   changelogNoDesiredVersion: 'Legen Sie oben eine gewünschte Version fest, um nach Minecraft-Versions-Updates zu suchen',

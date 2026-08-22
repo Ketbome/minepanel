@@ -1283,7 +1283,7 @@ export const ru: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Укажите целевую версию, чтобы проверить совместимость',
   viewChangelog: 'Показать журнал изменений',
   changelogEmpty: 'Журнал изменений не предоставлен',
-  changelogUpToDate: 'Уже используется последняя версия',
+  modChangelogUpToDate: 'Уже используется последняя версия',
   changelogSameVersionTitle: 'Обновления той же версии',
   changelogMcVersionTitle: 'Обновления версии Minecraft',
   changelogNoDesiredVersion: 'Укажите целевую версию выше, чтобы проверить обновления версии Minecraft',

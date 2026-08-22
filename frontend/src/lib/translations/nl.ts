@@ -1461,7 +1461,7 @@ export const nl: Record<TranslationKey, string> = {
   modCompatibilityUnknown: 'Stel een gewenste versie in om compatibiliteit te controleren',
   viewChangelog: 'Changelog bekijken',
   changelogEmpty: 'Geen changelog opgegeven',
-  changelogUpToDate: 'Al op de nieuwste versie',
+  modChangelogUpToDate: 'Al op de nieuwste versie',
   changelogSameVersionTitle: 'Updates binnen dezelfde versie',
   changelogMcVersionTitle: 'Minecraft-versie-updates',
   changelogNoDesiredVersion: 'Stel hierboven een gewenste versie in om te controleren op Minecraft-versie-updates',
