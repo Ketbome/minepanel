@@ -42,6 +42,8 @@ export class ServerStoreService {
   // The panel is the only writer, but two requests can still race, so index
   // writes are serialised through this chain.
   private indexWrites: Promise<unknown> = Promise.resolve();
+  // Only to keep two temp files in the same directory apart.
+  private tempWrites = 0;
 
   constructor(private readonly configService: ConfigService) {
     this.SERVERS_DIR = this.configService.get('serversDir');
@@ -72,6 +74,11 @@ export class ServerStoreService {
   }
 
   async writeConfig(config: ServerConfig): Promise<void> {
+    // Without an id this lands in `servers/undefined/server.json`, where the next
+    // reconcile reads it back as a server called "undefined".
+    if (!config?.id) {
+      throw new Error(`Refusing to write ${CONFIG_FILE} without a server id`);
+    }
     await fs.ensureDir(path.join(this.SERVERS_DIR, config.id));
     await this.writeJsonAtomic(this.getConfigPath(config.id), this.stripDerived(config));
     await this.upsertIndexEntry(config);
@@ -175,16 +182,59 @@ export class ServerStoreService {
     return next;
   }
 
-  // Rename is atomic on the same filesystem, so a crash mid-write leaves the
-  // previous file rather than a truncated one.
+  /**
+   * Write to a temp file, then rename it over the target, so a reader never sees a
+   * half-written file and a crash leaves the previous contents rather than nothing.
+   *
+   * The details matter more here than they look. Losing a `server.json` is not a
+   * recoverable "file is missing": `readConfig` cannot tell an empty one from a
+   * server that never had one, so the caller re-imports from the generated
+   * `docker-compose.yml` and silently drops everything compose does not round-trip.
+   */
   private async writeJsonAtomic(target: string, data: unknown): Promise<void> {
-    const temp = `${target}.${process.pid}.tmp`;
+    // Serialise up front: a value that cannot be stringified has to fail before
+    // anything on disk has been touched.
+    const contents = `${JSON.stringify(data, null, 2)}\n`;
+    const temp = `${target}.${process.pid}.${++this.tempWrites}.tmp`;
+
     try {
-      await fs.writeJson(temp, data, { spaces: 2 });
-      await fs.move(temp, target, { overwrite: true });
+      const handle = await fs.open(temp, 'w');
+      try {
+        await fs.writeFile(handle, contents, 'utf8');
+        // The rename below can otherwise reach the disk before the bytes do,
+        // leaving a renamed but empty file after a power cut.
+        await fs.fsync(handle);
+      } finally {
+        await fs.close(handle);
+      }
+
+      // rename(2), not fs-extra's move(): move with overwrite unlinks the
+      // destination first (lib/move/move.js, `doRename`), which opens a window
+      // where the server has no config at all. rename replaces it in a single
+      // step, and is atomic on the same filesystem — which temp always is, being
+      // a sibling of the target.
+      await fs.rename(temp, target);
+      await this.fsyncDirectory(path.dirname(target));
     } catch (error) {
       await fs.remove(temp).catch(() => undefined);
       throw error;
+    }
+  }
+
+  // A rename only becomes durable once the directory entry itself is flushed.
+  private async fsyncDirectory(dir: string): Promise<void> {
+    try {
+      const handle = await fs.open(dir, 'r');
+      try {
+        await fs.fsync(handle);
+      } finally {
+        await fs.close(handle);
+      }
+    } catch (error) {
+      // Not supported on every platform or filesystem (Windows most notably). The
+      // rename stays atomic either way; only its durability across a power cut is
+      // weaker, so this is worth a log line and not an error.
+      this.logger.debug(`Could not fsync ${dir}: ${error.message}`);
     }
   }
 }

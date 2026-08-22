@@ -82,6 +82,51 @@ describe('ServerStoreService', () => {
       const entries = await fs.readdir(path.join(serversDir, 'survival'));
       expect(entries.filter((name) => name.endsWith('.tmp'))).toEqual([]);
     });
+
+    it('refuses to write a config with no server id', async () => {
+      // Otherwise this lands in servers/undefined/ and reconciles back as a server.
+      await expect(service.writeConfig({} as ServerConfig)).rejects.toThrow('without a server id');
+      expect(await fs.pathExists(path.join(serversDir, 'undefined'))).toBe(false);
+    });
+
+    it('leaves the previous config intact when the new one cannot be serialised', async () => {
+      await service.writeConfig(config('survival', { maxPlayers: '20' }));
+
+      const circular = config('survival') as ServerConfig & { self?: unknown };
+      circular.self = circular;
+
+      await expect(service.writeConfig(circular)).rejects.toBeDefined();
+      // The failure mode to avoid is not a truncated file but a *missing* one:
+      // readConfig cannot tell that from a server that never had a config, so the
+      // caller would re-import from docker-compose.yml and lose the rest.
+      expect((await service.readConfig('survival'))?.maxPlayers).toBe('20');
+      const entries = await fs.readdir(path.join(serversDir, 'survival'));
+      expect(entries.filter((name) => name.endsWith('.tmp'))).toEqual([]);
+    });
+
+    it('never leaves the config missing while it is being replaced', async () => {
+      await service.writeConfig(config('survival', { maxPlayers: '20' }));
+      const configPath = service.getConfigPath('survival');
+
+      // fs-extra's move() with overwrite unlinks the destination before renaming,
+      // so the file genuinely disappears for a moment. Poll hard across a rewrite:
+      // with rename(2) the path is occupied the whole way through.
+      let sawMissing = false;
+      const poll = setInterval(() => {
+        if (!fs.pathExistsSync(configPath)) sawMissing = true;
+      }, 0);
+
+      try {
+        for (let i = 0; i < 40; i++) {
+          await service.writeConfig(config('survival', { maxPlayers: String(i) }));
+        }
+      } finally {
+        clearInterval(poll);
+      }
+
+      expect(sawMissing).toBe(false);
+      expect((await service.readConfig('survival'))?.maxPlayers).toBe('39');
+    });
   });
 
   describe('index', () => {
