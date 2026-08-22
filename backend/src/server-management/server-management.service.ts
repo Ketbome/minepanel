@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -10,7 +10,7 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
-import { ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
+import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
@@ -125,6 +125,35 @@ export class ServerManagementService {
     this.COMPOSE_PROJECT = this.configService.get<string>('composeProject')?.trim() || undefined;
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(this.getGlobalWorldsPath());
+  }
+
+  /**
+   * Writes the Mod Watch annotations — per-mod notes and the version being evaluated.
+   *
+   * Deliberately does not go through `DockerComposeService.updateServerConfig`: that
+   * regenerates the compose file, and regeneration re-runs `ensurePortAvailable`. Mod Watch
+   * is the one tab that stays usable while the server is running, so typing in a note box
+   * must not be able to move a running server's published port. Neither field is compose
+   * input, so writing `server.json` directly is the whole job.
+   */
+  async updateModWatch(serverId: string, update: { targetVersion?: string | null; notes?: Record<string, string> }): Promise<ServerConfig> {
+    const config = await this.store.updateConfig(serverId, (current) => {
+      if (update.targetVersion !== undefined) {
+        const trimmed = update.targetVersion?.trim();
+        current.modWatchTargetVersion = trimmed ? trimmed : undefined;
+      }
+      if (update.notes !== undefined) {
+        // Notes arrive as the whole map, already pruned to the mods still configured, so
+        // dropping an entry is how a note for a removed mod stops being stored.
+        const kept = Object.entries(update.notes).filter(([, note]) => note.trim().length > 0);
+        current.modNotes = kept.length > 0 ? Object.fromEntries(kept) : undefined;
+      }
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Server with ID "${serverId}" not found`);
+    }
+    return config;
   }
 
   private validateServerId(serverId: string): boolean {

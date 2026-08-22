@@ -152,6 +152,7 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the AUTO_CURSEFORGE "File" method and the Modrinth modpack field.
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
+- `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
 - `src/lib/store/servers-store.ts`
 - `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).

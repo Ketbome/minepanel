@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -15,6 +15,7 @@ const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mo
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
 const AdvancedTab = dynamic(() => import("../molecules/Tabs/AdvancedTab").then(mod => mod.AdvancedTab));
 const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mod.ModsTab));
+const ModWatchTab = dynamic(() => import("../molecules/Tabs/ModWatchTab").then(mod => mod.ModWatchTab));
 const PluginsTab = dynamic(() => import("../molecules/Tabs/PluginsTab").then(mod => mod.PluginsTab));
 const ResourcesTab = dynamic(() => import("../molecules/Tabs/ResourcesTab").then(mod => mod.ResourcesTab));
 const GameTab = dynamic(() => import("../molecules/Tabs/GameTab").then(mod => mod.GameTab));
@@ -31,7 +32,7 @@ const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasks
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
 
 // Tabs that were split up or absorbed. People bookmark these hashes and the docs
 // link to them, so an old one lands on whichever tab took over its content.
@@ -87,6 +88,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "lifecycle", label: t("lifecycle"), icon: Power, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning },
     { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning },
+    { value: "modwatch", label: t("modWatch"), icon: Eye, group: "monitoring", show: showModsTab, disabled: false },
     { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning },
     { value: "backups", label: t("backups"), icon: Archive, group: "config", show: showBackupsTab, disabled: isServerRunning },
     { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning, advanced: true },
@@ -316,6 +318,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               {showModsTab && (
                 <TabsContent value="mods" className="space-y-4 mt-0">
                   <ModsTab serverId={serverId} config={config} updateConfig={updateConfig} />
+                </TabsContent>
+              )}
+
+              {showModsTab && (
+                <TabsContent value="modwatch" className="space-y-4 mt-0">
+                  <ModWatchTab serverId={serverId} config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 

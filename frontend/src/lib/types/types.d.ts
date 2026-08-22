@@ -177,6 +177,11 @@ export interface ServerConfig {
 
   modrinthModpack?: string;
 
+  // Mod Watch annotations. Neither reaches the compose file; both are written by the
+  // Mod Watch tab through PUT /servers/:id/mod-watch, not the whole-form save.
+  modNotes?: Record<string, string>;
+  modWatchTargetVersion?: string;
+
   // GTNH specific
   gtnhPackVersion?: string;
   gtnhDeleteBackups?: boolean;

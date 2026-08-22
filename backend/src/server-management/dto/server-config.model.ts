@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
@@ -662,6 +662,21 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   whiteList?: boolean;
+
+  // Mod Watch annotations. Neither one reaches the compose file. They live here rather than
+  // in a sidecar so `server.json` stays the only per-server file, and so `cloneServer` — which
+  // rebuilds from this config rather than copying the folder — carries them.
+  //
+  // `modWatchTargetVersion` is a version the operator is *evaluating*, never one anything runs:
+  // `minecraftVersion` is what the server runs, and `versionFromModrinthProjects` is what lets
+  // itzg pick that at startup instead. Three different questions, three different fields.
+  @IsObject()
+  @IsOptional()
+  modNotes?: Record<string, string>;
+
+  @IsString()
+  @IsOptional()
+  modWatchTargetVersion?: string;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

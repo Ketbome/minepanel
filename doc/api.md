@@ -213,10 +213,35 @@ Host monitoring endpoints:
 - `GET /modrinth/projects/:ref/versions`
 - `GET /modrinth/versions/resolve` — same `ids` contract as CurseForge
 - `GET /modrinth/projects/latest` — same `refs` contract as CurseForge
+- `GET /curseforge/mods/:ref/files/:fileId/changelog` — changelog text for one file, resolved lazily on demand
 
 Search and version endpoints treat `minecraftVersion=latest` (or empty) as "no version
 filter" instead of returning zero results. CurseForge endpoints use the global API key
-from user settings; Modrinth needs no credentials.
+from user settings; Modrinth needs no credentials. Modrinth version objects (from
+`/modrinth/projects/:ref/versions` and `/modrinth/versions/resolve`) carry their `changelog`
+inline at no extra request cost.
+
+### Mod Watch
+
+The **Mod Watch** tab's annotations live on the server's own config (`servers/<serverId>/server.json`)
+as `modNotes` and `modWatchTargetVersion`, so there is no second per-server state file and
+`POST /servers/:id/clone` carries them:
+
+- `PUT /servers/:id/mod-watch` — body `{ "targetVersion"?: "1.21.4" | null, "notes"?: { "<mod-ref>": "..." } }`
+
+`notes` is the complete map, not a patch: the tab sends it pruned to the mods still configured, which
+is how a note for a removed mod stops being stored. Blank notes are dropped, and `targetVersion: null`
+clears the watch. Omitting either field leaves it untouched.
+
+This is the **only** way to write either field. `PUT /servers/:id` drops them: the panel submits the
+whole config it loaded, so a page opened before a note was written would otherwise put its stale copy
+back.
+
+This is deliberately separate from `PUT /servers/:id`: that regenerates `docker-compose.yml`, and
+regeneration re-runs port allocation. Mod Watch is the one tab that stays usable while the server is
+running, so it writes `server.json` directly and never touches the compose file. Neither field is
+compose input. Access control and the `servers` audit log are the same as any other server config
+change (action `update_mod_watch`).
 
 ### World Discovery
 

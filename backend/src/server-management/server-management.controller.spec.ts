@@ -19,6 +19,7 @@ describe('ServerManagementController', () => {
   let mockInstanceSettings: any;
   let bedrockAddonsService: jest.Mocked<BedrockAddonsService>;
   let accessControlService: jest.Mocked<AccessControlService>;
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     const mockServerService = {
@@ -38,6 +39,7 @@ describe('ServerManagementController', () => {
       getOps: jest.fn(),
       getBannedPlayers: jest.fn(),
       clearServerData: jest.fn(),
+      updateModWatch: jest.fn(),
     };
 
     const mockDockerComposeService = {
@@ -87,7 +89,7 @@ describe('ServerManagementController', () => {
       canUsePermission: jest.fn(() => false),
     };
 
-    const mockAuditLogService = {
+    auditLogService = {
       record: jest.fn(),
     };
 
@@ -102,7 +104,7 @@ describe('ServerManagementController', () => {
         { provide: BedrockAddonsService, useValue: mockBedrockAddonsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: AccessControlService, useValue: mockAccessControlService },
-        { provide: AuditLogService, useValue: mockAuditLogService },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 
@@ -374,6 +376,74 @@ describe('ServerManagementController', () => {
       } as any);
 
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalled();
+    });
+  });
+
+  describe('updateModWatch', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        username: 'someone',
+        role: 'USER',
+        permissions: { accessAllServers: false },
+        serverAccess: ['survival'],
+      });
+      serverService.updateModWatch.mockResolvedValue({ id: 'survival', modNotes: { sodium: 'note' } } as any);
+    });
+
+    it('checks server access before writing', async () => {
+      await controller.updateModWatch(mockReq, 'survival', { notes: { sodium: 'note' } });
+
+      expect(accessControlService.assertServerAccess).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), 'survival');
+      expect(serverService.updateModWatch).toHaveBeenCalledWith('survival', { notes: { sodium: 'note' } });
+    });
+
+    it('records an audit entry naming what changed', async () => {
+      await controller.updateModWatch(mockReq, 'survival', { notes: { sodium: 'note' }, targetVersion: '1.21.4' });
+
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'servers',
+          action: 'update_mod_watch',
+          serverId: 'survival',
+          summary: 'Updated Mod Watch notes and target version for survival',
+        }),
+      );
+    });
+
+    // The whole reason this is not just PUT /servers/:id: regenerating the compose file
+    // re-runs port allocation, and this tab is usable while the server is running.
+    it('never regenerates the compose file', async () => {
+      await controller.updateModWatch(mockReq, 'survival', { targetVersion: '1.21.4' });
+
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+    });
+
+    // The panel submits the whole config it loaded on every save. A page opened before
+    // a note was written still holds the old modNotes, so letting PUT /servers/:id carry
+    // these fields would put that stale copy back — no lock can prevent it, because the
+    // stale write is complete and self-consistent.
+    it('is the only way in: the whole-form save drops the Mod Watch fields', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        role: 'ADMIN',
+        permissions: { accessAllServers: true },
+        serverAccess: [],
+      });
+      accessControlService.isAdmin.mockReturnValue(true);
+      dockerComposeService.getServerConfig.mockResolvedValue({ id: 'survival', dockerVolumes: '', envVars: '' } as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue({ id: 'survival' } as any);
+
+      await controller.updateServer(mockReq, 'survival', {
+        maxPlayers: '40',
+        modNotes: { sodium: 'stale copy' },
+        modWatchTargetVersion: '1.16.5',
+      } as any);
+
+      const [, forwarded] = dockerComposeService.updateServerConfig.mock.calls[0];
+      expect(forwarded).toEqual({ maxPlayers: '40' });
     });
   });
 

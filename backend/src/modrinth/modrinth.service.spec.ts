@@ -87,4 +87,46 @@ describe('ModrinthService', () => {
       }),
     ).rejects.toMatchObject({ status: HttpStatus.BAD_GATEWAY });
   });
+
+  it('getProjectVersions should pass the changelog through unchanged', async () => {
+    mockClient.get.mockResolvedValue({
+      data: [
+        {
+          id: 'v1',
+          name: 'Version 1',
+          version_number: '1.0.0',
+          version_type: 'release',
+          date_published: '2026-01-01T00:00:00Z',
+          game_versions: ['1.20.1'],
+          loaders: ['fabric'],
+          files: [{ filename: 'mod.jar', primary: true }],
+          changelog: '## 1.0.0\n- Initial release',
+        },
+      ],
+    });
+
+    const versions = await service.getProjectVersions('sodium', {});
+
+    expect(versions[0].changelog).toBe('## 1.0.0\n- Initial release');
+  });
+
+  it('getProjectVersions should leave changelog undefined when missing', async () => {
+    mockClient.get.mockResolvedValue({
+      data: [
+        {
+          id: 'v1',
+          name: 'Version 1',
+          version_number: '1.0.0',
+          version_type: 'release',
+          game_versions: ['1.20.1'],
+          loaders: ['fabric'],
+          files: [{ filename: 'mod.jar', primary: true }],
+        },
+      ],
+    });
+
+    const versions = await service.getProjectVersions('sodium', {});
+
+    expect(versions[0].changelog).toBeUndefined();
+  });
 });
