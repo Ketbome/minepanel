@@ -114,6 +114,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>(config.modNotes ?? {});
   const [changelogState, setChangelogState] = useState<ChangelogDialogState | null>(null);
   const noteTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Mirrors the serverId prop for async callbacks: a debounced note or target-version save
+  // that resolves after the user switches servers must not overwrite the config now on screen.
+  const serverIdRef = useRef(serverId);
+  serverIdRef.current = serverId;
 
   const targetVersion = config.modWatchTargetVersion ?? '';
 
@@ -317,7 +321,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
     return Object.fromEntries(Object.entries(drafts).filter(([ref, note]) => live.has(ref) && note.trim().length > 0));
   };
 
-  const applySaved = (saved: ServerConfig) => {
+  const applySaved = (requestServerId: string, saved: ServerConfig) => {
+    // A save issued for a server the user has since switched away from must not clobber
+    // the config of whichever server is now on screen.
+    if (requestServerId !== serverIdRef.current) return;
     // Keep the page's copy of the config in step, or the next whole-form save from
     // another tab would PUT the stale notes back over these.
     updateConfig('modNotes', saved.modNotes);
@@ -325,9 +332,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
   };
 
   const handleSaveTargetVersion = async () => {
+    const requestServerId = serverId;
     setSavingTargetVersion(true);
     try {
-      applySaved(await updateModWatch(serverId, { targetVersion: targetVersionInput.trim() || null }));
+      applySaved(requestServerId, await updateModWatch(requestServerId, { targetVersion: targetVersionInput.trim() || null }));
       mcToast.success(t('save'));
     } catch (error) {
       console.error('Error saving the target version:', error);
@@ -343,9 +351,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
     setNoteDrafts(drafts);
 
     if (noteTimers.current[key]) clearTimeout(noteTimers.current[key]);
+    const requestServerId = serverId;
     noteTimers.current[key] = setTimeout(() => {
-      updateModWatch(serverId, { notes: collectNotes(drafts) })
-        .then(applySaved)
+      updateModWatch(requestServerId, { notes: collectNotes(drafts) })
+        .then((saved) => applySaved(requestServerId, saved))
         .catch((error) => {
           console.error('Error saving mod note:', error);
           mcToast.error(t('error'));

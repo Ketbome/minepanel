@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -161,6 +161,10 @@ export class ServerManagementService {
    * input, so writing `server.json` directly is the whole job.
    */
   async updateModWatch(serverId: string, update: { targetVersion?: string | null; notes?: Record<string, string> }): Promise<ServerConfig> {
+    if (!this.validateServerId(serverId)) {
+      throw new BadRequestException(`Invalid server ID: ${serverId}`);
+    }
+
     const config = await this.store.updateConfig(serverId, (current) => {
       if (update.targetVersion !== undefined) {
         const trimmed = update.targetVersion?.trim();

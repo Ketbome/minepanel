@@ -242,6 +242,11 @@ describe('ServerManagementService', () => {
 
       await expect(service.updateModWatch('ghost', { notes: {} })).rejects.toThrow('not found');
     });
+
+    it('rejects an invalid server ID without touching the store', async () => {
+      await expect(service.updateModWatch('../hack', { notes: {} })).rejects.toThrow('Invalid server ID');
+      expect(mockStore.updateConfig).not.toHaveBeenCalled();
+    });
   });
 
   describe('startServer', () => {
