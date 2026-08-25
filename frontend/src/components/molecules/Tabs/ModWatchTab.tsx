@@ -317,14 +317,20 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
   // Notes are stored as a whole map, so the save is also what prunes: a note whose mod is
   // no longer configured is simply not in what gets sent. Blank drafts drop out too.
   const collectNotes = (drafts: Record<string, string>): Record<string, string> => {
-    const live = new Set(configuredMods.map((mod) => mod.entry.ref.toLowerCase()));
-    return Object.fromEntries(Object.entries(drafts).filter(([ref, note]) => live.has(ref) && note.trim().length > 0));
+    const live = new Set(configuredMods.map((mod) => `${mod.provider}:${mod.entry.ref.toLowerCase()}`));
+    return Object.fromEntries(Object.entries(drafts).filter(([key, note]) => live.has(key) && note.trim().length > 0));
   };
 
-  const applySaved = (requestServerId: string, saved: ServerConfig) => {
+  // Two note saves, or a note save and a target-version save, for the same server can
+  // resolve out of order; only the response to the most recently issued request may apply.
+  const modWatchRequestSeq = useRef(0);
+
+  const applySaved = (requestServerId: string, requestSeq: number, saved: ServerConfig) => {
     // A save issued for a server the user has since switched away from must not clobber
     // the config of whichever server is now on screen.
     if (requestServerId !== serverIdRef.current) return;
+    // An older request that resolves after a newer one must not revert it.
+    if (requestSeq !== modWatchRequestSeq.current) return;
     // Keep the page's copy of the config in step, or the next whole-form save from
     // another tab would PUT the stale notes back over these.
     updateConfig('modNotes', saved.modNotes);
@@ -333,9 +339,10 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
 
   const handleSaveTargetVersion = async () => {
     const requestServerId = serverId;
+    const requestSeq = ++modWatchRequestSeq.current;
     setSavingTargetVersion(true);
     try {
-      applySaved(requestServerId, await updateModWatch(requestServerId, { targetVersion: targetVersionInput.trim() || null }));
+      applySaved(requestServerId, requestSeq, await updateModWatch(requestServerId, { targetVersion: targetVersionInput.trim() || null }));
       mcToast.success(t('save'));
     } catch (error) {
       console.error('Error saving the target version:', error);
@@ -345,16 +352,17 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
     }
   };
 
-  const handleNoteChange = (ref: string, value: string) => {
-    const key = ref.toLowerCase();
+  const handleNoteChange = (provider: ModProvider, ref: string, value: string) => {
+    const key = `${provider}:${ref.toLowerCase()}`;
     const drafts = { ...noteDrafts, [key]: value };
     setNoteDrafts(drafts);
 
     if (noteTimers.current[key]) clearTimeout(noteTimers.current[key]);
     const requestServerId = serverId;
     noteTimers.current[key] = setTimeout(() => {
+      const requestSeq = ++modWatchRequestSeq.current;
       updateModWatch(requestServerId, { notes: collectNotes(drafts) })
-        .then((saved) => applySaved(requestServerId, saved))
+        .then((saved) => applySaved(requestServerId, requestSeq, saved))
         .catch((error) => {
           console.error('Error saving mod note:', error);
           mcToast.error(t('error'));
@@ -401,6 +409,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
   const changelogRequestRef = useRef(0);
   useEffect(() => {
     changelogRequestRef.current += 1;
+    setChangelogState(null);
   }, [serverId]);
 
   const handleViewChangelog = async (provider: ModProvider, entry: ModEntry, label: string) => {
@@ -512,7 +521,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
                 // Unpinned entries always resolve to the newest build at startup, so they're
                 // never "behind" — only a pinned entry can meaningfully have an update available.
                 const hasSameVersionUpdate = Boolean(entry.version && sameVersionUpdate && sameVersionUpdate.versionId !== entry.version);
-                const noteKey = entry.ref.toLowerCase();
+                const noteKey = `${provider}:${entry.ref.toLowerCase()}`;
                 const displayName = detail?.name ?? entry.ref;
 
                 return (
@@ -568,7 +577,7 @@ export const ModWatchTab: FC<ModWatchTabProps> = ({ serverId, config, updateConf
 
                     <Textarea
                       value={noteDrafts[noteKey] ?? ''}
-                      onChange={(event) => handleNoteChange(entry.ref, event.target.value)}
+                      onChange={(event) => handleNoteChange(provider, entry.ref, event.target.value)}
                       placeholder={t('modNotesPlaceholder')}
                       className="min-h-16 min-w-[200px] flex-1 basis-64 bg-gray-800/70 border-gray-700/50 text-gray-200 text-xs"
                     />
