@@ -24,6 +24,8 @@ export class ProxyController {
       available: !!settings.baseDomain,
       enabled: settings.enabled && !!settings.baseDomain,
       baseDomain: settings.baseDomain,
+      // The host port mc-router publishes: what players actually connect to.
+      proxyPort: router.proxyPort,
       autoScaleAvailable: router.autoScaleEnabled,
       // Whether the container is actually up, not whether a routes file exists.
       running,
