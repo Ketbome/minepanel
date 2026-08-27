@@ -495,6 +495,19 @@ describe('ServerManagementService', () => {
     });
   });
   describe('getServerRuntimeStats', () => {
+    // Frozen so the uptime assertion cannot straddle a second between the stub and the read.
+    const NOW = 1_700_000_000_000;
+
+    const freezeClock = () => {
+      jest.spyOn(Date, 'now').mockReturnValue(NOW);
+    };
+
+    // jest is not configured with restoreMocks, and clearAllMocks does not undo a spy:
+    // without this the frozen clock would leak into every later test in this file.
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     const stubRunningServer = (probe: unknown) => {
       jest.spyOn(service, 'getServerStatus').mockResolvedValue('running');
       jest.spyOn(service, 'getServerResources').mockResolvedValue({
@@ -506,10 +519,11 @@ describe('ServerManagementService', () => {
       jest.spyOn(service as any, 'getServerLimits').mockResolvedValue({ cpuLimit: '2', memoryLimit: '4G' });
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       jest.spyOn(service as any, 'runMinecraftStatusProbe').mockResolvedValue(probe);
-      jest.spyOn(service as any, 'getContainersStartedAt').mockResolvedValue({ container123: Date.now() - 120_000 });
+      jest.spyOn(service as any, 'getContainersStartedAt').mockResolvedValue({ container123: NOW - 120_000 });
     };
 
     it('reports players and version when the game answers', async () => {
+      freezeClock();
       stubRunningServer({ playersOnline: 3, playersMax: 10, version: '1.21.4' });
 
       const stats = await service.getServerRuntimeStats('myserver');

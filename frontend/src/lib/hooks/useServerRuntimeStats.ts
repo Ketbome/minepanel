@@ -13,6 +13,9 @@ export function useServerRuntimeStats(serverId: string, serverStatus: string) {
     }
 
     let active = true;
+    // Drop the previous server's values: without this, switching servers renders
+    // stats belonging to the old one until the first request resolves.
+    setStats(null);
 
     const loadStats = async () => {
       try {
