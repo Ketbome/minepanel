@@ -63,6 +63,7 @@ import { getTemplatesByEdition, ServerTemplate } from '@/lib/server-templates';
 import { ServerEdition } from '@/lib/types/types';
 import { TranslationKey } from '@/lib/translations';
 import { getCurrentUser } from '@/services/users/users.service';
+import { getProxyMappings, getProxyStatus } from '@/services/network.service';
 
 type ServerInfo = {
   id: string;
@@ -88,6 +89,7 @@ export default function Dashboard() {
   const [selectedTemplate, setSelectedTemplate] = useState<ServerTemplate | null>(null);
   const [selectedEdition, setSelectedEdition] = useState<ServerEdition>('JAVA');
   const [canCreateServers, setCanCreateServers] = useState(false);
+  const [proxyAddresses, setProxyAddresses] = useState<Record<string, string>>({});
   const availableTemplates = getTemplatesByEdition(selectedEdition);
 
   const form = useForm<{ id: string }>({
@@ -153,6 +155,24 @@ export default function Dashboard() {
     [t],
   );
 
+  // Proxied servers publish no host port, so the allocated one is not reachable:
+  // what players use is the router hostname.
+  const loadProxyAddresses = useCallback(async () => {
+    const status = await getProxyStatus();
+    if (!status.enabled) {
+      setProxyAddresses({});
+      return;
+    }
+
+    const mappings = await getProxyMappings();
+    const port = status.proxyPort && status.proxyPort !== '25565' ? `:${status.proxyPort}` : '';
+    setProxyAddresses(
+      Object.fromEntries(
+        mappings.map(({ host, backend }) => [backend.split(':')[0], `${host}${port}`]),
+      ),
+    );
+  }, []);
+
   const fetchServersFromBackend = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -168,6 +188,7 @@ export default function Dashboard() {
       }));
 
       setServers(formattedServers);
+      await loadProxyAddresses();
       const updatedServers = await processServerStatuses(formattedServers);
       setServers(updatedServers);
     } catch (error) {
@@ -176,7 +197,7 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [t, processServerStatuses]);
+  }, [t, processServerStatuses, loadProxyAddresses]);
 
   const refreshGlobalServers = useServersStore((state) => state.refreshAll);
 
@@ -605,9 +626,18 @@ export default function Dashboard() {
                       </div>
 
                       <div className="hidden md:block shrink-0 text-right leading-tight font-mono text-xs">
-                        <p className="text-gray-300" title={t('port')}>
-                          :{server.port}
-                        </p>
+                        {proxyAddresses[server.id] ? (
+                          <p
+                            className="text-gray-300 truncate max-w-40"
+                            title={t('serverConnection')}
+                          >
+                            {proxyAddresses[server.id]}
+                          </p>
+                        ) : (
+                          <p className="text-gray-300" title={t('port')}>
+                            :{server.port}
+                          </p>
+                        )}
                         <p className="text-gray-500 truncate max-w-40" title={t('container')}>
                           {server.containerName}
                         </p>
