@@ -3,9 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Cpu, Activity, Server, AlertTriangle, ArrowRight } from "lucide-react";
-import { getAllServersResources, ServerResourceInfo } from "@/services/docker/fetchs";
+import { Cpu, Activity, Server, AlertTriangle, ArrowRight, Clock, Users } from "lucide-react";
+import { getAllServersRuntimeStats, ServerRuntimeStats } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { RuntimeChip } from "@/components/molecules/ServerRuntimeChips";
+import { formatPlayers, getCpuPercent, getMemoryPercent, getUsageColor } from "@/lib/utils/server-runtime-stats";
+import { formatUptime } from "@/services/system/system.service";
 
 interface ServerQuickViewProps {
   servers: Array<{ id: string; serverName?: string }>;
@@ -15,53 +18,10 @@ type ServerWithResources = {
   id: string;
   name: string;
   status: "running" | "stopped" | "starting" | "not_found";
-  cpuUsage: number;
-  cpuLimit: number;
   cpuPercent: number;
-  memoryUsage: string;
   memoryPercent: number;
+  stats: ServerRuntimeStats;
 };
-
-function parsePercentage(value: string): number {
-  const match = value.match(/[\d.]+/);
-  return match ? parseFloat(match[0]) : 0;
-}
-
-function parseCpuLimit(limit: string): number {
-  const value = parseFloat(limit);
-  return isNaN(value) ? 1 : value;
-}
-
-function parseMemorySize(str: string): number {
-  const match = str.match(/([\d.]+)\s*([KMGT]?i?B?)/i);
-  if (!match) return 0;
-  const value = parseFloat(match[1]);
-  const unit = match[2].toUpperCase();
-  const multipliers: Record<string, number> = {
-    "": 1,
-    B: 1,
-    K: 1024,
-    KB: 1024,
-    KIB: 1024,
-    M: 1024 ** 2,
-    MB: 1024 ** 2,
-    MIB: 1024 ** 2,
-    G: 1024 ** 3,
-    GB: 1024 ** 3,
-    GIB: 1024 ** 3,
-    T: 1024 ** 4,
-    TB: 1024 ** 4,
-    TIB: 1024 ** 4,
-  };
-  return value * (multipliers[unit] || 1);
-}
-
-function parseMemoryToPercent(usage: string, configLimit: string): number {
-  if (usage === "N/A" || !configLimit) return 0;
-  const usedBytes = parseMemorySize(usage);
-  const limitBytes = parseMemorySize(configLimit);
-  return limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0;
-}
 
 export function ServerQuickView({ servers }: ServerQuickViewProps) {
   const { t } = useLanguage();
@@ -76,33 +36,30 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
     }
 
     try {
-      const resources = await getAllServersResources();
+      const resources = await getAllServersRuntimeStats();
 
       const data: ServerWithResources[] = servers.map((server) => {
-        const res: ServerResourceInfo = resources[server.id] || {
+        const res: ServerRuntimeStats = resources[server.id] || {
           status: "not_found",
           cpuUsage: "N/A",
           memoryUsage: "N/A",
           memoryLimit: "N/A",
           cpuLimit: "1",
           memoryConfigLimit: "4G",
+          playersOnline: null,
+          playersMax: null,
+          uptimeSeconds: null,
+          version: null,
+          gameReachable: false,
         };
-
-        const cpuUsage = parsePercentage(res.cpuUsage);
-        const cpuLimit = parseCpuLimit(res.cpuLimit);
-        // CPU usage is relative to system, limit is number of cores
-        // 100% per core, so cpuLimit=2 means max 200%
-        const cpuPercent = cpuLimit > 0 ? (cpuUsage / (cpuLimit * 100)) * 100 : 0;
 
         return {
           id: server.id,
           name: server.serverName || server.id,
           status: res.status,
-          cpuUsage,
-          cpuLimit,
-          cpuPercent,
-          memoryUsage: res.memoryUsage,
-          memoryPercent: parseMemoryToPercent(res.memoryUsage, res.memoryConfigLimit),
+          cpuPercent: getCpuPercent(res) ?? 0,
+          memoryPercent: getMemoryPercent(res) ?? 0,
+          stats: res,
         };
       });
 
@@ -131,13 +88,6 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
       default:
         return "bg-red-800/70 text-red-200";
     }
-  };
-
-  // Colors based on percentage of configured limit
-  const getUsageColor = (percent: number) => {
-    if (percent >= 90) return "#f05a5a";
-    if (percent >= 70) return "#f5c542";
-    return "#9dff3f";
   };
 
   const hasHighUsage = (server: ServerWithResources) => server.status === "running" && (server.cpuPercent >= 80 || server.memoryPercent >= 80);
@@ -174,7 +124,15 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                       <span className="font-minecraft text-sm text-white group-hover:text-emerald-400 transition-colors truncate">{server.name}</span>
                       {hasHighUsage(server) && <AlertTriangle className="w-4 h-4 text-yellow-400 animate-pulse shrink-0" />}
                     </div>
-                    <span className={`mc-tag ${getStatusColor(server.status)} text-[10px] px-2 py-0.5 shrink-0`}>{t(server.status)}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {server.status === "running" && (
+                        <>
+                          <RuntimeChip icon={Users} label={t("players")} value={formatPlayers(server.stats)} color="#9dff3f" className="hidden sm:flex" />
+                          <RuntimeChip icon={Clock} label={t("uptime")} value={server.stats.uptimeSeconds === null ? "—" : formatUptime(server.stats.uptimeSeconds)} color="#6fe3d4" className="hidden md:flex" />
+                        </>
+                      )}
+                      <span className={`mc-tag ${getStatusColor(server.status)} text-[10px] px-2 py-0.5 shrink-0`}>{t(server.status)}</span>
+                    </div>
                   </div>
 
                   {server.status === "running" && (

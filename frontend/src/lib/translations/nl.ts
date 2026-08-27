@@ -122,6 +122,7 @@ export const nl: Record<TranslationKey, string> = {
   serverType: 'Servertype',
   serverTypeDescription: 'Selecteer het type Minecraft server dat je wilt configureren.',
   version: 'Versie',
+  uptime: 'Actieve tijd',
   memory: 'Geheugen',
   port: 'Poort',
   difficulty: 'Moeilijkheidsgraad',

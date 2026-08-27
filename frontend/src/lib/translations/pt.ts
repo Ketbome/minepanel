@@ -122,6 +122,7 @@ export const pt: Record<TranslationKey, string> = {
   serverType: 'Tipo de Servidor',
   serverTypeDescription: 'Selecione o tipo de servidor de Minecraft que você deseja configurar',
   version: 'Versão',
+  uptime: 'Tempo ativo',
   memory: 'Memória',
   port: 'Porta',
   difficulty: 'Dificuldade',

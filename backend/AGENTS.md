@@ -132,6 +132,7 @@ Path and filesystem patterns (critical):
 - `src/main.ts` - CORS/cookies/bootstrap behavior.
 - `src/server-management/server-management.service.ts` - lifecycle, status, command execution, world selection.
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
+- `src/server-management/minecraft-status.util.ts` - parses the `mc-monitor` probe output (`key=value` pairs, order not guaranteed).
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
@@ -197,6 +198,19 @@ Data migration and compatibility:
 
 - Keep misplaced data migration logic (`server root -> mc-data`) intact when touching server creation.
 - Preserve Java/Bedrock compatibility in lifecycle and command execution paths.
+
+Runtime stats (`/servers/:id/runtime-stats`, `/servers/all-runtime-stats`):
+
+- Player totals and version come from `docker exec <container> mc-monitor status|status-bedrock`,
+  the binary the itzg images already ship for their healthcheck. No RCON password, no npm dependency,
+  works on both editions.
+- **A failed probe must never render as `0` players.** `playersOnline`/`version` stay `null` and
+  `gameReachable` is `false`; `playersMax` falls back to `maxPlayers` from `server.json`.
+- Edition and `maxPlayers` are read through `ServerStoreService.readConfig`, never from the
+  generated compose file.
+- Probes are cached per server (`STATUS_PROBE_TTL_MS`) with in-flight dedupe, and container start
+  times come from one batched `docker inspect`. The home page and the server page both poll: do not
+  add a docker spawn per server per request.
 - Bedrock permission fix depends on host path mount and UID/GID from compose; do not break this flow.
 
 ## Required AGENTS.md Content

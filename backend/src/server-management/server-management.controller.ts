@@ -370,6 +370,17 @@ export class ServerManagementController {
     return Object.fromEntries(Object.entries(resources).filter(([serverId]) => visibleIds.has(serverId)));
   }
 
+  @Get('all-runtime-stats')
+  async getAllServersRuntimeStats(@Request() req) {
+    const stats = await this.managementService.getAllServersRuntimeStats();
+    if (!this.usersService || !this.accessControlService) {
+      throw new InternalServerErrorException('Access control is not available');
+    }
+    const user = await this.getCurrentUser(req);
+    const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(stats)));
+    return Object.fromEntries(Object.entries(stats).filter(([serverId]) => visibleIds.has(serverId)));
+  }
+
   @Get(':id')
   async getServer(@Request() req, @Param('id') id: string) {
     await this.requireServerAccess(req, id);
@@ -559,6 +570,16 @@ export class ServerManagementController {
       ...resources,
       status: status,
     };
+  }
+
+  @Get(':id/runtime-stats')
+  async getServerRuntimeStats(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
+    const serverExists = await this.dockerComposeService.getServerConfig(id);
+    if (!serverExists) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+    return this.managementService.getServerRuntimeStats(id);
   }
 
   @Put(':id')

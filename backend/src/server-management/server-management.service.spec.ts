@@ -79,7 +79,7 @@ describe('ServerManagementService', () => {
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
-        { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined) } },
+        { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) } },
         { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },
         {
           provide: InstanceSettingsService,
@@ -492,6 +492,79 @@ describe('ServerManagementService', () => {
       const result = await service.getWhitelist('myserver');
 
       expect(result).toEqual(mockWhitelist);
+    });
+  });
+  describe('getServerRuntimeStats', () => {
+    const stubRunningServer = (probe: unknown) => {
+      jest.spyOn(service, 'getServerStatus').mockResolvedValue('running');
+      jest.spyOn(service, 'getServerResources').mockResolvedValue({
+        status: 'running',
+        cpuUsage: '25.00%',
+        memoryUsage: '1GiB',
+        memoryLimit: '4GiB',
+      } as never);
+      jest.spyOn(service as any, 'getServerLimits').mockResolvedValue({ cpuLimit: '2', memoryLimit: '4G' });
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      jest.spyOn(service as any, 'runMinecraftStatusProbe').mockResolvedValue(probe);
+      jest.spyOn(service as any, 'getContainersStartedAt').mockResolvedValue({ container123: Date.now() - 120_000 });
+    };
+
+    it('reports players and version when the game answers', async () => {
+      stubRunningServer({ playersOnline: 3, playersMax: 10, version: '1.21.4' });
+
+      const stats = await service.getServerRuntimeStats('myserver');
+
+      expect(stats.playersOnline).toBe(3);
+      expect(stats.playersMax).toBe(10);
+      expect(stats.version).toBe('1.21.4');
+      expect(stats.gameReachable).toBe(true);
+      expect(stats.uptimeSeconds).toBe(120);
+      expect(stats.cpuUsage).toBe('25.00%');
+    });
+
+    it('keeps player count null when the probe fails on a running server', async () => {
+      stubRunningServer(null);
+
+      const stats = await service.getServerRuntimeStats('myserver');
+
+      expect(stats.playersOnline).toBeNull();
+      expect(stats.version).toBeNull();
+      expect(stats.gameReachable).toBe(false);
+      // maxPlayers still comes from server.json so the UI can render "- / 20".
+      expect(stats.playersMax).toBe(20);
+    });
+
+    it('returns no game stats and skips the probe for a stopped server', async () => {
+      jest.spyOn(service, 'getServerStatus').mockResolvedValue('stopped');
+      jest.spyOn(service as any, 'getServerLimits').mockResolvedValue({ cpuLimit: '2', memoryLimit: '4G' });
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('');
+      const probe = jest.spyOn(service as any, 'runMinecraftStatusProbe');
+
+      const stats = await service.getServerRuntimeStats('myserver');
+
+      expect(stats.status).toBe('stopped');
+      expect(stats.playersOnline).toBeNull();
+      expect(stats.playersMax).toBeNull();
+      expect(stats.uptimeSeconds).toBeNull();
+      expect(stats.gameReachable).toBe(false);
+      expect(probe).not.toHaveBeenCalled();
+    });
+
+    it('runs a single probe for concurrent callers of the same server', async () => {
+      stubRunningServer({ playersOnline: 1, playersMax: 10, version: '1.21.4' });
+      const probe = jest.spyOn(service as any, 'runMinecraftStatusProbe');
+
+      await Promise.all([service.getServerRuntimeStats('myserver'), service.getServerRuntimeStats('myserver')]);
+      await service.getServerRuntimeStats('myserver');
+
+      expect(probe).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns not_found for an invalid server id', async () => {
+      const stats = await service.getServerRuntimeStats('../hack');
+
+      expect(stats.status).toBe('not_found');
+      expect(stats.gameReachable).toBe(false);
     });
   });
 });

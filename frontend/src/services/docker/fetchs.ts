@@ -194,6 +194,24 @@ export const getAllServersResources = async (): Promise<Record<string, ServerRes
   return response.data;
 };
 
+export type ServerRuntimeStats = ServerResourceInfo & {
+  playersOnline: number | null;
+  playersMax: number | null;
+  uptimeSeconds: number | null;
+  version: string | null;
+  gameReachable: boolean;
+};
+
+export const getServerRuntimeStats = async (serverId: string): Promise<ServerRuntimeStats> => {
+  const response = await api.get(`/servers/${serverId}/runtime-stats`);
+  return response.data;
+};
+
+export const getAllServersRuntimeStats = async (): Promise<Record<string, ServerRuntimeStats>> => {
+  const response = await api.get(`/servers/all-runtime-stats`);
+  return response.data;
+};
+
 export const executeServerCommand = async (
   serverId: string,
   body: { command: string; rconPort: string; rconPassword?: string },

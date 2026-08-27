@@ -151,6 +151,13 @@ Tooling / build (Next.js 16):
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
 - `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the AUTO_CURSEFORGE "File" method and the Modrinth modpack field.
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
+- `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,
+  uptime, CPU, RAM) for a running server's header; also exports the `RuntimeChip` primitive reused
+  by `dashboard/ServerQuickView.tsx`. Labels live in `title`/`aria-label` so the strip stays one line.
+- `src/lib/hooks/useServerRuntimeStats.ts` - polls `/servers/:id/runtime-stats` every 10s while the
+  server is running.
+- `src/lib/utils/server-runtime-stats.ts` - shared CPU/RAM percentage parsing and player formatting.
+  These return `null` for unknown values on purpose: an unreachable game must render as `-`, never `0`.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/lib/store/servers-store.ts`
 - `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)

@@ -120,6 +120,7 @@ export const en = {
   serverType: 'Server Type',
   serverTypeDescription: 'Select the type of Minecraft server you want to configure.',
   version: 'Version',
+  uptime: 'Uptime',
   memory: 'Memory',
   port: 'Port',
   difficulty: 'Difficulty',

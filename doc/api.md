@@ -117,6 +117,15 @@ Typical examples:
 - `POST /servers/:id/stop/force` — skips the shutdown announcement (see below)
 - `POST /servers/:id/restart`
 - `GET /servers/:id/logs`
+- `GET /servers/:id/runtime-stats` — live status, CPU, memory, player totals, uptime and
+  game version for one server
+- `GET /servers/all-runtime-stats` — the same data keyed by server ID, filtered to the servers
+  visible to the current user
+
+Game values (`playersOnline`, `playersMax`, `version`) are nullable. A container answers Docker
+resource checks before Minecraft is ready to answer its Java or Bedrock status query; in that
+window `gameReachable` is `false` and the API leaves those fields `null` instead of turning an
+unavailable player count into zero. `playersMax` falls back to `maxPlayers` from `server.json`.
 
 Modpack files uploaded for a server (`.zip` for CurseForge, `.mrpack` for Modrinth). They are stored
 in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
