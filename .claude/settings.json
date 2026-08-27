@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); echo \"$cmd\" | grep -qE -- 'git[[:space:]]+(commit|push).*--no-verify' && block=1; echo \"$cmd\" | grep -qE -- 'git[[:space:]]+commit.*[[:space:]]-[a-zA-Z]*n([[:space:]]|$)' && block=1; [ -n \"$block\" ] || exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"This repo does not allow skipping the git hooks: pre-commit runs lint-staged and pre-push runs npm run verify (lint + typecheck + tests). Run npm run verify, fix what it reports, then commit or push again without that flag.\"}}'",
+            "timeout": 10,
+            "statusMessage": "Checking git hook bypass"
+          }
+        ]
+      }
+    ]
+  }
+}

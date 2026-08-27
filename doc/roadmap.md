@@ -73,7 +73,7 @@ Already available in the current stable line.
 
 ### ✅ Dashboard & monitoring (live)
 
-- Status cards: status, players, CPU/RAM at a glance
+- Status cards: status, players, uptime and CPU/RAM at a glance
 - Visual alerts for high CPU/RAM
 - Real-time sidebar sync
 - Log viewer with search, filtering, error highlighting, live stats
@@ -118,7 +118,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 - ~~Cron-style scheduling at specific times~~ ✅ Shipped (interval or cron expression per task)
 - More flexible backup scheduling (beyond the current `backupInterval`)
-- Uptime tracking on top of the metrics history
+- Historical uptime and availability tracking on top of the metrics history (live uptime already ships)
 
 ### Bedrock console commands
 

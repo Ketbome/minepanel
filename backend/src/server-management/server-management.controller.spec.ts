@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ServerManagementController } from './server-management.controller';
 import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
@@ -38,6 +38,7 @@ describe('ServerManagementController', () => {
       getOps: jest.fn(),
       getBannedPlayers: jest.fn(),
       clearServerData: jest.fn(),
+      listAvailableWorlds: jest.fn(),
     };
 
     const mockDockerComposeService = {
@@ -448,6 +449,64 @@ describe('ServerManagementController', () => {
       const proxyService = (controller as any).proxyService;
       expect(proxyService.clearRoutesFile).toHaveBeenCalled();
       expect(proxyService.generateRoutesFile).not.toHaveBeenCalled();
+    });
+  });
+  describe('selectServerWorld', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      dockerComposeService.getServerConfig.mockResolvedValue({ id: 'java', edition: 'JAVA', worldSource: 'Oneblock.zip', worldScope: 'global', worldLevelName: 'world' } as any);
+      dockerComposeService.updateServerConfig.mockResolvedValue({ id: 'java', worldSource: '' } as any);
+      serverService.getServerStatus.mockResolvedValue('stopped');
+    });
+
+    it('clears the selection when worldSource is empty', async () => {
+      const result = await controller.selectServerWorld(mockReq, 'java', {
+        worldSource: '',
+        worldLevelName: 'world',
+        forceWorldCopy: true,
+        restartIfRunning: false,
+      } as any);
+
+      expect(result.success).toBe(true);
+      // Nothing to look up: an empty source is a removal, not a pick.
+      expect(serverService.listAvailableWorlds).not.toHaveBeenCalled();
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith(
+        'java',
+        expect.objectContaining({ worldSource: '', worldScope: 'local', forceWorldCopy: false }),
+        false,
+      );
+    });
+
+    it('treats a whitespace-only worldSource as a removal', async () => {
+      await controller.selectServerWorld(mockReq, 'java', { worldSource: '   ', worldLevelName: 'world', restartIfRunning: false } as any);
+
+      expect(serverService.listAvailableWorlds).not.toHaveBeenCalled();
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith('java', expect.objectContaining({ worldSource: '' }), false);
+    });
+
+    it('still rejects a non-empty world that does not exist', async () => {
+      serverService.listAvailableWorlds.mockResolvedValue([] as any);
+
+      await expect(controller.selectServerWorld(mockReq, 'java', { worldSource: 'ghost.zip', worldLevelName: 'world', restartIfRunning: false } as any)).rejects.toThrow(BadRequestException);
+    });
+
+    it('keeps persisting a valid pick', async () => {
+      serverService.listAvailableWorlds.mockResolvedValue([{ source: 'One Chunk.zip', scope: 'local' }] as any);
+
+      await controller.selectServerWorld(mockReq, 'java', {
+        worldSource: 'One Chunk.zip',
+        worldScope: 'local',
+        worldLevelName: 'chunk',
+        forceWorldCopy: true,
+        restartIfRunning: false,
+      } as any);
+
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith(
+        'java',
+        expect.objectContaining({ worldSource: 'One Chunk.zip', worldScope: 'local', worldLevelName: 'chunk', forceWorldCopy: true }),
+        false,
+      );
     });
   });
 });

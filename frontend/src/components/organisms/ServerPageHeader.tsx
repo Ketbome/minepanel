@@ -9,6 +9,7 @@ import { useState } from "react";
 import { ServerConnectionInfo } from "@/components/molecules/ServerConnectionInfo";
 import { getStatusIcon, getStatusBadgeClass } from "@/lib/utils/server-status";
 import { ServerEdition } from "@/lib/types/types";
+import { ServerRuntimeChips } from "@/components/molecules/ServerRuntimeChips";
 
 interface ServerPageHeaderProps {
   readonly serverId: string;
@@ -77,6 +78,8 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
           )}
         </Badge>
       </div>
+
+      {serverStatus === "running" && <ServerRuntimeChips serverId={serverId} serverStatus={serverStatus} />}
 
       <div className="mc-slot flex flex-col md:flex-row items-start md:items-center gap-4 p-4">
         <div className="flex items-center gap-3">

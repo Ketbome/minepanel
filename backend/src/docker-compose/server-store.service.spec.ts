@@ -6,9 +6,6 @@ import * as path from 'node:path';
 import { ServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStoreService } from './server-store.service';
 
-// These tests run against a real temp directory: the whole point of the store is
-// what it leaves on disk, and mocking fs would only assert that the mocks were
-// called.
 describe('ServerStoreService', () => {
   let service: ServerStoreService;
   let serversDir: string;
@@ -71,8 +68,6 @@ describe('ServerStoreService', () => {
       await fs.ensureDir(path.join(serversDir, 'survival'));
       await fs.writeFile(service.getConfigPath('survival'), '{ not json');
 
-      // Returning null here would make the caller re-import from the compose
-      // file and overwrite whatever the damaged file still held.
       await expect(service.readConfig('survival')).rejects.toBeDefined();
     });
 
@@ -84,7 +79,6 @@ describe('ServerStoreService', () => {
     });
 
     it('refuses to write a config with no server id', async () => {
-      // Otherwise this lands in servers/undefined/ and reconciles back as a server.
       await expect(service.writeConfig({} as ServerConfig)).rejects.toThrow('without a server id');
       expect(await fs.pathExists(path.join(serversDir, 'undefined'))).toBe(false);
     });
@@ -96,9 +90,6 @@ describe('ServerStoreService', () => {
       circular.self = circular;
 
       await expect(service.writeConfig(circular)).rejects.toBeDefined();
-      // The failure mode to avoid is not a truncated file but a *missing* one:
-      // readConfig cannot tell that from a server that never had a config, so the
-      // caller would re-import from docker-compose.yml and lose the rest.
       expect((await service.readConfig('survival'))?.maxPlayers).toBe('20');
       const entries = await fs.readdir(path.join(serversDir, 'survival'));
       expect(entries.filter((name) => name.endsWith('.tmp'))).toEqual([]);
@@ -108,9 +99,6 @@ describe('ServerStoreService', () => {
       await service.writeConfig(config('survival', { maxPlayers: '20' }));
       const configPath = service.getConfigPath('survival');
 
-      // fs-extra's move() with overwrite unlinks the destination before renaming,
-      // so the file genuinely disappears for a moment. Poll hard across a rewrite:
-      // with rename(2) the path is occupied the whole way through.
       let sawMissing = false;
       const poll = setInterval(() => {
         if (!fs.pathExistsSync(configPath)) sawMissing = true;
@@ -236,8 +224,6 @@ describe('ServerStoreService', () => {
     });
   });
 
-  // Every configurable field has to survive being stored. This fixture is the
-  // whole DTO, so a field added later that does not round-trip fails here.
   describe('storing every configurable field', () => {
     const fullConfig = () =>
       ({

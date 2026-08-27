@@ -38,12 +38,17 @@ flowchart LR
 
 | Feature   | Description                               |
 | --------- | ----------------------------------------- |
-| Dashboard | Status cards, resource usage at a glance  |
+| Dashboard | Home cards show status, players, uptime, CPU and RAM; a running server's header adds the game version |
 | Live logs | Streaming, errors highlighted, searchable |
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
-| Stats     | CPU%, RAM%, player count, uptime          |
+| Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | Per-server CPU/RAM graphs (1h–72h) in the Metrics tab, sampled every minute with 7-day retention |
 | Alerts    | Opt-in Discord alerts per server: unexpected server down, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
+
+Runtime stats refresh on their own on the home page and the server page, and only render for
+running servers. Player totals and version come from a game status query that works on both Java
+and Bedrock. If the container is up but the game is not answering yet, those values stay blank
+instead of reporting zero players.
 
 ## Server Control
 
@@ -135,6 +140,8 @@ Operational notes:
 
 - Uploading/changing worlds, mods, plugins, and most configs usually requires restart.
 - World switching supports folders with `level.dat` and archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`).
+- A selected world can be removed again: click it a second time (or use Clear selection) and apply.
+  The server goes back to its own world; the copy already on disk is not deleted.
 - `WORLD` clone source is mounted read-only by Minepanel to avoid accidental source overwrites.
 - World Library includes **Discover Worlds** to search CurseForge worlds and import remote ZIP/TAR URLs directly into `servers/.world/worlds/`.
 - The World Library page lists what you already have as searchable cards, filterable by name and by the folder imports landed in. The file browser is still there, folded away, for uploading, renaming and deleting.
