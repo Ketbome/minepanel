@@ -140,6 +140,8 @@ Operational notes:
 
 - Uploading/changing worlds, mods, plugins, and most configs usually requires restart.
 - World switching supports folders with `level.dat` and archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`).
+- A selected world can be removed again: click it a second time (or use Clear selection) and apply.
+  The server goes back to its own world; the copy already on disk is not deleted.
 - `WORLD` clone source is mounted read-only by Minepanel to avoid accidental source overwrites.
 - World Library includes **Discover Worlds** to search CurseForge worlds and import remote ZIP/TAR URLs directly into `servers/.world/worlds/`.
 - The World Library page lists what you already have as searchable cards, filterable by name and by the folder imports landed in. The file browser is still there, folded away, for uploading, renaming and deleting.

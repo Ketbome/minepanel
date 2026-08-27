@@ -51,7 +51,15 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
     setForceWorldCopy(config.forceWorldCopy ?? false);
   }, [config.worldSource, config.worldScope, config.worldLevelName, config.forceWorldCopy]);
 
+  const isPicked = (world: AvailableWorld) => selectedSource === world.source && selectedScope === world.scope;
+
+  // Clicking the picked world again clears the selection, so a server can go back to
+  // booting its own world instead of importing one.
   const handlePickWorld = (world: AvailableWorld) => {
+    if (isPicked(world)) {
+      setSelectedSource("");
+      return;
+    }
     setSelectedSource(world.source);
     setSelectedScope(world.scope);
     if (!worldLevelName || worldLevelName === "world") {
@@ -59,8 +67,10 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
     }
   };
 
+  const isRemoval = !selectedSource && Boolean(config.worldSource);
+
   const handleApply = async () => {
-    if (!selectedSource) {
+    if (!selectedSource && !config.worldSource) {
       mcToast.error(t("worldSelectRequired"));
       return;
     }
@@ -87,7 +97,8 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
       updateConfig("forceWorldCopy", result.config.forceWorldCopy ?? forceWorldCopy);
       updateConfig("cfSetLevelFrom", "");
 
-      mcToast.success(result.restarted ? t("worldAppliedAndRestarted") : t("worldApplied"));
+      const successMessage = isRemoval ? t("worldSelectionRemoved") : t("worldApplied");
+      mcToast.success(result.restarted ? t("worldAppliedAndRestarted") : successMessage);
       await loadWorlds();
     } catch (error) {
       console.error("Error applying world selection:", error);
@@ -145,10 +156,9 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
         key={`${world.scope}:${world.source}`}
         type="button"
         onClick={() => handlePickWorld(world)}
+        title={isPicked(world) ? t("worldClearSelectionHint") : undefined}
         className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
-          selectedSource === world.source && selectedScope === world.scope
-            ? "border-emerald-500/70 bg-emerald-900/20"
-            : "border-gray-700/60 bg-gray-800/40 hover:border-gray-600"
+          isPicked(world) ? "border-emerald-500/70 bg-emerald-900/20" : "border-gray-700/60 bg-gray-800/40 hover:border-gray-600"
         }`}
       >
         <div className="flex items-center justify-between gap-2">
@@ -157,7 +167,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
             <p className="text-xs text-gray-400">{world.type === "directory" ? t("worldTypeFolder") : t("worldTypeArchive")}</p>
           </div>
           <div className="flex gap-2">
-            {selectedSource === world.source && selectedScope === world.scope && <Badge variant="secondary">{t("selected")}</Badge>}
+            {isPicked(world) && <Badge variant="secondary">{t("selected")}</Badge>}
             <Badge
               variant={world.copied ? "default" : "outline"}
               className={world.copied ? "" : "border-amber-500/70 text-amber-200 bg-amber-900/30"}
@@ -255,9 +265,32 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
           </div>
         </div>
 
-        <Button type="button" onClick={handleApply} disabled={saving || loading || worlds.length === 0} className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40">
-          {saving ? t("saving") : t("applyWorldAndRestart")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={handleApply}
+            disabled={saving || loading || (!selectedSource && !config.worldSource)}
+            className={
+              isRemoval
+                ? "bg-amber-700 hover:bg-amber-800 text-white border border-amber-500/40"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40"
+            }
+          >
+            {saving ? t("saving") : isRemoval ? t("worldRemoveSelection") : t("applyWorldAndRestart")}
+          </Button>
+
+          {selectedSource && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedSource("")}
+              disabled={saving || loading}
+              className="border-gray-600/70 bg-gray-800/40 text-gray-200 hover:bg-gray-700/50"
+            >
+              {t("worldClearSelection")}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

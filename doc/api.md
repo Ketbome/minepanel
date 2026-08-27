@@ -133,7 +133,10 @@ in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
 - `GET /servers/:id/worlds` — worlds available to this server, from its own library
   and the shared one (Java only)
 - `PUT /servers/:id/worlds/select` — body `{ worldSource, worldScope, worldLevelName,
-  forceWorldCopy?, restartIfRunning? }`. `worldScope` is `local` | `global`
+  forceWorldCopy?, restartIfRunning? }`. `worldScope` is `local` | `global`.
+  An empty `worldSource` clears the selection: `WORLD` stops being generated, the server boots
+  its own world at `LEVEL`, and `forceWorldCopy` is reset. Already-copied world data on disk is
+  left untouched
 - `GET /servers/:id/modpacks`
 - `POST /servers/:id/modpacks` — multipart `file`
 - `DELETE /servers/:id/modpacks/:fileName`

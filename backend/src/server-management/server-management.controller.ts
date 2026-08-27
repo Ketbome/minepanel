@@ -645,19 +645,25 @@ export class ServerManagementController {
     }
 
     const selectedScope = body.worldScope ?? 'local';
-    const availableWorlds = await this.managementService.listAvailableWorlds(id, config.worldSource, config.worldLevelName, config.worldScope ?? 'local');
-    const selectedWorld = availableWorlds.find((world) => world.source === body.worldSource && world.scope === selectedScope);
-    if (!selectedWorld) {
-      throw new BadRequestException('Selected world source was not found in local or world library sources');
+    // An empty worldSource clears the selection: the server then boots its own world at
+    // LEVEL instead of importing one. Already-copied world data is left untouched.
+    const requestedSource = body.worldSource?.trim() ?? '';
+    if (requestedSource) {
+      const availableWorlds = await this.managementService.listAvailableWorlds(id, config.worldSource, config.worldLevelName, config.worldScope ?? 'local');
+      const selectedWorld = availableWorlds.find((world) => world.source === requestedSource && world.scope === selectedScope);
+      if (!selectedWorld) {
+        throw new BadRequestException('Selected world source was not found in local or world library sources');
+      }
     }
 
     const { enabled: proxyEnabled } = await this.proxyService.getProxySettings();
 
     const nextConfig: Partial<ServerConfig> = {
-      worldSource: body.worldSource,
-      worldScope: selectedScope,
+      worldSource: requestedSource,
+      worldScope: requestedSource ? selectedScope : 'local',
       worldLevelName,
-      forceWorldCopy: body.forceWorldCopy === true,
+      // FORCE_WORLD_COPY only means anything alongside a world source.
+      forceWorldCopy: requestedSource ? body.forceWorldCopy === true : false,
       cfSetLevelFrom: '',
     };
 
