@@ -6,15 +6,20 @@
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "npm run lint --prefix backend",
     "lint:frontend": "npm run lint --prefix frontend",
+    "lint:fix": "npm run lint:fix --prefix backend && npm run lint:fix --prefix frontend",
+    "typecheck": "npm run typecheck:backend && npm run typecheck:frontend",
+    "typecheck:backend": "cd backend && npx tsc --noEmit",
+    "typecheck:frontend": "cd frontend && npx tsc --noEmit",
     "format": "npm run format --prefix backend",
-    "test": "npm run test --prefix backend"
+    "test": "npm run test --prefix backend",
+    "verify": "npm run lint && npm run typecheck && npm run test"
   },
   "devDependencies": {
     "husky": "9.1.7",
     "lint-staged": "15.5.0"
   },
   "lint-staged": {
-    "backend/**/*.ts": "npm run lint:backend --",
-    "frontend/**/*.{ts,tsx}": "npm run lint:frontend --"
+    "backend/**/*.ts": "npm run lint:fix --prefix backend --",
+    "frontend/**/*.{ts,tsx}": "npm run lint:fix --prefix frontend --"
   }
 }

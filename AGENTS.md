@@ -37,8 +37,11 @@ service in the root compose file.
 
 ```bash
 # root
+npm run verify      # lint + typecheck + tests (same gate as pre-push and CI)
 npm run lint
+npm run typecheck
 npm run test
+npm run lint:fix    # the only script that rewrites files
 
 # backend
 npm run start:dev --prefix backend
@@ -55,6 +58,24 @@ docker compose up -d
 docker compose -f docker-compose.development.yml up --build
 docker compose -f docker-compose.test.yml up -d
 ```
+
+## Verification Gate
+
+`npm run verify` (lint + typecheck + backend tests, ~20s) is the single gate. It runs:
+
+- on every `git push`, via `.husky/pre-push`
+- in CI (`.github/workflows/ci.yml`, which additionally builds both apps)
+
+The `git push` half only works once husky has claimed the hooks. `npm install` at the repo root
+runs the `prepare` script that does it; check with `git config core.hooksPath` (expected
+`.husky/_`). An empty value means the local gate is inert and only CI is catching things.
+
+`npm run lint` only checks; `npm run lint:fix` is the one that rewrites files and is what
+`lint-staged` runs on `git commit`. Keep them separate: a gate that silently fixes what it is
+meant to catch is not a gate.
+
+`.claude/settings.json` holds a `PreToolUse` hook that blocks `git commit` / `git push` with
+`--no-verify`, so an agent cannot skip the gate. Fix what `npm run verify` reports instead.
 
 ## Code Patterns
 
