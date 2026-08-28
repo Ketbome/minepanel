@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Users } from '../entities/users.entity';
 import { ChangePasswordDto, CreateUserInvitationDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
 import * as bcrypt from 'bcrypt';
@@ -317,7 +317,7 @@ export class UsersService {
       usedAt: null,
     });
 
-    await this.pendingEmailChangesRepo.update({ userId: user.id, usedAt: null }, { usedAt: new Date() });
+    await this.pendingEmailChangesRepo.update({ userId: user.id, usedAt: IsNull() }, { usedAt: new Date() });
     const savedChange = await this.pendingEmailChangesRepo.save(pendingChange);
 
     try {
@@ -335,7 +335,7 @@ export class UsersService {
 
   async confirmEmailChange(userId: number, code: string): Promise<Users> {
     const pendingChange = await this.pendingEmailChangesRepo.findOne({
-      where: { userId, usedAt: null },
+      where: { userId, usedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
 
@@ -378,7 +378,7 @@ export class UsersService {
   async getActiveInvitations(): Promise<UserInvitation[]> {
     const now = new Date();
     const invitations = await this.invitationsRepo.find({
-      where: { usedAt: null },
+      where: { usedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
 
@@ -462,7 +462,7 @@ export class UsersService {
   }
 
   async getInvitationLink(id: number): Promise<string> {
-    const invitation = await this.invitationsRepo.findOne({ where: { id, usedAt: null } });
+    const invitation = await this.invitationsRepo.findOne({ where: { id, usedAt: IsNull() } });
 
     if (!invitation || invitation.expiresAt < new Date()) {
       throw new NotFoundException('Invitation not found');

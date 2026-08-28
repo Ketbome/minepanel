@@ -1,5 +1,6 @@
 import { BadRequestException, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { IsNull } from 'typeorm';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(async (value: string) => `hashed:${value}`),
@@ -112,7 +113,7 @@ describe('AuthService tokens, recovery and invitations', () => {
 
     await service.createPasswordReset('c@x.com');
 
-    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: null }, { usedAt: expect.any(Date) });
+    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: IsNull() }, { usedAt: expect.any(Date) });
     const saved = resetRepo.save.mock.calls[0][0];
     expect(saved.expiresAt.getTime() - Date.now()).toBeGreaterThan(29 * 60 * 1000);
     const [to, username, url] = authMail.sendPasswordResetEmail.mock.calls[0];

@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { IsNull } from 'typeorm';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(async (value: string) => `hashed:${value}`),
@@ -313,7 +314,7 @@ describe('UsersService', () => {
       usersRepo.findOne.mockResolvedValueOnce(user()).mockResolvedValueOnce(null);
       const result = await service.requestEmailChange(1, { email: 'new@example.com' });
       expect(result).toEqual({ requiresConfirmation: true, pendingEmail: 'new@example.com' });
-      expect(pendingEmailRepo.update).toHaveBeenCalledWith({ userId: 1, usedAt: null }, { usedAt: expect.any(Date) });
+      expect(pendingEmailRepo.update).toHaveBeenCalledWith({ userId: 1, usedAt: IsNull() }, { usedAt: expect.any(Date) });
       expect(authMail.sendEmailChangeCodeEmail).toHaveBeenCalledWith('new@example.com', 'alice', expect.stringMatching(/^\d{6}$/));
     });
 
