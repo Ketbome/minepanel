@@ -44,17 +44,17 @@ Backend integration model:
 ## Key Commands
 
 ```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
+pnpm dev
+pnpm build
+pnpm start
+pnpm lint
 ```
 
 From repo root:
 
 ```bash
-npm run dev --prefix frontend
-npm run lint --prefix frontend
+pnpm dev:frontend
+pnpm --filter ./frontend lint
 ```
 
 ## Code Patterns
@@ -129,7 +129,14 @@ Tooling / build (Next.js 16):
 - Turbopack is the default bundler for `next dev` and `next build`. `next.config.ts`
   uses a `turbopack` block; do not reintroduce a `webpack` config (it errors under Turbopack).
 - `next lint` was removed. The `lint` script is `eslint src`, using the flat config
-  exported by `eslint-config-next` in `eslint.config.mjs`.
+  exported by `eslint-config-next` in `eslint.config.mjs`. ESLint stays on 9.x until
+  `eslint-config-next` supports 10 (its bundled `eslint-plugin-react` breaks on 10).
+- `lucide-react` 1.x dropped brand icons; the GitHub mark in `GitHubStarButton.tsx` is an
+  inline SVG on purpose.
+- `next.config.ts` points `turbopack.root` and `outputFileTracingRoot` at the pnpm
+  workspace root (`..`), where the lockfile and hoisted `node_modules` live. Because of
+  that the standalone output keeps the `frontend/` prefix (`.next/standalone/frontend/server.js`
+  next to a root `node_modules`); `frontend/Dockerfile` and the root `Dockerfile` rely on it.
 - The React Compiler `react-hooks/*` rules shipped by eslint-config-next 16 are
   disabled in `eslint.config.mjs` to preserve the pre-upgrade baseline; revisit as a
   dedicated cleanup, not inside unrelated changes.

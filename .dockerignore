@@ -12,6 +12,14 @@ frontend/.next
 frontend/out
 frontend/build
 
+# Not part of any image
+doc
+docs
+.claude
+.agents
+.superpowers
+.playwright-mcp
+
 # Testing (no excluir test/ de backend, lo necesita para e2e)
 **/coverage
 **/.nyc_output

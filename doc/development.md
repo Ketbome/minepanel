@@ -16,7 +16,7 @@ Want to contribute or run locally? Here's how.
 
 ## What you need
 
-- Node.js 18+
+- Node.js 22+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose
 - Git
 
@@ -53,12 +53,15 @@ minepanel/
 
 ## Run locally
 
+The repo is a pnpm workspace (`backend` + `frontend`). Requirements: Node 22+ and
+pnpm 10 (`corepack enable`). `pnpm install` at the root installs both apps and the
+git hooks.
+
 ### Backend
 
 ```bash
-cd backend
-npm install
-npm run start:dev
+pnpm install
+pnpm dev:backend
 ```
 
 Runs on `http://localhost:8091`
@@ -66,9 +69,8 @@ Runs on `http://localhost:8091`
 ### Frontend
 
 ```bash
-cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev:frontend
 ```
 
 Runs on `http://localhost:3000`
@@ -136,8 +138,8 @@ Check [CONTRIBUTING.md](https://github.com/Ketbome/minepanel/blob/main/CONTRIBUT
 1. Fork the repo
 2. Create a branch: `git checkout -b feature/thing`
 3. Make changes
-4. Test: `npm test`
-5. Lint: `npm run lint`
+4. Test: `pnpm test`
+5. Lint: `pnpm lint` (or `pnpm verify` for the full pre-push gate)
 6. Push and open PR
 
 ### Commit format
@@ -159,11 +161,8 @@ docs: update install guide
 ## Testing
 
 ```bash
-# Backend
-cd backend && npm test
-
-# Frontend
-cd frontend && npm test
+pnpm test                      # backend unit tests (coverage gate: 90%)
+pnpm --filter ./backend test:e2e
 ```
 
 ## Documentation
@@ -171,9 +170,8 @@ cd frontend && npm test
 Docs are in `doc/` using VitePress.
 
 ```bash
-cd doc
-npm install
-npm run docs:dev
+pnpm install
+pnpm docs:dev
 ```
 
 Runs on `http://localhost:5173`
@@ -198,7 +196,7 @@ Runs on `http://localhost:5173`
 **Backend:**
 
 ```bash
-npm run start:debug
+pnpm --filter ./backend start:debug
 ```
 
 **Frontend:**
@@ -230,8 +228,8 @@ sudo usermod -aG docker $USER
 ### Node modules issues
 
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules backend/node_modules frontend/node_modules
+pnpm install
 ```
 
 ## Release process

@@ -15,8 +15,8 @@ with the flat config from `eslint-config-next` in `eslint.config.mjs`.
 ## Run
 
 ```bash
-npm install
-npm run dev
+pnpm install          # at the repo root (pnpm workspace)
+pnpm dev:frontend     # or: cd frontend && pnpm dev
 ```
 
 App default URL: `http://localhost:3000`.
@@ -24,9 +24,10 @@ App default URL: `http://localhost:3000`.
 ## Useful Commands
 
 ```bash
-npm run build
-npm run start
-npm run lint
+# from frontend/ (or prefix with `pnpm --filter ./frontend` at the root)
+pnpm build
+pnpm start
+pnpm lint
 ```
 
 ## Base Path

@@ -20,6 +20,7 @@ minepanel/
 |  |- <id>/server.json  Source of truth for one server's config
 |  |- <id>/docker-compose.yml  Generated from server.json
 |- data/         SQLite data (gitignored)
+|- pnpm-workspace.yaml
 |- docker-compose.yml
 |- docker-compose.development.yml
 |- docker-compose.test.yml
@@ -35,23 +36,35 @@ service in the root compose file.
 
 ## Key Commands
 
+The repo is a pnpm workspace (`pnpm-workspace.yaml`: `backend`, `frontend`, `doc`). `doc/`
+is built by Cloudflare Workers Builds from its own directory; it keeps `doc/package-lock.json`
+so an npm-based build still works, and its `vite` override is mirrored in the root
+`pnpm.overrides` (pnpm ignores overrides declared in non-root packages). Node 22+, pnpm 10 via corepack.
+Filter packages by path (`--filter ./backend`), never by name: the frontend package is
+named `minepanel`, and a name filter that matches nothing exits 0 without running anything.
+
 ```bash
 # root
-npm run verify      # lint + typecheck + tests (same gate as pre-push and CI)
-npm run lint
-npm run typecheck
-npm run test
-npm run lint:fix    # the only script that rewrites files
+pnpm install        # installs both apps and the git hooks
+pnpm verify         # lint + typecheck + tests (same gate as pre-push and CI)
+pnpm lint
+pnpm typecheck
+pnpm test           # backend jest with a 90% coverage threshold
+pnpm lint:fix       # the only script that rewrites files
 
 # backend
-npm run start:dev --prefix backend
-npm run build --prefix backend
-npm run test --prefix backend
+pnpm dev:backend            # = pnpm --filter ./backend start:dev
+pnpm --filter ./backend build
+pnpm --filter ./backend test
 
 # frontend
-npm run dev --prefix frontend
-npm run build --prefix frontend
-npm run lint --prefix frontend
+pnpm dev:frontend           # = pnpm --filter ./frontend dev
+pnpm --filter ./frontend build
+pnpm --filter ./frontend lint
+
+# docs
+pnpm docs:dev               # = pnpm --filter ./doc docs:dev
+pnpm docs:build
 
 # docker stack
 docker compose up -d
@@ -61,21 +74,33 @@ docker compose -f docker-compose.test.yml up -d
 
 ## Verification Gate
 
-`npm run verify` (lint + typecheck + backend tests, ~20s) is the single gate. It runs:
+`pnpm verify` (lint + typecheck + backend tests, ~30s) is the single gate. It runs:
 
 - on every `git push`, via `.husky/pre-push`
-- in CI (`.github/workflows/ci.yml`, which additionally builds both apps)
+- in CI (`.github/workflows/ci.yml`, on every branch push; it additionally builds both apps)
 
-The `git push` half only works once husky has claimed the hooks. `npm install` at the repo root
-runs the `prepare` script that does it; check with `git config core.hooksPath` (expected
-`.husky/_`). An empty value means the local gate is inert and only CI is catching things.
+Docker images are only published by `docker-publish.yml` after a green CI run
+(`workflow_run`), so a red `main` never ships `latest`.
 
-`npm run lint` only checks; `npm run lint:fix` is the one that rewrites files and is what
+The `git push` half only works once husky has claimed the hooks. Any `pnpm install` (root or
+inside `backend/`/`frontend/`) runs the root `prepare` script that does it; the repo `.npmrc`
+sets `ignore-scripts=false` so a user-level `ignore-scripts=true` cannot silently skip it.
+Check with `git config core.hooksPath` (expected `.husky/_`). An empty value means the local
+gate is inert and only CI is catching things.
+
+`pnpm test` enforces `coverageThreshold` in `backend/package.json` (90% lines/statements/
+functions). Adding code without tests fails the gate; keep the threshold, add tests.
+
+`pnpm lint` only checks; `pnpm lint:fix` is the one that rewrites files and is what
 `lint-staged` runs on `git commit`. Keep them separate: a gate that silently fixes what it is
 meant to catch is not a gate.
 
 `.claude/settings.json` holds a `PreToolUse` hook that blocks `git commit` / `git push` with
-`--no-verify`, so an agent cannot skip the gate. Fix what `npm run verify` reports instead.
+`--no-verify`, so an agent cannot skip the gate. Fix what `pnpm verify` reports instead.
+
+Docker images build from the repo root (`docker build -f backend/Dockerfile .`): the pnpm
+lockfile lives there. `backend/Dockerfile` uses `pnpm deploy --legacy` to produce a flat
+production tree, and `frontend/Dockerfile` copies the Next standalone output.
 
 ## Code Patterns
 
@@ -89,6 +114,7 @@ meant to catch is not a gate.
 - `AGENTS.md`
 - `Readme.md`
 - `.env.example`
+- `pnpm-workspace.yaml` / `.npmrc`
 - `docker-compose.yml`
 - `docker-compose.development.yml`
 - `docker-compose.test.yml`

@@ -13,9 +13,9 @@ Public documentation site built with VitePress. Hosted at https://minepanel.ketb
 
 ```bash
 cd doc
-npm run docs:dev      # Dev server at localhost:5173
-npm run docs:build    # Build static site
-npm run docs:preview  # Preview build
+pnpm docs:dev         # Dev server at localhost:5173 (from doc/; or `pnpm docs:dev` at the repo root)
+pnpm docs:build       # Build static site
+pnpm docs:preview     # Preview build
 ```
 
 ---
@@ -138,9 +138,9 @@ services:
 
 ```bash
 cd doc
-npm run docs:dev      # Dev server at localhost:5173
-npm run docs:build    # Build static site
-npm run docs:preview  # Preview build
+pnpm docs:dev         # Dev server at localhost:5173 (from doc/; or `pnpm docs:dev` at the repo root)
+pnpm docs:build       # Build static site
+pnpm docs:preview     # Preview build
 ```
 
 ---

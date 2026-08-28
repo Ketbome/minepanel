@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, InternalServerErrorException, Optional } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
@@ -152,16 +152,13 @@ export class ServerManagementController {
     private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyService: ProxyService,
     private readonly bedrockAddonsService: BedrockAddonsService,
-    @Optional()
     private readonly usersService: UsersService,
-    @Optional()
     private readonly accessControlService: AccessControlService,
-    @Optional()
     private readonly auditLogService: AuditLogService,
   ) {}
 
   private async recordServerAudit(user: Users | null, action: string, serverId: string, summary: string, outcome: 'success' | 'error' = 'success', metadata?: Record<string, unknown>) {
-    if (!user || !this.auditLogService) {
+    if (!user) {
       return;
     }
 
@@ -178,17 +175,11 @@ export class ServerManagementController {
   }
 
   private async getCurrentUser(req): Promise<Users> {
-    if (!this.usersService) {
-      return null;
-    }
     const user = req.user as PayloadToken;
     return this.usersService.getRequiredUserById(user.userId);
   }
 
   private async requireAdmin(req): Promise<Users> {
-    if (!this.usersService || !this.accessControlService) {
-      throw new InternalServerErrorException('Access control is not available');
-    }
     const user = await this.getCurrentUser(req);
     if (!this.accessControlService.isAdmin(user)) {
       throw new ForbiddenException('Only admin can perform this action');
@@ -198,9 +189,6 @@ export class ServerManagementController {
   }
 
   private async requireServerAccess(req, serverId: string): Promise<Users> {
-    if (!this.usersService || !this.accessControlService) {
-      throw new InternalServerErrorException('Access control is not available');
-    }
     const user = await this.getCurrentUser(req);
     this.accessControlService.assertServerAccess(user, serverId);
     return user;
@@ -209,7 +197,7 @@ export class ServerManagementController {
   // The panel submits the whole server form on every save, so non-admins are only
   // blocked when a host-affecting field actually differs from what is persisted.
   private assertCanChangeAdvancedConfig(user: Users | null, incoming: Partial<ServerConfig>, current: ServerConfig): void {
-    if (!this.accessControlService || this.accessControlService.isAdmin(user)) {
+    if (this.accessControlService.isAdmin(user)) {
       return;
     }
 
@@ -241,7 +229,7 @@ export class ServerManagementController {
   }
 
   private assertSafeNewServerConfig(user: Users | null, config: Partial<ServerConfig>): void {
-    if (!this.accessControlService || this.accessControlService.isAdmin(user)) {
+    if (this.accessControlService.isAdmin(user)) {
       return;
     }
 
@@ -299,14 +287,6 @@ export class ServerManagementController {
     }
   }
 
-  private resolveRequestAndId(reqOrId, id?: string) {
-    if (typeof reqOrId === 'string' && id === undefined) {
-      return { req: null, id: reqOrId };
-    }
-
-    return { req: reqOrId, id: id as string };
-  }
-
   private sanitizeJavaServerDefaults(defaults: Record<string, any> | undefined): Record<string, any> {
     if (!defaults || typeof defaults !== 'object') {
       return {};
@@ -344,16 +324,8 @@ export class ServerManagementController {
   }
 
   @Get('all-status')
-  async getAllServersStatus(@Request() req?) {
+  async getAllServersStatus(@Request() req) {
     const allStatus = await this.managementService.getAllServersStatus();
-    if (!req) {
-      return allStatus;
-    }
-
-    if (!this.usersService || !this.accessControlService) {
-      throw new InternalServerErrorException('Access control is not available');
-    }
-
     const user = await this.getCurrentUser(req);
     const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(allStatus)));
     return Object.fromEntries(Object.entries(allStatus).filter(([serverId]) => visibleIds.has(serverId)));
@@ -362,9 +334,6 @@ export class ServerManagementController {
   @Get('all-resources')
   async getAllServersResources(@Request() req) {
     const resources = await this.managementService.getAllServersResources();
-    if (!this.usersService || !this.accessControlService) {
-      throw new InternalServerErrorException('Access control is not available');
-    }
     const user = await this.getCurrentUser(req);
     const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(resources)));
     return Object.fromEntries(Object.entries(resources).filter(([serverId]) => visibleIds.has(serverId)));
@@ -373,9 +342,6 @@ export class ServerManagementController {
   @Get('all-runtime-stats')
   async getAllServersRuntimeStats(@Request() req) {
     const stats = await this.managementService.getAllServersRuntimeStats();
-    if (!this.usersService || !this.accessControlService) {
-      throw new InternalServerErrorException('Access control is not available');
-    }
     const user = await this.getCurrentUser(req);
     const visibleIds = new Set(this.accessControlService.getVisibleServerIds(user, Object.keys(stats)));
     return Object.fromEntries(Object.entries(stats).filter(([serverId]) => visibleIds.has(serverId)));
@@ -395,9 +361,7 @@ export class ServerManagementController {
   async createServer(@Request() req, @Body(new ValidationPipe()) data: UpdateServerConfigDto) {
     try {
       const currentUser = await this.getCurrentUser(req);
-      if (currentUser && this.accessControlService) {
-        this.accessControlService.assertCreateServers(currentUser);
-      }
+      this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
@@ -452,9 +416,7 @@ export class ServerManagementController {
     body: CloneServerDto,
   ) {
     const currentUser = await this.requireServerAccess(req, id);
-    if (currentUser && this.accessControlService) {
-      this.accessControlService.assertCreateServers(currentUser);
-    }
+    this.accessControlService.assertCreateServers(currentUser);
 
     const config = await this.dockerComposeService.getServerConfig(id);
     if (!config?.serverExists) {
@@ -689,14 +651,10 @@ export class ServerManagementController {
   }
 
   @Post(':id/restart')
-  async restartServer(@Request() reqOrId, @Param('id') id?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, id);
-    let currentUser: Users | null = null;
-    if (resolved.req) {
-      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
-    }
-    const result = await this.managementService.restartServer(resolved.id);
-    await this.recordServerAudit(currentUser, 'restart_server', resolved.id, result ? `Restarted server ${resolved.id}` : `Failed to restart server ${resolved.id}`, result ? 'success' : 'error');
+  async restartServer(@Request() req, @Param('id') id: string) {
+    const currentUser = await this.requireServerAccess(req, id);
+    const result = await this.managementService.restartServer(id);
+    await this.recordServerAudit(currentUser, 'restart_server', id, result ? `Restarted server ${id}` : `Failed to restart server ${id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server restarted successfully' : 'Failed to restart server',
@@ -727,12 +685,9 @@ export class ServerManagementController {
   }
 
   @Get(':id/status')
-  async getServerStatus(@Request() reqOrId, @Param('id') id?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, id);
-    if (resolved.req) {
-      await this.requireServerAccess(resolved.req, resolved.id);
-    }
-    const status = await this.managementService.getServerStatus(resolved.id);
+  async getServerStatus(@Request() req, @Param('id') id: string) {
+    await this.requireServerAccess(req, id);
+    const status = await this.managementService.getServerStatus(id);
     return { status };
   }
 
@@ -762,25 +717,21 @@ export class ServerManagementController {
   }
 
   @Get(':id/logs')
-  async getServerLogs(@Request() reqOrId, @Param('id') idOrLines?: string | number, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, typeof idOrLines === 'string' ? idOrLines : undefined);
-    if (resolved.req && this.usersService && this.accessControlService) {
-      const user = await this.getCurrentUser(resolved.req);
-      this.accessControlService.assertViewLogs(user, resolved.id);
-    }
-    const resolvedLines = typeof idOrLines === 'number' && lines === undefined ? idOrLines : lines;
-    const lineCount = resolvedLines && resolvedLines > 0 ? Math.min(resolvedLines, 10000) : 100;
+  async getServerLogs(@Request() req, @Param('id') id: string, @Query('lines') lines?: number, @Query('since') since?: string, @Query('stream') stream?: string) {
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertViewLogs(user, id);
+    const lineCount = lines && lines > 0 ? Math.min(lines, 10000) : 100;
 
     if (since) {
       assertValidSince(since);
     }
     if (stream === 'true' && since) {
-      return this.managementService.getServerLogsStream(resolved.id, lineCount, since);
+      return this.managementService.getServerLogsStream(id, lineCount, since);
     }
     if (since) {
-      return this.managementService.getServerLogsSince(resolved.id, since);
+      return this.managementService.getServerLogsSince(id, since);
     }
-    return this.managementService.getServerLogs(resolved.id, lineCount);
+    return this.managementService.getServerLogs(id, lineCount);
   }
 
   @Get(':id/logs/stream')
@@ -817,14 +768,10 @@ export class ServerManagementController {
   }
 
   @Post(':id/start')
-  async startServer(@Request() reqOrId, @Param('id') id?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, id);
-    let currentUser: Users | null = null;
-    if (resolved.req) {
-      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
-    }
-    const result = await this.managementService.startServer(resolved.id);
-    await this.recordServerAudit(currentUser, 'start_server', resolved.id, result ? `Started server ${resolved.id}` : `Failed to start server ${resolved.id}`, result ? 'success' : 'error');
+  async startServer(@Request() req, @Param('id') id: string) {
+    const currentUser = await this.requireServerAccess(req, id);
+    const result = await this.managementService.startServer(id);
+    await this.recordServerAudit(currentUser, 'start_server', id, result ? `Started server ${id}` : `Failed to start server ${id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server started successfully' : 'Failed to start server',
@@ -832,14 +779,10 @@ export class ServerManagementController {
   }
 
   @Post(':id/stop')
-  async stopServer(@Request() reqOrId, @Param('id') id?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, id);
-    let currentUser: Users | null = null;
-    if (resolved.req) {
-      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
-    }
-    const result = await this.managementService.stopServer(resolved.id);
-    await this.recordServerAudit(currentUser, 'stop_server', resolved.id, result ? `Stopped server ${resolved.id}` : `Failed to stop server ${resolved.id}`, result ? 'success' : 'error');
+  async stopServer(@Request() req, @Param('id') id: string) {
+    const currentUser = await this.requireServerAccess(req, id);
+    const result = await this.managementService.stopServer(id);
+    await this.recordServerAudit(currentUser, 'stop_server', id, result ? `Stopped server ${id}` : `Failed to stop server ${id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server stopped successfully' : 'Failed to stop server',
@@ -847,14 +790,10 @@ export class ServerManagementController {
   }
 
   @Post(':id/stop/force')
-  async forceStopServer(@Request() reqOrId, @Param('id') id?: string) {
-    const resolved = this.resolveRequestAndId(reqOrId, id);
-    let currentUser: Users | null = null;
-    if (resolved.req) {
-      currentUser = await this.requireServerAccess(resolved.req, resolved.id);
-    }
-    const result = await this.managementService.forceStopServer(resolved.id);
-    await this.recordServerAudit(currentUser, 'force_stop_server', resolved.id, result ? `Force stopped server ${resolved.id}` : `Failed to force stop server ${resolved.id}`, result ? 'success' : 'error');
+  async forceStopServer(@Request() req, @Param('id') id: string) {
+    const currentUser = await this.requireServerAccess(req, id);
+    const result = await this.managementService.forceStopServer(id);
+    await this.recordServerAudit(currentUser, 'force_stop_server', id, result ? `Force stopped server ${id}` : `Failed to force stop server ${id}`, result ? 'success' : 'error');
     return {
       success: result,
       message: result ? 'Server force stopped successfully' : 'Failed to force stop server',

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from './entities/users.entity';
 import { UsersController } from './controllers/users.controller';
@@ -19,7 +19,7 @@ import { ProxyModule } from 'src/proxy/proxy.module';
 import { IntegrationSettingsController } from './controllers/integration-settings.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule, ProxyModule],
+  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule, forwardRef(() => ProxyModule)],
   controllers: [UsersController, SettingsController, AuditLogController, IntegrationSettingsController],
   providers: [UsersService, SettingsService, AccessControlService, AuditLogService, AuthMailService],
   exports: [UsersService, SettingsService, AccessControlService, AuditLogService],

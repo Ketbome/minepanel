@@ -1,0 +1,9 @@
+packages:
+  - backend
+  - frontend
+  - doc
+
+# pnpm 10 skips dependency install scripts unless listed here. bcrypt needs its
+# node-gyp-build step to pick the prebuilt binary.
+onlyBuiltDependencies:
+  - bcrypt

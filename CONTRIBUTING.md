@@ -14,7 +14,7 @@ Don't be a jerk. That's it.
 
 ## What you need
 
-- Node.js 18+
+- Node.js 22+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose v2.0+
 - Git
 - Any code editor (VS Code works great)
@@ -51,32 +51,32 @@ Don't be a jerk. That's it.
 
 ## Running locally
 
+The repo is a pnpm workspace (`backend` + `frontend`); `pnpm install` at the root
+installs both and the git hooks. Node 22+ and pnpm 10 (`corepack enable`).
+
 ### Backend
 
 ```bash
-cd backend
-npm install
-npm run start:dev
+pnpm install
+pnpm dev:backend
 ```
 
-Runs on `http://localhost:3000`
+Runs on `http://localhost:8091`
 
 ### Frontend
 
 ```bash
-cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev:frontend
 ```
 
-Runs on `http://localhost:3001`
+Runs on `http://localhost:3000`
 
 ### Documentation
 
 ```bash
-cd doc
-npm install
-npm run docs:dev
+pnpm install
+pnpm docs:dev
 ```
 
 Runs on `http://localhost:5173`
@@ -133,15 +133,13 @@ minepanel/
 2. Run tests:
 
    ```bash
-   cd backend && npm test
-   cd frontend && npm test
+   pnpm test
    ```
 
-3. Lint:
+3. Lint (`pnpm verify` runs lint + typecheck + tests, the same gate as the pre-push hook and CI):
 
    ```bash
-   cd backend && npm run lint
-   cd frontend && npm run lint
+   pnpm lint
    ```
 
 4. Test manually
@@ -296,9 +294,8 @@ Want to add a new language?
 4. Test it:
 
    ```bash
-   cd frontend
-   npm run lint
-   npm run build
+   pnpm --filter ./frontend lint
+   pnpm --filter ./frontend build
    ```
 
    Also select the new locale on the login page and in **Settings → Preferences**.

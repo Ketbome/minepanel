@@ -1,8 +1,9 @@
 name: CI
 
+# Runs on every push: docker-publish.yml waits for this workflow's verdict.
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
     branches: [main]
 
@@ -13,6 +14,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HUSKY: 0
+
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -21,34 +25,61 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v7
+      # On push this compares the whole pushed range (before..after), so a
+      # multi-commit rebase merge is seen as one change set.
       - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
             backend:
               - 'backend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
             frontend:
               - 'frontend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+            root:
+              - 'Dockerfile'
+              - 'config.json'
+              - 'backend/**'
+              - 'frontend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+      # docker-publish.yml runs on workflow_run, which carries no push range, so
+      # it reads the change set from this artifact instead of guessing.
+      - name: Persist the change set
+        env:
+          BACKEND: ${{ steps.filter.outputs.backend }}
+          FRONTEND: ${{ steps.filter.outputs.frontend }}
+          ROOT: ${{ steps.filter.outputs.root }}
+        run: printf '{"backend":%s,"frontend":%s,"root":%s}\n' "$BACKEND" "$FRONTEND" "$ROOT" > changed-paths.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: changed-paths
+          path: changed-paths.json
+          retention-days: 1
 
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          node-version: '22'
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test -- --ci --coverage --maxWorkers=2
+      - run: pnpm install --frozen-lockfile --filter ./backend
+      - run: pnpm --filter ./backend lint
+      - run: pnpm --filter ./backend exec tsc --noEmit
+      - run: pnpm --filter ./backend build
+      - run: pnpm --filter ./backend test --ci --maxWorkers=2
 
       - name: Upload coverage
         if: always()
@@ -62,21 +93,18 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '22'
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npx tsc --noEmit
+      - run: pnpm install --frozen-lockfile --filter ./frontend
+      - run: pnpm --filter ./frontend lint
+      - run: pnpm --filter ./frontend exec tsc --noEmit
+      - run: pnpm --filter ./frontend build
 
   ci-status:
     if: always()

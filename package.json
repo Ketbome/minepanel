@@ -3,23 +3,35 @@
   "private": true,
   "scripts": {
     "prepare": "husky",
-    "lint": "npm run lint:backend && npm run lint:frontend",
-    "lint:backend": "npm run lint --prefix backend",
-    "lint:frontend": "npm run lint --prefix frontend",
-    "lint:fix": "npm run lint:fix --prefix backend && npm run lint:fix --prefix frontend",
-    "typecheck": "npm run typecheck:backend && npm run typecheck:frontend",
-    "typecheck:backend": "cd backend && npx tsc --noEmit",
-    "typecheck:frontend": "cd frontend && npx tsc --noEmit",
-    "format": "npm run format --prefix backend",
-    "test": "npm run test --prefix backend",
-    "verify": "npm run lint && npm run typecheck && npm run test"
+    "lint": "pnpm --filter ./backend lint && pnpm --filter ./frontend lint",
+    "lint:fix": "pnpm --filter ./backend lint:fix && pnpm --filter ./frontend lint:fix",
+    "typecheck": "pnpm --filter ./backend exec tsc --noEmit && pnpm --filter ./frontend exec tsc --noEmit",
+    "format": "pnpm --filter ./backend format",
+    "test": "pnpm --filter ./backend test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "dev:backend": "pnpm --filter ./backend start:dev",
+    "dev:frontend": "pnpm --filter ./frontend dev",
+    "build": "pnpm --filter ./backend build && pnpm --filter ./frontend build",
+    "docs:dev": "pnpm --filter ./doc docs:dev",
+    "docs:build": "pnpm --filter ./doc docs:build"
   },
   "devDependencies": {
     "husky": "9.1.7",
-    "lint-staged": "15.5.0"
+    "lint-staged": "17.3.0"
   },
   "lint-staged": {
-    "backend/**/*.ts": "npm run lint:fix --prefix backend --",
-    "frontend/**/*.{ts,tsx}": "npm run lint:fix --prefix frontend --"
+    "backend/**/*.ts": "pnpm --filter ./backend lint:fix --",
+    "frontend/**/*.{ts,tsx}": "pnpm --filter ./frontend lint:fix --"
+  },
+  "packageManager": "pnpm@10.29.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify": "3.4.13",
+      "postcss": "8.5.26",
+      "vite": "6.4.3"
+    }
   }
 }

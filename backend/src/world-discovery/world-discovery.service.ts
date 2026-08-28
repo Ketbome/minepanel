@@ -488,7 +488,8 @@ export class WorldDiscoveryService {
       throw new BadRequestException('Only HTTPS download URLs are allowed');
     }
 
-    const host = parsed.hostname.toLowerCase();
+    // WHATWG URL keeps the brackets on IPv6 literals, which would hide ::1 from the private-host check.
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
     if (!host) {
       throw new BadRequestException('Invalid download URL host');
     }
@@ -514,8 +515,28 @@ export class WorldDiscoveryService {
 
     const ipType = net.isIP(host);
     if (ipType === 0) return false;
-    if (ipType === 6) return host === '::1';
+    if (ipType === 6) return this.isLocalOrPrivateIpv6(host);
 
+    return this.isPrivateIpv4(host);
+  }
+
+  private isLocalOrPrivateIpv6(host: string): boolean {
+    // Loopback, unspecified, unique-local (fc00::/7) and link-local (fe80::/10).
+    if (host === '::1' || host === '::' || /^f[cd]/.test(host) || /^fe[89ab]/.test(host)) return true;
+
+    // An IPv4-mapped address reaches the IPv4 host, so apply the same rules. WHATWG URL
+    // serializes ::ffff:10.0.0.1 as ::ffff:a00:1, so accept both spellings.
+    const dotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(host);
+    if (dotted) return this.isPrivateIpv4(dotted[1]);
+    const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(host);
+    if (hex) {
+      const [high, low] = [Number.parseInt(hex[1], 16), Number.parseInt(hex[2], 16)];
+      return this.isPrivateIpv4([high >> 8, high & 0xff, low >> 8, low & 0xff].join('.'));
+    }
+    return false;
+  }
+
+  private isPrivateIpv4(host: string): boolean {
     const octets = host.split('.').map((part) => Number.parseInt(part, 10));
     if (octets.length !== 4 || octets.some((value) => Number.isNaN(value))) return false;
 

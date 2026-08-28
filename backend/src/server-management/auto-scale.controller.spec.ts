@@ -6,6 +6,10 @@ import { ServerManagementService } from './server-management.service';
 import { ProxyService } from '../proxy/proxy.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 
+jest.mock('node:net', () => ({ connect: jest.fn() }));
+import { connect } from 'node:net';
+import { EventEmitter } from 'node:events';
+
 const TOKEN = 'super-secret-token';
 const AUTH = `Bearer ${TOKEN}`;
 
@@ -100,5 +104,61 @@ describe('AutoScaleController', () => {
       status: 'stopped',
     });
     expect(serverService.stopServer).toHaveBeenCalledWith('survival');
+  });
+  describe('scale up', () => {
+    const stubSocket = (event: 'connect' | 'timeout' | 'error') => {
+      (connect as jest.Mock).mockImplementation(() => {
+        const socket = Object.assign(new EventEmitter(), { destroy: jest.fn() });
+        process.nextTick(() => socket.emit(event));
+        return socket;
+      });
+    };
+
+    it('starts a stopped server and waits for its port', async () => {
+      serverService.getServerStatus.mockResolvedValue('stopped');
+      serverService.startServer.mockResolvedValue(true);
+      stubSocket('connect');
+
+      const result = await controller.autoScale(AUTH, { action: 'up', serverAddress: 'survival.mc.example.com' } as any);
+
+      expect(result).toEqual({ serverId: 'survival', status: 'running' });
+      expect(serverService.startServer).toHaveBeenCalledWith('survival');
+      expect(connect).toHaveBeenCalledWith(expect.objectContaining({ host: 'survival', port: 25565 }));
+    });
+
+    it('fails when the server cannot be started', async () => {
+      serverService.getServerStatus.mockResolvedValue('stopped');
+      serverService.startServer.mockResolvedValue(false);
+      await expect(controller.autoScale(AUTH, { action: 'up', backend: 'survival:25565' } as any)).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('fails when the port never opens', async () => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+      try {
+        serverService.getServerStatus.mockResolvedValue('stopped');
+        serverService.startServer.mockResolvedValue(true);
+        stubSocket('timeout');
+
+        const pending = controller.autoScale(AUTH, { action: 'up', backend: 'survival:25565' } as any);
+        const assertion = expect(pending).rejects.toThrow('still starting');
+        await jest.advanceTimersByTimeAsync(160_000);
+        await assertion;
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('fails when the server cannot be stopped', async () => {
+      serverService.stopServer.mockResolvedValue(false);
+      await expect(controller.autoScale(AUTH, { action: 'down', backend: 'survival:25565' } as any)).rejects.toThrow('Failed to stop');
+    });
+
+    it('rejects a missing bearer prefix and falls back to the default port', async () => {
+      await expect(controller.autoScale(TOKEN, { action: 'down', backend: 'survival:25565' } as any)).rejects.toThrow(UnauthorizedException);
+
+      proxyService.getAllMappings.mockResolvedValue([{ host: 'h', backend: 'lobby:abc' }]);
+      serverService.getServerStatus.mockResolvedValue('running');
+      expect(await controller.autoScale(AUTH, { action: 'up', backend: 'lobby:abc' } as any)).toEqual({ serverId: 'lobby', status: 'running' });
+    });
   });
 });
