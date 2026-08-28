@@ -1,5 +1,5 @@
 # Build context is the repo root (pnpm workspace): docker build -f frontend/Dockerfile .
-FROM node:22-alpine AS base
+FROM node:25-alpine AS base
 
 ENV HUSKY=0 CI=true NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
@@ -28,7 +28,7 @@ ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 RUN pnpm --filter ./frontend build
 
 # Production image
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
