@@ -14,7 +14,7 @@ Don't be a jerk. That's it.
 
 ## What you need
 
-- Node.js 18+
+- Node.js 22+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose v2.0+
 - Git
 - Any code editor (VS Code works great)

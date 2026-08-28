@@ -16,7 +16,7 @@ Want to contribute or run locally? Here's how.
 
 ## What you need
 
-- Node.js 18+
+- Node.js 22+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose
 - Git
 

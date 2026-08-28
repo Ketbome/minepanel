@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: read
+  # Needed to download the change-set artifact from the CI run that triggered us.
+  actions: read
 
 concurrency:
   group: docker-publish-${{ github.event.workflow_run.head_branch || github.ref_name }}
@@ -34,28 +36,38 @@ jobs:
     steps:
       - name: Resolve branch
         id: branch
+        # Through env, never inline: a branch name is attacker-controllable shell text.
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
-          branch="${{ github.event.workflow_run.head_branch || github.ref_name }}"
-          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
-          echo "name=$branch" >> "$GITHUB_OUTPUT"
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "is_main=$([ "$branch" = "main" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "is_main=$([ "$BRANCH" = "main" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         with:
           ref: ${{ steps.branch.outputs.sha }}
           fetch-depth: 0
+      # The CI run computed the change set over the whole pushed range; reuse it.
+      # Anything without an artifact (workflow_dispatch, or an older CI run) builds everything.
+      - uses: actions/download-artifact@v7
+        if: github.event_name == 'workflow_run'
+        continue-on-error: true
+        with:
+          name: changed-paths
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
       - name: Detect changed paths
         id: filter
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            changed=$(git ls-files)
+          if [ -f changed-paths.json ]; then
+            for key in backend frontend root; do
+              echo "$key=$(jq -r ".$key" changed-paths.json)" >> "$GITHUB_OUTPUT"
+            done
           else
-            changed=$(git diff --name-only HEAD^ HEAD)
+            echo "No change set from CI, building every image"
+            printf 'backend=true\nfrontend=true\nroot=true\n' >> "$GITHUB_OUTPUT"
           fi
-          match() { echo "$changed" | grep -qE "$1" && echo true || echo false; }
-          echo "backend=$(match '^(backend/|pnpm-lock\.yaml|pnpm-workspace\.yaml|package\.json)')" >> "$GITHUB_OUTPUT"
-          echo "frontend=$(match '^(frontend/|pnpm-lock\.yaml|pnpm-workspace\.yaml|package\.json)')" >> "$GITHUB_OUTPUT"
-          echo "root=$(match '^(Dockerfile|config\.json|frontend/|backend/|pnpm-lock\.yaml|pnpm-workspace\.yaml|package\.json)')" >> "$GITHUB_OUTPUT"
       - name: Resolve version
         id: version
         run: |

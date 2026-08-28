@@ -25,6 +25,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v7
+      # On push this compares the whole pushed range (before..after), so a
+      # multi-commit rebase merge is seen as one change set.
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -39,6 +41,27 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'package.json'
+            root:
+              - 'Dockerfile'
+              - 'config.json'
+              - 'backend/**'
+              - 'frontend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+      # docker-publish.yml runs on workflow_run, which carries no push range, so
+      # it reads the change set from this artifact instead of guessing.
+      - name: Persist the change set
+        env:
+          BACKEND: ${{ steps.filter.outputs.backend }}
+          FRONTEND: ${{ steps.filter.outputs.frontend }}
+          ROOT: ${{ steps.filter.outputs.root }}
+        run: printf '{"backend":%s,"frontend":%s,"root":%s}\n' "$BACKEND" "$FRONTEND" "$ROOT" > changed-paths.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: changed-paths
+          path: changed-paths.json
+          retention-days: 1
 
   backend:
     needs: changes

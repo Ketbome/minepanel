@@ -116,6 +116,11 @@ describe('WorldDiscoveryService imports', () => {
       await expect(service.importFromUrl({ downloadUrl: 'https://172.20.0.1/w.zip' })).rejects.toThrow('host is not allowed');
       await expect(service.importFromUrl({ downloadUrl: 'https://127.0.0.1/w.zip' })).rejects.toThrow('host is not allowed');
       await expect(service.importFromUrl({ downloadUrl: 'https://[::1]/w.zip' })).rejects.toThrow('host is not allowed');
+      await expect(service.importFromUrl({ downloadUrl: 'https://[::]/w.zip' })).rejects.toThrow('host is not allowed');
+      await expect(service.importFromUrl({ downloadUrl: 'https://[fd00::1]/w.zip' })).rejects.toThrow('host is not allowed');
+      await expect(service.importFromUrl({ downloadUrl: 'https://[fe80::1]/w.zip' })).rejects.toThrow('host is not allowed');
+      await expect(service.importFromUrl({ downloadUrl: 'https://[::ffff:127.0.0.1]/w.zip' })).rejects.toThrow('host is not allowed');
+      await expect(service.importFromUrl({ downloadUrl: 'https://[::ffff:10.1.2.3]/w.zip' })).rejects.toThrow('host is not allowed');
       await expect(service.importFromUrl({ downloadUrl: 'https://example.com/readme.txt' })).rejects.toThrow('Only ZIP/TAR/TGZ');
       await expect(service.importFromUrl({ downloadUrl: 'https://example.com/w.zip', targetFolder: '../../escape' })).rejects.toThrow('Invalid target folder');
     });
