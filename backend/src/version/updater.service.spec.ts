@@ -35,7 +35,7 @@ describe('UpdaterService', () => {
     // What `docker ps` reports for the running stack, i.e. the images a rollback
     // would go back to.
     execMock.mockImplementation((command: string) =>
-      command.startsWith('docker ps') ? 'backend ketbom/minepanel-backend:1.11.30\nfrontend ketbom/minepanel-frontend:1.11.30' : '',
+      command.startsWith('docker ps') ? 'backend sha256:backend-old\nfrontend sha256:frontend-old' : '',
     );
     hostContext = { get: jest.fn().mockResolvedValue(composeContext) } as never;
     config = { get: jest.fn().mockReturnValue('/opt/minepanel/data') } as never;
@@ -74,8 +74,9 @@ describe('UpdaterService', () => {
     it('mounts the host compose directory it was started from', async () => {
       await service.start();
 
-      expect(runCommand()).toContain(`-v '/opt/minepanel':/workspace`);
-      expect(runCommand()).toContain('-w /workspace');
+      expect(runCommand()).toContain(`-v '/opt/minepanel':'/opt/minepanel'`);
+      expect(runCommand()).toContain(`-w '/opt/minepanel'`);
+      expect(runCommand()).not.toContain('/workspace');
     });
 
     it('pulls and recreates the stack', async () => {
@@ -94,8 +95,8 @@ describe('UpdaterService', () => {
 
       await service.start();
 
-      expect(runCommand()).toContain('docker-compose.yml');
-      expect(runCommand()).toContain('override.yml');
+      expect(runCommand()).toContain('/opt/minepanel/docker-compose.yml');
+      expect(runCommand()).toContain('/opt/minepanel/override.yml');
     });
 
     // The daemon resolves this mount on the host: the panel's own /app/data
@@ -125,7 +126,10 @@ describe('UpdaterService', () => {
     it('waits for the panel to answer before calling it a success', async () => {
       await service.start();
 
-      expect(runCommand()).toContain('exec -T backend');
+      expect(runCommand()).toContain('exec -T backend node -e');
+      expect(runCommand()).toContain('/health');
+      expect(runCommand()).toContain('r.statusCode === 200');
+      expect(runCommand()).toContain('request.setTimeout(10000');
       expect(runCommand()).toContain('write_result succeeded');
     });
 
@@ -133,17 +137,18 @@ describe('UpdaterService', () => {
       await service.start();
 
       expect(runCommand()).toContain('write_result rolled-back');
-      expect(runCommand()).toContain('ketbom/minepanel-backend:1.11.30');
-      expect(runCommand()).toContain('ketbom/minepanel-frontend:1.11.30');
+      expect(runCommand()).toContain('sha256:backend-old');
+      expect(runCommand()).toContain('sha256:frontend-old');
     });
 
     it('records the images it started from so a rollback has somewhere to go', async () => {
       const result = await service.start();
 
       expect(result.fromDigests).toEqual({
-        backend: 'ketbom/minepanel-backend:1.11.30',
-        frontend: 'ketbom/minepanel-frontend:1.11.30',
+        backend: 'sha256:backend-old',
+        frontend: 'sha256:frontend-old',
       });
+      expect(execMock.mock.calls[0][0]).toContain('com.docker.compose.image');
     });
 
     it('records that an update is in flight so the panel can report it after restarting', async () => {

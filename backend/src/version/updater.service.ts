@@ -80,12 +80,14 @@ export class UpdaterService {
     const command = [
       'docker run -d --rm',
       '-v /var/run/docker.sock:/var/run/docker.sock',
-      `-v ${this.shellQuote(context.workingDir)}:/workspace`,
+      // Compose records the paths visible to it in container labels. Preserve
+      // the host path so later updates can resolve the project directory.
+      `-v ${this.shellQuote(context.workingDir)}:${this.shellQuote(context.workingDir)}`,
       // The daemon resolves this path on the host, so the panel's own container
       // path would land the outcome in a directory the panel cannot read, and
       // the update would look stuck at "running" forever.
       `-v ${this.shellQuote(this.resultHostDir())}:/result`,
-      '-w /workspace',
+      `-w ${this.shellQuote(context.workingDir)}`,
       UPDATER_IMAGE,
       `sh -c ${this.shellQuote(script)}`,
     ].join(' ');
@@ -109,11 +111,11 @@ export class UpdaterService {
   }
 
   private buildScript(configFiles: string[], digests: Record<string, string>, startedAt: string, panelService?: string): string {
-    // Compose files are recorded as host paths; the working dir is mounted at
-    // /workspace, so only their basenames are needed inside the updater.
-    const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(path.basename(file))}`).join(' ');
+    const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(file)}`).join(' ');
     const compose = `docker compose ${fileArgs}`;
-    const health = panelService ? `${compose} exec -T ${panelService} true` : 'true';
+    const healthProbe =
+      "const request = require('http').get('http://localhost:8091' + (process.env.BASE_PATH || '') + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)); request.setTimeout(10000, () => request.destroy()); request.on('error', () => process.exit(1))";
+    const health = panelService ? `${compose} exec -T ${panelService} node -e ${this.shellQuote(healthProbe)}` : 'true';
     const rollback = Object.entries(digests)
       .map(([service, digest]) => `docker tag ${this.shellQuote(digest)} "$(${compose} config --images | grep -m1 ${this.shellQuote(service)})" || true`)
       .join('\n');
@@ -149,7 +151,7 @@ export class UpdaterService {
 
     try {
       const { stdout } = await execAsync(
-        `docker ps --filter "label=com.docker.compose.project=${project}" --format "{{.Label \\"com.docker.compose.service\\"}} {{.Image}}"`,
+        `docker ps --filter "label=com.docker.compose.project=${project}" --format "{{.Label \\"com.docker.compose.service\\"}} {{.Label \\"com.docker.compose.image\\"}}"`,
       );
 
       const digests: Record<string, string> = {};
