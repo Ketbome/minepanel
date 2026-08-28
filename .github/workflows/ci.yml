@@ -56,7 +56,7 @@ jobs:
       - run: pnpm --filter ./backend lint
       - run: pnpm --filter ./backend exec tsc --noEmit
       - run: pnpm --filter ./backend build
-      - run: pnpm --filter ./backend test -- --ci --maxWorkers=2
+      - run: pnpm --filter ./backend test --ci --maxWorkers=2
 
       - name: Upload coverage
         if: always()

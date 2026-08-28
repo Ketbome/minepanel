@@ -11,7 +11,9 @@
     "verify": "pnpm lint && pnpm typecheck && pnpm test",
     "dev:backend": "pnpm --filter ./backend start:dev",
     "dev:frontend": "pnpm --filter ./frontend dev",
-    "build": "pnpm --filter ./backend build && pnpm --filter ./frontend build"
+    "build": "pnpm --filter ./backend build && pnpm --filter ./frontend build",
+    "docs:dev": "pnpm --filter ./doc docs:dev",
+    "docs:build": "pnpm --filter ./doc docs:build"
   },
   "devDependencies": {
     "husky": "9.1.7",
@@ -28,7 +30,8 @@
   "pnpm": {
     "overrides": {
       "dompurify": "3.4.13",
-      "postcss": "8.5.26"
+      "postcss": "8.5.26",
+      "vite": "6.4.3"
     }
   }
 }

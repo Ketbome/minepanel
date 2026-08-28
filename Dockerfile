@@ -12,7 +12,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile --filter ./backend --filter ./frontend
 
 COPY backend/ backend/
 COPY frontend/ frontend/

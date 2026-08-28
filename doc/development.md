@@ -170,9 +170,8 @@ pnpm --filter ./backend test:e2e
 Docs are in `doc/` using VitePress.
 
 ```bash
-cd doc
-npm install
-npm run docs:dev
+pnpm install
+pnpm docs:dev
 ```
 
 Runs on `http://localhost:5173`

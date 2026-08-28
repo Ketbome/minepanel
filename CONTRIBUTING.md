@@ -75,9 +75,8 @@ Runs on `http://localhost:3000`
 ### Documentation
 
 ```bash
-cd doc
-npm install
-npm run docs:dev
+pnpm install
+pnpm docs:dev
 ```
 
 Runs on `http://localhost:5173`
