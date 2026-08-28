@@ -11,8 +11,8 @@ NestJS API used by Minepanel to manage Minecraft servers through Docker.
 ## Run
 
 ```bash
-npm install
-npm run start:dev
+pnpm install          # at the repo root (pnpm workspace)
+pnpm start:dev
 ```
 
 API default port: `8091`.
@@ -20,10 +20,10 @@ API default port: `8091`.
 ## Useful Commands
 
 ```bash
-npm run build
-npm run lint
-npm run test
-npm run test:e2e
+pnpm build
+pnpm lint
+pnpm test
+pnpm test:e2e
 ```
 
 ## Base Path

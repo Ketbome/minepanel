@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - '${BACKEND_PORT:-8091}:8091'
     # Optional features (SMTP password recovery, OIDC/SSO, ...) are read from .env.
@@ -29,8 +29,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       # Subdirectory routing (build-time): uncomment and set path
       # args:
       #   - NEXT_PUBLIC_BASE_PATH=/minepanel

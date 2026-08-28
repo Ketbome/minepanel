@@ -1,17 +1,21 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+// The pnpm workspace root: the lockfile and the hoisted node_modules live there,
+// so both Turbopack and the standalone output tracing must start from it.
+const workspaceRoot = path.resolve(__dirname, '..');
 
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   ...(basePath && { basePath }),
 
-  // Turbopack is the default bundler in Next.js 16. Pin the workspace root so
-  // the multi-lockfile warning is silenced and builds are deterministic.
+  // Turbopack is the default bundler in Next.js 16.
   turbopack: {
-    root: __dirname,
+    root: workspaceRoot,
   },
+  outputFileTracingRoot: workspaceRoot,
 
   images: {
     remotePatterns: [

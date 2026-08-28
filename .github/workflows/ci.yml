@@ -1,8 +1,9 @@
 name: CI
 
+# Runs on every push: docker-publish.yml waits for this workflow's verdict.
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
     branches: [main]
 
@@ -12,6 +13,9 @@ permissions:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  HUSKY: 0
 
 jobs:
   changes:
@@ -27,28 +31,32 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
             frontend:
               - 'frontend/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
 
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          node-version: '22'
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test -- --ci --coverage --maxWorkers=2
+      - run: pnpm install --frozen-lockfile --filter ./backend
+      - run: pnpm --filter ./backend lint
+      - run: pnpm --filter ./backend exec tsc --noEmit
+      - run: pnpm --filter ./backend build
+      - run: pnpm --filter ./backend test -- --ci --maxWorkers=2
 
       - name: Upload coverage
         if: always()
@@ -62,21 +70,18 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '22'
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npx tsc --noEmit
+      - run: pnpm install --frozen-lockfile --filter ./frontend
+      - run: pnpm --filter ./frontend lint
+      - run: pnpm --filter ./frontend exec tsc --noEmit
+      - run: pnpm --filter ./frontend build
 
   ci-status:
     if: always()

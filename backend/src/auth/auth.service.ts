@@ -148,7 +148,7 @@ export class AuthService {
   async validateRefreshToken(token: string): Promise<PayloadToken | null> {
     const tokens = await this.refreshTokenRepo.find({
       where: { revoked: false },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     for (const storedToken of tokens) {
@@ -227,7 +227,7 @@ export class AuthService {
   async resetPassword(token: string, password: string): Promise<void> {
     const passwordResetToken = await this.passwordResetTokenRepo.findOne({
       where: { tokenHash: this.hashToken(token) },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     if (

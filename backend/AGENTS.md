@@ -56,19 +56,24 @@ Primary runtime relationship:
 ## Key Commands
 
 ```bash
-npm run start:dev
-npm run build
-npm run lint
-npm run test
-npm run test:e2e
+pnpm start:dev
+pnpm build
+pnpm lint
+pnpm test        # jest with a 90% coverage threshold (lines/statements/functions)
+pnpm test:e2e
 ```
 
 From repo root:
 
 ```bash
-npm run start:dev --prefix backend
-npm run test --prefix backend
+pnpm dev:backend
+pnpm --filter ./backend test
 ```
+
+Tests mock the process boundary (`fs-extra`, `node:child_process`, `axios`, repositories),
+or use a temp dir under `os.tmpdir()` when the code under test is mostly filesystem
+logic (`bedrock-addons`, `world-discovery`, `server-store`). New code needs tests that
+keep the coverage threshold; dropping the threshold is not an option.
 
 ## Code Patterns
 

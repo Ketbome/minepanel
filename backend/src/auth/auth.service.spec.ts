@@ -364,7 +364,7 @@ describe('AuthService', () => {
 
       expect(passwordResetTokenRepo.findOne).toHaveBeenCalledWith({
         where: { tokenHash: 'hashed-reset-token' },
-        relations: ['user'],
+        relations: { user: true },
       });
       expect(passwordResetTokenRepo.manager.save).toHaveBeenCalledWith(
         expect.objectContaining({ password: 'new-hashed-password' }),
