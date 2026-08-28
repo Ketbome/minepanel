@@ -57,12 +57,12 @@ export class UpdaterService {
    */
   async canSelfUpdate(): Promise<boolean> {
     const context = await this.hostContext.get();
-    return !!context.workingDir && context.configFiles.length > 0;
+    return !!context.workingDir && context.configFiles.length > 0 && !!context.service;
   }
 
   async start(): Promise<UpdateResult> {
     const context = await this.hostContext.get();
-    if (!context.workingDir || context.configFiles.length === 0) {
+    if (!context.workingDir || context.configFiles.length === 0 || !context.service) {
       throw new UpdateNotSupportedError('The panel was not started by Docker Compose, so it cannot update itself');
     }
 
@@ -80,12 +80,15 @@ export class UpdaterService {
     const command = [
       'docker run -d --rm',
       '-v /var/run/docker.sock:/var/run/docker.sock',
-      `-v ${this.shellQuote(context.workingDir)}:/workspace`,
+      // Compose records the paths visible to it in container labels. Preserve
+      // the host path so later updates can resolve the project directory.
+      `--mount ${this.shellQuote(`type=bind,src=${context.workingDir},dst=${context.workingDir}`)}`,
+      ...context.configFiles.map((file) => `--mount ${this.shellQuote(`type=bind,src=${file},dst=${file},readonly`)}`),
       // The daemon resolves this path on the host, so the panel's own container
       // path would land the outcome in a directory the panel cannot read, and
       // the update would look stuck at "running" forever.
-      `-v ${this.shellQuote(this.resultHostDir())}:/result`,
-      '-w /workspace',
+      `--mount ${this.shellQuote(`type=bind,src=${this.resultHostDir()},dst=/result`)}`,
+      `-w ${this.shellQuote(context.workingDir)}`,
       UPDATER_IMAGE,
       `sh -c ${this.shellQuote(script)}`,
     ].join(' ');
@@ -108,12 +111,12 @@ export class UpdaterService {
     return path.dirname(RESULT_FILE);
   }
 
-  private buildScript(configFiles: string[], digests: Record<string, string>, startedAt: string, panelService?: string): string {
-    // Compose files are recorded as host paths; the working dir is mounted at
-    // /workspace, so only their basenames are needed inside the updater.
-    const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(path.basename(file))}`).join(' ');
+  private buildScript(configFiles: string[], digests: Record<string, string>, startedAt: string, panelService: string): string {
+    const fileArgs = configFiles.map((file) => `-f ${this.shellQuote(file)}`).join(' ');
     const compose = `docker compose ${fileArgs}`;
-    const health = panelService ? `${compose} exec -T ${panelService} true` : 'true';
+    const healthProbe =
+      "const signal = AbortSignal.timeout(10000); require('http').get('http://localhost:8091' + (process.env.BASE_PATH || '') + '/health', { signal }, (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))";
+    const health = `${compose} exec -T ${panelService} node -e ${this.shellQuote(healthProbe)}`;
     const rollback = Object.entries(digests)
       .map(([service, digest]) => `docker tag ${this.shellQuote(digest)} "$(${compose} config --images | grep -m1 ${this.shellQuote(service)})" || true`)
       .join('\n');
@@ -149,7 +152,7 @@ export class UpdaterService {
 
     try {
       const { stdout } = await execAsync(
-        `docker ps --filter "label=com.docker.compose.project=${project}" --format "{{.Label \\"com.docker.compose.service\\"}} {{.Image}}"`,
+        `docker ps --filter "label=com.docker.compose.project=${project}" --format "{{.Label \\"com.docker.compose.service\\"}} {{.Label \\"com.docker.compose.image\\"}}"`,
       );
 
       const digests: Record<string, string> = {};
