@@ -137,4 +137,74 @@ describe('ProxyService', () => {
 
     expect(hostname).toBe('survival.instance.test');
   });
+  describe('routes file', () => {
+    it('exposes proxy availability from instance settings', async () => {
+      expect(await service.isProxyAvailable()).toBe(true);
+      expect(await service.isProxyEnabled()).toBe(true);
+      instanceSettings.getProxy.mockResolvedValue({ enabled: false, baseDomain: null });
+      expect(await service.isProxyAvailable()).toBe(false);
+      expect(await service.isProxyEnabled()).toBe(false);
+    });
+
+    it('generates hostnames from ids or custom names', () => {
+      expect(service.generateHostname('srv', 'proxy.test')).toBe('srv.proxy.test');
+      expect(service.generateHostname('srv', 'proxy.test', 'play')).toBe('play.proxy.test');
+      expect(service.generateHostname('srv', 'proxy.test', 'mc.other.com')).toBe('mc.other.com');
+    });
+
+    it('generateRoutesFile writes only servers that use the proxy', async () => {
+      await service.generateRoutesFile(
+        [
+          { id: 'a', useProxy: true },
+          { id: 'b', useProxy: true, hostname: 'custom' },
+          { id: 'c', useProxy: false },
+        ],
+        'proxy.test',
+      );
+
+      expect(fs.writeJson).toHaveBeenCalledWith('/app/data/proxy/routes.json', { mappings: { 'a.proxy.test': 'a:25565', 'custom.proxy.test': 'b:25565' } }, { spaces: 2 });
+    });
+
+    it('addServerToProxy replaces the previous hostname of the same server', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readJson as jest.Mock).mockResolvedValue({ mappings: { 'old.proxy.test': 'a:25565', 'other.proxy.test': 'b:25565' } });
+
+      await service.addServerToProxy('a', 'proxy.test', 'new');
+
+      expect(fs.writeJson).toHaveBeenCalledWith(expect.any(String), { mappings: { 'other.proxy.test': 'b:25565', 'new.proxy.test': 'a:25565' } }, { spaces: 2 });
+    });
+
+    it('removeServerFromProxy and clearRoutesFile drop mappings', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readJson as jest.Mock).mockResolvedValue({ mappings: { 'a.proxy.test': 'a:25565', 'b.proxy.test': 'b:25565' } });
+
+      await service.removeServerFromProxy('a');
+      expect(fs.writeJson).toHaveBeenLastCalledWith(expect.any(String), { mappings: { 'b.proxy.test': 'b:25565' } }, { spaces: 2 });
+
+      await service.clearRoutesFile();
+      expect(fs.writeJson).toHaveBeenLastCalledWith(expect.any(String), { mappings: {} }, { spaces: 2 });
+    });
+
+    it('migrates the legacy array format and tolerates unreadable files', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readJson as jest.Mock).mockResolvedValue({ mappings: [{ host: 'a.proxy.test', backend: 'a:25565' }] });
+      expect(await service.getAllMappings()).toEqual([{ host: 'a.proxy.test', backend: 'a:25565' }]);
+      expect(await service.getServerHostname('a')).toBe('a.proxy.test');
+
+      (fs.readJson as jest.Mock).mockRejectedValue(new Error('corrupt'));
+      expect(await service.getAllMappings()).toEqual([]);
+      expect(await service.getRoutesStatus()).toEqual({ hasRoutesFile: true, routesCount: 0 });
+    });
+
+    it('getServerHostname returns null when the proxy is off and no mapping exists', async () => {
+      instanceSettings.getProxy.mockResolvedValue({ enabled: false, baseDomain: null });
+      expect(await service.getServerHostname('a')).toBeNull();
+    });
+
+    it('getServerHostname falls back to the generated hostname when the compose file cannot be read', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+      (fs.readFile as unknown as jest.Mock).mockRejectedValue(new Error('io'));
+      expect(await service.getServerHostname('a')).toBe('a.proxy.test');
+    });
+  });
 });

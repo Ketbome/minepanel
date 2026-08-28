@@ -197,4 +197,97 @@ describe('ScheduledTasksService', () => {
       expect(task.lastResult).toBe('Server restarted');
     });
   });
+  describe('remaining behaviour', () => {
+    const baseTask = () => ({ id: 1, serverId: 'srv', name: 't', type: 'command', command: 'say hi', scheduleKind: 'interval', intervalMinutes: 10, cronExpression: null, enabled: true, nextRunAt: new Date(), lastRunAt: null, lastResult: null });
+
+    it('lists tasks per server', async () => {
+      taskRepo.find.mockResolvedValue(['task']);
+      expect(await service.listByServer('srv')).toEqual(['task']);
+      expect(taskRepo.find).toHaveBeenCalledWith({ where: { serverId: 'srv' }, order: { createdAt: 'ASC' } });
+    });
+
+    it('update changes name, command, type and re-enables with a fresh nextRunAt', async () => {
+      const task: any = { ...baseTask(), enabled: false, nextRunAt: new Date(0) };
+      taskRepo.findOne.mockResolvedValue(task);
+
+      const updated = await service.update('srv', 1, { name: 'renamed', command: 'stop', enabled: true });
+      expect(updated).toMatchObject({ name: 'renamed', command: 'stop', enabled: true });
+      expect(updated.nextRunAt.getTime()).toBeGreaterThan(Date.now());
+
+      await service.update('srv', 1, { type: 'restart' });
+      expect(task.command).toBeNull();
+
+      await service.update('srv', 1, { enabled: false });
+      expect(task.enabled).toBe(false);
+    });
+
+    it('update keeps the schedule when nothing schedule-related changed', async () => {
+      const task: any = { ...baseTask(), nextRunAt: new Date(123) };
+      taskRepo.findOne.mockResolvedValue(task);
+      await service.update('srv', 1, { scheduleKind: 'interval', intervalMinutes: 10 });
+      expect(task.nextRunAt.getTime()).toBe(123);
+    });
+
+    it('remove deletes an owned task', async () => {
+      const task = baseTask();
+      taskRepo.findOne.mockResolvedValue(task);
+      await service.remove('srv', 1);
+      expect(taskRepo.remove).toHaveBeenCalledWith(task);
+    });
+
+    it('runNow executes restart and command tasks and records the result', async () => {
+      const restart: any = { ...baseTask(), type: 'restart', command: null };
+      taskRepo.findOne.mockResolvedValue(restart);
+      serverManagement.restartServer.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      expect((await service.runNow('srv', 1)).lastResult).toBe('Server restarted');
+      expect((await service.runNow('srv', 1)).lastResult).toBe('Failed to restart server');
+      expect(restart.lastRunAt).toBeInstanceOf(Date);
+
+      const command: any = baseTask();
+      taskRepo.findOne.mockResolvedValue(command);
+      dockerCompose.getServerConfig.mockResolvedValue({ rconPort: '25575', rconPassword: 'pw' });
+      serverManagement.executeCommand.mockResolvedValueOnce({ success: true, output: 'done' }).mockResolvedValueOnce({ success: true, output: '' }).mockResolvedValueOnce({ success: false, output: 'nope' });
+      expect((await service.runNow('srv', 1)).lastResult).toBe('done');
+      expect((await service.runNow('srv', 1)).lastResult).toBe('Command executed');
+      expect((await service.runNow('srv', 1)).lastResult).toBe('Command failed: nope');
+      expect(serverManagement.executeCommand).toHaveBeenCalledWith('srv', 'say hi', '25575', 'pw');
+
+      const empty: any = { ...baseTask(), command: null };
+      taskRepo.findOne.mockResolvedValue(empty);
+      expect((await service.runNow('srv', 1)).lastResult).toBe('No command configured');
+
+      taskRepo.findOne.mockResolvedValue(command);
+      serverManagement.executeCommand.mockRejectedValueOnce(new Error('rcon down'));
+      expect((await service.runNow('srv', 1)).lastResult).toBe('Execution failed: rcon down');
+    });
+
+    it('runs due tasks on the timer, skipping overlapping runs and surviving errors', async () => {
+      jest.useFakeTimers();
+      try {
+        const due: any = { ...baseTask(), type: 'restart' };
+        taskRepo.find.mockResolvedValueOnce([due]).mockRejectedValueOnce(new Error('db'));
+        serverManagement.restartServer.mockResolvedValue(true);
+
+        service.onModuleInit();
+        await jest.advanceTimersByTimeAsync(30_000);
+        expect(serverManagement.restartServer).toHaveBeenCalledWith('srv');
+        expect(taskRepo.save).toHaveBeenCalledWith(expect.objectContaining({ lastResult: 'Server restarted' }));
+
+        await jest.advanceTimersByTimeAsync(30_000);
+        expect(taskRepo.find).toHaveBeenCalledTimes(2);
+
+        (service as any).running = true;
+        await jest.advanceTimersByTimeAsync(30_000);
+        expect(taskRepo.find).toHaveBeenCalledTimes(2);
+        (service as any).running = false;
+
+        service.onModuleDestroy();
+        service.onModuleDestroy();
+        await jest.advanceTimersByTimeAsync(30_000);
+        expect(taskRepo.find).toHaveBeenCalledTimes(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
 });

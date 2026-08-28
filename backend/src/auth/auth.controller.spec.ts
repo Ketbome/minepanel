@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -32,6 +32,12 @@ describe('AuthController', () => {
       revokeRefreshToken: jest.fn(),
       createPasswordReset: jest.fn(),
       resetPassword: jest.fn(),
+      getSessionUser: jest.fn(),
+      getActiveInvitations: jest.fn(),
+      createInvitation: jest.fn(),
+      getInvitationLink: jest.fn(),
+      getInvitation: jest.fn(),
+      acceptInvitation: jest.fn(),
     };
 
     const mockAuditLogService = {
@@ -320,6 +326,49 @@ describe('AuthController', () => {
         controller.resetPassword({ token: 'reset-token', password: 'new-password-123' }),
       ).resolves.toEqual({ message: 'Password reset successfully' });
       expect(authService.resetPassword).toHaveBeenCalledWith('reset-token', 'new-password-123');
+    });
+  });
+  describe('sso and invitations', () => {
+    const req: any = { user: { userId: 1, username: 'admin', role: 'ADMIN' } };
+    const session = (manageUsers: boolean, role = 'ADMIN') => ({ userId: 1, username: 'admin', role, access: { permissions: { manageUsers }, serverAccess: [] } });
+
+    it('blocks password login and setup when SSO disables passwords', async () => {
+      const module = (controller as any).instanceSettings as { getOidc: jest.Mock };
+      module.getOidc.mockResolvedValue({ enabled: true, disablePasswordLogin: true });
+      await expect(controller.login({ username: 'a', password: 'b' }, mockResponse as Response)).rejects.toThrow(ForbiddenException);
+      await expect(controller.setupAdmin({ username: 'a', email: 'a@x.com', password: 'secret12' }, mockResponse as Response)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('getMe returns the session user', async () => {
+      authService.getSessionUser.mockResolvedValue(session(true) as any);
+      expect(await controller.getMe(req)).toMatchObject({ userId: 1 });
+    });
+
+    it('invitation management requires manageUsers', async () => {
+      authService.getSessionUser.mockResolvedValue(session(false) as any);
+      await expect(controller.listInvitations(req)).rejects.toThrow(ForbiddenException);
+      await expect(controller.createInvitation(req, {})).rejects.toThrow(ForbiddenException);
+      await expect(controller.getInvitationLink(req, 3)).rejects.toThrow(ForbiddenException);
+
+      authService.getSessionUser.mockResolvedValue(session(true, 'USER') as any);
+      authService.getActiveInvitations.mockResolvedValue(['inv'] as any);
+      authService.createInvitation.mockResolvedValue({ id: 3 } as any);
+      authService.getInvitationLink.mockResolvedValue({ inviteUrl: 'u' });
+      expect(await controller.listInvitations(req)).toEqual(['inv']);
+      expect(await controller.createInvitation(req, { email: 'x@y.com' })).toEqual({ id: 3 });
+      expect(authService.createInvitation).toHaveBeenCalledWith({ email: 'x@y.com' }, req.user, false);
+      expect(await controller.getInvitationLink(req, '3' as any)).toEqual({ inviteUrl: 'u' });
+      expect(authService.getInvitationLink).toHaveBeenCalledWith(3, req.user);
+    });
+
+    it('public invitation lookup and acceptance', async () => {
+      authService.getInvitation.mockResolvedValue({ email: 'x' } as any);
+      expect(await controller.getInvitation('tok')).toEqual({ email: 'x' });
+
+      authService.acceptInvitation.mockResolvedValue({ access_token: 'a', refresh_token: 'r', username: 'newbie', expires_in: 60 } as any);
+      const result = await controller.acceptInvitation({ token: 'tok', username: 'newbie', password: 'secret12', email: 'n@x.com' }, mockResponse as Response);
+      expect(result).toEqual({ username: 'newbie', expires_in: 60 });
+      expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', 'a', expect.any(Object));
     });
   });
 });
