@@ -206,8 +206,14 @@ Still planned:
 
 ### Network features
 
-- Velocity/BungeeCord integration
-- Lobby + game server networks managed from the panel
+- **Possible first iteration:** panel-managed Velocity as an alternative to
+  mc-router for Java networks, with static lobby/game backends, ordered fallback,
+  forced hosts, and validated modern forwarding.
+- **Later possibilities:** lobby pools, health-aware routing, auto-scaling,
+  multi-node backends, BungeeCord compatibility, and Bedrock support.
+
+> This direction still needs an implementation design covering topology,
+> lifecycle, backend compatibility, network isolation, and forwarding secrets.
 
 ### Resource limits per user
 
