@@ -52,11 +52,24 @@ describe('UpdaterService', () => {
 
       expect(await service.canSelfUpdate()).toBe(false);
     });
+
+    it('is false when the panel service cannot be identified', async () => {
+      hostContext.get.mockResolvedValue({ ...composeContext, service: undefined });
+
+      expect(await service.canSelfUpdate()).toBe(false);
+    });
   });
 
   describe('start', () => {
     it('refuses when there is no compose stack to act on', async () => {
       hostContext.get.mockResolvedValue({ configFiles: [] });
+
+      await expect(service.start()).rejects.toBeInstanceOf(UpdateNotSupportedError);
+      expect(execMock).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the panel service cannot be identified', async () => {
+      hostContext.get.mockResolvedValue({ ...composeContext, service: undefined });
 
       await expect(service.start()).rejects.toBeInstanceOf(UpdateNotSupportedError);
       expect(execMock).not.toHaveBeenCalled();
@@ -74,7 +87,7 @@ describe('UpdaterService', () => {
     it('mounts the host compose directory it was started from', async () => {
       await service.start();
 
-      expect(runCommand()).toContain(`-v '/opt/minepanel':'/opt/minepanel'`);
+      expect(runCommand()).toContain(`--mount 'type=bind,src=/opt/minepanel,dst=/opt/minepanel'`);
       expect(runCommand()).toContain(`-w '/opt/minepanel'`);
       expect(runCommand()).not.toContain('/workspace');
     });
@@ -99,12 +112,25 @@ describe('UpdaterService', () => {
       expect(runCommand()).toContain('/opt/minepanel/override.yml');
     });
 
+    it('mounts compose files outside the working directory', async () => {
+      hostContext.get.mockResolvedValue({
+        ...composeContext,
+        configFiles: ['/opt/minepanel/docker-compose.yml', '/etc/minepanel/override.yml'],
+      });
+
+      await service.start();
+
+      expect(runCommand()).toContain(
+        `--mount 'type=bind,src=/etc/minepanel/override.yml,dst=/etc/minepanel/override.yml,readonly'`,
+      );
+    });
+
     // The daemon resolves this mount on the host: the panel's own /app/data
     // would send the outcome to a directory it cannot read back.
     it('writes the outcome to the host directory behind /app/data', async () => {
       await service.start();
 
-      expect(runCommand()).toContain(`-v '/opt/minepanel/data':/result`);
+      expect(runCommand()).toContain(`--mount 'type=bind,src=/opt/minepanel/data,dst=/result'`);
     });
 
     it('leaves an outcome behind when the updater dies before deciding', async () => {
@@ -129,7 +155,10 @@ describe('UpdaterService', () => {
       expect(runCommand()).toContain('exec -T backend node -e');
       expect(runCommand()).toContain('/health');
       expect(runCommand()).toContain('r.statusCode === 200');
-      expect(runCommand()).toContain('request.setTimeout(10000');
+      expect(runCommand()).toContain('AbortSignal.timeout(10000)');
+      expect(runCommand()).toContain('{ signal }');
+      expect(runCommand()).toContain(')).on(');
+      expect(runCommand()).toContain('error');
       expect(runCommand()).toContain('write_result succeeded');
     });
 
