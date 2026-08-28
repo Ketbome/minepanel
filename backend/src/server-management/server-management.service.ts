@@ -1500,8 +1500,8 @@ export class ServerManagementService {
         const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--since', since, '--timestamps', containerId]);
         logs = stdout + stderr;
       } else {
-        const result = await execAsync(`docker logs --tail ${lines} --timestamps ${containerId} 2>&1`);
-        logs = result.stdout;
+        const { stdout, stderr } = await this.executeProcess('docker', ['logs', '--tail', String(lines), '--timestamps', containerId]);
+        logs = stdout + stderr;
       }
       const logAnalysis = this.analyzeLogs(logs);
 

@@ -488,7 +488,8 @@ export class WorldDiscoveryService {
       throw new BadRequestException('Only HTTPS download URLs are allowed');
     }
 
-    const host = parsed.hostname.toLowerCase();
+    // WHATWG URL keeps the brackets on IPv6 literals, which would hide ::1 from the private-host check.
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
     if (!host) {
       throw new BadRequestException('Invalid download URL host');
     }
