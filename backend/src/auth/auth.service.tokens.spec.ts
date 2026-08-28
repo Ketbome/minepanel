@@ -146,6 +146,19 @@ describe('AuthService tokens, recovery and invitations', () => {
     expect(resetRepo.manager.save).not.toHaveBeenCalled();
   });
 
+  it('resetPassword consumes only unused tokens for the user', async () => {
+    resetRepo.findOne.mockResolvedValue({
+      userId: 3,
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 10_000),
+      user: { id: 3, isActive: true, password: 'old' },
+    });
+
+    await service.resetPassword('t', 'newpass1');
+
+    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: IsNull() }, { usedAt: expect.any(Date) });
+  });
+
   it('manages invitations with audit entries', async () => {
     usersService.createInvitation.mockResolvedValue({ invitation: { id: 7, email: null, role: 'USER', permissions: {}, serverAccess: null, expiresAt: new Date() }, inviteUrl: 'u', token: 't' });
     const created = await service.createInvitation({}, { userId: 1, username: 'admin', role: 'ADMIN' }, true);

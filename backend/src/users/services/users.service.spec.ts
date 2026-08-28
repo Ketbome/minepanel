@@ -343,6 +343,10 @@ describe('UsersService', () => {
       const updated = await service.confirmEmailChange(1, ' 123456 ');
 
       expect(updated.email).toBe('new@example.com');
+      expect(pendingEmailRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 1, usedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+      });
       expect(pendingEmailRepo.save).toHaveBeenCalledWith(expect.objectContaining({ id: 3, usedAt: expect.any(Date) }));
     });
   });
@@ -391,6 +395,10 @@ describe('UsersService', () => {
       const result = await service.getActiveInvitations();
 
       expect(result.map((i) => i.id)).toEqual([2]);
+      expect(invitationsRepo.find).toHaveBeenCalledWith({
+        where: { usedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+      });
       expect(invitationsRepo.update).toHaveBeenCalledWith([1], { usedAt: expect.any(Date) });
     });
 
@@ -466,6 +474,7 @@ describe('UsersService', () => {
       const link = await service.getInvitationLink(4);
 
       expect(link).toMatch(/inviteToken=[a-f0-9]{64}$/);
+      expect(invitationsRepo.findOne).toHaveBeenCalledWith({ where: { id: 4, usedAt: IsNull() } });
       expect(invitation.tokenHash).not.toBe('old');
       expect(invitationsRepo.save).toHaveBeenCalledWith(invitation);
     });
