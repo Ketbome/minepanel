@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { IsNull, LessThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
@@ -208,7 +208,7 @@ export class AuthService {
     const tokenHash = this.hashToken(rawToken);
     const expiresAt = new Date(Date.now() + this.getPasswordResetTtlMinutes() * 60 * 1000);
 
-    await this.passwordResetTokenRepo.update({ userId: user.id, usedAt: null }, { usedAt: new Date() });
+    await this.passwordResetTokenRepo.update({ userId: user.id, usedAt: IsNull() }, { usedAt: new Date() });
     await this.passwordResetTokenRepo.save({
       userId: user.id,
       tokenHash,
@@ -243,7 +243,7 @@ export class AuthService {
     await this.passwordResetTokenRepo.manager.save(passwordResetToken.user);
 
     const usedAt = new Date();
-    await this.passwordResetTokenRepo.update({ userId: passwordResetToken.userId, usedAt: null }, { usedAt });
+    await this.passwordResetTokenRepo.update({ userId: passwordResetToken.userId, usedAt: IsNull() }, { usedAt });
     await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
   }
 

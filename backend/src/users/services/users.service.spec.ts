@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { IsNull } from 'typeorm';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(async (value: string) => `hashed:${value}`),
@@ -313,7 +314,7 @@ describe('UsersService', () => {
       usersRepo.findOne.mockResolvedValueOnce(user()).mockResolvedValueOnce(null);
       const result = await service.requestEmailChange(1, { email: 'new@example.com' });
       expect(result).toEqual({ requiresConfirmation: true, pendingEmail: 'new@example.com' });
-      expect(pendingEmailRepo.update).toHaveBeenCalledWith({ userId: 1, usedAt: null }, { usedAt: expect.any(Date) });
+      expect(pendingEmailRepo.update).toHaveBeenCalledWith({ userId: 1, usedAt: IsNull() }, { usedAt: expect.any(Date) });
       expect(authMail.sendEmailChangeCodeEmail).toHaveBeenCalledWith('new@example.com', 'alice', expect.stringMatching(/^\d{6}$/));
     });
 
@@ -342,6 +343,10 @@ describe('UsersService', () => {
       const updated = await service.confirmEmailChange(1, ' 123456 ');
 
       expect(updated.email).toBe('new@example.com');
+      expect(pendingEmailRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 1, usedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+      });
       expect(pendingEmailRepo.save).toHaveBeenCalledWith(expect.objectContaining({ id: 3, usedAt: expect.any(Date) }));
     });
   });
@@ -390,6 +395,10 @@ describe('UsersService', () => {
       const result = await service.getActiveInvitations();
 
       expect(result.map((i) => i.id)).toEqual([2]);
+      expect(invitationsRepo.find).toHaveBeenCalledWith({
+        where: { usedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+      });
       expect(invitationsRepo.update).toHaveBeenCalledWith([1], { usedAt: expect.any(Date) });
     });
 
@@ -465,6 +474,7 @@ describe('UsersService', () => {
       const link = await service.getInvitationLink(4);
 
       expect(link).toMatch(/inviteToken=[a-f0-9]{64}$/);
+      expect(invitationsRepo.findOne).toHaveBeenCalledWith({ where: { id: 4, usedAt: IsNull() } });
       expect(invitation.tokenHash).not.toBe('old');
       expect(invitationsRepo.save).toHaveBeenCalledWith(invitation);
     });

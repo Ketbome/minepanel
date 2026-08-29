@@ -1,5 +1,6 @@
 import { BadRequestException, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { IsNull } from 'typeorm';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(async (value: string) => `hashed:${value}`),
@@ -112,7 +113,7 @@ describe('AuthService tokens, recovery and invitations', () => {
 
     await service.createPasswordReset('c@x.com');
 
-    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: null }, { usedAt: expect.any(Date) });
+    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: IsNull() }, { usedAt: expect.any(Date) });
     const saved = resetRepo.save.mock.calls[0][0];
     expect(saved.expiresAt.getTime() - Date.now()).toBeGreaterThan(29 * 60 * 1000);
     const [to, username, url] = authMail.sendPasswordResetEmail.mock.calls[0];
@@ -143,6 +144,19 @@ describe('AuthService tokens, recovery and invitations', () => {
     resetRepo.findOne.mockResolvedValueOnce({ usedAt: null, expiresAt: future, user: { isActive: false } });
     await expect(service.resetPassword('t', 'newpass1')).rejects.toThrow(BadRequestException);
     expect(resetRepo.manager.save).not.toHaveBeenCalled();
+  });
+
+  it('resetPassword consumes only unused tokens for the user', async () => {
+    resetRepo.findOne.mockResolvedValue({
+      userId: 3,
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 10_000),
+      user: { id: 3, isActive: true, password: 'old' },
+    });
+
+    await service.resetPassword('t', 'newpass1');
+
+    expect(resetRepo.update).toHaveBeenCalledWith({ userId: 3, usedAt: IsNull() }, { usedAt: expect.any(Date) });
   });
 
   it('manages invitations with audit entries', async () => {
