@@ -1,5 +1,5 @@
 # Fullstack image (backend + frontend under supervisord). Build context is the repo root.
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 
 ENV HUSKY=0 CI=true NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
