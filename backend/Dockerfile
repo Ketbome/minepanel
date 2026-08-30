@@ -1,5 +1,5 @@
 # Build context is the repo root (pnpm workspace): docker build -f backend/Dockerfile .
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 ENV HUSKY=0 CI=true
 RUN corepack enable
@@ -19,7 +19,7 @@ RUN pnpm --filter ./backend build
 # Self-contained production tree: package.json + dist (see "files") + prod node_modules.
 RUN pnpm --filter ./backend --prod --legacy deploy /out
 
-FROM node:22-alpine
+FROM node:26-alpine
 
 RUN apk add --no-cache docker-cli docker-cli-compose
 
