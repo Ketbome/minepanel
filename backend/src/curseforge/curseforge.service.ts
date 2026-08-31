@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 
 export interface CurseForgeModpack {
@@ -161,6 +161,7 @@ type ModSortField = 'relevance' | 'downloads' | 'updated';
 
 @Injectable()
 export class CurseforgeService {
+  private readonly logger = new Logger(CurseforgeService.name);
   private readonly apiClient: AxiosInstance;
   private readonly CURSEFORGE_API_BASE = 'https://api.curseforge.com/v1';
   private readonly MINECRAFT_GAME_ID = 432;
@@ -663,6 +664,28 @@ export class CurseforgeService {
     } catch (error) {
       console.error('Error fetching CurseForge modpack files:', error);
       throw new HttpException('Error fetching modpack files', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getFileChangelogByRef(apiKey: string, ref: string, fileId: string): Promise<string | null> {
+    if (!apiKey) {
+      throw new HttpException('CurseForge API key not configured', HttpStatus.BAD_REQUEST);
+    }
+    if (!/^\d+$/.test(fileId)) {
+      return null;
+    }
+
+    try {
+      const client = this.getApiClient(apiKey);
+      const modId = await this.resolveModId(client, ref);
+      const response = await client.get<{ data: string }>(`/mods/${modId}/files/${fileId}/changelog`);
+      return response.data.data ?? null;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new HttpException('Invalid CurseForge API key', HttpStatus.FORBIDDEN);
+      }
+      this.logger.error(`Error fetching CurseForge changelog for "${ref}" file ${fileId}`, error as Error);
+      return null;
     }
   }
 

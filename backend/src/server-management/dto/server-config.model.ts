@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
@@ -662,6 +662,15 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   whiteList?: boolean;
+
+  // Mod Watch annotations; not compose input, kept here so cloneServer carries them.
+  @IsObject()
+  @IsOptional()
+  modNotes?: Record<string, string>;
+
+  @IsString()
+  @IsOptional()
+  modWatchTargetVersion?: string;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

@@ -1,5 +1,9 @@
 import type { ModProvider } from "@/services/mods/mods-browser.service";
 
+// The only parser for CURSEFORGE_FILES / MODRINTH_PROJECTS entries. The backend stores
+// those fields verbatim and hands them to itzg, so it has no reason to parse them —
+// keep it that way rather than porting a second copy that can drift.
+
 // itzg accepts a prefix so a project can target something other than the server
 // TYPE. Whitelisted because "fabric:fabric-api" (prefix + slug) and
 // "fabric-api:beta" (slug + release type) are otherwise indistinguishable.

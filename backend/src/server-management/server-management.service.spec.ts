@@ -43,6 +43,10 @@ const mockExec = jest.requireMock('node:util').promisify();
 
 describe('ServerManagementService', () => {
   let service: ServerManagementService;
+  let mockDockerComposeService: { getServerConfig: jest.Mock; updateServerConfig: jest.Mock; refreshComposeFile: jest.Mock };
+  let mockSettingsRepo: { findOne: jest.Mock };
+  let mockInstanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock };
+  let mockStore: { removeFromIndex: jest.Mock; updateConfig: jest.Mock; readConfig: jest.Mock };
 
   const SERVERS_DIR = '/app/servers';
 
@@ -57,7 +61,7 @@ describe('ServerManagementService', () => {
       }),
     };
 
-    const mockSettingsRepo = {
+    mockSettingsRepo = {
       findOne: jest.fn().mockResolvedValue(null),
     };
 
@@ -67,6 +71,28 @@ describe('ServerManagementService', () => {
 
     const mockAlertsService = {
       markExpectedStop: jest.fn(),
+    };
+
+    mockDockerComposeService = {
+      getServerConfig: jest.fn().mockResolvedValue(null),
+      updateServerConfig: jest.fn().mockResolvedValue(null),
+      refreshComposeFile: jest.fn().mockResolvedValue(true),
+    };
+
+    mockStore = {
+      removeFromIndex: jest.fn().mockResolvedValue(undefined),
+      readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }),
+      // Mirrors the real store: hand the mutator a config, return what it produced.
+      updateConfig: jest.fn(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver' } as any;
+        mutate(config);
+        return config;
+      }),
+    };
+
+    mockInstanceSettings = {
+      getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
+      getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
     };
 
     (fs.ensureDirSync as jest.Mock).mockImplementation(() => {});
@@ -79,15 +105,9 @@ describe('ServerManagementService', () => {
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
-        { provide: ServerStoreService, useValue: { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) } },
-        { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },
-        {
-          provide: InstanceSettingsService,
-          useValue: {
-            getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
-            getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
-          },
-        },
+        { provide: ServerStoreService, useValue: mockStore },
+        { provide: DockerComposeService, useValue: mockDockerComposeService },
+        { provide: InstanceSettingsService, useValue: mockInstanceSettings },
       ],
     }).compile();
 
@@ -185,6 +205,50 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('updateModWatch', () => {
+    it('writes notes and the target version without regenerating the compose file', async () => {
+      const config = await service.updateModWatch('myserver', { targetVersion: ' 1.21.4 ', notes: { sodium: 'waiting on Iris' } });
+
+      expect(config.modWatchTargetVersion).toBe('1.21.4');
+      expect(config.modNotes).toEqual({ sodium: 'waiting on Iris' });
+      // The whole point of the separate path: Mod Watch is usable while the server runs,
+      // and regenerating compose there can reassign the published port.
+      expect(mockDockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(mockDockerComposeService.refreshComposeFile).not.toHaveBeenCalled();
+    });
+
+    it('drops blank notes and clears an emptied target version', async () => {
+      const config = await service.updateModWatch('myserver', { targetVersion: '', notes: { sodium: '   ', jei: 'keep' } });
+
+      expect(config.modWatchTargetVersion).toBeUndefined();
+      expect(config.modNotes).toEqual({ jei: 'keep' });
+    });
+
+    it('leaves a field alone when it is not in the request', async () => {
+      mockStore.updateConfig.mockImplementation(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver', modWatchTargetVersion: '1.20.1', modNotes: { sodium: 'existing' } } as any;
+        mutate(config);
+        return config;
+      });
+
+      const config = await service.updateModWatch('myserver', { notes: {} });
+
+      expect(config.modWatchTargetVersion).toBe('1.20.1');
+      expect(config.modNotes).toBeUndefined();
+    });
+
+    it('throws when the server has no server.json', async () => {
+      mockStore.updateConfig.mockResolvedValue(null);
+
+      await expect(service.updateModWatch('ghost', { notes: {} })).rejects.toThrow('not found');
+    });
+
+    it('rejects an invalid server ID without touching the store', async () => {
+      await expect(service.updateModWatch('../hack', { notes: {} })).rejects.toThrow('Invalid server ID');
+      expect(mockStore.updateConfig).not.toHaveBeenCalled();
+    });
+  });
+
   describe('startServer', () => {
     it('should fail for invalid server ID', async () => {
       const result = await service.startServer('invalid;id');
@@ -198,6 +262,10 @@ describe('ServerManagementService', () => {
 
       expect(result).toBe(false);
     });
+
+
+
+
   });
 
   describe('stopServer', () => {
@@ -227,6 +295,8 @@ describe('ServerManagementService', () => {
 
       expect(result).toBe(true);
     });
+
+
   });
 
   describe('deleteServer', () => {

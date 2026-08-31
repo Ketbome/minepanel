@@ -40,6 +40,7 @@ pnpm lint
 
 - `src/app/` - routes and layouts
 - `src/components/` - UI composition
+  - `src/components/molecules/Tabs/ModWatchTab.tsx` - Mod Watch tab: notes, target-version compatibility checks, and changelog history for every configured mod (pinned or not); never edits the mod list
 - `src/services/` - API calls
 - `src/lib/store/` - global state
 - `src/lib/translations/` - i18n

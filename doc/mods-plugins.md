@@ -147,6 +147,47 @@ you do it. Editing the generated `docker-compose.yml` does not: it is rebuilt fr
 The key is read from **Settings -> Integrations** and injected into the generated compose
 on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no key at all.
 
+## Mod Watch tab
+
+For Java servers with mod pinning available (Forge/Neoforge/Fabric/AUTO_CURSEFORGE/CurseForge/Modrinth/GTNH/FTBA),
+Minepanel adds a **Mod Watch** tab that stays available even while the server is running (unlike the
+**Mods** tab, which locks while the server is up).
+
+### What it shows
+
+- Every currently configured mod (parsed from `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`, pinned or not)
+  with its version. Manual entries (raw URLs, `@file` references) are listed separately, read-only —
+  there's no ref to search or diff for those
+- A free-text **note** per mod, saved automatically and independent of the docker-compose config
+- A **target Minecraft version** for the whole server — a single version you're considering moving
+  to, used only to check mod compatibility ahead of time. It does not change the version the server
+  runs. If **Set version from mods** (`VERSION_FROM_MODRINTH_PROJECTS`) is enabled, the tab says so:
+  itzg already resolves the newest version all your non-optional Modrinth mods support at startup,
+  so this box is for evaluating a *different* target, and for CurseForge lists that flag doesn't cover
+- A compatibility badge per mod against the target version, once one is set
+- An on-demand **changelog history** per mod, split into the two kinds of update you'd actually
+  decide between:
+  - **Same-version updates** — newer builds released for the Minecraft version the server is
+    already running (bug fixes and feature releases that don't require a version bump)
+  - **Minecraft version updates** — builds released for the target version you're watching,
+    which may pull in a larger set of changes since it usually also means jumping several
+    same-version releases at once
+  Each lane concatenates every intervening version's changelog, newest first, so you see
+  everything you'd pick up rather than just the latest entry
+
+### What it does not do
+
+Mod Watch is read-only with respect to your mod list. It never adds, removes, or updates a mod —
+the **Mods** tab is the only thing that edits `CURSEFORGE_FILES`/`MODRINTH_PROJECTS`, so there is
+exactly one writer and one source of truth for which mods a server runs.
+
+### Where this data is stored
+
+Notes and the target version are fields on `servers/<server-id>/server.json` (`modNotes` and
+`modWatchTargetVersion`), alongside the rest of the server's config rather than in a file of their
+own. Cloning a server carries them; deleting a server removes them with it. Neither field reaches
+the generated `docker-compose.yml`, so neither has any effect on server startup or mod resolution.
+
 ---
 
 ## Modrinth

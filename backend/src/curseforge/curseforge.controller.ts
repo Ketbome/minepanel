@@ -125,6 +125,13 @@ export class CurseforgeController {
     };
   }
 
+  @Get('mods/:ref/files/:fileId/changelog')
+  async getFileChangelog(@Request() req, @Param('ref') ref: string, @Param('fileId') fileId: string) {
+    const user = req.user as PayloadToken;
+    const apiKey = await this.getApiKey(user.userId);
+    return { changelog: await this.curseforgeService.getFileChangelogByRef(apiKey, ref, fileId) };
+  }
+
   @Get(':id')
   async getModpack(@Request() req, @Param('id') id: string) {
     const user = req.user as PayloadToken;

@@ -120,6 +120,34 @@ Path and filesystem patterns (critical):
   derived state (`active`, `serverExists`) in it.
 - Adding a config field means adding it to `ServerConfigDto` and to the compose
   generator. There is no reader to update: that is the point of `server.json`.
+  The exception is an annotation the panel stores *about* a server without it
+  reaching the container — `modNotes` and `modWatchTargetVersion` are the only
+  ones today. Those still go in `ServerConfigDto`, so one file describes a server
+  and `cloneServer` (which rebuilds from the config, never copies the folder)
+  carries them; they just have no compose output. Do not add a sidecar file for
+  this: a second per-server file is one more thing every copy/export path has to
+  remember, and it silently does not survive a clone.
+- Writing a *subset* of a server's config goes through
+  `ServerStoreService.updateConfig(id, mutate)`, never a read-modify-write of your
+  own. Every `server.json` write — full or partial — queues on a per-server chain,
+  so a read-modify-write cannot interleave with a full save. It also writes without
+  regenerating the compose file, which is what makes it safe while a server is
+  running: `DockerComposeService.updateServerConfig` regenerates, and regeneration
+  re-runs `ensurePortAvailable`, so it can move a live server's published port.
+- A lock cannot save a field from the whole-form save. The panel submits the entire
+  config it loaded, so a page opened before some other write lands will put its
+  stale copy back — that write is complete and self-consistent, and only the caller
+  knows it is out of date. A field edited outside the main form must therefore be
+  **stripped from `PUT /servers/:id`** (see `updateServer`, which drops `modNotes`
+  and `modWatchTargetVersion`); `updateServerConfig` merges over a fresh read, so
+  what is on disk then survives.
+- `server.json` is written temp-then-`rename(2)`, with the temp file fsynced before
+  the rename and the directory fsynced after. Do not reach for `fs.move` here: with
+  `overwrite` it unlinks the destination first, leaving a window with no config at
+  all. That matters more than it looks — `readConfig` cannot tell an empty
+  `server.json` from a server that never had one, so the caller re-imports from the
+  generated `docker-compose.yml` and silently drops everything compose does not
+  round-trip.
 - Per-server canonical layout is:
   - `/app/servers/<serverId>/server.json` (source of truth)
   - `/app/servers/<serverId>/docker-compose.yml` (generated)
@@ -156,6 +184,7 @@ Path and filesystem patterns (critical):
   than it looks for `server.json` — `readConfig` cannot tell an empty one from a server
   that never had one, so the caller re-imports from the generated `docker-compose.yml`
   and silently drops everything compose does not round-trip.
+  `updateConfig` is the serialised read-modify-write for partial config changes.
 - `src/proxy/proxy.service.ts` - proxy routes file path behavior.
 - `src/proxy/proxy-router.service.ts` - generates and runs the mc-router compose project.
 - `src/common/docker/host-context.service.ts` - reads the panel's own compose labels;
