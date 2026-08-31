@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { SystemMonitoringController } from './system-monitoring.controller';
 import { SystemMonitoringService } from './system-monitoring.service';
-import { Settings } from 'src/users/entities/settings.entity';
+import { SettingsModule } from 'src/settings/settings.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Settings])],
+  imports: [SettingsModule],
   controllers: [SystemMonitoringController],
   providers: [SystemMonitoringService],
   exports: [SystemMonitoringService],

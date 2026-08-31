@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as os from 'node:os';
-import { Settings } from 'src/users/entities/settings.entity';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 const execAsync = promisify(exec);
 
@@ -37,8 +35,7 @@ export class SystemMonitoringService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(Settings)
-    private readonly settingsRepo: Repository<Settings>,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {}
 
   async getSystemStats(): Promise<SystemStats> {
@@ -208,15 +205,13 @@ export class SystemMonitoringService {
   async getNetworkInfo(): Promise<{ hostname: string; localIPs: string[]; publicIP: string | null }> {
     const localIPs: string[] = [];
 
-    // Get IPs from settings (first user's settings)
+    // Network config is instance-wide, not per user
     let publicIp: string | null = null;
     let lanIp: string | null = null;
     try {
-      const [settings] = await this.settingsRepo.find({ order: { id: 'ASC' }, take: 1 });
-      if (settings?.preferences) {
-        publicIp = settings.preferences.publicIp ?? null;
-        lanIp = settings.preferences.lanIp ?? null;
-      }
+      const network = await this.instanceSettings.getNetwork();
+      publicIp = network.publicIp;
+      lanIp = network.lanIp;
     } catch (error) {
       console.error('Error fetching network settings:', error);
     }
