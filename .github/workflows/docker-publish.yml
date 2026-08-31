@@ -50,7 +50,7 @@ jobs:
           fetch-depth: 0
       # The CI run computed the change set over the whole pushed range; reuse it.
       # Anything without an artifact (workflow_dispatch, or an older CI run) builds everything.
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         if: github.event_name == 'workflow_run'
         continue-on-error: true
         with:
