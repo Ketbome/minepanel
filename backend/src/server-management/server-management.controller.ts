@@ -554,11 +554,8 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
 
-    // The Mod Watch fields have their own endpoint and are edited while the server runs,
-    // so the whole-form save must not carry them: the panel submits the entire config it
-    // loaded, and a page opened before a note was written would otherwise put its stale
-    // copy back. updateServerConfig merges over a fresh read, so dropping them here means
-    // whatever is on disk survives.
+    // Mod Watch fields save through their own endpoint; dropping them here stops a stale
+    // whole-form save from clobbering what's on disk.
     const { modNotes: _modNotes, modWatchTargetVersion: _modWatchTargetVersion, ...configWithoutModWatch } = config;
 
     const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
@@ -578,9 +575,8 @@ export class ServerManagementController {
     return updatedConfig;
   }
 
-  // Separate from PUT :id because this is the one config write that must not regenerate the
-  // compose file: the Mod Watch tab stays open while the server runs. Same access check and
-  // the same audit log as every other server config change.
+  // Separate from PUT :id: the Mod Watch tab stays open while the server runs, so this write
+  // must not regenerate the compose file.
   @Put(':id/mod-watch')
   async updateModWatch(
     @Request() req,

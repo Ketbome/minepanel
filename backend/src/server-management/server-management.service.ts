@@ -151,15 +151,8 @@ export class ServerManagementService {
     fs.ensureDirSync(this.getGlobalWorldsPath());
   }
 
-  /**
-   * Writes the Mod Watch annotations — per-mod notes and the version being evaluated.
-   *
-   * Deliberately does not go through `DockerComposeService.updateServerConfig`: that
-   * regenerates the compose file, and regeneration re-runs `ensurePortAvailable`. Mod Watch
-   * is the one tab that stays usable while the server is running, so typing in a note box
-   * must not be able to move a running server's published port. Neither field is compose
-   * input, so writing `server.json` directly is the whole job.
-   */
+  // Writes server.json directly rather than through DockerComposeService.updateServerConfig,
+  // which regenerates the compose file and would move a running server's published port.
   async updateModWatch(serverId: string, update: { targetVersion?: string | null; notes?: Record<string, string> }): Promise<ServerConfig> {
     if (!this.validateServerId(serverId)) {
       throw new BadRequestException(`Invalid server ID: ${serverId}`);
@@ -171,8 +164,6 @@ export class ServerManagementService {
         current.modWatchTargetVersion = trimmed ? trimmed : undefined;
       }
       if (update.notes !== undefined) {
-        // Notes arrive as the whole map, already pruned to the mods still configured, so
-        // dropping an entry is how a note for a removed mod stops being stored.
         const kept = Object.entries(update.notes).filter(([, note]) => note.trim().length > 0);
         current.modNotes = kept.length > 0 ? Object.fromEntries(kept) : undefined;
       }
