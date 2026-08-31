@@ -239,7 +239,10 @@ The **Mod Watch** tab's annotations live on the server's own config (`servers/<s
 as `modNotes` and `modWatchTargetVersion`, so there is no second per-server state file and
 `POST /servers/:id/clone` carries them:
 
-- `PUT /servers/:id/mod-watch` — body `{ "targetVersion"?: "1.21.4" | null, "notes"?: { "<mod-ref>": "..." } }`
+- `PUT /servers/:id/mod-watch` — body `{ "targetVersion"?: "1.21.4" | null, "notes"?: { "<provider>:<mod-ref>": "..." } }`
+
+Note keys are namespaced by provider (`curseforge:jei`, `modrinth:sodium`), since the same ref can
+exist on both platforms.
 
 `notes` is the complete map, not a patch: the tab sends it pruned to the mods still configured, which
 is how a note for a removed mod stops being stored. Blank notes are dropped, and `targetVersion: null`

@@ -1,7 +1,9 @@
 import { IsOptional, IsString, MaxLength, Matches, ValidateBy, ValidationOptions, buildMessage } from 'class-validator';
 
-// A note key is a mod ref: a provider slug or a numeric project id.
-const MOD_REF_PATTERN = /^[a-zA-Z0-9._-]+$/;
+// A note key is a mod ref — a provider slug or a numeric project id — namespaced by
+// provider, since CurseForge and Modrinth can share the same ref. Bare refs stay valid
+// so a page saved before the namespacing does not fail wholesale.
+const MOD_REF_PATTERN = /^(?:(?:curseforge|modrinth):)?[a-zA-Z0-9._-]+$/;
 const MAX_REF_LENGTH = 120;
 const MAX_NOTE_LENGTH = 2000;
 const MAX_NOTES = 500;
