@@ -12,13 +12,13 @@ const cpu = (idle: number, user: number) => ({ model: 'Test CPU', speed: 1, time
 
 describe('SystemMonitoringService', () => {
   let service: SystemMonitoringService;
-  let settingsRepo: { find: jest.Mock };
+  let instanceSettings: { getNetwork: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    settingsRepo = { find: jest.fn().mockResolvedValue([]) };
-    service = new SystemMonitoringService({ get: jest.fn() } as any, settingsRepo as any);
+    instanceSettings = { getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }) };
+    service = new SystemMonitoringService({ get: jest.fn() } as any, instanceSettings as any);
     jest.spyOn(os, 'totalmem').mockReturnValue(1000);
     jest.spyOn(os, 'freemem').mockReturnValue(250);
     jest.spyOn(os, 'uptime').mockReturnValue(42);
@@ -75,17 +75,17 @@ describe('SystemMonitoringService', () => {
     expect(service.formatBytes(5 * 1024 * 1024, -1)).toBe('5 MB');
   });
 
-  it('reads network settings from the first user and validates the LAN ip', async () => {
-    settingsRepo.find.mockResolvedValue([{ preferences: { publicIp: ' play.example.com ', lanIp: '192.168.1.10' } }]);
+  it('reads network settings from the instance settings and validates the LAN ip', async () => {
+    instanceSettings.getNetwork.mockResolvedValue({ publicIp: ' play.example.com ', lanIp: '192.168.1.10' });
     expect(await service.getNetworkInfo()).toEqual({ hostname: 'panel', localIPs: ['192.168.1.10'], publicIP: 'play.example.com' });
 
-    settingsRepo.find.mockResolvedValue([{ preferences: { publicIp: '  ', lanIp: '999.1.1' } }]);
+    instanceSettings.getNetwork.mockResolvedValue({ publicIp: '  ', lanIp: '999.1.1' });
     expect(await service.getNetworkInfo()).toEqual({ hostname: 'panel', localIPs: [], publicIP: null });
 
-    settingsRepo.find.mockResolvedValue([{ preferences: { lanIp: '10.0.0.999' } }]);
+    instanceSettings.getNetwork.mockResolvedValue({ publicIp: null, lanIp: '10.0.0.999' });
     expect((await service.getNetworkInfo()).localIPs).toEqual([]);
 
-    settingsRepo.find.mockRejectedValue(new Error('db'));
+    instanceSettings.getNetwork.mockRejectedValue(new Error('db'));
     expect(await service.getNetworkInfo()).toEqual({ hostname: 'panel', localIPs: [], publicIP: null });
   });
 });
