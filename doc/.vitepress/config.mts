@@ -1,8 +1,24 @@
 import { defineConfig, HeadConfig } from 'vitepress';
 import { MermaidMarkdown } from 'vitepress-plugin-mermaid';
 import llmstxt from 'vitepress-plugin-llms';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const hostname = 'https://minepanel.ketbome.com';
+
+const git = (args: string) => {
+  try {
+    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+};
+
+// Cloudflare Builds clones shallow: every file's git timestamp collapses to HEAD,
+// which would stamp all pages as "modified" on each deploy (sitemap lastmod, footer).
+const hasGitHistory = git('rev-parse --is-shallow-repository') === 'false';
+const headDate = git('log -1 --format=%cI');
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -128,12 +144,12 @@ export default defineConfig({
           price: '0',
           priceCurrency: 'USD',
         },
-        softwareVersion: '1.10.8',
+        softwareVersion: version,
         softwareRequirements: 'Docker 20.10+, Docker Compose v2.0+',
         releaseNotes: `${hostname}/roadmap`,
         screenshot: `${hostname}/img/minepanel.webp`,
         datePublished: '2024-01-01',
-        dateModified: '2026-06-12',
+        ...(headDate && { dateModified: headDate.slice(0, 10) }),
       }),
     ],
 
@@ -329,7 +345,7 @@ export default defineConfig({
     },
   },
 
-  lastUpdated: true,
+  lastUpdated: hasGitHistory,
 
   markdown: {
     config: (md) => MermaidMarkdown(md),
@@ -397,6 +413,7 @@ export default defineConfig({
 
         return {
           ...item,
+          lastmod: hasGitHistory ? item.lastmod : undefined,
           priority,
           changefreq,
         };

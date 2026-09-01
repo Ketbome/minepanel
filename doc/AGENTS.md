@@ -143,6 +143,10 @@ pnpm docs:build       # Build static site
 pnpm docs:preview     # Preview build
 ```
 
+Production builds run on Cloudflare Workers Builds from a shallow clone, so per-file git
+timestamps are meaningless there. `config.mts` detects that and drops the sitemap `lastmod`
+and the "Last updated" footer; a local build with full history keeps both.
+
 ---
 
 ## Adding New Page
