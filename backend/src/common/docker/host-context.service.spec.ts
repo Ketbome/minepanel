@@ -1,4 +1,5 @@
 import { HostContextService } from './host-context.service';
+import * as ownContainer from './own-container';
 
 const execMock = jest.fn();
 jest.mock('node:child_process', () => ({
@@ -19,6 +20,7 @@ describe('HostContextService', () => {
   const labels = (value: Record<string, string>) => JSON.stringify(value);
 
   beforeEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
     process.env.HOSTNAME = 'abc123def';
     service = new HostContextService();
@@ -66,6 +68,16 @@ describe('HostContextService', () => {
     await service.get();
 
     expect(execMock).toHaveBeenCalledTimes(1);
+  });
+
+  // Watchtower recreates the container with the old hostname, so the first id is
+  // a container that no longer exists and only the mountinfo id answers.
+  it('falls through to the next id when HOSTNAME names a container that is gone', async () => {
+    jest.spyOn(ownContainer, 'ownContainerIds').mockReturnValue(['stale000', 'f'.repeat(64)]);
+    execMock.mockImplementation((command: string) => (command.includes('stale000') ? new Error('No such object: stale000') : labels({ 'com.docker.compose.service': 'backend' })));
+
+    expect((await service.get()).service).toBe('backend');
+    expect(execMock).toHaveBeenCalledTimes(2);
   });
 
   it('returns an empty context instead of throwing when docker inspect fails', async () => {
