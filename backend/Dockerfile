@@ -1,5 +1,8 @@
 # Build context is the repo root (pnpm workspace): docker build -f backend/Dockerfile .
-FROM node:22-alpine AS builder
+# The builder runs on the build host's own architecture: nothing in it is target-specific
+# (bcrypt ships prebuilds for every platform and picks one at runtime), and running node
+# under QEMU for the arm64 image has crashed with SIGILL and hung a release build for hours.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 
 ENV HUSKY=0 CI=true
 RUN corepack enable
