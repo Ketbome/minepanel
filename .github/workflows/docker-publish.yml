@@ -245,6 +245,33 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
+  # Docker Hub overview for the three public images, sourced from .github/dockerhub/README.md.
+  # Needs DOCKERHUB_TOKEN with the "Read, Write, Delete" scope; a push-only token gets a 403.
+  dockerhub-readme:
+    needs: changes
+    if: needs.changes.outputs.is_main == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: minepanel
+            short: Self-hosted panel to run Minecraft Java & Bedrock servers with Docker · docs minepanel.ketbome.com
+          - image: minepanel-backend
+            short: Minepanel API (NestJS) · Minecraft Java & Bedrock server manager · docs minepanel.ketbome.com
+          - image: minepanel-frontend
+            short: Minepanel web UI (Next.js) · Minecraft Java & Bedrock server manager · docs minepanel.ketbome.com
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.changes.outputs.sha }}
+      - uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+          readme-filepath: .github/dockerhub/README.md
+          short-description: ${{ matrix.short }}
+
   # Tag + GitHub release: one patch bump per merge to main
   release:
     needs: [changes, build-main]
