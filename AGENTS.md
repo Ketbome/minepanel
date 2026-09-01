@@ -80,8 +80,10 @@ docker compose -f docker-compose.test.yml up -d
 - in CI (`.github/workflows/ci.yml`, on every branch push; it additionally builds both apps)
 
 Docker images are only published by `docker-publish.yml` after a green CI run
-(`workflow_run`), so a red `main` never ships `latest`. The same workflow pushes
-`.github/dockerhub/README.md` as the Docker Hub overview of the three public images.
+(`workflow_run`), so a red `main` never ships `latest`. Every release rebuilds all three
+production images (the backend bakes `APP_VERSION`, which must match the tag) and the tag is
+only created once all three are pushed. The same workflow pushes `.github/dockerhub/README.md`
+as the Docker Hub overview of the three public images.
 
 The `git push` half only works once husky has claimed the hooks. Any `pnpm install` (root or
 inside `backend/`/`frontend/`) runs the root `prepare` script that does it; the repo `.npmrc`
