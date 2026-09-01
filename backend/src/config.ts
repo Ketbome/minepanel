@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import * as path from 'node:path';
-import * as os from 'node:os';
+import { isInsideContainer, ownContainerIds } from './common/docker/own-container';
 
 export interface DockerMount {
   Type?: string;
@@ -30,35 +30,88 @@ interface MountSpec {
 // ever produce. It also keeps whatever path shape the platform reports (Docker Desktop
 // rewrites binds to /host_mnt/... and /run/desktop/...) intact, since the daemon is the
 // one resolving it back.
-function readOwnMounts(): DockerMount[] {
-  try {
-    const containerId = process.env.HOSTNAME || os.hostname();
-    // execFileSync, not execSync: HOSTNAME is whatever the container spec says, and there is
-    // no reason to hand it to a shell to reinterpret.
-    // .Mounts says what is mounted where; .HostConfig.Mounts is the request that produced it
-    // and the only place a volume subpath survives.
-    const stdout = execFileSync(
-      'docker',
-      ['inspect', containerId, '--format', '{"mounts":{{json .Mounts}},"spec":{{json .HostConfig.Mounts}}}'],
-      {
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-        timeout: 5000,
-      },
-    ).trim();
+function inspectMounts(containerId: string): string {
+  // execFileSync, not execSync: HOSTNAME is whatever the container spec says, and there is
+  // no reason to hand it to a shell to reinterpret.
+  // .Mounts says what is mounted where; .HostConfig.Mounts is the request that produced it
+  // and the only place a volume subpath survives.
+  return execFileSync(
+    'docker',
+    ['inspect', containerId, '--format', '{"mounts":{{json .Mounts}},"spec":{{json .HostConfig.Mounts}}}'],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 15000,
+    },
+  ).trim();
+}
 
-    const parsed = JSON.parse(stdout || '{}') as { mounts?: unknown; spec?: unknown };
-    const mounts = Array.isArray(parsed.mounts) ? (parsed.mounts as DockerMount[]) : [];
-    const spec = Array.isArray(parsed.spec) ? (parsed.spec as MountSpec[]) : [];
+function parseMounts(stdout: string): DockerMount[] {
+  const parsed = JSON.parse(stdout || '{}') as { mounts?: unknown; spec?: unknown };
+  const mounts = Array.isArray(parsed.mounts) ? (parsed.mounts as DockerMount[]) : [];
+  const spec = Array.isArray(parsed.spec) ? (parsed.spec as MountSpec[]) : [];
 
-    return mounts.map((mount) => {
-      const subpath = spec.find((entry) => entry.Target === mount.Destination)?.VolumeOptions?.Subpath;
-      return subpath ? { ...mount, Subpath: subpath } : mount;
-    });
-  } catch {
-    // Docker unavailable (e.g. local dev outside Docker) -> fall back to BASE_DIR.
-    return [];
+  return mounts.map((mount) => {
+    const subpath = spec.find((entry) => entry.Target === mount.Destination)?.VolumeOptions?.Subpath;
+    return subpath ? { ...mount, Subpath: subpath } : mount;
+  });
+}
+
+function describeFailure(error: unknown): string {
+  const failure = error as { stderr?: string; message?: string };
+  return (failure.stderr?.trim() || failure.message || String(error)).split('\n')[0];
+}
+
+// The daemon can be slow to answer right after an update, while it is still extracting
+// images, and the answer is fixed for the life of the process, so a timeout is worth a
+// second try. "No such object" is not: that id is simply not ours.
+function isTransient(error: unknown): boolean {
+  const failure = error as { code?: string; signal?: string };
+  return failure.code === 'ETIMEDOUT' || failure.signal === 'SIGTERM';
+}
+
+function pause(ms: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+// `[]` means the panel is not running in a container, where BASE_DIR is the right answer.
+// `undefined` means it is, but could not find out what is mounted where: every host path
+// derived from here is then a guess, and the callers must treat it as one.
+export function readOwnMounts(
+  ids: string[],
+  inContainer: boolean,
+  inspect: (containerId: string) => string = inspectMounts,
+  attempts = 3,
+  retryDelayMs = 2000,
+): DockerMount[] | undefined {
+  const failures: string[] = [];
+
+  for (const id of ids) {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        const mounts = parseMounts(inspect(id));
+        // Inside a container an answer with no mounts at all cannot be ours: the Docker
+        // socket alone is one. Treat it like an id the daemon does not know.
+        if (inContainer && mounts.length === 0) {
+          failures.push(`${id}: no mounts`);
+          break;
+        }
+        return mounts;
+      } catch (error) {
+        failures.push(`${id}: ${describeFailure(error)}`);
+        if (!isTransient(error) || attempt === attempts) break;
+        pause(retryDelayMs);
+      }
+    }
   }
+
+  if (!inContainer) return [];
+
+  console.warn(
+    `[config] could not inspect the panel's own container to find its mounts (${failures.join('; ') || 'no container id known'}). ` +
+      'Host paths cannot be derived, so servers and mc-router will refuse to start until the panel is restarted with a working `docker inspect`.',
+  );
+  return undefined;
 }
 
 // The deepest mount containing `containerPath`, so a single volume mounted at /app resolves
@@ -99,7 +152,13 @@ export function resolveHostPath(mounts: DockerMount[], containerPath: string): s
 // should refuse rather than hand the daemon a path that does not exist.
 const unresolvedHostPaths: string[] = [];
 
-function detectHostDir(mounts: DockerMount[], containerPath: string, fallback: string): string {
+function detectHostDir(mounts: DockerMount[] | undefined, containerPath: string, fallback: string): string {
+  if (!mounts) {
+    unresolvedHostPaths.push(containerPath);
+    console.warn(`[config] the host path of ${containerPath} is unknown. Falling back to "${fallback}", which is a path inside this container, not on the host.`);
+    return fallback;
+  }
+
   const detected = resolveHostPath(mounts, containerPath);
   if (!detected) {
     // No mounts at all means we are not in a container (local dev), where BASE_DIR is a
@@ -124,7 +183,7 @@ function detectHostDir(mounts: DockerMount[], containerPath: string, fallback: s
 
 // Resolved once at import: the factory below can be called more than once, and detection
 // shells out to `docker inspect` and warns on the way.
-const ownMounts = readOwnMounts();
+const ownMounts = readOwnMounts(ownContainerIds(), isInsideContainer());
 const envBaseDir = process.env.BASE_DIR || '/app';
 const serversHostDir = detectHostDir(ownMounts, '/app/servers', path.join(envBaseDir, 'servers'));
 const dataHostDir = detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 'data'));

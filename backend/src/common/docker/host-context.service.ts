@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { ownContainerIds } from './own-container';
 
 const execAsync = promisify(exec);
 
@@ -35,30 +36,33 @@ export class HostContextService {
   }
 
   private async inspectSelf(): Promise<HostContext> {
-    // Docker sets HOSTNAME to the short container id unless the compose file
-    // overrides it, which none of the shipped ones do.
-    const containerId = process.env.HOSTNAME?.trim();
-    if (!containerId) {
+    // HOSTNAME first, then the id mountinfo reports, which is the one that still
+    // works after a tool such as Watchtower recreated the container with the old
+    // hostname. Both are ids Docker generated, never something a shell could reinterpret.
+    const ids = ownContainerIds();
+    if (ids.length === 0) {
       this.logger.warn('No container id in HOSTNAME; the panel is probably not running in Docker');
       return { configFiles: [] };
     }
 
-    try {
-      const format = '{{json .Config.Labels}}';
-      const { stdout } = await execAsync(`docker inspect --format '${format}' ${containerId}`);
-      const labels = JSON.parse(stdout.trim() || '{}') as Record<string, string>;
+    for (const containerId of ids) {
+      try {
+        const format = '{{json .Config.Labels}}';
+        const { stdout } = await execAsync(`docker inspect --format '${format}' ${containerId}`);
+        const labels = JSON.parse(stdout.trim() || '{}') as Record<string, string>;
 
-      return {
-        project: labels['com.docker.compose.project'] || undefined,
-        workingDir: labels['com.docker.compose.project.working_dir'] || undefined,
-        configFiles: this.parseConfigFiles(labels['com.docker.compose.project.config_files']),
-        service: labels['com.docker.compose.service'] || undefined,
-      };
-    } catch (error) {
-      // Not fatal: callers fall back to their own defaults and say so.
-      this.logger.warn(`Could not inspect the panel's own container (${containerId})`, error);
-      return { configFiles: [] };
+        return {
+          project: labels['com.docker.compose.project'] || undefined,
+          workingDir: labels['com.docker.compose.project.working_dir'] || undefined,
+          configFiles: this.parseConfigFiles(labels['com.docker.compose.project.config_files']),
+          service: labels['com.docker.compose.service'] || undefined,
+        };
+      } catch (error) {
+        // Not fatal: callers fall back to their own defaults and say so.
+        this.logger.warn(`Could not inspect the panel's own container (${containerId})`, error);
+      }
     }
+    return { configFiles: [] };
   }
 
   private parseConfigFiles(value?: string): string[] {

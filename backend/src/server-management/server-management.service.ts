@@ -121,6 +121,7 @@ export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
   private readonly SERVERS_HOST_DIR: string;
+  private readonly SERVERS_HOST_DIR_IS_A_GUESS: boolean;
   private readonly COMPOSE_PROJECT?: string;
   private readonly RESERVED_SERVER_DIRS = new Set(['.world']);
 
@@ -146,6 +147,7 @@ export class ServerManagementService {
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
+    this.SERVERS_HOST_DIR_IS_A_GUESS = (this.configService.get<string[]>('unresolvedHostPaths') ?? []).includes('/app/servers');
     this.COMPOSE_PROJECT = this.configService.get<string>('composeProject')?.trim() || undefined;
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(this.getGlobalWorldsPath());
@@ -772,6 +774,19 @@ export class ServerManagementService {
     return '';
   }
 
+  // Every mount in a server's compose file is a host path under SERVERS_HOST_DIR. With a
+  // guessed one the daemon would create an empty bind source and the server would write a
+  // fresh world into it, which is worse than not starting at all.
+  private hostDirIsKnown(serverId: string): boolean {
+    if (!this.SERVERS_HOST_DIR_IS_A_GUESS) return true;
+
+    this.logger.error(
+      `Refusing to start server ${serverId}: the host path of /app/servers is unknown, so "${path.join(this.SERVERS_HOST_DIR, serverId)}" is a guess and the server would run against an empty directory. ` +
+        'See the [config] warnings at startup and restart the panel.',
+    );
+    return false;
+  }
+
   async restartServer(serverId: string): Promise<boolean> {
     try {
       if (!this.validateServerId(serverId)) {
@@ -782,6 +797,10 @@ export class ServerManagementService {
       const dockerComposePath = this.getDockerComposePath(serverId);
       if (!(await fs.pathExists(dockerComposePath))) {
         this.logger.error(`Docker compose file does not exist for server ${serverId}`);
+        return false;
+      }
+
+      if (!this.hostDirIsKnown(serverId)) {
         return false;
       }
 
@@ -1721,6 +1740,10 @@ export class ServerManagementService {
       const dockerComposePath = this.getDockerComposePath(serverId);
       if (!(await fs.pathExists(dockerComposePath))) {
         this.logger.error(`Docker compose file does not exist for server ${serverId}`);
+        return false;
+      }
+
+      if (!this.hostDirIsKnown(serverId)) {
         return false;
       }
 

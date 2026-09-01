@@ -386,6 +386,36 @@ Volumes on a non-local driver (NFS, CIFS) cannot be resolved this way. The panel
 startup and falls back to `BASE_DIR`; use a bind mount for those.
 :::
 
+### Servers or mc-router mount `/app/servers/...` or `/app/data/...` after an auto-update
+
+**Symptoms:** The panel worked until Watchtower (or a script that recreates the container)
+updated it. Afterwards the generated mc-router compose file mounts `/app/data/proxy:/data`, or a
+server's compose file mounts `/app/servers/<id>/mc-data`, and the container finds an empty
+directory: mc-router crash-loops on a missing `routes.json`, a server generates a fresh world.
+
+**Cause:** The panel asks Docker about its own mounts with `docker inspect $HOSTNAME`. Docker
+sets `HOSTNAME` to the container id at creation, but Watchtower recreates the container by
+copying its old configuration, hostname included, so the recreated panel carries the *previous*
+container's id and the inspect fails. Before 1.12.11 that failure looked the same as running
+outside Docker, so the panel fell back to its own container paths and wrote them into the
+compose files as if they were host paths.
+
+**Solution:** From 1.12.11 the panel also reads its id from `/proc/self/mountinfo`, which
+survives recreation, and when it cannot inspect itself at all it refuses to start servers or
+mc-router instead of guessing. The startup log says which id it tried and why it failed.
+
+On an older version, or to recover: recreate the panel with Compose so it gets a fresh id and
+start the affected servers again (their compose files are regenerated on every start):
+
+```bash
+docker compose up -d --force-recreate backend
+```
+
+`docker restart` is not enough: it keeps the stale hostname. If a server was started against
+the empty directory, its real data is still in whatever backs `/app/servers`: `servers/<id>/mc-data`
+for a bind mount, `<volume>/_data/<id>/mc-data` for a named volume. The empty copy is at the
+literal `/app/servers/<id>` path on the host and can be deleted.
+
 ### A server is missing from the dashboard
 
 The list is built from `servers/servers.json`, an index the panel rebuilds from the folders.

@@ -268,6 +268,51 @@ describe('ServerManagementService', () => {
 
   });
 
+  // Every mount in the compose file is a host path under serversHostDir. When the panel
+  // could not resolve it, starting would bind an empty directory and the server would
+  // write a fresh world into it.
+  describe('with an unresolved host path for /app/servers', () => {
+    let guessing: ServerManagementService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          ServerManagementService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn((key: string) => {
+                if (key === 'serversDir') return SERVERS_DIR;
+                if (key === 'serversHostDir') return '/app/servers';
+                if (key === 'unresolvedHostPaths') return ['/app/servers'];
+                return null;
+              }),
+            },
+          },
+          { provide: getRepositoryToken(Settings), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
+          { provide: DiscordService, useValue: { sendServerNotification: jest.fn() } },
+          { provide: AlertsService, useValue: { markExpectedStop: jest.fn() } },
+          { provide: ServerStoreService, useValue: { readConfig: jest.fn() } },
+          { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },
+          { provide: InstanceSettingsService, useValue: {} },
+        ],
+      }).compile();
+
+      guessing = module.get(ServerManagementService);
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+    });
+
+    it('refuses to start a server instead of binding a guessed path', async () => {
+      expect(await guessing.startServer('myserver')).toBe(false);
+      expect(mockExec).not.toHaveBeenCalled();
+    });
+
+    it('refuses to restart a server for the same reason', async () => {
+      expect(await guessing.restartServer('myserver')).toBe(false);
+      expect(mockExec).not.toHaveBeenCalled();
+    });
+  });
+
   describe('stopServer', () => {
     it('should fail for invalid server ID', async () => {
       const result = await service.stopServer('invalid;id');

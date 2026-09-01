@@ -102,6 +102,15 @@ Path and filesystem patterns (critical):
   a mount with `volume: subpath:` still lists the volume root as its `Source`. `readOwnMounts`
   reads `.HostConfig.Mounts` in the same inspect and copies `VolumeOptions.Subpath` onto the
   mount so `resolveHostPath` can append it. Any new mount lookup must go through that helper.
+- The own container id comes from `common/docker/own-container.ts` (`ownContainerIds`):
+  `HOSTNAME` first, then the id in `/proc/self/mountinfo`. Watchtower recreates a container
+  with the old hostname, so `HOSTNAME` alone names a container that no longer exists. Never
+  call `docker inspect $HOSTNAME` directly; take the ids from that helper.
+- `readOwnMounts` returns `[]` outside a container (local dev, `BASE_DIR` is right) and
+  `undefined` inside one it could not inspect. The latter puts both `/app/servers` and
+  `/app/data` in `unresolvedHostPaths`; `ServerManagementService.startServer`/`restartServer`
+  and `ProxyRouterService.start` refuse to run against those. Any new code that writes a host
+  path into a bind mount must check `unresolvedHostPaths` the same way.
 - Never mix `serversDir` with the host dirs; they are not interchangeable.
 - **`servers/<id>/server.json` is the source of truth for a server's config.**
   `docker-compose.yml` is generated output; never parse it to read config. Reads go

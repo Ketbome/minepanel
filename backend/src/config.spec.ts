@@ -1,4 +1,4 @@
-import { resolveHostPath, type DockerMount } from './config';
+import { readOwnMounts, resolveHostPath, type DockerMount } from './config';
 
 describe('resolveHostPath', () => {
   const bind = (source: string, destination: string): DockerMount => ({ Type: 'bind', Source: source, Destination: destination });
@@ -63,5 +63,100 @@ describe('resolveHostPath', () => {
   it('ignores mounts that do not contain the path', () => {
     expect(resolveHostPath([bind('/var/run/docker.sock', '/var/run/docker.sock')], '/app/servers')).toBeUndefined();
     expect(resolveHostPath([], '/app/servers')).toBeUndefined();
+  });
+});
+
+describe('readOwnMounts', () => {
+  const inspectOutput = JSON.stringify({
+    mounts: [{ Type: 'volume', Name: 'minepanel_data', Source: '/var/lib/docker/volumes/minepanel_data/_data', Destination: '/app/data' }],
+    spec: [{ Target: '/app/data', VolumeOptions: { Subpath: 'data' } }],
+  });
+  const noSuchObject = (id: string) => Object.assign(new Error(`Command failed: docker inspect ${id}`), { stderr: `Error: No such object: ${id}\n`, status: 1 });
+  const timeout = () => Object.assign(new Error('spawnSync docker ETIMEDOUT'), { code: 'ETIMEDOUT', signal: 'SIGTERM' });
+
+  let warn: jest.SpyInstance;
+
+  beforeEach(() => {
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  it('copies the volume subpath onto the mount it belongs to', () => {
+    const inspect = jest.fn().mockReturnValue(inspectOutput);
+
+    expect(readOwnMounts(['abc'], true, inspect)).toEqual([expect.objectContaining({ Destination: '/app/data', Subpath: 'data' })]);
+  });
+
+  // The bug: a container recreated with the previous container's hostname made the
+  // inspect fail, and that was indistinguishable from running outside Docker.
+  it('falls through to the next id when the first one is not a container', () => {
+    const inspect = jest.fn((id: string) => {
+      if (id === 'stale') throw noSuchObject(id);
+      return inspectOutput;
+    });
+
+    expect(readOwnMounts(['stale', 'current'], true, inspect)).toHaveLength(1);
+    expect(inspect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry an id the daemon does not know', () => {
+    const inspect = jest.fn((id: string) => {
+      throw noSuchObject(id);
+    });
+
+    readOwnMounts(['stale'], true, inspect, 3, 0);
+
+    expect(inspect).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries when the daemon is too slow to answer', () => {
+    const inspect = jest.fn().mockImplementationOnce(() => {
+      throw timeout();
+    });
+    inspect.mockReturnValue(inspectOutput);
+
+    expect(readOwnMounts(['abc'], true, inspect, 3, 0)).toHaveLength(1);
+    expect(inspect).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports unknown mounts, not "no mounts", when it is in a container it cannot inspect', () => {
+    const inspect = jest.fn((id: string) => {
+      throw noSuchObject(id);
+    });
+
+    expect(readOwnMounts(['stale'], true, inspect, 3, 0)).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No such object: stale'));
+  });
+
+  it('treats an answer with no mounts as not ours inside a container', () => {
+    const inspect = jest.fn().mockReturnValue(JSON.stringify({ mounts: [], spec: [] }));
+
+    expect(readOwnMounts(['abc'], true, inspect)).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('abc: no mounts'));
+  });
+
+  it('gives up after the last attempt on a daemon that never answers', () => {
+    const inspect = jest.fn(() => {
+      throw timeout();
+    });
+
+    expect(readOwnMounts(['abc'], true, inspect, 2, 0)).toBeUndefined();
+    expect(inspect).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats a failed inspect outside a container as local dev', () => {
+    const inspect = jest.fn(() => {
+      throw new Error('spawnSync docker ENOENT');
+    });
+
+    expect(readOwnMounts(['my-laptop'], false, inspect)).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('is empty outside a container with no id to try', () => {
+    expect(readOwnMounts([], false, jest.fn())).toEqual([]);
   });
 });
