@@ -412,8 +412,9 @@ docker compose up -d --force-recreate backend
 ```
 
 `docker restart` is not enough: it keeps the stale hostname. If a server was started against
-the empty directory, its real data is still under your `servers/<id>/mc-data`; the empty copy is
-at the literal `/app/servers/<id>` path on the host and can be deleted.
+the empty directory, its real data is still in whatever backs `/app/servers`: `servers/<id>/mc-data`
+for a bind mount, `<volume>/_data/<id>/mc-data` for a named volume. The empty copy is at the
+literal `/app/servers/<id>` path on the host and can be deleted.
 
 ### A server is missing from the dashboard
 

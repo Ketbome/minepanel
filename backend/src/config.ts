@@ -89,7 +89,14 @@ export function readOwnMounts(
   for (const id of ids) {
     for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
-        return parseMounts(inspect(id));
+        const mounts = parseMounts(inspect(id));
+        // Inside a container an answer with no mounts at all cannot be ours: the Docker
+        // socket alone is one. Treat it like an id the daemon does not know.
+        if (inContainer && mounts.length === 0) {
+          failures.push(`${id}: no mounts`);
+          break;
+        }
+        return mounts;
       } catch (error) {
         failures.push(`${id}: ${describeFailure(error)}`);
         if (!isTransient(error) || attempt === attempts) break;

@@ -131,6 +131,13 @@ describe('readOwnMounts', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('No such object: stale'));
   });
 
+  it('treats an answer with no mounts as not ours inside a container', () => {
+    const inspect = jest.fn().mockReturnValue(JSON.stringify({ mounts: [], spec: [] }));
+
+    expect(readOwnMounts(['abc'], true, inspect)).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('abc: no mounts'));
+  });
+
   it('gives up after the last attempt on a daemon that never answers', () => {
     const inspect = jest.fn(() => {
       throw timeout();
