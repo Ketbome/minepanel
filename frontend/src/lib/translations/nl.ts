@@ -1721,6 +1721,8 @@ export const nl: Record<TranslationKey, string> = {
   texturepackRequiredDesc: 'Dwing spelers om server resource pack te downloaden',
   whiteList: 'Whitelist',
   whiteListDesc: 'Alleen spelers op de whitelist mogen joinen',
+  whitelistPlayers: 'Spelers op de whitelist',
+  whitelistPlayersDesc: "Spelers die bij het opstarten aan de whitelist worden toegevoegd, gescheiden door komma's. Dit veld voegt alleen toe: toegang intrekken doe je in het tabblad Commando's.",
   serverPortV6: 'IPv6 Poort',
   serverPortV6Desc: 'Poort voor IPv6 verbindingen. Laat leeg om uit te schakelen.',
   serverPortV6Help: 'Optioneel. Stel in als je server IPv6 verbindingen ondersteunt.',

@@ -100,7 +100,7 @@ The current audit phase includes:
 | Feature        | Description                                |
 | -------------- | ------------------------------------------ |
 | Online players | View, kick, ban, change gamemode, teleport |
-| Whitelist      | Add/remove players                         |
+| Whitelist      | Add/remove players at runtime, or seed it from **Access** before the first boot |
 | Operators      | Manage OPs from panel                      |
 | Ban list       | View reasons, unban                        |
 

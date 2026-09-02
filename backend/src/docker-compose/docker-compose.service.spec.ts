@@ -234,6 +234,41 @@ describe('DockerComposeService', () => {
       expect(envVars).not.toContain('SERVER_PORT_V6');
     });
 
+    it('should read the whitelist from the env keys each edition writes', async () => {
+      const withPlayers = await loadFromCompose('java-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: 'java-server', TYPE: 'VANILLA', WHITELIST: 'alice,bob' },
+          },
+        },
+      });
+      expect(withPlayers?.whitelistPlayers).toBe('alice,bob');
+      expect(withPlayers?.whiteList).toBe(true);
+      expect(withPlayers?.envVars ?? '').not.toContain('WHITELIST');
+
+      const closedButEmpty = await loadFromCompose('java-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: 'java-server', TYPE: 'VANILLA', ENABLE_WHITELIST: 'true' },
+          },
+        },
+      });
+      expect(closedButEmpty?.whiteList).toBe(true);
+      expect(closedButEmpty?.whitelistPlayers).toBe('');
+
+      const bedrock = await loadFromCompose('bedrock-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-bedrock-server:latest',
+            environment: { ID_MANAGER: 'bedrock-server', WHITE_LIST: 'true' },
+          },
+        },
+      });
+      expect(bedrock?.whiteList).toBe(true);
+    });
+
     it('should read the auto-scale opt-out label', async () => {
       const compose = {
         services: {

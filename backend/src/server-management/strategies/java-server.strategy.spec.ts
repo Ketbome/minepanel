@@ -249,6 +249,18 @@ describe('JavaServerStrategy', () => {
       }
     });
 
+    it('provisions the whitelist from the players list and the enable flag', () => {
+      expect(strategy.buildEnvironment({ ...baseConfig(), whitelistPlayers: ' alice,bob ' } as any)).toMatchObject({ WHITELIST: 'alice,bob' });
+
+      const closedButEmpty = strategy.buildEnvironment({ ...baseConfig(), whiteList: true, whitelistPlayers: '  ' } as any);
+      expect(closedButEmpty.WHITELIST).toBeUndefined();
+      expect(closedButEmpty.ENABLE_WHITELIST).toBe('true');
+
+      const off = strategy.buildEnvironment(baseConfig());
+      expect(off.WHITELIST).toBeUndefined();
+      expect(off.ENABLE_WHITELIST).toBeUndefined();
+    });
+
     it('ignores malformed custom env lines', () => {
       const env = strategy.buildEnvironment({ ...baseConfig(), serverType: 'QUILT', envVars: 'NO_SEPARATOR\n=novalue\nKEY=\nGOOD=yes\n' } as any);
       expect(env.GOOD).toBe('yes');

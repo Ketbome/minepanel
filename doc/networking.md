@@ -90,6 +90,8 @@ server is reached, **Access** for who is allowed in once they get there.
 | `extraPorts` | Network | Extra host port mappings (voice chat, Dynmap, ...) |
 | `onlineMode` | Access | Mojang auth verification for Java servers |
 | `ops` | Access | Operator usernames |
+| `whiteList` | Access | Turns the whitelist on (`ENABLE_WHITELIST` on Java, `WHITE_LIST` on Bedrock) |
+| `whitelistPlayers` | Access | Java players merged into the whitelist on boot (`WHITELIST`); additive, removing a name here does not revoke access |
 | `opPermissionLevel` | Access | Java op permission level (1-4) |
 | `enableRcon` / `rconPort` / `rconPassword` | Access | Remote console, required by backups |
 
