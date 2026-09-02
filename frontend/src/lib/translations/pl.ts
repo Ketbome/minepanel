@@ -1696,6 +1696,8 @@ export const pl: Record<TranslationKey, string> = {
   texturepackRequiredDesc: 'Wymuś na graczach pobranie pakietu zasobów serwera',
   whiteList: 'Biała lista',
   whiteListDesc: 'Zezwalaj na dołączanie tylko graczom z białej listy',
+  whitelistPlayers: 'Gracze na białej liście',
+  whitelistPlayersDesc: 'Gracze dodawani do białej listy przy starcie, oddzieleni przecinkami. To pole tylko dodaje: aby odebrać dostęp, użyj zakładki Polecenia.',
   serverPortV6: 'Port IPv6',
   serverPortV6Desc: 'Port dla połączeń IPv6. Pozostaw puste, aby wyłączyć.',
   serverPortV6Help: 'Opcjonalne. Ustaw, jeśli Twój serwer obsługuje połączenia IPv6.',

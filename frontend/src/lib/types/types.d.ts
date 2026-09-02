@@ -58,6 +58,8 @@ export interface ServerConfig {
   difficulty: 'peaceful' | 'easy' | 'normal' | 'hard';
   maxPlayers: string;
   ops: string;
+  whiteList?: boolean;
+  whitelistPlayers?: string;
   onlineMode: boolean;
   pvp: boolean;
   commandBlock: boolean;
@@ -257,7 +259,6 @@ export interface ServerConfig {
   defaultPlayerPermissionLevel?: 'visitor' | 'member' | 'operator';
   texturepackRequired?: boolean;
   serverPortV6?: string;
-  whiteList?: boolean;
 }
 
 export interface AvailableWorld {

@@ -54,6 +54,14 @@ export class ServerConfigDto {
 
   @IsBoolean()
   @IsOptional()
+  whiteList?: boolean;
+
+  @IsString()
+  @IsOptional()
+  whitelistPlayers?: string;
+
+  @IsBoolean()
+  @IsOptional()
   onlineMode?: boolean;
 
   @IsBoolean()
@@ -658,10 +666,6 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   serverPortV6?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  whiteList?: boolean;
 
   // Mod Watch annotations; not compose input, kept here so cloneServer carries them.
   @IsObject()

@@ -99,6 +99,7 @@ export class JavaServerStrategy implements IServerStrategy {
     };
 
     if (config.seed) env['SEED'] = config.seed;
+    this.addWhitelistConfig(env, config);
     this.addWorldConfig(env, config);
 
     this.addJvmOptions(env, config);
@@ -109,6 +110,16 @@ export class JavaServerStrategy implements IServerStrategy {
     this.addCustomEnvVars(env, config);
 
     return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined && value !== ''));
+  }
+
+  // itzg enables white-list on its own once WHITELIST is set, so ENABLE_WHITELIST only
+  // matters for an empty list (start closed, add players by RCON later). The list is
+  // merged into whitelist.json, never synchronized: dropping a name here must not undo
+  // what an admin added in-game.
+  private addWhitelistConfig(env: Record<string, string>, config: ServerConfig): void {
+    const players = config.whitelistPlayers?.trim();
+    if (players) env['WHITELIST'] = players;
+    if (config.whiteList) env['ENABLE_WHITELIST'] = 'true';
   }
 
   private addJvmOptions(env: Record<string, string>, config: ServerConfig): void {

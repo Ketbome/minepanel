@@ -1688,6 +1688,8 @@ export const en = {
   texturepackRequiredDesc: 'Force players to download server resource pack',
   whiteList: 'Whitelist',
   whiteListDesc: 'Only allow players on the whitelist to join',
+  whitelistPlayers: 'Whitelisted Players',
+  whitelistPlayersDesc: 'Players added to the whitelist on boot, separated by commas. This field only ever adds: to revoke access, use the Commands tab.',
   serverPortV6: 'IPv6 Port',
   serverPortV6Desc: 'Port for IPv6 connections. Leave empty to disable.',
   serverPortV6Help: 'Optional. Set if your server supports IPv6 connections.',

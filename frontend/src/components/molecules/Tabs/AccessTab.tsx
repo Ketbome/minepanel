@@ -69,19 +69,33 @@ export const AccessTab: FC<AccessTabProps> = ({ config, updateConfig }) => {
             <p className="text-xs text-gray-400">{t('onlineModeDesc')}</p>
           </div>
 
-          {isBedrock && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="whiteList" className="text-gray-200 font-minecraft text-sm">
-                  {t('whiteList')}
-                </Label>
-                <Switch
-                  id="whiteList"
-                  checked={config.whiteList ?? false}
-                  onCheckedChange={(checked) => updateConfig('whiteList', checked)}
-                />
-              </div>
-              <p className="text-xs text-gray-400">{t('whiteListDesc')}</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="whiteList" className="text-gray-200 font-minecraft text-sm">
+                {t('whiteList')}
+              </Label>
+              <Switch
+                id="whiteList"
+                checked={config.whiteList ?? false}
+                onCheckedChange={(checked) => updateConfig('whiteList', checked)}
+              />
+            </div>
+            <p className="text-xs text-gray-400">{t('whiteListDesc')}</p>
+          </div>
+
+          {isJava && (
+            <div className="space-y-2">
+              <Label htmlFor="whitelistPlayers" className="text-gray-200 font-minecraft text-sm">
+                {t('whitelistPlayers')}
+              </Label>
+              <Input
+                id="whitelistPlayers"
+                value={config.whitelistPlayers || ''}
+                onChange={(e) => updateConfig('whitelistPlayers', e.target.value)}
+                placeholder="player1,player2"
+                className="bg-gray-800/70 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+              />
+              <p className="text-xs text-gray-400">{t('whitelistPlayersDesc')}</p>
             </div>
           )}
 
