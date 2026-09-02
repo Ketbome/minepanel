@@ -22,8 +22,8 @@ flowchart TB
         MC["🎮 Minecraft :25565"]
     end
 
-    Admin -->|":3000"| FE
-    FE <-->|"API"| BE
+    Admin -->|"UI :3000"| FE
+    Admin <-->|"API :8091"| BE
     Player -->|":25565"| MC
 
     style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
