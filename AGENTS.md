@@ -85,6 +85,14 @@ production images (the backend bakes `APP_VERSION`, which must match the tag) an
 only created once all three are pushed. The same workflow pushes `.github/dockerhub/README.md`
 as the Docker Hub overview of the three public images.
 
+Every image is built once per architecture on a runner of that architecture (`ubuntu-latest`
+for amd64, `ubuntu-24.04-arm` for arm64), pushed by digest, and the `merge` job stitches the
+digests into the multi-arch tag with `docker buildx imagetools create`. Never reach for QEMU
+here: emulating arm64 ran node under emulation, where `pnpm install` hung for the whole job
+timeout. Cross-compiling the whole builder is not a substitute either -- `sharp` resolves
+`@img/sharp-linuxmusl-<arch>` at install time and the Next standalone trace carries that
+binary into the image, so the install must run on the target architecture.
+
 The `git push` half only works once husky has claimed the hooks. Any `pnpm install` (root or
 inside `backend/`/`frontend/`) runs the root `prepare` script that does it; the repo `.npmrc`
 sets `ignore-scripts=false` so a user-level `ignore-scripts=true` cannot silently skip it.

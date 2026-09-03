@@ -25,9 +25,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
+      test_images: ${{ steps.filter.outputs.test_images }}
       version: ${{ steps.version.outputs.version }}
       is_new: ${{ steps.version.outputs.is_new }}
       is_main: ${{ steps.branch.outputs.is_main }}
@@ -61,13 +60,18 @@ jobs:
         id: filter
         run: |
           if [ -f changed-paths.json ]; then
-            for key in backend frontend root; do
-              echo "$key=$(jq -r ".$key" changed-paths.json)" >> "$GITHUB_OUTPUT"
-            done
+            backend=$(jq -r '.backend' changed-paths.json)
+            frontend=$(jq -r '.frontend' changed-paths.json)
+            root=$(jq -r '.root' changed-paths.json)
           else
             echo "No change set from CI, building every image"
-            printf 'backend=true\nfrontend=true\nroot=true\n' >> "$GITHUB_OUTPUT"
+            backend=true frontend=true root=true
           fi
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          # Which test images a non-main branch needs, as the matrix that builds them.
+          echo "test_images=$(jq -cn --arg b "$backend" --arg f "$frontend" \
+            '[if $b == "true" then "backend" else empty end,
+              if $f == "true" then "frontend" else empty end]')" >> "$GITHUB_OUTPUT"
       - name: Resolve version
         id: version
         run: |
@@ -85,133 +89,142 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Resolved version: $version"
 
-  # The three production images build together on every release: APP_VERSION is baked
-  # into the backend, so a release that skipped it would leave the panel reporting the
-  # previous version and offering an update that pulls nothing.
-  # The arm64 half runs under QEMU, which has hung a build for the 6h default limit
-  # (node crashed with SIGILL and buildkit waited); the timeout turns that into a failure.
-
-  # Main image (fullstack) - Only on main branch
-  build-main:
+  # Every image is built once per architecture, each on a runner of that architecture, and
+  # pushed by digest; `merge` below stitches the digests into one multi-arch tag. There is
+  # no QEMU on purpose: emulating arm64 ran node under emulation, where `pnpm install` hung
+  # for the whole 60m timeout and cost v1.12.12 its release.
+  #
+  # The three production images build together on every release: APP_VERSION is baked into
+  # the backend, so a release that skipped it would leave the panel reporting the previous
+  # version and offering an update that pulls nothing.
+  build:
     needs: changes
     if: needs.changes.outputs.is_main == 'true' && (needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [fullstack, backend, frontend]
+        arch: [amd64, arm64]
+        include:
+          - app: fullstack
+            image: minepanel
+            file: Dockerfile
+          - app: backend
+            image: minepanel-backend
+            file: backend/Dockerfile
+          - app: frontend
+            image: minepanel-frontend
+            file: frontend/Dockerfile
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.changes.outputs.sha }}
-      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Labels only: the tags land on the manifest list, not on the per-arch images.
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ needs.changes.outputs.version }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
 
       - uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
-          push: true
-          build-args: |
-            APP_VERSION=${{ needs.changes.outputs.version }}
-          tags: ${{ steps.meta.outputs.tags }}
+          file: ${{ matrix.file }}
+          platforms: linux/${{ matrix.arch }}
+          build-args: ${{ matrix.app != 'frontend' && format('APP_VERSION={0}', needs.changes.outputs.version) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.app }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}-${{ matrix.arch }}
 
-  # Standalone backend - Production (main branch only)
-  build-backend:
-    needs: changes
-    if: needs.changes.outputs.is_main == 'true' && (needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
+      # One empty file per built architecture, named after its digest.
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          touch "${{ runner.temp }}/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
         with:
-          ref: ${{ needs.changes.outputs.sha }}
-      - uses: docker/setup-qemu-action@v3
+          name: digests-${{ matrix.app }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Publishes the tags: until this runs, the per-arch images exist only as digests.
+  merge:
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: fullstack
+            image: minepanel
+          - app: backend
+            image: minepanel-backend
+          - app: frontend
+            image: minepanel-frontend
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.app }}-*
+          merge-multiple: true
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ needs.changes.outputs.version }}
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
 
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: backend/Dockerfile
-          push: true
-          build-args: |
-            APP_VERSION=${{ needs.changes.outputs.version }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-  # Standalone frontend - Production (main branch only)
-  build-frontend:
+  # Test images - Development (non-main branches)
+  build-test:
     needs: changes
-    if: needs.changes.outputs.is_main == 'true' && (needs.changes.outputs.root == 'true' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    if: needs.changes.outputs.is_main != 'true' && needs.changes.outputs.test_images != '[]'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.changes.outputs.test_images) }}
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.changes.outputs.sha }}
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ needs.changes.outputs.version }}
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-  # Test backend - Development (non-main branches)
-  build-backend-test:
-    needs: changes
-    if: needs.changes.outputs.is_main != 'true' && needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.changes.outputs.sha }}
-      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v3
         with:
@@ -219,40 +232,56 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
-          file: backend/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-backend-test:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          file: ${{ matrix.app }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/minepanel-${{ matrix.app }}-test,push-by-digest=true,name-canonical=true,push=true
+          # Shared with the production build of the same Dockerfile.
+          cache-from: type=gha,scope=${{ matrix.app }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}-${{ matrix.arch }}
 
-  # Test frontend - Development (non-main branches)
-  build-frontend-test:
-    needs: changes
-    if: needs.changes.outputs.is_main != 'true' && needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          touch "${{ runner.temp }}/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
         with:
-          ref: ${{ needs.changes.outputs.sha }}
-      - uses: docker/setup-qemu-action@v3
+          name: digests-${{ matrix.app }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-test:
+    needs: [changes, build-test]
+    if: needs.changes.outputs.is_main != 'true' && needs.changes.outputs.test_images != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.changes.outputs.test_images) }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.app }}-*
+          merge-multiple: true
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-frontend-test:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/minepanel-${{ matrix.app }}-test
+        run: |
+          docker buildx imagetools create -t "$IMAGE:latest" \
+            $(printf "$IMAGE@sha256:%s " *)
 
   # Docker Hub overview for the three public images, sourced from .github/dockerhub/README.md.
   # Needs DOCKERHUB_TOKEN with the "Read, Write, Delete" scope; a push-only token gets a 403.
@@ -283,9 +312,9 @@ jobs:
           short-description: ${{ matrix.short }}
 
   # Tag + GitHub release: one patch bump per merge to main, and only once every image
-  # for it exists (v1.12.10 was tagged while the backend build was still hanging).
+  # for it is tagged (v1.12.10 was tagged while the backend build was still hanging).
   release:
-    needs: [changes, build-main, build-backend, build-frontend]
+    needs: [changes, merge]
     if: needs.changes.outputs.is_main == 'true' && github.event_name == 'workflow_run' && needs.changes.outputs.is_new == 'true'
     runs-on: ubuntu-latest
     permissions:
