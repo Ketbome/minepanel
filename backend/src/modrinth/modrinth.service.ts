@@ -93,7 +93,7 @@ export class ModrinthService {
   private readonly apiClient: AxiosInstance;
   private readonly MODRINTH_API_BASE = 'https://api.modrinth.com/v2';
   private readonly KNOWN_LOADERS = ['forge', 'neoforge', 'fabric', 'quilt', 'datapack'];
-  private readonly MAX_RESOLVE_REFS = 50;
+  private readonly MAX_RESOLVE_REFS = 500;
   private readonly CATEGORIES_TTL_MS = 24 * 60 * 60 * 1000;
 
   private readonly SORT_INDEX: Record<ModSortField, string> = {

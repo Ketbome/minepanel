@@ -167,7 +167,7 @@ export class CurseforgeService {
   private readonly MINECRAFT_GAME_ID = 432;
   private readonly MODS_CLASS_ID = 6;
   private readonly MODPACK_CLASS_ID = 4471;
-  private readonly MAX_RESOLVE_REFS = 50;
+  private readonly MAX_RESOLVE_REFS = 500;
   private readonly CATEGORIES_TTL_MS = 24 * 60 * 60 * 1000;
 
   // 2 = Popularity, 3 = LastUpdated, 6 = TotalDownloads. CurseForge has no
