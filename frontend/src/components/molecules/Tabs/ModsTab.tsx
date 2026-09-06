@@ -871,7 +871,12 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
         )}
       </CardContent>
 
-      <ModpackBrowser open={showModpackBrowser} onClose={() => setShowModpackBrowser(false)} onSelect={handleModpackSelect} />
+      <ModpackBrowser
+        open={showModpackBrowser}
+        onClose={() => setShowModpackBrowser(false)}
+        onSelect={handleModpackSelect}
+        onUseZip={isCurseForge ? () => updateConfig("cfMethod", "file") : undefined}
+      />
       <ModsBrowserDialog
         open={showModsBrowser}
         onClose={() => setShowModsBrowser(false)}

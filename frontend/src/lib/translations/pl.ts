@@ -1219,7 +1219,7 @@ export const pl: Record<TranslationKey, string> = {
   modpackSelected: 'Wybrany pakiet modów',
   modpackVersionDetected: 'Wersja wykryta z modpacka',
   searchOrBrowsePopular: 'Wyszukaj pakiet modów lub przeglądaj popularne',
-  searchModpacks: 'Wyszukaj pakiety modów...',
+  searchModpacks: 'Nazwa, slug lub adres CurseForge...',
   searchMods: 'Szukaj modów',
   searchDatapacks: 'Szukaj datapacków',
   searchTypeMods: 'Mody',
@@ -1484,6 +1484,16 @@ export const pl: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Błąd ładowania pakietów modów',
   errorSearchingModpacks: 'Błąd wyszukiwania pakietów modów',
   noModpacksFound: 'Nie znaleziono pakietów modów',
+  modpackNotFoundIntro:
+    'Wyszukiwarka CurseForge nie pokazuje każdej paczki. Wklejony adres paczki albo dokładny slug jest sprawdzany bezpośrednio, więc spróbuj tego najpierw.',
+  modpackNotFoundPasteUrl:
+    'Wklej adres strony modpacka (albo jego slug) w polu wyżej: panel go znajdzie, nawet jeśli wyszukiwarka go pominie.',
+  modpackNotFoundUseZip:
+    'Nadal nic? Pobierz .zip paczki z CurseForge i zainstaluj metodą Plik: panel go odczyta i sam ustawi loader oraz wersję Minecrafta.',
+  modpackNotFoundPickLoader:
+    'Jeśli zip nie zawiera loadera, panel poprosi o loader (Forge, NeoForge, Fabric lub Quilt) i wersję Minecrafta, a potem rozpakuje go na danych serwera.',
+  modpackNotFoundZipAction: 'Zainstaluj z pliku .zip',
+  modpackNotFoundSearchOnCurseForge: 'Szukaj na CurseForge',
   selectModpack: 'Wybierz pakiet modów',
   modpackLikes: 'Polubienia',
   modpackSupportedVersions: 'Wspierane wersje',

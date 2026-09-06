@@ -540,6 +540,28 @@ Minepanel includes a **Browse** button to search CurseForge modpacks directly fr
 The browser uses the same layout as the mod search: a card grid, debounced search, a sort
 selector (Relevance / Downloads / Recently updated) and infinite scroll over the results.
 
+### When the modpack does not show up {#modpack-not-found}
+
+CurseForge's fuzzy search does not rank every pack, and its exact-slug lookup is a different
+index. So a search that comes back empty is retried as a **reference** before giving up: a
+pasted pack URL, a bare slug, a numeric project id, or the name slugified the way CurseForge
+does it (`All The Mods 9` → `all-the-mods-9`). Pasting the pack's page URL into the search box
+is the fastest way to reach a pack the search never lists. This applies both to the **Browse**
+dialog and to the **Modpack templates** page.
+
+If even that misses, the empty state spells out the manual route:
+
+1. Paste the pack page URL or its slug — that is the lookup above.
+2. Download the pack `.zip` from CurseForge and install it with the
+   [File method](#modpack-zip-inspection). The panel reads the archive and sets the loader and
+   Minecraft version itself. In a server's Mods tab the empty state has an **Install from a
+   .zip** button that switches the method for you.
+3. If the zip declares no loader, [pick one yourself](#modpack-zip-no-loader) — the panel asks
+   for the loader and Minecraft version and unpacks the archive over the server data.
+
+The same route is the answer when a pack's author blocked automatic downloads: the details
+dialog says so, and `AUTO_CURSEFORGE` cannot install it however it is referenced.
+
 ## GTNH {#gtnh}
 
 Minepanel also supports **GT New Horizons** through the dedicated **GTNH** server type.

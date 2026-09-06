@@ -8,7 +8,8 @@ import ModpackCard from "@/components/molecules/modpacks/ModpackCard";
 import { ModpackSearch } from "@/components/organisms/ModpackSearch";
 import { ModpackDetailsModalEnhanced } from "@/components/molecules/modpacks/ModpackDetailsModalEnhanced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CurseForgeModpack, searchModpacks, getFeaturedModpacks, getPopularModpacks, isCurseForgeApiKeyError } from "@/services/curseforge/curseforge.service";
+import { CurseForgeModpack, searchModpacks, findModpackByQuery, getFeaturedModpacks, getPopularModpacks, isCurseForgeApiKeyError } from "@/services/curseforge/curseforge.service";
+import { ModpackNotFoundHelp } from "@/components/molecules/modpacks/ModpackNotFoundHelp";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 
 export default function TemplatesPage() {
@@ -73,13 +74,23 @@ export default function TemplatesPage() {
 
     try {
       const response = await searchModpacks(query, 18, 0, sortField, sortOrder);
+      setActiveTab("search");
+
+      // Fuzzy search and the exact slug lookup are different indexes upstream, so
+      // a query that finds nothing is retried as a reference before giving up.
+      if (response.data.length === 0 && query.trim()) {
+        const resolved = await findModpackByQuery(query);
+        setModpacks(resolved ? [resolved] : []);
+        setPagination({ index: 0, pageSize: 18, totalCount: resolved ? 1 : 0 });
+        return;
+      }
+
       setModpacks(response.data);
       setPagination({
         index: response.pagination.index,
         pageSize: response.pagination.pageSize,
         totalCount: response.pagination.totalCount,
       });
-      setActiveTab("search");
     } catch (err) {
       console.error("Error searching modpacks:", err);
       mcToast.error(t("errorSearchingModpacks"));
@@ -230,10 +241,7 @@ export default function TemplatesPage() {
 
             <TabsContent value="featured" className="mt-6">
               {featuredModpacks.length === 0 ? (
-                <div className="text-center py-12">
-                  <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
-                  <p className="text-gray-400">{t("noModpacksFound")}</p>
-                </div>
+                <ModpackNotFoundHelp />
               ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                   {featuredModpacks.map((modpack) => (
@@ -272,10 +280,7 @@ export default function TemplatesPage() {
 
             <TabsContent value="search" className="mt-6">
               {modpacks.length === 0 ? (
-                <div className="text-center py-12">
-                  <Image src="/images/barrier.webp" alt="No results" width={64} height={64} className="mx-auto opacity-50 mb-4" />
-                  <p className="text-gray-400">{t("noModpacksFound")}</p>
-                </div>
+                <ModpackNotFoundHelp query={searchQuery} />
               ) : (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">

@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CurseForgeModpack, searchModpacks, formatDownloadCount } from "@/services/curseforge/curseforge.service";
+import { CurseForgeModpack, searchModpacks, findModpackByQuery, formatDownloadCount } from "@/services/curseforge/curseforge.service";
+import { ModpackNotFoundHelp } from "./ModpackNotFoundHelp";
 import { Search, Loader2, Package, Download, Check, Calendar, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -15,6 +16,8 @@ interface ModpackBrowserProps {
   open: boolean;
   onClose: () => void;
   onSelect: (modpack: CurseForgeModpack) => void;
+  /** Switches the server to the local-zip method; omitted where there is no server yet. */
+  onUseZip?: () => void;
 }
 
 const PAGE_SIZE = 12;
@@ -34,7 +37,7 @@ const SORT_LABELS: Record<SortField, "sortRelevance" | "sortDownloads" | "sortUp
   updated: "sortUpdated",
 };
 
-export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps) {
+export function ModpackBrowser({ open, onClose, onSelect, onUseZip }: ModpackBrowserProps) {
   const { t } = useLanguage();
   const [modpacks, setModpacks] = useState<CurseForgeModpack[]>([]);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -65,6 +68,19 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
         const response = await searchModpacks(searchQuery.trim() || undefined, PAGE_SIZE, nextPageIndex * PAGE_SIZE, SORT_FIELDS[sort], "desc");
 
         if (requestId !== requestIdRef.current) return;
+
+        // Fuzzy search and the exact slug lookup are different indexes upstream, so
+        // a query that finds nothing is retried as a reference before giving up.
+        const query = searchQuery.trim();
+        if (reset && response.data.length === 0 && query) {
+          const resolved = await findModpackByQuery(query);
+          if (requestId !== requestIdRef.current) return;
+
+          setModpacks(resolved ? [resolved] : []);
+          setHasMore(false);
+          setPageIndex(0);
+          return;
+        }
 
         setModpacks((prev) => {
           if (reset) return response.data;
@@ -180,10 +196,17 @@ export function ModpackBrowser({ open, onClose, onSelect }: ModpackBrowserProps)
               <p className="text-sm text-gray-400 mt-2">{t("loading")}</p>
             </div>
           ) : modpacks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 text-gray-400">
-              <Image src="/images/barrier.webp" alt="No results" width={50} height={50} className="opacity-60 mb-4" />
-              <p className="font-minecraft text-sm">{t("noModpacksFound")}</p>
-            </div>
+            <ModpackNotFoundHelp
+              query={searchQuery}
+              onUseZip={
+                onUseZip
+                  ? () => {
+                      onUseZip();
+                      onClose();
+                    }
+                  : undefined
+              }
+            />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {modpacks.map((modpack) => (

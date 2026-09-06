@@ -1220,7 +1220,7 @@ export const ru: Record<TranslationKey, string> = {
   modpackSelected: 'Модпак выбран',
   modpackVersionDetected: 'Версия определена из модпака',
   searchOrBrowsePopular: 'Найдите модпак или просмотрите популярные',
-  searchModpacks: 'Поиск модпаков...',
+  searchModpacks: 'Название, slug или ссылка CurseForge...',
   searchMods: 'Поиск модов',
   searchDatapacks: 'Поиск датапаков',
   searchTypeMods: 'Моды',
@@ -1481,6 +1481,16 @@ export const ru: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Ошибка загрузки модпаков',
   errorSearchingModpacks: 'Ошибка поиска модпаков',
   noModpacksFound: 'Модпаки не найдены',
+  modpackNotFoundIntro:
+    'Поиск CurseForge показывает не каждую сборку. Вставленная ссылка на сборку или её точный slug ищутся напрямую — начните с этого.',
+  modpackNotFoundPasteUrl:
+    'Вставьте ссылку на страницу модпака (или его slug) в поле выше: панель найдёт его, даже если поиск его не показывает.',
+  modpackNotFoundUseZip:
+    'Всё ещё пусто? Скачайте .zip сборки с CurseForge и установите методом «Файл»: панель прочитает архив и сама выставит загрузчик и версию Minecraft.',
+  modpackNotFoundPickLoader:
+    'Если в архиве нет загрузчика, панель спросит загрузчик (Forge, NeoForge, Fabric или Quilt) и версию Minecraft, а затем распакует его поверх данных сервера.',
+  modpackNotFoundZipAction: 'Установить из .zip',
+  modpackNotFoundSearchOnCurseForge: 'Искать на CurseForge',
   selectModpack: 'Выберите модпак',
   modpackLikes: 'Лайки',
   modpackSupportedVersions: 'Поддерживаемые версии',

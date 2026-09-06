@@ -1419,7 +1419,7 @@ export const nl: Record<TranslationKey, string> = {
   templates: 'Sjablonen',
   modpackTemplates: 'Modpack Sjablonen',
   modpackTemplatesDescription: 'Ontdek en installeer modpacks van CurseForge',
-  searchModpacks: 'Zoek modpacks...',
+  searchModpacks: 'Naam, slug of CurseForge-URL...',
   searchMods: 'Mods zoeken',
   searchDatapacks: 'Datapacks zoeken',
   searchTypeMods: 'Mods',
@@ -1508,6 +1508,16 @@ export const nl: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Fout bij het laden van modpacks',
   errorSearchingModpacks: 'Fout bij het zoeken naar modpacks',
   noModpacksFound: 'Geen modpacks gevonden',
+  modpackNotFoundIntro:
+    'De zoekfunctie van CurseForge toont niet elk pack. Een geplakte pack-URL of de exacte slug wordt direct opgezocht, dus probeer dat eerst.',
+  modpackNotFoundPasteUrl:
+    'Plak de URL van de modpackpagina (of de slug) hierboven: het paneel vindt hem ook als de zoekopdracht hem mist.',
+  modpackNotFoundUseZip:
+    'Nog steeds niets? Download de .zip van het pack bij CurseForge en installeer hem met de methode Bestand: het paneel leest hem en stelt loader en Minecraft-versie zelf in.',
+  modpackNotFoundPickLoader:
+    'Bevat de zip geen loader, dan vraagt het paneel om de loader (Forge, NeoForge, Fabric of Quilt) en de Minecraft-versie, en pakt hem uit over de serverdata.',
+  modpackNotFoundZipAction: 'Installeren vanaf een .zip',
+  modpackNotFoundSearchOnCurseForge: 'Zoeken op CurseForge',
   selectModpack: 'Selecteer Modpack',
   modpackLikes: 'Likes',
   modpackSupportedVersions: 'Ondersteunde versies',

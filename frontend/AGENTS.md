@@ -164,6 +164,13 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the
   AUTO_CURSEFORGE "File" method, the deprecated CURSEFORGE `cfServerMod` field and the Modrinth
   modpack field. It inspects only the selected file and reports the result through `onInspection`.
+- `src/lib/utils/curseforge-ref.ts` - single parser for "what did the user type": a pack page
+  URL, a slug, a project id, or a name to slugify. `CurseForgeModpackSection` and the search
+  rescue both read it; do not re-implement the URL regex.
+- `src/components/molecules/modpacks/ModpackNotFoundHelp.tsx` - the empty state for both the
+  Browse dialog and the templates page. Before it renders, the caller retries the query as an
+  exact reference (`findModpackByQuery`), because CurseForge's fuzzy search and its slug lookup
+  are different indexes.
 - `src/components/molecules/modpacks/ModpackZipGuidance.tsx` - turns that inspection into the one
   action the archive actually needs: switch the server type, or pick a loader and version for a
   zip that declares none (`genericPack` -> `GENERIC_PACK`). It is the only place that rewrites

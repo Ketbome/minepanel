@@ -1404,7 +1404,7 @@ export const es: Record<TranslationKey, string> = {
   templates: 'Plantillas',
   modpackTemplates: 'Plantillas de Modpacks',
   modpackTemplatesDescription: 'Descubre e instala modpacks desde CurseForge',
-  searchModpacks: 'Buscar modpacks...',
+  searchModpacks: 'Nombre, slug o URL de CurseForge...',
   searchMods: 'Buscar mods',
   searchDatapacks: 'Buscar datapacks',
   searchTypeMods: 'Mods',
@@ -1494,6 +1494,16 @@ export const es: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Error al cargar modpacks',
   errorSearchingModpacks: 'Error al buscar modpacks',
   noModpacksFound: 'No se encontraron modpacks',
+  modpackNotFoundIntro:
+    'El buscador de CurseForge no rankea todos los packs. Una URL del pack pegada, o su slug exacto, se busca directo, así que prueba eso primero.',
+  modpackNotFoundPasteUrl:
+    'Pega la URL de la página del modpack (o su slug) en el buscador de arriba: el panel lo resuelve aunque la búsqueda no lo encuentre.',
+  modpackNotFoundUseZip:
+    '¿Sigue sin aparecer? Descarga el .zip del pack desde CurseForge e instálalo con el método Archivo: el panel lo lee y pone el loader y la versión de Minecraft por ti.',
+  modpackNotFoundPickLoader:
+    'Si el zip no trae loader, el panel te pide el loader (Forge, NeoForge, Fabric o Quilt) y la versión de Minecraft, y lo descomprime sobre los datos del servidor.',
+  modpackNotFoundZipAction: 'Instalar desde un .zip',
+  modpackNotFoundSearchOnCurseForge: 'Buscar en CurseForge',
   selectModpack: 'Seleccionar Modpack',
   modpackLikes: 'Me gusta',
   modpackSupportedVersions: 'Versiones compatibles',

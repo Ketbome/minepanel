@@ -1,6 +1,7 @@
 import axios from "axios";
 import api from "../axios.service";
 import { ModVersionItem } from "../mods/mods-browser.service";
+import { modpackRefFromQuery } from "@/lib/utils/curseforge-ref";
 
 export interface CurseForgeAuthor {
   id: number;
@@ -188,6 +189,24 @@ export const getModpack = async (id: number): Promise<CurseForgeModpack> => {
 export const resolveModpack = async (ref: string): Promise<CurseForgeModpack> => {
   const response = await api.get<CurseForgeModpack>(`/curseforge/modpacks/${encodeURIComponent(ref)}`);
   return response.data;
+};
+
+/**
+ * Last resort for a search that found nothing: CurseForge's fuzzy search and its
+ * exact slug lookup are different indexes, so a pack that never ranks can still
+ * be resolved from a pasted URL, a slug, a project id, or its name slugified.
+ * Returns null when there is nothing to look up or the lookup misses - a rescue
+ * that fails is still "no results", not an error.
+ */
+export const findModpackByQuery = async (query: string): Promise<CurseForgeModpack | null> => {
+  const ref = modpackRefFromQuery(query);
+  if (!ref) return null;
+
+  try {
+    return await resolveModpack(ref);
+  } catch {
+    return null;
+  }
 };
 
 export const getModpackFiles = async (ref: string): Promise<ModVersionItem[]> => {
