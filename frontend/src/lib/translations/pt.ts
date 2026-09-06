@@ -1123,6 +1123,16 @@ export const pt: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP baixado com sucesso',
   errorDownloadingZip: 'Erro ao baixar ZIP',
   enterNewName: 'Digite o novo nome',
+  searchFiles: 'Pesquisar nesta pasta...',
+  clearSearch: 'Limpar pesquisa',
+  searchNoResults: 'Nenhum arquivo corresponde a "{query}"',
+  emptyFolder: 'Pasta vazia',
+  columnName: 'Nome',
+  columnSize: 'Tamanho',
+  columnModified: 'Modificado',
+  filesCount: '{count} arquivos',
+  foldersCount: '{count} pastas',
+  filteredCount: 'exibindo {visible} de {total}',
   toSave: 'para salvar',
 
   // Configurações de Servidores de Plugins
@@ -1315,6 +1325,27 @@ export const pt: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Tipo de arquivo esperado:',
   modpackLoadError: 'Não foi possível carregar os arquivos de modpack',
   modpackHint: 'Os arquivos ficam na pasta modpacks/ do servidor e são montados somente leitura em /modpacks',
+  modpackCount: '{count} arquivos',
+  modpackInspecting: 'Lendo o arquivo...',
+  modpackNoLoader: 'Sem loader',
+  modpackKindClient: 'Pacote cliente do CurseForge',
+  modpackKindModrinth: 'Pacote do Modrinth',
+  modpackKindServerPack: 'Server pack',
+  modpackKindGeneric: 'Mods e configurações',
+  modpackNeedsLoaderTitle: 'Este arquivo não declara nenhum mod loader',
+  modpackNeedsLoaderDesc:
+    'Ele traz mods e configurações, mas não tem manifest nem instalador do loader, então não pode ser instalado sozinho. Escolha o loader e a versão do Minecraft para a qual o modpack foi feito: o tipo de servidor muda para esse loader e o arquivo é descompactado sobre os dados do servidor.',
+  modpackLoaderLabel: 'Mod loader',
+  modpackGuidanceApply: 'Aplicar',
+  modpackGuidanceApplied: 'Configuração do servidor atualizada a partir do modpack',
+  modpackGuidanceOk:
+    'O arquivo corresponde a este tipo de servidor. A versão do Minecraft e a imagem Java seguem o que ele declara.',
+  modpackWrongTypeTitle: 'Este arquivo precisa de outro tipo de servidor',
+  modpackWrongTypeDesc:
+    'O tipo de servidor atual não consegue instalá-lo. Ele precisa ser instalado como {type}.',
+  modpackGuidanceSwitchTo: 'Mudar para {type}',
+  modpackUseUpload: 'Melhor enviar um arquivo',
+  modpackUseManualPath: 'Melhor digitar um caminho do contêiner',
 
   cfApiKey: 'Chave de API do CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Chave de API do CurseForge (Eternal) necessária para baixar alguns modpacks.',
@@ -1373,7 +1404,7 @@ export const pt: Record<TranslationKey, string> = {
   templates: 'Templates',
   modpackTemplates: 'Templates de Modpacks',
   modpackTemplatesDescription: 'Descubra e instale modpacks do CurseForge',
-  searchModpacks: 'Buscar modpacks...',
+  searchModpacks: 'Nome, slug ou URL do CurseForge...',
   searchMods: 'Buscar mods',
   searchDatapacks: 'Buscar datapacks',
   searchTypeMods: 'Mods',
@@ -1463,6 +1494,16 @@ export const pt: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Erro ao carregar modpacks',
   errorSearchingModpacks: 'Erro ao buscar modpacks',
   noModpacksFound: 'Nenhum modpack encontrado',
+  modpackNotFoundIntro:
+    'A busca do CurseForge não classifica todos os packs. Uma URL do pack colada, ou o slug exato, é consultada direto, então tente isso primeiro.',
+  modpackNotFoundPasteUrl:
+    'Cole a URL da página do modpack (ou o slug) no campo acima: o painel resolve mesmo quando a busca não encontra.',
+  modpackNotFoundUseZip:
+    'Continua sem aparecer? Baixe o .zip do pack no CurseForge e instale pelo método Arquivo: o painel lê o arquivo e define o loader e a versão do Minecraft.',
+  modpackNotFoundPickLoader:
+    'Se o zip não trouxer loader, o painel pede o loader (Forge, NeoForge, Fabric ou Quilt) e a versão do Minecraft, e o descompacta sobre os dados do servidor.',
+  modpackNotFoundZipAction: 'Instalar de um .zip',
+  modpackNotFoundSearchOnCurseForge: 'Buscar no CurseForge',
   selectModpack: 'Selecionar Modpack',
   modpackLikes: 'Curtidas',
   modpackSupportedVersions: 'Versões compatíveis',

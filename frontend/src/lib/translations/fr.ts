@@ -1115,6 +1115,16 @@ export const fr: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP téléchargé avec succès',
   errorDownloadingZip: 'Erreur lors du téléchargement du ZIP',
   enterNewName: 'Entrez le nouveau nom',
+  searchFiles: 'Rechercher dans ce dossier...',
+  clearSearch: 'Effacer la recherche',
+  searchNoResults: 'Aucun fichier ne correspond à "{query}"',
+  emptyFolder: 'Dossier vide',
+  columnName: 'Nom',
+  columnSize: 'Taille',
+  columnModified: 'Modifié',
+  filesCount: '{count} fichiers',
+  foldersCount: '{count} dossiers',
+  filteredCount: 'affichage de {visible} sur {total}',
   toSave: 'pour enregistrer',
 
   // Plugin Server Configurations
@@ -1210,7 +1220,7 @@ export const fr: Record<TranslationKey, string> = {
   modpackSelected: 'Modpack sélectionné',
   modpackVersionDetected: 'Version détectée depuis le modpack',
   searchOrBrowsePopular: 'Rechercher un modpack ou parcourir les plus populaires',
-  searchModpacks: 'Rechercher des modpacks...',
+  searchModpacks: 'Nom, slug ou URL CurseForge...',
   searchMods: 'Rechercher des mods',
   searchDatapacks: 'Rechercher des datapacks',
   searchTypeMods: 'Mods',
@@ -1391,6 +1401,27 @@ export const fr: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Type de fichier attendu :',
   modpackLoadError: 'Impossible de charger les fichiers de modpack',
   modpackHint: 'Les fichiers sont stockés dans le dossier modpacks/ du serveur et montés en lecture seule sur /modpacks',
+  modpackCount: '{count} fichiers',
+  modpackInspecting: "Lecture de l'archive...",
+  modpackNoLoader: 'Sans loader',
+  modpackKindClient: 'Pack client CurseForge',
+  modpackKindModrinth: 'Pack Modrinth',
+  modpackKindServerPack: 'Server pack',
+  modpackKindGeneric: 'Mods et configurations',
+  modpackNeedsLoaderTitle: 'Cette archive ne déclare aucun mod loader',
+  modpackNeedsLoaderDesc:
+    "Elle contient des mods et des configurations, mais ni manifest ni installateur de loader : elle ne peut donc pas être installée seule. Choisissez le loader et la version de Minecraft pour lesquels le modpack a été conçu : le type de serveur passe à ce loader et l'archive est décompressée par-dessus les données du serveur.",
+  modpackLoaderLabel: 'Mod loader',
+  modpackGuidanceApply: 'Appliquer',
+  modpackGuidanceApplied: 'Configuration du serveur mise à jour depuis le modpack',
+  modpackGuidanceOk:
+    "L'archive correspond à ce type de serveur. La version de Minecraft et l'image Java suivent ce qu'elle déclare.",
+  modpackWrongTypeTitle: 'Cette archive nécessite un autre type de serveur',
+  modpackWrongTypeDesc:
+    "Le type de serveur actuel ne peut pas l'installer. Elle doit être installée en {type}.",
+  modpackGuidanceSwitchTo: 'Passer à {type}',
+  modpackUseUpload: 'Envoyer un fichier à la place',
+  modpackUseManualPath: 'Saisir un chemin du conteneur à la place',
 
   cfApiKey: 'Clé API CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Clé API CurseForge (Eternal) requise pour télécharger certains modpacks.',
@@ -1451,6 +1482,16 @@ export const fr: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Erreur lors du chargement des modpacks',
   errorSearchingModpacks: 'Erreur lors de la recherche des modpacks',
   noModpacksFound: 'Aucun modpack trouvé',
+  modpackNotFoundIntro:
+    "La recherche CurseForge ne classe pas tous les packs. Une URL de pack collée, ou son slug exact, est recherchée directement : essayez d'abord ça.",
+  modpackNotFoundPasteUrl:
+    "Collez l'URL de la page du modpack (ou son slug) dans le champ ci-dessus : le panneau le résout même quand la recherche le manque.",
+  modpackNotFoundUseZip:
+    'Toujours rien ? Téléchargez le .zip du pack depuis CurseForge et installez-le avec la méthode Fichier : le panneau le lit et définit le loader et la version de Minecraft.',
+  modpackNotFoundPickLoader:
+    'Si le zip ne contient aucun loader, le panneau demande le loader (Forge, NeoForge, Fabric ou Quilt) et la version de Minecraft, puis le décompresse par-dessus les données du serveur.',
+  modpackNotFoundZipAction: 'Installer depuis un .zip',
+  modpackNotFoundSearchOnCurseForge: 'Rechercher sur CurseForge',
   selectModpack: 'Sélectionner un modpack',
   modpackLikes: 'J\'aime',
   modpackSupportedVersions: 'Versions compatibles',

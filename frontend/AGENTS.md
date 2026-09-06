@@ -147,6 +147,11 @@ Tooling / build (Next.js 16):
 - `src/services/docker/fetchs.ts` - core server API calls.
 - `src/services/files/files.service.ts` - files API contract.
 - `src/components/molecules/FileBrowser/FileBrowser.tsx` - file management UX and upload/download behavior.
+  Owns the current folder's listing plus the search query and sort state; `FileList` renders
+  what it is given. Filtering and sorting are client-side over the loaded folder - there is no
+  recursive search endpoint, so do not fake one by walking the tree from the browser.
+- `src/components/molecules/FileBrowser/FileStatusBar.tsx` - footer counts (folders, files,
+  total size) and the "showing X of Y" line while a filter is active.
 - `src/app/dashboard/files/page.tsx` - global file browser entry (`_root`).
 - `src/app/dashboard/world-library/page.tsx` - world library entry (`.world`).
 - `src/app/dashboard/servers/[server]/page.tsx` - dynamic server route binding.
@@ -156,7 +161,20 @@ Tooling / build (Next.js 16):
 - `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
 - `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
-- `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the AUTO_CURSEFORGE "File" method and the Modrinth modpack field.
+- `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the
+  AUTO_CURSEFORGE "File" method, the deprecated CURSEFORGE `cfServerMod` field and the Modrinth
+  modpack field. It inspects only the selected file and reports the result through `onInspection`.
+- `src/lib/utils/curseforge-ref.ts` - single parser for "what did the user type": a pack page
+  URL, a slug, a project id, or a name to slugify. `CurseForgeModpackSection` and the search
+  rescue both read it; do not re-implement the URL regex.
+- `src/components/molecules/modpacks/ModpackNotFoundHelp.tsx` - the empty state for both the
+  Browse dialog and the templates page. Before it renders, the caller retries the query as an
+  exact reference (`findModpackByQuery`), because CurseForge's fuzzy search and its slug lookup
+  are different indexes.
+- `src/components/molecules/modpacks/ModpackZipGuidance.tsx` - turns that inspection into the one
+  action the archive actually needs: switch the server type, or pick a loader and version for a
+  zip that declares none (`genericPack` -> `GENERIC_PACK`). It is the only place that rewrites
+  `serverType` from the Mods tab.
 - `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
 - `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,
   uptime, CPU, RAM) for a running server's header; also exports the `RuntimeChip` primitive reused

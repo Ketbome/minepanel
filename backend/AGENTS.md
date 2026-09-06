@@ -176,6 +176,12 @@ Path and filesystem patterns (critical):
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
 - `src/server-management/minecraft-status.util.ts` - parses the `mc-monitor` probe output (`key=value` pairs, order not guaranteed).
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.
+- `src/modpacks/modpack-inspector.ts` - reads an uploaded `.zip`/`.mrpack` to tell which
+  install path the itzg image needs (`curseforge-client`, `modrinth`, `server-pack`,
+  `generic`) plus the loader and Minecraft version it declares. Never throws: an
+  unreadable archive is reported as `generic` with `needsLoader`. Inspection runs on
+  upload and on `GET /servers/:id/modpacks/:fileName/inspect`, never in `list` - reading
+  an archive loads it whole.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

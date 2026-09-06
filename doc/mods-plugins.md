@@ -438,14 +438,47 @@ private pack exported from the CurseForge app.
 3. Select the uploaded file in the list
 
 The file is stored in `servers/<server-id>/modpacks/` and mounted read-only at `/modpacks`, and the
-panel sets `CF_MODPACK_ZIP` to it. It must be a **client** modpack zip containing `manifest.json`;
-a server-files zip has no manifest and fails. A CurseForge API key is still required, because the
-mods listed in the manifest are downloaded from CurseForge.
+panel sets `CF_MODPACK_ZIP` to it. A CurseForge API key is still required, because the mods listed
+in the manifest are downloaded from CurseForge.
+
+### What the panel reads out of the zip {#modpack-zip-inspection}
+
+Selecting an uploaded archive makes the panel open it and report what it actually is, because
+`AUTO_CURSEFORGE` only accepts one of the four shapes below. The file row shows the kind, the
+loader and the Minecraft version it declares, and a card underneath says what to do next.
+
+| Detected | What it is | How the panel installs it |
+| --- | --- | --- |
+| **CurseForge client pack** | has `manifest.json` | `AUTO_CURSEFORGE` with the File method — nothing to change |
+| **Server pack** | has a loader installer jar or a start script | one click switches the server to `CURSEFORGE` and points `CF_SERVER_MOD` at the zip |
+| **Modrinth pack** | has `modrinth.index.json` | one click switches the server to `MODRINTH` |
+| **Mods and configs** | none of the above | you pick the loader and Minecraft version; see below |
+
+When the archive declares a Minecraft version and the server type already matches, that version and
+the matching java tag are applied on the spot, the same as [picking a modpack in the browser](#automatic-version-from-the-modpack).
+
+### Zips that carry no loader {#modpack-zip-no-loader}
+
+Some packs ship as a bare bundle of `mods/` and `config/` — no `manifest.json`, no Forge or Fabric
+installer. Nothing can install those on their own, so the panel asks for the two facts the archive
+does not carry: **mod loader** and **Minecraft version**. Applying them switches the server type to
+that loader, sets the version and java image, and passes the zip as `GENERIC_PACK`, which the image
+unpacks over the server data before the loader starts.
+
+This is the path for packs that are only published as a client download, such as
+[Tensura Evolutions](https://www.curseforge.com/minecraft/modpacks/tensura-evolutions-1-21-1) —
+if its export does contain `manifest.json`, the panel reads NeoForge and 1.21.1 from it instead and
+leaves the server on `AUTO_CURSEFORGE`.
 
 ::: tip Not a CurseForge zip?
 Prism Launcher and MultiMC do not export CurseForge packs — they export Modrinth `.mrpack`. Use the
 [Modrinth modpack](#modrinth-modpacks) flow for those.
 :::
+
+The deprecated **CurseForge (manual)** server type works the same way: its **Modpack File** field
+uploads and picks a zip instead of asking for a container path, with the same inspection card, and
+**Type a container path instead** brings the raw `CF_SERVER_MOD` input back for paths the panel
+does not manage.
 
 ### Use the modpack URL, not the server-file URL
 
@@ -506,6 +539,28 @@ option for tags released after this version of the panel.
 Minepanel includes a **Browse** button to search CurseForge modpacks directly from the UI.
 The browser uses the same layout as the mod search: a card grid, debounced search, a sort
 selector (Relevance / Downloads / Recently updated) and infinite scroll over the results.
+
+### When the modpack does not show up {#modpack-not-found}
+
+CurseForge's fuzzy search does not rank every pack, and its exact-slug lookup is a different
+index. So a search that comes back empty is retried as a **reference** before giving up: a
+pasted pack URL, a bare slug, a numeric project id, or the name slugified the way CurseForge
+does it (`All The Mods 9` → `all-the-mods-9`). Pasting the pack's page URL into the search box
+is the fastest way to reach a pack the search never lists. This applies both to the **Browse**
+dialog and to the **Modpack templates** page.
+
+If even that misses, the empty state spells out the manual route:
+
+1. Paste the pack page URL or its slug — that is the lookup above.
+2. Download the pack `.zip` from CurseForge and install it with the
+   [File method](#modpack-zip-inspection). The panel reads the archive and sets the loader and
+   Minecraft version itself. In a server's Mods tab the empty state has an **Install from a
+   .zip** button that switches the method for you.
+3. If the zip declares no loader, [pick one yourself](#modpack-zip-no-loader) — the panel asks
+   for the loader and Minecraft version and unpacks the archive over the server data.
+
+The same route is the answer when a pack's author blocked automatic downloads: the details
+dialog says so, and `AUTO_CURSEFORGE` cannot install it however it is referenced.
 
 ## GTNH {#gtnh}
 

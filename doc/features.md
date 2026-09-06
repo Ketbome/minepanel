@@ -126,6 +126,9 @@ Built-in browser for each server under `servers/<id>/mc-data`:
 - Edit configs (syntax highlighting)
 - Create/delete/rename
 - Drag & drop support
+- Filter the current folder as you type (Ctrl/Cmd+F focuses the box, Esc clears it); the
+  footer counts folders, files and total size, and says how many of them the filter is showing
+- Sort by name, size or modified date from the column headers; folders always stay on top
 
 Common paths:
 

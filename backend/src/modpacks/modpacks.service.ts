@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
+import { inspectModpackArchive, ModpackInspection } from './modpack-inspector';
 
 export interface ModpackFile {
   name: string;
@@ -9,6 +10,10 @@ export interface ModpackFile {
   modified: Date;
   // Path to use in the server config; `modpacks/` is mounted read-only at /modpacks.
   containerPath: string;
+}
+
+export interface InspectedModpackFile extends ModpackFile {
+  inspection: ModpackInspection;
 }
 
 export const MAX_MODPACK_SIZE = 256 * 1024 * 1024;
@@ -46,7 +51,7 @@ export class ModpacksService {
     return files.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  async save(serverId: string, file: Express.Multer.File): Promise<ModpackFile> {
+  async save(serverId: string, file: Express.Multer.File): Promise<InspectedModpackFile> {
     const name = this.validateFileName(file.originalname);
     const dir = await this.getModpacksDir(serverId);
 
@@ -54,7 +59,28 @@ export class ModpacksService {
     this.logger.log(`Stored modpack ${name} for server ${serverId}`);
 
     const stats = await fs.stat(path.join(dir, name));
-    return { name, size: stats.size, modified: stats.mtime, containerPath: `/modpacks/${name}` };
+    return {
+      name,
+      size: stats.size,
+      modified: stats.mtime,
+      containerPath: `/modpacks/${name}`,
+      // The buffer is still in memory here, so the upload response already carries
+      // what the UI needs to pick the install method.
+      inspection: inspectModpackArchive(file.buffer),
+    };
+  }
+
+  // Reading a modpack archive means loading it whole, so `list` stays cheap and
+  // inspection is only done for the file the user actually picked.
+  async inspect(serverId: string, fileName: string): Promise<ModpackInspection> {
+    const name = this.validateFileName(fileName);
+    const filePath = path.join(await this.getModpacksDir(serverId), name);
+
+    if (!(await fs.pathExists(filePath))) {
+      throw new NotFoundException(`Modpack ${name} not found`);
+    }
+
+    return inspectModpackArchive(filePath);
   }
 
   async remove(serverId: string, fileName: string): Promise<void> {

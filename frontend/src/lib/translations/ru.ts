@@ -1115,6 +1115,16 @@ export const ru: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP успешно скачан',
   errorDownloadingZip: 'Ошибка скачивания ZIP',
   enterNewName: 'Введите новое название',
+  searchFiles: 'Поиск в этой папке...',
+  clearSearch: 'Очистить поиск',
+  searchNoResults: 'Нет файлов, совпадающих с "{query}"',
+  emptyFolder: 'Пустая папка',
+  columnName: 'Имя',
+  columnSize: 'Размер',
+  columnModified: 'Изменён',
+  filesCount: '{count} файлов',
+  foldersCount: '{count} папок',
+  filteredCount: 'показано {visible} из {total}',
   toSave: 'для сохранения',
 
   // Plugin Server Configurations
@@ -1210,7 +1220,7 @@ export const ru: Record<TranslationKey, string> = {
   modpackSelected: 'Модпак выбран',
   modpackVersionDetected: 'Версия определена из модпака',
   searchOrBrowsePopular: 'Найдите модпак или просмотрите популярные',
-  searchModpacks: 'Поиск модпаков...',
+  searchModpacks: 'Название, slug или ссылка CurseForge...',
   searchMods: 'Поиск модов',
   searchDatapacks: 'Поиск датапаков',
   searchTypeMods: 'Моды',
@@ -1390,6 +1400,27 @@ export const ru: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Ожидаемый тип файла:',
   modpackLoadError: 'Не удалось загрузить файлы модпака',
   modpackHint: 'Файлы хранятся в папке modpacks/ сервера и монтируются только для чтения в /modpacks',
+  modpackCount: '{count} файлов',
+  modpackInspecting: 'Чтение архива...',
+  modpackNoLoader: 'Без загрузчика',
+  modpackKindClient: 'Клиентский пак CurseForge',
+  modpackKindModrinth: 'Пак Modrinth',
+  modpackKindServerPack: 'Серверный пак',
+  modpackKindGeneric: 'Моды и конфигурации',
+  modpackNeedsLoaderTitle: 'В этом архиве не указан загрузчик модов',
+  modpackNeedsLoaderDesc:
+    'В нём есть моды и конфигурации, но нет ни манифеста, ни установщика загрузчика, поэтому сам по себе он не установится. Выберите загрузчик и версию Minecraft, под которые собран модпак: тип сервера сменится на этот загрузчик, а архив распакуется поверх данных сервера.',
+  modpackLoaderLabel: 'Загрузчик модов',
+  modpackGuidanceApply: 'Применить',
+  modpackGuidanceApplied: 'Конфигурация сервера обновлена из модпака',
+  modpackGuidanceOk:
+    'Архив подходит этому типу сервера. Версия Minecraft и образ Java следуют тому, что он объявляет.',
+  modpackWrongTypeTitle: 'Этому архиву нужен другой тип сервера',
+  modpackWrongTypeDesc:
+    'Текущий тип сервера не может его установить. Его нужно устанавливать как {type}.',
+  modpackGuidanceSwitchTo: 'Переключить на {type}',
+  modpackUseUpload: 'Лучше загрузить файл',
+  modpackUseManualPath: 'Лучше ввести путь в контейнере',
 
   cfApiKey: 'Ключ API CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Постоянный ключ API CurseForge, необходимый для скачивания некоторых модпаков.',
@@ -1450,6 +1481,16 @@ export const ru: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Ошибка загрузки модпаков',
   errorSearchingModpacks: 'Ошибка поиска модпаков',
   noModpacksFound: 'Модпаки не найдены',
+  modpackNotFoundIntro:
+    'Поиск CurseForge показывает не каждую сборку. Вставленная ссылка на сборку или её точный slug ищутся напрямую — начните с этого.',
+  modpackNotFoundPasteUrl:
+    'Вставьте ссылку на страницу модпака (или его slug) в поле выше: панель найдёт его, даже если поиск его не показывает.',
+  modpackNotFoundUseZip:
+    'Всё ещё пусто? Скачайте .zip сборки с CurseForge и установите методом «Файл»: панель прочитает архив и сама выставит загрузчик и версию Minecraft.',
+  modpackNotFoundPickLoader:
+    'Если в архиве нет загрузчика, панель спросит загрузчик (Forge, NeoForge, Fabric или Quilt) и версию Minecraft, а затем распакует его поверх данных сервера.',
+  modpackNotFoundZipAction: 'Установить из .zip',
+  modpackNotFoundSearchOnCurseForge: 'Искать на CurseForge',
   selectModpack: 'Выберите модпак',
   modpackLikes: 'Лайки',
   modpackSupportedVersions: 'Поддерживаемые версии',

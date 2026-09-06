@@ -1123,6 +1123,16 @@ export const es: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP descargado correctamente',
   errorDownloadingZip: 'Error al descargar ZIP',
   enterNewName: 'Ingresa el nuevo nombre',
+  searchFiles: 'Buscar en esta carpeta...',
+  clearSearch: 'Limpiar búsqueda',
+  searchNoResults: 'Ningún archivo coincide con "{query}"',
+  emptyFolder: 'Carpeta vacía',
+  columnName: 'Nombre',
+  columnSize: 'Tamaño',
+  columnModified: 'Modificado',
+  filesCount: '{count} archivos',
+  foldersCount: '{count} carpetas',
+  filteredCount: 'mostrando {visible} de {total}',
   toSave: 'para guardar',
 
   // Configuraciones de Servidores de Plugins
@@ -1315,6 +1325,27 @@ export const es: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Se esperaba un archivo:',
   modpackLoadError: 'No se pudieron cargar los archivos de modpack',
   modpackHint: 'Los archivos se guardan en la carpeta modpacks/ del servidor y se montan en /modpacks en solo lectura',
+  modpackCount: '{count} archivos',
+  modpackInspecting: 'Leyendo el archivo...',
+  modpackNoLoader: 'Sin loader',
+  modpackKindClient: 'Pack de cliente CurseForge',
+  modpackKindModrinth: 'Pack de Modrinth',
+  modpackKindServerPack: 'Server pack',
+  modpackKindGeneric: 'Mods y configuraciones',
+  modpackNeedsLoaderTitle: 'Este archivo no declara ningún mod loader',
+  modpackNeedsLoaderDesc:
+    'Trae mods y configuraciones, pero no tiene manifest ni instalador del loader, así que no se puede instalar solo. Elige el loader y la versión de Minecraft para la que se creó el modpack: el tipo de servidor cambia a ese loader y el archivo se descomprime sobre los datos del servidor.',
+  modpackLoaderLabel: 'Mod loader',
+  modpackGuidanceApply: 'Aplicar',
+  modpackGuidanceApplied: 'Configuración del servidor actualizada desde el modpack',
+  modpackGuidanceOk:
+    'El archivo coincide con este tipo de servidor. La versión de Minecraft y la imagen de Java siguen lo que declara.',
+  modpackWrongTypeTitle: 'Este archivo necesita otro tipo de servidor',
+  modpackWrongTypeDesc:
+    'El tipo de servidor actual no puede instalarlo. Hay que instalarlo como {type}.',
+  modpackGuidanceSwitchTo: 'Cambiar a {type}',
+  modpackUseUpload: 'Mejor subir un archivo',
+  modpackUseManualPath: 'Mejor escribir una ruta del contenedor',
 
   cfApiKey: 'API Key de CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'API Key de CurseForge (Eternal) requerida para descargar algunos modpacks.',
@@ -1373,7 +1404,7 @@ export const es: Record<TranslationKey, string> = {
   templates: 'Plantillas',
   modpackTemplates: 'Plantillas de Modpacks',
   modpackTemplatesDescription: 'Descubre e instala modpacks desde CurseForge',
-  searchModpacks: 'Buscar modpacks...',
+  searchModpacks: 'Nombre, slug o URL de CurseForge...',
   searchMods: 'Buscar mods',
   searchDatapacks: 'Buscar datapacks',
   searchTypeMods: 'Mods',
@@ -1463,6 +1494,16 @@ export const es: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Error al cargar modpacks',
   errorSearchingModpacks: 'Error al buscar modpacks',
   noModpacksFound: 'No se encontraron modpacks',
+  modpackNotFoundIntro:
+    'El buscador de CurseForge no rankea todos los packs. Una URL del pack pegada, o su slug exacto, se busca directo, así que prueba eso primero.',
+  modpackNotFoundPasteUrl:
+    'Pega la URL de la página del modpack (o su slug) en el buscador de arriba: el panel lo resuelve aunque la búsqueda no lo encuentre.',
+  modpackNotFoundUseZip:
+    '¿Sigue sin aparecer? Descarga el .zip del pack desde CurseForge e instálalo con el método Archivo: el panel lo lee y pone el loader y la versión de Minecraft por ti.',
+  modpackNotFoundPickLoader:
+    'Si el zip no trae loader, el panel te pide el loader (Forge, NeoForge, Fabric o Quilt) y la versión de Minecraft, y lo descomprime sobre los datos del servidor.',
+  modpackNotFoundZipAction: 'Instalar desde un .zip',
+  modpackNotFoundSearchOnCurseForge: 'Buscar en CurseForge',
   selectModpack: 'Seleccionar Modpack',
   modpackLikes: 'Me gusta',
   modpackSupportedVersions: 'Versiones compatibles',

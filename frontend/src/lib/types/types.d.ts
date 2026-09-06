@@ -209,6 +209,10 @@ export interface ServerConfig {
   cfOverridesSkipExisting?: boolean;
   cfSetLevelFrom?: string;
 
+  // Container path to an archive unpacked over /data, for modpack zips that
+  // declare no loader of their own.
+  genericPack?: string;
+
   // Manual CurseForge (deprecated) specific
   cfServerMod?: string;
   cfBaseDir?: string;

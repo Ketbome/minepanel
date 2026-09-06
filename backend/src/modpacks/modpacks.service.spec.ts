@@ -2,6 +2,7 @@ import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import * as AdmZip from 'adm-zip';
 import { ModpacksService } from './modpacks.service';
 
 describe('ModpacksService', () => {
@@ -37,6 +38,16 @@ describe('ModpacksService', () => {
     await service.remove('srv', 'a.mrpack');
     expect((await service.list('srv')).map((f) => f.name)).toEqual(['All The Mods (9).zip']);
     await expect(service.remove('srv', 'a.mrpack')).rejects.toThrow(NotFoundException);
+  });
+
+  it('inspects a stored modpack and reports missing ones', async () => {
+    const zip = new AdmZip();
+    zip.addFile('manifest.json', Buffer.from(JSON.stringify({ minecraft: { version: '1.21.1', modLoaders: [{ id: 'neoforge-21.1.72' }] } })));
+    const saved = await service.save('srv', { originalname: 'pack.zip', buffer: zip.toBuffer() } as Express.Multer.File);
+
+    expect(saved.inspection).toMatchObject({ kind: 'curseforge-client', loader: 'NEOFORGE' });
+    expect(await service.inspect('srv', 'pack.zip')).toMatchObject({ minecraftVersion: '1.21.1' });
+    await expect(service.inspect('srv', 'missing.zip')).rejects.toThrow(NotFoundException);
   });
 
   it('only accepts .zip and .mrpack names', async () => {

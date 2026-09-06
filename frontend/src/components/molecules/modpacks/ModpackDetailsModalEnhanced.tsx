@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { createServer } from "@/services/docker/fetchs";
 import { findMinecraftVersion, getSuggestedJavaImage } from "@/lib/utils/java-image";
+import { LINK_MODPACK_ZIP } from "@/lib/providers/constants";
 
 interface ModpackDetailsModalEnhancedProps {
   readonly modpack: CurseForgeModpack | null;
@@ -160,7 +161,12 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
             {distributionBlocked ? (
               <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                <p className="text-xs text-amber-200">{t("modpackNoDistribution")}</p>
+                <p className="text-xs text-amber-200">
+                  {t("modpackNoDistribution")}{" "}
+                  <a href={LINK_MODPACK_ZIP} target="_blank" rel="noopener noreferrer" className="text-amber-100 underline underline-offset-2">
+                    {t("documentation")}
+                  </a>
+                </p>
               </div>
             ) : null}
 
@@ -207,7 +213,12 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
               {distributionBlocked ? (
                 <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                  <p className="text-xs text-amber-200">{t("modpackNoDistribution")}</p>
+                  <p className="text-xs text-amber-200">
+                    {t("modpackNoDistribution")}{" "}
+                    <a href={LINK_MODPACK_ZIP} target="_blank" rel="noopener noreferrer" className="text-amber-100 underline underline-offset-2">
+                      {t("documentation")}
+                    </a>
+                  </p>
                 </div>
               ) : null}
 

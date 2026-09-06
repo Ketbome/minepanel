@@ -22,6 +22,8 @@ import { ModsBrowserDialog } from "@/components/molecules/mods/ModsBrowserDialog
 import { ModsListEditor } from "@/components/molecules/mods/ModsListEditor";
 import { ModpackFilePicker } from "@/components/molecules/ModpackFilePicker";
 import { CurseForgeModpackSection } from "@/components/molecules/modpacks/CurseForgeModpackSection";
+import { ModpackZipGuidance } from "@/components/molecules/modpacks/ModpackZipGuidance";
+import { ModpackInspection } from "@/services/modpacks/modpacks.service";
 import { ModLoader, ModProjectType, ModProvider, ModSearchItem } from "@/services/mods/mods-browser.service";
 import { findModEntryIndex, parseModEntries, serializeModEntries } from "@/lib/utils/mod-entries";
 import { findMinecraftVersion, getSuggestedJavaImage } from "@/lib/utils/java-image";
@@ -43,6 +45,10 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
   const [showModsBrowser, setShowModsBrowser] = useState(false);
   const [modsBrowserProvider, setModsBrowserProvider] = useState<ModProvider>("curseforge");
   const [modsTargetField, setModsTargetField] = useState<"cfFiles" | "modrinthProjects">("cfFiles");
+  // Uploading is the default: typing a container path means leaving the tab to
+  // look the file up in the global file browser.
+  const [useManualServerModPath, setUseManualServerModPath] = useState(false);
+  const [serverModInspection, setServerModInspection] = useState<ModpackInspection | null>(null);
   const isCurseForge = config.serverType === "AUTO_CURSEFORGE";
   const isManualCurseForge = config.serverType === "CURSEFORGE";
   const isModrinth = config.serverType === "MODRINTH";
@@ -328,8 +334,21 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Input id="cfServerMod" value={config.cfServerMod || ""} onChange={(e) => updateConfig("cfServerMod", e.target.value)} placeholder="/modpacks/SkyFactory_4_Server_4.1.0.zip" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
-              <p className="text-xs text-gray-400">{t("modpackFilePath")}</p>
+              {useManualServerModPath ? (
+                <>
+                  <Input id="cfServerMod" value={config.cfServerMod || ""} onChange={(e) => updateConfig("cfServerMod", e.target.value)} placeholder="/modpacks/SkyFactory_4_Server_4.1.0.zip" className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30" />
+                  <p className="text-xs text-gray-400">{t("modpackFilePath")}</p>
+                </>
+              ) : (
+                <>
+                  <ModpackFilePicker serverId={serverId} value={config.cfServerMod} onChange={(containerPath) => updateConfig("cfServerMod", containerPath)} onInspection={setServerModInspection} accept=".zip" />
+                  <ModpackZipGuidance inspection={serverModInspection} containerPath={config.cfServerMod} config={config} updateConfig={updateConfig} />
+                </>
+              )}
+
+              <Button type="button" variant="ghost" size="sm" onClick={() => setUseManualServerModPath(!useManualServerModPath)} className="h-7 px-2 text-xs text-gray-400 hover:text-gray-200">
+                {useManualServerModPath ? t("modpackUseUpload") : t("modpackUseManualPath")}
+              </Button>
             </div>
 
             <div className="space-y-2 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
@@ -852,7 +871,12 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
         )}
       </CardContent>
 
-      <ModpackBrowser open={showModpackBrowser} onClose={() => setShowModpackBrowser(false)} onSelect={handleModpackSelect} />
+      <ModpackBrowser
+        open={showModpackBrowser}
+        onClose={() => setShowModpackBrowser(false)}
+        onSelect={handleModpackSelect}
+        onUseZip={isCurseForge ? () => updateConfig("cfMethod", "file") : undefined}
+      />
       <ModsBrowserDialog
         open={showModsBrowser}
         onClose={() => setShowModsBrowser(false)}

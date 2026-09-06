@@ -1113,6 +1113,16 @@ export const en = {
   zipDownloaded: 'ZIP downloaded successfully',
   errorDownloadingZip: 'Error downloading ZIP',
   enterNewName: 'Enter new name',
+  searchFiles: 'Search in this folder...',
+  clearSearch: 'Clear search',
+  searchNoResults: 'No files match "{query}"',
+  emptyFolder: 'Empty folder',
+  columnName: 'Name',
+  columnSize: 'Size',
+  columnModified: 'Modified',
+  filesCount: '{count} files',
+  foldersCount: '{count} folders',
+  filteredCount: 'showing {visible} of {total}',
   toSave: 'to save',
 
   // Plugin Server Configurations
@@ -1208,7 +1218,7 @@ export const en = {
   modpackSelected: 'Modpack selected',
   modpackVersionDetected: 'Version detected from modpack',
   searchOrBrowsePopular: 'Search for a modpack or browse popular ones',
-  searchModpacks: 'Search modpacks...',
+  searchModpacks: 'Name, slug or CurseForge URL...',
   searchMods: 'Search mods',
   searchDatapacks: 'Search datapacks',
   searchTypeMods: 'Mods',
@@ -1389,6 +1399,27 @@ export const en = {
   modpackWrongFormat: 'Expected file type:',
   modpackLoadError: 'Could not load the modpack files',
   modpackHint: 'Files are stored in the server modpacks/ folder and mounted read-only at /modpacks',
+  modpackCount: '{count} files',
+  modpackInspecting: 'Reading archive...',
+  modpackNoLoader: 'No loader',
+  modpackKindClient: 'CurseForge client pack',
+  modpackKindModrinth: 'Modrinth pack',
+  modpackKindServerPack: 'Server pack',
+  modpackKindGeneric: 'Mods and configs',
+  modpackNeedsLoaderTitle: 'This archive declares no mod loader',
+  modpackNeedsLoaderDesc:
+    'It carries mods and configs but no manifest and no loader installer, so it cannot be installed on its own. Pick the loader and Minecraft version the modpack was built for: the server type is switched to that loader and the archive is unpacked over the server data.',
+  modpackLoaderLabel: 'Mod loader',
+  modpackGuidanceApply: 'Apply',
+  modpackGuidanceApplied: 'Server configuration updated from the modpack',
+  modpackGuidanceOk:
+    'The archive matches this server type. Minecraft version and Java image follow what it declares.',
+  modpackWrongTypeTitle: 'This archive needs another server type',
+  modpackWrongTypeDesc:
+    'The current server type cannot install it. It has to be installed as {type}.',
+  modpackGuidanceSwitchTo: 'Switch to {type}',
+  modpackUseUpload: 'Upload a file instead',
+  modpackUseManualPath: 'Type a container path instead',
 
   cfApiKey: 'CurseForge API Key (CF_API_KEY)',
   cfApiKeyHelp: 'CurseForge API Key (Eternal) required to download some modpacks.',
@@ -1449,6 +1480,16 @@ export const en = {
   errorLoadingModpacks: 'Error loading modpacks',
   errorSearchingModpacks: 'Error searching modpacks',
   noModpacksFound: 'No modpacks found',
+  modpackNotFoundIntro:
+    'CurseForge search does not rank every pack. A pasted pack URL or its exact slug is looked up directly, so try that first.',
+  modpackNotFoundPasteUrl:
+    'Paste the modpack page URL (or its slug) into the box above — the panel resolves it even when the search misses it.',
+  modpackNotFoundUseZip:
+    'Still nothing? Download the pack .zip from CurseForge and install it with the File method: the panel reads it and sets the loader and Minecraft version itself.',
+  modpackNotFoundPickLoader:
+    'If the zip carries no loader, the panel asks for the loader (Forge, NeoForge, Fabric or Quilt) and the Minecraft version, then unpacks it over the server data.',
+  modpackNotFoundZipAction: 'Install from a .zip',
+  modpackNotFoundSearchOnCurseForge: 'Search on CurseForge',
   selectModpack: 'Select Modpack',
   modpackLikes: 'Likes',
   modpackSupportedVersions: 'Supported versions',

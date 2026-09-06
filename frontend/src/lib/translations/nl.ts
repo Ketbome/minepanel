@@ -1140,6 +1140,16 @@ export const nl: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP succesvol gedownload',
   errorDownloadingZip: 'Fout bij downloaden ZIP',
   enterNewName: 'Voer nieuwe naam in',
+  searchFiles: 'Zoeken in deze map...',
+  clearSearch: 'Zoekopdracht wissen',
+  searchNoResults: 'Geen bestanden komen overeen met "{query}"',
+  emptyFolder: 'Lege map',
+  columnName: 'Naam',
+  columnSize: 'Grootte',
+  columnModified: 'Gewijzigd',
+  filesCount: '{count} bestanden',
+  foldersCount: '{count} mappen',
+  filteredCount: '{visible} van {total} getoond',
   toSave: 'om op te slaan',
 
   // Plugin Server Configurations
@@ -1332,6 +1342,27 @@ export const nl: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Verwacht bestandstype:',
   modpackLoadError: 'Kon de modpack-bestanden niet laden',
   modpackHint: 'Bestanden staan in de map modpacks/ van de server en zijn alleen-lezen gekoppeld op /modpacks',
+  modpackCount: '{count} bestanden',
+  modpackInspecting: 'Archief wordt gelezen...',
+  modpackNoLoader: 'Geen loader',
+  modpackKindClient: 'CurseForge-clientpack',
+  modpackKindModrinth: 'Modrinth-pack',
+  modpackKindServerPack: 'Serverpack',
+  modpackKindGeneric: 'Mods en configuraties',
+  modpackNeedsLoaderTitle: 'Dit archief vermeldt geen modloader',
+  modpackNeedsLoaderDesc:
+    'Het bevat mods en configuraties, maar geen manifest en geen loader-installer, dus het kan niet zelfstandig worden geïnstalleerd. Kies de loader en Minecraft-versie waarvoor de modpack is gemaakt: het servertype wordt die loader en het archief wordt over de serverdata uitgepakt.',
+  modpackLoaderLabel: 'Modloader',
+  modpackGuidanceApply: 'Toepassen',
+  modpackGuidanceApplied: 'Serverconfiguratie bijgewerkt vanuit de modpack',
+  modpackGuidanceOk:
+    'Het archief past bij dit servertype. Minecraft-versie en Java-image volgen wat het vermeldt.',
+  modpackWrongTypeTitle: 'Dit archief heeft een ander servertype nodig',
+  modpackWrongTypeDesc:
+    'Het huidige servertype kan het niet installeren. Het moet als {type} worden geïnstalleerd.',
+  modpackGuidanceSwitchTo: 'Overschakelen naar {type}',
+  modpackUseUpload: 'Liever een bestand uploaden',
+  modpackUseManualPath: 'Liever een containerpad invoeren',
 
   cfApiKey: 'CurseForge API key (CF_API_KEY)',
   cfApiKeyHelp: 'CurseForge API key (Eternal) vereist om sommige modpacks te downloaden.',
@@ -1388,7 +1419,7 @@ export const nl: Record<TranslationKey, string> = {
   templates: 'Sjablonen',
   modpackTemplates: 'Modpack Sjablonen',
   modpackTemplatesDescription: 'Ontdek en installeer modpacks van CurseForge',
-  searchModpacks: 'Zoek modpacks...',
+  searchModpacks: 'Naam, slug of CurseForge-URL...',
   searchMods: 'Mods zoeken',
   searchDatapacks: 'Datapacks zoeken',
   searchTypeMods: 'Mods',
@@ -1477,6 +1508,16 @@ export const nl: Record<TranslationKey, string> = {
   errorLoadingModpacks: 'Fout bij het laden van modpacks',
   errorSearchingModpacks: 'Fout bij het zoeken naar modpacks',
   noModpacksFound: 'Geen modpacks gevonden',
+  modpackNotFoundIntro:
+    'De zoekfunctie van CurseForge toont niet elk pack. Een geplakte pack-URL of de exacte slug wordt direct opgezocht, dus probeer dat eerst.',
+  modpackNotFoundPasteUrl:
+    'Plak de URL van de modpackpagina (of de slug) hierboven: het paneel vindt hem ook als de zoekopdracht hem mist.',
+  modpackNotFoundUseZip:
+    'Nog steeds niets? Download de .zip van het pack bij CurseForge en installeer hem met de methode Bestand: het paneel leest hem en stelt loader en Minecraft-versie zelf in.',
+  modpackNotFoundPickLoader:
+    'Bevat de zip geen loader, dan vraagt het paneel om de loader (Forge, NeoForge, Fabric of Quilt) en de Minecraft-versie, en pakt hem uit over de serverdata.',
+  modpackNotFoundZipAction: 'Installeren vanaf een .zip',
+  modpackNotFoundSearchOnCurseForge: 'Zoeken op CurseForge',
   selectModpack: 'Selecteer Modpack',
   modpackLikes: 'Likes',
   modpackSupportedVersions: 'Ondersteunde versies',
