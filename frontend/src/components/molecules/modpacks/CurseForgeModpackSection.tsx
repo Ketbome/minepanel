@@ -252,7 +252,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             onInspection={setZipInspection}
             accept=".zip"
           />
-          <ModpackZipGuidance inspection={zipInspection} containerPath={config.cfModpackZip} config={config} updateConfig={updateConfig} />
+          <ModpackZipGuidance serverId={serverId} inspection={zipInspection} containerPath={config.cfModpackZip} config={config} updateConfig={updateConfig} />
         </div>
       ) : isManual ? (
         <div className="space-y-3">

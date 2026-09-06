@@ -140,6 +140,8 @@ in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
 - `GET /servers/:id/modpacks`
 - `POST /servers/:id/modpacks` — multipart `file`
 - `GET /servers/:id/modpacks/:fileName/inspect`
+- `GET /servers/:id/modpacks/:fileName/mods`
+- `POST /servers/:id/modpacks/:fileName/strip` — body `{ entries: string[] }`
 - `DELETE /servers/:id/modpacks/:fileName`
 
 Uploads are capped at 256 MB and rejected unless the file ends in `.zip` or `.mrpack`.
@@ -171,6 +173,16 @@ not inspect: reading an archive means loading it whole, so only the selected fil
 
 An archive that cannot be read is reported as `generic` with `needsLoader: true` rather than
 failing the request.
+
+`mods` reads every jar under the archive's `mods/` folder and reports the side each one declares:
+`client`, `server` or `both` from the jar's own metadata, `known-client` when the jar says nothing
+but the mod is on the vendored client-only list, and `unknown` otherwise. Only Fabric and Quilt
+declare a side (`fabric.mod.json` `environment`, `quilt.mod.json` `minecraft.environment`); Forge
+and NeoForge keep it in bytecode, so their jars are usually `unknown`. The scan stops after 600
+jars and says so with `truncated: true`.
+
+`strip` writes a sibling archive without the given entry paths, named `<pack>-server.zip`, and
+returns it like an upload. The original is never modified.
 
 ### Files
 

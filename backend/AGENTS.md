@@ -182,6 +182,15 @@ Path and filesystem patterns (critical):
   unreadable archive is reported as `generic` with `needsLoader`. Inspection runs on
   upload and on `GET /servers/:id/modpacks/:fileName/inspect`, never in `list` - reading
   an archive loads it whole.
+- `src/modpacks/mod-jar-metadata.ts` - reads one mod jar's id, loader and declared side.
+  Only Fabric (`fabric.mod.json` `environment`) and Quilt say which side they run on; Forge
+  and NeoForge have no side field in their toml (it lives in `@Mod(dist = ...)` bytecode), so
+  those jars come back `unknown` and fall through to `client-only-mods.ts`. Do not "improve"
+  this by scanning class files for `Dist.CLIENT`: `@OnlyIn` marks individual members in almost
+  every mod, so it would flag nearly everything.
+- `src/modpacks/client-only-mods.ts` - vendored snapshot of itzg's `cf-exclude-include.json`
+  globalExcludes (Apache-2.0). Only consulted where the metadata says nothing, and only ever
+  as a suggestion the user confirms.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

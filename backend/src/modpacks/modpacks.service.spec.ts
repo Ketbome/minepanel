@@ -50,6 +50,28 @@ describe('ModpacksService', () => {
     await expect(service.inspect('srv', 'missing.zip')).rejects.toThrow(NotFoundException);
   });
 
+  it('scans the mods of a stored pack and writes a copy without the ones picked', async () => {
+    const mod = new AdmZip();
+    mod.addFile('fabric.mod.json', Buffer.from(JSON.stringify({ id: 'sodium', environment: 'client' })));
+    const pack = new AdmZip();
+    pack.addFile('mods/sodium.jar', mod.toBuffer());
+    pack.addFile('mods/carpet.jar', Buffer.from('x'));
+    await service.save('srv', { originalname: 'pack.zip', buffer: pack.toBuffer() } as Express.Multer.File);
+
+    const scan = await service.scanMods('srv', 'pack.zip');
+    expect(scan.mods.map((m) => m.fileName)).toEqual(['carpet.jar', 'sodium.jar']);
+    expect(scan.mods.find((m) => m.modId === 'sodium')?.side).toBe('client');
+
+    const stripped = await service.stripMods('srv', 'pack.zip', ['mods/sodium.jar']);
+    expect(stripped.name).toBe('pack-server.zip');
+    expect((await service.scanMods('srv', 'pack-server.zip')).mods.map((m) => m.fileName)).toEqual(['carpet.jar']);
+
+    // The original is what the user uploaded; a wrong call must not cost it.
+    expect((await service.scanMods('srv', 'pack.zip')).mods).toHaveLength(2);
+    await expect(service.stripMods('srv', 'pack.zip', [])).rejects.toThrow(BadRequestException);
+    await expect(service.scanMods('srv', 'missing.zip')).rejects.toThrow(NotFoundException);
+  });
+
   it('only accepts .zip and .mrpack names', async () => {
     await expect(service.save('srv', { originalname: 'virus.exe', buffer: Buffer.from('x') } as Express.Multer.File)).rejects.toThrow(BadRequestException);
     await expect(service.remove('srv', 'bad;name.zip')).rejects.toThrow(BadRequestException);

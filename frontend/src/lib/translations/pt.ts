@@ -1346,6 +1346,28 @@ export const pt: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Mudar para {type}',
   modpackUseUpload: 'Melhor enviar um arquivo',
   modpackUseManualPath: 'Melhor digitar um caminho do contêiner',
+  modsReviewTitle: 'Mods de cliente',
+  modsReviewIntro:
+    'Um zip instalado assim é descompactado como está, então os mods de cliente também vão para o servidor e podem derrubá-lo na inicialização. O painel pode ler cada jar do arquivo e dizer quais estão sobrando.',
+  modsReviewAction: 'Revisar os mods',
+  modsReviewScanning: 'Lendo os jars...',
+  modsReviewNone: 'Este arquivo não tem pasta mods para revisar.',
+  modsReviewCount: '{count} mods · {client} parecem de cliente',
+  modsReviewUndeclared:
+    'Forge e NeoForge não guardam o side nos metadados do mod, então {count} jars não puderam ser classificados. Ficam desmarcados: marque os que você souber que são de cliente e deixe o resto.',
+  modsReviewTruncated:
+    'Só os primeiros mods foram lidos; o arquivo tem mais do que a revisão consegue listar.',
+  modsSideClient: 'Só cliente',
+  modsSideKnownClient: 'Mod de cliente conhecido',
+  modsSideServer: 'Só servidor',
+  modsSideBoth: 'Os dois lados',
+  modsSideUnknown: 'Não declarado',
+  modsStripAction: 'Criar uma cópia sem {count} mods',
+  modsStripHint:
+    'A cópia fica ao lado do original, que não é alterado, e o servidor passa a apontar para a cópia.',
+  modsStripped: '{name} criado e selecionado',
+  modsStripError: 'Não foi possível criar a cópia filtrada',
+  modsScanError: 'Não foi possível ler os mods deste arquivo',
 
   cfApiKey: 'Chave de API do CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Chave de API do CurseForge (Eternal) necessária para baixar alguns modpacks.',

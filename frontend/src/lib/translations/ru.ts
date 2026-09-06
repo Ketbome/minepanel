@@ -1421,6 +1421,28 @@ export const ru: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Переключить на {type}',
   modpackUseUpload: 'Лучше загрузить файл',
   modpackUseManualPath: 'Лучше ввести путь в контейнере',
+  modsReviewTitle: 'Клиентские моды',
+  modsReviewIntro:
+    'Такой zip распаковывается как есть, поэтому клиентские моды тоже попадают на сервер и могут уронить его при запуске. Панель может прочитать каждый jar в архиве и показать, какие там лишние.',
+  modsReviewAction: 'Проверить моды',
+  modsReviewScanning: 'Читаем jar-файлы...',
+  modsReviewNone: 'В этом архиве нет папки mods для проверки.',
+  modsReviewCount: '{count} модов · {client} похожи на клиентские',
+  modsReviewUndeclared:
+    'Forge и NeoForge не хранят сторону в метаданных мода, поэтому {count} jar-файлов не удалось классифицировать. Они остаются неотмеченными: отметьте те, о которых точно знаете, что они клиентские, остальные оставьте.',
+  modsReviewTruncated:
+    'Прочитаны только первые моды; в архиве их больше, чем проверка может показать.',
+  modsSideClient: 'Только клиент',
+  modsSideKnownClient: 'Известный клиентский мод',
+  modsSideServer: 'Только сервер',
+  modsSideBoth: 'Обе стороны',
+  modsSideUnknown: 'Не указано',
+  modsStripAction: 'Создать копию без {count} модов',
+  modsStripHint:
+    'Копия сохраняется рядом с оригиналом, который не меняется, и сервер начинает указывать на копию.',
+  modsStripped: '{name} создан и выбран',
+  modsStripError: 'Не удалось создать отфильтрованную копию',
+  modsScanError: 'Не удалось прочитать моды из этого архива',
 
   cfApiKey: 'Ключ API CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Постоянный ключ API CurseForge, необходимый для скачивания некоторых модпаков.',

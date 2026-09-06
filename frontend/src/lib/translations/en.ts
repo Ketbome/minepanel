@@ -1420,6 +1420,28 @@ export const en = {
   modpackGuidanceSwitchTo: 'Switch to {type}',
   modpackUseUpload: 'Upload a file instead',
   modpackUseManualPath: 'Type a container path instead',
+  modsReviewTitle: 'Client mods',
+  modsReviewIntro:
+    'A zip installed this way is unpacked as it is, so client-only mods go to the server too and can crash it on start. The panel can read every jar in the archive and tell you which ones do not belong.',
+  modsReviewAction: 'Review the mods',
+  modsReviewScanning: 'Reading the jars...',
+  modsReviewNone: 'This archive has no mods folder to review.',
+  modsReviewCount: '{count} mods · {client} look client-only',
+  modsReviewUndeclared:
+    "Forge and NeoForge do not record the side in a mod's metadata, so {count} jars could not be classified. They are left unchecked: check the ones you know are client-only, and leave the rest.",
+  modsReviewTruncated:
+    'Only the first mods were read; the archive holds more than the review can list.',
+  modsSideClient: 'Client only',
+  modsSideKnownClient: 'Known client mod',
+  modsSideServer: 'Server only',
+  modsSideBoth: 'Both sides',
+  modsSideUnknown: 'Not declared',
+  modsStripAction: 'Write a copy without {count} mods',
+  modsStripHint:
+    'The copy is saved next to the original, which is left untouched, and the server is pointed at the copy.',
+  modsStripped: 'Wrote {name} and selected it',
+  modsStripError: 'Could not write the filtered copy',
+  modsScanError: 'Could not read the mods in this archive',
 
   cfApiKey: 'CurseForge API Key (CF_API_KEY)',
   cfApiKeyHelp: 'CurseForge API Key (Eternal) required to download some modpacks.',

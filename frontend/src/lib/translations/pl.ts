@@ -1422,6 +1422,28 @@ export const pl: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Przełącz na {type}',
   modpackUseUpload: 'Lepiej wgraj plik',
   modpackUseManualPath: 'Lepiej wpisz ścieżkę w kontenerze',
+  modsReviewTitle: 'Mody klienckie',
+  modsReviewIntro:
+    'Zip zainstalowany w ten sposób jest rozpakowywany bez zmian, więc mody klienckie też trafiają na serwer i mogą go wywalić przy starcie. Panel może odczytać każdy jar w archiwum i wskazać, które tam nie pasują.',
+  modsReviewAction: 'Sprawdź mody',
+  modsReviewScanning: 'Odczytywanie jarów...',
+  modsReviewNone: 'To archiwum nie ma folderu mods do sprawdzenia.',
+  modsReviewCount: '{count} modów · {client} wygląda na klienckie',
+  modsReviewUndeclared:
+    'Forge i NeoForge nie zapisują strony w metadanych moda, więc {count} jarów nie dało się sklasyfikować. Zostają niezaznaczone: zaznacz te, o których wiesz, że są klienckie, a resztę zostaw.',
+  modsReviewTruncated:
+    'Odczytano tylko pierwsze mody; archiwum zawiera ich więcej, niż przegląd może wyświetlić.',
+  modsSideClient: 'Tylko klient',
+  modsSideKnownClient: 'Znany mod kliencki',
+  modsSideServer: 'Tylko serwer',
+  modsSideBoth: 'Obie strony',
+  modsSideUnknown: 'Nie zadeklarowano',
+  modsStripAction: 'Zapisz kopię bez {count} modów',
+  modsStripHint:
+    'Kopia trafia obok oryginału, którego nic nie rusza, a serwer zaczyna wskazywać na kopię.',
+  modsStripped: 'Zapisano {name} i wybrano go',
+  modsStripError: 'Nie udało się zapisać przefiltrowanej kopii',
+  modsScanError: 'Nie udało się odczytać modów z tego archiwum',
 
   cfApiKey: 'Klucz API CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Klucz API CurseForge (Eternal) wymagany do pobrania niektórych modpacków.',

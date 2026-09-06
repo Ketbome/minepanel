@@ -1363,6 +1363,28 @@ export const nl: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Overschakelen naar {type}',
   modpackUseUpload: 'Liever een bestand uploaden',
   modpackUseManualPath: 'Liever een containerpad invoeren',
+  modsReviewTitle: 'Clientmods',
+  modsReviewIntro:
+    'Een zo geïnstalleerde zip wordt onveranderd uitgepakt, dus clientmods gaan ook naar de server en kunnen hem bij het starten laten crashen. Het paneel kan elke jar in het archief lezen en zeggen welke er niet horen.',
+  modsReviewAction: 'Mods nakijken',
+  modsReviewScanning: 'Jars worden gelezen...',
+  modsReviewNone: 'Dit archief heeft geen mods-map om na te kijken.',
+  modsReviewCount: '{count} mods · {client} lijken alleen client',
+  modsReviewUndeclared:
+    'Forge en NeoForge leggen de kant niet vast in de metadata van een mod, dus {count} jars konden niet worden ingedeeld. Ze blijven onaangevinkt: vink aan wat je zeker als clientmod kent en laat de rest staan.',
+  modsReviewTruncated:
+    'Alleen de eerste mods zijn gelezen; het archief bevat er meer dan de controle kan tonen.',
+  modsSideClient: 'Alleen client',
+  modsSideKnownClient: 'Bekende clientmod',
+  modsSideServer: 'Alleen server',
+  modsSideBoth: 'Beide kanten',
+  modsSideUnknown: 'Niet opgegeven',
+  modsStripAction: 'Kopie zonder {count} mods maken',
+  modsStripHint:
+    'De kopie komt naast het origineel te staan, dat onaangeroerd blijft, en de server wijst daarna naar de kopie.',
+  modsStripped: '{name} gemaakt en geselecteerd',
+  modsStripError: 'De gefilterde kopie kon niet worden gemaakt',
+  modsScanError: 'De mods in dit archief konden niet worden gelezen',
 
   cfApiKey: 'CurseForge API key (CF_API_KEY)',
   cfApiKeyHelp: 'CurseForge API key (Eternal) vereist om sommige modpacks te downloaden.',
