@@ -132,7 +132,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Labels only: the tags land on the manifest list, not on the per-arch images.
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
@@ -189,7 +189,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
