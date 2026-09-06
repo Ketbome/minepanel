@@ -2,13 +2,24 @@
 
 import { FC, useState, useCallback } from "react";
 import { FileItem } from "@/services/files/files.service";
-import { Folder, File, FileText, FileCode, FileImage, FileArchive, ArrowUp } from "lucide-react";
+import { Folder, File, FileText, FileCode, FileImage, FileArchive, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/hooks/useLanguage";
+import { TranslationKey } from "@/lib/translations";
 import { FileContextMenu } from "./FileContextMenu";
+
+export type SortKey = "name" | "size" | "modified";
+export interface SortState {
+  key: SortKey;
+  direction: "asc" | "desc";
+}
 
 interface FileListProps {
   files: FileItem[];
   selectedFile: FileItem | null;
+  sort: SortState;
+  onSortChange: (key: SortKey) => void;
+  searchQuery?: string;
   onFileClick: (file: FileItem) => void;
   onFileDoubleClick: (file: FileItem) => void;
   onNavigateUp?: () => void;
@@ -46,6 +57,12 @@ const getFileIcon = (file: FileItem) => {
   return <File className="h-5 w-5 text-gray-500" />;
 };
 
+const COLUMNS: Array<{ key: SortKey; label: TranslationKey; width?: string }> = [
+  { key: "name", label: "columnName" },
+  { key: "size", label: "columnSize", width: "w-24" },
+  { key: "modified", label: "columnModified", width: "w-44" },
+];
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "-";
   const k = 1024;
@@ -68,6 +85,9 @@ const formatDate = (dateStr: string): string => {
 export const FileList: FC<FileListProps> = ({
   files,
   selectedFile,
+  sort,
+  onSortChange,
+  searchQuery,
   onFileClick,
   onFileDoubleClick,
   onNavigateUp,
@@ -77,6 +97,7 @@ export const FileList: FC<FileListProps> = ({
   onDelete,
   onRename,
 }) => {
+  const { t } = useLanguage();
   const [contextMenu, setContextMenu] = useState<{
     file: FileItem;
     position: { x: number; y: number };
@@ -101,9 +122,19 @@ export const FileList: FC<FileListProps> = ({
       <table className="w-full text-sm">
           <thead className="bg-[var(--mc-stone-deep)] sticky top-0 z-10">
             <tr className="text-gray-400 text-left font-minecraft">
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium w-24">Size</th>
-              <th className="px-4 py-2 font-medium w-44">Modified</th>
+              {COLUMNS.map((column) => (
+                <th key={column.key} className={cn("px-4 py-2 font-medium", column.width)}>
+                  <button
+                    type="button"
+                    onClick={() => onSortChange(column.key)}
+                    className="flex items-center gap-1 hover:text-gray-200 transition-colors"
+                  >
+                    {t(column.label)}
+                    {sort.key === column.key &&
+                      (sort.direction === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                  </button>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -145,10 +176,10 @@ export const FileList: FC<FileListProps> = ({
                 <td className="px-4 py-2 text-gray-400">{formatDate(file.modified)}</td>
               </tr>
             ))}
-            {files.length === 0 && !onNavigateUp && (
+            {files.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                  Empty folder
+                  {searchQuery ? t("searchNoResults").replace("{query}", searchQuery) : t("emptyFolder")}
                 </td>
               </tr>
             )}

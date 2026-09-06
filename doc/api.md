@@ -139,9 +139,38 @@ in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
   left untouched
 - `GET /servers/:id/modpacks`
 - `POST /servers/:id/modpacks` — multipart `file`
+- `GET /servers/:id/modpacks/:fileName/inspect`
 - `DELETE /servers/:id/modpacks/:fileName`
 
 Uploads are capped at 256 MB and rejected unless the file ends in `.zip` or `.mrpack`.
+
+`inspect` reads the archive and reports how it has to be installed, so the dashboard can pick the
+right server type instead of leaving it to trial and error. The upload response carries the same
+object under `inspection`; `GET .../inspect` re-reads a file that is already stored. Listing does
+not inspect: reading an archive means loading it whole, so only the selected file is read.
+
+```json
+{
+  "kind": "curseforge-client",
+  "name": "Tensura Evolutions",
+  "minecraftVersion": "1.21.1",
+  "loader": "NEOFORGE",
+  "loaderVersion": "21.1.72",
+  "hasStartScript": false,
+  "hasMods": true,
+  "needsLoader": false
+}
+```
+
+| `kind` | Detected from | Installed as |
+| --- | --- | --- |
+| `curseforge-client` | `manifest.json` with a `minecraft` block | `AUTO_CURSEFORGE` + `CF_MODPACK_ZIP` |
+| `modrinth` | `modrinth.index.json` | `MODRINTH` + `MODRINTH_MODPACK` |
+| `server-pack` | loader installer jar or a start script | `CURSEFORGE` + `CF_SERVER_MOD` |
+| `generic` | none of the above | loader server type + `GENERIC_PACK` |
+
+An archive that cannot be read is reported as `generic` with `needsLoader: true` rather than
+failing the request.
 
 ### Files
 

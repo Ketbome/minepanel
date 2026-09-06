@@ -33,6 +33,12 @@ export class ModpacksController {
     return this.modpacksService.save(serverId, file);
   }
 
+  @Get(':fileName/inspect')
+  async inspect(@Request() req, @Param('serverId') serverId: string, @Param('fileName') fileName: string) {
+    await this.assertAccess(req, serverId, false);
+    return this.modpacksService.inspect(serverId, fileName);
+  }
+
   @Delete(':fileName')
   async remove(@Request() req, @Param('serverId') serverId: string, @Param('fileName') fileName: string) {
     await this.assertAccess(req, serverId, true);

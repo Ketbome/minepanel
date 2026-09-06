@@ -119,6 +119,7 @@ const defaultConfig: ServerConfig = {
   cfParallelDownloads: '4',
   cfOverridesSkipExisting: false,
   cfSetLevelFrom: '',
+  genericPack: '',
   cfServerMod: '',
   cfBaseDir: '/data/FeedTheBeast',
   useModpackStartScript: true,

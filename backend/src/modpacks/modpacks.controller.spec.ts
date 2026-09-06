@@ -7,7 +7,12 @@ describe('ModpacksController', () => {
   let controller: ModpacksController;
 
   beforeEach(() => {
-    service = { list: jest.fn().mockResolvedValue(['m']), save: jest.fn().mockResolvedValue({ name: 'a.zip' }), remove: jest.fn().mockResolvedValue(undefined) };
+    service = {
+      list: jest.fn().mockResolvedValue(['m']),
+      save: jest.fn().mockResolvedValue({ name: 'a.zip' }),
+      remove: jest.fn().mockResolvedValue(undefined),
+      inspect: jest.fn().mockResolvedValue({ kind: 'generic' }),
+    };
     accessControl = { assertServerFiles: jest.fn() };
     controller = new ModpacksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
   });
@@ -18,6 +23,8 @@ describe('ModpacksController', () => {
     const file = { originalname: 'a.zip' } as Express.Multer.File;
     expect(await controller.upload(req, 'srv', file)).toEqual({ name: 'a.zip' });
     expect(accessControl.assertServerFiles).toHaveBeenLastCalledWith({ id: 1 }, 'srv', true);
+    expect(await controller.inspect(req, 'srv', 'a.zip')).toEqual({ kind: 'generic' });
+    expect(accessControl.assertServerFiles).toHaveBeenLastCalledWith({ id: 1 }, 'srv', false);
     expect(await controller.remove(req, 'srv', 'a.zip')).toEqual({ success: true });
     expect(service.remove).toHaveBeenCalledWith('srv', 'a.zip');
   });

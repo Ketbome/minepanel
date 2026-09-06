@@ -14,6 +14,8 @@ import { findMinecraftVersion, getSuggestedJavaImage } from '@/lib/utils/java-im
 import { useCanChangeVersion } from '@/lib/hooks/useCanChangeVersion';
 import { ServerConfig } from '@/lib/types/types';
 import { ModpackFilePicker } from '@/components/molecules/ModpackFilePicker';
+import { ModpackZipGuidance } from '@/components/molecules/modpacks/ModpackZipGuidance';
+import { ModpackInspection } from '@/services/modpacks/modpacks.service';
 import {
   CurseForgeModpack,
   formatDownloadCount,
@@ -54,6 +56,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
   const [isResolving, setIsResolving] = useState(false);
   const [files, setFiles] = useState<ModVersionItem[] | null>(null);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [zipInspection, setZipInspection] = useState<ModpackInspection | null>(null);
   const canChangeVersion = useCanChangeVersion();
 
   const method = (config.cfMethod as CfMethod) || 'url';
@@ -253,8 +256,10 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             serverId={serverId}
             value={config.cfModpackZip}
             onChange={(containerPath) => updateConfig('cfModpackZip', containerPath)}
+            onInspection={setZipInspection}
             accept=".zip"
           />
+          <ModpackZipGuidance inspection={zipInspection} containerPath={config.cfModpackZip} config={config} updateConfig={updateConfig} />
         </div>
       ) : isManual ? (
         <div className="space-y-3">

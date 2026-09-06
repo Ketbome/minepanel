@@ -501,6 +501,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
     // Parse CurseForge files config for mod-compatible server types
     this.parseCurseForgeFilesConfig(serverConfig, env);
 
+    serverConfig.genericPack = env.GENERIC_PACK ?? '';
+
     const pluginServers = ['SPIGOT', 'PAPER', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'];
     if (pluginServers.includes(serverConfig.serverType)) {
       this.parsePluginServerConfig(serverConfig, env);
@@ -688,6 +690,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
       cfParallelDownloads: '4',
       cfOverridesSkipExisting: false,
       cfSetLevelFrom: '',
+
+      genericPack: '',
 
       cfServerMod: '',
       cfBaseDir: '/data',

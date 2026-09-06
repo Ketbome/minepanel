@@ -540,6 +540,12 @@ export class ServerConfigDto {
   @IsOptional()
   cfSetLevelFrom?: string;
 
+  // Container path to an archive unpacked over /data, e.g. /modpacks/pack.zip.
+  // Used for modpack zips that declare no loader of their own.
+  @IsString()
+  @IsOptional()
+  genericPack?: string;
+
   // Manual CurseForge (deprecated) specific
   @IsString()
   @IsOptional()

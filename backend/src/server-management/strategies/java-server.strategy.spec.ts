@@ -89,6 +89,32 @@ describe('JavaServerStrategy', () => {
     expect(env.CF_FILENAME_MATCHER).toBeUndefined();
   });
 
+  it('should unpack a loader-less modpack zip over a loader server', () => {
+    const config = {
+      ...baseConfig(),
+      serverType: 'NEOFORGE',
+      neoforgeBuild: '21.1.72',
+      genericPack: '/modpacks/tensura.zip',
+    } as ServerConfig;
+
+    const env = strategy.buildEnvironment(config);
+
+    expect(env.GENERIC_PACK).toBe('/modpacks/tensura.zip');
+    expect(env.VERSION).toBe('1.21.1');
+  });
+
+  it('should ignore GENERIC_PACK for server types that install their own modpack', () => {
+    const config = {
+      ...baseConfig(),
+      serverType: 'AUTO_CURSEFORGE',
+      cfMethod: 'slug',
+      cfSlug: 'all-the-mods-9',
+      genericPack: '/modpacks/tensura.zip',
+    } as ServerConfig;
+
+    expect(strategy.buildEnvironment(config).GENERIC_PACK).toBeUndefined();
+  });
+
   it('should keep CF_FILENAME_MATCHER as a filter for published modpacks', () => {
     const config = {
       ...baseConfig(),

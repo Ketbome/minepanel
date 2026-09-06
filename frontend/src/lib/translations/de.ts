@@ -1126,6 +1126,16 @@ export const de: Record<TranslationKey, string> = {
   zipDownloaded: 'ZIP erfolgreich heruntergeladen',
   errorDownloadingZip: 'Fehler beim Herunterladen der ZIP',
   enterNewName: 'Neuen Namen eingeben',
+  searchFiles: 'In diesem Ordner suchen...',
+  clearSearch: 'Suche zurücksetzen',
+  searchNoResults: 'Keine Datei passt zu "{query}"',
+  emptyFolder: 'Leerer Ordner',
+  columnName: 'Name',
+  columnSize: 'Größe',
+  columnModified: 'Geändert',
+  filesCount: '{count} Dateien',
+  foldersCount: '{count} Ordner',
+  filteredCount: '{visible} von {total} angezeigt',
   toSave: 'zum Speichern',
 
   // Plugin Server Configurations
@@ -1406,6 +1416,27 @@ export const de: Record<TranslationKey, string> = {
   modpackWrongFormat: 'Erwarteter Dateityp:',
   modpackLoadError: 'Modpack-Dateien konnten nicht geladen werden',
   modpackHint: 'Dateien liegen im Ordner modpacks/ des Servers und werden schreibgeschützt unter /modpacks eingebunden',
+  modpackCount: '{count} Dateien',
+  modpackInspecting: 'Archiv wird gelesen...',
+  modpackNoLoader: 'Ohne Loader',
+  modpackKindClient: 'CurseForge-Client-Pack',
+  modpackKindModrinth: 'Modrinth-Pack',
+  modpackKindServerPack: 'Server-Pack',
+  modpackKindGeneric: 'Mods und Konfigurationen',
+  modpackNeedsLoaderTitle: 'Dieses Archiv gibt keinen Mod-Loader an',
+  modpackNeedsLoaderDesc:
+    'Es enthält Mods und Konfigurationen, aber weder Manifest noch Loader-Installer und kann daher nicht allein installiert werden. Wähle den Loader und die Minecraft-Version, für die das Modpack gebaut wurde: Der Servertyp wechselt zu diesem Loader und das Archiv wird über die Serverdaten entpackt.',
+  modpackLoaderLabel: 'Mod-Loader',
+  modpackGuidanceApply: 'Anwenden',
+  modpackGuidanceApplied: 'Serverkonfiguration aus dem Modpack übernommen',
+  modpackGuidanceOk:
+    'Das Archiv passt zu diesem Servertyp. Minecraft-Version und Java-Image folgen seinen Angaben.',
+  modpackWrongTypeTitle: 'Dieses Archiv braucht einen anderen Servertyp',
+  modpackWrongTypeDesc:
+    'Der aktuelle Servertyp kann es nicht installieren. Es muss als {type} installiert werden.',
+  modpackGuidanceSwitchTo: 'Zu {type} wechseln',
+  modpackUseUpload: 'Lieber eine Datei hochladen',
+  modpackUseManualPath: 'Lieber einen Container-Pfad eingeben',
 
   cfApiKey: 'CurseForge API-Schlüssel (CF_API_KEY)',
   cfApiKeyHelp:

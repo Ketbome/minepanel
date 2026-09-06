@@ -213,6 +213,7 @@ export class JavaServerStrategy implements IServerStrategy {
 
     this.addModrinthConfig(env, config);
     this.addCurseForgeFilesConfig(env, config);
+    this.addGenericPackConfig(env, config);
 
     const serverTypeHandlers: Record<string, () => void> = {
       FORGE: () => this.addForgeConfig(env, config),
@@ -283,6 +284,15 @@ export class JavaServerStrategy implements IServerStrategy {
     const apiKey = config.cfApiKey;
     if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
     if (config.cfFiles) env['CURSEFORGE_FILES'] = config.cfFiles;
+  }
+
+  // Escape hatch for modpack archives that carry mods and configs but no loader of
+  // their own: the loader comes from TYPE/VERSION and the zip is unpacked over /data.
+  private addGenericPackConfig(env: Record<string, string>, config: ServerConfig): void {
+    const compatibleTypes = ['VANILLA', 'FORGE', 'NEOFORGE', 'FABRIC', 'QUILT'];
+    if (!config.genericPack || !compatibleTypes.includes(config.serverType)) return;
+
+    env['GENERIC_PACK'] = config.genericPack;
   }
 
   private addAutoCurseForgeConfig(env: Record<string, string>, config: ServerConfig): void {

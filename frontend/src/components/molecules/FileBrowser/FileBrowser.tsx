@@ -1,15 +1,16 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback, useRef } from "react";
+import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { filesService, FileItem, DownloadProgress } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
-import { FileList } from "./FileList";
+import { FileList, SortKey, SortState } from "./FileList";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FileToolbar } from "./FileToolbar";
 import { FileEditor } from "./FileEditor";
 import { DropZone } from "./DropZone";
 import { UploadProgress, UploadItem } from "./UploadProgress";
+import { FileStatusBar } from "./FileStatusBar";
 import { Loader2 } from "lucide-react";
 
 interface FileBrowserProps {
@@ -79,6 +80,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortState>({ key: "name", direction: "asc" });
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
@@ -111,10 +114,33 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
     (path: string) => {
       setSelectedFile(null);
       setEditingFile(null);
+      setSearch("");
       loadFiles(path);
     },
     [loadFiles]
   );
+
+  const toggleSort = useCallback((key: SortKey) => {
+    setSort((current) => ({ key, direction: current.key === key && current.direction === "asc" ? "desc" : "asc" }));
+  }, []);
+
+  // Folders always lead, whatever the column: a listing that mixes them is much
+  // harder to scan than one that is a little less sorted.
+  const visibleFiles = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const matching = query ? files.filter((file) => file.name.toLowerCase().includes(query)) : files;
+    const direction = sort.direction === "asc" ? 1 : -1;
+
+    return [...matching].sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+
+      if (sort.key === "size") return (a.size - b.size) * direction;
+      if (sort.key === "modified") {
+        return (new Date(a.modified).getTime() - new Date(b.modified).getTime()) * direction;
+      }
+      return a.name.localeCompare(b.name) * direction;
+    });
+  }, [files, search, sort]);
 
   const navigateUp = useCallback(() => {
     if (!currentPath) return;
@@ -410,7 +436,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   return (
     <DropZone onFilesDropped={handleUploadFiles} className="h-[600px]">
       <div className="relative flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
-        <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} isUploading={isUploading} />
+        <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} search={search} onSearchChange={setSearch} isUploading={isUploading} />
 
         <Breadcrumbs path={currentPath} onNavigate={navigateToFolder} onNavigateUp={navigateUp} />
 
@@ -420,8 +446,11 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           </div>
         ) : (
           <FileList
-            files={files}
+            files={visibleFiles}
             selectedFile={selectedFile}
+            sort={sort}
+            onSortChange={toggleSort}
+            searchQuery={search.trim()}
             onFileClick={handleFileClick}
             onFileDoubleClick={handleFileDoubleClick}
             onNavigateUp={currentPath ? navigateUp : undefined}
@@ -437,6 +466,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             }}
           />
         )}
+
+        {!loading && <FileStatusBar files={files} visible={visibleFiles} isFiltering={Boolean(search.trim())} />}
 
         <div className="absolute bottom-4 right-4 z-50 flex flex-col items-end gap-2">
           <UploadProgress uploads={uploads} className="relative" onCancel={handleCancelUpload} onClose={handleCloseUploadProgress} />

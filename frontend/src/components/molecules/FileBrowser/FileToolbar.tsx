@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef } from "react";
+import { FC, useState, useRef, useEffect } from "react";
 import { FileItem } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { FolderPlus, Upload, RefreshCw, Trash2, Download, Pencil, Loader2 } from "lucide-react";
+import { FolderPlus, Upload, RefreshCw, Trash2, Download, Pencil, Loader2, Search, X } from "lucide-react";
 
 interface FileToolbarProps {
   onCreateFolder: (name: string) => void;
@@ -22,6 +22,8 @@ interface FileToolbarProps {
   onDelete: (file: FileItem) => void;
   onRename: (file: FileItem, newName: string) => void;
   onDownload: (file: FileItem) => void;
+  search: string;
+  onSearchChange: (value: string) => void;
   isUploading?: boolean;
 }
 
@@ -33,16 +35,34 @@ export const FileToolbar: FC<FileToolbarProps> = ({
   onDelete,
   onRename,
   onDownload,
+  search,
+  onSearchChange,
   isUploading = false,
 }) => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [renameName, setRenameName] = useState("");
+
+  // Ctrl/Cmd+F is the reflex for "find in this list", and the browser's own find
+  // only matches what is currently scrolled into view.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
@@ -143,7 +163,30 @@ export const FileToolbar: FC<FileToolbarProps> = ({
           {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
         />
 
-        <div className="flex-1" />
+        <div className="relative min-w-[140px] flex-1 max-w-xs">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+          <Input
+            ref={searchInputRef}
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") onSearchChange("");
+            }}
+            placeholder={t("searchFiles")}
+            aria-label={t("searchFiles")}
+            className="h-8 bg-gray-800/70 pl-7 pr-7 text-xs text-gray-200 border-gray-700/50"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              aria-label={t("clearSearch")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
 
         {selectedFile && (
           <>
