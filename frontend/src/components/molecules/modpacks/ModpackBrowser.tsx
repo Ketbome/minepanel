@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurseForgeModpack, searchModpacks, findModpackByQuery, formatDownloadCount } from "@/services/curseforge/curseforge.service";
 import { ModpackNotFoundHelp } from "./ModpackNotFoundHelp";
-import { Search, Loader2, Package, Download, Check, Calendar, ExternalLink } from "lucide-react";
+import { Search, Loader2, Package, Download, Check, Calendar, ExternalLink, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Badge } from "@/components/ui/badge";
@@ -240,6 +240,13 @@ export function ModpackBrowser({ open, onClose, onSelect, onUseZip }: ModpackBro
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-900/50 text-blue-300">
                         <Calendar className="h-3 w-3 mr-1" />
                         {modpack.latestFiles[0].gameVersions[0]}
+                      </Badge>
+                    )}
+                    {/* Worth knowing before picking it, not after the install fails. */}
+                    {modpack.allowModDistribution === false && (
+                      <Badge variant="secondary" title={t("modpackNoDistribution")} className="text-[10px] px-1.5 py-0 bg-amber-900/50 text-amber-300">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        {t("modpackNoDistributionShort")}
                       </Badge>
                     )}
                   </div>

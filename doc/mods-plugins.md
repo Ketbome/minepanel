@@ -551,9 +551,16 @@ pack: downloads, likes, popularity rank, categories, every Minecraft version it 
 for, and the newest file with its release channel, size and date.
 
 ::: warning Packs that block automatic downloads
-Some authors opt their pack out of the CurseForge API. The dialog says so, because
-`AUTO_CURSEFORGE` cannot download those: the install fails partway through provisioning.
-Download the `.zip` yourself and upload it from the server's **Mods** tab instead.
+Some authors opt their pack out of the CurseForge API (`allowModDistribution: false`), and
+`AUTO_CURSEFORGE` cannot download those however they are referenced: URL, Slug and a file id
+all end in the same failure partway through provisioning.
+
+The panel flags it in three places so the failure never happens: the browser marks those packs
+in the result grid, the details dialog drops the URL/Slug choice and creates the server with the
+**File** method — landing you on its Mods tab to upload the `.zip` — and an existing server whose
+pack turns out to be blocked gets a warning in the Mods tab with a one-click switch to the File
+method. On an existing server the switch is a button rather than automatic: the flag is the
+author's and it does get turned back on, so a stale `false` must not rewrite a config that works.
 :::
 
 The modpack itself is always pinned to the file that was picked: a pack that updates on its

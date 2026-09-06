@@ -1546,6 +1546,11 @@ export const nl: Record<TranslationKey, string> = {
   modpackFileSize: 'Grootte',
   modpackServerPack: 'Serverpack',
   modpackNoDistribution: 'De auteur heeft automatische downloads voor dit modpack geblokkeerd op CurseForge, dus de automatische installatie mislukt. Download de .zip zelf en upload hem via het Mods-tabblad van de server.',
+  modpackNoDistributionTitle: 'Dit pack blokkeert automatische downloads',
+  modpackNoDistributionShort: 'Handmatige download',
+  modpackSwitchToFile: 'Overschakelen naar de methode Bestand',
+  modpackForcedFileMethod:
+    'Bij dit pack lopen URL en Slug op dezelfde mislukte download uit, dus de server wordt aangemaakt met de methode Bestand. Upload de .zip op het tabblad Mods, waar je meteen na het aanmaken terechtkomt.',
   modpackVersionToInstall: 'Te installeren versie',
   modpackInstallMethodHelp: 'Beide installeren hetzelfde pack: URL gebruikt de CurseForge-pagina, Slug de pack-identifier plus het bestands-ID.',
   modpackWillCreate: 'Dit maakt aan',

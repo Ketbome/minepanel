@@ -1539,6 +1539,11 @@ export const de: Record<TranslationKey, string> = {
   modpackFileSize: 'Größe',
   modpackServerPack: 'Server-Pack',
   modpackNoDistribution: 'Der Autor hat automatische Downloads für dieses Modpack auf CurseForge gesperrt, die automatische Installation schlägt also fehl. Lade die .zip selbst herunter und lade sie im Mods-Tab des Servers hoch.',
+  modpackNoDistributionTitle: 'Dieses Pack blockiert automatische Downloads',
+  modpackNoDistributionShort: 'Manueller Download',
+  modpackSwitchToFile: 'Zur Methode Datei wechseln',
+  modpackForcedFileMethod:
+    'Bei diesem Pack enden URL und Slug im selben fehlgeschlagenen Download, deshalb wird der Server mit der Methode Datei angelegt. Lade die .zip in seinem Mods-Tab hoch, wo du direkt nach dem Anlegen landest.',
   modpackVersionToInstall: 'Zu installierende Version',
   modpackInstallMethodHelp: 'Beide installieren dasselbe Pack: URL nutzt die CurseForge-Seite, Slug den Pack-Bezeichner plus die Datei-ID.',
   modpackWillCreate: 'Damit wird erstellt',

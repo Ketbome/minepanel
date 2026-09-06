@@ -1518,6 +1518,11 @@ export const en = {
   modpackFileSize: 'Size',
   modpackServerPack: 'Server pack',
   modpackNoDistribution: 'The author blocked automatic downloads for this modpack on CurseForge, so the automatic install will fail. Download the .zip yourself and upload it from the server\'s Mods tab.',
+  modpackNoDistributionTitle: 'This pack blocks automatic downloads',
+  modpackNoDistributionShort: 'Manual download',
+  modpackSwitchToFile: 'Switch to the File method',
+  modpackForcedFileMethod:
+    'URL and Slug both end in the same failed download for this pack, so the server is created for the File method. Upload the .zip in its Mods tab, where you land right after creating it.',
   modpackVersionToInstall: 'Version to install',
   modpackInstallMethodHelp: 'Both install the same pack: URL uses the CurseForge page, Slug uses the pack identifier plus the file ID.',
   modpackWillCreate: 'This will create',

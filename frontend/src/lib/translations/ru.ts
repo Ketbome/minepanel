@@ -1519,6 +1519,11 @@ export const ru: Record<TranslationKey, string> = {
   modpackFileSize: 'Размер',
   modpackServerPack: 'Серверная сборка',
   modpackNoDistribution: 'Автор запретил автоматическую загрузку этого модпака на CurseForge, поэтому автоматическая установка не сработает. Скачайте .zip вручную и загрузите его во вкладке Mods сервера.',
+  modpackNoDistributionTitle: 'Эта сборка запрещает автоматическую загрузку',
+  modpackNoDistributionShort: 'Ручная загрузка',
+  modpackSwitchToFile: 'Перейти к методу «Файл»',
+  modpackForcedFileMethod:
+    'Для этой сборки URL и slug приводят к одной и той же неудачной загрузке, поэтому сервер создаётся с методом «Файл». Загрузите .zip на его вкладке «Моды», куда вы попадёте сразу после создания.',
   modpackVersionToInstall: 'Версия для установки',
   modpackInstallMethodHelp: 'Оба варианта ставят один и тот же пак: URL использует страницу CurseForge, Slug — идентификатор пака и ID файла.',
   modpackWillCreate: 'Будет создано',

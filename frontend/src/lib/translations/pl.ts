@@ -1522,6 +1522,11 @@ export const pl: Record<TranslationKey, string> = {
   modpackFileSize: 'Rozmiar',
   modpackServerPack: 'Paczka serwerowa',
   modpackNoDistribution: 'Autor zablokował automatyczne pobieranie tego modpacka na CurseForge, więc automatyczna instalacja się nie uda. Pobierz .zip ręcznie i wgraj go z zakładki Mods serwera.',
+  modpackNoDistributionTitle: 'Ta paczka blokuje automatyczne pobieranie',
+  modpackNoDistributionShort: 'Pobranie ręczne',
+  modpackSwitchToFile: 'Przełącz na metodę Plik',
+  modpackForcedFileMethod:
+    'Dla tej paczki URL i Slug kończą się tym samym nieudanym pobraniem, więc serwer powstaje z metodą Plik. Wgraj .zip w jego zakładce Mody, na której lądujesz zaraz po utworzeniu.',
   modpackVersionToInstall: 'Wersja do instalacji',
   modpackInstallMethodHelp: 'Obie instalują ten sam pack: URL korzysta ze strony CurseForge, Slug z identyfikatora packa i ID pliku.',
   modpackWillCreate: 'Zostanie utworzone',
