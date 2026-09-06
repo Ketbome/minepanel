@@ -74,11 +74,13 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
 
   // Reading an archive means loading it whole, so only the selected one is inspected.
   useEffect(() => {
-    if (!selectedName) {
-      setInspection(null);
-      onInspectionRef.current?.(null);
-      return;
-    }
+    // The previous file's inspection has to go before the next one is read: the
+    // caller acts on it, and acting on the old archive under the new path is
+    // worse than having nothing to act on.
+    setInspection(null);
+    onInspectionRef.current?.(null);
+
+    if (!selectedName) return;
 
     let cancelled = false;
     setIsInspecting(true);

@@ -1,4 +1,6 @@
-const MODPACK_URL = /curseforge\.com\/minecraft\/modpacks\/([^/?#]+)(?:\/(?:download|files)\/(\d+))?/i;
+// The host has to end at a boundary, or `notcurseforge.com/minecraft/modpacks/x`
+// would be read as a pack reference.
+const MODPACK_URL = /(?:^|\/\/)(?:[\w-]+\.)*curseforge\.com\/minecraft\/modpacks\/([^/?#]+)(?:\/(?:download|files)\/(\d+))?/i;
 
 export const parseModpackUrl = (url: string): { slug?: string; fileId?: string } => {
   const match = MODPACK_URL.exec(url.trim());

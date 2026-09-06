@@ -210,6 +210,25 @@ describe('DockerComposeService', () => {
       expect(result?.envVars ?? '').not.toContain('SPAWN_PROTECTION');
     });
 
+    it('should read GENERIC_PACK into its own field instead of the custom env textarea', async () => {
+      const result = await loadFromCompose('java-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: {
+              ID_MANAGER: 'java-server',
+              TYPE: 'NEOFORGE',
+              GENERIC_PACK: '/modpacks/tensura.zip',
+            },
+          },
+        },
+      });
+
+      expect(result?.genericPack).toBe('/modpacks/tensura.zip');
+      // A copy in envVars would survive clearing the field and keep re-emitting the pack.
+      expect(result?.envVars ?? '').not.toContain('GENERIC_PACK');
+    });
+
     it('should read the Bedrock seed and game mode from the keys Bedrock writes', async () => {
       const result = await loadFromCompose('bedrock-server', {
         services: {
