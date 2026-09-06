@@ -12,6 +12,7 @@ import { mcToast } from '@/lib/utils/minecraft-toast';
 import { getSuggestedJavaImage } from '@/lib/utils/java-image';
 import { ServerConfig } from '@/lib/types/types';
 import { ModpackInspection, ModpackLoader } from '@/services/modpacks/modpacks.service';
+import { ModpackClientModsPanel } from './ModpackClientModsPanel';
 
 const LOADERS: ModpackLoader[] = ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT'];
 
@@ -23,14 +24,18 @@ const SERVER_TYPE_FOR_KIND = {
   'server-pack': 'CURSEFORGE',
 } as const;
 
+const ARCHIVE_FIELDS = ['cfModpackZip', 'cfServerMod', 'modrinthModpack', 'genericPack'] as const;
+type ArchiveField = (typeof ARCHIVE_FIELDS)[number];
+
 interface ModpackZipGuidanceProps {
+  readonly serverId: string;
   readonly inspection: ModpackInspection | null;
   readonly containerPath?: string;
   readonly config: ServerConfig;
   readonly updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, containerPath, config, updateConfig }) => {
+export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ serverId, inspection, containerPath, config, updateConfig }) => {
   const { t } = useLanguage();
   const canChangeVersion = useCanChangeVersion();
   const [loader, setLoader] = useState<ModpackLoader>('NEOFORGE');
@@ -74,11 +79,18 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, co
 
   // Each install path reads a different field, so the other two are cleared to
   // keep a single source for the archive.
-  const selectArchiveField = (field: 'cfModpackZip' | 'cfServerMod' | 'modrinthModpack' | 'genericPack') => {
-    for (const other of ['cfModpackZip', 'cfServerMod', 'modrinthModpack', 'genericPack'] as const) {
+  const selectArchiveField = (field: ArchiveField, value = containerPath) => {
+    for (const other of ARCHIVE_FIELDS) {
       if (other !== field && config[other]) updateConfig(other, '');
     }
-    updateConfig(field, containerPath);
+    updateConfig(field, value);
+  };
+
+  // The filtered copy has to replace the original wherever it is referenced, and
+  // only the field currently holding it knows where that is.
+  const replaceArchive = (nextContainerPath: string) => {
+    const field = ARCHIVE_FIELDS.find((candidate) => config[candidate] === containerPath);
+    if (field) updateConfig(field, nextContainerPath);
   };
 
   const applyExpectedType = () => {
@@ -105,8 +117,16 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, co
     mcToast.success(t('modpackGuidanceApplied'));
   };
 
+  // Only archives the image unpacks as-is need a review: for a CurseForge client
+  // pack the image applies its own client-mod exclusions.
+  const unpackedAsIs = inspection.kind === 'generic' || inspection.kind === 'server-pack';
+  const modsPanel = unpackedAsIs ? (
+    <ModpackClientModsPanel serverId={serverId} containerPath={containerPath} onStripped={replaceArchive} />
+  ) : null;
+
   if (inspection.kind === 'generic') {
     return (
+      <>
       <div className="space-y-3 border-2 border-amber-500/40 bg-amber-900/15 p-3">
         <p className="flex items-center gap-2 font-minecraft text-xs text-amber-300">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -151,6 +171,8 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, co
           </Button>
         </div>
       </div>
+      {modsPanel}
+      </>
     );
   }
 
@@ -158,10 +180,13 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, co
 
   if (matchesCurrentType) {
     return (
-      <p className="flex items-center gap-2 border-2 border-emerald-500/30 bg-emerald-900/15 px-3 py-2 text-[11px] text-emerald-200">
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-        {t('modpackGuidanceOk')}
-      </p>
+      <>
+        <p className="flex items-center gap-2 border-2 border-emerald-500/30 bg-emerald-900/15 px-3 py-2 text-[11px] text-emerald-200">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+          {t('modpackGuidanceOk')}
+        </p>
+        {modsPanel}
+      </>
     );
   }
 
@@ -178,6 +203,7 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ inspection, co
         <Wand2 className="mr-1 h-3.5 w-3.5" />
         {t('modpackGuidanceSwitchTo').replace('{type}', expectedType)}
       </Button>
+      {modsPanel}
     </div>
   );
 };

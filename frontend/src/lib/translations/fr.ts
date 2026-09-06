@@ -1422,6 +1422,28 @@ export const fr: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Passer à {type}',
   modpackUseUpload: 'Envoyer un fichier à la place',
   modpackUseManualPath: 'Saisir un chemin du conteneur à la place',
+  modsReviewTitle: 'Mods client',
+  modsReviewIntro:
+    "Un zip installé ainsi est décompressé tel quel : les mods client partent aussi sur le serveur et peuvent le faire planter au démarrage. Le panneau peut lire chaque jar de l'archive et dire lesquels sont de trop.",
+  modsReviewAction: 'Examiner les mods',
+  modsReviewScanning: 'Lecture des jars...',
+  modsReviewNone: "Cette archive n'a pas de dossier mods à examiner.",
+  modsReviewCount: '{count} mods · {client} semblent client uniquement',
+  modsReviewUndeclared:
+    "Forge et NeoForge n'inscrivent pas le côté dans les métadonnées du mod : {count} jars n'ont pas pu être classés. Ils restent décochés — cochez ceux que vous savez être client, laissez les autres.",
+  modsReviewTruncated:
+    "Seuls les premiers mods ont été lus ; l'archive en contient plus que l'examen ne peut lister.",
+  modsSideClient: 'Client uniquement',
+  modsSideKnownClient: 'Mod client connu',
+  modsSideServer: 'Serveur uniquement',
+  modsSideBoth: 'Les deux côtés',
+  modsSideUnknown: 'Non déclaré',
+  modsStripAction: 'Créer une copie sans {count} mods',
+  modsStripHint:
+    "La copie est enregistrée à côté de l'original, qui reste intact, et le serveur pointe désormais sur la copie.",
+  modsStripped: '{name} créé et sélectionné',
+  modsStripError: 'Impossible de créer la copie filtrée',
+  modsScanError: 'Impossible de lire les mods de cette archive',
 
   cfApiKey: 'Clé API CurseForge (CF_API_KEY)',
   cfApiKeyHelp: 'Clé API CurseForge (Eternal) requise pour télécharger certains modpacks.',
@@ -1498,6 +1520,11 @@ export const fr: Record<TranslationKey, string> = {
   modpackFileSize: 'Taille',
   modpackServerPack: 'Pack serveur',
   modpackNoDistribution: 'L\'auteur a bloqué le téléchargement automatique de ce modpack sur CurseForge : l\'installation automatique échouera. Télécharge le .zip toi-même et envoie-le depuis l\'onglet Mods du serveur.',
+  modpackNoDistributionTitle: 'Ce pack bloque les téléchargements automatiques',
+  modpackNoDistributionShort: 'Téléchargement manuel',
+  modpackSwitchToFile: 'Passer à la méthode Fichier',
+  modpackForcedFileMethod:
+    'Pour ce pack, URL et Slug aboutissent au même échec de téléchargement : le serveur est donc créé avec la méthode Fichier. Envoyez le .zip dans son onglet Mods, où vous arrivez juste après la création.',
   modpackVersionToInstall: 'Version à installer',
   modpackInstallMethodHelp: 'Les deux installent le même pack : URL utilise la page CurseForge, Slug utilise l\'identifiant du pack et l\'ID du fichier.',
   modpackWillCreate: 'Cela va créer',

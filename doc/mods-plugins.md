@@ -470,6 +470,35 @@ This is the path for packs that are only published as a client download, such as
 if its export does contain `manifest.json`, the panel reads NeoForge and 1.21.1 from it instead and
 leaves the server on `AUTO_CURSEFORGE`.
 
+### Client mods in an uploaded zip {#client-mod-review}
+
+A zip installed as a server pack or with `GENERIC_PACK` is unpacked exactly as it is, so the
+client-only mods that ship with a client pack land on the server too and often crash it on the
+first start. (`AUTO_CURSEFORGE` does not have this problem: the image applies its own list of
+~200 known client mods, and **Exclude mods** (`CF_EXCLUDE_MODS`) is the manual override.)
+
+For the archives nothing filters, **Review the mods** reads every jar under the archive's
+`mods/` folder and reports what each one says about the side it runs on:
+
+| Badge | Where it comes from |
+| --- | --- |
+| **Client only** / **Server only** / **Both sides** | the jar's own metadata |
+| **Known client mod** | the jar declares nothing, but the mod is on a known client-only list |
+| **Not declared** | nothing to go on |
+
+The split is not the panel being cautious, it is what the formats allow. Fabric and Quilt
+declare it: `fabric.mod.json` has an `environment` field (`"client"`, `"server"`, `"*"`) and
+`quilt.mod.json` has `minecraft.environment`. **Forge and NeoForge do not** — the `[[mods]]`
+block of `neoforge.mods.toml` has no side field at all, because the side lives in the code as
+`@Mod(dist = Dist.CLIENT)`. So for a Forge or NeoForge pack most jars come back as *Not
+declared*, and the known-mod list is the only signal there is. That list is a snapshot of the
+one [itzg's image ships](https://github.com/itzg/docker-minecraft-server/blob/master/files/cf-exclude-include.json),
+so it goes stale, which is why a match is a suggestion and never an automatic removal.
+
+Declared client mods and known ones start checked; *Not declared* jars start unchecked. Pressing
+**Write a copy without N mods** saves a `<pack>-server.zip` next to the original and points the
+server at it. The original upload is never modified, so a wrong call about a mod costs one click.
+
 ::: tip Not a CurseForge zip?
 Prism Launcher and MultiMC do not export CurseForge packs — they export Modrinth `.mrpack`. Use the
 [Modrinth modpack](#modrinth-modpacks) flow for those.
@@ -522,9 +551,16 @@ pack: downloads, likes, popularity rank, categories, every Minecraft version it 
 for, and the newest file with its release channel, size and date.
 
 ::: warning Packs that block automatic downloads
-Some authors opt their pack out of the CurseForge API. The dialog says so, because
-`AUTO_CURSEFORGE` cannot download those: the install fails partway through provisioning.
-Download the `.zip` yourself and upload it from the server's **Mods** tab instead.
+Some authors opt their pack out of the CurseForge API (`allowModDistribution: false`), and
+`AUTO_CURSEFORGE` cannot download those however they are referenced: URL, Slug and a file id
+all end in the same failure partway through provisioning.
+
+The panel flags it in three places so the failure never happens: the browser marks those packs
+in the result grid, the details dialog drops the URL/Slug choice and creates the server with the
+**File** method — landing you on its Mods tab to upload the `.zip` — and an existing server whose
+pack turns out to be blocked gets a warning in the Mods tab with a one-click switch to the File
+method. On an existing server the switch is a button rather than automatic: the flag is the
+author's and it does get turned back on, so a stale `false` must not rewrite a config that works.
 :::
 
 The modpack itself is always pinned to the file that was picked: a pack that updates on its

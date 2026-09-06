@@ -91,21 +91,26 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
     try {
       // Pinned to a file so the pack does not move on its own, and the Minecraft
       // version comes from that same file.
+      // A blocked pack cannot be downloaded by the image however it is referenced,
+      // so the server is created for the zip the user still has to upload. CF_SLUG
+      // only names the install in that method, which is why it is kept.
+      const method: "url" | "slug" | "file" = distributionBlocked ? "file" : installMethod;
       const config = {
         id: serverId,
         serverName: serverName || modpack.name,
         serverType: "AUTO_CURSEFORGE" as const,
-        cfMethod: installMethod,
-        cfUrl: installMethod === "url" ? (selectedFileId ? `${modpack.links.websiteUrl}/download/${selectedFileId}` : modpack.links.websiteUrl) : "",
-        cfSlug: installMethod === "slug" ? modpack.slug : "",
-        cfFile: installMethod === "slug" ? selectedFileId : "",
+        cfMethod: method,
+        cfUrl: method === "url" ? (selectedFileId ? `${modpack.links.websiteUrl}/download/${selectedFileId}` : modpack.links.websiteUrl) : "",
+        cfSlug: method === "url" ? "" : modpack.slug,
+        cfFile: method === "slug" ? selectedFileId : "",
         ...(detectedVersion ? { minecraftVersion: detectedVersion, dockerImage: getSuggestedJavaImage(detectedVersion) } : {}),
       };
 
       await createServer(config);
       mcToast.success(t("serverCreated"));
       onClose();
-      router.push(`/dashboard/servers/${serverId}`);
+      // The pack is still missing, so land on the tab that asks for it.
+      router.push(`/dashboard/servers/${serverId}${distributionBlocked ? "#mods" : ""}`);
     } catch (error) {
       console.error("Error creating server:", error);
       mcToast.error(t("errorCreatingServer"));
@@ -257,26 +262,34 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
                   <div>
                     <Label className="text-sm font-semibold text-white">{t("installationMethod")}</Label>
-                    <div className="mt-1 grid grid-cols-2 gap-2">
-                      {(["url", "slug"] as const).map((method) => (
-                        <Button
-                          key={method}
-                          type="button"
-                          size="sm"
-                          variant={installMethod === method ? "default" : "outline"}
-                          onClick={() => setInstallMethod(method)}
-                          className={installMethod === method ? "bg-emerald-600 hover:bg-emerald-500" : "border-gray-700 bg-gray-800 text-gray-300 hover:border-emerald-500 hover:bg-gray-700 hover:text-emerald-400"}
-                        >
-                          {method === "url" ? "URL" : "Slug"}
-                        </Button>
-                      ))}
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">{t("modpackInstallMethodHelp")}</p>
+                    {distributionBlocked ? (
+                      // URL and Slug both end in the same failed download, so they are
+                      // not offered rather than left there to be picked.
+                      <p className="mt-1 border border-amber-600/40 bg-amber-900/20 p-2 text-xs leading-relaxed text-amber-200">{t("modpackForcedFileMethod")}</p>
+                    ) : (
+                      <>
+                        <div className="mt-1 grid grid-cols-2 gap-2">
+                          {(["url", "slug"] as const).map((method) => (
+                            <Button
+                              key={method}
+                              type="button"
+                              size="sm"
+                              variant={installMethod === method ? "default" : "outline"}
+                              onClick={() => setInstallMethod(method)}
+                              className={installMethod === method ? "bg-emerald-600 hover:bg-emerald-500" : "border-gray-700 bg-gray-800 text-gray-300 hover:border-emerald-500 hover:bg-gray-700 hover:text-emerald-400"}
+                            >
+                              {method === "url" ? "URL" : "Slug"}
+                            </Button>
+                          ))}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{t("modpackInstallMethodHelp")}</p>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex gap-2">
-                    <Input value={installMethod === "url" ? modpack.links.websiteUrl : modpack.slug} readOnly className="border-gray-700 bg-gray-800 text-xs text-gray-400" />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(installMethod === "url" ? modpack.links.websiteUrl : modpack.slug, installMethod === "url" ? "URL" : "Slug")} className="border-emerald-600 text-emerald-400 hover:border-emerald-500 hover:bg-emerald-600/20 hover:text-emerald-300">
+                    <Input value={installMethod === "url" && !distributionBlocked ? modpack.links.websiteUrl : modpack.slug} readOnly className="border-gray-700 bg-gray-800 text-xs text-gray-400" />
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(installMethod === "url" && !distributionBlocked ? modpack.links.websiteUrl : modpack.slug, installMethod === "url" && !distributionBlocked ? "URL" : "Slug")} className="border-emerald-600 text-emerald-400 hover:border-emerald-500 hover:bg-emerald-600/20 hover:text-emerald-300">
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -288,7 +301,8 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                   <p className="mb-2 font-minecraft text-[11px] tracking-wide text-emerald-300">{t("modpackWillCreate")}</p>
                   <dl className="grid gap-1 text-xs">
                     <SummaryRow label={t("serverType")} value="AUTO_CURSEFORGE" />
-                    <SummaryRow label={t("fileName")} value={selectedFile?.fileName ?? "-"} />
+                    <SummaryRow label={t("installationMethod")} value={distributionBlocked ? t("methodFile") : installMethod === "url" ? t("methodUrl") : t("methodSlug")} />
+                    <SummaryRow label={t("fileName")} value={distributionBlocked ? "-" : (selectedFile?.fileName ?? "-")} />
                     <SummaryRow label={t("minecraftVersion")} value={detectedVersion ?? "-"} />
                     <SummaryRow label={t("dockerImage")} value={detectedVersion ? `itzg/minecraft-server:${getSuggestedJavaImage(detectedVersion)}` : "-"} />
                   </dl>

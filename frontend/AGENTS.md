@@ -171,6 +171,10 @@ Tooling / build (Next.js 16):
   Browse dialog and the templates page. Before it renders, the caller retries the query as an
   exact reference (`findModpackByQuery`), because CurseForge's fuzzy search and its slug lookup
   are different indexes.
+- `src/components/molecules/modpacks/ModpackClientModsPanel.tsx` - the client-mod review for an
+  uploaded archive. Shown only for archives the image unpacks as-is (`generic`, `server-pack`);
+  a CurseForge client pack is filtered by the image itself, so offering it there is noise.
+  Stripping writes a sibling copy and repoints the config field - it never edits the upload.
 - `src/components/molecules/modpacks/ModpackZipGuidance.tsx` - turns that inspection into the one
   action the archive actually needs: switch the server type, or pick a loader and version for a
   zip that declares none (`genericPack` -> `GENERIC_PACK`). It is the only place that rewrites

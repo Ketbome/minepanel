@@ -1437,6 +1437,28 @@ export const de: Record<TranslationKey, string> = {
   modpackGuidanceSwitchTo: 'Zu {type} wechseln',
   modpackUseUpload: 'Lieber eine Datei hochladen',
   modpackUseManualPath: 'Lieber einen Container-Pfad eingeben',
+  modsReviewTitle: 'Client-Mods',
+  modsReviewIntro:
+    'Eine so installierte Zip wird unverändert entpackt, also landen Client-Mods ebenfalls auf dem Server und können ihn beim Start abstürzen lassen. Das Panel kann jede Jar im Archiv lesen und sagen, welche nicht dorthin gehören.',
+  modsReviewAction: 'Mods prüfen',
+  modsReviewScanning: 'Jars werden gelesen...',
+  modsReviewNone: 'Dieses Archiv hat keinen mods-Ordner zum Prüfen.',
+  modsReviewCount: '{count} Mods · {client} wirken client-only',
+  modsReviewUndeclared:
+    'Forge und NeoForge halten die Seite nicht in den Mod-Metadaten fest, daher konnten {count} Jars nicht eingeordnet werden. Sie bleiben unmarkiert: Hake an, was du sicher als Client-Mod kennst, und lass den Rest.',
+  modsReviewTruncated:
+    'Es wurden nur die ersten Mods gelesen; das Archiv enthält mehr, als die Prüfung auflisten kann.',
+  modsSideClient: 'Nur Client',
+  modsSideKnownClient: 'Bekannter Client-Mod',
+  modsSideServer: 'Nur Server',
+  modsSideBoth: 'Beide Seiten',
+  modsSideUnknown: 'Nicht angegeben',
+  modsStripAction: 'Kopie ohne {count} Mods schreiben',
+  modsStripHint:
+    'Die Kopie liegt neben dem Original, das unangetastet bleibt, und der Server zeigt danach auf die Kopie.',
+  modsStripped: '{name} geschrieben und ausgewählt',
+  modsStripError: 'Die gefilterte Kopie konnte nicht geschrieben werden',
+  modsScanError: 'Die Mods in diesem Archiv konnten nicht gelesen werden',
 
   cfApiKey: 'CurseForge API-Schlüssel (CF_API_KEY)',
   cfApiKeyHelp:
@@ -1517,6 +1539,11 @@ export const de: Record<TranslationKey, string> = {
   modpackFileSize: 'Größe',
   modpackServerPack: 'Server-Pack',
   modpackNoDistribution: 'Der Autor hat automatische Downloads für dieses Modpack auf CurseForge gesperrt, die automatische Installation schlägt also fehl. Lade die .zip selbst herunter und lade sie im Mods-Tab des Servers hoch.',
+  modpackNoDistributionTitle: 'Dieses Pack blockiert automatische Downloads',
+  modpackNoDistributionShort: 'Manueller Download',
+  modpackSwitchToFile: 'Zur Methode Datei wechseln',
+  modpackForcedFileMethod:
+    'Bei diesem Pack enden URL und Slug im selben fehlgeschlagenen Download, deshalb wird der Server mit der Methode Datei angelegt. Lade die .zip in seinem Mods-Tab hoch, wo du direkt nach dem Anlegen landest.',
   modpackVersionToInstall: 'Zu installierende Version',
   modpackInstallMethodHelp: 'Beide installieren dasselbe Pack: URL nutzt die CurseForge-Seite, Slug den Pack-Bezeichner plus die Datei-ID.',
   modpackWillCreate: 'Damit wird erstellt',

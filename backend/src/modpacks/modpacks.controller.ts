@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, ParseFilePipeBuilder, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseFilePipeBuilder, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { AccessControlService } from 'src/users/services/access-control.service';
@@ -37,6 +37,23 @@ export class ModpacksController {
   async inspect(@Request() req, @Param('serverId') serverId: string, @Param('fileName') fileName: string) {
     await this.assertAccess(req, serverId, false);
     return this.modpacksService.inspect(serverId, fileName);
+  }
+
+  @Get(':fileName/mods')
+  async scanMods(@Request() req, @Param('serverId') serverId: string, @Param('fileName') fileName: string) {
+    await this.assertAccess(req, serverId, false);
+    return this.modpacksService.scanMods(serverId, fileName);
+  }
+
+  @Post(':fileName/strip')
+  async stripMods(@Request() req, @Param('serverId') serverId: string, @Param('fileName') fileName: string, @Body() body: { entries?: string[] }) {
+    await this.assertAccess(req, serverId, true);
+
+    if (!Array.isArray(body?.entries) || body.entries.some((entry) => typeof entry !== 'string')) {
+      throw new BadRequestException('entries must be a list of archive paths');
+    }
+
+    return this.modpacksService.stripMods(serverId, fileName, body.entries);
   }
 
   @Delete(':fileName')

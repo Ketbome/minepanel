@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import { inspectModpackArchive, ModpackInspection } from './modpack-inspector';
+import { copyArchiveWithout, ModpackModScan, scanModpackMods } from './modpack-mods';
 
 export interface ModpackFile {
   name: string;
@@ -73,14 +74,7 @@ export class ModpacksService {
   // Reading a modpack archive means loading it whole, so `list` stays cheap and
   // inspection is only done for the file the user actually picked.
   async inspect(serverId: string, fileName: string): Promise<ModpackInspection> {
-    const name = this.validateFileName(fileName);
-    const filePath = path.join(await this.getModpacksDir(serverId), name);
-
-    if (!(await fs.pathExists(filePath))) {
-      throw new NotFoundException(`Modpack ${name} not found`);
-    }
-
-    return inspectModpackArchive(filePath);
+    return inspectModpackArchive(await this.resolveFilePath(serverId, fileName));
   }
 
   async remove(serverId: string, fileName: string): Promise<void> {
@@ -93,6 +87,50 @@ export class ModpacksService {
 
     await fs.remove(filePath);
     this.logger.log(`Removed modpack ${name} from server ${serverId}`);
+  }
+
+  // Reading every mod jar is the slowest thing this service does, so it only
+  // happens when the user asks to review a specific archive.
+  async scanMods(serverId: string, fileName: string): Promise<ModpackModScan> {
+    return scanModpackMods(await this.resolveFilePath(serverId, fileName));
+  }
+
+  /**
+   * Writes a sibling archive without the given entries and returns it. The
+   * original stays put, so a wrong call about a mod's side is one click back.
+   */
+  async stripMods(serverId: string, fileName: string, entries: string[]): Promise<InspectedModpackFile> {
+    if (entries.length === 0) {
+      throw new BadRequestException('No mods selected');
+    }
+
+    const source = await this.resolveFilePath(serverId, fileName);
+    const strippedName = this.validateFileName(fileName.replace(/\.zip$/i, '-server.zip'));
+    const buffer = copyArchiveWithout(source, new Set(entries));
+
+    const dir = await this.getModpacksDir(serverId);
+    await fs.writeFile(path.join(dir, strippedName), buffer);
+    this.logger.log(`Wrote ${strippedName} for server ${serverId} without ${entries.length} mods`);
+
+    const stats = await fs.stat(path.join(dir, strippedName));
+    return {
+      name: strippedName,
+      size: stats.size,
+      modified: stats.mtime,
+      containerPath: `/modpacks/${strippedName}`,
+      inspection: inspectModpackArchive(buffer),
+    };
+  }
+
+  private async resolveFilePath(serverId: string, fileName: string): Promise<string> {
+    const name = this.validateFileName(fileName);
+    const filePath = path.join(await this.getModpacksDir(serverId), name);
+
+    if (!(await fs.pathExists(filePath))) {
+      throw new NotFoundException(`Modpack ${name} not found`);
+    }
+
+    return filePath;
   }
 
   private async getModpacksDir(serverId: string): Promise<string> {

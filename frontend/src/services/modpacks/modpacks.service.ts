@@ -33,6 +33,28 @@ export interface UploadedModpackFile extends ModpackFile {
   inspection: ModpackInspection;
 }
 
+/**
+ * - `client` / `server` / `both`: the jar declares it (Fabric and Quilt only)
+ * - `known-client`: undeclared, but the mod is on the known client-only list
+ * - `unknown`: nothing to go on; Forge and NeoForge keep the side in bytecode
+ */
+export type ModSide = "client" | "server" | "both" | "known-client" | "unknown";
+
+export interface ModJarInfo {
+  entry: string;
+  fileName: string;
+  size: number;
+  modId?: string;
+  name?: string;
+  loader?: ModpackLoader;
+  side: ModSide;
+}
+
+export interface ModpackModScan {
+  mods: ModJarInfo[];
+  truncated: boolean;
+}
+
 export const modpacksService = {
   async list(serverId: string): Promise<ModpackFile[]> {
     const { data } = await api.get(`/servers/${serverId}/modpacks`);
@@ -57,6 +79,16 @@ export const modpacksService = {
 
   async inspect(serverId: string, fileName: string): Promise<ModpackInspection> {
     const { data } = await api.get(`/servers/${serverId}/modpacks/${encodeURIComponent(fileName)}/inspect`);
+    return data;
+  },
+
+  async scanMods(serverId: string, fileName: string): Promise<ModpackModScan> {
+    const { data } = await api.get(`/servers/${serverId}/modpacks/${encodeURIComponent(fileName)}/mods`);
+    return data;
+  },
+
+  async stripMods(serverId: string, fileName: string, entries: string[]): Promise<UploadedModpackFile> {
+    const { data } = await api.post(`/servers/${serverId}/modpacks/${encodeURIComponent(fileName)}/strip`, { entries });
     return data;
   },
 

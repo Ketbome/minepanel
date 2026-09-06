@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowUpCircle, ExternalLink, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowUpCircle, ExternalLink, FileArchive, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -172,6 +172,19 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
   )[0];
   const updateAvailable = Boolean(fileId && newestRelease && String(newestRelease.id) !== fileId);
 
+  // `allowModDistribution` is the author's switch on CurseForge; the panel only
+  // reports it while the method still depends on CurseForge serving the file.
+  const distributionBlocked = modpack?.allowModDistribution === false && method !== 'file';
+
+  // Not done on its own: the flag flips when an author changes their mind, and
+  // rewriting a working config from a stale `false` is worse than one click.
+  const switchToFileMethod = () => {
+    updateConfig('cfMethod', 'file');
+    // CF_SLUG only names the install in this method, and the resolved pack is
+    // the best name available for it.
+    if (ref && !config.cfSlug) updateConfig('cfSlug', ref);
+  };
+
   const methodOptions: Array<{ value: CfMethod; label: string; description: string }> = [
     { value: 'url', label: t('methodUrl'), description: t('installFromUrl') },
     { value: 'slug', label: t('methodSlug'), description: t('useIdSlug') },
@@ -239,6 +252,22 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
         ))}
       </div>
 
+      {/* The image cannot download a pack whose author opted out, whatever it is
+          referenced by, so the only way through is a zip the user supplies. */}
+      {distributionBlocked && (
+        <div className="space-y-2 border-2 border-amber-500/40 bg-amber-900/15 p-3">
+          <p className="flex items-center gap-2 font-minecraft text-xs text-amber-300">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            {t('modpackNoDistributionTitle')}
+          </p>
+          <p className="text-[11px] leading-relaxed text-amber-100/80">{t('modpackNoDistribution')}</p>
+          <Button type="button" onClick={switchToFileMethod} className="h-9 font-minecraft text-xs">
+            <FileArchive className="mr-1.5 h-3.5 w-3.5" />
+            {t('modpackSwitchToFile')}
+          </Button>
+        </div>
+      )}
+
       {method === 'file' ? (
         <div className="space-y-2 border-2 border-[var(--mc-frame)] bg-gray-900/50 p-3">
           <Label className="text-gray-200 font-minecraft text-xs flex items-center gap-2">
@@ -252,7 +281,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             onInspection={setZipInspection}
             accept=".zip"
           />
-          <ModpackZipGuidance inspection={zipInspection} containerPath={config.cfModpackZip} config={config} updateConfig={updateConfig} />
+          <ModpackZipGuidance serverId={serverId} inspection={zipInspection} containerPath={config.cfModpackZip} config={config} updateConfig={updateConfig} />
         </div>
       ) : isManual ? (
         <div className="space-y-3">

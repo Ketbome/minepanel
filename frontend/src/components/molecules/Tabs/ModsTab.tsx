@@ -342,7 +342,7 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
               ) : (
                 <>
                   <ModpackFilePicker serverId={serverId} value={config.cfServerMod} onChange={(containerPath) => updateConfig("cfServerMod", containerPath)} onInspection={setServerModInspection} accept=".zip" />
-                  <ModpackZipGuidance inspection={serverModInspection} containerPath={config.cfServerMod} config={config} updateConfig={updateConfig} />
+                  <ModpackZipGuidance serverId={serverId} inspection={serverModInspection} containerPath={config.cfServerMod} config={config} updateConfig={updateConfig} />
                 </>
               )}
 
