@@ -22,7 +22,7 @@ services:
       - NODE_ENV=production
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET} # Required. Generate with: openssl rand -base64 32
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-2d}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-}
       - ALLOW_INSECURE_AUTH_COOKIES=${ALLOW_INSECURE_AUTH_COOKIES:-false}
       - BASE_DIR=${BASE_DIR:-$PWD}
       - COMPOSE_PROJECT=${COMPOSE_PROJECT:-}

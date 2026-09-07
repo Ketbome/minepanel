@@ -83,7 +83,7 @@ Runs on `http://localhost:3000`
 FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
 # Generate a strong random secret: openssl rand -base64 32
 JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRES_IN=2d # Access token expiration (use 20s to test refresh flow)
+# JWT_EXPIRES_IN=20s # Deprecated override of the 15m access token TTL; only useful to test the refresh flow
 SMTP_HOST= # Optional: SMTP host for password recovery
 SMTP_PORT=587
 SMTP_SECURE=false
