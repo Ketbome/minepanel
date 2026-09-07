@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Like, Repository } from 'typeorm';
+import { IsNull, LessThan, Like, MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
@@ -159,7 +159,7 @@ export class AuthService {
     if (stored) return stored;
 
     const legacy = await this.refreshTokenRepo.find({
-      where: { token: Like('$2%'), revoked: false },
+      where: { token: Like('$2%'), revoked: false, expiresAt: MoreThan(new Date()) },
       relations: { user: true },
     });
     for (const row of legacy) {
@@ -169,7 +169,7 @@ export class AuthService {
     return null;
   }
 
-  async validateRefreshToken(token: string): Promise<PayloadToken | null> {
+  async refreshSession(token: string) {
     const storedToken = await this.findRefreshToken(token);
     if (!storedToken) return null;
 
@@ -188,11 +188,21 @@ export class AuthService {
     const graceEnd = new Date(Math.min(storedToken.expiresAt.getTime(), Date.now() + ROTATION_GRACE_MS));
     await this.refreshTokenRepo.update(storedToken.id, { expiresAt: graceEnd });
 
-    return {
+    const tokens = await this.generateJwt({
       userId: storedToken.user.id,
       username: storedToken.user.username,
       role: storedToken.user.role,
-    };
+    });
+
+    // A password reset that ran between the lookup and the save above revoked
+    // every token of this user; the pair we just issued must not outlive it.
+    const current = await this.refreshTokenRepo.findOne({ where: { id: storedToken.id } });
+    if (!current || current.revoked) {
+      await this.refreshTokenRepo.update({ token: this.hashToken(tokens.refresh_token) }, { revoked: true });
+      return null;
+    }
+
+    return tokens;
   }
 
   async revokeRefreshToken(token: string): Promise<void> {

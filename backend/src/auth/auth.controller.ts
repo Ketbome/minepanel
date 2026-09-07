@@ -132,6 +132,8 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 20, ttl: seconds(60) } })
+  @UseGuards(ThrottlerGuard)
   @Post('refresh')
   async refresh(
     @Req() req: Request,
@@ -143,15 +145,14 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token is required');
     }
 
-    const user = await this.authService.validateRefreshToken(refreshToken);
-    if (!user) {
+    const tokens = await this.authService.refreshSession(refreshToken);
+    if (!tokens) {
       // Clear invalid cookies
       res.clearCookie('access_token');
       res.clearCookie('refresh_token');
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    const tokens = await this.authService.generateJwt(user);
     setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 
     return {

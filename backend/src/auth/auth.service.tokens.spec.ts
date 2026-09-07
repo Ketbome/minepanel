@@ -68,44 +68,59 @@ describe('AuthService tokens, recovery and invitations', () => {
     expect(admin.expires_in).toBe(900);
   });
 
-  it('validateRefreshToken rotates a valid token and rejects expired or inactive ones', async () => {
+  it('refreshSession rotates a valid token and rejects expired or inactive ones', async () => {
     const future = new Date(Date.now() + 10 * 60_000);
     const past = new Date(Date.now() - 10_000);
     const bob = { id: 2, username: 'bob', role: 'USER', isActive: true };
-    refreshRepo.findOne.mockResolvedValue({ id: 2, token: sha256('mine'), expiresAt: future, user: bob });
-    expect(await service.validateRefreshToken('mine')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 2, token: sha256('mine'), expiresAt: future, user: bob }).mockResolvedValueOnce({ id: 2, revoked: false });
+    expect(await service.refreshSession('mine')).toMatchObject({ access_token: 'access', username: 'bob', expires_in: 900 });
     expect(refreshRepo.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { token: sha256('mine'), revoked: false } }));
     expect(refreshRepo.find).not.toHaveBeenCalled();
     const graceEnd = refreshRepo.update.mock.calls[0][1].expiresAt as Date;
     expect(refreshRepo.update).toHaveBeenCalledWith(2, { expiresAt: graceEnd });
     expect(graceEnd.getTime()).toBeGreaterThan(Date.now());
     expect(graceEnd.getTime()).toBeLessThanOrEqual(Date.now() + 60_000);
+    expect(refreshRepo.save).toHaveBeenCalledWith(expect.objectContaining({ userId: 2, revoked: false }));
 
     // A token about to expire is not extended by the grace window.
     const soon = new Date(Date.now() + 5_000);
-    refreshRepo.findOne.mockResolvedValue({ id: 5, token: sha256('soon'), expiresAt: soon, user: bob });
-    expect(await service.validateRefreshToken('soon')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
-    expect(refreshRepo.update).toHaveBeenLastCalledWith(5, { expiresAt: soon });
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 5, token: sha256('soon'), expiresAt: soon, user: bob }).mockResolvedValueOnce({ id: 5, revoked: false });
+    expect(await service.refreshSession('soon')).toMatchObject({ username: 'bob' });
+    expect(refreshRepo.update).toHaveBeenCalledWith(5, { expiresAt: soon });
 
-    refreshRepo.findOne.mockResolvedValue({ id: 3, token: sha256('old'), expiresAt: past, user: { isActive: true } });
-    expect(await service.validateRefreshToken('old')).toBeNull();
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 3, token: sha256('old'), expiresAt: past, user: { isActive: true } });
+    expect(await service.refreshSession('old')).toBeNull();
     expect(refreshRepo.update).toHaveBeenLastCalledWith(3, { revoked: true });
 
-    refreshRepo.findOne.mockResolvedValue({ id: 4, token: sha256('dis'), expiresAt: future, user: { isActive: false } });
-    expect(await service.validateRefreshToken('dis')).toBeNull();
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 4, token: sha256('dis'), expiresAt: future, user: { isActive: false } });
+    expect(await service.refreshSession('dis')).toBeNull();
 
-    refreshRepo.findOne.mockResolvedValue(null);
-    expect(await service.validateRefreshToken('unknown')).toBeNull();
+    refreshRepo.findOne.mockResolvedValueOnce(null);
+    expect(await service.refreshSession('unknown')).toBeNull();
   });
 
-  it('validateRefreshToken still accepts tokens stored with bcrypt before the sha256 switch', async () => {
+  it('refreshSession revokes the pair it issued when a password reset raced the rotation', async () => {
+    const future = new Date(Date.now() + 10 * 60_000);
+    const bob = { id: 2, username: 'bob', role: 'USER', isActive: true };
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 2, token: sha256('mine'), expiresAt: future, user: bob }).mockResolvedValueOnce({ id: 2, revoked: true });
+    expect(await service.refreshSession('mine')).toBeNull();
+    const issued = refreshRepo.save.mock.calls[0][0].token;
+    expect(refreshRepo.update).toHaveBeenLastCalledWith({ token: issued }, { revoked: true });
+
+    // The cleanup of a concurrent save may already have deleted the revoked row.
+    refreshRepo.findOne.mockResolvedValueOnce({ id: 2, token: sha256('mine'), expiresAt: future, user: bob }).mockResolvedValueOnce(null);
+    expect(await service.refreshSession('mine')).toBeNull();
+  });
+
+  it('refreshSession still accepts tokens stored with bcrypt before the sha256 switch', async () => {
     const future = new Date(Date.now() + 10 * 60_000);
     refreshRepo.find.mockResolvedValue([
       { id: 1, token: 'hashed:other', expiresAt: future, user: { id: 1, isActive: true } },
       { id: 2, token: 'hashed:mine', expiresAt: future, user: { id: 2, username: 'bob', role: 'USER', isActive: true } },
     ]);
-    expect(await service.validateRefreshToken('mine')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
-    expect(refreshRepo.find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ revoked: false }) }));
+    refreshRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 2, revoked: false });
+    expect(await service.refreshSession('mine')).toMatchObject({ username: 'bob' });
+    expect(refreshRepo.find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ revoked: false, expiresAt: expect.anything() }) }));
     expect(refreshRepo.update).toHaveBeenCalledWith(2, expect.objectContaining({ expiresAt: expect.any(Date) }));
   });
 
