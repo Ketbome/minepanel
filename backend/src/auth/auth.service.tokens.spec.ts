@@ -43,7 +43,7 @@ describe('AuthService tokens, recovery and invitations', () => {
     };
     audit = { record: jest.fn().mockResolvedValue(undefined) };
     instanceSettings = { getOidc: jest.fn().mockResolvedValue({ enabled: true, providerName: 'Authentik', disablePasswordLogin: true }) };
-    refreshRepo = { delete: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), find: jest.fn().mockResolvedValue([]), update: jest.fn().mockResolvedValue(undefined) };
+    refreshRepo = { delete: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null), update: jest.fn().mockResolvedValue(undefined) };
     resetRepo = { update: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), findOne: jest.fn(), manager: { save: jest.fn().mockResolvedValue(undefined) } };
 
     service = new AuthService(jwtService as any, usersService as any, configService as any, authMail as any, audit as any, instanceSettings as any, refreshRepo as any, resetRepo as any);
@@ -69,30 +69,54 @@ describe('AuthService tokens, recovery and invitations', () => {
   });
 
   it('validateRefreshToken rotates a valid token and rejects expired or inactive ones', async () => {
-    const future = new Date(Date.now() + 10_000);
+    const future = new Date(Date.now() + 10 * 60_000);
     const past = new Date(Date.now() - 10_000);
+    const bob = { id: 2, username: 'bob', role: 'USER', isActive: true };
+    refreshRepo.findOne.mockResolvedValue({ id: 2, token: sha256('mine'), expiresAt: future, user: bob });
+    expect(await service.validateRefreshToken('mine')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
+    expect(refreshRepo.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { token: sha256('mine'), revoked: false } }));
+    expect(refreshRepo.find).not.toHaveBeenCalled();
+    const graceEnd = refreshRepo.update.mock.calls[0][1].expiresAt as Date;
+    expect(refreshRepo.update).toHaveBeenCalledWith(2, { expiresAt: graceEnd });
+    expect(graceEnd.getTime()).toBeGreaterThan(Date.now());
+    expect(graceEnd.getTime()).toBeLessThanOrEqual(Date.now() + 60_000);
+
+    // A token about to expire is not extended by the grace window.
+    const soon = new Date(Date.now() + 5_000);
+    refreshRepo.findOne.mockResolvedValue({ id: 5, token: sha256('soon'), expiresAt: soon, user: bob });
+    expect(await service.validateRefreshToken('soon')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
+    expect(refreshRepo.update).toHaveBeenLastCalledWith(5, { expiresAt: soon });
+
+    refreshRepo.findOne.mockResolvedValue({ id: 3, token: sha256('old'), expiresAt: past, user: { isActive: true } });
+    expect(await service.validateRefreshToken('old')).toBeNull();
+    expect(refreshRepo.update).toHaveBeenLastCalledWith(3, { revoked: true });
+
+    refreshRepo.findOne.mockResolvedValue({ id: 4, token: sha256('dis'), expiresAt: future, user: { isActive: false } });
+    expect(await service.validateRefreshToken('dis')).toBeNull();
+
+    refreshRepo.findOne.mockResolvedValue(null);
+    expect(await service.validateRefreshToken('unknown')).toBeNull();
+  });
+
+  it('validateRefreshToken still accepts tokens stored with bcrypt before the sha256 switch', async () => {
+    const future = new Date(Date.now() + 10 * 60_000);
     refreshRepo.find.mockResolvedValue([
       { id: 1, token: 'hashed:other', expiresAt: future, user: { id: 1, isActive: true } },
       { id: 2, token: 'hashed:mine', expiresAt: future, user: { id: 2, username: 'bob', role: 'USER', isActive: true } },
     ]);
     expect(await service.validateRefreshToken('mine')).toEqual({ userId: 2, username: 'bob', role: 'USER' });
-    expect(refreshRepo.update).toHaveBeenCalledWith(2, { revoked: true });
-
-    refreshRepo.find.mockResolvedValue([{ id: 3, token: 'hashed:old', expiresAt: past, user: { isActive: true } }]);
-    expect(await service.validateRefreshToken('old')).toBeNull();
-    expect(refreshRepo.update).toHaveBeenLastCalledWith(3, { revoked: true });
-
-    refreshRepo.find.mockResolvedValue([{ id: 4, token: 'hashed:dis', expiresAt: future, user: { isActive: false } }]);
-    expect(await service.validateRefreshToken('dis')).toBeNull();
-
-    expect(await service.validateRefreshToken('unknown')).toBeNull();
+    expect(refreshRepo.find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ revoked: false }) }));
+    expect(refreshRepo.update).toHaveBeenCalledWith(2, expect.objectContaining({ expiresAt: expect.any(Date) }));
   });
 
   it('revokeRefreshToken revokes only the matching token', async () => {
-    refreshRepo.find.mockResolvedValue([{ id: 1, token: 'hashed:a' }, { id: 2, token: 'hashed:b' }]);
+    refreshRepo.findOne.mockResolvedValue({ id: 2, token: sha256('b') });
     await service.revokeRefreshToken('b');
     expect(refreshRepo.update).toHaveBeenCalledTimes(1);
     expect(refreshRepo.update).toHaveBeenCalledWith(2, { revoked: true });
+
+    refreshRepo.findOne.mockResolvedValue(null);
+    refreshRepo.find.mockResolvedValue([{ id: 1, token: 'hashed:a' }]);
     await service.revokeRefreshToken('zzz');
     expect(refreshRepo.update).toHaveBeenCalledTimes(1);
   });

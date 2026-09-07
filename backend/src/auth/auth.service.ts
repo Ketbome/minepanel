@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Repository } from 'typeorm';
+import { IsNull, LessThan, Like, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { PayloadToken } from './models/token.model';
@@ -14,6 +14,10 @@ import { AuthMailService } from './auth-mail.service';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 import { AuditLogService } from 'src/users/services/audit-log.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+
+// A rotated refresh token stays usable this long so concurrent refreshes
+// (two tabs, a restored browser session) don't invalidate each other.
+const ROTATION_GRACE_MS = 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -127,7 +131,6 @@ export class AuthService {
 
   private async createRefreshToken(userId: number): Promise<string> {
     const token = randomBytes(32).toString('hex');
-    const hashedToken = await bcrypt.hash(token, 10);
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
@@ -137,7 +140,7 @@ export class AuthService {
 
     await this.refreshTokenRepo.save({
       userId,
-      token: hashedToken,
+      token: this.hashToken(token),
       expiresAt,
       revoked: false,
     });
@@ -145,48 +148,57 @@ export class AuthService {
     return token;
   }
 
-  async validateRefreshToken(token: string): Promise<PayloadToken | null> {
-    const tokens = await this.refreshTokenRepo.find({
-      where: { revoked: false },
+  // The token is 256 random bits, so a plain sha256 is enough at rest and lets a
+  // refresh look its row up directly. Rows written before this change hold a
+  // bcrypt hash and can only be matched by comparing each one.
+  private async findRefreshToken(token: string): Promise<RefreshToken | null> {
+    const stored = await this.refreshTokenRepo.findOne({
+      where: { token: this.hashToken(token), revoked: false },
       relations: { user: true },
     });
+    if (stored) return stored;
 
-    for (const storedToken of tokens) {
-      const isValid = await bcrypt.compare(token, storedToken.token);
-      
-      if (isValid) {
-        if (storedToken.expiresAt < new Date()) {
-          await this.refreshTokenRepo.update(storedToken.id, { revoked: true });
-          return null;
-        }
-
-        if (!storedToken.user?.isActive) {
-          return null;
-        }
-
-        // Revoke old token (rotation)
-        await this.refreshTokenRepo.update(storedToken.id, { revoked: true });
-
-        return {
-          userId: storedToken.user.id,
-          username: storedToken.user.username,
-          role: storedToken.user.role,
-        };
-      }
+    const legacy = await this.refreshTokenRepo.find({
+      where: { token: Like('$2%'), revoked: false },
+      relations: { user: true },
+    });
+    for (const row of legacy) {
+      if (await bcrypt.compare(token, row.token)) return row;
     }
 
     return null;
   }
 
-  async revokeRefreshToken(token: string): Promise<void> {
-    const tokens = await this.refreshTokenRepo.find({ where: { revoked: false } });
+  async validateRefreshToken(token: string): Promise<PayloadToken | null> {
+    const storedToken = await this.findRefreshToken(token);
+    if (!storedToken) return null;
 
-    for (const storedToken of tokens) {
-      const isValid = await bcrypt.compare(token, storedToken.token);
-      if (isValid) {
-        await this.refreshTokenRepo.update(storedToken.id, { revoked: true });
-        return;
-      }
+    if (storedToken.expiresAt < new Date()) {
+      await this.refreshTokenRepo.update(storedToken.id, { revoked: true });
+      return null;
+    }
+
+    if (!storedToken.user?.isActive) {
+      return null;
+    }
+
+    // Rotate: let the old token expire after a short grace window instead of
+    // revoking it outright, otherwise a second refresh racing with this one
+    // fails and clears the cookies the first one just set.
+    const graceEnd = new Date(Math.min(storedToken.expiresAt.getTime(), Date.now() + ROTATION_GRACE_MS));
+    await this.refreshTokenRepo.update(storedToken.id, { expiresAt: graceEnd });
+
+    return {
+      userId: storedToken.user.id,
+      username: storedToken.user.username,
+      role: storedToken.user.role,
+    };
+  }
+
+  async revokeRefreshToken(token: string): Promise<void> {
+    const storedToken = await this.findRefreshToken(token);
+    if (storedToken) {
+      await this.refreshTokenRepo.update(storedToken.id, { revoked: true });
     }
   }
 

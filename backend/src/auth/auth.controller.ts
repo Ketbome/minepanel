@@ -1,4 +1,4 @@
-import { Controller, Post, Body, ForbiddenException, UnauthorizedException, UseGuards, Res, Req, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, ForbiddenException, HttpCode, HttpStatus, UnauthorizedException, UseGuards, Res, Req, Get, Param } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -131,6 +131,7 @@ export class AuthController {
   }
 
   @Public()
+  @HttpCode(HttpStatus.OK)
   @Post('refresh')
   async refresh(
     @Req() req: Request,

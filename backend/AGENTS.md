@@ -228,6 +228,7 @@ General:
 - If API contract changes, update frontend usage and docs in `doc/`.
 - Backend auth is private-by-default through a global JWT guard; only explicitly `@Public()` routes should bypass auth.
 - Keep auth transport limited to `httpOnly` cookies and bearer headers; never add JWT support via query params.
+- Refresh tokens are stored as sha256 (`auth.service.ts`, `findRefreshToken`) and looked up by hash; rows from before that switch hold a bcrypt hash and are matched by comparison until they expire. Rotation does not revoke the old token, it shortens its `expiresAt` to a 60s grace window so two concurrent refreshes (two tabs) don't log the session out. Only logout and password reset revoke immediately.
 - `POST /servers/autoscale` (`src/server-management/auto-scale.controller.ts`) is the only `@Public()` route that controls servers. It is off unless `MC_PROXY_AUTOSCALE_TOKEN` is set, authenticates mc-router with a constant-time bearer comparison, and must keep accepting only servers present in `routes.json`.
 - Optional SSO is OpenID Connect via `auth/oidc/*` (provider-agnostic; configured by `OIDC_*` env in `config.ts`). It validates the IdP `id_token` then issues the same Minepanel session cookies via `auth/utils/auth-cookies.ts`; the `client_secret` stays server-side and is never exposed. `OIDC_DISABLE_PASSWORD_LOGIN=true` blocks password login server-side (only when SSO is fully configured).
 

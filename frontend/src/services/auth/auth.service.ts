@@ -200,8 +200,8 @@ export const logout = async () => {
 
 export const refreshToken = async (): Promise<boolean> => {
   try {
-    const response = await api.post("/auth/refresh", {}, { withCredentials: true });
-    return response.status === 200;
+    await api.post("/auth/refresh", {}, { withCredentials: true });
+    return true;
   } catch (error) {
     console.error("Error refreshing token:", error);
     return false;
