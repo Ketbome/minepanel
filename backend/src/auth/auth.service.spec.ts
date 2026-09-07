@@ -182,11 +182,10 @@ describe('AuthService', () => {
   describe('generateJwt', () => {
     it('should return access token, refresh token, username and expires_in', async () => {
       const mockAccessToken = 'jwt.access.token';
-      const mockHashedToken = 'hashed.refresh.token';
-      
+      const mockHashedToken = 'hashed-reset-token';
+
       jwtService.sign.mockReturnValue(mockAccessToken);
       jwtService.decode.mockReturnValue({ iat: 100, exp: 120 } as any);
-      (bcrypt.hash as jest.Mock).mockResolvedValue(mockHashedToken);
       refreshTokenRepo.save.mockResolvedValue({} as any);
 
       const payload: PayloadToken = {

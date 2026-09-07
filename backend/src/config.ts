@@ -190,7 +190,7 @@ const dataHostDir = detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 
 
 export default () => ({
   jwtSecret: process.env.JWT_SECRET,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2d',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   jwtIssuer: process.env.JWT_ISSUER || 'minepanel',
   jwtAudience: process.env.JWT_AUDIENCE || 'minepanel-users',
   frontendUrl: process.env.FRONTEND_URL,

@@ -28,7 +28,7 @@ describe('AuthController', () => {
       generateJwt: jest.fn(),
       getSetupStatus: jest.fn(),
       createInitialAdmin: jest.fn(),
-      validateRefreshToken: jest.fn(),
+      refreshSession: jest.fn(),
       revokeRefreshToken: jest.fn(),
       createPasswordReset: jest.fn(),
       resetPassword: jest.fn(),
@@ -245,11 +245,9 @@ describe('AuthController', () => {
 
   describe('refresh', () => {
     it('should return new tokens when refresh token is valid', async () => {
-      const mockPayload = { userId: 1, username: 'admin', role: 'ADMIN' };
       mockRequest.cookies = { refresh_token: 'valid.refresh.token' };
 
-      authService.validateRefreshToken.mockResolvedValue(mockPayload);
-      authService.generateJwt.mockResolvedValue({
+      authService.refreshSession.mockResolvedValue({
         access_token: 'new.access.token',
         refresh_token: 'new.refresh.token',
         username: 'admin',
@@ -273,7 +271,7 @@ describe('AuthController', () => {
 
     it('should clear cookies and throw when refresh token is invalid', async () => {
       mockRequest.cookies = { refresh_token: 'invalid.token' };
-      authService.validateRefreshToken.mockResolvedValue(null);
+      authService.refreshSession.mockResolvedValue(null);
 
       await expect(controller.refresh(mockRequest as Request, mockResponse as Response)).rejects.toThrow(UnauthorizedException);
 

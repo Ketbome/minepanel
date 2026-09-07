@@ -28,7 +28,7 @@ import { SettingsModule } from 'src/settings/settings.module';
         return {
           secret: configService.get('jwtSecret'),
           signOptions: {
-            expiresIn: configService.get('jwtExpiresIn') || '2d',
+            expiresIn: configService.get('jwtExpiresIn') || '15m',
             issuer: configService.get('jwtIssuer'),
             audience: configService.get('jwtAudience'),
           },

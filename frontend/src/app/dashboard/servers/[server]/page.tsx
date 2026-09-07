@@ -23,9 +23,9 @@ export default function ServerConfig() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/");
-    }
+    isAuthenticated().then((authenticated) => {
+      if (!authenticated) router.push("/");
+    });
   }, [router]);
 
   const handleClearServerData = useCallback(async () => {

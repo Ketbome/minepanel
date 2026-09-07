@@ -38,7 +38,7 @@ to edit `docker-compose.yml` to enable them — just add the variables to `.env`
 
 | Variable          | Default | Description    |
 | ----------------- | ------- | -------------- |
-| `JWT_EXPIRES_IN` | `2d` | Access token expiration (`20s`, `15m`, `1h`, `2d`) |
+| `JWT_EXPIRES_IN` | `15m` | **Deprecated.** Overrides the access token TTL (`20s`, `1h`, `2d`). Sessions already stay alive through the 7-day refresh token, renewed on every use, so leave it unset; the backend logs a warning when it is set and the variable will be removed in a future release |
 | `ALLOW_INSECURE_AUTH_COOKIES` | `false` | Set `true` only for HTTP/LAN access when browsers block auth cookies |
 
 Minepanel no longer uses default credentials from environment variables. The first visit to the panel opens a setup screen where you create the initial admin account.
