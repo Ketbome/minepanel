@@ -7,7 +7,7 @@ skills-lock.json
 .agents/
 .claude/*
 !.claude/settings.json
-servers/
+/servers/
 .playwright-mcp/
 .superpowers
 docs/
