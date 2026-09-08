@@ -16,7 +16,7 @@ Want to contribute or run locally? Here's how.
 
 ## What you need
 
-- Node.js 22+ and pnpm 10 (`corepack enable`)
+- Node.js 24+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose
 - Git
 
@@ -53,7 +53,7 @@ minepanel/
 
 ## Run locally
 
-The repo is a pnpm workspace (`backend` + `frontend`). Requirements: Node 22+ and
+The repo is a pnpm workspace (`backend` + `frontend`). Requirements: Node 24+ and
 pnpm 10 (`corepack enable`). `pnpm install` at the root installs both apps and the
 git hooks.
 
