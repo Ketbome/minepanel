@@ -39,7 +39,7 @@ service in the root compose file.
 The repo is a pnpm workspace (`pnpm-workspace.yaml`: `backend`, `frontend`, `doc`). `doc/`
 is built by Cloudflare Workers Builds from its own directory; it keeps `doc/package-lock.json`
 so an npm-based build still works, and its `vite` override is mirrored in the root
-`pnpm.overrides` (pnpm ignores overrides declared in non-root packages). Node 22+, pnpm 10 via corepack.
+`pnpm.overrides` (pnpm ignores overrides declared in non-root packages). Node 24+, pnpm 10 via corepack.
 Filter packages by path (`--filter ./backend`), never by name: the frontend package is
 named `minepanel`, and a name filter that matches nothing exits 0 without running anything.
 

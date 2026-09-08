@@ -14,7 +14,7 @@ Don't be a jerk. That's it.
 
 ## What you need
 
-- Node.js 22+ and pnpm 10 (`corepack enable`)
+- Node.js 24+ and pnpm 10 (`corepack enable`)
 - Docker & Docker Compose v2.0+
 - Git
 - Any code editor (VS Code works great)
@@ -52,7 +52,7 @@ Don't be a jerk. That's it.
 ## Running locally
 
 The repo is a pnpm workspace (`backend` + `frontend`); `pnpm install` at the root
-installs both and the git hooks. Node 22+ and pnpm 10 (`corepack enable`).
+installs both and the git hooks. Node 24+ and pnpm 10 (`corepack enable`).
 
 ### Backend
 
