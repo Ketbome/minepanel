@@ -4,6 +4,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as archiver from 'archiver';
 
+const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 export interface FileItem {
   name: string;
   path: string;
@@ -33,6 +35,11 @@ export class FilesService {
       return path.join(this.SERVERS_DIR, '.world', 'worlds');
     }
 
+    // serverId is a decoded route param ("..%2F" arrives as "../"), so it must never shape the base path
+    if (!SERVER_ID_PATTERN.test(serverId)) {
+      throw new BadRequestException('Invalid server id');
+    }
+
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
@@ -41,8 +48,8 @@ export class FilesService {
     const fullPath = path.join(basePath, filePath || '');
     const normalized = path.normalize(fullPath);
 
-    // Prevent path traversal attacks
-    if (!normalized.startsWith(basePath)) {
+    // Prevent path traversal attacks; the separator keeps siblings like "servers-old" out
+    if (normalized !== basePath && !normalized.startsWith(basePath + path.sep)) {
       throw new BadRequestException('Invalid path');
     }
 

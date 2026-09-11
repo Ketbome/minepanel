@@ -251,7 +251,11 @@ Files module behavior:
 - `serverId="_root"` maps to `/app/servers` in files API.
 - `serverId=".world"` maps to `/app/servers/.world/worlds` in files API.
 - Other server IDs map to `/app/servers/<serverId>/mc-data`.
-- Preserve traversal protection (`normalize` + `startsWith(basePath)`).
+- Preserve traversal protection (`normalize` + `startsWith(basePath + path.sep)`, or equal to it).
+  A bare `startsWith(basePath)` lets `_root` reach siblings such as `/app/servers-old`.
+- `serverId` is a percent-decoded route param (`..%2F` arrives as `../`), so any other id must
+  match `^[a-zA-Z0-9_-]+$` before it is joined into a path. Checking containment against a base
+  built from it proves nothing.
 
 Data migration and compatibility:
 

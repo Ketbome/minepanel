@@ -51,6 +51,17 @@ describe('FilesService', () => {
     it('should reject path traversal that escapes the base directory', () => {
       expect(() => service.getFullPath('srv', '../../../etc/passwd')).toThrow(BadRequestException);
     });
+
+    it('should reject a server id that is not a plain folder name', () => {
+      for (const serverId of ['../outside', '../../tmp/x', 'a/b', '..', '']) {
+        expect(() => service.getFullPath(serverId, 'file.txt')).toThrow(BadRequestException);
+      }
+    });
+
+    it('should reject paths that escape into a sibling of the base directory', () => {
+      expect(() => service.getFullPath('_root', '../servers-evil/secret.txt')).toThrow(BadRequestException);
+      expect(() => service.getFullPath('.world', '../worlds-old')).toThrow(BadRequestException);
+    });
   });
 
   describe('listFiles', () => {
