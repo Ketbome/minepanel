@@ -2,7 +2,7 @@ import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import { ModpacksService } from './modpacks.service';
 
 describe('ModpacksService', () => {

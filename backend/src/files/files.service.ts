@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as archiver from 'archiver';
+import { Archiver, ZipArchive } from 'archiver';
 
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
@@ -188,7 +188,7 @@ export class FilesService {
     return this.validatePath(serverId, filePath);
   }
 
-  async createZipStream(serverId: string, dirPath: string): Promise<{ stream: archiver.Archiver; name: string }> {
+  async createZipStream(serverId: string, dirPath: string): Promise<{ stream: Archiver; name: string }> {
     const fullPath = this.validatePath(serverId, dirPath);
 
     if (!(await fs.pathExists(fullPath))) {
@@ -201,7 +201,7 @@ export class FilesService {
     }
 
     const folderName = path.basename(fullPath);
-    const archive = archiver('zip', { zlib: { level: 6 } });
+    const archive = new ZipArchive({ zlib: { level: 6 } });
 
     archive.directory(fullPath, folderName);
     archive.finalize();

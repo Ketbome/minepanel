@@ -4,7 +4,7 @@ NestJS API used by Minepanel to manage Minecraft servers through Docker.
 
 ## Stack
 
-- NestJS 11
+- NestJS 12
 - TypeORM + sql.js (SQLite)
 - JWT auth
 

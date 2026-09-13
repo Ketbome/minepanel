@@ -1,4 +1,4 @@
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import { KNOWN_CLIENT_ONLY_MODS } from './client-only-mods';
 
 export type ModLoader = 'FORGE' | 'NEOFORGE' | 'FABRIC' | 'QUILT';

@@ -1,4 +1,4 @@
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';

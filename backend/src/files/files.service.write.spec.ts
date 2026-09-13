@@ -14,7 +14,7 @@ jest.mock('fs-extra', () => ({
 }));
 
 const mockArchive = { directory: jest.fn(), finalize: jest.fn() };
-jest.mock('archiver', () => jest.fn(() => mockArchive));
+jest.mock('archiver', () => ({ ZipArchive: jest.fn(() => mockArchive) }));
 
 describe('FilesService writes', () => {
   let service: FilesService;

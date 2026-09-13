@@ -75,6 +75,13 @@ or use a temp dir under `os.tmpdir()` when the code under test is mostly filesys
 logic (`bedrock-addons`, `world-discovery`, `server-store`). New code needs tests that
 keep the coverage threshold; dropping the threshold is not an option.
 
+The backend compiles to CommonJS but Nest 12, `archiver` and other deps are ESM-only. Node
+loads them via `require(esm)`; jest only does so with `--experimental-vm-modules`, which the
+`test*` scripts set through `NODE_OPTIONS`. Run jest through those scripts, not bare `jest`.
+TypeScript 6 always applies `esModuleInterop`: import `export =` modules as defaults
+(`import AdmZip from 'adm-zip'`), and spy on a default import (`import os from 'node:os'`)
+because `import * as` namespaces are non-configurable and `jest.spyOn` throws on them.
+
 ## Code Patterns
 
 - Keep controllers thin; put behavior in services.

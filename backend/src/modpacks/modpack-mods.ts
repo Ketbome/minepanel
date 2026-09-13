@@ -1,4 +1,4 @@
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import { ModJarInfo, readModJar } from './mod-jar-metadata';
 
 export interface ModpackModScan {

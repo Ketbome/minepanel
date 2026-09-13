@@ -35,7 +35,7 @@ flowchart TB
 
 ### Frontend (Next.js)
 
-- **Tech:** Next.js 14, React 18, TypeScript, TailwindCSS, shadcn/ui
+- **Tech:** Next.js 16, React 19, TypeScript, TailwindCSS, shadcn/ui
 - **Role:** Web interface, API calls, real-time updates
 
 ### Backend (NestJS)

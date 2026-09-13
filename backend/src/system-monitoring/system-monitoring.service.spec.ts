@@ -1,4 +1,4 @@
-import * as os from 'node:os';
+import os from 'node:os';
 import { SystemMonitoringService } from './system-monitoring.service';
 
 jest.mock('node:util', () => {

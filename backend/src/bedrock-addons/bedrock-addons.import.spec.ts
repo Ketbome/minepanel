@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import axios from 'axios';
 import { BadRequestException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { BedrockAddonsService } from './bedrock-addons.service';

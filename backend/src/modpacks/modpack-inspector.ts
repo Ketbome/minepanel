@@ -1,4 +1,4 @@
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 
 export type ModpackLoader = 'FORGE' | 'NEOFORGE' | 'FABRIC' | 'QUILT';
 
