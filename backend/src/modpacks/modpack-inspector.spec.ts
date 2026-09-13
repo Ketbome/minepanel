@@ -1,4 +1,4 @@
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 import { inspectModpackArchive } from './modpack-inspector';
 
 const zipOf = (entries: Record<string, string>): Buffer => {

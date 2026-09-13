@@ -114,7 +114,7 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en # en, es, nl, de, pl
 
 ### Frontend
 
-- Next.js 14 (App Router)
+- Next.js 16 (App Router)
 - React
 - TailwindCSS
 - shadcn/ui
