@@ -1815,7 +1815,7 @@ export const pl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Światy',
-  worldsDescription: 'Wybierz, który świat uruchamia ten serwer — z jego własnych lub ze wspólnej biblioteki.',
+  worldsDescription: 'Opcjonalnie zaimportuj tutaj zapisany świat. Jeśli nic nie wybierzesz, serwer nadal generuje lub uruchamia własny świat pod nazwą poziomu poniżej.',
   worldsLoadError: 'Błąd ładowania dostępnych światów',
   worldsEmpty:
     'Nie znaleziono światów. Wgraj folder (z level.dat) lub ZIP/TAR do lokalnego servers/<id>/worlds albo do Biblioteki światów.',
@@ -1828,7 +1828,8 @@ export const pl: Record<TranslationKey, string> = {
   worldCopied: 'Skopiowano',
   worldNotCopied: 'Nie skopiowano',
   worldLevelName: 'Nazwa poziomu (LEVEL)',
-  worldSelectRequired: 'Najpierw wybierz źródło świata',
+  worldLevelNameHelpNoSource: 'Nie zaimportowano świata — to tylko ustawia LEVEL, więc serwer nadal zarządza własnym światem pod tą nazwą.',
+  worldLevelNameHelpWithSource: 'Używane jako nazwa folderu po zastosowaniu świata wybranego powyżej.',
   worldClearSelection: 'Wyczyść wybór',
   worldRemoveSelection: 'Usuń wybrany świat',
   worldSelectionRemoved: 'Usunięto wybór świata',

@@ -251,6 +251,9 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
               placeholder="world"
               className="bg-gray-800 border-gray-600 text-gray-200"
             />
+            <p className="text-xs text-gray-400">
+              {selectedSource ? t("worldLevelNameHelpWithSource") : t("worldLevelNameHelpNoSource")}
+            </p>
           </div>
 
           <div className="space-y-2">

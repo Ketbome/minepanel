@@ -1840,7 +1840,7 @@ export const nl: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Werelden',
-  worldsDescription: 'Kies welke wereld deze server draait, uit zijn eigen werelden of de gedeelde bibliotheek.',
+  worldsDescription: 'Importeer hier optioneel een opgeslagen wereld. Selecteer je niets, dan blijft de server zijn eigen wereld genereren of opstarten onder de levelnaam hieronder.',
   worldsLoadError: 'Fout bij laden van beschikbare werelden',
   worldsEmpty:
     'Geen werelden gevonden. Upload een map (met level.dat) of ZIP/TAR naar lokaal servers/<id>/worlds of naar de Wereldbibliotheek.',
@@ -1853,7 +1853,8 @@ export const nl: Record<TranslationKey, string> = {
   worldCopied: 'Gekopieerd',
   worldNotCopied: 'Niet gekopieerd',
   worldLevelName: 'Levelnaam (LEVEL)',
-  worldSelectRequired: 'Selecteer eerst een wereldbron',
+  worldLevelNameHelpNoSource: 'Geen wereld geïmporteerd — dit stelt alleen LEVEL in, dus de server beheert zijn eigen wereld onder deze naam.',
+  worldLevelNameHelpWithSource: 'Wordt gebruikt als mapnaam zodra de hierboven geselecteerde wereld wordt toegepast.',
   worldClearSelection: 'Selectie wissen',
   worldRemoveSelection: 'Wereldselectie verwijderen',
   worldSelectionRemoved: 'Wereldselectie verwijderd',

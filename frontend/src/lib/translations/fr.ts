@@ -1810,7 +1810,7 @@ export const fr: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Mondes',
-  worldsDescription: 'Choisissez le monde que ce serveur exécute, parmi les siens ou la bibliothèque partagée.',
+  worldsDescription: 'Importez éventuellement un monde enregistré ici. Si aucun n’est sélectionné, le serveur continue de générer ou démarrer son propre monde sous le nom de niveau ci-dessous.',
   worldsLoadError: 'Erreur lors du chargement des mondes disponibles',
   worldsEmpty: 'Aucun monde trouvé. Téléversez un dossier (avec level.dat) ou un ZIP/TAR dans servers/<id>/worlds ou dans la bibliothèque de mondes.',
   worldsRestartNoticeStopped: 'Le serveur est arrêté. Le monde sélectionné sera appliqué au prochain démarrage.',
@@ -1822,7 +1822,8 @@ export const fr: Record<TranslationKey, string> = {
   worldCopied: 'Copié',
   worldNotCopied: 'Non copié',
   worldLevelName: 'Nom du niveau (LEVEL)',
-  worldSelectRequired: 'Sélectionnez d’abord une source de monde',
+  worldLevelNameHelpNoSource: 'Aucun monde importé — cela définit seulement LEVEL, le serveur continue donc de gérer son propre monde sous ce nom.',
+  worldLevelNameHelpWithSource: 'Utilisé comme nom de dossier une fois le monde sélectionné ci-dessus appliqué.',
   worldClearSelection: 'Effacer la sélection',
   worldRemoveSelection: 'Retirer le monde sélectionné',
   worldSelectionRemoved: 'Sélection du monde retirée',

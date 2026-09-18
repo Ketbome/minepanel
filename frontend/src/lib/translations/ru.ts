@@ -1808,7 +1808,7 @@ export const ru: Record<TranslationKey, string> = {
 
   // Worlds tab
   worlds: 'Миры',
-  worldsDescription: 'Выберите, какой мир запускает этот сервер — из его собственных или общей библиотеки.',
+  worldsDescription: 'При желании импортируйте здесь сохранённый мир. Если ничего не выбрано, сервер продолжает создавать или запускать собственный мир под именем уровня ниже.',
   worldsLoadError: 'Ошибка загрузки доступных миров',
   worldsEmpty: 'Миры не найдены. Загрузите папку с level.dat или ZIP/TAR в local servers/<id>/worlds либо World Library.',
   worldsRestartNoticeStopped: 'Сервер остановлен. Выбранный мир будет применён при следующем запуске.',
@@ -1820,7 +1820,8 @@ export const ru: Record<TranslationKey, string> = {
   worldCopied: 'Скопирован',
   worldNotCopied: 'Не скопирован',
   worldLevelName: 'Название уровня (LEVEL)',
-  worldSelectRequired: 'Сначала выберите источник мира',
+  worldLevelNameHelpNoSource: 'Мир не импортирован — это лишь задаёт LEVEL, поэтому сервер продолжает управлять собственным миром под этим именем.',
+  worldLevelNameHelpWithSource: 'Используется как имя папки при применении выбранного выше мира.',
   worldClearSelection: 'Сбросить выбор',
   worldRemoveSelection: 'Убрать выбранный мир',
   worldSelectionRemoved: 'Выбор мира сброшен',
