@@ -68,13 +68,12 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
   };
 
   const isRemoval = !selectedSource && Boolean(config.worldSource);
+  // With no world source picked, the panel isn't managing worlds at all: the level name
+  // field is then a free-text override of LEVEL, so it must be applicable on its own.
+  const levelNameChanged = worldLevelName.trim() !== (config.worldLevelName || "world");
+  const hasNoPendingChange = !selectedSource && !config.worldSource && !levelNameChanged;
 
   const handleApply = async () => {
-    if (!selectedSource && !config.worldSource) {
-      mcToast.error(t("worldSelectRequired"));
-      return;
-    }
-
     const trimmedLevelName = worldLevelName.trim();
     if (!trimmedLevelName) {
       mcToast.error(t("worldLevelNameRequired"));
@@ -269,7 +268,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
           <Button
             type="button"
             onClick={handleApply}
-            disabled={saving || loading || (!selectedSource && !config.worldSource)}
+            disabled={saving || loading || hasNoPendingChange}
             className={
               isRemoval
                 ? "bg-amber-700 hover:bg-amber-800 text-white border border-amber-500/40"
