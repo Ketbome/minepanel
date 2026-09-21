@@ -18,7 +18,7 @@
   "author": "Ketbome",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "mermaid": "11.17.2",
+    "mermaid": "12.0.0",
     "terser": "^5.46.0",
     "vitepress": "1.6.4",
     "vitepress-plugin-llms": "^1.14.0",
