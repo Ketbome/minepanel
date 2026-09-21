@@ -1831,7 +1831,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Pestaña de mundos
   worlds: 'Mundos',
-  worldsDescription: 'Elige qué mundo corre este servidor, entre los suyos y la biblioteca compartida.',
+  worldsDescription: 'Importa opcionalmente un mundo guardado aquí. Si no seleccionas ninguno, el servidor sigue generando o iniciando su propio mundo con el nombre de nivel de abajo.',
   worldsLoadError: 'Error cargando mundos disponibles',
   worldsEmpty:
     'No se encontraron mundos. Sube una carpeta (con level.dat) o ZIP/TAR a servers/<id>/worlds local o a la Biblioteca de mundos.',
@@ -1844,7 +1844,8 @@ export const es: Record<TranslationKey, string> = {
   worldCopied: 'Copiado',
   worldNotCopied: 'No copiado',
   worldLevelName: 'Nombre de nivel (LEVEL)',
-  worldSelectRequired: 'Primero selecciona un origen de mundo',
+  worldLevelNameHelpNoSource: 'Ningún mundo importado: esto solo establece LEVEL, así que el servidor sigue gestionando su propio mundo con este nombre.',
+  worldLevelNameHelpWithSource: 'Se usa como nombre de carpeta al aplicar el mundo seleccionado arriba.',
   worldClearSelection: 'Quitar selección',
   worldRemoveSelection: 'Quitar mundo seleccionado',
   worldSelectionRemoved: 'Selección de mundo quitada',

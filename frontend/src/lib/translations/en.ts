@@ -1807,7 +1807,7 @@ export const en = {
 
   // Worlds tab
   worlds: 'Worlds',
-  worldsDescription: 'Pick which world this server runs, from its own worlds or the shared library.',
+  worldsDescription: 'Optionally import a saved world here. Leave nothing selected and the server keeps generating or booting its own world under the level name below.',
   worldsLoadError: 'Error loading available worlds',
   worldsEmpty: 'No worlds found. Upload a folder (with level.dat) or ZIP/TAR into local servers/<id>/worlds or World Library.',
   worldsRestartNoticeStopped: 'The server is stopped. The selected world will apply on the next start.',
@@ -1819,7 +1819,8 @@ export const en = {
   worldCopied: 'Copied',
   worldNotCopied: 'Not copied',
   worldLevelName: 'Level name (LEVEL)',
-  worldSelectRequired: 'Select a world source first',
+  worldLevelNameHelpNoSource: 'No world imported — this sets LEVEL directly, so the server keeps managing its own world under this name.',
+  worldLevelNameHelpWithSource: 'Used as the folder name once the world selected above is applied.',
   worldClearSelection: 'Clear selection',
   worldRemoveSelection: 'Remove world selection',
   worldSelectionRemoved: 'World selection removed',
