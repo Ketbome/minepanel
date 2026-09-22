@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'en' | 'es' | 'nl';
+export type SupportedLanguage = 'en' | 'es' | 'nl' | 'tr';
 
 export type ServerEventType = 'created' | 'deleted' | 'started' | 'stopped' | 'restarted' | 'error' | 'warning';
 
@@ -284,6 +284,94 @@ export const discordTranslations: Record<SupportedLanguage, DiscordTranslations>
       description: 'Alles verbonden! Je krijgt hier meldingen.',
       features: ['Server start/stop', 'Fouten & waarschuwingen', 'Server creatie'],
       success: 'Test geslaagd',
+    },
+    footer: ['MinePanel', 'Powered by MinePanel', '⛏️ MinePanel'],
+  },
+  tr: {
+    events: {
+      created: {
+        titles: ['Yeni Dünya Açıldı', 'Sunucu Hazır', 'Yeni Bir Macera Başlıyor', 'Dünya Oluşturuldu'],
+        descriptions: [
+          'Yeni sunucun sahneye çıkmaya hazır 🎸',
+          'Yepyeni dünya, yepyeni maceralar',
+          'Harika bir şeyler inşa etme vakti',
+          'Sunucu ilk oyuncularını bekliyor',
+        ],
+        status: 'OLUŞTURULDU',
+        emoji: '🌍',
+      },
+      deleted: {
+        titles: ['Dünya Silindi', 'Sunucu Kaldırıldı', 'The End', 'Hoşça kal'],
+        descriptions: [
+          'Bu dünya boşluğa arşivlendi',
+          'Sunucu başarıyla kaldırıldı',
+          'Gitti, ama anılar kaldı',
+          'Bir bölüm daha kapandı',
+        ],
+        status: 'SİLİNDİ',
+        emoji: '🗑️',
+      },
+      started: {
+        titles: ['Yayındayız!', 'Sunucu Çevrimiçi', 'Oyun Başlasın', 'Çalışıyor'],
+        descriptions: [
+          'Sunucu ayakta ve çalışıyor! Atla gel 🎮',
+          'Portal açıldı, oyuncular buyursun',
+          'Her şey yolunda, oynama vakti',
+          'Sunucu başarıyla başlatıldı',
+        ],
+        status: 'ONLINE',
+        emoji: '🟢',
+      },
+      stopped: {
+        titles: ['Sunucu Çevrimdışı', 'Mola Veriyor', 'Kapandı', 'Yakında Görüşürüz'],
+        descriptions: [
+          'Sunucu kestiriyor 😴',
+          'Düzgünce kapatılıyor',
+          'Sunucu durdu, dünyalar kaydedildi',
+          'Sunucu dinleniyor... şimdilik',
+        ],
+        status: 'OFFLINE',
+        emoji: '🔴',
+      },
+      restarted: {
+        titles: ['Hızlı Yeniden Başlatma', 'Yeniden Başlıyor', 'Hemen Döneriz', 'Tazeleniyor'],
+        descriptions: [
+          'Sunucu biraz bacaklarını açıyor 🏃',
+          'Hızlı yeniden başlatma sürüyor',
+          'Tozu dumanı siliyoruz...',
+          'Birazdan tekrar çevrimiçi',
+        ],
+        status: 'YENİDEN BAŞLATMA',
+        emoji: '🔄',
+      },
+      error: {
+        titles: ['Eyvah', 'Bir Şey Bozuldu', 'Hata Tespit Edildi', 'Houston...'],
+        descriptions: [
+          'Bir şeyler ters gitti, günlüklere bakılıyor...',
+          'Sunucu bir sorunla karşılaştı',
+          'Bir hata oluştu, inceleniyor',
+          'Creeper önemli bir şeyi havaya uçurdu',
+        ],
+        status: 'HATA',
+        emoji: '💥',
+      },
+      warning: {
+        titles: ['Dikkat', 'Uyarı', 'Bakman Lazım', 'Gözünü Aç'],
+        descriptions: [
+          'Bir şey ilgini bekliyor',
+          'Uyarı tespit edildi, bir bak',
+          'Sunucu sana bir şey anlatmaya çalışıyor',
+          'Küçük bir sorun tespit edildi',
+        ],
+        status: 'UYARI',
+        emoji: '⚠️',
+      },
+    },
+    test: {
+      title: '🎮 Bağlantı Testi',
+      description: 'Her şey bağlı! Bildirimleri buradan alacaksın.',
+      features: ['Sunucu başlatma/durdurma', 'Hatalar ve uyarılar', 'Sunucu oluşturma'],
+      success: 'Test başarılı',
     },
     footer: ['MinePanel', 'Powered by MinePanel', '⛏️ MinePanel'],
   },
