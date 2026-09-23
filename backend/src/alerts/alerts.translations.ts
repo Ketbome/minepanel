@@ -54,6 +54,19 @@ const messages: Record<SupportedLanguage, AlertMessages> = {
     sustainedField: 'Aangehouden gedurende',
     minutes: 'min',
   },
+  tr: {
+    downTitle: '🚨 Sunucu kapandı',
+    downDescription: 'Sunucu beklenmedik şekilde durdu.',
+    cpuTitle: '📈 Yüksek CPU kullanımı',
+    cpuDescription: 'CPU kullanımı ayarlanan eşiğin üzerinde seyrediyor.',
+    memoryTitle: '📈 Yüksek bellek kullanımı',
+    memoryDescription: 'Bellek kullanımı ayarlanan eşiğin üzerinde seyrediyor.',
+    serverField: 'Sunucu',
+    usageField: 'Güncel kullanım',
+    thresholdField: 'Eşik',
+    sustainedField: 'Kesintisiz',
+    minutes: 'dk',
+  },
 };
 
 export const getAlertMessages = (lang: SupportedLanguage): AlertMessages => messages[lang] ?? messages.en;

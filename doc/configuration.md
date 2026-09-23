@@ -86,7 +86,7 @@ Keycloak, Google, ...). See the [Single Sign-On](/sso) guide for setup.
 | `NEXT_PUBLIC_BACKEND_URL`      | `http://localhost:8091` | API URL for frontend         |
 | `BASE_PATH`                    | _(empty)_               | Backend API prefix such as `/api` |
 | `NEXT_PUBLIC_BASE_PATH`        | _(empty)_               | Frontend route prefix such as `/minepanel` |
-| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`                    | `en`, `es`, `nl`, `de`, `pl` |
+| `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`                    | `en`, `es`, `nl`, `de`, `pl`, `fr`, `ru`, `pt`, `tr` |
 
 ::: danger CORS
 `FRONTEND_URL` **must match** how you access the panel. Mismatch = blocked requests.
