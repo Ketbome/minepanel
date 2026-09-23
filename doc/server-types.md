@@ -53,6 +53,7 @@ flowchart LR
 ## Bedrock Edition
 
 Minecraft Bedrock Edition server for cross-platform play (Windows 10/11, Xbox, PlayStation, Switch, iOS, Android).
+For the underlying image without the panel, see [Bedrock server with Docker](/guides/bedrock-server-docker).
 
 ### Basic Setup
 

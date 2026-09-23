@@ -59,7 +59,7 @@ flowchart LR
 | **Spiget**     | Spigot/Paper plugins     | ❌ No            |
 
 ::: tip Learn More
-For advanced options and all environment variables, see the [docker-minecraft-server mods documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/).
+For advanced options and all environment variables, see the [docker-minecraft-server mods documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/) or our [modded server with Docker guide](/guides/modded-minecraft-server-docker).
 :::
 
 ### Paper Cross-Play Template

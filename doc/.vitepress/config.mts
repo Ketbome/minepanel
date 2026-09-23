@@ -217,6 +217,16 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'Guide', link: '/installation' },
       {
+        text: 'Guides',
+        items: [
+          { text: 'Server with Docker Compose', link: '/guides/minecraft-server-docker-compose' },
+          { text: 'Modded Server with Docker', link: '/guides/modded-minecraft-server-docker' },
+          { text: 'Bedrock Server with Docker', link: '/guides/bedrock-server-docker' },
+          { text: 'mc-router Setup', link: '/guides/mc-router-setup' },
+          { text: 'Backups with mc-backup', link: '/guides/minecraft-server-backup-docker' },
+        ],
+      },
+      {
         text: 'Resources',
         items: [
           { text: 'Features', link: '/features' },
@@ -252,6 +262,17 @@ export default defineConfig({
           { text: 'Installation', link: '/installation' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'Quick Start', link: '/' },
+        ],
+      },
+      {
+        text: 'Docker Guides',
+        collapsed: false,
+        items: [
+          { text: 'Server with Docker Compose', link: '/guides/minecraft-server-docker-compose' },
+          { text: 'Modded Server with Docker', link: '/guides/modded-minecraft-server-docker' },
+          { text: 'Bedrock Server with Docker', link: '/guides/bedrock-server-docker' },
+          { text: 'mc-router Setup', link: '/guides/mc-router-setup' },
+          { text: 'Backups with mc-backup', link: '/guides/minecraft-server-backup-docker' },
         ],
       },
       {
@@ -391,6 +412,11 @@ export default defineConfig({
         '/networking': 0.85,
         '/troubleshooting': 0.85,
         '/upgrading-to-1-12': 0.85,
+        '/guides/minecraft-server-docker-compose': 0.9,
+        '/guides/modded-minecraft-server-docker': 0.9,
+        '/guides/bedrock-server-docker': 0.9,
+        '/guides/mc-router-setup': 0.9,
+        '/guides/minecraft-server-backup-docker': 0.9,
       };
 
       const changefreqMap: Record<string, string> = {

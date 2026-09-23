@@ -104,6 +104,18 @@ services:
 
 ---
 
+## Docker Guides (`guides/`)
+
+SEO-oriented tutorials that target real searches ("minecraft server docker compose",
+"mc-router setup", …). They solve the task with the plain itzg images, without Minepanel,
+and end with a short Minepanel CTA plus related-guide links.
+
+- Verify every env var and flag against the itzg docs; never write them from memory.
+- Keep them in the "Docker Guides" sidebar group and nav dropdown, with sitemap priority 0.9.
+- Link to them from the matching product page (networking, mods-plugins, features, server-types).
+
+---
+
 ## When to Update Documentation
 
 ### ALWAYS update docs when:

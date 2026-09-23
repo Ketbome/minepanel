@@ -154,6 +154,9 @@ Operational notes:
 
 ## Backups
 
+Backups run the `itzg/mc-backup` sidecar; the [backup guide](/guides/minecraft-server-backup-docker)
+explains how it works under the hood.
+
 | Feature   | Description           |
 | --------- | --------------------- |
 | Automatic | Schedule daily/weekly |

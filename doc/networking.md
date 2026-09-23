@@ -174,7 +174,8 @@ api.yourdomain.com {
 
 ## MC Proxy Router (Java Only)
 
-Single port (25565) for all Java servers via hostname routing.
+Single port (25565) for all Java servers via hostname routing. For how mc-router works on its
+own, see the [mc-router setup guide](/guides/mc-router-setup).
 
 ::: warning Java Edition Only
 mc-router only works with Java Edition (TCP protocol). Bedrock servers use UDP and cannot be proxied this way. Each Bedrock server needs its own port.
