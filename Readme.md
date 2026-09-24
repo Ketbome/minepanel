@@ -49,7 +49,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 
 - **Java & Bedrock** — Support for both Minecraft editions
 - **Multi-server** — Create and manage multiple servers from one panel
-- **Real-time monitoring** — CPU, RAM, players, and logs
+- **Real-time monitoring** — CPU, RAM, players, logs, and TPS/MSPT for NeoForge modpacks (including ATM10) and compatible spark servers
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies

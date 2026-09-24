@@ -1669,6 +1669,20 @@ export class ServerManagementService {
     }
   }
 
+  async readTickStats(serverId: string, source: 'neoforge' | 'spark'): Promise<CommandExecutionResponse> {
+    if (!this.validateServerId(serverId)) return { success: false, output: '' };
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return { success: false, output: '' };
+      // Fixed read-only command; credentials stay in the container environment.
+      const command = source === 'neoforge' ? 'neoforge tps' : 'spark tps';
+      const { stdout, exitCode } = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', command], { timeout: 5_000 });
+      return { success: exitCode === 0, output: this.sanitizeCommandOutput(stdout) };
+    } catch {
+      return { success: false, output: '' };
+    }
+  }
+
   async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
     try {
       if (!this.validateServerId(serverId)) {

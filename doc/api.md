@@ -235,6 +235,22 @@ Examples:
 - `DELETE /users/:id`
 - `POST /users/change-password`
 
+### Server monitoring
+
+Both endpoints require authentication and access to the requested server.
+
+- `GET /metrics/:id/live` — resource usage, players, uptime, timestamp and tick
+  measurements, cached for 10 seconds with concurrent request deduplication.
+  `tickStatus` is `available`, `offline`, `unsupported`, `rcon_disabled`,
+  `spark_missing`, or `unavailable`. `tickSource` is `neoforge`, `spark`, or null.
+  NeoForge returns estimated `tps` and `msptMean`; spark returns 1-minute `tps`,
+  `msptMedian` and `msptP95` over 10 seconds. Unavailable values are null.
+- `GET /metrics/:id/history?hours=24` — `{ serverId, hours, points }`, with the
+  window clamped to 1–168 hours. Points contain `timestamp`, `cpuPercent`,
+  `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,
+  `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
+  Samples are collected every minute and retained for 7 days.
+
 ### System
 
 Host monitoring endpoints:

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { MonitoringService } from './monitoring.service';
 import { MetricsService } from './metrics.service';
 import { MetricSample } from './entities/metric-sample.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
@@ -9,7 +10,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
-  let serverManagement: { getAllServersResources: jest.Mock };
+  let serverManagement: { getAllServersRuntimeStats: jest.Mock };
   let alertsService: { evaluate: jest.Mock };
 
   beforeEach(async () => {
@@ -19,7 +20,7 @@ describe('MetricsService', () => {
       save: jest.fn(async (x) => x),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    serverManagement = { getAllServersResources: jest.fn() };
+    serverManagement = { getAllServersRuntimeStats: jest.fn() };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -28,6 +29,7 @@ describe('MetricsService', () => {
         { provide: getRepositoryToken(MetricSample), useValue: sampleRepo },
         { provide: ServerManagementService, useValue: serverManagement },
         { provide: AlertsService, useValue: alertsService },
+        { provide: MonitoringService, useValue: { getSnapshot: jest.fn().mockResolvedValue({ tps: 19.5, msptMedian: 30, msptP95: 60, playersOnline: 3 }) } },
       ],
     }).compile();
 
@@ -68,14 +70,14 @@ describe('MetricsService', () => {
       const result = await service.getHistory('srv', 24);
 
       expect(result).toEqual([
-        { cpuPercent: 10, memoryMb: 512, memoryLimitMb: 1024, timestamp: '2026-01-01T00:00:00.000Z' },
+        { cpuPercent: 10, memoryMb: 512, memoryLimitMb: 1024, tps: null, tickSource: null, msptMean: null, msptMedian: null, msptP95: null, playersOnline: null, timestamp: '2026-01-01T00:00:00.000Z' },
       ]);
     });
   });
 
   describe('collectSamples', () => {
     it('should only persist samples for running servers with parseable usage', async () => {
-      serverManagement.getAllServersResources.mockResolvedValue({
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({
         srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },
         srvB: { status: 'exited', cpuUsage: '5%', memoryUsage: '256MiB', memoryLimit: '1GiB' },
         srvC: { status: 'running', cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },
@@ -86,11 +88,11 @@ describe('MetricsService', () => {
       expect(sampleRepo.save).toHaveBeenCalledTimes(1);
       const saved = sampleRepo.save.mock.calls[0][0];
       expect(saved).toHaveLength(1);
-      expect(saved[0]).toMatchObject({ serverId: 'srvA', cpuPercent: 10, memoryMb: 512, memoryLimitMb: 1024 });
+      expect(saved[0]).toMatchObject({ serverId: 'srvA', cpuPercent: 10, memoryMb: 512, memoryLimitMb: 1024, tps: 19.5, msptMedian: 30, msptP95: 60, playersOnline: 3 });
     });
 
     it('should not save when no running server has parseable usage', async () => {
-      serverManagement.getAllServersResources.mockResolvedValue({
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({
         srvC: { status: 'running', cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },
       });
 
@@ -103,7 +105,7 @@ describe('MetricsService', () => {
       const resources = {
         srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },
       };
-      serverManagement.getAllServersResources.mockResolvedValue(resources);
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue(resources);
 
       await (service as any).collectSamples();
 
@@ -112,7 +114,7 @@ describe('MetricsService', () => {
 
     it('should still persist samples when alert evaluation fails', async () => {
       alertsService.evaluate.mockRejectedValue(new Error('boom'));
-      serverManagement.getAllServersResources.mockResolvedValue({
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({
         srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },
       });
 

@@ -363,6 +363,36 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('readTickStats', () => {
+    it('uses a fixed bounded command and container-side credentials', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: '\u001b[32mTPS data\u001b[0m', exitCode: 0 });
+      expect(await service.readTickStats('atm10', 'spark')).toEqual({ success: true, output: 'TPS data' });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'spark tps'], { timeout: 5000 });
+    });
+
+    it('reads native NeoForge tick measurements', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'Overall: 20 TPS (25 ms/tick)', exitCode: 0 });
+      await service.readTickStats('atm10', 'neoforge');
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'neoforge tps'], { timeout: 5000 });
+    });
+
+    it('rejects invalid ids and missing containers', async () => {
+      const find = jest.spyOn(service as any, 'findContainerId').mockResolvedValue(null);
+      expect((await service.readTickStats('../data', 'spark')).success).toBe(false);
+      expect(find).not.toHaveBeenCalled();
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+    });
+
+    it('treats timeouts and failed commands as missing measurements', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      jest.spyOn(service as any, 'executeProcess').mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce({ stdout: '', exitCode: 1 });
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+    });
+  });
+
   describe('executeCommand', () => {
     it('should return error when container not found', async () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(true);

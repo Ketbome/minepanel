@@ -49,3 +49,13 @@ pnpm lint
 
 - Frontend agent rules: `frontend/AGENTS.md`
 - Root project guide: `Readme.md`
+
+## Server monitoring
+
+The Metrics tab combines live TPS/MSPT, container CPU/RAM and player count with
+1–168 hour history. NeoForge/ATM10 uses the native overall tick report, explicitly
+labelled as estimated TPS and mean MSPT. Compatible spark servers expose measured
+TPS and median/P95 durations. The view identifies disabled RCON, unavailable
+measurements and unsupported Bedrock ticks; resource charts remain available.
+Chart cursors support keyboard and touch. Existing Discord alert settings remain
+below the charts.

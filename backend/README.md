@@ -40,6 +40,10 @@ pnpm test:e2e
 - `src/files/` - file operations
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
+- `src/metrics/` - live resources and tick performance, plus 7-day history. Native
+  NeoForge/CurseForge TPS is an estimate from mean tick time; compatible spark
+  responses provide 1-minute TPS and 10-second median/P95 MSPT. RCON stays inside
+  the container. Missing measurements remain null.
 
 ## References
 

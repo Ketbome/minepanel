@@ -119,6 +119,10 @@ production tree, and `frontend/Dockerfile` copies the Next standalone output.
 - Scope: make minimal, task-focused changes; no unrelated refactors.
 - Commits: `type(scope): short description`.
 
+Monitoring uses `backend/src/metrics/monitoring.service.ts`: native NeoForge tick measurements
+for CurseForge/NeoForge, with spark support on other compatible Java servers. Keep the
+estimated native TPS distinct from spark measurements; unavailable metrics stay null.
+
 ## Critical Files
 
 - `AGENTS.md`

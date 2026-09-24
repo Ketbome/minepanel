@@ -42,13 +42,43 @@ flowchart LR
 | Live logs | Streaming, errors highlighted, searchable |
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
-| History   | Per-server CPU/RAM graphs (1h–72h) in the Metrics tab, sampled every minute with 7-day retention |
+| History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |
+| Tick performance | Native NeoForge/ATM10 estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
 | Alerts    | Opt-in Discord alerts per server: unexpected server down, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
 
 Runtime stats refresh on their own on the home page and the server page, and only render for
 running servers. Player totals and version come from a game status query that works on both Java
 and Bedrock. If the container is up but the game is not answering yet, those values stay blank
 instead of reporting zero players.
+
+### CurseForge / ATM10 monitoring
+
+Open **Monitoring → Metrics**. Live values refresh about every 10 seconds. For
+ATM10 with NeoForge, Minepanel reads `neoforge tps` through the itzg container's
+`rcon-cli`. Keep the CurseForge server type; there is no need to switch to Paper
+or install an additional monitoring mod. RCON must be enabled in **Network**.
+
+The overall NeoForge report provides mean tick duration (MSPT) and **estimated
+TPS**, calculated by NeoForge from tick time. This is different from directly
+counting ticks. At the default 20 TPS, the tick budget is 50 ms. These reference
+lines do not imply that a deliberately changed tick rate is unhealthy.
+
+On servers with a usable `spark tps` RCON response, Minepanel displays 1-minute
+TPS and 10-second median/P95 tick duration. P95 is the duration below which 95%
+of ticks fall; it is not the mean. Some spark versions return an empty RCON
+response because commands are asynchronous. Installing spark alone does not
+guarantee RCON monitoring works; NeoForge's native command avoids this on ATM10.
+
+Missing readings stay blank, and charts leave gaps for missing samples or server
+downtime. Older history contains resource data only. CPU uses Docker's scale:
+100% represents one fully used core, so multi-core usage may exceed 100%.
+Memory is container usage, not JVM heap alone. Bedrock retains resource/player
+monitoring but has no tick measurements. Existing Discord alerts cover server
+down and high CPU/RAM; TPS alerting is not included.
+
+References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/latest/sending-commands/commands/),
+[NeoForge TPS implementation](https://github.com/neoforged/NeoForge/blob/1.21.1/src/main/java/net/neoforged/neoforge/server/command/TPSCommand.java),
+[spark TPS/MSPT](https://spark.lucko.me/docs/guides/TPS-and-MSPT).
 
 ## Server Control
 
