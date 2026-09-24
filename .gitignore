@@ -5,8 +5,7 @@ node_modules/
 package-lock.json
 skills-lock.json
 .agents/
-.claude/*
-!.claude/settings.json
+.claude/
 /servers/
 .playwright-mcp/
 .superpowers

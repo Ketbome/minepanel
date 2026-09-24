@@ -106,8 +106,7 @@ functions). Adding code without tests fails the gate; keep the threshold, add te
 `lint-staged` runs on `git commit`. Keep them separate: a gate that silently fixes what it is
 meant to catch is not a gate.
 
-`.claude/settings.json` holds a `PreToolUse` hook that blocks `git commit` / `git push` with
-`--no-verify`, so an agent cannot skip the gate. Fix what `pnpm verify` reports instead.
+Never use `--no-verify` on `git commit` / `git push`. Fix what `pnpm verify` reports instead.
 
 Docker images build from the repo root (`docker build -f backend/Dockerfile .`): the pnpm
 lockfile lives there. `backend/Dockerfile` uses `pnpm deploy --legacy` to produce a flat
