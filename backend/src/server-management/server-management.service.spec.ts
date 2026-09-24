@@ -33,6 +33,7 @@ jest.mock('node:util', () => {
 // Import after mocks
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from '../alerts/alerts.service';
+import { PlayerSession, PlayerTracking } from '../player-activity/entities/player-session.entity';
 import { ServerStoreService } from '../docker-compose/server-store.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { InstanceSettingsService } from '../settings/instance-settings.service';
@@ -44,7 +45,7 @@ const mockExec = jest.requireMock('node:util').promisify();
 describe('ServerManagementService', () => {
   let service: ServerManagementService;
   let mockDockerComposeService: { getServerConfig: jest.Mock; updateServerConfig: jest.Mock; refreshComposeFile: jest.Mock };
-  let mockSettingsRepo: { findOne: jest.Mock };
+  let mockSettingsRepo: { findOne: jest.Mock; manager?: unknown };
   let mockInstanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock };
   let mockStore: { removeFromIndex: jest.Mock; updateConfig: jest.Mock; readConfig: jest.Mock };
 
@@ -351,6 +352,24 @@ describe('ServerManagementService', () => {
       const result = await service.deleteServer('nonexistent');
 
       expect(result).toBe(false);
+    });
+
+    it('removes player activity so a reused server ID starts without history', async () => {
+      const deleted: [unknown, unknown][] = [];
+      mockSettingsRepo.manager = { transaction: jest.fn((run) => run({ delete: jest.fn(async (entity, where) => deleted.push([entity, where])) })) };
+      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      mockExec.mockResolvedValue({ stdout: '' });
+
+      expect(await service.deleteServer('survival')).toBe(true);
+      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }]]);
+    });
+
+    it('still deletes the server when player activity cleanup fails', async () => {
+      mockSettingsRepo.manager = { transaction: jest.fn().mockRejectedValue(new Error('db locked')) };
+      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      mockExec.mockResolvedValue({ stdout: '' });
+
+      expect(await service.deleteServer('survival')).toBe(true);
     });
   });
 

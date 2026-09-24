@@ -57,6 +57,12 @@ export class PlayerActivityService implements OnModuleInit, OnModuleDestroy {
     const since = previous?.cursor ?? new Date(until.getTime() - 86_400_000);
     if (until <= since) return;
     const window = await this.management.readPlayerLogWindow(serverId, since, until);
+    // A transient read failure must not consume the window: Docker still has those lines,
+    // so keep the cursor and retry. Only an outage longer than MAX_GAP_MS closes sessions.
+    if (!window && previous && until.getTime() - since.getTime() <= MAX_GAP_MS) {
+      await this.tracking.save({ ...previous, status: 'unavailable' });
+      return;
+    }
     await this.sessions.manager.transaction(async (manager) => {
       const sessions = manager.getRepository(PlayerSession);
       const tracking = manager.getRepository(PlayerTracking);

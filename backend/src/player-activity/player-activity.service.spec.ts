@@ -43,13 +43,28 @@ describe('Player activity persistence', () => {
 
   it.each(['restart', 'missing', 'truncated', 'gap'])('closes at last observation on %s and never counts the outage', async (reason) => {
     await service.collect();
-    now.mockReturnValue(start + (reason === 'gap' ? 300_000 : 62_000));
+    // A missing window only closes sessions once the outage outlasts the gap limit.
+    now.mockReturnValue(start + (reason === 'gap' || reason === 'missing' ? 300_000 : 62_000));
     management.readPlayerLogWindow.mockResolvedValue(reason === 'missing' ? null : { runId: reason === 'restart' ? 'container:next' : 'container:boot', running: true, logs: '', truncated: reason === 'truncated' });
     await service.collect();
     const detail = await service.detail('survival', 'java:alex', 0);
     expect(detail.profile.totalSeconds).toBe(30);
     expect(detail.sessions[0]).toMatchObject({ endReason: 'interrupted', leftAt: new Date(start + 30_000).toISOString() });
     if (reason === 'missing' || reason === 'truncated') expect(detail.profile.online).toBeNull();
+  });
+
+  it('retries a transiently unreadable window instead of consuming it', async () => {
+    await service.collect();
+    now.mockReturnValue(start + 62_000);
+    management.readPlayerLogWindow.mockResolvedValue(null);
+    await service.collect();
+    expect((await service.detail('survival', 'java:alex', 0)).sessions[0]).toMatchObject({ leftAt: null, endReason: null });
+    expect((await service.list('survival', 0)).players[0].online).toBeNull();
+    now.mockReturnValue(start + 92_000);
+    management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:boot', running: true, logs: line(40, 'Alex left the game'), truncated: false });
+    await service.collect();
+    expect(management.readPlayerLogWindow).toHaveBeenLastCalledWith('survival', new Date(start + 30_000), new Date(start + 90_000));
+    expect((await service.detail('survival', 'java:alex', 0)).sessions[0]).toMatchObject({ endReason: 'left', durationSeconds: 40 });
   });
 
   it('keeps persisted history across panel restart and marks stale status unknown', async () => {

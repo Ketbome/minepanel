@@ -6,6 +6,7 @@ import * as path from 'node:path';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PlayerSession, PlayerTracking } from 'src/player-activity/entities/player-session.entity';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
@@ -1012,6 +1013,16 @@ export class ServerManagementService {
 
       await fs.remove(serverDir);
       await this.store.removeFromIndex(serverId);
+
+      // Server IDs are reusable: a new server with this ID must not inherit its player history.
+      try {
+        await this.settingsRepo.manager.transaction(async (manager) => {
+          await manager.delete(PlayerSession, { serverId });
+          await manager.delete(PlayerTracking, { serverId });
+        });
+      } catch (error) {
+        this.logger.warn(`Could not clean up player activity for ${serverId}`, error);
+      }
 
       try {
         const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(serverId));

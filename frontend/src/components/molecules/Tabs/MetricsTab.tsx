@@ -106,7 +106,7 @@ function MonitoringView({ serverId }: { serverId: string }) {
         <CardHeader className="gap-2"><CardTitle className="text-sm">{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           <p className="text-gray-400">{t("monitoringTickHelp")}</p>
-          {live && ["spark_missing", "unavailable"].includes(live.tickStatus) && (
+          {live?.tickStatus === "spark_missing" && (
             <p>{t("monitoringSetup")} <a href="https://spark.lucko.me/docs/Installation" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">{t("monitoringSparkDocs")}</a></p>
           )}
         </CardContent>
