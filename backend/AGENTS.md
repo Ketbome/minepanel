@@ -166,6 +166,13 @@ Path and filesystem patterns (critical):
   `server.json` from a server that never had one, so the caller re-imports from the
   generated `docker-compose.yml` and silently drops everything compose does not
   round-trip.
+- `composeSnippets` (`ServerConfigDto`) is raw compose YAML merged into the generated
+  document by `applyComposeSnippets` (`src/common/compose/compose-snippets.ts`) as the last
+  step of `generateDockerComposeFile`. It is structural (parsed and deep-merged), never text
+  concatenation, so it cannot emit duplicate keys. It is admin-only in both
+  `ADMIN_ONLY_*` lists in the controller, since it can mount host paths or add privileged
+  services, and the controller validates it on create/update so a bad snippet is rejected
+  at save rather than at start.
 - Per-server canonical layout is:
   - `/app/servers/<serverId>/server.json` (source of truth)
   - `/app/servers/<serverId>/docker-compose.yml` (generated)

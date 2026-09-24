@@ -742,6 +742,19 @@ export const de: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Container-Labels (eines pro Zeile, Format: schlüssel=wert). Nützlich für Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Compose-Snippets',
+  composeSnippetsDesc: 'Rohes docker-compose-YAML, das in die generierte Datei eingefügt wird',
+  composeSnippetsWarning:
+    'Fortgeschritten und fragil. Jedes Snippet wird in die generierte docker-compose.yml eingefügt; ein Fehler oder eine Änderung an einem vom Panel verwalteten Schlüssel kann den Serverstart verhindern. Nur Admins können dies bearbeiten.',
+  composeSnippetsHelp:
+    'Jedes Snippet ist YAML, das an der gewählten Stelle zusammengeführt wird. Maps werden zusammengeführt, Listen angehängt und jeder andere Wert ersetzt den des Panels.',
+  composeSnippetTargetRoot: 'Oberste Ebene (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Services (weitere Services hinzufügen)',
+  composeSnippetTargetMc: 'Minecraft-Service',
+  addComposeSnippet: 'Snippet hinzufügen',
+  removeComposeSnippet: 'Snippet entfernen',
+
   // Backup Configuration
   backupConfig: 'Backup-Konfiguration',
   enableBackup: 'Backups aktivieren',

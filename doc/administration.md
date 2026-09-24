@@ -200,6 +200,7 @@ Operating an assigned server does not include changing how its container is buil
 
 - Docker volumes and the custom backup host directory
 - Docker image and Docker labels
+- [Custom compose snippets](/networking#custom-compose-snippets)
 - UID and GID
 - Custom environment variables
 - Custom server binary download URLs (Paper, Bukkit, Spigot, Purpur, Folia, Fabric)

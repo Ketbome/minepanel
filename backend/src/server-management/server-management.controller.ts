@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
+import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
 import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
@@ -35,6 +36,7 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
   'backupHostDir',
   'dockerImage',
   'dockerLabels',
+  'composeSnippets',
   'uid',
   'gid',
   'envVars',
@@ -52,6 +54,7 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
 const ADMIN_ONLY_ON_CREATE_FIELDS = [
   'dockerImage',
   'dockerLabels',
+  'composeSnippets',
   'uid',
   'gid',
   'fabricLauncherUrl',
@@ -107,7 +110,7 @@ function isTrustedArtifactRef(value: string): boolean {
 
 function normalizeConfigValue(value: unknown): string {
   if (value === undefined || value === null) return '';
-  return String(value)
+  return (typeof value === 'object' ? JSON.stringify(value) : String(value))
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -226,6 +229,14 @@ export class ServerManagementController {
 
     if (changed.length > 0) {
       throw new ForbiddenException(`Only admins can change these settings: ${changed.join(', ')}`);
+    }
+  }
+
+  private assertValidComposeSnippets(snippets: ServerConfig['composeSnippets']): void {
+    try {
+      assertValidComposeSnippets(snippets);
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
     }
   }
 
@@ -364,6 +375,7 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
+      this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
@@ -553,6 +565,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
+    this.assertValidComposeSnippets(config.composeSnippets);
 
     // Mod Watch fields save through their own endpoint; dropping them here stops a stale
     // whole-form save from clobbering what's on disk.

@@ -759,6 +759,19 @@ export const nl: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Container labels (één per regel, formaat: sleutel=waarde). Handig voor Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Compose-fragmenten',
+  composeSnippetsDesc: 'Ruwe docker-compose-YAML die in het gegenereerde bestand wordt samengevoegd',
+  composeSnippetsWarning:
+    'Geavanceerd en kwetsbaar. Elk fragment wordt samengevoegd in de gegenereerde docker-compose.yml, dus een fout of wijziging van een sleutel die het paneel beheert kan de server laten falen bij het starten. Alleen beheerders kunnen dit bewerken.',
+  composeSnippetsHelp:
+    'Elk fragment is YAML dat op de gekozen plek wordt samengevoegd. Maps worden samengevoegd, lijsten aangevuld en elke andere waarde vervangt die van het paneel.',
+  composeSnippetTargetRoot: 'Hoogste niveau (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Services (meer services toevoegen)',
+  composeSnippetTargetMc: 'Minecraft-service',
+  addComposeSnippet: 'Fragment toevoegen',
+  removeComposeSnippet: 'Fragment verwijderen',
+
   // Backup Configuration
   backupConfig: 'Back-up configuratie',
   enableBackup: 'Back-ups inschakelen',

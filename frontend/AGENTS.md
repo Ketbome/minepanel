@@ -98,7 +98,7 @@ Server config tabs:
 - Tabs are grouped by the question the user is asking, not by where the value is
   stored: `type`, `game`, `access`, `network`, `resources`, `lifecycle`, mods/plugins/addons,
   `backups`, `advanced`. `advanced` holds only escape hatches handed straight to Docker
-  (`envVars`, `dockerVolumes`, `dockerLabels`, log options) - anything with a real home
+  (`envVars`, `dockerVolumes`, `dockerLabels`, `composeSnippets`, log options) - anything with a real home
   belongs in its own tab.
 - A config field gets exactly one control. Two controls for the same field silently
   disagree, so before adding one, grep for `updateConfig('<field>'`.

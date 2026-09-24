@@ -39,6 +39,7 @@ export const ADVANCED_TAB_HAS_CUSTOM_VALUES: Record<string, (config: ServerConfi
   advanced: (config) =>
     isSet(config.envVars) ||
     isSet(config.dockerLabels) ||
+    (config.composeSnippets?.length ?? 0) > 0 ||
     config.enableRollingLogs === true ||
     config.logTimestamp === true,
 };

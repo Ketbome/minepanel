@@ -9,6 +9,7 @@ import { ServerConfig } from '@/lib/types/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import Image from 'next/image';
+import { ComposeSnippetsField } from './ComposeSnippetsField';
 
 interface AdvancedTabProps {
   config: ServerConfig;
@@ -156,6 +157,11 @@ traefik.tcp.routers.mc.entrypoints=minecraft"
           />
           <p className="text-xs text-gray-400">{t('dockerLabelsHelp')}</p>
         </div>
+
+        <ComposeSnippetsField
+          snippets={config.composeSnippets ?? []}
+          onChange={(snippets) => updateConfig('composeSnippets', snippets)}
+        />
 
         <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700/50 space-y-3">
           <div className="flex items-center justify-between">

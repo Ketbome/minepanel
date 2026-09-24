@@ -745,6 +745,19 @@ export const pt: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Labels do contêiner (um por linha, formato: chave=valor). Úteis para Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Trechos do Compose',
+  composeSnippetsDesc: 'YAML bruto do docker-compose mesclado no arquivo gerado',
+  composeSnippetsWarning:
+    'Avançado e frágil. Cada trecho é mesclado no docker-compose.yml gerado, então um erro ou uma alteração em uma chave gerenciada pelo painel pode impedir o servidor de iniciar. Somente administradores podem editar.',
+  composeSnippetsHelp:
+    'Cada trecho é YAML mesclado no local escolhido. Mapas são mesclados, listas são acrescentadas e qualquer outro valor substitui o do painel.',
+  composeSnippetTargetRoot: 'Nível superior (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Serviços (adicionar mais serviços)',
+  composeSnippetTargetMc: 'Serviço do Minecraft',
+  addComposeSnippet: 'Adicionar trecho',
+  removeComposeSnippet: 'Remover trecho',
+
   // Configuração de Backups
   backupConfig: 'Configuração de Backups',
   enableBackup: 'Ativar Backups',
