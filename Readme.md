@@ -123,3 +123,7 @@ Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License
   <br>
   <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
 </div>
+
+Player profiles under **Monitoring → Players** show recorded playtime, last seen and persistent
+join/leave sessions for Java and Bedrock. Java profiles also show available saved-world
+statistics. [Collection details and limitations](doc/features.md#player-profiles-and-session-history).

@@ -57,5 +57,10 @@ The Metrics tab combines live TPS/MSPT, container CPU/RAM and player count with
 labelled as estimated TPS and mean MSPT. Compatible spark servers expose measured
 TPS and median/P95 durations. The view identifies disabled RCON, unavailable
 measurements and unsupported Bedrock ticks; resource charts remain available.
-Chart cursors support keyboard and touch. Existing Discord alert settings remain
-below the charts.
+Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Existing Discord alert
+settings remain below the charts.
+
+**Monitoring → Players** displays persistent player profiles and paginated sessions for
+both editions, including offline players. Saved Java world statistics are shown separately
+from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
+30 seconds after completion; unknown presence is explicitly labeled.

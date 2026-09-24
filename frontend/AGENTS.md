@@ -183,6 +183,9 @@ Tooling / build (Next.js 16):
   Uses `molecules/monitoring/monitoring-chart.tsx` for charts and `monitoring-alerts.tsx`
   for existing Discord settings. Native NeoForge TPS is explicitly estimated; mean
   MSPT and spark median/P95 stay distinct. Null samples and downtime break chart lines.
+  Charts show the latest sample, labelled scales and min/max of available samples;
+  memory uses GiB in cards and charts. Chart probes support hover, touch and keyboard
+  navigation; keep pointer state local and never project samples into downtime gaps. Keep the history view free of sliders.
   Live polls run after completion (10s); history every 60s. Failed live requests clear
   values; history failures are shown without presenting old samples as current.
 - `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,
@@ -260,6 +263,12 @@ Every frontend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
+
+
+Player profiles: `src/components/molecules/players/player-activity.tsx` is the lazily loaded
+Monitoring → Players tab for both editions, including stopped servers. API calls live in
+`src/services/player-activity/`. Show stale presence as unknown and interrupted departures
+as last observations. Keep saved Java world totals distinct from panel-recorded playtime.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

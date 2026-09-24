@@ -319,3 +319,10 @@ Every backend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `backend/AGENTS.md` and `backend/README.md` updated whenever backend workflow, architecture, commands, or conventions change.
+
+Player activity (`src/player-activity/`): commit session changes and the log cursor in one
+transaction. Bound Docker log windows to 10,001 lines; overflow is an unknown interval.
+Boot changes and gaps over two minutes interrupt open sessions at the last observation.
+Do not parse chat as join/leave events. Java identity is name-based; Bedrock uses XUID.
+`player-stats.service.ts` must keep realpath containment, file-size limits, and UUID validation;
+never expose raw player/world files through the activity API.

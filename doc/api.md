@@ -398,3 +398,23 @@ Validation errors usually come from NestJS validation pipes.
 - [Architecture](/architecture)
 - [Configuration](/configuration)
 - [Development](/development)
+
+## Player activity
+
+Authentication and access to the selected server are required.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/servers/:id/player-activity?page=0` | Recorded player summaries, newest observation first |
+| GET | `/servers/:id/player-activity/:key?page=0` | Profile, saved Java world statistics and session history |
+
+Pages are zero-based with 25 items and `hasMore`. Player keys are returned by the list;
+URL-encode them when requesting details (`java:alex` or `bedrock:<XUID>`).
+Both responses include `status` (`collecting`, `offline`, `unavailable`) and `sampledAt`.
+Profiles include `firstSeen`, `lastSeen`, `sessionCount`, `totalSeconds`, and nullable `online`.
+Sessions include `joinedAt`, `lastSeenAt`, nullable `leftAt`, `durationSeconds`, and nullable
+`endReason` (`left`, `interrupted`). An interrupted session ends at its last observation,
+not a known logout time. Unknown presence and unavailable statistics are null.
+
+Collection runs every 30 seconds from Docker logs; opening these endpoints does not run
+Docker commands. See [player activity limitations](/features#player-profiles-and-session-history).

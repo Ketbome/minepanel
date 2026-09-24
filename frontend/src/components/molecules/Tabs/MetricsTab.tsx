@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, RefreshCw } from "lucide-react";
+import { Activity, RefreshCw, Cpu, MemoryStick, Users, Timer, Gauge } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/hooks/useLanguage";
@@ -21,7 +21,7 @@ const STATUS_KEYS: Record<TickStatus, TranslationKey> = {
 
 const number = (value: number | null | undefined, digits = 1) => value == null ? "—" : value.toFixed(digits);
 
-// Reset view state when switching servers, including pending requests and chart cursors.
+// Reset view state when switching servers, including pending requests.
 export function MetricsTab({ serverId }: { serverId: string }) {
   return <MonitoringView key={serverId} serverId={serverId} />;
 }
@@ -75,11 +75,11 @@ function MonitoringView({ serverId }: { serverId: string }) {
   const native = live?.tickSource === "neoforge";
   const nativeHistory = native || points.some((point) => point.tickSource === "neoforge");
   const cards = [
-    { label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: t(native ? "monitoringNativeHelp" : "monitoringTpsWindow") },
-    { label: "MSPT", value: number(native ? live?.msptMean : live?.msptMedian), help: native ? t("monitoringMeanHelp") : `${t("monitoringMsptWindow")} · P95 ${number(live?.msptP95)} ms` },
-    { label: t("metricsCpu"), value: `${number(live?.cpuPercent)}%`, help: t("monitoringCpuHelp") },
-    { label: t("metricsMemory"), value: `${number(live?.memoryMb == null ? null : live.memoryMb / 1024, 2)} GiB`, help: t("monitoringMemoryHelp") },
-    { label: t("players"), value: `${number(live?.playersOnline, 0)} / ${number(live?.playersMax, 0)}`, help: `${t("uptime")}: ${live?.uptimeSeconds == null ? "—" : `${Math.floor(live.uptimeSeconds / 3600)}h ${Math.floor((live.uptimeSeconds % 3600) / 60)}m`}` },
+    { icon: Gauge, label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: t(native ? "monitoringNativeHelp" : "monitoringTpsWindow") },
+    { icon: Timer, label: "MSPT", value: `${number(native ? live?.msptMean : live?.msptMedian)} ms`, help: native ? t("monitoringMeanHelp") : `${t("monitoringMsptWindow")} · P95 ${number(live?.msptP95)} ms` },
+    { icon: Cpu, label: t("metricsCpu"), value: `${number(live?.cpuPercent)}%`, help: t("monitoringCpuHelp") },
+    { icon: MemoryStick, label: t("metricsMemory"), value: `${number(live?.memoryMb == null ? null : live.memoryMb / 1024, 2)} GiB`, help: t("monitoringMemoryHelp") },
+    { icon: Users, label: t("players"), value: `${number(live?.playersOnline, 0)} / ${number(live?.playersMax, 0)}`, help: `${t("uptime")}: ${live?.uptimeSeconds == null ? "—" : `${Math.floor(live.uptimeSeconds / 3600)}h ${Math.floor((live.uptimeSeconds % 3600) / 60)}m`}` },
   ];
 
   return (
@@ -93,17 +93,17 @@ function MonitoringView({ serverId }: { serverId: string }) {
         <Button variant="outline" size="sm" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100" onClick={() => setRefresh((value) => value + 1)} disabled={loading}><RefreshCw className="size-4" />{t("refresh")}</Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
-          <Card key={card.label} className="gap-3">
-            <CardHeader><CardDescription className="text-gray-400">{card.label}</CardDescription><CardTitle className="break-words font-mono text-2xl tabular-nums">{card.value}</CardTitle></CardHeader>
-            <CardContent><p className="text-xs text-gray-400">{card.help}</p></CardContent>
+          <Card key={card.label} className="gap-3 py-4">
+            <CardHeader className="gap-3 px-4"><CardDescription className="flex items-center gap-2 text-xs text-gray-300"><card.icon className="size-4 shrink-0 text-emerald-400" />{card.label}</CardDescription><CardTitle className="break-words font-mono text-3xl tracking-tight tabular-nums">{card.value}</CardTitle></CardHeader>
+            <CardContent className="px-4"><p className="text-xs leading-5 text-gray-400">{card.help}</p></CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>
+      <Card className="gap-3 py-4">
+        <CardHeader className="gap-2"><CardTitle className="text-sm">{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           <p className="text-gray-400">{t("monitoringTickHelp")}</p>
           {live && ["spark_missing", "unavailable"].includes(live.tickStatus) && (
@@ -123,7 +123,7 @@ function MonitoringView({ serverId }: { serverId: string }) {
       {historyError && <p role="alert" className="text-sm text-destructive">{t("monitoringHistoryError")}</p>}
       {loading ? <p role="status" className="py-8 text-center text-gray-400">{t("loading")}</p> : (
         <div key={hours} className="grid gap-4 lg:grid-cols-2">
-          <MonitoringChart title="TPS" description={t(nativeHistory ? "monitoringNativeHelp" : "monitoringTpsWindow")} points={points} metric="tps" reference={20} />
+          <MonitoringChart title={nativeHistory ? t("monitoringEstimatedTps") : "TPS"} description={t(nativeHistory ? "monitoringNativeHelp" : "monitoringTpsWindow")} points={points} metric="tps" reference={20} />
           <MonitoringChart title={nativeHistory ? "MSPT" : "MSPT · P95"} description={t(nativeHistory ? "monitoringMeanHelp" : "monitoringP95Help")} points={points} metric={nativeHistory ? "msptMean" : "msptP95"} unit=" ms" reference={50} />
           <MonitoringChart title={t("metricsCpu")} description={t("monitoringCpuHelp")} points={points} metric="cpuPercent" unit="%" />
           <MonitoringChart title={t("metricsMemory")} description={t("monitoringMemoryHelp")} points={points} metric="memoryMb" unit=" MiB" />

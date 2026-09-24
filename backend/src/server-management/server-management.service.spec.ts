@@ -726,4 +726,36 @@ describe('ServerManagementService', () => {
       expect(stats.gameReachable).toBe(false);
     });
   });
+  describe('readPlayerLogWindow', () => {
+    const since = new Date('2026-09-24T11:00:00Z');
+    const until = new Date('2026-09-24T13:00:00Z');
+    it('uses fixed arguments, current boot boundary, both output streams, and a bounded tail', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: true }), exitCode: 0 })
+        .mockResolvedValueOnce({ stdout: 'one', stderr: 'two', exitCode: 0 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toEqual({ runId: 'container123:2026-09-24T12:00:00Z', running: true, logs: 'one\ntwo', truncated: false });
+      expect(execute).toHaveBeenLastCalledWith('docker', ['logs', '--timestamps', '--tail', '10001', '--since', '2026-09-24T12:00:00.000Z', '--until', until.toISOString(), 'container123'], { timeout: 5000 });
+    });
+    it('reports invalid IDs, missing containers, failed inspect/logs, and exceptions as unavailable', async () => {
+      expect(await service.readPlayerLogWindow('../bad', since, until)).toBeNull();
+      const find = jest.spyOn(service as any, 'findContainerId').mockResolvedValue('');
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      find.mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ exitCode: 1 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      execute.mockResolvedValueOnce({ exitCode: 0, stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: true }) }).mockResolvedValueOnce({ exitCode: 1 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      execute.mockRejectedValueOnce(Error('timeout'));
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+    });
+    it('reports log overflow as a gap', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      jest.spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: false }), exitCode: 0 })
+        .mockResolvedValueOnce({ stdout: 'line\n'.repeat(10001), stderr: '', exitCode: 0 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toMatchObject({ truncated: true, running: false });
+    });
+  });
+
 });

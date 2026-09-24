@@ -43,7 +43,7 @@ flowchart LR
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |
-| Tick performance | Native NeoForge/ATM10 estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
+| Tick performance | Native NeoForge estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
 | Alerts    | Opt-in Discord alerts per server: unexpected server down, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
 
 Runtime stats refresh on their own on the home page and the server page, and only render for
@@ -51,10 +51,10 @@ running servers. Player totals and version come from a game status query that wo
 and Bedrock. If the container is up but the game is not answering yet, those values stay blank
 instead of reporting zero players.
 
-### CurseForge / ATM10 monitoring
+### CurseForge / NeoForge monitoring
 
 Open **Monitoring → Metrics**. Live values refresh about every 10 seconds. For
-ATM10 with NeoForge, Minepanel reads `neoforge tps` through the itzg container's
+NeoForge-based modpacks, Minepanel reads `neoforge tps` through the itzg container's
 `rcon-cli`. Keep the CurseForge server type; there is no need to switch to Paper
 or install an additional monitoring mod. RCON must be enabled in **Network**.
 
@@ -67,10 +67,11 @@ On servers with a usable `spark tps` RCON response, Minepanel displays 1-minute
 TPS and 10-second median/P95 tick duration. P95 is the duration below which 95%
 of ticks fall; it is not the mean. Some spark versions return an empty RCON
 response because commands are asynchronous. Installing spark alone does not
-guarantee RCON monitoring works; NeoForge's native command avoids this on ATM10.
+guarantee RCON monitoring works; NeoForge's native command avoids this.
 
 Missing readings stay blank, and charts leave gaps for missing samples or server
-downtime. Older history contains resource data only. CPU uses Docker's scale:
+downtime. Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB; use the time-range
+selector to change the history window. Older history contains resource data only. CPU uses Docker's scale:
 100% represents one fully used core, so multi-core usage may exceed 100%.
 Memory is container usage, not JVM heap alone. Bedrock retains resource/player
 monitoring but has no tick measurements. Existing Discord alerts cover server
@@ -334,3 +335,35 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 - Bedrock console commands
 
 **→ Full roadmap:** [Roadmap](/roadmap)
+
+## Player profiles and session history
+
+![Player profile and session history with example data](/img/player-profiles.webp)
+
+*Example data shown.*
+
+Open **Monitoring → Players** to browse recorded players, including offline players.
+Select a name to see first/last observation, recorded playtime, and paginated join/leave
+sessions. Both Java and Bedrock are supported without RCON or an added game plugin.
+
+- A backend sampler reads Docker join/leave logs every 30 seconds, independently of the browser.
+  On first activation it reads up to 24 hours of retained logs. Only observed joins create sessions;
+  players whose join is no longer in the logs appear after their next join.
+- Session timestamps come from logs. Active duration advances to the last successful observation,
+  rather than extrapolating indefinitely. A missing exit, changed container boot, sampling gap over
+  two minutes, or more than 10,000 log lines in a window interrupts open sessions at their last
+  observation. Their duration is a lower bound, not an exact departure time. Unavailable/stale
+  tracking shows unknown presence, not zero players or a guessed offline status.
+- History and collection cursors persist in SQLite. The total is **recorded playtime**, not a
+  promise of lifetime playtime; logging changes, rotation and outages may leave gaps. Unsupported
+  custom join/leave formats are ignored. Standard Java server INFO messages and Bedrock
+  `Player connected/disconnected` messages are recognized; chat is not treated as a session event.
+- Java profiles are grouped by case-insensitive name; a renamed Java account starts a separate
+  history. Bedrock profiles use XUID. No external player lookup service is called.
+- Java profiles additionally show the current world's saved playtime, deaths, mob/player kills
+  and blocks mined, when the player is present in `usercache.json` and its statistics file exists.
+  These are last-saved world totals, not live measurements or session deltas. World changes and
+  restored backups can change them. Missing or unsupported values remain blank; Bedrock has no
+  Java statistics section data.
+- Both endpoints require authentication and access to the selected server. Only derived player
+  activity and selected counters are returned, never raw logs or arbitrary world files.

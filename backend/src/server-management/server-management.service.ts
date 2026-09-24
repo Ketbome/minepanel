@@ -1669,6 +1669,23 @@ export class ServerManagementService {
     }
   }
 
+  async readPlayerLogWindow(serverId: string, since: Date, until: Date): Promise<{ runId: string; running: boolean; logs: string; truncated: boolean } | null> {
+    if (!this.validateServerId(serverId)) return null;
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return null;
+      const inspect = await this.executeProcess('docker', ['inspect', '--format', '{{json .State}}', containerId], { timeout: 5_000 });
+      if (inspect.exitCode !== 0) return null;
+      const state = JSON.parse(inspect.stdout) as { StartedAt: string; Running: boolean };
+      const result = await this.executeProcess('docker', ['logs', '--timestamps', '--tail', '10001', '--since', new Date(Math.max(since.getTime(), Date.parse(state.StartedAt) || 0)).toISOString(), '--until', until.toISOString(), containerId], { timeout: 5_000 });
+      if (result.exitCode !== 0) return null;
+      const logs = `${result.stdout}\n${result.stderr}`;
+      return { runId: `${containerId}:${state.StartedAt}`, running: state.Running, logs, truncated: logs.split('\n').filter(Boolean).length >= 10001 };
+    } catch {
+      return null;
+    }
+  }
+
   async readTickStats(serverId: string, source: 'neoforge' | 'spark'): Promise<CommandExecutionResponse> {
     if (!this.validateServerId(serverId)) return { success: false, output: '' };
     try {
