@@ -1,13 +1,12 @@
-import { FC, useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { FC, useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Send, Trash, Terminal, AlertTriangle, Users, Shield, Ban, RefreshCw, UserPlus, UserMinus, Crown, Gavel, MoreVertical, Gamepad2, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
+import { Send, Trash, Terminal, AlertTriangle, Shield, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
 import { useServerCommands } from "@/lib/hooks/useServerCommands";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { getOnlinePlayers, getWhitelist, getOps, getBannedPlayers, executeServerCommand, WhitelistPlayer, OpPlayer, BannedPlayer } from "@/services/docker/fetchs";
+import { executeServerCommand } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import Image from "next/image";
 
@@ -26,47 +25,17 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
   const [filteredCommands, setFilteredCommands] = useState<Array<{ label: string; command: string }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Player management state
-  const [onlinePlayers, setOnlinePlayers] = useState<{ online: number; max: number; players: string[] }>({ online: 0, max: 0, players: [] });
-  const [whitelist, setWhitelist] = useState<WhitelistPlayer[]>([]);
-  const [ops, setOps] = useState<OpPlayer[]>([]);
-  const [banned, setBanned] = useState<BannedPlayer[]>([]);
-  const [loadingPlayers, setLoadingPlayers] = useState(false);
-  const [newPlayerName, setNewPlayerName] = useState("");
-  const [activeSection, setActiveSection] = useState<"commands" | "players" | "world">("commands");
+  const [activeSection, setActiveSection] = useState<"commands" | "world">("commands");
   const [tpCoords, setTpCoords] = useState({ x: "0", y: "100", z: "0" });
   const [borderSize, setBorderSize] = useState("1000");
 
   const isServerRunning = serverStatus === "running";
 
-  const fetchPlayerData = useCallback(async () => {
-    if (!isServerRunning) return;
-    setLoadingPlayers(true);
-    try {
-      const [online, wl, opsList, bannedList] = await Promise.all([getOnlinePlayers(serverId, rconPort, rconPassword), getWhitelist(serverId), getOps(serverId), getBannedPlayers(serverId)]);
-      setOnlinePlayers(online);
-      setWhitelist(wl);
-      setOps(opsList);
-      setBanned(bannedList);
-    } catch (error) {
-      console.error("Error fetching player data:", error);
-    } finally {
-      setLoadingPlayers(false);
-    }
-  }, [serverId, rconPort, rconPassword, isServerRunning]);
-
-  useEffect(() => {
-    if (isServerRunning && activeSection === "players") {
-      fetchPlayerData();
-    }
-  }, [isServerRunning, activeSection, fetchPlayerData]);
-
-  // Helper para ejecutar comandos RCON y refrescar data
+  // Helper para ejecutar comandos RCON
   const runCommand = async (cmd: string, successMsg: string) => {
     const result = await executeServerCommand(serverId, { command: cmd, rconPort, rconPassword });
     if (result.success) {
       mcToast.success(successMsg);
-      setTimeout(fetchPlayerData, 500); // Pequeño delay para que el servidor procese
     } else {
       mcToast.error(result.output);
     }
@@ -74,21 +43,6 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
   };
 
   const [broadcastMsg, setBroadcastMsg] = useState("");
-
-  // Player management actions
-  const handleAddWhitelist = () => newPlayerName.trim() && runCommand(`whitelist add ${newPlayerName.trim()}`, t("playerAddedToWhitelist")).then(() => setNewPlayerName(""));
-  const handleRemoveWhitelist = (name: string) => runCommand(`whitelist remove ${name}`, t("playerRemovedFromWhitelist"));
-  const handleAddOp = (name: string) => runCommand(`op ${name}`, t("playerPromotedToOp"));
-  const handleRemoveOp = (name: string) => runCommand(`deop ${name}`, t("playerDemotedFromOp"));
-  const handleKick = (name: string) => runCommand(`kick ${name}`, t("playerKicked"));
-  const handleBan = (name: string) => runCommand(`ban ${name}`, t("playerBanned"));
-  const handleUnban = (name: string) => runCommand(`pardon ${name}`, t("playerUnbanned"));
-
-  // Player quick actions
-  const handleGamemode = (name: string, mode: string) => runCommand(`gamemode ${mode} ${name}`, t("gamemodeChanged"));
-  const handleTpToSpawn = (name: string) => runCommand(`tp ${name} 0 100 0`, t("playerTeleported"));
-  const handleHeal = (name: string) => runCommand(`effect give ${name} minecraft:instant_health 1 10`, t("playerHealed"));
-  const handleGiveItems = (name: string, item: string, amount: number) => runCommand(`give ${name} minecraft:${item} ${amount}`, t("itemsGiven"));
 
   // Server quick actions
   const handleSaveWorld = () => runCommand("save-all", t("worldSaved"));
@@ -230,10 +184,6 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
             <Terminal className="h-4 w-4 mr-1" />
             {t("commands")}
           </Button>
-          <Button type="button" variant={activeSection === "players" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("players")} disabled={!isServerRunning} className={activeSection === "players" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
-            <Users className="h-4 w-4 mr-1" />
-            {t("players")}
-          </Button>
           <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Globe className="h-4 w-4 mr-1" />
             {t("world")}
@@ -312,19 +262,8 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
           </>
         )}
 
-        {activeSection === "players" && (
+        {activeSection === "world" && (
           <div className="space-y-4">
-            {/* Header con refresh */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-gray-300">
-                <Users className="h-5 w-5 text-emerald-400" />
-                <span className="font-minecraft">{t("playerManagement")}</span>
-              </div>
-              <Button type="button" variant="ghost" size="sm" onClick={fetchPlayerData} disabled={loadingPlayers} className="text-gray-400 hover:text-white">
-                <RefreshCw className={`h-4 w-4 ${loadingPlayers ? "animate-spin" : ""}`} />
-              </Button>
-            </div>
-
             {/* Quick Admin Actions */}
             <div className="p-3 bg-gray-800/50 rounded-lg border border-emerald-700/30">
               <div className="flex items-center gap-2 mb-3">
@@ -373,175 +312,6 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               </div>
             </div>
 
-            {/* Online Players */}
-            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-green-400" />
-                <span className="font-minecraft text-sm text-gray-200">{t("onlinePlayers")}</span>
-                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
-                  {onlinePlayers.online}/{onlinePlayers.max}
-                </Badge>
-              </div>
-              {onlinePlayers.players.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {onlinePlayers.players.map((player) => (
-                    <div key={player} className="flex items-center gap-1 bg-gray-900/60 px-2 py-1 rounded text-sm">
-                      <span className="text-gray-200">{player}</span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="ghost" size="icon" className="h-5 w-5 text-gray-400 hover:text-white">
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-gray-800 border-gray-700 min-w-[160px]">
-                          <DropdownMenuItem onClick={() => handleGamemode(player, "survival")} className="text-gray-200 hover:bg-gray-700">
-                            <Gamepad2 className="h-3 w-3 mr-2" /> Survival
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleGamemode(player, "creative")} className="text-gray-200 hover:bg-gray-700">
-                            <Gamepad2 className="h-3 w-3 mr-2" /> Creative
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleGamemode(player, "spectator")} className="text-gray-200 hover:bg-gray-700">
-                            <Gamepad2 className="h-3 w-3 mr-2" /> Spectator
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-gray-700" />
-                          <DropdownMenuItem onClick={() => handleTpToSpawn(player)} className="text-gray-200 hover:bg-gray-700">
-                            <MapPin className="h-3 w-3 mr-2 text-blue-400" /> TP Spawn
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleHeal(player)} className="text-gray-200 hover:bg-gray-700">
-                            <Heart className="h-3 w-3 mr-2 text-red-400" /> {t("heal")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleGiveItems(player, "diamond", 64)} className="text-gray-200 hover:bg-gray-700">
-                            <Diamond className="h-3 w-3 mr-2 text-cyan-400" /> Give 64 💎
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-gray-700" />
-                          <DropdownMenuItem onClick={() => handleKick(player)} className="text-amber-400 hover:bg-gray-700">
-                            <Gavel className="h-3 w-3 mr-2" /> {t("kick")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBan(player)} className="text-red-400 hover:bg-gray-700">
-                            <Ban className="h-3 w-3 mr-2" /> {t("ban")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">{t("noPlayersOnline")}</p>
-              )}
-            </div>
-
-            {/* Whitelist */}
-            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-blue-400" />
-                <span className="font-minecraft text-sm text-gray-200">{t("whitelist")}</span>
-                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
-                  {whitelist.length}
-                </Badge>
-              </div>
-              <div className="flex gap-2 mb-2">
-                <Input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder={t("playerName")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200 placeholder:text-gray-500" onKeyDown={(e) => e.key === "Enter" && handleAddWhitelist()} />
-                <Button type="button" size="sm" onClick={handleAddWhitelist} disabled={!newPlayerName.trim()} className="bg-blue-600 hover:bg-blue-700">
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </div>
-              {whitelist.length > 0 ? (
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-auto">
-                  {whitelist.map((player) => (
-                    <div key={player.uuid} className="flex items-center gap-1 bg-gray-900/60 px-2 py-1 rounded text-sm">
-                      <span className="text-gray-200">{player.name}</span>
-                      {ops.some((op) => op.uuid === player.uuid) && (
-                        <span className="inline-flex" title="OP">
-                          <Crown className="h-3 w-3 text-amber-400" />
-                        </span>
-                      )}
-                      <Button type="button" variant="ghost" size="icon" className="h-5 w-5 text-red-400 hover:text-red-300" onClick={() => handleRemoveWhitelist(player.name)} title={t("remove")}>
-                        <UserMinus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">{t("whitelistEmpty")}</p>
-              )}
-            </div>
-
-            {/* Operators */}
-            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Crown className="h-4 w-4 text-amber-400" />
-                <span className="font-minecraft text-sm text-gray-200">{t("operators")}</span>
-                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
-                  {ops.length}
-                </Badge>
-              </div>
-              {ops.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {ops.map((op) => (
-                    <div key={op.uuid} className="flex items-center gap-1 bg-gray-900/60 px-2 py-1 rounded text-sm">
-                      <span className="text-gray-200">{op.name}</span>
-                      <span className="text-xs text-gray-500">Lv{op.level}</span>
-                      <Button type="button" variant="ghost" size="icon" className="h-5 w-5 text-red-400 hover:text-red-300" onClick={() => handleRemoveOp(op.name)} title={t("demote")}>
-                        <UserMinus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">{t("noOperators")}</p>
-              )}
-              {/* Promover jugador a OP desde whitelist */}
-              {whitelist.filter((p) => !ops.some((op) => op.uuid === p.uuid)).length > 0 && (
-                <div className="mt-2 pt-2 border-t border-gray-700/30">
-                  <p className="text-xs text-gray-400 mb-1">{t("promoteToOp")}:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {whitelist
-                      .filter((p) => !ops.some((op) => op.uuid === p.uuid))
-                      .slice(0, 5)
-                      .map((p) => (
-                        <Button key={p.uuid} type="button" variant="outline" size="sm" className="text-xs h-6 bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-amber-600/20 hover:border-amber-500 hover:text-amber-400" onClick={() => handleAddOp(p.name)}>
-                          {p.name}
-                        </Button>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Banned Players */}
-            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Ban className="h-4 w-4 text-red-400" />
-                <span className="font-minecraft text-sm text-gray-200">{t("bannedPlayers")}</span>
-                <Badge variant="outline" className="ml-auto text-xs border-gray-600 text-gray-300">
-                  {banned.length}
-                </Badge>
-              </div>
-              {banned.length > 0 ? (
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-auto">
-                  {banned.map((player) => (
-                    <div key={player.uuid} className="flex items-center gap-1 bg-gray-900/60 px-2 py-1 rounded text-sm">
-                      <span className="text-gray-200">{player.name}</span>
-                      {player.reason && (
-                        <span className="text-xs text-gray-500" title={player.reason}>
-                          ({player.reason.slice(0, 10)}...)
-                        </span>
-                      )}
-                      <Button type="button" variant="ghost" size="icon" className="h-5 w-5 text-green-400 hover:text-green-300" onClick={() => handleUnban(player.name)} title={t("unban")}>
-                        <UserPlus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">{t("noBannedPlayers")}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeSection === "world" && (
-          <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center gap-2 text-gray-300">
               <Globe className="h-5 w-5 text-emerald-400" />

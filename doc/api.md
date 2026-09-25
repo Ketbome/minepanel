@@ -235,6 +235,19 @@ Examples:
 - `DELETE /users/:id`
 - `POST /users/change-password`
 
+### Players
+
+Read-only player data from a Java server's world files (works while the server is stopped).
+Requires access to the server.
+
+- `GET /players/:serverId` — everyone in `playerdata`/`stats`/`advancements`, the whitelist,
+  ops and ban list: flags, last seen (player file mtime), stats summary and advancement count
+- `GET /players/:serverId/:uuid` — the same plus all statistics by category, advancements with
+  completion date, inventory, armor, offhand, ender chest, last position and spawn point
+
+Online state is not part of these responses; the panel combines them with the RCON player list.
+Player actions go through `POST /servers/:id/command`.
+
 ### System
 
 Host monitoring endpoints:

@@ -27,7 +27,8 @@ backend/src/
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
-|- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
+|- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
+|- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
@@ -200,6 +201,13 @@ Path and filesystem patterns (critical):
 - `src/modpacks/client-only-mods.ts` - vendored snapshot of itzg's `cf-exclude-include.json`
   globalExcludes (Apache-2.0). Only consulted where the metadata says nothing, and only ever
   as a suggestion the user confirms.
+- `src/players/player-nbt.ts` - normalises `playerdata/<uuid>.dat` across formats: item
+  `Count`/`tag` (before 1.20.5) vs `count`/`components`, armor/offhand inside `Inventory`
+  (slots 100-103, -106) vs the 1.21.5 `equipment` compound, `Spawn*` keys vs `respawn`. Add a
+  case there when Mojang changes the format; never let an unknown key throw.
+- `src/players/players.service.ts` - resolves the world from `level-name` in `server.properties`
+  and refuses one that escapes `mc-data`. `usercache.json` only names players; membership comes
+  from world files, whitelist, ops and bans.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

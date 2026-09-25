@@ -97,12 +97,21 @@ The current audit phase includes:
 
 ## Player Management
 
+The **Players** tab (Java servers) lists everyone who has joined, with their skin avatar, and works
+while the server is stopped because it reads the world files directly.
+
 | Feature        | Description                                |
 | -------------- | ------------------------------------------ |
-| Online players | View, kick, ban, change gamemode, teleport |
-| Whitelist      | Add/remove players at runtime, or seed it from **Access** before the first boot |
-| Operators      | Manage OPs from panel                      |
-| Ban list       | View reasons, unban                        |
+| Player list    | Search and filter by online, whitelisted, operator or banned; last seen, play time and advancements at a glance |
+| Profile        | Play time, deaths, mob and PvP kills, distance, blocks mined, last position and spawn point |
+| Statistics     | Every vanilla (and modded) statistic, by category, searchable |
+| Inventory      | Inventory, armor, offhand and ender chest, including renamed items |
+| Advancements   | Completed ones with their date, and the ones still pending |
+| Player actions | Gamemode, teleport, heal, give, kick, ban/unban, op/deop, whitelist add/remove (server running, needs console permission) |
+| Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
+
+Minecraft writes player files on autosave and on logout, so data for online players can be a few
+minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
 
 ## Mod & Plugin Support
 
