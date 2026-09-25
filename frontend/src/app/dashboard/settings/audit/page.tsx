@@ -83,8 +83,8 @@ export default function AuditSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600/20">
-              <ScrollText className="h-5 w-5 text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <ScrollText className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('auditTitle')}</CardTitle>
@@ -104,8 +104,8 @@ export default function AuditSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600/20">
-              <ScrollText className="h-5 w-5 text-cyan-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <ScrollText className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('auditTitle')}</CardTitle>
@@ -150,7 +150,7 @@ export default function AuditSettingsPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button type="button" onClick={() => loadAudit(filters)} disabled={isSearching} className="bg-cyan-600 hover:bg-cyan-700 text-white font-minecraft">
+            <Button type="button" onClick={() => loadAudit(filters)} disabled={isSearching} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
               {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
               {t('filterAudit')}
             </Button>

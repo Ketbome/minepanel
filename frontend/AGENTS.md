@@ -84,7 +84,9 @@ Design system (Minecraft GUI, converged with the docs brand):
   running). Semantic hues (`blue`, `cyan`, `amber`, `yellow`, `orange`, `red`, `purple`, and
   the `sky`/`indigo`/`violet` aliases) are retuned in `globals.css` `@theme` to sit on the
   green-black surfaces; `green` aliases `emerald`. Secondary actions use the neutral stone
-  `mc-btn`, not extra colored fills. A stopped server is neutral gray, not warning yellow.
+  `mc-btn`, not extra colored fills. Save/confirm/search actions use the acid primary
+  (`bg-emerald-400 text-gray-950`); section icon tiles are emerald (red only for danger).
+  A stopped server is neutral gray, not warning yellow.
 - Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
   slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).
   Segmented bars: `mc-bar` + `mc-bar__fill` (set fill color via inline `backgroundColor`).

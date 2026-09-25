@@ -127,8 +127,8 @@ export default function AccountSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
-              <User className="h-5 w-5 text-blue-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <User className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('accountSettings')}</CardTitle>
@@ -165,7 +165,7 @@ export default function AccountSettingsPage() {
                     <Label htmlFor="email-confirmation-code" className="text-gray-200">{t('emailConfirmationCode')}</Label>
                     <Input id="email-confirmation-code" value={confirmationCode} onChange={(event) => setConfirmationCode(event.target.value)} className="bg-gray-800 border-gray-700 text-white" placeholder="123456" />
                   </div>
-                  <Button type="button" onClick={handleConfirmEmail} disabled={isConfirmingEmail} className="bg-amber-600 hover:bg-amber-700 text-white font-minecraft">
+                  <Button type="button" onClick={handleConfirmEmail} disabled={isConfirmingEmail} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                     {isConfirmingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {isConfirmingEmail ? t('saving') : t('confirmEmailChange')}
                   </Button>
@@ -179,8 +179,8 @@ export default function AccountSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600/20">
-              <Lock className="h-5 w-5 text-indigo-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <Lock className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('securitySettings')}</CardTitle>

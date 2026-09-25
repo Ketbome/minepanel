@@ -57,7 +57,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       >
         <DashboardHeader />
 
-        <main className="flex-1 p-6 overflow-auto min-w-0">
+        <main className="flex-1 p-3 sm:p-6 overflow-auto min-w-0">
           <div className="max-w-7xl mx-auto animate-fade-in min-w-0">
             {children}
           </div>

@@ -1072,3 +1072,13 @@
 [data-slot="slider-thumb"]:active {
   cursor: grabbing;
 }
+
+/* Phones: cards nest inside panels, so the stock px-6 gutters stack up and
+   leave config tabs a ~150px text column. */
+@media (max-width: 639px) {
+  [data-slot="card-header"],
+  [data-slot="card-content"],
+  [data-slot="card-footer"] {
+    padding-inline: 1rem;
+  }
+}

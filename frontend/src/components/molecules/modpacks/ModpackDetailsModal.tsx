@@ -206,7 +206,7 @@ export function ModpackDetailsModal({ modpack, open, onClose }: ModpackDetailsMo
           <div className="flex gap-3">
             <Button
               onClick={() => window.open(modpack.links.websiteUrl, "_blank")}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-minecraft"
+              className="flex-1 font-minecraft"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               {t("viewOnCurseForge")}

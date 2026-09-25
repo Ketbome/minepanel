@@ -284,7 +284,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
       <form onSubmit={handleSubmit}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="mc-panel min-w-0 p-4 text-gray-200 min-h-[400px]">
+          <div className="mc-panel min-w-0 p-2 sm:p-4 text-gray-200 min-h-[400px]">
               <TabsContent value="type" className="space-y-4 mt-0">
                 <ServerTypeTab config={config} updateConfig={updateConfig} />
               </TabsContent>

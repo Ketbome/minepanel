@@ -306,7 +306,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               {/* Broadcast */}
               <div className="flex gap-2">
                 <Input value={broadcastMsg} onChange={(e) => setBroadcastMsg(e.target.value)} placeholder={t("broadcastPlaceholder")} className="flex-1 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200 placeholder:text-gray-500" onKeyDown={(e) => e.key === "Enter" && handleBroadcast()} />
-                <Button type="button" size="sm" onClick={handleBroadcast} disabled={!broadcastMsg.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1">
+                <Button type="button" size="sm" onClick={handleBroadcast} disabled={!broadcastMsg.trim()} className="gap-1">
                   <MessageSquare className="h-3 w-3" /> {t("broadcast")}
                 </Button>
               </div>
@@ -392,7 +392,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               {/* World Border */}
               <div className="flex gap-2">
                 <Input value={borderSize} onChange={(e) => setBorderSize(e.target.value)} placeholder="1000" className="w-24 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
-                <Button type="button" size="sm" onClick={() => handleWorldBorder(borderSize)} className="bg-blue-600 hover:bg-blue-700 gap-1 text-xs">
+                <Button type="button" size="sm" onClick={() => handleWorldBorder(borderSize)} className="gap-1 text-xs">
                   <Target className="h-3 w-3" /> {t("setWorldBorder")}
                 </Button>
               </div>
@@ -523,7 +523,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
                 <Input value={tpCoords.x} onChange={(e) => setTpCoords((p) => ({ ...p, x: e.target.value }))} placeholder="X" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
                 <Input value={tpCoords.y} onChange={(e) => setTpCoords((p) => ({ ...p, y: e.target.value }))} placeholder="Y" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
                 <Input value={tpCoords.z} onChange={(e) => setTpCoords((p) => ({ ...p, z: e.target.value }))} placeholder="Z" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
-                <Button type="button" size="sm" onClick={() => runCommand(`tp @a ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, t("playerTeleported"))} className="bg-blue-600 hover:bg-blue-700 gap-1 text-xs">
+                <Button type="button" size="sm" onClick={() => runCommand(`tp @a ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, t("playerTeleported"))} className="gap-1 text-xs">
                   <Navigation className="h-3 w-3" /> TP All
                 </Button>
               </div>
