@@ -715,6 +715,8 @@ export const ru: Record<TranslationKey, string> = {
   noRestart: 'Не перезапускать (No restart)',
   alwaysRestart: 'Всегда перезапускать (Always restart)',
   restartOnFailure: 'Перезапускать при ошибке (Restart on failure)',
+  restartMaxRetries: 'Максимум перезапусков',
+  restartMaxRetriesHelp: 'Docker перестаёт перезапускать сервер после стольких сбоев подряд. Пусто = без ограничений. При включённых оповещениях о падении придёт сообщение в Discord с кодом выхода и последними строками лога.',
   restartUnlessStopped: 'Перезапускать, пока не остановлен (Unless stopped)',
   autoStopForcesNoRestart: 'Auto-Stop требует политики «Не перезапускать» и устанавливает её автоматически.',
   no: 'Нет',

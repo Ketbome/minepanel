@@ -431,6 +431,17 @@ When **Auto-Stop** is enabled, restart policy must be **`no`**.
 
 This prevents Docker from automatically restarting a server after Auto-Stop intentionally shuts it down.
 
+### Crash loops (retry limit)
+
+With restart policy **Restart on failure**, the Lifecycle tab offers **Maximum retries**
+(1-10). The generated compose uses `restart: on-failure:<n>`, so Docker restarts a crashing
+server up to `n` times in a row and then leaves it stopped. Empty keeps the old behaviour
+(retry forever).
+
+If the server's **down alert** is on (Metrics tab), running out of retries sends one Discord
+"crash loop" message with the exit code and the last 20 log lines instead of the generic
+down alert. Stops requested from the panel never trigger it.
+
 ### Java Edition (RCON)
 
 Java servers use RCON for command execution. Commands are sent and responses are returned directly:

@@ -715,6 +715,8 @@ export const fr: Record<TranslationKey, string> = {
   noRestart: 'Pas de redémarrage',
   alwaysRestart: 'Toujours redémarrer',
   restartOnFailure: 'Redémarrer en cas d’échec',
+  restartMaxRetries: 'Tentatives maximales',
+  restartMaxRetriesHelp: 'Docker arrête de redémarrer après ce nombre de plantages consécutifs. Vide = réessayer indéfiniment. Avec les alertes d’arrêt activées, un message Discord indique le code de sortie et les dernières lignes du journal.',
   restartUnlessStopped: 'Redémarrer sauf arrêt manuel',
   autoStopForcesNoRestart: 'L’arrêt automatique nécessite la politique "Pas de redémarrage" et la force automatiquement.',
   no: 'Non',

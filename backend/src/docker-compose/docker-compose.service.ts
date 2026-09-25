@@ -69,6 +69,21 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
+  private parseRestart(restart: string | undefined): Pick<ServerConfig, 'restartPolicy' | 'restartMaxRetries'> {
+    const match = /^on-failure:(\d+)$/.exec(restart ?? '');
+    if (match) {
+      return { restartPolicy: 'on-failure', restartMaxRetries: Number(match[1]) };
+    }
+    return { restartPolicy: (restart as ServerConfig['restartPolicy']) ?? 'no' };
+  }
+
+  private resolveRestart(config: ServerConfig): string | undefined {
+    if (config.restartPolicy === 'on-failure' && config.restartMaxRetries) {
+      return `on-failure:${config.restartMaxRetries}`;
+    }
+    return config.restartPolicy;
+  }
+
   private normalizeAutoStopRestartPolicy(config: ServerConfig): ServerConfig {
     if (!config.enableAutoStop) {
       return config;
@@ -271,7 +286,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
               .filter(Boolean)
               .join('\n')
           : undefined,
-        restartPolicy: mcService.restart ?? 'no',
+        ...this.parseRestart(mcService.restart),
         stopDelay: env.STOP_SERVER_ANNOUNCE_DELAY ?? '60',
         execDirectly: env.EXEC_DIRECTLY === 'true',
         envVars: this.extractCustomEnvVars(env),
@@ -1239,7 +1254,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
       stdin_open: true,
       environment,
       volumes,
-      restart: config.restartPolicy,
+      restart: this.resolveRestart(config),
       stop_grace_period: `${this.resolveStopGracePeriod(config, edition)}s`,
     };
 

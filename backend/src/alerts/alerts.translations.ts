@@ -12,6 +12,11 @@ interface AlertMessages {
   thresholdField: string;
   sustainedField: string;
   minutes: string;
+  crashTitle: string;
+  crashDescription: string;
+  exitCodeField: string;
+  retriesField: string;
+  logTailField: string;
 }
 
 const messages: Record<SupportedLanguage, AlertMessages> = {
@@ -27,6 +32,11 @@ const messages: Record<SupportedLanguage, AlertMessages> = {
     thresholdField: 'Threshold',
     sustainedField: 'Sustained for',
     minutes: 'min',
+    crashTitle: '💥 Server crash loop',
+    crashDescription: 'The server kept crashing and Docker stopped restarting it.',
+    exitCodeField: 'Exit code',
+    retriesField: 'Retries',
+    logTailField: 'Last log lines',
   },
   es: {
     downTitle: '🚨 Servidor caído',
@@ -40,6 +50,11 @@ const messages: Record<SupportedLanguage, AlertMessages> = {
     thresholdField: 'Umbral',
     sustainedField: 'Sostenido durante',
     minutes: 'min',
+    crashTitle: '💥 Servidor en bucle de caídas',
+    crashDescription: 'El servidor siguió cayéndose y Docker dejó de reiniciarlo.',
+    exitCodeField: 'Código de salida',
+    retriesField: 'Reintentos',
+    logTailField: 'Últimas líneas del log',
   },
   nl: {
     downTitle: '🚨 Server offline',
@@ -53,6 +68,11 @@ const messages: Record<SupportedLanguage, AlertMessages> = {
     thresholdField: 'Drempel',
     sustainedField: 'Aangehouden gedurende',
     minutes: 'min',
+    crashTitle: '💥 Server blijft crashen',
+    crashDescription: 'De server bleef crashen en Docker is gestopt met herstarten.',
+    exitCodeField: 'Exitcode',
+    retriesField: 'Pogingen',
+    logTailField: 'Laatste logregels',
   },
   tr: {
     downTitle: '🚨 Sunucu kapandı',
@@ -66,6 +86,11 @@ const messages: Record<SupportedLanguage, AlertMessages> = {
     thresholdField: 'Eşik',
     sustainedField: 'Kesintisiz',
     minutes: 'dk',
+    crashTitle: '💥 Sunucu çökme döngüsünde',
+    crashDescription: 'Sunucu çökmeye devam etti ve Docker yeniden başlatmayı bıraktı.',
+    exitCodeField: 'Çıkış kodu',
+    retriesField: 'Deneme sayısı',
+    logTailField: 'Son günlük satırları',
   },
 };
 

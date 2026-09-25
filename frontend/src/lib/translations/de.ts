@@ -719,6 +719,8 @@ export const de: Record<TranslationKey, string> = {
   noRestart: 'Kein Neustart',
   alwaysRestart: 'Immer neustarten',
   restartOnFailure: 'Bei Fehler neustarten',
+  restartMaxRetries: 'Maximale Neustartversuche',
+  restartMaxRetriesHelp: 'Docker hört nach so vielen Abstürzen in Folge auf neu zu starten. Leer = unbegrenzt. Mit aktivierten Ausfallwarnungen kommt eine Discord-Nachricht mit Exit-Code und letzten Logzeilen.',
   restartUnlessStopped: 'Neustarten außer gestoppt',
   autoStopForcesNoRestart:
     'Auto-Stop erfordert die Neustartrichtlinie "Kein Neustart" und erzwingt sie automatisch.',

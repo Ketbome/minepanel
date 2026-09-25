@@ -713,6 +713,8 @@ export const en = {
   noRestart: 'No restart',
   alwaysRestart: 'Always restart',
   restartOnFailure: 'Restart on failure',
+  restartMaxRetries: 'Maximum retries',
+  restartMaxRetriesHelp: 'Docker stops restarting after this many crashes in a row. Empty = retry forever. With down alerts on, you get a Discord message with the exit code and last log lines.',
   restartUnlessStopped: 'Restart unless stopped',
   autoStopForcesNoRestart: 'Auto-Stop requires restart policy "No restart" and forces it automatically.',
   no: 'No',

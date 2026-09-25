@@ -722,6 +722,8 @@ export const es: Record<TranslationKey, string> = {
   noRestart: 'No reiniciar',
   alwaysRestart: 'Siempre reiniciar',
   restartOnFailure: 'Reiniciar en caso de error',
+  restartMaxRetries: 'Reintentos máximos',
+  restartMaxRetriesHelp: 'Docker deja de reiniciar tras esta cantidad de caídas seguidas. Vacío = reintentar siempre. Con las alertas de caída activas, recibes un mensaje en Discord con el código de salida y las últimas líneas del log.',
   restartUnlessStopped: 'Reiniciar a menos que se detenga manualmente',
   autoStopForcesNoRestart:
     'Auto-Stop requiere la política de reinicio "No reiniciar" y la fuerza automáticamente.',

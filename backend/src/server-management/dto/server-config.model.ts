@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
@@ -341,6 +341,13 @@ export class ServerConfigDto {
   @IsEnum(['no', 'always', 'on-failure', 'unless-stopped'])
   @IsOptional()
   restartPolicy?: 'no' | 'always' | 'on-failure' | 'unless-stopped';
+
+  // Only used with `on-failure`: Docker gives up after this many restarts
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  restartMaxRetries?: number;
 
   @IsString()
   @IsOptional()

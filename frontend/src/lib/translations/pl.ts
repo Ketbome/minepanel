@@ -712,6 +712,8 @@ export const pl: Record<TranslationKey, string> = {
   noRestart: 'Bez restartu',
   alwaysRestart: 'Zawsze restartuj',
   restartOnFailure: 'Uruchom ponownie w przypadku awarii',
+  restartMaxRetries: 'Maksymalna liczba prób',
+  restartMaxRetriesHelp: 'Docker przestaje restartować po tylu awariach z rzędu. Puste = bez limitu. Przy włączonych alertach awarii dostaniesz wiadomość na Discordzie z kodem wyjścia i ostatnimi liniami logu.',
   restartUnlessStopped: 'Uruchom ponownie, chyba że zatrzymane',
   autoStopForcesNoRestart:
     'Auto-Stop wymaga zasady restartu „Bez restartu” i ustawia ją automatycznie.',

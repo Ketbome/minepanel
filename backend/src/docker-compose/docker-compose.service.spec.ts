@@ -721,6 +721,34 @@ describe('DockerComposeService', () => {
       expect(parsed.services.mc.restart).toBe('no');
     });
 
+    it('should add the retry limit to on-failure', async () => {
+      const config = (service as any).createDefaultConfig('crash-server');
+      config.restartPolicy = 'on-failure';
+      config.restartMaxRetries = 3;
+
+      await service.generateDockerComposeFile(config, false);
+
+      const [, yamlContent] = (fs.writeFile as unknown as jest.Mock).mock.calls[0];
+      expect((yaml.load(yamlContent as string) as any).services.mc.restart).toBe('on-failure:3');
+    });
+
+    it('should ignore the retry limit for other policies', async () => {
+      const config = (service as any).createDefaultConfig('always-server');
+      config.restartPolicy = 'always';
+      config.restartMaxRetries = 3;
+
+      await service.generateDockerComposeFile(config, false);
+
+      const [, yamlContent] = (fs.writeFile as unknown as jest.Mock).mock.calls[0];
+      expect((yaml.load(yamlContent as string) as any).services.mc.restart).toBe('always');
+    });
+
+    it('should read an on-failure retry limit back from a compose file', () => {
+      expect((service as any).parseRestart('on-failure:5')).toEqual({ restartPolicy: 'on-failure', restartMaxRetries: 5 });
+      expect((service as any).parseRestart('unless-stopped')).toEqual({ restartPolicy: 'unless-stopped' });
+      expect((service as any).parseRestart(undefined)).toEqual({ restartPolicy: 'no' });
+    });
+
     it('should generate valid yaml for docker labels with urls when proxy labels are also present', async () => {
       const config = (service as any).createDefaultConfig('label-server');
       config.dockerLabels = 'example.label=https://example.com/icon.png';

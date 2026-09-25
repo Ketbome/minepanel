@@ -9,7 +9,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
-  let serverManagement: { getAllServersResources: jest.Mock };
+  let serverManagement: { getAllServersResources: jest.Mock; getCrashInfo: jest.Mock };
   let alertsService: { evaluate: jest.Mock };
 
   beforeEach(async () => {
@@ -19,7 +19,7 @@ describe('MetricsService', () => {
       save: jest.fn(async (x) => x),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    serverManagement = { getAllServersResources: jest.fn() };
+    serverManagement = { getAllServersResources: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -107,7 +107,9 @@ describe('MetricsService', () => {
 
       await (service as any).collectSamples();
 
-      expect(alertsService.evaluate).toHaveBeenCalledWith(resources);
+      expect(alertsService.evaluate).toHaveBeenCalledWith(resources, expect.any(Function));
+      await alertsService.evaluate.mock.calls[0][1]('srvA');
+      expect(serverManagement.getCrashInfo).toHaveBeenCalledWith('srvA');
     });
 
     it('should still persist samples when alert evaluation fails', async () => {

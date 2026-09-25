@@ -741,6 +741,8 @@ export const tr: Record<TranslationKey, string> = {
   noRestart: 'Yeniden başlatma',
   alwaysRestart: 'Her zaman yeniden başlat',
   restartOnFailure: 'Hata durumunda yeniden başlat',
+  restartMaxRetries: 'Maksimum deneme',
+  restartMaxRetriesHelp: 'Docker art arda bu kadar çökmeden sonra yeniden başlatmayı bırakır. Boş = sınırsız. Çökme uyarıları açıksa, çıkış kodu ve son günlük satırlarıyla bir Discord mesajı alırsın.',
   restartUnlessStopped: 'Elle durdurulmadıkça yeniden başlat',
   autoStopForcesNoRestart:
     'Otomatik durdurma, "Yeniden başlatma" politikasını gerektirir ve bunu otomatik olarak uygular.',

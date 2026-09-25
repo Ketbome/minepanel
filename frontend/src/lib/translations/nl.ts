@@ -736,6 +736,8 @@ export const nl: Record<TranslationKey, string> = {
   noRestart: 'Niet herstarten',
   alwaysRestart: 'Altijd herstarten',
   restartOnFailure: 'Herstarten bij problemen',
+  restartMaxRetries: 'Maximaal aantal pogingen',
+  restartMaxRetriesHelp: 'Docker stopt met herstarten na zoveel crashes op rij. Leeg = altijd opnieuw proberen. Met uitvalmeldingen aan krijg je een Discord-bericht met de exitcode en de laatste logregels.',
   restartUnlessStopped: 'Herstarten tenzij gestopt',
   autoStopForcesNoRestart:
     'Auto-stop vereist het herstartbeleid "Niet herstarten" en forceert dit automatisch.',
