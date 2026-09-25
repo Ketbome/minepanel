@@ -411,6 +411,52 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('getGamerules', () => {
+    beforeEach(() => {
+      jest.spyOn(service as any, 'getServerEdition').mockResolvedValue('JAVA');
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+    });
+
+    it('lists rules from help and reads each value in one exec', async () => {
+      const execute = jest
+        .spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: '/gamerule keepInventory [<value>]/gamerule randomTickSpeed [<value>]\n/gamerule (mod:a|mod:b)', exitCode: 0 })
+        .mockResolvedValueOnce({
+          stdout: '@@keepInventory@@\nGamerule keepInventory is currently set to: false\n@@randomTickSpeed@@\nGamerule randomTickSpeed is currently set to: 3\n@@mod:a@@\nUnknown command\n@@mod:b@@\n',
+          exitCode: 0,
+        });
+
+      const result = await service.getGamerules('survival');
+
+      expect(result).toEqual({
+        success: true,
+        supported: true,
+        rules: [
+          { name: 'keepInventory', value: 'false' },
+          { name: 'randomTickSpeed', value: '3' },
+        ],
+      });
+      expect(execute).toHaveBeenLastCalledWith(
+        'docker',
+        ['exec', 'container123', 'sh', '-c', expect.any(String), 'sh', 'keepInventory', 'randomTickSpeed', 'mod:a', 'mod:b'],
+        { timeout: 30000 },
+      );
+    });
+
+    it('reports Bedrock as unsupported and failures as empty', async () => {
+      (service as any).getServerEdition.mockResolvedValueOnce('BEDROCK');
+      expect(await service.getGamerules('bds')).toEqual({ success: false, supported: false, rules: [] });
+      expect((await service.getGamerules('../x')).success).toBe(false);
+
+      jest.spyOn(service as any, 'executeProcess').mockResolvedValueOnce({ stdout: 'Unknown command', exitCode: 0 }).mockRejectedValueOnce(new Error('boom'));
+      expect((await service.getGamerules('survival')).rules).toEqual([]);
+      expect((await service.getGamerules('survival')).success).toBe(false);
+
+      (service as any).findContainerId.mockResolvedValueOnce(null);
+      expect((await service.getGamerules('survival')).success).toBe(false);
+    });
+  });
+
   describe('readTickStats', () => {
     it('uses a fixed bounded command and container-side credentials', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');

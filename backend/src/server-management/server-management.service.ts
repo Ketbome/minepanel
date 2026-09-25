@@ -1728,6 +1728,53 @@ export class ServerManagementService {
     }
   }
 
+  // Rule names come from the server's own `help gamerule`, so version renames
+  // (keepInventory -> keep_inventory) and modded rules need no hardcoded list.
+  async getGamerules(serverId: string): Promise<{ success: boolean; supported: boolean; rules: { name: string; value: string }[] }> {
+    const empty = { success: false, supported: true, rules: [] };
+    if (!this.validateServerId(serverId)) return empty;
+    try {
+      if ((await this.getServerEdition(serverId)) === 'BEDROCK') return { ...empty, supported: false };
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return empty;
+
+      const help = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', 'help', 'gamerule'], { timeout: 10_000 });
+      const names = this.parseGameruleNames(this.sanitizeCommandOutput(help.stdout));
+      if (help.exitCode !== 0 || names.length === 0) return empty;
+
+      // One exec for all rules; names are argv, never interpolated into the script.
+      const script = 'for r do echo "@@$r@@"; rcon-cli gamerule "$r"; done';
+      const { stdout } = await this.executeProcess('docker', ['exec', containerId, 'sh', '-c', script, 'sh', ...names], { timeout: 30_000 });
+      return { success: true, supported: true, rules: this.parseGameruleValues(this.sanitizeCommandOutput(stdout), names) };
+    } catch (error) {
+      this.logger.warn(`Failed to read gamerules for ${serverId}: ${(error as Error).message}`);
+      return empty;
+    }
+  }
+
+  private parseGameruleNames(helpOutput: string): string[] {
+    const names = new Set<string>();
+    // Usage is either one line per rule or `/gamerule (a|b|c)`; RCON may also glue lines together.
+    for (const [, usage] of helpOutput.matchAll(/gamerule\s+(\([^)]*\)|[^\s[/]+)/g)) {
+      for (const name of usage.split(/[()|]/)) {
+        if (/^[A-Za-z][\w.:-]{0,63}$/.test(name)) names.add(name);
+      }
+    }
+    return [...names].slice(0, 300);
+  }
+
+  private parseGameruleValues(output: string, names: string[]): { name: string; value: string }[] {
+    const known = new Set(names);
+    // Output is `@@name@@<reply>` per rule; sanitizing may drop the newlines between them.
+    const parts = output.split('@@');
+    const rules: { name: string; value: string }[] = [];
+    for (let i = 1; i + 1 < parts.length; i += 2) {
+      const value = /set to:?\s*([^\s@]+)/i.exec(parts[i + 1])?.[1];
+      if (known.has(parts[i]) && value) rules.push({ name: parts[i], value });
+    }
+    return rules;
+  }
+
   async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
     try {
       if (!this.validateServerId(serverId)) {
