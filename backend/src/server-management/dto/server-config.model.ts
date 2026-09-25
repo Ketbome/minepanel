@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsArray, ValidateNested, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsArray, ValidateNested, MaxLength, ValidateBy, buildMessage } from 'class-validator';
 import { Type } from 'class-transformer';
+import { isValidPortMapping } from 'src/common/compose/port-mapping';
 import { PartialType } from '@nestjs/mapped-types';
 import { COMPOSE_SNIPPET_TARGETS, type ComposeSnippetTarget } from 'src/common/compose/compose-snippets';
 
@@ -497,6 +498,18 @@ export class ServerConfigDto {
 
   // Ports
   @IsString({ each: true })
+  @ValidateBy(
+    {
+      name: 'isPortMapping',
+      validator: {
+        validate: (value: unknown) => typeof value === 'string' && isValidPortMapping(value),
+        defaultMessage: buildMessage(
+          (each) => `${each}$property must use Docker Compose port syntax, e.g. "3091:3091" or "3091:3091/udp"`,
+        ),
+      },
+    },
+    { each: true },
+  )
   @IsOptional()
   extraPorts: string[];
 
