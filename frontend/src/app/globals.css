@@ -65,6 +65,117 @@
   --color-gray-800: #101609;
   --color-gray-900: #0d1207;
   --color-gray-950: #0a0e08;
+
+  /* Semantic hues pulled onto the same green-black world: slightly lower
+     chroma than Tailwind's defaults so blue/red/amber/purple sit next to the
+     acid green instead of fighting it. `green` aliases the emerald scale so
+     the app has one green, not two. */
+  --color-green-300: #c4ff7a;
+  --color-green-400: #9dff3f;
+  --color-green-500: #7fd82f;
+  --color-green-600: #5da621;
+  --color-green-700: #3a5423;
+  --color-green-800: #24350f;
+  --color-green-900: #16200a;
+  --color-green-950: #0d1207;
+
+  --color-blue-200: oklch(0.89 0.05 262);
+  --color-blue-300: oklch(0.82 0.08 262);
+  --color-blue-400: oklch(0.74 0.12 262);
+  --color-blue-500: oklch(0.65 0.14 262);
+  --color-blue-600: oklch(0.55 0.14 262);
+  --color-blue-700: oklch(0.45 0.12 262);
+  --color-blue-800: oklch(0.34 0.08 262);
+  --color-blue-900: oklch(0.26 0.06 262);
+  --color-blue-950: oklch(0.2 0.04 262);
+
+  --color-cyan-200: oklch(0.92 0.06 215);
+  --color-cyan-300: oklch(0.86 0.1 215);
+  --color-cyan-400: oklch(0.8 0.12 215);
+  --color-cyan-500: oklch(0.71 0.12 215);
+  --color-cyan-600: oklch(0.6 0.11 215);
+  --color-cyan-700: oklch(0.48 0.09 215);
+  --color-cyan-800: oklch(0.36 0.07 215);
+  --color-cyan-900: oklch(0.27 0.05 215);
+  --color-cyan-950: oklch(0.2 0.035 215);
+
+  --color-amber-200: oklch(0.93 0.07 85);
+  --color-amber-300: oklch(0.88 0.12 85);
+  --color-amber-400: oklch(0.84 0.14 82);
+  --color-amber-500: oklch(0.76 0.14 78);
+  --color-amber-600: oklch(0.64 0.13 72);
+  --color-amber-700: oklch(0.51 0.11 68);
+  --color-amber-800: oklch(0.39 0.08 68);
+  --color-amber-900: oklch(0.29 0.06 70);
+  --color-amber-950: oklch(0.21 0.04 72);
+
+  --color-yellow-200: oklch(0.94 0.08 95);
+  --color-yellow-300: oklch(0.9 0.12 92);
+  --color-yellow-400: oklch(0.86 0.14 90);
+  --color-yellow-500: oklch(0.79 0.14 87);
+  --color-yellow-600: oklch(0.66 0.12 84);
+  --color-yellow-700: oklch(0.52 0.1 82);
+  --color-yellow-800: oklch(0.4 0.07 82);
+  --color-yellow-900: oklch(0.3 0.05 85);
+  --color-yellow-950: oklch(0.22 0.035 88);
+
+  --color-orange-300: oklch(0.84 0.1 55);
+  --color-orange-400: oklch(0.77 0.14 52);
+  --color-orange-500: oklch(0.7 0.16 48);
+  --color-orange-600: oklch(0.6 0.15 45);
+  --color-orange-700: oklch(0.49 0.12 42);
+  --color-orange-800: oklch(0.38 0.08 42);
+  --color-orange-900: oklch(0.28 0.06 42);
+  --color-orange-950: oklch(0.21 0.04 45);
+
+  --color-red-200: oklch(0.89 0.05 27);
+  --color-red-300: oklch(0.81 0.09 27);
+  --color-red-400: oklch(0.72 0.15 27);
+  --color-red-500: oklch(0.65 0.18 27);
+  --color-red-600: oklch(0.56 0.17 27);
+  --color-red-700: oklch(0.46 0.14 27);
+  --color-red-800: oklch(0.36 0.1 27);
+  --color-red-900: oklch(0.27 0.07 27);
+  --color-red-950: oklch(0.2 0.045 27);
+
+  --color-purple-200: oklch(0.89 0.05 300);
+  --color-purple-300: oklch(0.82 0.09 300);
+  --color-purple-400: oklch(0.74 0.13 300);
+  --color-purple-500: oklch(0.65 0.15 298);
+  --color-purple-600: oklch(0.55 0.15 296);
+  --color-purple-700: oklch(0.45 0.13 295);
+  --color-purple-800: oklch(0.35 0.09 295);
+  --color-purple-900: oklch(0.27 0.06 295);
+  --color-purple-950: oklch(0.2 0.04 295);
+
+  /* Stray hues fold into the tuned scales above. */
+  --color-sky-200: var(--color-cyan-200);
+  --color-sky-300: var(--color-cyan-300);
+  --color-sky-400: var(--color-cyan-400);
+  --color-sky-500: var(--color-cyan-500);
+  --color-sky-600: var(--color-cyan-600);
+  --color-sky-700: var(--color-cyan-700);
+  --color-sky-800: var(--color-cyan-800);
+  --color-sky-900: var(--color-cyan-900);
+  --color-sky-950: var(--color-cyan-950);
+  --color-indigo-200: var(--color-blue-200);
+  --color-indigo-300: var(--color-blue-300);
+  --color-indigo-400: var(--color-blue-400);
+  --color-indigo-500: var(--color-blue-500);
+  --color-indigo-600: var(--color-blue-600);
+  --color-indigo-700: var(--color-blue-700);
+  --color-indigo-800: var(--color-blue-800);
+  --color-indigo-900: var(--color-blue-900);
+  --color-indigo-950: var(--color-blue-950);
+  --color-violet-200: var(--color-purple-200);
+  --color-violet-300: var(--color-purple-300);
+  --color-violet-400: var(--color-purple-400);
+  --color-violet-500: var(--color-purple-500);
+  --color-violet-600: var(--color-purple-600);
+  --color-violet-700: var(--color-purple-700);
+  --color-violet-800: var(--color-purple-800);
+  --color-violet-900: var(--color-purple-900);
+  --color-violet-950: var(--color-purple-950);
 }
 
 :root {
@@ -142,25 +253,58 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgba(157, 255, 63, 0.28);
+    color: #f5f8ee;
+  }
+  input,
+  textarea {
+    caret-color: var(--mc-emerald);
+  }
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Display font: Archivo Black uppercase (same voice as the docs), replacing
-   the old minecraft.woff2. Lives in the components layer so text and leading
-   utilities still win. */
+/* Type roles. Archivo carries the whole panel: `font-minecraft` is the UI
+   heading/label voice (semibold, natural case) so nav, card titles and buttons
+   stay readable for hours. Archivo Black uppercase, the docs' display voice,
+   is kept for the one page title per screen (h1) and the brand wordmark.
+   Lives in the components layer so text, weight and leading utilities win. */
 @layer components {
   .font-minecraft,
-  .mc-count,
-  .mc-btn,
-  .mc-tag {
-    font-family: var(--font-archivo-black), sans-serif;
+  .mc-btn {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  h1.font-minecraft,
+  .mc-display {
+    font-family: var(--font-archivo-black), var(--font-archivo), sans-serif;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+  }
+  .mc-tag {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .mc-count {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .drop-shadow-glow {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
 }
 
 /* Custom scrollbar styles */
@@ -199,11 +343,12 @@
   scrollbar-width: none;
 }
 
-/* Minecraft pixelated images */
+/* Item art ships as 128px sprites and is always drawn smaller, where
+   nearest-neighbour sampling drops whole pixel rows; smooth downscaling keeps
+   every one. The GUI surfaces no longer force `pixelated` either, since
+   image-rendering is inherited by the sprites inside slots and buttons. */
 .pixelated {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+  image-rendering: auto;
 }
 
 /* Toast animations */
@@ -596,7 +741,6 @@
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.1), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 6px 6px 0 rgba(157, 255, 63, 0.1);
-  image-rendering: pixelated;
 }
 
 /* Subtle pixel-stone grain so panels never read as flat */
@@ -628,7 +772,6 @@
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06);
-  image-rendering: pixelated;
 }
 
 .mc-slot--active {
@@ -653,13 +796,12 @@
   gap: 0.5rem;
   color: #f3fff8;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
-  background: linear-gradient(180deg, #4d4d4d, #383838);
+  background: linear-gradient(180deg, #2c3b22, #1c2716);
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.22), inset -2px -2px 0 rgba(0, 0, 0, 0.45), 0 4px 0 rgba(0, 0, 0, 0.45);
   cursor: pointer;
   transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
-  image-rendering: pixelated;
 }
 
 .mc-btn:hover {
@@ -729,7 +871,6 @@
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55);
   overflow: hidden;
-  image-rendering: pixelated;
 }
 
 .mc-bar__fill {
@@ -798,7 +939,6 @@
   box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.42), 0 3px 0 rgba(0, 0, 0, 0.4);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
   transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
-  image-rendering: pixelated;
 }
 .mc-bevel:hover {
   filter: brightness(1.12);

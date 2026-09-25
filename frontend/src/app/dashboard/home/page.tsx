@@ -127,8 +127,8 @@ export default function HomePage() {
           label: "CPU",
           img: "/images/diamond.webp",
           icon: Cpu,
-          color: "#5eead4",
-          text: "text-[#5eead4]",
+          color: "var(--mc-diamond)",
+          text: "text-cyan-300",
           percent: systemStats.cpu.usage,
           value: `${Math.round(systemStats.cpu.usage)}%`,
         },
@@ -155,9 +155,9 @@ export default function HomePage() {
 
   const quickActions = [
     { href: "/dashboard/servers", img: "/images/crafting-table.webp", icon: Plus, label: t("createServer"), btn: "mc-btn-emerald" },
-    { href: "/dashboard/servers", img: "/images/command-block.webp", icon: Server, label: t("viewAllServers"), btn: "mc-btn-lapis" },
-    { href: "/dashboard/files", img: "/images/chest.webp", icon: FolderOpen, label: t("files"), btn: "mc-btn-gold" },
-    { href: "/dashboard/settings", img: "/images/redstone.webp", icon: Settings, label: t("settings"), btn: "mc-btn-amethyst" },
+    { href: "/dashboard/servers", img: "/images/command-block.webp", icon: Server, label: t("viewAllServers"), btn: "" },
+    { href: "/dashboard/files", img: "/images/chest.webp", icon: FolderOpen, label: t("files"), btn: "" },
+    { href: "/dashboard/settings", img: "/images/redstone.webp", icon: Settings, label: t("settings"), btn: "" },
   ];
 
   return (
@@ -165,7 +165,7 @@ export default function HomePage() {
       {/* Inventory window header */}
       <div className="mc-panel animate-fade-in-up">
         <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
-          <Image src="/images/grass.webp" alt="Home" width={32} height={32} className="pixelated animate-float" />
+          <Image src="/images/grass.webp" alt="Home" width={32} height={32} className="pixelated" />
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("homeTitle")}</h1>
             <p className="text-gray-300 text-xs">
@@ -241,7 +241,7 @@ export default function HomePage() {
               <Link key={action.label} href={action.href}>
                 <button className={`mc-btn ${action.btn} w-full h-full py-4 flex-col gap-2`}>
                   <Image src={action.img} alt="" width={32} height={32} className="pixelated" />
-                  <span className="text-[11px] leading-tight text-center px-1">{action.label}</span>
+                  <span className="text-sm leading-tight text-center px-1">{action.label}</span>
                 </button>
               </Link>
             ))}
@@ -273,18 +273,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Decorative */}
-      <div className="flex justify-center gap-8 pt-2">
-        <div className="animate-float">
-          <Image src="/images/diamond.webp" alt="Diamond" width={24} height={24} className="pixelated opacity-40 hover:opacity-80 transition-opacity" />
-        </div>
-        <div className="animate-float-delay-1">
-          <Image src="/images/emerald.webp" alt="Emerald" width={24} height={24} className="pixelated opacity-40 hover:opacity-80 transition-opacity" />
-        </div>
-        <div className="animate-float-delay-2">
-          <Image src="/images/command-block.webp" alt="Command Block" width={24} height={24} className="pixelated opacity-40 hover:opacity-80 transition-opacity" />
-        </div>
-      </div>
     </div>
   );
 }

@@ -167,7 +167,7 @@ export default function TemplatesPage() {
       {/* Recipe book header */}
       <div className="mc-panel animate-fade-in-up">
         <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
-          <Image src="/images/bookshelf.webp" alt="Templates" width={32} height={32} className="pixelated animate-float" />
+          <Image src="/images/bookshelf.webp" alt="Templates" width={32} height={32} className="pixelated" />
           <div>
             <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("modpackTemplates")}</h1>
             <p className="text-gray-300 text-xs">{t("modpackTemplatesDescription")}</p>
@@ -313,18 +313,6 @@ export default function TemplatesPage() {
       )}
 
       <ModpackDetailsModalEnhanced modpack={selectedModpack} open={!!selectedModpack} onClose={() => setSelectedModpack(null)} />
-
-      <div className="flex justify-center gap-8 pt-8">
-        <div className="animate-float">
-          <Image src="/images/diamond.webp" alt="Diamond" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </div>
-        <div className="animate-float-delay-1">
-          <Image src="/images/bookshelf.webp" alt="Bookshelf" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </div>
-        <div className="animate-float-delay-2">
-          <Image src="/images/emerald.webp" alt="Emerald" width={32} height={32} className="opacity-50 hover:opacity-80 transition-opacity" />
-        </div>
-      </div>
     </div>
   );
 }

@@ -153,7 +153,7 @@ export default function AccountSettingsPage() {
                 <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="bg-gray-800 border-gray-700 text-white" placeholder="name@example.com" />
                 <p className="text-xs text-gray-500">{t('yourEmail')}</p>
               </div>
-              <Button type="button" onClick={handleUpdateProfile} disabled={isUpdatingProfile} className="bg-blue-600 hover:bg-blue-700 text-white font-minecraft">
+              <Button type="button" onClick={handleUpdateProfile} disabled={isUpdatingProfile} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 {isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isUpdatingProfile ? t('saving') : t('updateEmail')}
               </Button>
@@ -225,7 +225,7 @@ export default function AccountSettingsPage() {
               </div>
             </div>
           ))}
-          <Button type="button" onClick={handleChangePassword} disabled={isChangingPassword} className="bg-indigo-600 hover:bg-indigo-700 text-white font-minecraft">
+          <Button type="button" onClick={handleChangePassword} disabled={isChangingPassword} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
             {isChangingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
             {isChangingPassword ? t('updatingPassword') : t('updatePassword')}
           </Button>

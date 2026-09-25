@@ -72,10 +72,19 @@ Design system (Minecraft GUI, converged with the docs brand):
 - The app uses a pixel/inventory "Minecraft GUI" look defined in `src/app/globals.css`, sharing
   brand DNA with the docs site (`doc/.vitepress/theme/style.css`): acid green `#9dff3f` on
   near-black `#0a0e08`, hard offset shadows, and a blueprint-grid backdrop (`mp-blueprint`).
-- Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo Black uppercase is the
-  display font (`font-minecraft`, `mc-btn`, `mc-tag`, `mc-count`); Archivo is the body font
-  (`--font-sans`); JetBrains Mono is the mono font (`--font-mono`, mono labels via `mp-tag`).
-  Do not reintroduce Mojang's proprietary Minecraft font or any pixel font.
+- Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo (variable) carries the
+  whole UI. `font-minecraft` and `mc-btn` are the heading/label voice: Archivo semibold in
+  natural case, never forced uppercase. Archivo Black uppercase is reserved for the one page
+  title per screen (`h1.font-minecraft`) and the wordmark (`mc-display`). `mc-tag` (status
+  chips) is Archivo bold small caps; `mc-count` is Archivo extra-bold tabular numbers.
+  JetBrains Mono (`--font-mono`, tabular numerals) is for data, ports, paths and `mp-tag`.
+  Do not reintroduce Mojang's proprietary Minecraft font, any pixel font, or Archivo Black
+  on body-size text.
+- Color: acid green (`emerald-*`) is the only brand accent (primary actions, active state,
+  running). Semantic hues (`blue`, `cyan`, `amber`, `yellow`, `orange`, `red`, `purple`, and
+  the `sky`/`indigo`/`violet` aliases) are retuned in `globals.css` `@theme` to sit on the
+  green-black surfaces; `green` aliases `emerald`. Secondary actions use the neutral stone
+  `mc-btn`, not extra colored fills. A stopped server is neutral gray, not warning yellow.
 - Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
   slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).
   Segmented bars: `mc-bar` + `mc-bar__fill` (set fill color via inline `backgroundColor`).
@@ -87,7 +96,15 @@ Design system (Minecraft GUI, converged with the docs brand):
   `mc-*` classes for bespoke layouts (dashboards, headers).
 - The Tailwind `emerald-*`/`gray-*` scales are remapped in `globals.css` `@theme` onto the docs'
   acid/green-tinted palette; prefer those utilities (or `--mc-*` vars) over new raw hex values.
-- Use the existing pixel item art in `public/images/*.webp` with the `pixelated` class for icons.
+- Item art in `public/images/` is normalized: 128x128, transparent, content fitted to a
+  112px box and centered, so every sprite reads at the same optical size in a slot. New
+  sprites must follow the same rule (trim, fit, center). Full-bleed textures (`cow.jpg`,
+  `villager.png`, `nether.webp`, `shield.png`, `neoforged.png`, `server-icon.png`) stay as-is.
+  The `pixelated` class now means smooth downscaling (sprites are always drawn smaller than
+  128px, where nearest-neighbour drops pixel rows); do not set `image-rendering: pixelated`
+  on GUI surfaces, since it is inherited by the sprites inside them.
+- No perpetual decorative motion in operating screens (no floating item rows or bobbing
+  header icons); motion is for state changes.
 
 Auth/session patterns:
 

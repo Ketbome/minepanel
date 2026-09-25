@@ -114,7 +114,7 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
       {isDragging && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-emerald-900/80 backdrop-blur-sm border-2 border-dashed border-emerald-400 rounded-lg select-none">
           <div className="flex flex-col items-center gap-3 text-emerald-300">
-            <Upload className="h-12 w-12 animate-bounce" />
+            <Upload className="h-12 w-12" />
             <p className="text-lg font-minecraft">{t("dropFilesHere")}</p>
             <p className="text-sm text-emerald-400/70">{t("releaseToUpload")}</p>
           </div>
