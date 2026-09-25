@@ -49,7 +49,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 
 - **Java & Bedrock** — Support for both Minecraft editions
 - **Multi-server** — Create and manage multiple servers from one panel
-- **Real-time monitoring** — CPU, RAM, players, and logs
+- **Real-time monitoring** — CPU, RAM, players, logs, and TPS/MSPT for NeoForge modpacks (including ATM10) and compatible spark servers
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies
@@ -123,3 +123,7 @@ Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License
   <br>
   <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
 </div>
+
+Player profiles under **Monitoring → Players** show recorded playtime, last seen and persistent
+join/leave sessions for Java and Bedrock. Java profiles also show available saved-world
+statistics. [Collection details and limitations](doc/features.md#player-profiles-and-session-history).

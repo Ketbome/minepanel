@@ -7,7 +7,21 @@ describe('MetricsController', () => {
 
   beforeEach(() => {
     metrics = { getHistory: jest.fn().mockResolvedValue(['p']) };
-    controller = new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any);
+    controller = new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any, { getSnapshot: jest.fn().mockResolvedValue({ tps: 20 }) } as any);
+  });
+
+  it('returns live monitoring', async () => {
+    expect(await controller.getLive(req, 'srv')).toEqual({ tps: 20 });
+  });
+
+  it('denies live monitoring before collecting another user’s server data', async () => {
+    const getSnapshot = jest.fn();
+    const restricted = new MetricsController(metrics as any,
+      { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any,
+      { assertServerAccess: jest.fn(() => { throw new Error('Forbidden'); }) } as any,
+      { getSnapshot } as any);
+    await expect(restricted.getLive(req, 'other-server')).rejects.toThrow('Forbidden');
+    expect(getSnapshot).not.toHaveBeenCalled();
   });
 
   it('clamps the hours window', async () => {

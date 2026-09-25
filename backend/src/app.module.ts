@@ -1,3 +1,4 @@
+import { PlayerActivityModule } from './player-activity/player-activity.module';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -44,6 +45,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     BedrockAddonsModule,
     ModpacksModule,
     MetricsModule,
+    PlayerActivityModule,
     ScheduledTasksModule,
     AlertsModule,
     FilesModule,

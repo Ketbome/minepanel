@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -27,12 +27,13 @@ const BackupsTab = dynamic(() => import("../molecules/Tabs/BackupsTab").then(mod
 const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").then(mod => mod.ServerTypeTab));
 const BedrockAddonsTab = dynamic(() => import("../molecules/Tabs/BedrockAddonsTab").then(mod => mod.BedrockAddonsTab));
 const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
+const PlayerActivityTab = dynamic(() => import("../molecules/players/player-activity").then(mod => mod.PlayerActivityTab));
 const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
 const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasksTab").then(mod => mod.ScheduledTasksTab));
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks"];
+const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks", "players"];
 
 // Tabs that were split up or absorbed. People bookmark these hashes and the docs
 // link to them, so an old one lands on whichever tab took over its content.
@@ -95,6 +96,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
     { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
+    { value: "players", label: t("paTitle"), icon: Users, group: "monitoring", show: true, disabled: false },
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
@@ -358,6 +360,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsContent value="files" className="space-y-4 mt-0">
                 <FilesTab serverId={serverId} />
+              </TabsContent>
+
+              <TabsContent value="players" className="space-y-4 mt-0">
+                <PlayerActivityTab key={serverId} serverId={serverId} />
               </TabsContent>
 
               <TabsContent value="metrics" className="space-y-4 mt-0">

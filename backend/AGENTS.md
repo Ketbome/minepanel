@@ -26,7 +26,7 @@ backend/src/
 |- proxy/                   mc-router routes.json generation
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
-|- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
+|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
 |- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
@@ -285,6 +285,18 @@ Runtime stats (`/servers/:id/runtime-stats`, `/servers/all-runtime-stats`):
   add a docker spawn per server per request.
 - Bedrock permission fix depends on host path mount and UID/GID from compose; do not break this flow.
 
+Monitoring (`src/metrics/`):
+
+- `monitoring.service.ts` shares a 10s cache and in-flight requests between live views and
+  the sampler. Native `neoforge tps` is tried first for NeoForge/CurseForge; spark is
+  used where it returns usable RCON output (its async commands can return empty).
+- Native TPS is estimated from tick duration. Persist `tickSource` and keep native
+  `msptMean` separate from spark `msptMedian`/`msptP95`; never silently mix statistics.
+- Read only the overall NeoForge row, not a dimension. Fixed commands execute via
+  container-local `rcon-cli` with a timeout; credentials never reach the browser.
+- Failed, stopped, unsupported and RCON-disabled probes have null tick values.
+  Bedrock keeps CPU/RAM/player monitoring. Historical columns are nullable for old rows.
+
 ## Required AGENTS.md Content
 
 Every backend AGENTS update must include:
@@ -307,3 +319,10 @@ Every backend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `backend/AGENTS.md` and `backend/README.md` updated whenever backend workflow, architecture, commands, or conventions change.
+
+Player activity (`src/player-activity/`): commit session changes and the log cursor in one
+transaction. Bound Docker log windows to 10,001 lines; overflow is an unknown interval.
+Boot changes and gaps over two minutes interrupt open sessions at the last observation.
+Do not parse chat as join/leave events. Java identity is name-based; Bedrock uses XUID.
+`player-stats.service.ts` must keep realpath containment, file-size limits, and UUID validation;
+never expose raw player/world files through the activity API.

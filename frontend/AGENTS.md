@@ -26,7 +26,7 @@ frontend/src/
 |  |- docker/                   Server lifecycle/config endpoints
 |  |- files/                    File browser endpoints
 |  |- world-discovery/          World import endpoints
-|  |- metrics/                  Per-server CPU/RAM history endpoints
+|  |- metrics/                  Per-server live monitoring and history endpoints
 |  |- scheduler/                Scheduled tasks CRUD endpoints
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
@@ -179,7 +179,15 @@ Tooling / build (Next.js 16):
   action the archive actually needs: switch the server type, or pick a loader and version for a
   zip that declares none (`genericPack` -> `GENERIC_PACK`). It is the only place that rewrites
   `serverType` from the Mods tab.
-- `src/components/molecules/Tabs/MetricsTab.tsx` - per-server CPU/RAM history chart.
+- `src/components/molecules/Tabs/MetricsTab.tsx` - live tick/resource overview and history.
+  Uses `molecules/monitoring/monitoring-chart.tsx` for charts and `monitoring-alerts.tsx`
+  for existing Discord settings. Native NeoForge TPS is explicitly estimated; mean
+  MSPT and spark median/P95 stay distinct. Null samples and downtime break chart lines.
+  Charts show the latest sample, labelled scales and min/max of available samples;
+  memory uses GiB in cards and charts. Chart probes support hover, touch and keyboard
+  navigation; keep pointer state local and never project samples into downtime gaps. Keep the history view free of sliders.
+  Live polls run after completion (10s); history every 60s. Failed live requests clear
+  values; history failures are shown without presenting old samples as current.
 - `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,
   uptime, CPU, RAM) for a running server's header; also exports the `RuntimeChip` primitive reused
   by `dashboard/ServerQuickView.tsx`. Labels live in `title`/`aria-label` so the strip stays one line.
@@ -255,3 +263,19 @@ Every frontend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
+
+
+Player profiles: `src/components/molecules/players/player-activity.tsx` is the lazily loaded
+Monitoring → Players tab for both editions, including stopped servers. API calls live in
+`src/services/player-activity/`. Show stale presence as unknown and interrupted departures
+as last observations. Keep saved Java world totals distinct from panel-recorded playtime.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

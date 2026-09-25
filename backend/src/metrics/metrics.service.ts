@@ -5,6 +5,7 @@ import { MetricSample } from './entities/metric-sample.entity';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
+import { MonitoringService } from './monitoring.service';
 
 const SAMPLE_INTERVAL_MS = 60_000;
 const RETENTION_DAYS = 7;
@@ -13,6 +14,12 @@ export interface MetricPoint {
   cpuPercent: number;
   memoryMb: number;
   memoryLimitMb: number | null;
+  tps: number | null;
+  tickSource: 'neoforge' | 'spark' | null;
+  msptMean: number | null;
+  msptMedian: number | null;
+  msptP95: number | null;
+  playersOnline: number | null;
   timestamp: string;
 }
 
@@ -27,6 +34,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     private readonly sampleRepo: Repository<MetricSample>,
     private readonly serverManagement: ServerManagementService,
     private readonly alertsService: AlertsService,
+    private readonly monitoring: MonitoringService,
   ) {}
 
   onModuleInit(): void {
@@ -53,6 +61,12 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       cpuPercent: sample.cpuPercent,
       memoryMb: sample.memoryMb,
       memoryLimitMb: sample.memoryLimitMb,
+      tps: sample.tps ?? null,
+      tickSource: sample.tickSource ?? null,
+      msptMean: sample.msptMean ?? null,
+      msptMedian: sample.msptMedian ?? null,
+      msptP95: sample.msptP95 ?? null,
+      playersOnline: sample.playersOnline ?? null,
       timestamp: sample.createdAt.toISOString(),
     }));
   }
@@ -64,7 +78,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     this.sampling = true;
 
     try {
-      const resources = await this.serverManagement.getAllServersResources();
+      const resources = await this.serverManagement.getAllServersRuntimeStats();
 
       try {
         await this.alertsService.evaluate(resources);
@@ -75,26 +89,38 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       const now = new Date();
       const samples: MetricSample[] = [];
 
-      for (const [serverId, data] of Object.entries(resources)) {
-        if (data.status !== 'running') {
-          continue;
-        }
+      const entries = Object.entries(resources);
+      // Bound RCON concurrency across large installations.
+      for (let offset = 0; offset < entries.length; offset += 4) {
+        await Promise.all(entries.slice(offset, offset + 4).map(async ([serverId, data]) => {
+          if (data.status !== 'running') {
+            return;
+          }
 
-        const cpuPercent = parseCpuPercent(data.cpuUsage);
-        const memoryMb = parseMemoryToMb(data.memoryUsage);
-        if (cpuPercent === null || memoryMb === null) {
-          continue;
-        }
+          const cpuPercent = parseCpuPercent(data.cpuUsage);
+          const memoryMb = parseMemoryToMb(data.memoryUsage);
+          if (cpuPercent === null || memoryMb === null) {
+            return;
+          }
 
-        samples.push(
-          this.sampleRepo.create({
-            serverId,
-            cpuPercent,
-            memoryMb,
-            memoryLimitMb: parseMemoryToMb(data.memoryLimit),
-            createdAt: now,
-          }),
-        );
+          const live = await this.monitoring.getSnapshot(serverId, data);
+
+          samples.push(
+            this.sampleRepo.create({
+              serverId,
+              cpuPercent,
+              memoryMb,
+              memoryLimitMb: parseMemoryToMb(data.memoryLimit),
+              tps: live.tps,
+              tickSource: live.tickSource,
+              msptMean: live.msptMean,
+              msptMedian: live.msptMedian,
+              msptP95: live.msptP95,
+              playersOnline: live.playersOnline,
+              createdAt: now,
+            }),
+          );
+        }));
       }
 
       if (samples.length > 0) {

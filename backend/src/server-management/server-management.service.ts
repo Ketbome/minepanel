@@ -6,6 +6,7 @@ import * as path from 'node:path';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PlayerSession, PlayerTracking } from 'src/player-activity/entities/player-session.entity';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
@@ -1013,6 +1014,16 @@ export class ServerManagementService {
       await fs.remove(serverDir);
       await this.store.removeFromIndex(serverId);
 
+      // Server IDs are reusable: a new server with this ID must not inherit its player history.
+      try {
+        await this.settingsRepo.manager.transaction(async (manager) => {
+          await manager.delete(PlayerSession, { serverId });
+          await manager.delete(PlayerTracking, { serverId });
+        });
+      } catch (error) {
+        this.logger.warn(`Could not clean up player activity for ${serverId}`, error);
+      }
+
       try {
         const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(serverId));
         if (volumeList.trim()) {
@@ -1666,6 +1677,37 @@ export class ServerManagementService {
       this.logger.warn(`Failed to list restic snapshots for server ${serverId}: ${message}`);
       const friendly = message.includes('No such container') ? 'Backup container is not running' : 'Could not list snapshots from the restic repository';
       return { success: false, snapshots: [], error: friendly };
+    }
+  }
+
+  async readPlayerLogWindow(serverId: string, since: Date, until: Date): Promise<{ runId: string; running: boolean; logs: string; truncated: boolean } | null> {
+    if (!this.validateServerId(serverId)) return null;
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return null;
+      const inspect = await this.executeProcess('docker', ['inspect', '--format', '{{json .State}}', containerId], { timeout: 5_000 });
+      if (inspect.exitCode !== 0) return null;
+      const state = JSON.parse(inspect.stdout) as { StartedAt: string; Running: boolean };
+      const result = await this.executeProcess('docker', ['logs', '--timestamps', '--tail', '10001', '--since', new Date(Math.max(since.getTime(), Date.parse(state.StartedAt) || 0)).toISOString(), '--until', until.toISOString(), containerId], { timeout: 5_000 });
+      if (result.exitCode !== 0) return null;
+      const logs = `${result.stdout}\n${result.stderr}`;
+      return { runId: `${containerId}:${state.StartedAt}`, running: state.Running, logs, truncated: logs.split('\n').filter(Boolean).length >= 10001 };
+    } catch {
+      return null;
+    }
+  }
+
+  async readTickStats(serverId: string, source: 'neoforge' | 'spark'): Promise<CommandExecutionResponse> {
+    if (!this.validateServerId(serverId)) return { success: false, output: '' };
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return { success: false, output: '' };
+      // Fixed read-only command; credentials stay in the container environment.
+      const command = source === 'neoforge' ? 'neoforge tps' : 'spark tps';
+      const { stdout, exitCode } = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', command], { timeout: 5_000 });
+      return { success: exitCode === 0, output: this.sanitizeCommandOutput(stdout) };
+    } catch {
+      return { success: false, output: '' };
     }
   }
 

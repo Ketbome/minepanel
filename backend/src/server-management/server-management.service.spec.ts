@@ -33,6 +33,7 @@ jest.mock('node:util', () => {
 // Import after mocks
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from '../alerts/alerts.service';
+import { PlayerSession, PlayerTracking } from '../player-activity/entities/player-session.entity';
 import { ServerStoreService } from '../docker-compose/server-store.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { InstanceSettingsService } from '../settings/instance-settings.service';
@@ -44,7 +45,7 @@ const mockExec = jest.requireMock('node:util').promisify();
 describe('ServerManagementService', () => {
   let service: ServerManagementService;
   let mockDockerComposeService: { getServerConfig: jest.Mock; updateServerConfig: jest.Mock; refreshComposeFile: jest.Mock };
-  let mockSettingsRepo: { findOne: jest.Mock };
+  let mockSettingsRepo: { findOne: jest.Mock; manager?: unknown };
   let mockInstanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock };
   let mockStore: { removeFromIndex: jest.Mock; updateConfig: jest.Mock; readConfig: jest.Mock };
 
@@ -352,6 +353,24 @@ describe('ServerManagementService', () => {
 
       expect(result).toBe(false);
     });
+
+    it('removes player activity so a reused server ID starts without history', async () => {
+      const deleted: [unknown, unknown][] = [];
+      mockSettingsRepo.manager = { transaction: jest.fn((run) => run({ delete: jest.fn(async (entity, where) => deleted.push([entity, where])) })) };
+      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      mockExec.mockResolvedValue({ stdout: '' });
+
+      expect(await service.deleteServer('survival')).toBe(true);
+      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }]]);
+    });
+
+    it('still deletes the server when player activity cleanup fails', async () => {
+      mockSettingsRepo.manager = { transaction: jest.fn().mockRejectedValue(new Error('db locked')) };
+      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      mockExec.mockResolvedValue({ stdout: '' });
+
+      expect(await service.deleteServer('survival')).toBe(true);
+    });
   });
 
   describe('getServerLogs', () => {
@@ -360,6 +379,36 @@ describe('ServerManagementService', () => {
 
       expect(result.logs).toBe('Invalid server ID');
       expect(result.hasErrors).toBe(true);
+    });
+  });
+
+  describe('readTickStats', () => {
+    it('uses a fixed bounded command and container-side credentials', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: '\u001b[32mTPS data\u001b[0m', exitCode: 0 });
+      expect(await service.readTickStats('atm10', 'spark')).toEqual({ success: true, output: 'TPS data' });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'spark tps'], { timeout: 5000 });
+    });
+
+    it('reads native NeoForge tick measurements', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'Overall: 20 TPS (25 ms/tick)', exitCode: 0 });
+      await service.readTickStats('atm10', 'neoforge');
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'neoforge tps'], { timeout: 5000 });
+    });
+
+    it('rejects invalid ids and missing containers', async () => {
+      const find = jest.spyOn(service as any, 'findContainerId').mockResolvedValue(null);
+      expect((await service.readTickStats('../data', 'spark')).success).toBe(false);
+      expect(find).not.toHaveBeenCalled();
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+    });
+
+    it('treats timeouts and failed commands as missing measurements', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      jest.spyOn(service as any, 'executeProcess').mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce({ stdout: '', exitCode: 1 });
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
     });
   });
 
@@ -696,4 +745,36 @@ describe('ServerManagementService', () => {
       expect(stats.gameReachable).toBe(false);
     });
   });
+  describe('readPlayerLogWindow', () => {
+    const since = new Date('2026-09-24T11:00:00Z');
+    const until = new Date('2026-09-24T13:00:00Z');
+    it('uses fixed arguments, current boot boundary, both output streams, and a bounded tail', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: true }), exitCode: 0 })
+        .mockResolvedValueOnce({ stdout: 'one', stderr: 'two', exitCode: 0 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toEqual({ runId: 'container123:2026-09-24T12:00:00Z', running: true, logs: 'one\ntwo', truncated: false });
+      expect(execute).toHaveBeenLastCalledWith('docker', ['logs', '--timestamps', '--tail', '10001', '--since', '2026-09-24T12:00:00.000Z', '--until', until.toISOString(), 'container123'], { timeout: 5000 });
+    });
+    it('reports invalid IDs, missing containers, failed inspect/logs, and exceptions as unavailable', async () => {
+      expect(await service.readPlayerLogWindow('../bad', since, until)).toBeNull();
+      const find = jest.spyOn(service as any, 'findContainerId').mockResolvedValue('');
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      find.mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ exitCode: 1 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      execute.mockResolvedValueOnce({ exitCode: 0, stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: true }) }).mockResolvedValueOnce({ exitCode: 1 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+      execute.mockRejectedValueOnce(Error('timeout'));
+      expect(await service.readPlayerLogWindow('survival', since, until)).toBeNull();
+    });
+    it('reports log overflow as a gap', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      jest.spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ StartedAt: '2026-09-24T12:00:00Z', Running: false }), exitCode: 0 })
+        .mockResolvedValueOnce({ stdout: 'line\n'.repeat(10001), stderr: '', exitCode: 0 });
+      expect(await service.readPlayerLogWindow('survival', since, until)).toMatchObject({ truncated: true, running: false });
+    });
+  });
+
 });
