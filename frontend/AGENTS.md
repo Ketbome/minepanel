@@ -125,6 +125,9 @@ Server config tabs:
   `edition === 'BEDROCK'`.
 - Renaming or removing a tab value means adding an entry to `RENAMED_TABS` in
   `ServerConfigTabs.tsx`: the tab value is the URL hash and people bookmark it.
+- Adding any tab (config or not) means adding its value to `ALL_TAB_VALUES`. The side nav
+  switches tabs by setting the hash, and a value missing there is silently ignored: the tab
+  shows in the nav but clicking it does nothing.
 - Every `config` tab is disabled while the server runs, `worlds` included: a world
   swapped underneath a live server is a data hazard, and the rule only holds if it
   has no exceptions. Adding a config tab means adding it to `tabsMeta` with
