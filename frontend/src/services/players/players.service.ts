@@ -26,6 +26,26 @@ export interface PlayerItem {
   id: string;
   count: number;
   name?: string;
+  contents?: PlayerItem[];
+}
+
+export interface PlayerInventoryData {
+  inventory: PlayerItem[];
+  armor: PlayerItem[];
+  offhand: PlayerItem | null;
+  enderChest: PlayerItem[];
+}
+
+export interface ItemMatch {
+  uuid: string;
+  name: string | null;
+  where: "inventory" | "enderChest" | "container";
+  containerId?: string;
+  slot: number;
+  id: string;
+  itemName?: string;
+  count: number;
+  savedAt: string | null;
 }
 
 export interface PlayerLocation {
@@ -54,6 +74,11 @@ export interface PlayerProfile extends PlayerSummary {
 
 export const getPlayers = async (serverId: string): Promise<PlayerSummary[]> => {
   const response = await api.get(`/players/${serverId}`);
+  return response.data;
+};
+
+export const searchItems = async (serverId: string, q: string): Promise<ItemMatch[]> => {
+  const response = await api.get(`/players/${serverId}/items/search`, { params: { q } });
   return response.data;
 };
 

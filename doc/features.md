@@ -105,7 +105,8 @@ while the server is stopped because it reads the world files directly.
 | Player list    | Search and filter by online, whitelisted, operator or banned; last seen, play time and advancements at a glance |
 | Profile        | Play time, deaths, mob and PvP kills, distance, blocks mined, last position and spawn point |
 | Statistics     | Every vanilla (and modded) statistic, by category, searchable |
-| Inventory      | Inventory, armor, offhand and ender chest, including renamed items |
+| Inventory      | Inventory, armor, offhand and ender chest, including renamed items and what carried shulker boxes and bundles hold |
+| Find item      | "Who has my diamonds?": search every player's saved inventory, ender chest and carried containers by item or custom name |
 | Advancements   | Completed ones with their date, and the ones still pending |
 | Player actions | Gamemode, teleport, heal, give, kick, ban/unban, op/deop, whitelist add/remove (server running, needs console permission) |
 | Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
@@ -123,6 +124,7 @@ every few seconds and keeps:
 | Timeline  | Joins, leaves, chat, deaths, advancements and player commands; filter by type and player, search text |
 | Sessions  | Per player (Players tab → Sessions): history with duration, deaths, mob/PvP kills, blocks mined, chat and advancements; totals, weekday pattern and day streak |
 | History   | One-off import of the archived `logs/*.log.gz` from before tracking was turned on |
+| Inventory history | Snapshots of inventory and ender chest on join, leave and every autosave (50 per player), with the changes since the previous one and the last snapshot before each death |
 
 - Off by default: chat is personal data. The timeline needs the **view logs** permission.
 - Events and sessions are kept for 30 days.
@@ -131,6 +133,8 @@ every few seconds and keeps:
 - Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft
   writes on logout; imported history only has what the log says (deaths, chat, advancements).
 - Chat reformatted by server plugins may not be recognised.
+- Minecraft does not write the inventory at the moment of death, so "before death" is the last
+  save before it (join or autosave, up to 5 minutes earlier). Chests placed in the world are not tracked.
 
 ## Mod & Plugin Support
 

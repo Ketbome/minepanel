@@ -2,15 +2,15 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, UserPlus, Users } from "lucide-react";
+import { RefreshCw, Search, UserPlus, Users } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { executeServerCommand, getOnlinePlayers } from "@/services/docker/fetchs";
-import { getPlayerProfile, getPlayers, PlayerProfile, PlayerSummary } from "@/services/players/players.service";
+import { getPlayerProfile, getPlayers, ItemMatch, PlayerProfile, PlayerSummary, searchItems } from "@/services/players/players.service";
 import { PlayerAvatar } from "../players/PlayerAvatar";
 import { PlayerActions } from "../players/PlayerActions";
 import { PlayerProfilePanel } from "../players/PlayerProfilePanel";
-import { formatPlayTime } from "../players/player-format";
+import { formatPlayTime, humanizeId } from "../players/player-format";
 
 interface PlayersTabProps {
   serverId: string;
@@ -42,6 +42,9 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [newPlayer, setNewPlayer] = useState("");
+  const [itemQuery, setItemQuery] = useState("");
+  const [itemMatches, setItemMatches] = useState<ItemMatch[] | null>(null);
+  const [searchingItems, setSearchingItems] = useState(false);
 
   const isRunning = serverStatus === "running";
 
@@ -130,6 +133,22 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
     setNewPlayer("");
   };
 
+  const findItem = async () => {
+    const query = itemQuery.trim();
+    if (query.length < 2) return;
+    setSearchingItems(true);
+    try {
+      setItemMatches(await searchItems(serverId, query));
+    } catch {
+      mcToast.error(t("playersLoadError"));
+    } finally {
+      setSearchingItems(false);
+    }
+  };
+
+  const whereLabel = (match: ItemMatch) =>
+    match.where === "container" ? `${t("inside")} ${humanizeId(match.containerId ?? "")}` : match.where === "enderChest" ? t("enderChest") : t("inventory");
+
   const selectedRow = rows.find((row) => row.key === selected);
   const filters: Array<{ value: Filter; label: string }> = [
     { value: "all", label: t("filterAll") },
@@ -148,7 +167,39 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
         </CardTitle>
         <CardDescription>{t("playersTabDesc")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex gap-2 max-w-md">
+            <Input value={itemQuery} onChange={(e) => setItemQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && findItem()} placeholder={t("findItem")} className="h-8 text-sm" />
+            <Button type="button" size="sm" variant="outline" onClick={findItem} disabled={searchingItems || itemQuery.trim().length < 2} title={t("findItemDesc")}>
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          {itemMatches && (
+            <div className="border border-gray-700/50 max-h-56 overflow-auto text-sm">
+              {itemMatches.length === 0 ? (
+                <p className="text-gray-500 px-3 py-2">{t("noItemMatches")}</p>
+              ) : (
+                <ul className="divide-y divide-gray-800">
+                  {itemMatches.map((match, index) => (
+                    <li key={`${match.uuid}-${match.where}-${match.slot}-${index}`}>
+                      <button type="button" onClick={() => setSelected(match.uuid)} className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-gray-800/60">
+                        <PlayerAvatar player={match.name ?? match.uuid} size={20} />
+                        <span className="text-gray-100">{match.name ?? match.uuid}</span>
+                        <span className="text-gray-300">
+                          {match.count}× {match.itemName ? `${match.itemName} (${humanizeId(match.id)})` : humanizeId(match.id)}
+                        </span>
+                        <span className="text-xs text-gray-500">{whereLabel(match)}</span>
+                        {match.savedAt && <span className="ml-auto text-xs text-gray-500">{new Date(match.savedAt).toLocaleString()}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="grid lg:grid-cols-[320px_1fr] gap-4">
           <div className="space-y-2 min-w-0">
             <div className="flex gap-2">

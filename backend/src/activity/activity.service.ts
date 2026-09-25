@@ -1,8 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { createHash } from 'node:crypto';
 import { Between, FindOptionsWhere, In, IsNull, LessThan, Like, Repository } from 'typeorm';
 import { PlayersService, summarizeStats } from 'src/players/players.service';
 import { ActivityEvent } from './entities/activity-event.entity';
+import { InventorySnapshot, SnapshotReason } from './entities/inventory-snapshot.entity';
 import { PlayerSession, StatsSnapshot } from './entities/player-session.entity';
 import { ActivityType, classifyLine, LogLine } from './log-line.parser';
 import { localDay, tzOffsetMs } from './log-time';
@@ -12,6 +14,7 @@ export const RETENTION_DAYS = 30;
 const STATS_FLUSH_DELAY_MS = 5_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EVENTS_PAGE = 200;
+const MAX_SNAPSHOTS_PER_PLAYER = 50;
 
 // Stone-like blocks and valuable ores whose per-session `minecraft:mined` delta is kept for the x-ray report
 export const ORE_IDS = [
@@ -54,6 +57,15 @@ export interface PlayerRef {
   name?: string;
 }
 
+export interface SnapshotListItem {
+  id: number;
+  reason: SnapshotReason;
+  createdAt: Date;
+  items: number;
+  // Last snapshot saved before a death: vanilla never writes the inventory at the moment of death
+  deathMessage: string | null;
+}
+
 export interface SessionSummary {
   sessions: number;
   totalMs: number;
@@ -74,6 +86,8 @@ export class ActivityService {
     private readonly eventRepo: Repository<ActivityEvent>,
     @InjectRepository(PlayerSession)
     private readonly sessionRepo: Repository<PlayerSession>,
+    @InjectRepository(InventorySnapshot)
+    private readonly snapshotRepo: Repository<InventorySnapshot>,
     private readonly playersService: PlayersService,
   ) {}
 
@@ -138,9 +152,12 @@ export class ActivityService {
     this.liveStates.delete(serverId);
   }
 
-  async finalizeStats(sessionId: number): Promise<void> {
+  // Runs once Minecraft has written the player's files after a leave
+  async finalizeSession(sessionId: number): Promise<void> {
     const session = await this.sessionRepo.findOne({ where: { id: sessionId } });
-    if (!session?.baseline || !session.uuid) return;
+    if (!session?.uuid) return;
+    await this.snapshotInventory(session.serverId, session.uuid, session.name, 'leave');
+    if (!session.baseline) return;
     try {
       const current = await this.playersService.readStats(session.serverId, session.uuid);
       if (current) Object.assign(session, sessionDeltas(session.baseline, current));
@@ -149,6 +166,58 @@ export class ActivityService {
     }
     session.baseline = null;
     await this.sessionRepo.save(session);
+  }
+
+  // Picks up autosaves of online players; unchanged inventories are skipped by hash
+  async snapshotOnline(serverId: string): Promise<void> {
+    const state = await this.getLiveState(serverId);
+    for (const session of state.open.values()) {
+      if (session.uuid) await this.snapshotInventory(serverId, session.uuid, session.name, 'autosave');
+    }
+  }
+
+  async snapshotInventory(serverId: string, uuid: string, name: string, reason: SnapshotReason): Promise<void> {
+    try {
+      const saved = await this.playersService.readInventory(serverId, uuid);
+      if (!saved) return;
+      const hash = createHash('sha1').update(JSON.stringify(saved.inventory)).digest('hex');
+      const latest = await this.snapshotRepo.findOne({ where: { serverId, uuid }, order: { createdAt: 'DESC', id: 'DESC' } });
+      if (latest?.hash === hash) return;
+      await this.snapshotRepo.save(this.snapshotRepo.create({ serverId, uuid, name, reason, hash, data: saved.inventory, createdAt: saved.savedAt }));
+
+      const overflow = await this.snapshotRepo.find({ select: { id: true }, where: { serverId, uuid }, order: { createdAt: 'DESC', id: 'DESC' }, skip: MAX_SNAPSHOTS_PER_PLAYER });
+      if (overflow.length > 0) await this.snapshotRepo.delete({ id: In(overflow.map((row) => row.id)) });
+    } catch (error) {
+      this.logger.warn(`Failed to snapshot the inventory of ${name} on ${serverId}: ${(error as Error).message}`);
+    }
+  }
+
+  async listSnapshots(serverId: string, uuid: string): Promise<SnapshotListItem[]> {
+    const key = uuid.toLowerCase();
+    const [snapshots, deaths] = await Promise.all([
+      this.snapshotRepo.find({ where: { serverId, uuid: key }, order: { createdAt: 'DESC', id: 'DESC' } }),
+      this.eventRepo.find({ where: { serverId, uuid: key, type: 'death' }, order: { createdAt: 'ASC' } }),
+    ]);
+    const deathBySnapshot = new Map<number, string>();
+    for (const death of deaths) {
+      const before = snapshots.find((snapshot) => snapshot.createdAt.getTime() <= death.createdAt.getTime());
+      if (before) deathBySnapshot.set(before.id, death.message);
+    }
+    return snapshots.map((snapshot) => ({
+      id: snapshot.id,
+      reason: snapshot.reason,
+      createdAt: snapshot.createdAt,
+      items: snapshot.data.inventory.length + snapshot.data.armor.length + snapshot.data.enderChest.length + (snapshot.data.offhand ? 1 : 0),
+      deathMessage: deathBySnapshot.get(snapshot.id) ?? null,
+    }));
+  }
+
+  async getSnapshot(serverId: string, id: number): Promise<InventorySnapshot> {
+    const snapshot = await this.snapshotRepo.findOne({ where: { serverId, id } });
+    if (!snapshot) {
+      throw new NotFoundException(`Snapshot ${id} not found`);
+    }
+    return snapshot;
   }
 
   async listEvents(serverId: string, query: EventQuery): Promise<{ events: ActivityEvent[]; nextCursor: number | null }> {
@@ -207,6 +276,7 @@ export class ActivityService {
     const cutoff = new Date(now.getTime() - RETENTION_DAYS * DAY_MS);
     await this.eventRepo.delete({ createdAt: LessThan(cutoff) });
     await this.sessionRepo.delete({ endAt: LessThan(cutoff) });
+    await this.snapshotRepo.delete({ createdAt: LessThan(cutoff) });
   }
 
   // Sessions recorded before the player's UUID was known only carry the name
@@ -238,6 +308,9 @@ export class ActivityService {
       this.sessionRepo.create({ serverId, name, uuid, startAt: at, endAt: null, loggedDeaths: 0, advancements: 0, chatCount: 0, baseline: baseline ?? {} }),
     );
     state.open.set(key, session);
+    if (state.live && uuid) {
+      await this.snapshotInventory(serverId, uuid, name, 'join');
+    }
   }
 
   private async closeSession(serverId: string, state: IngestState, key: string, at: Date): Promise<void> {
@@ -246,11 +319,11 @@ export class ActivityService {
     state.open.delete(key);
     session.endAt = at;
     session.deaths = session.loggedDeaths;
-    const awaitStats = state.live && session.uuid && session.baseline;
-    if (!awaitStats) session.baseline = null;
+    const awaitFiles = state.live && session.uuid;
+    if (!awaitFiles) session.baseline = null;
     const saved = await this.sessionRepo.save(session);
-    if (awaitStats) {
-      setTimeout(() => void this.finalizeStats(saved.id), STATS_FLUSH_DELAY_MS).unref();
+    if (awaitFiles) {
+      setTimeout(() => void this.finalizeSession(saved.id), STATS_FLUSH_DELAY_MS).unref();
     }
   }
 }

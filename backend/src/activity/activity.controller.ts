@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post, Put, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, Put, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
@@ -70,6 +70,18 @@ export class ActivityController {
     this.assertPlayer(query);
     const config = await this.store.readConfig(serverId);
     return this.activityService.summarize(serverId, query, config?.tz || 'UTC');
+  }
+
+  @Get(':serverId/players/:uuid/snapshots')
+  async listSnapshots(@Request() req, @Param('serverId') serverId: string, @Param('uuid') uuid: string) {
+    this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
+    return this.activityService.listSnapshots(serverId, uuid);
+  }
+
+  @Get(':serverId/snapshots/:id')
+  async getSnapshot(@Request() req, @Param('serverId') serverId: string, @Param('id', ParseIntPipe) id: number) {
+    this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
+    return this.activityService.getSnapshot(serverId, id);
   }
 
   private assertPlayer(query: PlayerSessionsQueryDto): void {

@@ -218,6 +218,7 @@ Path and filesystem patterns (critical):
   starting with an online player's name that matches nothing else; add exclusions to `NOT_DEATH`.
 - `src/activity/activity.service.ts` - sessions keep a stats `baseline` while open so a panel restart
   can still compute deltas; imports use their own state (`newImportState`) and never touch live sessions.
+  Inventory snapshots are deduplicated by content hash and capped at 50 per player.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

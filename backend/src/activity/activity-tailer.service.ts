@@ -15,6 +15,8 @@ import { addDays, resolveLiveTime, resolveTimeAfter, zonedToUtc } from './log-ti
 const TICK_MS = 5_000;
 const CONFIG_REFRESH_MS = 30_000;
 const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+// Vanilla autosaves every 5 minutes; checking every minute catches each one without parsing NBT every tick
+const SNAPSHOT_INTERVAL_MS = 60_000;
 // Bounds memory when a server wrote a lot since the last tick; the rest is read next tick
 const MAX_READ_BYTES = 4 * 1024 * 1024;
 const MAX_HEAD_BYTES = 1024;
@@ -31,6 +33,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
   private busy = false;
   private configRefreshedAt = 0;
   private prunedAt = 0;
+  private snapshotAt = 0;
 
   constructor(
     @InjectRepository(LogCursor)
@@ -61,13 +64,16 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
         await this.refreshTracked();
         this.configRefreshedAt = now.getTime();
       }
+      const snapshotDue = now.getTime() - this.snapshotAt >= SNAPSHOT_INTERVAL_MS;
       for (const [serverId, tz] of this.tracked) {
         try {
           await this.tailServer(serverId, tz, now);
+          if (snapshotDue) await this.activityService.snapshotOnline(serverId);
         } catch (error) {
           this.logger.warn(`Failed to read the log of ${serverId}: ${(error as Error).message}`);
         }
       }
+      if (snapshotDue) this.snapshotAt = now.getTime();
       if (now.getTime() - this.prunedAt >= PRUNE_INTERVAL_MS) {
         await this.activityService.prune(now);
         this.prunedAt = now.getTime();

@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { ActivityService, sessionDeltas } from './activity.service';
 import { ActivityEvent } from './entities/activity-event.entity';
+import { InventorySnapshot } from './entities/inventory-snapshot.entity';
 import { LogCursor } from './entities/log-cursor.entity';
 import { PlayerSession } from './entities/player-session.entity';
 import { LogLine } from './log-line.parser';
@@ -11,11 +12,17 @@ const at = (time: string) => new Date(`2026-09-25T${time}Z`);
 
 describe('ActivityService', () => {
   let dataSource: DataSource;
-  let players: { readStats: jest.Mock; findUuid: jest.Mock };
+  let players: { readStats: jest.Mock; findUuid: jest.Mock; readInventory: jest.Mock };
   let service: ActivityService;
   let scheduled: Array<() => void>;
 
-  const create = () => new ActivityService(dataSource.getRepository(ActivityEvent), dataSource.getRepository(PlayerSession), players as any);
+  const create = () =>
+    new ActivityService(dataSource.getRepository(ActivityEvent), dataSource.getRepository(PlayerSession), dataSource.getRepository(InventorySnapshot), players as any);
+  const snapshots = () => dataSource.getRepository(InventorySnapshot).find({ order: { id: 'ASC' } });
+  const inventory = (id: string, savedAt: string) => ({
+    inventory: { inventory: [{ slot: 0, id, count: 1 }], armor: [], offhand: null, enderChest: [] },
+    savedAt: new Date(savedAt),
+  });
   const sessions = () => dataSource.getRepository(PlayerSession).find({ order: { id: 'ASC' } });
   const runScheduled = async () => {
     for (const fn of scheduled.splice(0)) fn();
@@ -24,9 +31,9 @@ describe('ActivityService', () => {
   };
 
   beforeEach(async () => {
-    dataSource = new DataSource({ type: 'sqljs', entities: [ActivityEvent, PlayerSession, LogCursor], synchronize: true });
+    dataSource = new DataSource({ type: 'sqljs', entities: [ActivityEvent, PlayerSession, LogCursor, InventorySnapshot], synchronize: true });
     await dataSource.initialize();
-    players = { readStats: jest.fn().mockResolvedValue(null), findUuid: jest.fn().mockResolvedValue(null) };
+    players = { readStats: jest.fn().mockResolvedValue(null), findUuid: jest.fn().mockResolvedValue(null), readInventory: jest.fn().mockResolvedValue(null) };
     service = create();
     scheduled = [];
     jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void) => {
@@ -124,6 +131,7 @@ describe('ActivityService', () => {
       expect(imported).toMatchObject({ deaths: 1, mobKills: null, baseline: null });
       expect(imported.endAt?.toISOString()).toBe('2026-09-25T08:10:00.000Z');
       expect(players.readStats).toHaveBeenCalledTimes(0);
+      expect(players.readInventory).toHaveBeenCalledTimes(0);
     });
 
     it('ignores activity from players it never saw join', async () => {
@@ -152,7 +160,7 @@ describe('ActivityService', () => {
     });
   });
 
-  describe('finalizeStats', () => {
+  describe('finalizeSession', () => {
     it('clears the baseline even when the stats cannot be read', async () => {
       players.findUuid.mockResolvedValue(STEVE);
       players.readStats.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('EACCES'));
@@ -164,7 +172,21 @@ describe('ActivityService', () => {
     });
 
     it('does nothing for unknown or already finalized sessions', async () => {
-      await expect(service.finalizeStats(999)).resolves.toBeUndefined();
+      await expect(service.finalizeSession(999)).resolves.toBeUndefined();
+    });
+
+    it('skips the stats when the session had no baseline', async () => {
+      players.findUuid.mockResolvedValue(STEVE);
+      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
+      await dataSource.getRepository(PlayerSession).update({ name: 'Steve' }, { baseline: null });
+      service.forgetLiveState('srv');
+      await service.ingest('srv', [line('12:01:00', 'Steve left the game')], at);
+      players.readStats.mockClear();
+
+      await runScheduled();
+
+      expect(players.readStats).not.toHaveBeenCalled();
+      expect(players.readInventory).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -225,6 +247,66 @@ describe('ActivityService', () => {
       expect(summary).toMatchObject({ sessions: 3, totalMs: 105 * 60_000, averageMs: 35 * 60_000, longestMs: 60 * 60_000, deaths: 3, streakDays: 3 });
       expect(summary.playMsByWeekday[3]).toBe(60 * 60_000); // Wednesday
       expect(await service.summarize('srv', {}, 'UTC')).toMatchObject({ sessions: 0, averageMs: 0, longestMs: 0, streakDays: 0 });
+    });
+  });
+
+  describe('inventory snapshots', () => {
+    beforeEach(() => {
+      players.findUuid.mockResolvedValue(STEVE);
+    });
+
+    it('snapshots on join, autosave and leave, skipping unchanged inventories', async () => {
+      players.readInventory
+        .mockResolvedValueOnce(inventory('minecraft:diamond', '2026-09-25T11:00:00Z'))
+        .mockResolvedValueOnce(inventory('minecraft:diamond', '2026-09-25T12:05:00Z'))
+        .mockResolvedValueOnce(inventory('minecraft:dirt', '2026-09-25T12:10:00Z'))
+        .mockResolvedValueOnce(inventory('minecraft:stick', '2026-09-25T12:20:00Z'));
+
+      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
+      await service.snapshotOnline('srv');
+      await service.snapshotOnline('srv');
+      await service.ingest('srv', [line('12:15:00', 'Steve was slain by Zombie'), line('12:20:00', 'Steve left the game')], at);
+      await runScheduled();
+
+      expect((await snapshots()).map((snapshot) => [snapshot.reason, snapshot.data.inventory[0].id])).toEqual([
+        ['join', 'minecraft:diamond'],
+        ['autosave', 'minecraft:dirt'],
+        ['leave', 'minecraft:stick'],
+      ]);
+
+      const list = await service.listSnapshots('srv', STEVE.toUpperCase());
+      expect(list.map((item) => [item.reason, item.items, item.deathMessage])).toEqual([
+        ['leave', 1, null],
+        ['autosave', 1, 'Steve was slain by Zombie'],
+        ['join', 1, null],
+      ]);
+      const full = await service.getSnapshot('srv', list[1].id);
+      expect(full.data.inventory[0].id).toBe('minecraft:dirt');
+      await expect(service.getSnapshot('other', list[1].id)).rejects.toThrow('not found');
+    });
+
+    it('keeps only the newest 50 snapshots per player', async () => {
+      for (let i = 0; i < 52; i++) {
+        players.readInventory.mockResolvedValueOnce(inventory(`minecraft:item_${i}`, new Date(Date.UTC(2026, 8, 25, 0, i)).toISOString()));
+        await service.snapshotInventory('srv', STEVE, 'Steve', 'autosave');
+      }
+
+      const rows = await snapshots();
+      expect(rows).toHaveLength(50);
+      expect(rows[0].data.inventory[0].id).toBe('minecraft:item_2');
+    });
+
+    it('logs and moves on when the player file cannot be read', async () => {
+      players.readInventory.mockRejectedValue(new Error('corrupt'));
+      await expect(service.snapshotInventory('srv', STEVE, 'Steve', 'join')).resolves.toBeUndefined();
+      expect(await snapshots()).toEqual([]);
+    });
+
+    it('skips online players without a known UUID', async () => {
+      players.findUuid.mockResolvedValue(null);
+      await service.ingest('srv', [line('12:00:00', 'Ghost joined the game')], at);
+      await service.snapshotOnline('srv');
+      expect(players.readInventory).not.toHaveBeenCalled();
     });
   });
 

@@ -6,7 +6,7 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { PlayerLocation, PlayerProfile } from "@/services/players/players.service";
 import { PlayerAvatar } from "./PlayerAvatar";
-import { PlayerInventory } from "./PlayerInventory";
+import { PlayerInventoryHistory } from "./PlayerInventoryHistory";
 import { PlayerSessions } from "./PlayerSessions";
 import { formatDimension, formatDistance, formatPlayTime, humanizeId, idNamespace } from "./player-format";
 
@@ -145,7 +145,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, prof
         </TabsContent>
 
         <TabsContent value="inventory" className="pt-3">
-          <PlayerInventory profile={profile} />
+          <PlayerInventoryHistory serverId={serverId} profile={profile} />
         </TabsContent>
 
         <TabsContent value="advancements" className="pt-3">

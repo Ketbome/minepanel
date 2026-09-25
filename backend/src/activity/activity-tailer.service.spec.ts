@@ -13,7 +13,7 @@ describe('ActivityTailerService', () => {
   let logsDir: string;
   let cursors: Map<string, LogCursor>;
   let cursorRepo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock };
-  let activity: { ingest: jest.Mock; closeOpenSessions: jest.Mock; newImportState: jest.Mock; forgetLiveState: jest.Mock; prune: jest.Mock };
+  let activity: { ingest: jest.Mock; closeOpenSessions: jest.Mock; newImportState: jest.Mock; forgetLiveState: jest.Mock; prune: jest.Mock; snapshotOnline: jest.Mock };
   let store: { listServerDirs: jest.Mock; readConfig: jest.Mock };
   let service: ActivityTailerService;
 
@@ -39,6 +39,7 @@ describe('ActivityTailerService', () => {
       newImportState: jest.fn(() => ({ import: true })),
       forgetLiveState: jest.fn(),
       prune: jest.fn().mockResolvedValue(undefined),
+      snapshotOnline: jest.fn().mockResolvedValue(undefined),
     };
     store = {
       listServerDirs: jest.fn().mockResolvedValue(['srv', 'bedrock', 'off', 'broken']),
@@ -74,6 +75,16 @@ describe('ActivityTailerService', () => {
       await fs.appendFile(latest(), ' line\n');
       await service.tick(new Date('2026-09-25T10:00:05Z'));
       expect(ingestedMessages(1)).toEqual(['<Steve> partial line']);
+    });
+
+    it('snapshots online players once a minute', async () => {
+      await fs.writeFile(latest(), HEADER);
+      await service.tick(new Date('2026-09-25T10:00:00Z'));
+      await service.tick(new Date('2026-09-25T10:00:30Z'));
+      await service.tick(new Date('2026-09-25T10:01:00Z'));
+
+      expect(activity.snapshotOnline).toHaveBeenCalledTimes(2);
+      expect(activity.snapshotOnline).toHaveBeenCalledWith('srv');
     });
 
     it('does not save the cursor when nothing changed', async () => {

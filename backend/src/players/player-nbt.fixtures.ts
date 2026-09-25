@@ -19,6 +19,12 @@ export const legacyPlayerDat = () =>
           { Slot: byte(9), id: str('minecraft:diamond'), Count: byte(12) },
           { Slot: byte(103), id: str('minecraft:iron_helmet'), Count: byte(1) },
           { Slot: byte(-106), id: str('minecraft:shield'), Count: byte(1) },
+          {
+            Slot: byte(10),
+            id: str('minecraft:shulker_box'),
+            Count: byte(1),
+            tag: comp({ BlockEntityTag: comp({ Items: list('compound', [{ Slot: byte(4), id: str('minecraft:diamond'), Count: byte(30) }]) }) }),
+          },
         ]),
         EnderItems: list('compound', [{ Slot: byte(3), id: str('minecraft:emerald'), Count: byte(64) }]),
         Pos: list('double', [10.5, 64, -3.25]),
@@ -38,7 +44,16 @@ export const modernPlayerDat = () =>
       type: 'compound',
       name: '',
       value: {
-        Inventory: list('compound', [{ Slot: byte(1), id: str('minecraft:diamond'), count: int(3), components: comp({ 'minecraft:custom_name': comp({ text: str('Shiny') }) }) }]),
+        Inventory: list('compound', [
+          { Slot: byte(1), id: str('minecraft:diamond'), count: int(3), components: comp({ 'minecraft:custom_name': comp({ text: str('Shiny') }) }) },
+          {
+            Slot: byte(2),
+            id: str('minecraft:red_shulker_box'),
+            count: int(1),
+            components: comp({ 'minecraft:container': list('compound', [{ slot: int(0), item: comp({ id: str('minecraft:netherite_ingot'), count: int(4) }) }]) }),
+          },
+          { Slot: byte(3), id: str('minecraft:bundle'), count: int(1), components: comp({ 'minecraft:bundle_contents': list('compound', [{ id: str('minecraft:emerald'), count: int(2) }]) }) },
+        ]),
         equipment: comp({
           head: comp({ id: str('minecraft:netherite_helmet'), count: int(1) }),
           offhand: comp({ id: str('minecraft:totem_of_undying'), count: int(1) }),

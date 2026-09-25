@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Image from "next/image";
-import { PlayerItem, PlayerProfile } from "@/services/players/players.service";
+import { PlayerInventoryData, PlayerItem } from "@/services/players/players.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { humanizeId } from "./player-format";
 
@@ -64,17 +64,20 @@ const Slot: FC<{ item?: PlayerItem | null }> = ({ item }) => {
   if (!item) {
     return <div className="mc-slot aspect-square w-full" />;
   }
-  const label = item.name ? `${item.name} (${humanizeId(item.id)})` : humanizeId(item.id);
+  const title = item.name ? `${item.name} (${humanizeId(item.id)})` : humanizeId(item.id);
+  const contents = item.contents?.map((inner) => `${inner.count}× ${inner.name ?? humanizeId(inner.id)}`).join("\n");
+  const label = contents ? `${title}\n${contents}` : title;
   const icon = ITEM_ICONS[item.id.split(":").pop() ?? ""];
 
   return (
     <div className="mc-slot aspect-square w-full flex items-center justify-center overflow-hidden" title={label}>
       {icon ? (
-        <Image src={`/images/${icon}`} alt={label} width={28} height={28} className="pixelated" />
+        <Image src={`/images/${icon}`} alt={title} width={28} height={28} className="pixelated" />
       ) : (
         <span className={`text-[9px] leading-tight text-center px-0.5 break-all ${item.name ? "text-cyan-300" : "text-gray-300"}`}>{item.name ?? humanizeId(item.id)}</span>
       )}
       {item.count > 1 && <span className="mc-count absolute bottom-0.5 right-1 text-xs tabular-nums">{item.count}</span>}
+      {item.contents && <span className="absolute top-0.5 left-0.5 h-1.5 w-1.5 bg-amber-400" />}
     </div>
   );
 };
@@ -92,7 +95,7 @@ const Grid: FC<{ items: PlayerItem[]; slots: number[] }> = ({ items, slots }) =>
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
-export const PlayerInventory: FC<{ profile: PlayerProfile }> = ({ profile }) => {
+export const PlayerInventory: FC<{ profile: PlayerInventoryData }> = ({ profile }) => {
   const { t } = useLanguage();
   const armor = new Map(profile.armor.map((item) => [item.slot, item]));
 

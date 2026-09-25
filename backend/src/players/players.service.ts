@@ -2,10 +2,11 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
-import { PlayerItem, PlayerLocation, readPlayerNbt } from './player-nbt';
+import { PlayerItem, PlayerLocation, PlayerNbtData, readPlayerNbt } from './player-nbt';
 
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_ITEM_MATCHES = 200;
 const UUID_FILE_PATTERN = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(dat|json)$/i;
 
 export interface PlayerStatsSummary {
@@ -27,6 +28,20 @@ export interface PlayerSummary {
   lastSeen: string | null;
   stats: PlayerStatsSummary;
   advancements: number;
+}
+
+export type PlayerInventory = Pick<PlayerNbtData, 'inventory' | 'armor' | 'offhand' | 'enderChest'>;
+
+export interface ItemMatch {
+  uuid: string;
+  name: string | null;
+  where: 'inventory' | 'enderChest' | 'container';
+  containerId?: string;
+  slot: number;
+  id: string;
+  itemName?: string;
+  count: number;
+  savedAt: string | null;
 }
 
 export interface PlayerAdvancement {
@@ -112,6 +127,46 @@ export class PlayersService {
     const files = await this.readServerFiles(serverId);
     const stats = await this.readJson<StatsFile>(this.playerFile(files, 'stats', uuid.toLowerCase(), 'json'));
     return stats?.stats ?? null;
+  }
+
+  async readInventory(serverId: string, uuid: string): Promise<{ inventory: PlayerInventory; savedAt: Date } | null> {
+    const files = await this.readServerFiles(serverId);
+    const file = this.playerFile(files, 'playerdata', uuid.toLowerCase(), 'dat');
+    const nbt = await this.readNbt(file);
+    if (!nbt) return null;
+    const { mtime } = await fs.stat(file);
+    return { inventory: { inventory: nbt.inventory, armor: nbt.armor, offhand: nbt.offhand, enderChest: nbt.enderChest }, savedAt: mtime };
+  }
+
+  // Searches every player's saved inventory, ender chest and the shulkers/bundles they carry,
+  // by item id ("diamond" matches minecraft:diamond_ore too) or custom name.
+  async searchItems(serverId: string, query: string): Promise<ItemMatch[]> {
+    const needle = query.trim().toLowerCase();
+    if (needle.length < 2) {
+      throw new BadRequestException('Search needs at least 2 characters');
+    }
+    const files = await this.readServerFiles(serverId);
+    const matches: ItemMatch[] = [];
+    const isMatch = (item: PlayerItem) => item.id.toLowerCase().replaceAll('_', ' ').includes(needle.replaceAll('_', ' ')) || Boolean(item.name?.toLowerCase().includes(needle));
+
+    for (const uuid of files.uuids) {
+      const file = this.playerFile(files, 'playerdata', uuid, 'dat');
+      const nbt = await this.readNbt(file);
+      if (!nbt) continue;
+      const savedAt = await this.readMtime(file);
+      const base = { uuid, name: files.names.get(uuid) ?? null, savedAt };
+      const collect = (items: PlayerItem[], where: 'inventory' | 'enderChest') => {
+        for (const item of items) {
+          if (isMatch(item)) matches.push({ ...base, where, slot: item.slot, id: item.id, itemName: item.name, count: item.count });
+          for (const inner of item.contents ?? []) {
+            if (isMatch(inner)) matches.push({ ...base, where: 'container', containerId: item.id, slot: item.slot, id: inner.id, itemName: inner.name, count: inner.count });
+          }
+        }
+      };
+      collect([...nbt.inventory, ...nbt.armor, ...(nbt.offhand ? [nbt.offhand] : [])], 'inventory');
+      collect(nbt.enderChest, 'enderChest');
+    }
+    return matches.slice(0, MAX_ITEM_MATCHES);
   }
 
   async findUuid(serverId: string, name: string): Promise<string | null> {

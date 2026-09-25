@@ -244,6 +244,8 @@ Requires access to the server.
   ops and ban list: flags, last seen (player file mtime), stats summary and advancement count
 - `GET /players/:serverId/:uuid` — the same plus all statistics by category, advancements with
   completion date, inventory, armor, offhand, ender chest, last position and spawn point
+- `GET /players/:serverId/items/search?q=` — who holds an item now (saved inventories, ender
+  chests, carried shulker boxes and bundles); matches the item id or custom name, 2+ characters
 
 Online state is not part of these responses; the panel combines them with the RCON player list.
 Player actions go through `POST /servers/:id/command`.
@@ -260,6 +262,8 @@ Activity log built from the server log (Java, opt-in per server). Requires acces
   first, paged by `nextCursor`; needs the **view logs** permission
 - `GET /activity/:serverId/sessions?uuid=&name=` and `.../sessions/summary?uuid=&name=` — one
   player's sessions and totals (`uuid` or `name` required)
+- `GET /activity/:serverId/players/:uuid/snapshots` — inventory snapshots, newest first, each with
+  the death it precedes (if any); `GET /activity/:serverId/snapshots/:id` — one snapshot's items
 
 ### System
 

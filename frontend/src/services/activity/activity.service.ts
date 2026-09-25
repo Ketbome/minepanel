@@ -1,4 +1,5 @@
 import api from "../axios.service";
+import type { PlayerInventoryData } from "../players/players.service";
 
 export type ActivityType = "join" | "leave" | "chat" | "death" | "advancement" | "command";
 
@@ -83,5 +84,30 @@ export const getPlayerSessions = async (serverId: string, player: PlayerRef): Pr
 
 export const getSessionSummary = async (serverId: string, player: PlayerRef): Promise<SessionSummary> => {
   const response = await api.get(`/activity/${serverId}/sessions/summary`, { params: player });
+  return response.data;
+};
+
+export interface SnapshotListItem {
+  id: number;
+  reason: "join" | "leave" | "autosave";
+  createdAt: string;
+  items: number;
+  deathMessage: string | null;
+}
+
+export interface InventorySnapshot {
+  id: number;
+  reason: SnapshotListItem["reason"];
+  createdAt: string;
+  data: PlayerInventoryData;
+}
+
+export const getInventorySnapshots = async (serverId: string, uuid: string): Promise<SnapshotListItem[]> => {
+  const response = await api.get(`/activity/${serverId}/players/${uuid}/snapshots`);
+  return response.data;
+};
+
+export const getInventorySnapshot = async (serverId: string, id: number): Promise<InventorySnapshot> => {
+  const response = await api.get(`/activity/${serverId}/snapshots/${id}`);
   return response.data;
 };

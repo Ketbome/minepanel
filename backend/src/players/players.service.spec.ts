@@ -116,7 +116,7 @@ describe('PlayersService', () => {
       expect(profile.name).toBe('Steve');
       expect(profile.statsByCategory).toEqual({ 'minecraft:killed': { 'minecraft:zombie': 3 } });
       expect(profile.advancementList).toEqual([{ id: 'minecraft:story/root', done: true, doneAt: null }]);
-      expect(profile.inventory).toHaveLength(2);
+      expect(profile.inventory).toHaveLength(3);
       expect(profile.enderChest).toEqual([{ slot: 3, id: 'minecraft:emerald', count: 64 }]);
       expect(profile.position?.dimension).toBe('minecraft:the_nether');
     });
@@ -143,6 +143,39 @@ describe('PlayersService', () => {
     it('rejects invalid uuids and unknown players', async () => {
       await expect(service.profile('srv', '../../x')).rejects.toBeInstanceOf(BadRequestException);
       await expect(service.profile('srv', STEVE)).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('inventory and item search', () => {
+    beforeEach(async () => {
+      await fs.writeJson(path.join(mcData, 'usercache.json'), [{ name: 'Steve', uuid: STEVE }]);
+      await writeWorldFile('world', 'playerdata', `${STEVE}.dat`, legacyPlayerDat());
+      await writeWorldFile('world', 'playerdata', `${ALEX}.dat`, 'corrupt');
+    });
+
+    it('reads a saved inventory with its save time', async () => {
+      const saved = await service.readInventory('srv', STEVE);
+      expect(saved?.inventory.enderChest).toHaveLength(1);
+      expect(Number.isNaN(saved?.savedAt.getTime())).toBe(false);
+      expect(await service.readInventory('srv', ALEX)).toBeNull();
+    });
+
+    it('finds items in inventories, ender chests and carried shulkers', async () => {
+      const matches = await service.searchItems('srv', 'Diamond');
+
+      expect(matches.map((m) => [m.name, m.where, m.id, m.count, m.containerId])).toEqual([
+        ['Steve', 'inventory', 'minecraft:diamond_pickaxe', 1, undefined],
+        ['Steve', 'inventory', 'minecraft:diamond', 12, undefined],
+        ['Steve', 'container', 'minecraft:diamond', 30, 'minecraft:shulker_box'],
+      ]);
+      expect((await service.searchItems('srv', 'digger'))[0].itemName).toBe('Digger');
+      expect((await service.searchItems('srv', 'ender pearl')).length).toBe(0);
+      expect((await service.searchItems('srv', 'emerald'))[0].where).toBe('enderChest');
+      expect((await service.searchItems('srv', 'iron_helmet')).length).toBe(1);
+    });
+
+    it('rejects searches that are too short', async () => {
+      await expect(service.searchItems('srv', ' a ')).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 

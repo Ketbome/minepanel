@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
@@ -18,6 +18,12 @@ export class PlayersController {
   async list(@Request() req, @Param('serverId') serverId: string) {
     await this.assertServerAccess(req, serverId);
     return this.playersService.list(serverId);
+  }
+
+  @Get(':serverId/items/search')
+  async searchItems(@Request() req, @Param('serverId') serverId: string, @Query('q') q = '') {
+    await this.assertServerAccess(req, serverId);
+    return this.playersService.searchItems(serverId, q);
   }
 
   @Get(':serverId/:uuid')

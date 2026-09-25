@@ -4,14 +4,20 @@ import { ActivityController } from './activity.controller';
 describe('ActivityController', () => {
   const req = { user: { userId: 1 } };
   const user = { id: 1 };
-  let activity: { listEvents: jest.Mock; listSessions: jest.Mock; summarize: jest.Mock };
+  let activity: { listEvents: jest.Mock; listSessions: jest.Mock; summarize: jest.Mock; listSnapshots: jest.Mock; getSnapshot: jest.Mock };
   let tailer: { setTracking: jest.Mock; getCursor: jest.Mock; importHistory: jest.Mock };
   let store: { readConfig: jest.Mock; updateConfig: jest.Mock };
   let access: { assertServerAccess: jest.Mock; assertViewLogs: jest.Mock };
   let controller: ActivityController;
 
   beforeEach(() => {
-    activity = { listEvents: jest.fn().mockResolvedValue({ events: [] }), listSessions: jest.fn().mockResolvedValue([]), summarize: jest.fn().mockResolvedValue({ sessions: 0 }) };
+    activity = {
+      listEvents: jest.fn().mockResolvedValue({ events: [] }),
+      listSessions: jest.fn().mockResolvedValue([]),
+      summarize: jest.fn().mockResolvedValue({ sessions: 0 }),
+      listSnapshots: jest.fn().mockResolvedValue([]),
+      getSnapshot: jest.fn().mockResolvedValue({ id: 3 }),
+    };
     tailer = { setTracking: jest.fn(), getCursor: jest.fn().mockResolvedValue({ historyImported: true }), importHistory: jest.fn().mockResolvedValue({ imported: 2, files: 1 }) };
     const config: Record<string, unknown> = { id: 'srv', tz: 'Europe/Madrid' };
     store = {
@@ -65,6 +71,12 @@ describe('ActivityController', () => {
     await controller.listSessions(req, 'srv', { name: 'Steve' });
     await controller.summarizeSessions(req, 'srv', { uuid: 'u' });
     expect(activity.summarize).toHaveBeenCalledWith('srv', { uuid: 'u' }, 'Europe/Madrid');
+  });
+
+  it('lists and reads inventory snapshots', async () => {
+    expect(await controller.listSnapshots(req, 'srv', 'u')).toEqual([]);
+    expect(await controller.getSnapshot(req, 'srv', 3)).toEqual({ id: 3 });
+    expect(activity.getSnapshot).toHaveBeenCalledWith('srv', 3);
   });
 
   it('falls back to UTC when the config has no time zone', async () => {

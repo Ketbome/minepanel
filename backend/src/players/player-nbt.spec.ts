@@ -8,6 +8,7 @@ describe('player-nbt', () => {
     expect(player.inventory).toEqual([
       { slot: 0, id: 'minecraft:diamond_pickaxe', count: 1, name: 'Digger' },
       { slot: 9, id: 'minecraft:diamond', count: 12 },
+      { slot: 10, id: 'minecraft:shulker_box', count: 1, contents: [{ slot: 4, id: 'minecraft:diamond', count: 30 }] },
     ]);
     expect(player.armor).toEqual([{ slot: 103, id: 'minecraft:iron_helmet', count: 1 }]);
     expect(player.offhand).toEqual({ slot: -106, id: 'minecraft:shield', count: 1 });
@@ -19,7 +20,11 @@ describe('player-nbt', () => {
   it('reads a 1.21.5+ player with equipment and respawn compounds', async () => {
     const player = await readPlayerNbt(modernPlayerDat());
 
-    expect(player.inventory).toEqual([{ slot: 1, id: 'minecraft:diamond', count: 3, name: 'Shiny' }]);
+    expect(player.inventory).toEqual([
+      { slot: 1, id: 'minecraft:diamond', count: 3, name: 'Shiny' },
+      { slot: 2, id: 'minecraft:red_shulker_box', count: 1, contents: [{ slot: 0, id: 'minecraft:netherite_ingot', count: 4 }] },
+      { slot: 3, id: 'minecraft:bundle', count: 1, contents: [{ slot: 0, id: 'minecraft:emerald', count: 2 }] },
+    ]);
     expect(player.armor).toEqual([{ slot: 103, id: 'minecraft:netherite_helmet', count: 1 }]);
     expect(player.offhand).toEqual({ slot: -106, id: 'minecraft:totem_of_undying', count: 1 });
     expect(player.enderChest).toEqual([]);

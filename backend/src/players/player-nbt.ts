@@ -5,6 +5,8 @@ export interface PlayerItem {
   id: string;
   count: number;
   name?: string;
+  // Items inside a carried shulker box or bundle (one level deep)
+  contents?: PlayerItem[];
 }
 
 export interface PlayerLocation {
@@ -34,7 +36,7 @@ type RawItem = {
   id?: string;
   count?: number;
   Count?: number;
-  tag?: { display?: { Name?: unknown } };
+  tag?: { display?: { Name?: unknown }; BlockEntityTag?: { Items?: RawItem[] }; Items?: RawItem[] };
   components?: Record<string, unknown>;
 };
 
@@ -103,7 +105,7 @@ function toDimension(value: unknown): string {
   return typeof value === 'string' && value ? value : 'minecraft:overworld';
 }
 
-function toItem(raw: RawItem | undefined, slot: number | undefined): PlayerItem | null {
+function toItem(raw: RawItem | undefined, slot: number | undefined, nested = false): PlayerItem | null {
   if (!raw?.id) {
     return null;
   }
@@ -112,7 +114,20 @@ function toItem(raw: RawItem | undefined, slot: number | undefined): PlayerItem 
   if (customName !== undefined) {
     item.name = textOf(customName);
   }
+  const contents = nested ? [] : containerContents(raw);
+  if (contents.length > 0) {
+    item.contents = contents;
+  }
   return item;
+}
+
+// Shulker boxes: `tag.BlockEntityTag.Items` before 1.20.5, `minecraft:container` after.
+// Bundles: `tag.Items` before, `minecraft:bundle_contents` after.
+function containerContents(raw: RawItem): PlayerItem[] {
+  const container = asArray<{ slot?: number; item?: RawItem }>(raw.components?.['minecraft:container']).map((entry) => toItem(entry.item, entry.slot, true));
+  const legacy = [...asArray<RawItem>(raw.tag?.BlockEntityTag?.Items), ...asArray<RawItem>(raw.tag?.Items)].map((entry) => toItem(entry, entry.Slot, true));
+  const bundle = asArray<RawItem>(raw.components?.['minecraft:bundle_contents']).map((entry, index) => toItem(entry, index, true));
+  return [...container, ...legacy, ...bundle].filter((item): item is PlayerItem => item !== null);
 }
 
 // Custom names are a JSON text component before 1.21.5 and an NBT one after; both reduce to their text.
