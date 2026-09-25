@@ -101,6 +101,7 @@ Already available in the current stable line.
 - Online players, whitelist, ops, ban/kick
 - Quick actions: gamemode, teleport, heal, give
 - Admin actions: save, whitelist toggle, time/weather, broadcast
+- Players tab, activity log and inventory history: see [Player insights](#player-insights)
 
 ### ✅ Integrations & networking
 
@@ -195,14 +196,54 @@ Still planned:
 
 ### Alerts
 
-Shipped so far: per-server Discord alerts for unexpected server down and
-sustained high CPU/RAM (configurable thresholds, sustain window and cooldown,
-in the Metrics tab).
+Shipped so far: per-server Discord alerts for unexpected server down, crash
+loops (restart retry limit ran out, with exit code and log tail) and sustained
+high CPU/RAM (configurable thresholds, sustain window and cooldown, in the
+Metrics tab).
 
 Still planned:
 
 - Log-error alerts
 - Email notifications
+- Discord bot (see [Player insights](#player-insights)): answer `/status` and
+  `/players`, and `/console` for linked admins, next to the existing webhooks
+
+### Player insights
+
+Shipped so far (Java, from world files, logs and RCON, no server-side plugin):
+
+- **Players tab**: everyone who joined, with stats, advancements, inventory, ender chest and
+  what carried shulkers hold; per-player actions; "who has this item" search
+- **Activity log** (opt-in per server): sessions with per-session stats, weekday pattern and
+  streak; searchable timeline of joins, leaves, chat, deaths, advancements and commands;
+  import of archived logs
+- **Inventory history**: snapshots on join, leave and autosave, with changes and the last
+  snapshot before each death
+
+Next, no plugin needed (designed, not scheduled):
+
+- **World map**: a BlueMap render served by the panel, later live players, portals, spawn points
+  and a visit heatmap. Waiting on its cost: an extra image, a Mojang EULA step for textures, and
+  CPU/disk to render large worlds
+- **X-ray report**: valuable ores per 1000 stone-like blocks against the server median, flagged
+  as "worth a look", never as a verdict. The per-session data it needs is already recorded
+
+Possible later, needs code inside the Minecraft server (not available, needs a design):
+
+- **CoreProtect / Ledger reader** (first iteration): when one of those plugins is already
+  installed, read its database to show block breaks/places, container transactions and kills in
+  the activity timeline, and where a suspected x-ray player dug. Only works where the operator
+  installed it; MySQL-backed installs and schema changes between versions need handling
+- **Minepanel agent**: a small plugin/mod that sends events to the panel: block changes, PvP
+  damage ("who swung first"), the exact inventory at death, positions without RCON polling.
+  Costs one build per loader (Paper, Fabric, NeoForge/Forge) and version range, and an event
+  volume that likely needs its own database
+- **Discord bot**: a gateway bot next to the webhooks, with Discord ↔ Minepanel account linking
+  and the same permission checks as the panel (`useConsole`, read-only users)
+
+> Open design questions for the agent-based items: how the agent authenticates and sends
+> events, where high-volume events are stored, and how the bot is kept from bypassing panel
+> permissions.
 
 ### Network features
 
