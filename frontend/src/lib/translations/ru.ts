@@ -771,6 +771,19 @@ export const ru: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Labels контейнера, по одному в строке: key=value. Полезны для Traefik, Caddy, nginx-proxy и других.',
 
+  // Compose Snippets
+  composeSnippets: 'Фрагменты Compose',
+  composeSnippetsDesc: 'Необработанный YAML docker-compose, объединяемый со сгенерированным файлом',
+  composeSnippetsWarning:
+    'Расширенная и хрупкая функция. Каждый фрагмент объединяется со сгенерированным docker-compose.yml, поэтому ошибка или изменение ключа, которым управляет панель, может помешать запуску сервера. Редактировать могут только администраторы.',
+  composeSnippetsHelp:
+    'Каждый фрагмент — это YAML, объединяемый в выбранном месте. Словари объединяются, списки дополняются, любое другое значение заменяет значение панели.',
+  composeSnippetTargetRoot: 'Верхний уровень (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Сервисы (добавить сервисы)',
+  composeSnippetTargetMc: 'Сервис Minecraft',
+  addComposeSnippet: 'Добавить фрагмент',
+  removeComposeSnippet: 'Удалить фрагмент',
+
   // Backup Configuration
   backupConfig: 'Настройка backup',
   enableBackup: 'Включить backup',

@@ -779,6 +779,19 @@ export const es: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Etiquetas del contenedor (una por línea, formato: clave=valor). Útiles para Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Fragmentos de Compose',
+  composeSnippetsDesc: 'YAML de docker-compose en bruto que se fusiona en el archivo generado',
+  composeSnippetsWarning:
+    'Avanzado y frágil. Cada fragmento se fusiona en el docker-compose.yml generado, así que un error o un cambio en una clave gestionada por el panel puede impedir que el servidor arranque. Solo los administradores pueden editarlo.',
+  composeSnippetsHelp:
+    'Cada fragmento es YAML que se fusiona en el lugar elegido. Los mapas se fusionan, las listas se añaden y cualquier otro valor sustituye al del panel.',
+  composeSnippetTargetRoot: 'Nivel superior (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Servicios (añadir más servicios)',
+  composeSnippetTargetMc: 'Servicio de Minecraft',
+  addComposeSnippet: 'Añadir fragmento',
+  removeComposeSnippet: 'Quitar fragmento',
+
   // Configuración de Backups
   backupConfig: 'Configuración de Copias de Seguridad',
   enableBackup: 'Activar Backups',

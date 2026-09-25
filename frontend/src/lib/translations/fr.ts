@@ -771,6 +771,19 @@ export const fr: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Labels du conteneur (une par ligne, format : clé=valeur). Utile pour Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Extraits Compose',
+  composeSnippetsDesc: 'YAML docker-compose brut fusionné dans le fichier généré',
+  composeSnippetsWarning:
+    'Avancé et fragile. Chaque extrait est fusionné dans le docker-compose.yml généré ; une erreur ou une modification d\'une clé gérée par le panneau peut empêcher le serveur de démarrer. Seuls les administrateurs peuvent le modifier.',
+  composeSnippetsHelp:
+    'Chaque extrait est du YAML fusionné à l\'emplacement choisi. Les maps sont fusionnées, les listes complétées et toute autre valeur remplace celle du panneau.',
+  composeSnippetTargetRoot: 'Niveau racine (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Services (ajouter des services)',
+  composeSnippetTargetMc: 'Service Minecraft',
+  addComposeSnippet: 'Ajouter un extrait',
+  removeComposeSnippet: 'Supprimer l\'extrait',
+
   // Backup Configuration
   backupConfig: 'Configuration des sauvegardes',
   enableBackup: 'Activer les sauvegardes',

@@ -790,6 +790,19 @@ export const tr: Record<TranslationKey, string> = {
   dockerLabelsHelp:
     'Konteyner etiketleri (her satıra bir tane, biçim: anahtar=değer). Traefik, Caddy, nginx-proxy vb. için kullanışlıdır.',
 
+  // Compose Snippets
+  composeSnippets: 'Compose parçacıkları',
+  composeSnippetsDesc: 'Oluşturulan dosyaya birleştirilen ham docker-compose YAML\'ı',
+  composeSnippetsWarning:
+    'Gelişmiş ve kırılgan. Her parçacık oluşturulan docker-compose.yml dosyasına birleştirilir; bir hata veya panelin yönettiği bir anahtarda yapılan değişiklik sunucunun başlamasını engelleyebilir. Yalnızca yöneticiler düzenleyebilir.',
+  composeSnippetsHelp:
+    'Her parçacık, seçilen yere birleştirilen YAML\'dır. Haritalar birleştirilir, listelere eklenir, diğer tüm değerler panelinkinin yerini alır.',
+  composeSnippetTargetRoot: 'Üst düzey (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Servisler (servis ekle)',
+  composeSnippetTargetMc: 'Minecraft servisi',
+  addComposeSnippet: 'Parçacık ekle',
+  removeComposeSnippet: 'Parçacığı kaldır',
+
   // Backup Configuration
   backupConfig: 'Yedekleme yapılandırması',
   enableBackup: 'Yedeklemeyi etkinleştir',

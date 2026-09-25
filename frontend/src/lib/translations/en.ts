@@ -769,6 +769,19 @@ export const en = {
   dockerLabelsHelp:
     'Container labels (one per line, format: key=value). Useful for Traefik, Caddy, nginx-proxy, etc.',
 
+  // Compose Snippets
+  composeSnippets: 'Compose Snippets',
+  composeSnippetsDesc: 'Raw docker-compose YAML merged into the generated file',
+  composeSnippetsWarning:
+    'Advanced and fragile. Each snippet is merged into the generated docker-compose.yml, so a mistake or a change to a key the panel manages can stop the server from starting. Only admins can edit this.',
+  composeSnippetsHelp:
+    'Each snippet is YAML merged into the chosen place. Maps are merged, lists are appended, and any other value replaces the panel\'s.',
+  composeSnippetTargetRoot: 'Top level (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Services (add more services)',
+  composeSnippetTargetMc: 'Minecraft service',
+  addComposeSnippet: 'Add snippet',
+  removeComposeSnippet: 'Remove snippet',
+
   // Backup Configuration
   backupConfig: 'Backup Configuration',
   enableBackup: 'Enable Backups',
