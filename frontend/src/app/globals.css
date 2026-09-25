@@ -179,38 +179,41 @@
 }
 
 :root {
+  /* The panel is dark-only: shadcn tokens point at the same green-black
+     world, so primitives that fall back to them (outline buttons, dialogs,
+     secondary badges, skeletons) never render as light-theme white. */
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #0a0e08;
+  --foreground: #eef3e4;
+  --card: #101609;
+  --card-foreground: #eef3e4;
+  --popover: #101609;
+  --popover-foreground: #eef3e4;
+  --primary: #2c3b22;
+  --primary-foreground: #f5f8ee;
+  --secondary: #1c2716;
+  --secondary-foreground: #eef3e4;
+  --muted: #1c2716;
+  --muted-foreground: #a9b699;
+  --accent: #24350f;
+  --accent-foreground: #f5f8ee;
+  --destructive: oklch(0.65 0.18 27);
+  --border: #1c2716;
+  --input: #1c2716;
+  --ring: #9dff3f;
+  --chart-1: #9dff3f;
+  --chart-2: #5fd7ff;
+  --chart-3: #ffd25f;
+  --chart-4: #ff6b5f;
+  --chart-5: #b388ff;
+  --sidebar: #101609;
+  --sidebar-foreground: #eef3e4;
+  --sidebar-primary: #9dff3f;
+  --sidebar-primary-foreground: #0a0e08;
+  --sidebar-accent: #24350f;
+  --sidebar-accent-foreground: #f5f8ee;
+  --sidebar-border: #1c2716;
+  --sidebar-ring: #9dff3f;
 }
 
 .dark {
@@ -281,7 +284,10 @@
   .mc-btn {
     font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.005em;
+    /* Archivo's width axis gives labels the presence Archivo Black had
+       without the all-caps weight. */
+    font-stretch: 112%;
+    letter-spacing: 0;
   }
   h1.font-minecraft,
   .mc-display {
@@ -293,6 +299,7 @@
   .mc-tag {
     font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
     font-weight: 700;
+    font-stretch: 112%;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -1029,4 +1036,39 @@
 [class*="rounded"][class*="bg-gray-800"]:not([class*="border"]):not(input):not(textarea):not(button),
 [class*="rounded"][class*="bg-gray-700"]:not([class*="border"]):not(input):not(textarea):not(button) {
   border-radius: 0 !important;
+}
+
+/* Slider skin: inset bar track, acid fill and a beveled square knob, so the
+   Radix slider matches mc-bar instead of the shadcn light defaults. */
+[data-slot="slider-track"] {
+  border-radius: 0;
+  background: var(--mc-stone-deep);
+  border: 2px solid var(--mc-frame);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+[data-slot="slider-track"][data-orientation="horizontal"] {
+  height: 12px;
+}
+[data-slot="slider-range"] {
+  background: var(--mc-emerald);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+}
+[data-slot="slider-thumb"] {
+  width: 18px;
+  height: 22px;
+  border-radius: 0;
+  background: linear-gradient(180deg, #3a4d2c, #24350f);
+  border: 2px solid var(--mc-frame);
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.45), 0 2px 0 rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+[data-slot="slider-thumb"]:hover {
+  border-color: var(--mc-emerald);
+}
+[data-slot="slider-thumb"]:focus-visible {
+  outline: 2px solid var(--mc-emerald);
+  outline-offset: 2px;
+}
+[data-slot="slider-thumb"]:active {
+  cursor: grabbing;
 }

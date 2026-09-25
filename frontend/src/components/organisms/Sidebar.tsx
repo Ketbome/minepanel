@@ -172,7 +172,7 @@ export function Sidebar() {
             >
               <ArrowLeft size={18} className="shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-minecraft">{t('back')}</p>
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-minecraft">{t('back')}</p>
                 <p className="font-minecraft text-sm text-white truncate">{serverDisplayName}</p>
               </div>
             </Link>
@@ -222,7 +222,7 @@ export function Sidebar() {
           <div className={cn('py-4', isCollapsed ? 'px-2' : 'px-3')}>
             <p
               className={cn(
-                'text-[10px] text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
+                'text-xs text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
                 isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
@@ -272,7 +272,7 @@ export function Sidebar() {
           >
             <p
               className={cn(
-                'text-[10px] text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
+                'text-xs text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
                 isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >

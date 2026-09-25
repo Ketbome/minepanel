@@ -111,7 +111,7 @@ export const ModpackClientModsPanel: FC<ModpackClientModsPanelProps> = ({ server
     <div className="space-y-3 border-2 border-[var(--mc-frame)] bg-gray-900/50 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-minecraft text-xs text-gray-200">{t('modsReviewTitle')}</p>
-        <p className="font-minecraft text-[11px] uppercase tracking-wide text-gray-500">
+        <p className="font-minecraft text-xs uppercase tracking-wide text-gray-500">
           {t('modsReviewCount').replace('{count}', String(counts.total)).replace('{client}', String(counts.client))}
         </p>
       </div>
@@ -136,7 +136,7 @@ export const ModpackClientModsPanel: FC<ModpackClientModsPanelProps> = ({ server
               <span className="block truncate text-xs text-gray-200">{mod.name ?? mod.modId ?? mod.fileName}</span>
               <span className="block truncate text-[10px] text-gray-500">{mod.fileName}</span>
             </span>
-            <span className={`shrink-0 border px-1.5 py-0.5 font-minecraft text-[10px] uppercase ${SIDE_STYLE[mod.side]}`}>{t(SIDE_LABEL[mod.side])}</span>
+            <span className={`shrink-0 border px-1.5 py-0.5 font-minecraft text-xs uppercase ${SIDE_STYLE[mod.side]}`}>{t(SIDE_LABEL[mod.side])}</span>
           </label>
         ))}
       </div>

@@ -58,7 +58,7 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
             <div className="flex items-start gap-2">
               <h3 className="line-clamp-2 flex-1 font-minecraft text-sm font-bold leading-tight text-white group-hover:text-emerald-400">{modpack.name}</h3>
               {modpack.isFeatured && (
-                <span className="mc-tag flex shrink-0 items-center bg-yellow-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
+                <span className="mc-tag flex shrink-0 items-center bg-yellow-500 px-1.5 py-0.5 text-xs font-bold text-black">
                   <Star className="mr-1 h-3 w-3 fill-black" />
                   {t("featured")}
                 </span>
@@ -68,11 +68,11 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
             <p className="line-clamp-2 text-xs leading-relaxed text-gray-400">{modpack.summary}</p>
 
             <div className="mt-auto flex flex-wrap items-center gap-1.5">
-              <span className="mc-tag flex items-center bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="mc-tag flex items-center bg-emerald-600 px-1.5 py-0.5 text-xs font-semibold text-white">
                 <Download className="mr-1 h-3 w-3" />
                 {formatDownloadCount(modpack.downloadCount)}
               </span>
-              <span className="mc-tag flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] font-semibold text-gray-300">
+              <span className="mc-tag flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-xs font-semibold text-gray-300">
                 <Calendar className="mr-1 h-3 w-3" />
                 {getLatestVersion()}
               </span>

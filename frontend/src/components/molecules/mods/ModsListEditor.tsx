@@ -456,7 +456,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                     type="button"
                     onClick={() => setEntryVersion(index, latest.versionId)}
                     title={`${t('modUpdateAvailable')}: ${latest.name}`}
-                    className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
+                    className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
                   >
                     <ArrowUpCircle className="h-3.5 w-3.5" />
                     {t('modUpdateAvailable')}
@@ -468,7 +468,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                     type="button"
                     onClick={() => toggleEntryOptional(index)}
                     title={t('modOptionalHelp')}
-                    className={`shrink-0 border-2 px-2 py-1 text-[10px] font-minecraft uppercase transition-colors ${
+                    className={`shrink-0 border-2 px-2 py-1 text-xs font-minecraft uppercase transition-colors ${
                       entry.optional
                         ? 'border-sky-500/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
                         : 'border-gray-700/60 bg-transparent text-gray-500 hover:border-gray-600 hover:text-gray-300'
@@ -524,7 +524,7 @@ export const ModsListEditor: FC<ModsListEditorProps> = ({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="font-minecraft text-[11px] text-gray-400">
+                <span className="font-minecraft text-xs text-gray-400">
                   {currentPage + 1} / {pageCount}
                 </span>
                 <Button

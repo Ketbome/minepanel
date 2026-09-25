@@ -182,7 +182,7 @@ export default function HomePage() {
                 <Image src={slot.img} alt={slot.title} width={36} height={36} className="pixelated" />
                 <span className={`mc-count ${slot.countColor} absolute bottom-0.5 right-1 text-lg`}>{isLoading ? "…" : slot.value}</span>
               </div>
-              <span className="font-minecraft text-[10px] uppercase tracking-wider text-gray-400 max-w-[5.5rem] leading-tight">{slot.title}</span>
+              <span className="font-minecraft text-xs uppercase tracking-wider text-gray-400 max-w-[5.5rem] leading-tight">{slot.title}</span>
             </div>
           ))}
         </div>
@@ -199,7 +199,7 @@ export default function HomePage() {
               <Cpu className="w-4 h-4 text-cyan-300" />
               {t("systemHealth")}
             </span>
-            <span className="mc-tag bg-emerald-700/70 text-emerald-200 text-[10px] px-2 py-0.5 flex items-center gap-1.5">
+            <span className="mc-tag bg-emerald-700/70 text-emerald-200 text-xs px-2 py-0.5 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" />
               {t("healthy")}
             </span>

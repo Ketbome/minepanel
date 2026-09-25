@@ -123,7 +123,7 @@ export const ActivityTab: FC<ActivityTabProps> = ({ serverId }) => {
                 key={type}
                 type="button"
                 onClick={() => toggleType(type)}
-                className={`flex items-center gap-1 px-2 py-0.5 text-xs border ${types.includes(type) ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
+                className={`flex items-center gap-1 px-2.5 py-1 text-sm border ${types.includes(type) ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
               >
                 <Icon className={`h-3 w-3 ${color}`} />
                 {t(label)}

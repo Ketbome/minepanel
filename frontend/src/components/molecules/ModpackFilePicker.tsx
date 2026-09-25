@@ -156,7 +156,7 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
       {!isLoading && files.length === 0 && <p className="text-xs text-gray-400">{t("modpackEmpty")}</p>}
 
       {!isLoading && files.length > 0 && (
-        <p className="font-minecraft text-[11px] uppercase tracking-wide text-gray-500">
+        <p className="font-minecraft text-xs uppercase tracking-wide text-gray-500">
           {t("modpackCount").replace("{count}", String(files.length))} · {formatSize(totalSize)}
         </p>
       )}
@@ -183,18 +183,18 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
                 )}
                 {isSelected && !isInspecting && inspection && (
                   <span className="mt-1 flex flex-wrap items-center gap-1">
-                    <span className="border border-gray-600/60 bg-gray-800/70 px-1.5 py-0.5 font-minecraft text-[10px] uppercase text-gray-300">{t(MODPACK_KIND_LABEL[inspection.kind])}</span>
+                    <span className="border border-gray-600/60 bg-gray-800/70 px-1.5 py-0.5 font-minecraft text-xs uppercase text-gray-300">{t(MODPACK_KIND_LABEL[inspection.kind])}</span>
                     {inspection.loader && (
-                      <span className="border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-minecraft text-[10px] uppercase text-emerald-300">
+                      <span className="border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-minecraft text-xs uppercase text-emerald-300">
                         {inspection.loader}
                         {inspection.loaderVersion ? ` ${inspection.loaderVersion}` : ""}
                       </span>
                     )}
                     {inspection.minecraftVersion && (
-                      <span className="border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 font-minecraft text-[10px] uppercase text-sky-300">MC {inspection.minecraftVersion}</span>
+                      <span className="border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 font-minecraft text-xs uppercase text-sky-300">MC {inspection.minecraftVersion}</span>
                     )}
                     {inspection.needsLoader && (
-                      <span className="flex items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-minecraft text-[10px] uppercase text-amber-300">
+                      <span className="flex items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-minecraft text-xs uppercase text-amber-300">
                         <AlertTriangle className="h-3 w-3" />
                         {t("modpackNoLoader")}
                       </span>

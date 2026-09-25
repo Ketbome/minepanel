@@ -214,7 +214,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className={`px-2 py-0.5 text-xs border ${filter === value ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
+                  className={`px-2.5 py-1 text-sm border ${filter === value ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
                 >
                   {label} ({counts[value]})
                 </button>
@@ -243,8 +243,8 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                       <span className="flex items-center gap-1.5">
                         {row.online && <span className="h-2 w-2 bg-emerald-400 shrink-0" />}
                         <span className="text-sm text-gray-100 truncate">{row.name}</span>
-                        {row.summary?.op && <span className="text-[10px] text-amber-300">OP</span>}
-                        {row.summary?.banned && <span className="text-[10px] text-red-400">{t("banned")}</span>}
+                        {row.summary?.op && <span className="text-xs text-amber-300">OP</span>}
+                        {row.summary?.banned && <span className="text-xs text-red-400">{t("banned")}</span>}
                       </span>
                       <span className="block text-xs text-gray-500 truncate">
                         {row.summary

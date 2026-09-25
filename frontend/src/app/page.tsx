@@ -714,7 +714,7 @@ function HomeContent() {
                 animate={{ y: [0, -8, 0] }}
                 transition={{ y: { duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 } }}
               >
-                <Image src="/images/creeper.webp" alt="Creeper" width={24} height={48} className="drop-shadow-lg" />
+                <Image src="/images/creeper.webp" alt="Creeper" width={48} height={48} className="drop-shadow-lg" />
               </m.div>
             </div>
           </m.div>

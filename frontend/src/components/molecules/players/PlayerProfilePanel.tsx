@@ -119,7 +119,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, prof
                 key={key}
                 type="button"
                 onClick={() => setCategory(key)}
-                className={`px-2 py-1 text-xs border ${key === category ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
+                className={`px-2.5 py-1 text-sm border ${key === category ? "border-emerald-500 text-emerald-300 bg-emerald-600/20" : "border-gray-700 text-gray-400 hover:text-gray-200"}`}
               >
                 {humanizeId(key)}
               </button>

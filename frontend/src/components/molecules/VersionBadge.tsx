@@ -157,7 +157,7 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
         )}
       >
         {isUpdating ? <Loader2 size={16} className="shrink-0 animate-spin" /> : info.updateAvailable ? <ArrowUpCircle size={16} className="shrink-0" /> : null}
-        <span className={cn('font-minecraft text-[11px] whitespace-nowrap', isCollapsed ? 'hidden' : 'block')}>
+        <span className={cn('font-minecraft text-xs whitespace-nowrap', isCollapsed ? 'hidden' : 'block')}>
           {isUpdating ? t('updating') : info.updateAvailable ? `${t('updateAvailable')} · v${info.latest}` : `v${info.current}`}
         </span>
       </button>
@@ -197,7 +197,7 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
               <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <div className="min-w-0">
-                  <p className="font-minecraft text-[11px] tracking-wide text-amber-300">{t('changelogActionRequired')}</p>
+                  <p className="font-minecraft text-xs tracking-wide text-amber-300">{t('changelogActionRequired')}</p>
                   <p className="mt-1 text-xs text-amber-200/80">{t('changelogBreakingWarning')}</p>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export const VersionBadge: FC<VersionBadgeProps> = ({ isCollapsed }) => {
 
           {info.updateAvailable ? (
             <div className="space-y-3 border-t border-gray-700/60 pt-3">
-              <p className="font-minecraft text-[11px] tracking-wide text-emerald-300">{t('updateHowTo')}</p>
+              <p className="font-minecraft text-xs tracking-wide text-emerald-300">{t('updateHowTo')}</p>
 
               {canUpdate ? (
                 <>

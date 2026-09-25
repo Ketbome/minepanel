@@ -30,18 +30,18 @@ export const ModpackNotFoundHelp: FC<ModpackNotFoundHelpProps> = ({ query, onUse
 
       <ol className="mx-auto max-w-xl space-y-2 text-left text-xs leading-relaxed text-gray-400">
         <li className="border-2 border-[var(--mc-frame)] bg-gray-900/50 p-3">
-          <span className="font-minecraft text-[11px] uppercase text-emerald-400">1. </span>
+          <span className="font-minecraft text-xs uppercase text-emerald-400">1. </span>
           {t("modpackNotFoundPasteUrl")}
         </li>
         <li className="border-2 border-[var(--mc-frame)] bg-gray-900/50 p-3">
-          <span className="font-minecraft text-[11px] uppercase text-emerald-400">2. </span>
+          <span className="font-minecraft text-xs uppercase text-emerald-400">2. </span>
           {t("modpackNotFoundUseZip")}{" "}
           <a href={LINK_MODPACK_ZIP} target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline-offset-2 hover:underline">
             {t("documentation")}
           </a>
         </li>
         <li className="border-2 border-[var(--mc-frame)] bg-gray-900/50 p-3">
-          <span className="font-minecraft text-[11px] uppercase text-emerald-400">3. </span>
+          <span className="font-minecraft text-xs uppercase text-emerald-400">3. </span>
           {t("modpackNotFoundPickLoader")}{" "}
           <a href={LINK_MODPACK_NO_LOADER} target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline-offset-2 hover:underline">
             {t("documentation")}

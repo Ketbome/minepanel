@@ -92,12 +92,15 @@ Design system (Minecraft GUI, converged with the docs brand):
 - The base shadcn primitives are skinned to this look via helper classes so feature UI inherits it
   automatically: `Card` uses `mc-panel`; `Button` uses `mc-bevel` + `font-minecraft`; `Input` uses
   `mc-field`; `Badge` uses `mc-chip`; `Tabs` list/trigger are squared with emerald active state.
+  The shadcn theme tokens in `globals.css` `:root` are dark (the panel has no light mode), so
+  `outline`/`secondary` buttons, dialogs and skeletons fall back to the stone palette; the
+  Radix slider is skinned by `data-slot` selectors in the same file.
   Prefer plain `Card`/`Button`/`Input`/`Badge`/`Tabs` and let the skin apply; only reach for the raw
   `mc-*` classes for bespoke layouts (dashboards, headers).
 - The Tailwind `emerald-*`/`gray-*` scales are remapped in `globals.css` `@theme` onto the docs'
   acid/green-tinted palette; prefer those utilities (or `--mc-*` vars) over new raw hex values.
 - Item art in `public/images/` is normalized: 128x128, transparent, content fitted to a
-  112px box and centered, so every sprite reads at the same optical size in a slot. New
+  124px box and centered, so every sprite reads at the same optical size in a slot. New
   sprites must follow the same rule (trim, fit, center). Full-bleed textures (`cow.jpg`,
   `villager.png`, `nether.webp`, `shield.png`, `neoforged.png`, `server-icon.png`) stay as-is.
   The `pixelated` class now means smooth downscaling (sprites are always drawn smaller than

@@ -300,7 +300,7 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
         <div className="rounded-xl border border-emerald-900/40 bg-linear-to-r from-gray-900/90 via-gray-800/75 to-gray-900/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 text-[11px] font-minecraft uppercase tracking-[0.18em] text-emerald-300">
+              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.18em] text-emerald-300">
                 Bedrock
               </Badge>
               <p className="text-sm text-gray-300">

@@ -76,7 +76,7 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
           if (groupItems.length === 0) return null;
           return (
             <div key={group} className="space-y-1">
-              <p className="px-3 font-minecraft text-[10px] uppercase tracking-[0.25em] text-emerald-300/70">{t(groupLabelKey[group])}</p>
+              <p className="px-3 font-minecraft text-xs uppercase tracking-[0.25em] text-emerald-300/70">{t(groupLabelKey[group])}</p>
               {groupItems.map((item) => renderButton(item))}
             </div>
           );
