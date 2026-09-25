@@ -313,10 +313,34 @@ describe('ActivityService', () => {
   it('prunes events and closed sessions past the retention window', async () => {
     await service.ingest('srv', [line('10:00:00', 'Steve joined the game'), line('10:10:00', 'Steve left the game'), line('10:20:00', 'Alex joined the game')], at);
 
-    await service.prune(new Date('2026-11-01T00:00:00Z'));
+    await service.prune(new Date('2026-10-25T10:15:00Z'));
 
-    expect(await dataSource.getRepository(ActivityEvent).count()).toBe(0);
+    expect(await dataSource.getRepository(ActivityEvent).count()).toBe(1);
     expect((await sessions()).map((session) => session.name)).toEqual(['Alex']);
+  });
+
+  it('prunes sessions that never closed once they are past the retention window', async () => {
+    await service.ingest('srv', [line('10:00:00', 'Steve joined the game')], at);
+
+    await service.prune(new Date('2026-10-20T00:00:00Z'));
+    expect(await sessions()).toHaveLength(1);
+
+    await service.prune(new Date('2026-11-01T00:00:00Z'));
+    expect(await sessions()).toEqual([]);
+
+    // The cached session is gone too: a late leave line must not bring it back
+    await service.ingest('srv', [line('10:05:00', 'Steve left the game')], at);
+    expect(await sessions()).toEqual([]);
+  });
+
+  it('keeps only the newest events of a server over the cap', async () => {
+    await service.ingest('srv', ['a', 'b', 'c', 'd', 'e'].map((word, i) => line(`10:0${i}:00`, `<Steve> ${word}`)), at);
+    await service.ingest('other', [line('10:00:00', '<Alex> hi')], at);
+
+    await service.prune(new Date('2026-09-25T12:00:00Z'), 3);
+
+    const kept = await dataSource.getRepository(ActivityEvent).find({ order: { id: 'ASC' } });
+    expect(kept.map((event) => `${event.serverId}:${event.message}`)).toEqual(['srv:c', 'srv:d', 'srv:e', 'other:hi']);
   });
 
   it('clamps negative stat deltas', () => {

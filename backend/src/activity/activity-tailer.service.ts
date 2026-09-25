@@ -76,6 +76,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
       if (snapshotDue) this.snapshotAt = now.getTime();
       if (now.getTime() - this.prunedAt >= PRUNE_INTERVAL_MS) {
         await this.activityService.prune(now);
+        await this.pruneCursors();
         this.prunedAt = now.getTime();
       }
     } catch (error) {
@@ -148,6 +149,13 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
     cursor.historyImported = true;
     await this.cursorRepo.save(cursor);
     return { imported, files };
+  }
+
+  // Cursors of deleted servers; their events and sessions expire with the TTL
+  private async pruneCursors(): Promise<void> {
+    const servers = new Set(await this.store.listServerDirs());
+    const orphans = (await this.cursorRepo.find()).filter((cursor) => !servers.has(cursor.serverId));
+    if (orphans.length > 0) await this.cursorRepo.remove(orphans);
   }
 
   private async refreshTracked(): Promise<void> {

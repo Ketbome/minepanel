@@ -127,7 +127,9 @@ every few seconds and keeps:
 | Inventory history | Snapshots of inventory and ender chest on join, leave and every autosave (50 per player), with the changes since the previous one and the last snapshot before each death |
 
 - Off by default: chat is personal data. The timeline needs the **view logs** permission.
-- Events and sessions are kept for 30 days.
+- Everything the activity log stores expires: events, sessions (including ones that never closed)
+  and inventory snapshots are deleted after 30 days, checked hourly. On top of that each server
+  keeps at most 100,000 events and 50 inventory snapshots per player, newest first.
 - Recording starts when tracking is turned on; earlier lines only carry a time of day and are
   left to the history import, whose dates come from the archive file names.
 - Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft

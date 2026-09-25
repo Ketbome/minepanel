@@ -219,6 +219,9 @@ Path and filesystem patterns (critical):
 - `src/activity/activity.service.ts` - sessions keep a stats `baseline` while open so a panel restart
   can still compute deltas; imports use their own state (`newImportState`) and never touch live sessions.
   Inventory snapshots are deduplicated by content hash and capped at 50 per player.
+  Every table it writes has a TTL (`RETENTION_DAYS`, pruned hourly, open sessions included) and
+  events have a per-server cap (`MAX_EVENTS_PER_SERVER`): sql.js holds the whole DB in RAM.
+  New activity data must get the same treatment.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

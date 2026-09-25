@@ -12,7 +12,7 @@ describe('ActivityTailerService', () => {
   let serversDir: string;
   let logsDir: string;
   let cursors: Map<string, LogCursor>;
-  let cursorRepo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock };
+  let cursorRepo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock; find: jest.Mock; remove: jest.Mock };
   let activity: { ingest: jest.Mock; closeOpenSessions: jest.Mock; newImportState: jest.Mock; forgetLiveState: jest.Mock; prune: jest.Mock; snapshotOnline: jest.Mock };
   let store: { listServerDirs: jest.Mock; readConfig: jest.Mock };
   let service: ActivityTailerService;
@@ -32,6 +32,8 @@ describe('ActivityTailerService', () => {
         return cursor;
       }),
       create: jest.fn((cursor) => ({ ...cursor })),
+      find: jest.fn(async () => [...cursors.values()]),
+      remove: jest.fn(async (rows: LogCursor[]) => rows.forEach((row) => cursors.delete(row.serverId))),
     };
     activity = {
       ingest: jest.fn().mockResolvedValue(1),
@@ -140,6 +142,18 @@ describe('ActivityTailerService', () => {
       await Promise.all([service.tick(new Date('2026-09-25T10:00:00Z')), service.tick(new Date('2026-09-25T10:00:00Z'))]);
 
       expect(cursorRepo.findOne).toHaveBeenCalledTimes(1);
+    });
+
+    it('drops cursors of deleted servers when pruning', async () => {
+      await fs.writeFile(latest(), HEADER);
+      cursors.set('deleted', { serverId: 'deleted', headHash: 'x', offset: 1 } as LogCursor);
+
+      await service.tick(new Date('2026-09-25T10:00:00Z'));
+
+      expect([...cursors.keys()]).toEqual(['srv']);
+      cursorRepo.remove.mockClear();
+      await service.tick(new Date('2026-09-25T12:00:00Z'));
+      expect(cursorRepo.remove).not.toHaveBeenCalled();
     });
 
     it('survives a failing server list', async () => {

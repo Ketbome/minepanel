@@ -15,6 +15,9 @@ const STATS_FLUSH_DELAY_MS = 5_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EVENTS_PAGE = 200;
 const MAX_SNAPSHOTS_PER_PLAYER = 50;
+// Safety net on top of the TTL: a chat-heavy server cannot grow the database past this in 30 days.
+// sql.js keeps the whole database in memory, so this bounds RAM as well as disk.
+export const MAX_EVENTS_PER_SERVER = 100_000;
 
 // Stone-like blocks and valuable ores whose per-session `minecraft:mined` delta is kept for the x-ray report
 export const ORE_IDS = [
@@ -272,11 +275,29 @@ export class ActivityService {
     };
   }
 
-  async prune(now = new Date()): Promise<void> {
+  async prune(now = new Date(), maxEventsPerServer = MAX_EVENTS_PER_SERVER): Promise<void> {
     const cutoff = new Date(now.getTime() - RETENTION_DAYS * DAY_MS);
     await this.eventRepo.delete({ createdAt: LessThan(cutoff) });
     await this.sessionRepo.delete({ endAt: LessThan(cutoff) });
+    // Sessions that never closed (server deleted, log lost) would otherwise stay forever
+    await this.sessionRepo.delete({ endAt: IsNull(), startAt: LessThan(cutoff) });
     await this.snapshotRepo.delete({ createdAt: LessThan(cutoff) });
+    await this.capEvents(maxEventsPerServer);
+    // Cached open sessions may have just been deleted; reload them from the database
+    this.liveStates.clear();
+  }
+
+  private async capEvents(max: number): Promise<void> {
+    const crowded: Array<{ serverId: string }> = await this.eventRepo
+      .createQueryBuilder('event')
+      .select('event.serverId', 'serverId')
+      .groupBy('event.serverId')
+      .having('COUNT(*) > :max', { max })
+      .getRawMany();
+    for (const { serverId } of crowded) {
+      const [oldestKept] = await this.eventRepo.find({ select: { id: true }, where: { serverId }, order: { id: 'DESC' }, skip: max - 1, take: 1 });
+      await this.eventRepo.delete({ serverId, id: LessThan(oldestKept.id) });
+    }
   }
 
   // Sessions recorded before the player's UUID was known only carry the name
