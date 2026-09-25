@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users, History } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -14,6 +14,7 @@ import { ConfigModeToggle } from "../molecules/ConfigModeToggle";
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
 const PlayersTab = dynamic(() => import("../molecules/Tabs/PlayersTab").then(mod => mod.PlayersTab));
+const ActivityTab = dynamic(() => import("../molecules/Tabs/ActivityTab").then(mod => mod.ActivityTab));
 const AdvancedTab = dynamic(() => import("../molecules/Tabs/AdvancedTab").then(mod => mod.AdvancedTab));
 const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mod.ModsTab));
 const ModWatchTab = dynamic(() => import("../molecules/Tabs/ModWatchTab").then(mod => mod.ModWatchTab));
@@ -99,6 +100,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "players", label: t("players"), icon: Users, group: "operation", show: showPlayersTab, disabled: false },
     { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
+    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showPlayersTab, disabled: false },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
 
@@ -372,6 +374,12 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               <TabsContent value="metrics" className="space-y-4 mt-0">
                 <MetricsTab serverId={serverId} />
               </TabsContent>
+
+              {showPlayersTab && (
+                <TabsContent value="activity" className="space-y-4 mt-0">
+                  <ActivityTab serverId={serverId} />
+                </TabsContent>
+              )}
 
               <TabsContent value="tasks" className="space-y-4 mt-0">
                 <ScheduledTasksTab serverId={serverId} />

@@ -7,9 +7,11 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { PlayerLocation, PlayerProfile } from "@/services/players/players.service";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PlayerInventory } from "./PlayerInventory";
+import { PlayerSessions } from "./PlayerSessions";
 import { formatDimension, formatDistance, formatPlayTime, humanizeId, idNamespace } from "./player-format";
 
 interface PlayerProfilePanelProps {
+  serverId: string;
   profile: PlayerProfile | null;
   loading: boolean;
   online: boolean;
@@ -26,7 +28,7 @@ const StatCard: FC<{ label: string; value: string | number }> = ({ label, value 
 const formatLocation = (location: PlayerLocation | null) =>
   location ? `${formatDimension(location.dimension)} · ${Math.round(location.x)}, ${Math.round(location.y)}, ${Math.round(location.z)}` : "—";
 
-export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ profile, loading, online, actions }) => {
+export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, profile, loading, online, actions }) => {
   const { t } = useLanguage();
   const [category, setCategory] = useState("minecraft:custom");
   const [statsQuery, setStatsQuery] = useState("");
@@ -76,6 +78,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ profile, loadi
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">{t("profile")}</TabsTrigger>
+          <TabsTrigger value="sessions">{t("sessions")}</TabsTrigger>
           <TabsTrigger value="statistics">{t("statistics")}</TabsTrigger>
           <TabsTrigger value="inventory">{t("inventory")}</TabsTrigger>
           <TabsTrigger value="advancements">{t("advancements")}</TabsTrigger>
@@ -103,6 +106,10 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ profile, loadi
             </div>
           </div>
           <p className="text-xs text-gray-500">{t("playerDataSavedNote")}</p>
+        </TabsContent>
+
+        <TabsContent value="sessions" className="pt-3">
+          <PlayerSessions serverId={serverId} player={{ uuid: profile.uuid, name: profile.name ?? undefined }} />
         </TabsContent>
 
         <TabsContent value="statistics" className="space-y-3 pt-3">

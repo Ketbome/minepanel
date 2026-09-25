@@ -248,6 +248,19 @@ Requires access to the server.
 Online state is not part of these responses; the panel combines them with the RCON player list.
 Player actions go through `POST /servers/:id/command`.
 
+### Activity
+
+Activity log built from the server log (Java, opt-in per server). Requires access to the server.
+
+- `GET /activity/:serverId/settings` / `PUT /activity/:serverId/settings` (`{ enabled }`) — turns
+  tracking on or off; stored as `activityTracking` in `server.json` and ignored by `PUT /servers/:id`
+- `POST /activity/:serverId/import-history` — reads archived logs older than tracking, once
+  (`409` on a second call, `400` when tracking is off)
+- `GET /activity/:serverId/events?types=chat,death&name=&q=&from=&to=&before=&limit=` — newest
+  first, paged by `nextCursor`; needs the **view logs** permission
+- `GET /activity/:serverId/sessions?uuid=&name=` and `.../sessions/summary?uuid=&name=` — one
+  player's sessions and totals (`uuid` or `name` required)
+
 ### System
 
 Host monitoring endpoints:

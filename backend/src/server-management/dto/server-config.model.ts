@@ -688,6 +688,11 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   modWatchTargetVersion?: string;
+
+  // Activity log opt-in (chat is personal data); saved through /activity, never compose input.
+  @IsBoolean()
+  @IsOptional()
+  activityTracking?: boolean;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}

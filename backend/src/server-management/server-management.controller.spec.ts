@@ -442,6 +442,7 @@ describe('ServerManagementController', () => {
         maxPlayers: '40',
         modNotes: { sodium: 'stale copy' },
         modWatchTargetVersion: '1.16.5',
+        activityTracking: false,
       } as any);
 
       const [, forwarded] = dockerComposeService.updateServerConfig.mock.calls[0];

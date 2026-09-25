@@ -107,6 +107,22 @@ export class PlayersService {
     };
   }
 
+  // Current stats file of a player, as written on the last autosave or logout
+  async readStats(serverId: string, uuid: string): Promise<Record<string, Record<string, number>> | null> {
+    const files = await this.readServerFiles(serverId);
+    const stats = await this.readJson<StatsFile>(this.playerFile(files, 'stats', uuid.toLowerCase(), 'json'));
+    return stats?.stats ?? null;
+  }
+
+  async findUuid(serverId: string, name: string): Promise<string | null> {
+    const files = await this.readServerFiles(serverId);
+    const key = name.toLowerCase();
+    for (const [uuid, knownName] of files.names) {
+      if (knownName.toLowerCase() === key) return uuid;
+    }
+    return null;
+  }
+
   private async buildSummary(files: ServerPlayerFiles, uuid: string): Promise<PlayerSummary> {
     const [stats, advancements, lastSeen] = await Promise.all([
       this.readJson<StatsFile>(this.playerFile(files, 'stats', uuid, 'json')),

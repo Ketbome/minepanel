@@ -146,6 +146,18 @@ describe('PlayersService', () => {
     });
   });
 
+  describe('readStats and findUuid', () => {
+    it('reads a player stats file and resolves names from the server lists', async () => {
+      await fs.writeJson(path.join(mcData, 'usercache.json'), [{ name: 'Steve', uuid: STEVE }]);
+      await writeWorldFile('world', 'stats', `${STEVE}.json`, JSON.stringify({ stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } } }));
+
+      expect(await service.readStats('srv', STEVE.toUpperCase())).toEqual({ 'minecraft:custom': { 'minecraft:deaths': 1 } });
+      expect(await service.readStats('srv', ALEX)).toBeNull();
+      expect(await service.findUuid('srv', 'steve')).toBe(STEVE);
+      expect(await service.findUuid('srv', 'Nobody')).toBeNull();
+    });
+  });
+
   it('summarizes pre-1.17 play time', () => {
     expect(summarizeStats({ 'minecraft:custom': { 'minecraft:play_one_minute': 20 } }).playTimeTicks).toBe(20);
     expect(summarizeStats({}).blocksMined).toBe(0);

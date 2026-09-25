@@ -113,6 +113,25 @@ while the server is stopped because it reads the world files directly.
 Minecraft writes player files on autosave and on logout, so data for online players can be a few
 minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
 
+### Activity log
+
+Opt-in per server (Java), from the **Activity** tab. When on, the panel reads `logs/latest.log`
+every few seconds and keeps:
+
+| Feature   | Description |
+| --------- | ----------- |
+| Timeline  | Joins, leaves, chat, deaths, advancements and player commands; filter by type and player, search text |
+| Sessions  | Per player (Players tab → Sessions): history with duration, deaths, mob/PvP kills, blocks mined, chat and advancements; totals, weekday pattern and day streak |
+| History   | One-off import of the archived `logs/*.log.gz` from before tracking was turned on |
+
+- Off by default: chat is personal data. The timeline needs the **view logs** permission.
+- Events and sessions are kept for 30 days.
+- Recording starts when tracking is turned on; earlier lines only carry a time of day and are
+  left to the history import, whose dates come from the archive file names.
+- Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft
+  writes on logout; imported history only has what the log says (deaths, chat, advancements).
+- Chat reformatted by server plugins may not be recognised.
+
 ## Mod & Plugin Support
 
 | Feature    | Description                          |

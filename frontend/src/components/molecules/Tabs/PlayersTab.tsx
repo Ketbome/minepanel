@@ -210,6 +210,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
 
           <div className="min-w-0">
             <PlayerProfilePanel
+              serverId={serverId}
               profile={profile}
               loading={loadingProfile}
               online={Boolean(selectedRow?.online)}

@@ -28,6 +28,7 @@ frontend/src/
 |  |- world-discovery/          World import endpoints
 |  |- metrics/                  Per-server CPU/RAM history endpoints
 |  |- players/                  Player list and profile (stats, advancements, inventory)
+|  |- activity/                 Activity tracking settings, event timeline, player sessions
 |  |- scheduler/                Scheduled tasks CRUD endpoints
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/

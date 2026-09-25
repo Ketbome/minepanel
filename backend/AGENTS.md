@@ -29,6 +29,7 @@ backend/src/
 |- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
 |- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
+|- activity/                Opt-in activity log: tails logs/latest.log into events and player sessions
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
@@ -208,6 +209,15 @@ Path and filesystem patterns (critical):
 - `src/players/players.service.ts` - resolves the world from `level-name` in `server.properties`
   and refuses one that escapes `mc-data`. `usercache.json` only names players; membership comes
   from world files, whitelist, ops and bans.
+- `src/activity/activity-tailer.service.ts` - reads `latest.log` by byte offset every 5s. A log is
+  identified by the hash of its complete first line; a different hash (or a shorter file) is a
+  rotation, and the lines between the last read and the rotation are drained from the newest
+  `.log.gz` whose first line matches (that is where the shutdown's leave lines are). It only saves
+  the cursor when it moved: sql.js rewrites the whole database on every save.
+- `src/activity/log-line.parser.ts` - vanilla, Paper and Forge line prefixes. Deaths are any INFO line
+  starting with an online player's name that matches nothing else; add exclusions to `NOT_DEATH`.
+- `src/activity/activity.service.ts` - sessions keep a stats `baseline` while open so a panel restart
+  can still compute deltas; imports use their own state (`newImportState`) and never touch live sessions.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

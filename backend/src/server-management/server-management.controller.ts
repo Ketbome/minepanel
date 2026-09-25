@@ -554,9 +554,9 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
 
-    // Mod Watch fields save through their own endpoint; dropping them here stops a stale
-    // whole-form save from clobbering what's on disk.
-    const { modNotes: _modNotes, modWatchTargetVersion: _modWatchTargetVersion, ...configWithoutModWatch } = config;
+    // Mod Watch and activity tracking save through their own endpoints; dropping them here stops
+    // a stale whole-form save from clobbering what's on disk.
+    const { modNotes: _modNotes, modWatchTargetVersion: _modWatchTargetVersion, activityTracking: _activityTracking, ...configWithoutModWatch } = config;
 
     const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 

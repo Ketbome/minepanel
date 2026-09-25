@@ -1,10 +1,6 @@
-const TICKS_PER_MINUTE = 20 * 60;
+const MS_PER_TICK = 50;
 
-export const formatPlayTime = (ticks: number): string => {
-  const minutes = Math.floor(ticks / TICKS_PER_MINUTE);
-  const hours = Math.floor(minutes / 60);
-  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
-};
+export const formatPlayTime = (ticks: number): string => formatDuration(ticks * MS_PER_TICK);
 
 export const formatDistance = (cm: number): string => {
   const meters = cm / 100;
@@ -24,3 +20,9 @@ export const humanizeId = (id: string): string => {
 export const idNamespace = (id: string): string => id.split(":").pop()?.split("/")[0] ?? "";
 
 export const formatDimension = (dimension: string): string => humanizeId(dimension.replace("the_", ""));
+
+export const formatDuration = (ms: number): string => {
+  const minutes = Math.floor(ms / 60_000);
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+};
