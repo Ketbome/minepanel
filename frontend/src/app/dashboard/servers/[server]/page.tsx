@@ -8,7 +8,6 @@ import { useServerConfig } from "@/lib/hooks/useServerConfig";
 import { ServerPageHeader } from "@/components/organisms/ServerPageHeader";
 import { ServerConfigTabs } from "@/components/organisms/ServerConfigTabs";
 import { ServerLoadingSkeleton } from "@/components/organisms/ServerLoadingSkeleton";
-import Image from "next/image";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
 
@@ -48,21 +47,6 @@ export default function ServerConfig() {
 
       <div className="animate-fade-in stagger-1">
         <ServerConfigTabs serverId={serverId} config={config} updateConfig={updateConfig} saveConfig={saveConfig} serverStatus={status} isSaving={isSaving} refreshToken={refreshToken} />
-      </div>
-
-      <div className="flex justify-center gap-8 pt-8 animate-fade-in stagger-2">
-        <div className="animate-float opacity-40 hover:opacity-70 transition-opacity">
-          <Image src="/images/ender-pearl.webp" alt="Ender Pearl" width={32} height={32} className="drop-shadow-md" />
-        </div>
-        <div className="animate-float-delay-1 opacity-40 hover:opacity-70 transition-opacity">
-          <Image src="/images/enchanted-book.webp" alt="Enchanted Book" width={32} height={32} className="drop-shadow-md" />
-        </div>
-        <div className="animate-float-delay-2 opacity-40 hover:opacity-70 transition-opacity">
-          <Image src="/images/iron-pick.webp" alt="Iron Pickaxe" width={32} height={32} className="drop-shadow-md" />
-        </div>
-        <div className="animate-float opacity-40 hover:opacity-70 transition-opacity">
-          <Image src="/images/diamond-pickaxe.webp" alt="Diamond Pickaxe" width={32} height={32} className="drop-shadow-md" />
-        </div>
       </div>
     </div>
   );

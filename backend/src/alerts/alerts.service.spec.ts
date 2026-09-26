@@ -56,6 +56,134 @@ describe('AlertsService', () => {
     service = module.get<AlertsService>(AlertsService);
   });
 
+  describe('crash alerts', () => {
+    const starting = { ...stopped, status: 'starting' };
+    const crashConfig = { restartPolicy: 'on-failure', restartMaxRetries: 3 };
+
+    it('should send one crash alert with exit code and log tail when retries run out', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: 'Exception in server tick loop' });
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+      const [, title, , color, fields] = discordService.sendCustomMessage.mock.calls[0];
+      expect(title).toContain('crash loop');
+      expect(color).toBe('error');
+      expect(fields.map((f) => f.value)).toEqual(expect.arrayContaining(['`1`', '`3`', expect.stringContaining('Exception in server tick loop')]));
+    });
+
+    it('should replace the down alert when a running server crashes out', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: '' });
+
+      await service.evaluate({ srv: running }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+      expect(discordService.sendCustomMessage.mock.calls[0][1]).toContain('crash loop');
+    });
+
+    it('should truncate long log tails to fit a Discord field', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: 'x'.repeat(5000) });
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      const fields = discordService.sendCustomMessage.mock.calls[0][4];
+      expect(fields[3].value.length).toBeLessThanOrEqual(1024);
+    });
+
+    it('should fall back to the down alert on a clean exit', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 0, logTail: '' });
+
+      await service.evaluate({ srv: running }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+      expect(discordService.sendCustomMessage.mock.calls[0][1]).toContain('Server Down');
+    });
+
+    it('should not inspect servers without a retry limit', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue({ restartPolicy: 'on-failure' });
+      const readCrashInfo = jest.fn();
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(readCrashInfo).not.toHaveBeenCalled();
+      expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not alert after a stop requested from the panel', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 143, logTail: '' });
+
+      await service.evaluate({ srv: running }, readCrashInfo);
+      service.markExpectedStop('srv');
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(readCrashInfo).not.toHaveBeenCalled();
+      expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+    });
+
+    it('should skip the crash check when the config cannot be read', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockRejectedValue(new Error('gone'));
+      const readCrashInfo = jest.fn();
+
+      await service.evaluate({ srv: running }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(readCrashInfo).not.toHaveBeenCalled();
+      expect(discordService.sendCustomMessage.mock.calls[0][1]).toContain('Server Down');
+    });
+
+    it('should respect the cooldown and still suppress the down alert', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: '' });
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not throw when the webhook call fails', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      settingsRepo.findOne.mockRejectedValue(new Error('db down'));
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: '' });
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await expect(service.evaluate({ srv: stopped }, readCrashInfo)).resolves.toBeUndefined();
+    });
+
+    it('should skip the message when no webhook is configured', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
+      settingsRepo.findOne.mockResolvedValue(null);
+      const readCrashInfo = jest.fn().mockResolvedValue({ exitCode: 1, logTail: '' });
+
+      await service.evaluate({ srv: starting }, readCrashInfo);
+      await service.evaluate({ srv: stopped }, readCrashInfo);
+
+      expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+    });
+  });
+
   describe('down alerts', () => {
     it('should alert when a running server transitions to stopped', async () => {
       alertConfigRepo.find.mockResolvedValue([downConfig()]);

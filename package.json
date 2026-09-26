@@ -32,7 +32,8 @@
       "dompurify": "3.4.13",
       "postcss": "8.5.26",
       "vite": "6.4.3",
-      "multer": "2.3.0"
+      "multer": "2.3.0",
+      "lodash-es": "4.18.1"
     }
   }
 }

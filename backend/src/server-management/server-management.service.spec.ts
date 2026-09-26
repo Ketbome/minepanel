@@ -169,6 +169,35 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('getCrashInfo', () => {
+    it('should return the exit code and the log tail', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      mockExec
+        .mockResolvedValueOnce({ stdout: 'container123\n' })
+        .mockResolvedValueOnce({ stdout: '1\n' })
+        .mockResolvedValueOnce({ stdout: 'Exception in server tick loop\n' });
+
+      const info = await service.getCrashInfo('myserver');
+
+      expect(info).toEqual({ exitCode: 1, logTail: 'Exception in server tick loop\n' });
+      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('{{.State.ExitCode}}'));
+    });
+
+    it('should return null when there is no container', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      mockExec.mockResolvedValue({ stdout: '' });
+
+      expect(await service.getCrashInfo('myserver')).toBeNull();
+    });
+
+    it('should return null when docker fails', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      mockExec.mockResolvedValueOnce({ stdout: 'container123\n' }).mockRejectedValueOnce(new Error('daemon down'));
+
+      expect(await service.getCrashInfo('myserver')).toBeNull();
+    });
+  });
+
   describe('findContainerId', () => {
     it('should resolve container via docker compose first', async () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(true);

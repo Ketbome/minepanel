@@ -18,7 +18,17 @@ interface ServerResources {
   memoryLimit: string;
 }
 
-type AlertType = 'down' | 'cpu' | 'memory';
+type AlertType = 'down' | 'cpu' | 'memory' | 'crash';
+
+export interface CrashInfo {
+  exitCode: number;
+  logTail: string;
+}
+
+type CrashInfoReader = (serverId: string) => Promise<CrashInfo | null>;
+
+// Discord rejects embed field values longer than 1024 characters
+const LOG_TAIL_MAX_CHARS = 1000;
 
 interface ServerAlertState {
   lastStatus: string | null;
@@ -68,7 +78,7 @@ export class AlertsService {
     this.getState(serverId).expectedStopUntil = Date.now() + windowMs;
   }
 
-  async evaluate(resources: Record<string, ServerResources>): Promise<void> {
+  async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {
     const configs = await this.alertConfigRepo.find();
     if (configs.length === 0) {
       this.primeState(resources);
@@ -88,7 +98,10 @@ export class AlertsService {
       }
 
       if (config.downAlertEnabled) {
-        await this.checkDown(serverId, config, state, previousStatus, data.status);
+        const crashed = await this.checkCrash(serverId, config, state, previousStatus, data.status, readCrashInfo);
+        if (!crashed) {
+          await this.checkDown(serverId, config, state, previousStatus, data.status);
+        }
       }
 
       if (config.resourceAlertEnabled && data.status === 'running') {
@@ -140,6 +153,39 @@ export class AlertsService {
     await this.notify(serverId, 'down');
   }
 
+  // A server on `on-failure:N` that ends stopped with a non-zero exit code has used up its retries.
+  // Returns true when this transition is a crash, so the generic down alert is not sent as well.
+  private async checkCrash(serverId: string, config: AlertConfig, state: ServerAlertState, previousStatus: string | null, currentStatus: string, readCrashInfo?: CrashInfoReader): Promise<boolean> {
+    const stoppedAfterRun = (previousStatus === 'running' || previousStatus === 'starting') && currentStatus === 'stopped';
+    if (!readCrashInfo || !stoppedAfterRun || Date.now() < state.expectedStopUntil) {
+      return false;
+    }
+
+    let maxRetries: number | undefined;
+    try {
+      const serverConfig = await this.dockerComposeService.getServerConfig(serverId);
+      if (serverConfig?.restartPolicy === 'on-failure') {
+        maxRetries = serverConfig.restartMaxRetries;
+      }
+    } catch {
+      return false;
+    }
+    if (!maxRetries) {
+      return false;
+    }
+
+    const info = await readCrashInfo(serverId);
+    if (!info || info.exitCode === 0) {
+      return false;
+    }
+
+    if (!this.isInCooldown(state, 'crash', config.cooldownMinutes)) {
+      state.lastAlertAt.crash = Date.now();
+      await this.notifyCrash(serverId, info, maxRetries);
+    }
+    return true;
+  }
+
   private async checkResources(serverId: string, config: AlertConfig, state: ServerAlertState, data: ServerResources): Promise<void> {
     const cpuPercent = parseCpuPercent(data.cpuUsage);
     const memoryMb = parseMemoryToMb(data.memoryUsage);
@@ -174,12 +220,38 @@ export class AlertsService {
     return lastAlertAt !== undefined && Date.now() - lastAlertAt < cooldownMinutes * 60 * 1000;
   }
 
+  private async notifyCrash(serverId: string, info: CrashInfo, maxRetries: number): Promise<void> {
+    try {
+      const settings = await this.findWebhookSettings();
+      const webhook = settings?.discordWebhook;
+      if (!webhook) {
+        return;
+      }
+
+      const t = getAlertMessages((settings?.language as SupportedLanguage) || 'es');
+      const logTail = info.logTail.trim().slice(-LOG_TAIL_MAX_CHARS) || '-';
+      const fields = [
+        { name: t.serverField, value: `\`${serverId}\``, inline: true },
+        { name: t.exitCodeField, value: `\`${info.exitCode}\``, inline: true },
+        { name: t.retriesField, value: `\`${maxRetries}\``, inline: true },
+        { name: t.logTailField, value: `\`\`\`\n${logTail}\n\`\`\`` },
+      ];
+      await this.discordService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields);
+    } catch (error) {
+      this.logger.warn(`Failed to send crash alert for server ${serverId}: ${(error as Error).message}`);
+    }
+  }
+
+  private findWebhookSettings(): Promise<Settings | null> {
+    return this.settingsRepo.findOne({
+      where: { discordWebhook: Not(IsNull()) },
+      order: { id: 'ASC' },
+    });
+  }
+
   private async notify(serverId: string, type: AlertType, details?: { usage: string; threshold: string; sustained: number }): Promise<void> {
     try {
-      const settings = await this.settingsRepo.findOne({
-        where: { discordWebhook: Not(IsNull()) },
-        order: { id: 'ASC' },
-      });
+      const settings = await this.findWebhookSettings();
       const webhook = settings?.discordWebhook;
       if (!webhook) {
         return;

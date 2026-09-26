@@ -43,7 +43,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "font-minecraft text-gray-300 data-[state=active]:bg-emerald-600 data-[state=active]:text-white inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-none border-0 px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50 hover:text-white [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "font-minecraft text-gray-300 data-[state=active]:bg-[var(--mc-emerald)]/15 data-[state=active]:text-[var(--mc-emerald)] inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-none border-0 px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50 hover:text-white [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

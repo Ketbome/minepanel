@@ -44,7 +44,7 @@ flowchart LR
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |
 | Tick performance | Native NeoForge estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
-| Alerts    | Opt-in Discord alerts per server: unexpected server down, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
+| Alerts    | Opt-in Discord alerts per server: unexpected server down, crash loops (with an exit code and log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
 
 Runtime stats refresh on their own on the home page and the server page, and only render for
 running servers. Player totals and version come from a game status query that works on both Java
@@ -128,12 +128,49 @@ The current audit phase includes:
 
 ## Player Management
 
+The **Players** tab (Java servers) lists everyone who has joined, with their skin avatar, and works
+while the server is stopped because it reads the world files directly.
+
 | Feature        | Description                                |
 | -------------- | ------------------------------------------ |
-| Online players | View, kick, ban, change gamemode, teleport |
-| Whitelist      | Add/remove players at runtime, or seed it from **Access** before the first boot |
-| Operators      | Manage OPs from panel                      |
-| Ban list       | View reasons, unban                        |
+| Player list    | Search and filter by online, whitelisted, operator or banned; last seen, play time and advancements at a glance |
+| Profile        | Play time, deaths, mob and PvP kills, distance, blocks mined, last position and spawn point |
+| Statistics     | Every vanilla (and modded) statistic, by category, searchable |
+| Inventory      | Inventory, armor, offhand and ender chest, including renamed items and what carried shulker boxes and bundles hold |
+| Find item      | "Who has my diamonds?": search every player's saved inventory, ender chest and carried containers by item or custom name |
+| Advancements   | Completed ones with their date, and the ones still pending |
+| Player actions | Gamemode, teleport, heal, give, kick, ban/unban, op/deop, whitelist add/remove (server running, needs console permission) |
+| Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
+
+Minecraft writes player files on autosave and on logout, so data for online players can be a few
+minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
+
+### Activity log
+
+Opt-in per server (Java), from the **Activity** tab. When on, the panel reads `logs/latest.log`
+every few seconds and keeps:
+
+| Feature   | Description |
+| --------- | ----------- |
+| Timeline  | Joins, leaves, chat, deaths, advancements and player commands; filter by type and player, search text |
+| Sessions  | Adds to the session history every server already records (Players tab → Sessions): per-session deaths, mob/PvP kills, blocks mined, chat and advancements |
+| History   | One-off import of the archived `logs/*.log.gz` from before tracking was turned on, including the sessions older than the first one the panel recorded |
+| Inventory history | Snapshots of inventory and ender chest on join, leave and every autosave (50 per player), with the changes since the previous one and the last snapshot before each death |
+
+- Off by default: chat is personal data. The timeline needs the **view logs** permission.
+- Everything the activity log stores expires: events and inventory snapshots are deleted after
+  30 days, checked hourly. On top of that each server keeps at most 100,000 events and 50
+  inventory snapshots per player, newest first. Sessions belong to the session history below and
+  stay until the server is deleted.
+- Chat, advancement and death counts only appear for sessions the log was read for; others show
+  a dash, never zero.
+- Recording starts when tracking is turned on; earlier lines only carry a time of day and are
+  left to the history import, whose dates come from the archive file names.
+- Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft
+  writes on logout; imported history only has what the log says (deaths, chat, advancements).
+- Chat reformatted by server plugins may not be recognised.
+- Minecraft does not write the inventory at the moment of death, so "before death" is the last
+  save before it (join or autosave, up to 5 minutes earlier). Chests placed in the world are not tracked.
 
 ## Mod & Plugin Support
 
@@ -310,7 +347,7 @@ Recommended approach:
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Optional desktop-only 3D easter egg in Settings > Danger Zone; find and click the portal to return |
+| End Portal expedition | Hidden 3D easter egg in Settings > Danger Zone: light a stronghold portal, break the End crystals, slay the dragon, catch its egg and read the End Poem. Works on desktop and touch; reduced-motion users get a static version |
 
 ## Edition Comparison
 
@@ -342,9 +379,11 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 
 *Example data shown.*
 
-Open **Monitoring → Players** to browse recorded players, including offline players.
-Select a name to see first/last observation, recorded playtime, and paginated join/leave
-sessions. Both Java and Bedrock are supported without RCON or an added game plugin.
+Every server records its players' join/leave sessions, with no setting to turn on. On Java,
+open **Players → (a player) → Sessions** for recorded playtime, totals, the weekday pattern,
+day streak and paginated sessions; with the [activity log](#activity-log) on, each session also
+gets its stat deltas, chat and advancements. On Bedrock, **Players** lists recorded players
+with first/last observation and their sessions. Neither needs RCON or a game plugin.
 
 - A backend sampler reads Docker join/leave logs every 30 seconds, independently of the browser.
   On first activation it reads up to 24 hours of retained logs. Only observed joins create sessions;

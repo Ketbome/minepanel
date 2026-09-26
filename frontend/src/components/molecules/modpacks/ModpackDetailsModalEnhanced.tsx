@@ -26,7 +26,7 @@ interface ModpackDetailsModalEnhancedProps {
 const MC_VERSION = /^\d+\.\d+(\.\d+)?$/;
 
 const RELEASE_LABELS: Record<number, { label: string; className: string }> = {
-  1: { label: "Release", className: "bg-emerald-600 text-white" },
+  1: { label: "Release", className: "bg-emerald-400 text-gray-950" },
   2: { label: "Beta", className: "bg-yellow-600 text-black" },
   3: { label: "Alpha", className: "bg-red-600 text-white" },
 };
@@ -129,9 +129,9 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
               <DialogTitle className="font-minecraft text-xl leading-tight font-bold text-white">{modpack.name}</DialogTitle>
               <DialogDescription className="mt-1 max-w-4xl text-sm text-gray-400">{modpack.summary}</DialogDescription>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {modpack.isFeatured ? <span className="mc-tag bg-yellow-500 px-1.5 py-0.5 text-[10px] font-bold text-black">{t("featured")}</span> : null}
+                {modpack.isFeatured ? <span className="mc-tag bg-yellow-500 px-1.5 py-0.5 text-xs font-bold text-black">{t("featured")}</span> : null}
                 {modpack.categories?.slice(0, 8).map((category) => (
-                  <span key={category.id} className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] text-gray-300">
+                  <span key={category.id} className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-xs text-gray-300">
                     {category.name}
                   </span>
                 ))}
@@ -142,11 +142,11 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="mx-6 mt-4 grid w-full max-w-lg grid-cols-2 bg-gray-800">
-            <TabsTrigger value="info" className="text-white data-[state=active]:bg-emerald-600">
+            <TabsTrigger value="info" className="text-white">
               <Package className="mr-2 h-4 w-4" />
               {t("modpackDetails")}
             </TabsTrigger>
-            <TabsTrigger value="create" className="text-white data-[state=active]:bg-blue-600">
+            <TabsTrigger value="create" className="text-white">
               <Rocket className="mr-2 h-4 w-4" />
               {t("createServer")}
             </TabsTrigger>
@@ -183,7 +183,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                   <SectionTitle icon={<Users className="h-4 w-4 text-blue-400" />} label={t("authors")} />
                   <div className="flex flex-wrap gap-1.5">
                     {modpack.authors?.map((author) => (
-                      <a key={author.id} href={author.url} target="_blank" rel="noopener noreferrer" className="mc-tag bg-blue-600/20 px-2 py-0.5 text-[11px] text-blue-300 transition-colors hover:bg-blue-600/40 hover:text-blue-100">
+                      <a key={author.id} href={author.url} target="_blank" rel="noopener noreferrer" className="mc-tag bg-blue-600/20 px-2 py-0.5 text-xs text-blue-300 transition-colors hover:bg-blue-600/40 hover:text-blue-100">
                         {author.name}
                       </a>
                     ))}
@@ -298,7 +298,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                 {/* What the form is actually about to write, since the version and
                     the Java image are picked from the file, not typed by hand. */}
                 <div className="h-fit rounded-lg border border-gray-700 bg-gray-800/40 p-3 md:col-span-2 xl:col-span-1">
-                  <p className="mb-2 font-minecraft text-[11px] tracking-wide text-emerald-300">{t("modpackWillCreate")}</p>
+                  <p className="mb-2 font-minecraft text-xs tracking-wide text-emerald-300">{t("modpackWillCreate")}</p>
                   <dl className="grid gap-1 text-xs">
                     <SummaryRow label={t("serverType")} value="AUTO_CURSEFORGE" />
                     <SummaryRow label={t("installationMethod")} value={distributionBlocked ? t("methodFile") : installMethod === "url" ? t("methodUrl") : t("methodSlug")} />
@@ -309,7 +309,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                 </div>
               </div>
 
-              <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 font-minecraft hover:from-emerald-500 hover:to-emerald-600">
+              <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 <Rocket className="mr-2 h-4 w-4" />
                 {isCreating ? t("creating") : t("createServer")}
               </Button>
@@ -407,9 +407,9 @@ const FileCard: FC<{ readonly file: CurseForgeFile; readonly title: string }> = 
       <SectionTitle icon={<Tag className="h-4 w-4 text-emerald-400" />} label={title} />
       <div className="space-y-2 rounded-lg border border-gray-700 bg-gray-800/40 p-3 text-sm">
         <div className="flex items-center gap-2">
-          {release ? <span className={`mc-tag px-1.5 py-0.5 text-[10px] font-bold ${release.className}`}>{release.label}</span> : null}
+          {release ? <span className={`mc-tag px-1.5 py-0.5 text-xs font-bold ${release.className}`}>{release.label}</span> : null}
           {file.isServerPack ? (
-            <span className="mc-tag flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] text-emerald-300">
+            <span className="mc-tag flex items-center bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-xs text-emerald-300">
               <Server className="mr-1 h-3 w-3" />
               {t("modpackServerPack")}
             </span>
@@ -420,12 +420,12 @@ const FileCard: FC<{ readonly file: CurseForgeFile; readonly title: string }> = 
 
         <div className="flex flex-wrap gap-1">
           {minecraft.map((version) => (
-            <span key={version} className="mc-tag bg-blue-600/20 px-1.5 py-0.5 text-[10px] text-blue-300">
+            <span key={version} className="mc-tag bg-blue-600/20 px-1.5 py-0.5 text-xs text-blue-300">
               {version}
             </span>
           ))}
           {loaders.map((loader) => (
-            <span key={loader} className="mc-tag bg-purple-600/20 px-1.5 py-0.5 text-[10px] text-purple-300">
+            <span key={loader} className="mc-tag bg-purple-600/20 px-1.5 py-0.5 text-xs text-purple-300">
               {loader}
             </span>
           ))}
@@ -468,11 +468,11 @@ const SupportedVersions: FC<{ readonly modpack: CurseForgeModpack }> = ({ modpac
       <SectionTitle icon={<Package className="h-4 w-4 text-blue-400" />} label={t("modpackSupportedVersions")} />
       <div className="flex flex-wrap gap-1">
         {versions.slice(0, 12).map((version) => (
-          <span key={version} className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] text-gray-300">
+          <span key={version} className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-xs text-gray-300">
             {version}
           </span>
         ))}
-        {versions.length > 12 ? <span className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-[10px] text-gray-500">+{versions.length - 12}</span> : null}
+        {versions.length > 12 ? <span className="mc-tag bg-[var(--mc-stone-deep)] px-1.5 py-0.5 text-xs text-gray-500">+{versions.length - 12}</span> : null}
       </div>
     </div>
   );

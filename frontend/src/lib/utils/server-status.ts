@@ -7,7 +7,7 @@ export const getStatusColor = (status: string): string => {
     case "starting":
       return "bg-orange-500";
     case "stopped":
-      return "bg-yellow-500";
+      return "bg-gray-600";
     case "not_found":
       return "bg-red-500";
     case "loading":
@@ -24,7 +24,7 @@ export const getStatusBadgeClass = (status: string): string => {
     case "starting":
       return "bg-orange-600/20 text-orange-400 border-orange-600/30";
     case "stopped":
-      return "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
+      return "bg-gray-700/60 text-gray-300 border-gray-600/40";
     case "not_found":
       return "bg-red-600/20 text-red-400 border-red-600/30";
     case "loading":
@@ -40,7 +40,7 @@ export const getStatusBadgeClassCompact = (status: string): string => {
     case "running":
       return "border-emerald-600/30 text-emerald-400";
     case "stopped":
-      return "border-yellow-600/30 text-yellow-400";
+      return "border-gray-600/40 text-gray-300";
     case "starting":
       return "border-orange-600/30 text-orange-400";
     default:

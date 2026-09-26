@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users, History } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -13,6 +13,8 @@ import { ConfigModeToggle } from "../molecules/ConfigModeToggle";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
+const PlayersTab = dynamic(() => import("../molecules/Tabs/PlayersTab").then(mod => mod.PlayersTab));
+const ActivityTab = dynamic(() => import("../molecules/Tabs/ActivityTab").then(mod => mod.ActivityTab));
 const AdvancedTab = dynamic(() => import("../molecules/Tabs/AdvancedTab").then(mod => mod.AdvancedTab));
 const ModsTab = dynamic(() => import("../molecules/Tabs/ModsTab").then(mod => mod.ModsTab));
 const ModWatchTab = dynamic(() => import("../molecules/Tabs/ModWatchTab").then(mod => mod.ModWatchTab));
@@ -33,7 +35,7 @@ const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasks
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "files", "metrics", "tasks", "players"];
+const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "players", "files", "metrics", "activity", "tasks"];
 
 // Tabs that were split up or absorbed. People bookmark these hashes and the docs
 // link to them, so an old one lands on whichever tab took over its content.
@@ -72,6 +74,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showCommandsTab = isJava; // RCON only works with Java
   const showBackupsTab = isJava; // mc-backup drives the world save over RCON
   const showWorldsTab = isJava; // world switching is Java-only server side
+  const showActivityTab = isJava; // tails the Java log file; Bedrock has no latest.log
 
   const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
@@ -95,9 +98,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
+    { value: "players", label: t("players"), icon: Users, group: "operation", show: true, disabled: false },
     { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
-    { value: "players", label: t("paTitle"), icon: Users, group: "monitoring", show: true, disabled: false },
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
+    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
 
@@ -281,7 +285,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
       <form onSubmit={handleSubmit}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="mc-panel min-w-0 p-4 text-gray-200 min-h-[400px]">
+          <div className="mc-panel min-w-0 p-2 sm:p-4 text-gray-200 min-h-[400px]">
               <TabsContent value="type" className="space-y-4 mt-0">
                 <ServerTypeTab config={config} updateConfig={updateConfig} />
               </TabsContent>
@@ -358,17 +362,28 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 </TabsContent>
               )}
 
-              <TabsContent value="files" className="space-y-4 mt-0">
-                <FilesTab serverId={serverId} />
+              {/* Java reads world player files; Bedrock keeps them in LevelDB, so it gets session history only */}
+              <TabsContent value="players" className="space-y-4 mt-0">
+                {isJava ? (
+                  <PlayersTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
+                ) : (
+                  <PlayerActivityTab key={serverId} serverId={serverId} />
+                )}
               </TabsContent>
 
-              <TabsContent value="players" className="space-y-4 mt-0">
-                <PlayerActivityTab key={serverId} serverId={serverId} />
+              <TabsContent value="files" className="space-y-4 mt-0">
+                <FilesTab serverId={serverId} />
               </TabsContent>
 
               <TabsContent value="metrics" className="space-y-4 mt-0">
                 <MetricsTab serverId={serverId} />
               </TabsContent>
+
+              {showActivityTab && (
+                <TabsContent value="activity" className="space-y-4 mt-0">
+                  <ActivityTab serverId={serverId} />
+                </TabsContent>
+              )}
 
               <TabsContent value="tasks" className="space-y-4 mt-0">
                 <ScheduledTasksTab serverId={serverId} />

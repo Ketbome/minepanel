@@ -131,7 +131,7 @@ export default function DefaultsSettingsPage() {
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
               <p className="text-xs text-emerald-300">{t('javaServerDefaultsApplyOnlyNewServers')}</p>
             </div>
-            <Button type="button" onClick={handleSave} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+            <Button type="button" onClick={handleSave} disabled={isSaving} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {isSaving ? t('saving') : t('saveChanges')}
             </Button>

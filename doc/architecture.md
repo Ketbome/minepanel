@@ -176,7 +176,10 @@ existing resource history is preserved. No generated compose files are parsed.
 `ServerManagementService.readPlayerLogWindow`. Each server's session changes and cursor
 commit together in a SQLite transaction (`player_sessions`, `player_tracking`). The sampler
 prevents overlapping runs and handles servers sequentially. Container boot identity and
-sampling gaps prevent open sessions from silently spanning unknown downtime.
+sampling gaps prevent open sessions from silently spanning unknown downtime. On Java servers
+with the activity log on, a live join and a leave hand the session to `ActivityService`, which
+adds the uuid, a stats baseline and inventory snapshots, then the per-session stat deltas; an
+interrupted session drops its baseline, since its deltas are unknown.
 
 `PlayerStatsService` reads only bounded, server-contained Java `usercache.json`,
 `server.properties`, and world `stats/<uuid>.json` files. It resolves symlinks before reading,

@@ -275,7 +275,7 @@ export const WorldsTab: FC<WorldsTabProps> = ({ serverId, config, updateConfig }
             className={
               isRemoval
                 ? "bg-amber-700 hover:bg-amber-800 text-white border border-amber-500/40"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40"
+                : "bg-emerald-400 hover:bg-emerald-300 text-gray-950"
             }
           >
             {saving ? t("saving") : isRemoval ? t("worldRemoveSelection") : t("applyWorldAndRestart")}

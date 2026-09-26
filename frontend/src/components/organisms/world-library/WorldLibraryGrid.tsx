@@ -81,7 +81,7 @@ export function WorldLibraryGrid({ refreshToken }: WorldLibraryGridProps) {
       type="button"
       onClick={() => setFolder(value)}
       className={cn(
-        'border-2 px-2.5 py-1 font-minecraft text-[11px] transition-colors',
+        'border-2 px-2.5 py-1 font-minecraft text-xs transition-colors',
         folder === value
           ? 'border-[var(--mc-emerald)]/60 bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)]'
           : 'border-gray-700/60 text-gray-400 hover:text-gray-200',

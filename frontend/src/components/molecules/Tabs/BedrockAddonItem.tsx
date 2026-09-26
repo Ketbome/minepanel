@@ -55,7 +55,7 @@ export const BedrockAddonItem: FC<BedrockAddonItemProps> = ({ addon, index, tota
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <Badge variant="outline" className="rounded-full border-emerald-500/40 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-minecraft text-emerald-300">
+          <Badge variant="outline" className="rounded-full border-emerald-500/40 bg-emerald-950/40 px-2 py-0.5 text-xs font-minecraft text-emerald-300">
             #{index + 1}
           </Badge>
           <div className="flex flex-col gap-1">

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { PlayerSession, PlayerTracking } from './entities/player-session.entity';
-import { PlayerActivityService } from './player-activity.service';
+import { PlayerActivityService, summarizeSessions } from './player-activity.service';
 
 const start = Date.parse('2026-09-24T12:00:00Z');
 const line = (seconds: number, message: string) => `${new Date(start + seconds * 1000).toISOString()} [12:00:00] [Server thread/INFO]: ${message}`;
@@ -11,6 +11,7 @@ describe('Player activity persistence', () => {
   const store = { listServerDirs: jest.fn(), readConfig: jest.fn() };
   const management = { readPlayerLogWindow: jest.fn() };
   const stats = { getStats: jest.fn().mockResolvedValue(null) };
+  const activity = { beginSession: jest.fn(), finalizeSession: jest.fn(), sessionEventCounts: jest.fn() };
   let now: jest.SpyInstance;
 
   beforeEach(async () => {
@@ -20,7 +21,8 @@ describe('Player activity persistence', () => {
     store.listServerDirs.mockResolvedValue(['survival']);
     store.readConfig.mockResolvedValue({ edition: 'JAVA' });
     management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:boot', running: true, logs: line(0, 'Alex joined the game'), truncated: false });
-    service = new PlayerActivityService(db.getRepository(PlayerSession), db.getRepository(PlayerTracking), store as any, management as any, stats as any);
+    activity.sessionEventCounts.mockResolvedValue(new Map());
+    service = new PlayerActivityService(db.getRepository(PlayerSession), db.getRepository(PlayerTracking), store as any, management as any, stats as any, activity as any);
   });
   afterEach(async () => { service.onModuleDestroy(); now.mockRestore(); await db.destroy(); });
 
@@ -71,7 +73,7 @@ describe('Player activity persistence', () => {
     await service.collect();
     now.mockReturnValue(start + 300_000);
     expect((await service.list('survival', 0)).players[0].online).toBeNull();
-    const restarted = new PlayerActivityService(db.getRepository(PlayerSession), db.getRepository(PlayerTracking), store as any, management as any, stats as any);
+    const restarted = new PlayerActivityService(db.getRepository(PlayerSession), db.getRepository(PlayerTracking), store as any, management as any, stats as any, activity as any);
     management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:boot', running: true, logs: '', truncated: false });
     await restarted.collect();
     expect((await restarted.detail('survival', 'java:alex', 0)).sessions[0].endReason).toBe('interrupted');
@@ -113,6 +115,89 @@ describe('Player activity persistence', () => {
     const detail = await service.detail('survival', 'java:alex', 0);
     expect(detail.profile).toMatchObject({ totalSeconds: 50, sessionCount: 2 });
     expect(detail.sessions[1].endReason).toBe('interrupted');
+  });
+
+  describe('with the activity log on', () => {
+    let scheduled: Array<() => void>;
+    beforeEach(() => {
+      store.readConfig.mockResolvedValue({ edition: 'JAVA', activityTracking: true, tz: 'UTC' });
+      scheduled = [];
+      jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void) => {
+        scheduled.push(fn);
+        return { unref: () => undefined };
+      }) as any);
+    });
+    afterEach(() => jest.restoreAllMocks());
+
+    it('enriches live joins and finalizes leaves once the files are written', async () => {
+      await service.collect();
+      const [session] = await db.getRepository(PlayerSession).find();
+      expect(activity.beginSession).toHaveBeenCalledWith(session.id);
+
+      now.mockReturnValue(start + 62_000);
+      management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:boot', running: true, logs: line(45, 'Alex left the game'), truncated: false });
+      await service.collect();
+      expect(activity.finalizeSession).not.toHaveBeenCalled();
+      scheduled.forEach((fn) => fn());
+      expect(activity.finalizeSession).toHaveBeenCalledWith(session.id);
+    });
+
+    it('does not take a baseline for joins recovered from older logs', async () => {
+      now.mockReturnValue(start + 300_000);
+      await service.collect();
+      expect(activity.beginSession).not.toHaveBeenCalled();
+    });
+
+    it('drops the baseline of an interrupted session', async () => {
+      await service.collect();
+      await db.getRepository(PlayerSession).update({ name: 'Alex' }, { baseline: {} });
+      now.mockReturnValue(start + 62_000);
+      management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:next', running: true, logs: '', truncated: false });
+      await service.collect();
+      expect((await db.getRepository(PlayerSession).find())[0]).toMatchObject({ endReason: 'interrupted', baseline: null });
+    });
+
+    it('adds the summary, stat deltas and event counts to the detail', async () => {
+      await service.collect();
+      const [session] = await db.getRepository(PlayerSession).find();
+      await db.getRepository(PlayerSession).update(session.id, { deaths: 2, mobKills: 5 });
+      activity.sessionEventCounts.mockResolvedValue(new Map([[session.id, { chat: 3, advancements: 1, deaths: 2 }]]));
+
+      const detail = await service.detail('survival', 'java:alex', 0);
+
+      expect(detail.summary).toMatchObject({ averageSeconds: 30, longestSeconds: 30, deaths: 2 });
+      expect(detail.sessions[0]).toMatchObject({ deaths: 2, mobKills: 5, blocksMined: null, events: { chat: 3, advancements: 1, deaths: 2 } });
+    });
+  });
+
+  it('leaves untracked and Bedrock servers alone', async () => {
+    await service.collect();
+    const detail = await service.detail('survival', 'java:alex', 0);
+    expect(activity.sessionEventCounts).not.toHaveBeenCalled();
+    expect(detail.sessions[0].events).toBeNull();
+
+    store.readConfig.mockResolvedValue({ edition: 'BEDROCK', activityTracking: true });
+    store.listServerDirs.mockResolvedValue(['pocket']);
+    management.readPlayerLogWindow.mockResolvedValue({ runId: 'container:boot', running: true, logs: `${new Date(start).toISOString()} [2026-09-24 12:00:00:000 INFO] Player connected: Alex One, xuid: 12345, pfid: abc`, truncated: false });
+    await service.collect();
+    expect((await service.list('pocket', 0)).players).toHaveLength(1);
+    expect(activity.beginSession).not.toHaveBeenCalled();
+  });
+
+  it('summarizes weekdays, streaks and known deaths', () => {
+    const at = (value: string) => new Date(value);
+    const summary = summarizeSessions(
+      [
+        { joinedAt: at('2026-09-23T10:00:00Z'), lastSeenAt: at('2026-09-23T11:00:00Z'), deaths: 2 },
+        { joinedAt: at('2026-09-24T10:00:00Z'), lastSeenAt: at('2026-09-24T10:30:00Z'), deaths: null },
+        { joinedAt: at('2026-09-25T10:00:00Z'), lastSeenAt: at('2026-09-25T10:15:00Z'), deaths: 1 },
+      ],
+      'UTC',
+      at('2026-09-25T10:15:00Z'),
+    );
+    expect(summary).toMatchObject({ averageSeconds: 35 * 60, longestSeconds: 60 * 60, deaths: 3, streakDays: 3 });
+    expect(summary.playSecondsByWeekday[3]).toBe(60 * 60); // Wednesday
+    expect(summarizeSessions([], 'UTC')).toEqual({ averageSeconds: 0, longestSeconds: 0, deaths: null, playSecondsByWeekday: [0, 0, 0, 0, 0, 0, 0], streakDays: 0 });
   });
 
   it('starts/stops the background timer', async () => {

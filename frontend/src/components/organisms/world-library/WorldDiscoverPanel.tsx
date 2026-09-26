@@ -165,7 +165,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
                   className="bg-gray-800 border-gray-700 text-gray-100 pl-9"
                 />
               </div>
-              <Button onClick={() => runSearch(0)} disabled={loadingSearch} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button onClick={() => runSearch(0)} disabled={loadingSearch} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950">
                 {loadingSearch ? <Loader2 className="h-4 w-4 animate-spin" /> : t("search")}
               </Button>
             </div>
@@ -202,7 +202,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
                           handleImportCurseforge(world);
                         }}
                         disabled={!world.importable || importingId === world.projectId}
-                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                        className="bg-emerald-400 hover:bg-emerald-300 text-gray-950"
                       >
                         {importingId === world.projectId ? <Loader2 className="h-4 w-4 animate-spin" /> : t("worldDiscoverImport")}
                       </Button>
@@ -295,7 +295,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
               />
             </div>
             <div className="flex items-end">
-              <Button type="button" onClick={handleImportUrl} disabled={importingId === "url"} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white">
+              <Button type="button" onClick={handleImportUrl} disabled={importingId === "url"} className="w-full bg-emerald-400 hover:bg-emerald-300 text-gray-950">
                 {importingId === "url" ? <Loader2 className="h-4 w-4 animate-spin" /> : t("worldDiscoverImport")}
               </Button>
             </div>

@@ -158,6 +158,7 @@ export interface ServerConfig {
   minecraftVersion: string;
   dockerVolumes?: string;
   restartPolicy: 'no' | 'always' | 'on-failure' | 'unless-stopped';
+  restartMaxRetries?: number | null;
   stopDelay: string;
   execDirectly: boolean;
   envVars: string;

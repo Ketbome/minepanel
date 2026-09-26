@@ -30,7 +30,7 @@ export function ModpackSearch({ onSearch, isLoading }: ModpackSearchProps) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
           <input
             type="text"
@@ -42,8 +42,8 @@ export function ModpackSearch({ onSearch, isLoading }: ModpackSearchProps) {
             disabled={isLoading}
           />
         </div>
-        <button onClick={handleSearch} disabled={isLoading} className="mc-btn mc-btn-emerald px-6">
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("search")}
+        <button onClick={handleSearch} disabled={isLoading} aria-label={t("search")} className="mc-btn mc-btn-emerald px-3 sm:px-6">
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4 sm:hidden" /><span className="hidden sm:inline">{t("search")}</span></>}
         </button>
         <button onClick={() => setShowFilters(!showFilters)} className="mc-btn px-4">
           <SlidersHorizontal className="w-4 h-4" />

@@ -136,7 +136,7 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ serverId, insp
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <div className="space-y-1">
-            <Label className="font-minecraft text-[11px] text-gray-300">{t('modpackLoaderLabel')}</Label>
+            <Label className="font-minecraft text-xs text-gray-300">{t('modpackLoaderLabel')}</Label>
             <Select value={loader} onValueChange={(value) => setLoader(value as ModpackLoader)}>
               <SelectTrigger className="h-9 border-gray-700/50 bg-gray-900/70 text-xs text-gray-200">
                 <SelectValue />
@@ -152,7 +152,7 @@ export const ModpackZipGuidance: FC<ModpackZipGuidanceProps> = ({ serverId, insp
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="modpackLoaderVersion" className="font-minecraft text-[11px] text-gray-300">
+            <Label htmlFor="modpackLoaderVersion" className="font-minecraft text-xs text-gray-300">
               {t('minecraftVersion')}
             </Label>
             <Input

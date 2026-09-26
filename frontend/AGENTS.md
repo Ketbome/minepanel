@@ -27,6 +27,9 @@ frontend/src/
 |  |- files/                    File browser endpoints
 |  |- world-discovery/          World import endpoints
 |  |- metrics/                  Per-server live monitoring and history endpoints
+|  |- player-activity/          Player sessions, recorded playtime and session summary
+|  |- players/                  Player list and profile (stats, advancements, inventory)
+|  |- activity/                 Activity tracking settings, event timeline, inventory history
 |  |- scheduler/                Scheduled tasks CRUD endpoints
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
@@ -70,10 +73,26 @@ Design system (Minecraft GUI, converged with the docs brand):
 - The app uses a pixel/inventory "Minecraft GUI" look defined in `src/app/globals.css`, sharing
   brand DNA with the docs site (`doc/.vitepress/theme/style.css`): acid green `#9dff3f` on
   near-black `#0a0e08`, hard offset shadows, and a blueprint-grid backdrop (`mp-blueprint`).
-- Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo Black uppercase is the
-  display font (`font-minecraft`, `mc-btn`, `mc-tag`, `mc-count`); Archivo is the body font
-  (`--font-sans`); JetBrains Mono is the mono font (`--font-mono`, mono labels via `mp-tag`).
-  Do not reintroduce Mojang's proprietary Minecraft font or any pixel font.
+- Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo (variable) carries the
+  whole UI at its natural width (no `font-stretch`; the expanded width axis read as squashed).
+  `font-minecraft` and `mc-btn` are the heading/label voice: Archivo semibold in
+  natural case, never forced uppercase. Nav items drop to `font-medium`; small uppercase
+  group labels use `tracking-[0.08em] text-gray-500`, never wide green tracking. Archivo Black uppercase is reserved for the one page
+  title per screen (`h1.font-minecraft`) and the wordmark (`mc-display`). `mc-tag` (status
+  chips) is Archivo bold small caps; `mc-count` is Archivo extra-bold tabular numbers.
+  JetBrains Mono (`--font-mono`, tabular numerals) is for data, ports, paths and `mp-tag`.
+  Do not reintroduce Mojang's proprietary Minecraft font, any pixel font, or Archivo Black
+  on body-size text.
+- Color: acid green (`emerald-*`) is the only brand accent (primary actions, active state,
+  running). Semantic hues (`blue`, `cyan`, `amber`, `yellow`, `orange`, `red`, `purple`, and
+  the `sky`/`indigo`/`violet` aliases) are retuned in `globals.css` `@theme` to sit on the
+  green-black surfaces; `green` aliases `emerald`. Secondary actions use the neutral stone
+  `mc-btn`, not extra colored fills. Save/confirm/search actions use the acid primary
+  (`bg-emerald-400 text-gray-950`, also the `minepanel` Button variant); never white text on
+  `emerald-600` (~3:1). Selected state (active tab, segmented toggle, nav item) is the tint
+  `bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)]`, not a solid fill, so it never reads as
+  a primary action. Section icon tiles are emerald (red only for danger).
+  A stopped server is neutral gray, not warning yellow.
 - Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
   slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).
   Segmented bars: `mc-bar` + `mc-bar__fill` (set fill color via inline `backgroundColor`).
@@ -81,11 +100,22 @@ Design system (Minecraft GUI, converged with the docs brand):
 - The base shadcn primitives are skinned to this look via helper classes so feature UI inherits it
   automatically: `Card` uses `mc-panel`; `Button` uses `mc-bevel` + `font-minecraft`; `Input` uses
   `mc-field`; `Badge` uses `mc-chip`; `Tabs` list/trigger are squared with emerald active state.
+  The shadcn theme tokens in `globals.css` `:root` are dark (the panel has no light mode), so
+  `outline`/`secondary` buttons, dialogs and skeletons fall back to the stone palette; the
+  Radix slider is skinned by `data-slot` selectors in the same file.
   Prefer plain `Card`/`Button`/`Input`/`Badge`/`Tabs` and let the skin apply; only reach for the raw
   `mc-*` classes for bespoke layouts (dashboards, headers).
 - The Tailwind `emerald-*`/`gray-*` scales are remapped in `globals.css` `@theme` onto the docs'
   acid/green-tinted palette; prefer those utilities (or `--mc-*` vars) over new raw hex values.
-- Use the existing pixel item art in `public/images/*.webp` with the `pixelated` class for icons.
+- Item art in `public/images/` is normalized: 128x128, transparent, content fitted to a
+  124px box and centered, so every sprite reads at the same optical size in a slot. New
+  sprites must follow the same rule (trim, fit, center). Full-bleed textures (`cow.jpg`,
+  `villager.png`, `nether.webp`, `shield.png`, `neoforged.png`, `server-icon.png`) stay as-is.
+  The `pixelated` class now means smooth downscaling (sprites are always drawn smaller than
+  128px, where nearest-neighbour drops pixel rows); do not set `image-rendering: pixelated`
+  on GUI surfaces, since it is inherited by the sprites inside them.
+- No perpetual decorative motion in operating screens (no floating item rows or bobbing
+  header icons); motion is for state changes.
 
 Auth/session patterns:
 
@@ -106,6 +136,9 @@ Server config tabs:
   `edition === 'BEDROCK'`.
 - Renaming or removing a tab value means adding an entry to `RENAMED_TABS` in
   `ServerConfigTabs.tsx`: the tab value is the URL hash and people bookmark it.
+- Adding any tab (config or not) means adding its value to `ALL_TAB_VALUES`. The side nav
+  switches tabs by setting the hash, and a value missing there is silently ignored: the tab
+  shows in the nav but clicking it does nothing.
 - Every `config` tab is disabled while the server runs, `worlds` included: a world
   swapped underneath a live server is a data hazard, and the rule only holds if it
   has no exceptions. Adding a config tab means adding it to `tabsMeta` with
@@ -197,6 +230,12 @@ Tooling / build (Next.js 16):
   These return `null` for unknown values on purpose: an unreachable game must render as `-`, never `0`.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
+- `src/components/organisms/settings/end/` - the Danger Zone easter egg. The R3F scene
+  (`JourneyScene`) is loaded with `next/dynamic` only on click, so `three` never reaches the
+  settings bundle; nothing outside this folder may import from it. Game state lives in
+  `end-game-store.ts`, sounds and their subtitles in `end-audio.ts` (CC0 clips + WebAudio synths),
+  block textures are painted at runtime in `voxels.tsx`. The overlay is exempt from the
+  no-perpetual-motion rule; it is not an operating screen.
 - `src/lib/store/servers-store.ts`
 - `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
@@ -265,8 +304,9 @@ Every frontend AGENTS update must include:
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
 
 
-Player profiles: `src/components/molecules/players/player-activity.tsx` is the lazily loaded
-Monitoring → Players tab for both editions, including stopped servers. API calls live in
+Player profiles: the Players tab renders `PlayersTab` on Java (sessions live in the profile's
+Sessions sub-tab, `PlayerSessions`) and `src/components/molecules/players/player-activity.tsx`
+on Bedrock; both read the same API and work on stopped servers. API calls live in
 `src/services/player-activity/`. Show stale presence as unknown and interrupted departures
 as last observations. Keep saved Java world totals distinct from panel-recorded playtime.
 

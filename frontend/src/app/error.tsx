@@ -21,7 +21,7 @@ export default function Error({ error, reset }: { readonly error: Error & { dige
         <h1 className="text-2xl font-minecraft text-red-400 mb-2">{t('unexpectedError')}</h1>
         <p className="text-sm text-gray-300 mb-6">{t('unexpectedErrorDesc')}</p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
-          <Button onClick={reset} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+          <Button onClick={reset} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
             <RefreshCw className="w-4 h-4 mr-2" />
             {t('retry')}
           </Button>

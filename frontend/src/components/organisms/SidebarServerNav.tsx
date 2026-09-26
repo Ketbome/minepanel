@@ -41,23 +41,24 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
         onClick={() => goToTab(item.value)}
         title={collapsed ? item.label : undefined}
         className={cn(
-          'flex w-full items-center gap-3 border-2 px-3 py-2.5 text-left font-minecraft transition-colors',
+          'relative flex h-10 w-full items-center gap-3 px-3 text-left transition-colors',
           isActive
-            ? 'border-transparent border-l-[3px] border-l-[var(--mc-emerald)] bg-[var(--mc-emerald)]/12 text-[var(--mc-emerald)] shadow-[inset_2px_2px_0_rgba(0,0,0,0.45),inset_-2px_-2px_0_rgba(255,255,255,0.05)]'
-            : 'border-transparent text-gray-300 hover:bg-black/35 hover:text-white',
+            ? 'bg-[var(--mc-emerald)]/12 text-[var(--mc-emerald)] shadow-[inset_2px_2px_0_rgba(0,0,0,0.45),inset_-2px_-2px_0_rgba(255,255,255,0.05)]'
+            : 'text-gray-300 hover:bg-black/35 hover:text-white',
           item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300',
           collapsed && 'justify-center px-0',
         )}
       >
-        <Icon className="h-4 w-4 shrink-0" />
-        {!collapsed && <span className="font-minecraft text-sm whitespace-nowrap">{item.label}</span>}
+        {isActive && <span className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mc-emerald)]" />}
+        <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'text-[var(--mc-emerald)]' : 'text-gray-500')} />
+        {!collapsed && <span className="font-minecraft font-medium text-sm whitespace-nowrap">{item.label}</span>}
       </button>
     );
   };
 
   if (collapsed) {
     return (
-      <nav className="flex flex-col gap-1 px-2">
+      <nav className="flex flex-col gap-0.5 px-2">
         <TabSearch items={paletteItems} onSelect={goToTab} collapsed />
         {items.map((item) => renderButton(item))}
       </nav>
@@ -75,8 +76,8 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
           const groupItems = items.filter((item) => item.group === group);
           if (groupItems.length === 0) return null;
           return (
-            <div key={group} className="space-y-1">
-              <p className="px-3 font-minecraft text-[10px] uppercase tracking-[0.25em] text-emerald-300/70">{t(groupLabelKey[group])}</p>
+            <div key={group} className="space-y-0.5">
+              <p className="mb-2 px-3 font-minecraft text-xs uppercase tracking-[0.08em] text-gray-500">{t(groupLabelKey[group])}</p>
               {groupItems.map((item) => renderButton(item))}
             </div>
           );

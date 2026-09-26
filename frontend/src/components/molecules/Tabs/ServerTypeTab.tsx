@@ -204,7 +204,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
       <CardContent className="space-y-6">
         {/* Edition Selector */}
         <div className={`space-y-3 p-4 rounded-md border-2 ${config.serverExists ? 'bg-gray-800/30 border-gray-600/30' : 'bg-blue-900/10 border-blue-500/30'}`}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <Label className={`font-minecraft text-sm flex items-center gap-2 ${config.serverExists ? 'text-gray-400' : 'text-blue-400'}`}>
               <Image src="/images/grass.webp" alt="Edition" width={16} height={16} />
               {t('serverEdition')}
@@ -216,7 +216,7 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
           <RadioGroup
             value={edition}
             onValueChange={(value) => handleEditionChange(value as ServerEdition)}
-            className="grid grid-cols-2 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             disabled={config.serverExists}
           >
             <div

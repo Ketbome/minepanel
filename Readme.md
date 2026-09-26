@@ -50,12 +50,13 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **Java & Bedrock** — Support for both Minecraft editions
 - **Multi-server** — Create and manage multiple servers from one panel
 - **Real-time monitoring** — CPU, RAM, players, logs, and TPS/MSPT for NeoForge modpacks (including ATM10) and compatible spark servers
+- **Player insights** — session history for Java and Bedrock, plus player profiles with stats, advancements and inventory, item search, and an opt-in activity log with chat search and inventory history (Java)
 - **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
 - **Modpacks** — CurseForge & Modrinth integration
 - **Automatic backups** — Scheduled backups with retention policies
 - **Proxy support** — mc-router for single-port multi-server (Java), started and configured by the panel, with optional auto-scaling (sleep when idle, wake on join) and a per-server opt-out
 - **Update notices** — release notes in the panel for every version between yours and the newest, and a one-click update for admins
-- **Discord webhooks** — Server events notifications
+- **Discord webhooks** — Server events notifications and alerts (down, crash loop, high CPU/RAM)
 - **Admin + user access control** — First phase with invitations and per-user permissions
 - **Multi-language** — English, Spanish, Dutch, German, Polish
 
@@ -124,6 +125,6 @@ Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License
   <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
 </div>
 
-Player profiles under **Monitoring → Players** show recorded playtime, last seen and persistent
-join/leave sessions for Java and Bedrock. Java profiles also show available saved-world
+The **Players** tab shows recorded playtime, last seen and persistent join/leave sessions for
+Java and Bedrock. Java profiles also show available saved-world
 statistics. [Collection details and limitations](doc/features.md#player-profiles-and-session-history).

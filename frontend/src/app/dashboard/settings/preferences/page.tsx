@@ -61,8 +61,8 @@ export default function PreferencesSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-600/20">
-              <Globe className="h-5 w-5 text-purple-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <Globe className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('appearanceSettings')}</CardTitle>
@@ -75,7 +75,7 @@ export default function PreferencesSettingsPage() {
             <Label className="text-gray-200">{t('language')}</Label>
             <LanguageSelector />
           </div>
-          <Button type="button" onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white font-minecraft">
+          <Button type="button" onClick={handleSave} disabled={isSaving} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {isSaving ? t('saving') : t('saveChanges')}
           </Button>
@@ -85,8 +85,8 @@ export default function PreferencesSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600/20">
-              <Bell className="h-5 w-5 text-orange-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <Bell className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('notificationSettings')}</CardTitle>
@@ -111,8 +111,8 @@ export default function PreferencesSettingsPage() {
         <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600/20">
-                <ShieldCheck className="h-5 w-5 text-cyan-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+                <ShieldCheck className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
                 <CardTitle className="text-white font-minecraft">{t('auditRetentionTitle')}</CardTitle>
@@ -125,7 +125,7 @@ export default function PreferencesSettingsPage() {
               <Label className="text-gray-200">{t('auditRetentionDays')}</Label>
               <Input type="number" min={1} max={365} value={auditRetentionDays} onChange={(event) => setAuditRetentionDays(event.target.value)} className="bg-gray-800 border-gray-700 text-white" />
             </div>
-            <Button type="button" onClick={handleSaveAuditRetention} disabled={isSavingAudit} className="bg-cyan-600 hover:bg-cyan-700 text-white font-minecraft">
+            <Button type="button" onClick={handleSaveAuditRetention} disabled={isSavingAudit} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
               {isSavingAudit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {isSavingAudit ? t('saving') : t('saveChanges')}
             </Button>

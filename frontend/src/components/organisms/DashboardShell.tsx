@@ -16,12 +16,14 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
-  const { isSidebarCollapsed, isHydrated, setHydrated } = useUIStore();
+  const { isSidebarCollapsed, isHydrated, setHydrated, setSidebarCollapsed } = useUIStore();
 
   useEffect(() => {
     initialize();
+    // The expanded sidebar leaves a phone ~130px of content; start as a rail.
+    if (window.matchMedia("(max-width: 767px)").matches) setSidebarCollapsed(true);
     setHydrated(true);
-  }, [initialize, setHydrated]);
+  }, [initialize, setHydrated, setSidebarCollapsed]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -55,7 +57,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       >
         <DashboardHeader />
 
-        <main className="flex-1 p-6 overflow-auto min-w-0">
+        <main className="flex-1 p-3 sm:p-6 overflow-auto min-w-0">
           <div className="max-w-7xl mx-auto animate-fade-in min-w-0">
             {children}
           </div>

@@ -398,7 +398,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-minecraft text-[11px] uppercase tracking-wide text-gray-500">
+            <span className="font-minecraft text-xs uppercase tracking-wide text-gray-500">
               {t('modpackVersion')}
             </span>
             {updateAvailable && (
@@ -406,7 +406,7 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
                 type="button"
                 onClick={() => setFile(String(newestRelease.id))}
                 title={`${t('modUpdateAvailable')}: ${newestRelease.displayName}`}
-                className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
+                className="flex shrink-0 items-center gap-1 border-2 border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-minecraft uppercase text-amber-300 transition-colors hover:bg-amber-500/20 hover:text-amber-200"
               >
                 <ArrowUpCircle className="h-3.5 w-3.5" />
                 {t('modUpdateAvailable')}

@@ -107,7 +107,7 @@ export const MonitoringAlerts: FC<{ serverId: string }> = ({ serverId }) => {
 
         <p className="text-xs text-gray-400">{t("alertsNeedWebhook")}</p>
 
-        <Button type="button" size="sm" onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+        <Button type="button" size="sm" onClick={save} disabled={saving} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950">
           {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
           {t("saveAlerts")}
         </Button>

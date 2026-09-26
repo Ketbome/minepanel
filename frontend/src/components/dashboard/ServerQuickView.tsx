@@ -131,7 +131,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
                           <RuntimeChip icon={Clock} label={t("uptime")} value={server.stats.uptimeSeconds === null ? "—" : formatUptime(server.stats.uptimeSeconds)} color="#6fe3d4" className="hidden md:flex" />
                         </>
                       )}
-                      <span className={`mc-tag ${getStatusColor(server.status)} text-[10px] px-2 py-0.5 shrink-0`}>{t(server.status)}</span>
+                      <span className={`mc-tag ${getStatusColor(server.status)} text-xs px-2 py-0.5 shrink-0`}>{t(server.status)}</span>
                     </div>
                   </div>
 

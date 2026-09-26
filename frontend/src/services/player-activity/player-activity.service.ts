@@ -30,6 +30,14 @@ export interface PlayerDetail extends Omit<PlayerActivity, "players"> {
     playerKills: number | null;
     blocksMined: number | null;
   } | null;
+  summary: {
+    averageSeconds: number;
+    longestSeconds: number;
+    deaths: number | null;
+    playSecondsByWeekday: number[];
+    streakDays: number;
+  };
+  // Stat deltas and event counts are null unless the activity log was on for that session
   sessions: {
     id: number;
     joinedAt: string;
@@ -37,6 +45,12 @@ export interface PlayerDetail extends Omit<PlayerActivity, "players"> {
     leftAt: string | null;
     endReason: "left" | "interrupted" | null;
     durationSeconds: number;
+    deaths: number | null;
+    mobKills: number | null;
+    playerKills: number | null;
+    blocksMined: number | null;
+    distanceCm: number | null;
+    events: { chat: number; advancements: number; deaths: number } | null;
   }[];
 }
 

@@ -60,7 +60,8 @@ measurements and unsupported Bedrock ticks; resource charts remain available.
 Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Existing Discord alert
 settings remain below the charts.
 
-**Monitoring → Players** displays persistent player profiles and paginated sessions for
-both editions, including offline players. Saved Java world statistics are shown separately
+**Players** shows persistent player profiles and paginated sessions for both editions,
+including offline players: on Java inside each profile's Sessions tab (`PlayerSessions`), on
+Bedrock as the session list itself (`player-activity.tsx`). Saved Java world statistics are shown separately
 from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
 30 seconds after completion; unknown presence is explicitly labeled.

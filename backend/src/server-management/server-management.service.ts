@@ -28,6 +28,7 @@ const DOCKER_COMMANDS = {
   PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
   PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
   INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
+  INSPECT_EXIT_CODE: (containerId: string) => `docker inspect --format="{{.State.ExitCode}}" ${containerId}`,
   STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
   STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
@@ -853,6 +854,22 @@ export class ServerManagementService {
     } catch (error) {
       this.logger.error(`Failed to clear data for server "${serverId}"`, error);
       return false;
+    }
+  }
+
+  // Read by the crash alert once a server has stopped; null when there is no container to inspect.
+  async getCrashInfo(serverId: string): Promise<{ exitCode: number; logTail: string } | null> {
+    try {
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) {
+        return null;
+      }
+      const { stdout: exitCode } = await execAsync(DOCKER_COMMANDS.INSPECT_EXIT_CODE(containerId));
+      const { stdout: logTail } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, 20));
+      return { exitCode: Number.parseInt(exitCode.trim(), 10), logTail };
+    } catch (error) {
+      this.logger.warn(`Failed to read crash info for ${serverId}: ${(error as Error).message}`);
+      return null;
     }
   }
 

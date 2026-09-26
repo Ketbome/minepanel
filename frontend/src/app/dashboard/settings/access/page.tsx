@@ -22,8 +22,8 @@ export default function AccessSettingsPage() {
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600/20">
-              <Shield className="h-5 w-5 text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+              <Shield className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
               <CardTitle className="text-white font-minecraft">{t('rolesAccessTitle')}</CardTitle>

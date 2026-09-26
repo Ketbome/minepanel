@@ -338,6 +338,29 @@ export const LifecycleTab: FC<LifecycleTabProps> = ({ config, updateConfig }) =>
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-400">{t('restartPolicyDesc')}</p>
+          {!autoStopEnabled && config.restartPolicy === 'on-failure' && (
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="restartMaxRetries" className="text-gray-200 text-sm">
+                {t('restartMaxRetries')}
+              </Label>
+              <Input
+                id="restartMaxRetries"
+                type="number"
+                min={1}
+                max={10}
+                value={config.restartMaxRetries ?? ''}
+                onChange={(e) =>
+                  updateConfig(
+                    'restartMaxRetries',
+                    e.target.value === '' ? null : Math.min(10, Math.max(1, Number(e.target.value))),
+                  )
+                }
+                placeholder="∞"
+                className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30"
+              />
+              <p className="text-xs text-gray-400">{t('restartMaxRetriesHelp')}</p>
+            </div>
+          )}
           {autoStopEnabled && (
             <p className="text-xs text-amber-400">{t('autoStopForcesNoRestart')}</p>
           )}

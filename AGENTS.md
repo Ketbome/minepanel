@@ -171,7 +171,9 @@ Every AGENTS file in this repo must include:
 
 The agent must keep `AGENTS.md` and `README.md` updated whenever workflow, architecture, commands, or conventions change.
 
-Player activity lives in `backend/src/player-activity/` and the Monitoring → Players tab.
+Player activity lives in `backend/src/player-activity/` and is the only session store: the
+opt-in activity log (`backend/src/activity/`) adds events, inventory snapshots and per-session
+stat deltas to those sessions, never sessions of its own. It shows in the Players tab.
 Session history comes from bounded Docker join/leave logs and SQLite cursors, not browser
 polling or `server.json`. Unknown intervals must not be counted as playtime; Java saved-world
 statistics are separate from recorded session totals.

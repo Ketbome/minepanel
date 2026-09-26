@@ -65,41 +65,155 @@
   --color-gray-800: #101609;
   --color-gray-900: #0d1207;
   --color-gray-950: #0a0e08;
+
+  /* Semantic hues pulled onto the same green-black world: slightly lower
+     chroma than Tailwind's defaults so blue/red/amber/purple sit next to the
+     acid green instead of fighting it. `green` aliases the emerald scale so
+     the app has one green, not two. */
+  --color-green-300: #c4ff7a;
+  --color-green-400: #9dff3f;
+  --color-green-500: #7fd82f;
+  --color-green-600: #5da621;
+  --color-green-700: #3a5423;
+  --color-green-800: #24350f;
+  --color-green-900: #16200a;
+  --color-green-950: #0d1207;
+
+  --color-blue-200: oklch(0.89 0.05 262);
+  --color-blue-300: oklch(0.82 0.08 262);
+  --color-blue-400: oklch(0.74 0.12 262);
+  --color-blue-500: oklch(0.65 0.14 262);
+  --color-blue-600: oklch(0.55 0.14 262);
+  --color-blue-700: oklch(0.45 0.12 262);
+  --color-blue-800: oklch(0.34 0.08 262);
+  --color-blue-900: oklch(0.26 0.06 262);
+  --color-blue-950: oklch(0.2 0.04 262);
+
+  --color-cyan-200: oklch(0.92 0.06 215);
+  --color-cyan-300: oklch(0.86 0.1 215);
+  --color-cyan-400: oklch(0.8 0.12 215);
+  --color-cyan-500: oklch(0.71 0.12 215);
+  --color-cyan-600: oklch(0.6 0.11 215);
+  --color-cyan-700: oklch(0.48 0.09 215);
+  --color-cyan-800: oklch(0.36 0.07 215);
+  --color-cyan-900: oklch(0.27 0.05 215);
+  --color-cyan-950: oklch(0.2 0.035 215);
+
+  --color-amber-200: oklch(0.93 0.07 85);
+  --color-amber-300: oklch(0.88 0.12 85);
+  --color-amber-400: oklch(0.84 0.14 82);
+  --color-amber-500: oklch(0.76 0.14 78);
+  --color-amber-600: oklch(0.64 0.13 72);
+  --color-amber-700: oklch(0.51 0.11 68);
+  --color-amber-800: oklch(0.39 0.08 68);
+  --color-amber-900: oklch(0.29 0.06 70);
+  --color-amber-950: oklch(0.21 0.04 72);
+
+  --color-yellow-200: oklch(0.94 0.08 95);
+  --color-yellow-300: oklch(0.9 0.12 92);
+  --color-yellow-400: oklch(0.86 0.14 90);
+  --color-yellow-500: oklch(0.79 0.14 87);
+  --color-yellow-600: oklch(0.66 0.12 84);
+  --color-yellow-700: oklch(0.52 0.1 82);
+  --color-yellow-800: oklch(0.4 0.07 82);
+  --color-yellow-900: oklch(0.3 0.05 85);
+  --color-yellow-950: oklch(0.22 0.035 88);
+
+  --color-orange-300: oklch(0.84 0.1 55);
+  --color-orange-400: oklch(0.77 0.14 52);
+  --color-orange-500: oklch(0.7 0.16 48);
+  --color-orange-600: oklch(0.6 0.15 45);
+  --color-orange-700: oklch(0.49 0.12 42);
+  --color-orange-800: oklch(0.38 0.08 42);
+  --color-orange-900: oklch(0.28 0.06 42);
+  --color-orange-950: oklch(0.21 0.04 45);
+
+  --color-red-200: oklch(0.89 0.05 27);
+  --color-red-300: oklch(0.81 0.09 27);
+  --color-red-400: oklch(0.72 0.15 27);
+  --color-red-500: oklch(0.65 0.18 27);
+  --color-red-600: oklch(0.56 0.17 27);
+  --color-red-700: oklch(0.46 0.14 27);
+  --color-red-800: oklch(0.36 0.1 27);
+  --color-red-900: oklch(0.27 0.07 27);
+  --color-red-950: oklch(0.2 0.045 27);
+
+  --color-purple-200: oklch(0.89 0.05 300);
+  --color-purple-300: oklch(0.82 0.09 300);
+  --color-purple-400: oklch(0.74 0.13 300);
+  --color-purple-500: oklch(0.65 0.15 298);
+  --color-purple-600: oklch(0.55 0.15 296);
+  --color-purple-700: oklch(0.45 0.13 295);
+  --color-purple-800: oklch(0.35 0.09 295);
+  --color-purple-900: oklch(0.27 0.06 295);
+  --color-purple-950: oklch(0.2 0.04 295);
+
+  /* Stray hues fold into the tuned scales above. */
+  --color-sky-200: var(--color-cyan-200);
+  --color-sky-300: var(--color-cyan-300);
+  --color-sky-400: var(--color-cyan-400);
+  --color-sky-500: var(--color-cyan-500);
+  --color-sky-600: var(--color-cyan-600);
+  --color-sky-700: var(--color-cyan-700);
+  --color-sky-800: var(--color-cyan-800);
+  --color-sky-900: var(--color-cyan-900);
+  --color-sky-950: var(--color-cyan-950);
+  --color-indigo-200: var(--color-blue-200);
+  --color-indigo-300: var(--color-blue-300);
+  --color-indigo-400: var(--color-blue-400);
+  --color-indigo-500: var(--color-blue-500);
+  --color-indigo-600: var(--color-blue-600);
+  --color-indigo-700: var(--color-blue-700);
+  --color-indigo-800: var(--color-blue-800);
+  --color-indigo-900: var(--color-blue-900);
+  --color-indigo-950: var(--color-blue-950);
+  --color-violet-200: var(--color-purple-200);
+  --color-violet-300: var(--color-purple-300);
+  --color-violet-400: var(--color-purple-400);
+  --color-violet-500: var(--color-purple-500);
+  --color-violet-600: var(--color-purple-600);
+  --color-violet-700: var(--color-purple-700);
+  --color-violet-800: var(--color-purple-800);
+  --color-violet-900: var(--color-purple-900);
+  --color-violet-950: var(--color-purple-950);
 }
 
 :root {
+  /* The panel is dark-only: shadcn tokens point at the same green-black
+     world, so primitives that fall back to them (outline buttons, dialogs,
+     secondary badges, skeletons) never render as light-theme white. */
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #0a0e08;
+  --foreground: #eef3e4;
+  --card: #101609;
+  --card-foreground: #eef3e4;
+  --popover: #101609;
+  --popover-foreground: #eef3e4;
+  --primary: #2c3b22;
+  --primary-foreground: #f5f8ee;
+  --secondary: #1c2716;
+  --secondary-foreground: #eef3e4;
+  --muted: #1c2716;
+  --muted-foreground: #a9b699;
+  --accent: #24350f;
+  --accent-foreground: #f5f8ee;
+  --destructive: oklch(0.65 0.18 27);
+  --border: #1c2716;
+  --input: #1c2716;
+  --ring: #9dff3f;
+  --chart-1: #9dff3f;
+  --chart-2: #5fd7ff;
+  --chart-3: #ffd25f;
+  --chart-4: #ff6b5f;
+  --chart-5: #b388ff;
+  --sidebar: #101609;
+  --sidebar-foreground: #eef3e4;
+  --sidebar-primary: #9dff3f;
+  --sidebar-primary-foreground: #0a0e08;
+  --sidebar-accent: #24350f;
+  --sidebar-accent-foreground: #f5f8ee;
+  --sidebar-border: #1c2716;
+  --sidebar-ring: #9dff3f;
 }
 
 .dark {
@@ -142,25 +256,59 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgba(157, 255, 63, 0.28);
+    color: #f5f8ee;
+  }
+  input,
+  textarea {
+    caret-color: var(--mc-emerald);
+  }
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Display font: Archivo Black uppercase (same voice as the docs), replacing
-   the old minecraft.woff2. Lives in the components layer so text and leading
-   utilities still win. */
+/* Type roles. Archivo carries the whole panel at its natural width (the
+   expanded width axis read as squashed): `font-minecraft` is the UI
+   heading/label voice (semibold, natural case) so nav, card titles and buttons
+   stay readable for hours. Archivo Black uppercase, the docs' display voice,
+   is kept for the one page title per screen (h1) and the brand wordmark.
+   Lives in the components layer so text, weight and leading utilities win. */
 @layer components {
   .font-minecraft,
-  .mc-count,
-  .mc-btn,
-  .mc-tag {
-    font-family: var(--font-archivo-black), sans-serif;
+  .mc-btn {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  h1.font-minecraft,
+  .mc-display {
+    font-family: var(--font-archivo-black), var(--font-archivo), sans-serif;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+  }
+  .mc-tag {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .mc-count {
+    font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .drop-shadow-glow {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
 }
 
 /* Custom scrollbar styles */
@@ -199,11 +347,12 @@
   scrollbar-width: none;
 }
 
-/* Minecraft pixelated images */
+/* Item art ships as 128px sprites and is always drawn smaller, where
+   nearest-neighbour sampling drops whole pixel rows; smooth downscaling keeps
+   every one. The GUI surfaces no longer force `pixelated` either, since
+   image-rendering is inherited by the sprites inside slots and buttons. */
 .pixelated {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+  image-rendering: auto;
 }
 
 /* Toast animations */
@@ -325,95 +474,6 @@
 }
 
 /* End portal easter egg animations */
-@keyframes portal-spin {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes ender-drift {
-  0% {
-    transform: translate(0, 0);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.9;
-  }
-  50% {
-    transform: translate(10px, -60px);
-  }
-  100% {
-    transform: translate(-10px, -120px);
-    opacity: 0;
-  }
-}
-
-.animate-portal-spin {
-  animation: portal-spin 6s linear infinite;
-  will-change: transform;
-}
-
-.animate-portal-spin-reverse {
-  animation: portal-spin 9s linear infinite reverse;
-  will-change: transform;
-}
-
-.animate-twinkle {
-  animation: twinkle 3s ease-in-out infinite;
-}
-
-.animate-ender-drift {
-  animation: ender-drift 4s ease-in-out infinite;
-}
-
-/* Voxel ender dragon wing flap: --wing-z anchors the wing to the body flank,
-   --flap-dir mirrors the rotation for the opposite wing */
-@keyframes wing-flap {
-  0%,
-  100% {
-    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * var(--flap-lo, 55deg)));
-  }
-  50% {
-    transform: translateZ(var(--wing-z, 0px)) rotateX(calc(var(--flap-dir, 1) * var(--flap-hi, 125deg)));
-  }
-}
-
-.animate-wing-flap {
-  animation: wing-flap 1.1s ease-in-out infinite;
-  transform-origin: top center;
-  will-change: transform;
-}
-
-/* Zero-gravity limb flail for the floating enderman */
-@keyframes limb-sway {
-  0%,
-  100% {
-    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * 10deg));
-  }
-  50% {
-    transform: translateZ(var(--limb-z, 0px)) rotateX(calc(var(--sway-dir, 1) * -16deg));
-  }
-}
-
-.animate-limb-sway {
-  animation: limb-sway 1.6s ease-in-out infinite;
-  transform-origin: top center;
-  will-change: transform;
-}
-
 @keyframes portal-drift {
   from {
     background-position: 0 0;
@@ -425,131 +485,6 @@
 
 .animate-portal-drift {
   animation: portal-drift linear infinite;
-}
-
-@keyframes portal-glimmer {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.75;
-  }
-}
-
-.animate-portal-glimmer {
-  animation: portal-glimmer 5s ease-in-out infinite;
-}
-
-@keyframes screen-shake {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(3px, -2px);
-  }
-  50% {
-    transform: translate(-2px, 3px);
-  }
-  75% {
-    transform: translate(2px, 2px);
-  }
-}
-
-.animate-screen-shake {
-  animation: screen-shake 0.22s linear infinite;
-}
-
-@keyframes tail-sway {
-  0%,
-  100% {
-    transform: rotateZ(calc(var(--sway-dir, 1) * 6deg));
-  }
-  50% {
-    transform: rotateZ(calc(var(--sway-dir, 1) * -8deg));
-  }
-}
-
-.animate-tail-sway {
-  animation: tail-sway 1.4s ease-in-out infinite;
-  transform-origin: 100% 50%;
-  will-change: transform;
-}
-
-@keyframes crystal-spin {
-  from {
-    transform: rotateX(-30deg) rotateY(45deg);
-  }
-  to {
-    transform: rotateX(-30deg) rotateY(405deg);
-  }
-}
-
-.animate-crystal-spin {
-  animation: crystal-spin 6s linear infinite;
-}
-
-@keyframes crystal-spin-reverse {
-  from {
-    transform: rotateX(60deg) rotateY(405deg);
-  }
-  to {
-    transform: rotateX(60deg) rotateY(45deg);
-  }
-}
-
-.animate-crystal-spin-reverse {
-  animation: crystal-spin-reverse 4s linear infinite;
-}
-
-@keyframes float-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-7px);
-  }
-}
-
-.animate-float-bob {
-  animation: float-bob 3s ease-in-out infinite;
-}
-
-@keyframes shulker-peek {
-  0%,
-  55%,
-  100% {
-    transform: translateY(0);
-  }
-  65%,
-  85% {
-    transform: translateY(-8px);
-  }
-}
-
-.animate-shulker-peek {
-  animation: shulker-peek 7s ease-in-out infinite;
-  will-change: transform;
-}
-
-@keyframes dragon-breath {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: translate(48px, var(--breath-y, -6px)) scale(0.3);
-    opacity: 0;
-  }
-}
-
-.animate-dragon-breath {
-  animation: dragon-breath 1.6s ease-in infinite;
 }
 
 /* ============================================================
@@ -596,7 +531,6 @@
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.1), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 6px 6px 0 rgba(157, 255, 63, 0.1);
-  image-rendering: pixelated;
 }
 
 /* Subtle pixel-stone grain so panels never read as flat */
@@ -628,7 +562,6 @@
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55), inset -3px -3px 0 rgba(255, 255, 255, 0.06);
-  image-rendering: pixelated;
 }
 
 .mc-slot--active {
@@ -653,13 +586,12 @@
   gap: 0.5rem;
   color: #f3fff8;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
-  background: linear-gradient(180deg, #4d4d4d, #383838);
+  background: linear-gradient(180deg, #2c3b22, #1c2716);
   border: 3px solid var(--mc-frame);
   border-radius: 0;
   box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.22), inset -2px -2px 0 rgba(0, 0, 0, 0.45), 0 4px 0 rgba(0, 0, 0, 0.45);
   cursor: pointer;
   transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
-  image-rendering: pixelated;
 }
 
 .mc-btn:hover {
@@ -729,7 +661,6 @@
   border-radius: 0;
   box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.55);
   overflow: hidden;
-  image-rendering: pixelated;
 }
 
 .mc-bar__fill {
@@ -798,7 +729,11 @@
   box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.42), 0 3px 0 rgba(0, 0, 0, 0.4);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
   transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
-  image-rendering: pixelated;
+}
+/* Dark label on the acid primary: the bevel's drop shadow only smears it. */
+.mc-bevel.text-gray-950,
+.mc-tag.text-gray-950 {
+  text-shadow: none;
 }
 .mc-bevel:hover {
   filter: brightness(1.12);
@@ -889,4 +824,49 @@
 [class*="rounded"][class*="bg-gray-800"]:not([class*="border"]):not(input):not(textarea):not(button),
 [class*="rounded"][class*="bg-gray-700"]:not([class*="border"]):not(input):not(textarea):not(button) {
   border-radius: 0 !important;
+}
+
+/* Slider skin: inset bar track, acid fill and a beveled square knob, so the
+   Radix slider matches mc-bar instead of the shadcn light defaults. */
+[data-slot="slider-track"] {
+  border-radius: 0;
+  background: var(--mc-stone-deep);
+  border: 2px solid var(--mc-frame);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+[data-slot="slider-track"][data-orientation="horizontal"] {
+  height: 12px;
+}
+[data-slot="slider-range"] {
+  background: var(--mc-emerald);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+}
+[data-slot="slider-thumb"] {
+  width: 18px;
+  height: 22px;
+  border-radius: 0;
+  background: linear-gradient(180deg, #3a4d2c, #24350f);
+  border: 2px solid var(--mc-frame);
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.45), 0 2px 0 rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+[data-slot="slider-thumb"]:hover {
+  border-color: var(--mc-emerald);
+}
+[data-slot="slider-thumb"]:focus-visible {
+  outline: 2px solid var(--mc-emerald);
+  outline-offset: 2px;
+}
+[data-slot="slider-thumb"]:active {
+  cursor: grabbing;
+}
+
+/* Phones: cards nest inside panels, so the stock px-6 gutters stack up and
+   leave config tabs a ~150px text column. */
+@media (max-width: 639px) {
+  [data-slot="card-header"],
+  [data-slot="card-content"],
+  [data-slot="card-footer"] {
+    padding-inline: 1rem;
+  }
 }

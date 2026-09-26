@@ -27,7 +27,10 @@ backend/src/
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
-|- alerts/                  Per-server Discord alerts (down / high CPU / high RAM), fed by the metrics sampler
+|- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
+|- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
+|- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
+|- activity/                Opt-in activity log: tails logs/latest.log into events and inventory snapshots
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
@@ -207,6 +210,29 @@ Path and filesystem patterns (critical):
 - `src/modpacks/client-only-mods.ts` - vendored snapshot of itzg's `cf-exclude-include.json`
   globalExcludes (Apache-2.0). Only consulted where the metadata says nothing, and only ever
   as a suggestion the user confirms.
+- `src/players/player-nbt.ts` - normalises `playerdata/<uuid>.dat` across formats: item
+  `Count`/`tag` (before 1.20.5) vs `count`/`components`, armor/offhand inside `Inventory`
+  (slots 100-103, -106) vs the 1.21.5 `equipment` compound, `Spawn*` keys vs `respawn`. Add a
+  case there when Mojang changes the format; never let an unknown key throw.
+- `src/players/players.service.ts` - resolves the world from `level-name` in `server.properties`
+  and refuses one that escapes `mc-data`. `usercache.json` only names players; membership comes
+  from world files, whitelist, ops and bans.
+- `src/activity/activity-tailer.service.ts` - reads `latest.log` by byte offset every 5s. A log is
+  identified by the hash of its complete first line; a different hash (or a shorter file) is a
+  rotation, and the lines between the last read and the rotation are drained from the newest
+  `.log.gz` whose first line matches (that is where the shutdown's leave lines are). It only saves
+  the cursor when it moved: sql.js rewrites the whole database on every save.
+- `src/activity/log-line.parser.ts` - vanilla, Paper and Forge line prefixes. Deaths are any INFO line
+  starting with an online player's name that matches nothing else; add exclusions to `NOT_DEATH`.
+- `src/activity/activity.service.ts` - never creates live sessions: `player-activity` owns
+  `player_sessions` and calls `beginSession` (uuid, stats `baseline`, join snapshot) and
+  `finalizeSession` (deltas, leave snapshot) for Java servers with the log on. The baseline is kept
+  while the session is open so a panel restart can still compute deltas. History imports use their
+  own state (`newImportState`) and only save sessions older than the first recorded one.
+  Inventory snapshots are deduplicated by content hash and capped at 50 per player.
+  Events and snapshots have a TTL (`RETENTION_DAYS`, pruned hourly) and events have a per-server
+  cap (`MAX_EVENTS_PER_SERVER`): sql.js holds the whole DB in RAM. New activity data must get the
+  same treatment.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and

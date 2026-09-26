@@ -18,7 +18,7 @@ interface RuntimeChipProps {
 // The label lives in the tooltip so the strip stays one line tall.
 export function RuntimeChip({ icon: Icon, label, value, className = "", color }: RuntimeChipProps) {
   return (
-    <span className={`mc-tag bg-gray-800/60 flex items-center gap-1.5 px-2 py-0.5 text-[11px] ${className}`} title={label} aria-label={`${label}: ${value}`}>
+    <span className={`mc-tag bg-gray-800/60 flex items-center gap-1.5 px-2 py-0.5 text-xs ${className}`} title={label} aria-label={`${label}: ${value}`}>
       <Icon className="h-3 w-3 shrink-0" style={color ? { color } : undefined} />
       <span className="font-mono text-gray-100 whitespace-nowrap">{value}</span>
     </span>

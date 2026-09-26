@@ -317,7 +317,7 @@ export default function Dashboard() {
               alt="Dashboard"
               width={32}
               height={32}
-              className="pixelated animate-float"
+              className="pixelated"
             />
             <div>
               <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">
@@ -366,7 +366,7 @@ export default function Dashboard() {
                   }}
                   className={
                     createMode === 'quick'
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }
                 >
@@ -379,7 +379,7 @@ export default function Dashboard() {
                   onClick={() => setCreateMode('template')}
                   className={
                     createMode === 'template'
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }
                 >
@@ -791,38 +791,6 @@ export default function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {servers.length > 0 && (
-        <div className="flex justify-center gap-8 pt-8">
-          <div className="animate-float">
-            <Image
-              src="/images/anvil.webp"
-              alt="Anvil"
-              width={32}
-              height={32}
-              className="opacity-50 hover:opacity-80 transition-opacity"
-            />
-          </div>
-          <div className="animate-float-delay-1">
-            <Image
-              src="/images/crafting-table.webp"
-              alt="Crafting Table"
-              width={32}
-              height={32}
-              className="opacity-50 hover:opacity-80 transition-opacity"
-            />
-          </div>
-          <div className="animate-float-delay-2">
-            <Image
-              src="/images/command-block.webp"
-              alt="Command Block"
-              width={32}
-              height={32}
-              className="opacity-50 hover:opacity-80 transition-opacity"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

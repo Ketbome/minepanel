@@ -81,7 +81,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       const resources = await this.serverManagement.getAllServersRuntimeStats();
 
       try {
-        await this.alertsService.evaluate(resources);
+        await this.alertsService.evaluate(resources, (serverId) => this.serverManagement.getCrashInfo(serverId));
       } catch (error) {
         this.logger.warn(`Failed to evaluate alerts: ${(error as Error).message}`);
       }

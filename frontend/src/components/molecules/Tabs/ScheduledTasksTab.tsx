@@ -225,7 +225,7 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" onClick={handleCreate} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40">
+            <Button type="button" onClick={handleCreate} disabled={saving} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950">
               <Plus className="h-4 w-4 mr-1" />
               {t("tasksAdd")}
             </Button>

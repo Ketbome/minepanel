@@ -8,8 +8,7 @@ import { MotionProvider } from '@/lib/providers/motion-provider';
 import './globals.css';
 
 const archivo = Archivo({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
+  subsets: ['latin', 'latin-ext'],
   variable: '--font-archivo',
   display: 'swap',
 });
@@ -22,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const archivoBlack = Archivo_Black({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: '400',
   variable: '--font-archivo-black',
   display: 'swap',

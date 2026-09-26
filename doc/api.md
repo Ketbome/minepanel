@@ -251,6 +251,35 @@ Both endpoints require authentication and access to the requested server.
   `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
   Samples are collected every minute and retained for 7 days.
 
+### Players
+
+Read-only player data from a Java server's world files (works while the server is stopped).
+Requires access to the server.
+
+- `GET /players/:serverId` — everyone in `playerdata`/`stats`/`advancements`, the whitelist,
+  ops and ban list: flags, last seen (player file mtime), stats summary and advancement count
+- `GET /players/:serverId/:uuid` — the same plus all statistics by category, advancements with
+  completion date, inventory, armor, offhand, ender chest, last position and spawn point
+- `GET /players/:serverId/items/search?q=` — who holds an item now (saved inventories, ender
+  chests, carried shulker boxes and bundles); matches the item id or custom name, 2+ characters
+
+Online state is not part of these responses; the panel combines them with the RCON player list.
+Player actions go through `POST /servers/:id/command`.
+
+### Activity
+
+Activity log built from the server log (Java, opt-in per server). Requires access to the server.
+
+- `GET /activity/:serverId/settings` / `PUT /activity/:serverId/settings` (`{ enabled }`) — turns
+  tracking on or off; stored as `activityTracking` in `server.json` and ignored by `PUT /servers/:id`
+- `POST /activity/:serverId/import-history` — reads archived logs older than tracking, once
+  (`409` on a second call, `400` when tracking is off); also adds the sessions older than the first
+  one `player-activity` recorded
+- `GET /activity/:serverId/events?types=chat,death&name=&q=&from=&to=&before=&limit=` — newest
+  first, paged by `nextCursor`; needs the **view logs** permission
+- `GET /activity/:serverId/players/:uuid/snapshots` — inventory snapshots, newest first, each with
+  the death it precedes (if any); `GET /activity/:serverId/snapshots/:id` — one snapshot's items
+
 ### System
 
 Host monitoring endpoints:
@@ -406,7 +435,7 @@ Authentication and access to the selected server are required.
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | GET | `/servers/:id/player-activity?page=0` | Recorded player summaries, newest observation first |
-| GET | `/servers/:id/player-activity/:key?page=0` | Profile, saved Java world statistics and session history |
+| GET | `/servers/:id/player-activity/:key?page=0` | Profile, saved Java world statistics, session summary (average, longest, weekday totals, day streak, known deaths) and session history. Sessions of Java servers with the activity log on also carry stat deltas and `events` (chat, advancements, deaths); both are null otherwise |
 
 Pages are zero-based with 25 items and `hasMore`. Player keys are returned by the list;
 URL-encode them when requesting details (`java:alex` or `bedrock:<XUID>`).

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsArray, ValidateNested, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max, IsArray, ValidateNested, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { COMPOSE_SNIPPET_TARGETS, type ComposeSnippetTarget } from 'src/common/compose/compose-snippets';
@@ -353,6 +353,13 @@ export class ServerConfigDto {
   @IsOptional()
   restartPolicy?: 'no' | 'always' | 'on-failure' | 'unless-stopped';
 
+  // Only used with `on-failure`: Docker gives up after this many restarts
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  restartMaxRetries?: number;
+
   @IsString()
   @IsOptional()
   stopDelay?: string;
@@ -699,6 +706,11 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   modWatchTargetVersion?: string;
+
+  // Activity log opt-in (chat is personal data); saved through /activity, never compose input.
+  @IsBoolean()
+  @IsOptional()
+  activityTracking?: boolean;
 }
 
 export class UpdateServerConfigDto extends PartialType(ServerConfigDto) {}
