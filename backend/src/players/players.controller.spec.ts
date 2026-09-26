@@ -49,8 +49,16 @@ describe('ItemTexturesController', () => {
     const file = path.join(dir, 'stone.png');
     await fs.writeFile(file, 'png');
     const controller = new ItemTexturesController({ resolve: jest.fn().mockResolvedValueOnce(file).mockResolvedValueOnce(null) } as any);
-    expect(await controller.texture('1.21.1', 'stone')).toBeInstanceOf(StreamableFile);
-    await expect(controller.texture('1.21.1', 'nope')).rejects.toThrow();
+    const found = { setHeader: jest.fn() };
+    const stream = await controller.texture('1.21.1', 'stone', found as any);
+    expect(stream).toBeInstanceOf(StreamableFile);
+    expect(stream.getHeaders().type).toBe('image/png');
+    expect(found.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, max-age=604800, immutable');
+
+    // A missing texture may appear once the download finishes, so the 404 must stay uncached.
+    const missing = { setHeader: jest.fn() };
+    await expect(controller.texture('1.21.1', 'nope', missing as any)).rejects.toThrow();
+    expect(missing.setHeader).not.toHaveBeenCalled();
     await fs.rm(dir, { recursive: true, force: true });
   });
 });

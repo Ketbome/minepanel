@@ -8,7 +8,8 @@ import path from 'node:path';
 const MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
 const MOJANG_HOSTS = new Set(['piston-meta.mojang.com', 'piston-data.mojang.com', 'launcher.mojang.com', 'launchermeta.mojang.com']);
 const TEXTURE_ENTRY = /^assets\/minecraft\/textures\/(item|block)\/([a-z0-9_]+)\.png$/;
-export const TEXTURE_VERSION = /^[a-zA-Z0-9._-]{1,32}$/;
+// Must start with a letter or digit so '.' and '..' can never name a directory.
+export const TEXTURE_VERSION = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,31}$/;
 export const TEXTURE_ITEM = /^[a-z0-9_]{1,64}$/;
 
 /**

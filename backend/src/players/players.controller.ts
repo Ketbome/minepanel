@@ -1,4 +1,5 @@
-import { Controller, Get, Header, NotFoundException, Param, Query, Request, StreamableFile, UseGuards } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query, Request, Res, StreamableFile, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { createReadStream } from 'node:fs';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { ItemTexturesService } from './item-textures.service';
@@ -50,11 +51,11 @@ export class ItemTexturesController {
 
   @Public()
   @Get(':version/:item')
-  @Header('Content-Type', 'image/png')
-  @Header('Cache-Control', 'public, max-age=604800, immutable')
-  async texture(@Param('version') version: string, @Param('item') item: string) {
+  async texture(@Param('version') version: string, @Param('item') item: string, @Res({ passthrough: true }) res: Response) {
     const file = await this.textures.resolve(version, item);
     if (!file) throw new NotFoundException();
-    return new StreamableFile(createReadStream(file));
+    // Only a found texture is immutable: a 404 means "not downloaded yet" and must not be cached.
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    return new StreamableFile(createReadStream(file), { type: 'image/png' });
   }
 }
