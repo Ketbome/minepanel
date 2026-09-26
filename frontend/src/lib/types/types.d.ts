@@ -44,6 +44,13 @@ export interface ServerListItem {
  * Complete server configuration
  * Used for detailed server settings and configuration
  */
+export type ComposeSnippetTarget = 'root' | 'services' | 'mc';
+
+export interface ComposeSnippet {
+  target: ComposeSnippetTarget;
+  yaml: string;
+}
+
 export interface ServerConfig {
   id: string;
   active: boolean;
@@ -156,6 +163,7 @@ export interface ServerConfig {
   execDirectly: boolean;
   envVars: string;
   dockerLabels?: string;
+  composeSnippets?: ComposeSnippet[];
   extraPorts: string[];
 
   // Forge specific

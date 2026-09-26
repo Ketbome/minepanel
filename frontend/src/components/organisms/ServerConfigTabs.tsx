@@ -29,6 +29,7 @@ const BackupsTab = dynamic(() => import("../molecules/Tabs/BackupsTab").then(mod
 const ServerTypeTab = dynamic(() => import("../molecules/Tabs/ServerTypeTab").then(mod => mod.ServerTypeTab));
 const BedrockAddonsTab = dynamic(() => import("../molecules/Tabs/BedrockAddonsTab").then(mod => mod.BedrockAddonsTab));
 const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => mod.FilesTab));
+const PlayerActivityTab = dynamic(() => import("../molecules/players/player-activity").then(mod => mod.PlayerActivityTab));
 const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
 const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasksTab").then(mod => mod.ScheduledTasksTab));
 
@@ -73,7 +74,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const showCommandsTab = isJava; // RCON only works with Java
   const showBackupsTab = isJava; // mc-backup drives the world save over RCON
   const showWorldsTab = isJava; // world switching is Java-only server side
-  const showPlayersTab = isJava; // reads Java world player files; Bedrock keeps them in LevelDB
+  const showActivityTab = isJava; // tails the Java log file; Bedrock has no latest.log
 
   const isServerRunning = serverStatus === "running" || serverStatus === "starting";
 
@@ -97,10 +98,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
-    { value: "players", label: t("players"), icon: Users, group: "operation", show: showPlayersTab, disabled: false },
+    { value: "players", label: t("players"), icon: Users, group: "operation", show: true, disabled: false },
     { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
-    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showPlayersTab, disabled: false },
+    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
   ];
 
@@ -361,11 +362,14 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 </TabsContent>
               )}
 
-              {showPlayersTab && (
-                <TabsContent value="players" className="space-y-4 mt-0">
+              {/* Java reads world player files; Bedrock keeps them in LevelDB, so it gets session history only */}
+              <TabsContent value="players" className="space-y-4 mt-0">
+                {isJava ? (
                   <PlayersTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
-                </TabsContent>
-              )}
+                ) : (
+                  <PlayerActivityTab key={serverId} serverId={serverId} />
+                )}
+              </TabsContent>
 
               <TabsContent value="files" className="space-y-4 mt-0">
                 <FilesTab serverId={serverId} />
@@ -375,7 +379,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
                 <MetricsTab serverId={serverId} />
               </TabsContent>
 
-              {showPlayersTab && (
+              {showActivityTab && (
                 <TabsContent value="activity" className="space-y-4 mt-0">
                   <ActivityTab serverId={serverId} />
                 </TabsContent>

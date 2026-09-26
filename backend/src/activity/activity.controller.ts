@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, Put, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, Put, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
@@ -7,7 +7,7 @@ import { AccessControlService } from 'src/users/services/access-control.service'
 import { UsersService } from 'src/users/services/users.service';
 import { ActivityTailerService } from './activity-tailer.service';
 import { ActivityService } from './activity.service';
-import { ActivityEventsQueryDto, PlayerSessionsQueryDto, UpdateActivitySettingsDto } from './dto/activity-query.dto';
+import { ActivityEventsQueryDto, UpdateActivitySettingsDto } from './dto/activity-query.dto';
 
 const queryPipe = new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true });
 
@@ -57,21 +57,6 @@ export class ActivityController {
     return this.activityService.listEvents(serverId, query);
   }
 
-  @Get(':serverId/sessions')
-  async listSessions(@Request() req, @Param('serverId') serverId: string, @Query(queryPipe) query: PlayerSessionsQueryDto) {
-    this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
-    this.assertPlayer(query);
-    return this.activityService.listSessions(serverId, query);
-  }
-
-  @Get(':serverId/sessions/summary')
-  async summarizeSessions(@Request() req, @Param('serverId') serverId: string, @Query(queryPipe) query: PlayerSessionsQueryDto) {
-    this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
-    this.assertPlayer(query);
-    const config = await this.store.readConfig(serverId);
-    return this.activityService.summarize(serverId, query, config?.tz || 'UTC');
-  }
-
   @Get(':serverId/players/:uuid/snapshots')
   async listSnapshots(@Request() req, @Param('serverId') serverId: string, @Param('uuid') uuid: string) {
     this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
@@ -82,12 +67,6 @@ export class ActivityController {
   async getSnapshot(@Request() req, @Param('serverId') serverId: string, @Param('id', ParseIntPipe) id: number) {
     this.accessControlService.assertServerAccess(await this.currentUser(req), serverId);
     return this.activityService.getSnapshot(serverId, id);
-  }
-
-  private assertPlayer(query: PlayerSessionsQueryDto): void {
-    if (!query.uuid && !query.name) {
-      throw new BadRequestException('uuid or name is required');
-    }
   }
 
   private currentUser(req): Promise<Users> {

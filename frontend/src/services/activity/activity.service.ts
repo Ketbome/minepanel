@@ -25,37 +25,6 @@ export interface ActivityEventsQuery {
   limit?: number;
 }
 
-export interface PlayerSession {
-  id: number;
-  name: string;
-  uuid: string | null;
-  startAt: string;
-  endAt: string | null;
-  deaths: number | null;
-  mobKills: number | null;
-  playerKills: number | null;
-  blocksMined: number | null;
-  distanceCm: number | null;
-  loggedDeaths: number;
-  advancements: number;
-  chatCount: number;
-}
-
-export interface SessionSummary {
-  sessions: number;
-  totalMs: number;
-  averageMs: number;
-  longestMs: number;
-  deaths: number;
-  playMsByWeekday: number[];
-  streakDays: number;
-}
-
-export interface PlayerRef {
-  uuid?: string;
-  name?: string;
-}
-
 export const getActivitySettings = async (serverId: string): Promise<ActivitySettings> => {
   const response = await api.get(`/activity/${serverId}/settings`);
   return response.data;
@@ -74,16 +43,6 @@ export const importActivityHistory = async (serverId: string): Promise<{ importe
 export const getActivityEvents = async (serverId: string, query: ActivityEventsQuery): Promise<{ events: ActivityEvent[]; nextCursor: number | null }> => {
   const { types, ...rest } = query;
   const response = await api.get(`/activity/${serverId}/events`, { params: { ...rest, types: types?.length ? types.join(",") : undefined } });
-  return response.data;
-};
-
-export const getPlayerSessions = async (serverId: string, player: PlayerRef): Promise<PlayerSession[]> => {
-  const response = await api.get(`/activity/${serverId}/sessions`, { params: player });
-  return response.data;
-};
-
-export const getSessionSummary = async (serverId: string, player: PlayerRef): Promise<SessionSummary> => {
-  const response = await api.get(`/activity/${serverId}/sessions/summary`, { params: player });
   return response.data;
 };
 

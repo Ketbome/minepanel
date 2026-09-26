@@ -3,7 +3,7 @@ import { ActivityService, sessionDeltas } from './activity.service';
 import { ActivityEvent } from './entities/activity-event.entity';
 import { InventorySnapshot } from './entities/inventory-snapshot.entity';
 import { LogCursor } from './entities/log-cursor.entity';
-import { PlayerSession } from './entities/player-session.entity';
+import { PlayerSession } from 'src/player-activity/entities/player-session.entity';
 import { LogLine } from './log-line.parser';
 
 const STEVE = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
@@ -14,20 +14,24 @@ describe('ActivityService', () => {
   let dataSource: DataSource;
   let players: { readStats: jest.Mock; findUuid: jest.Mock; readInventory: jest.Mock };
   let service: ActivityService;
-  let scheduled: Array<() => void>;
 
   const create = () =>
-    new ActivityService(dataSource.getRepository(ActivityEvent), dataSource.getRepository(PlayerSession), dataSource.getRepository(InventorySnapshot), players as any);
+    new ActivityService(
+      dataSource.getRepository(ActivityEvent),
+      dataSource.getRepository(PlayerSession),
+      dataSource.getRepository(InventorySnapshot),
+      dataSource.getRepository(LogCursor),
+      players as any,
+    );
   const snapshots = () => dataSource.getRepository(InventorySnapshot).find({ order: { id: 'ASC' } });
   const inventory = (id: string, savedAt: string) => ({
     inventory: { inventory: [{ slot: 0, id, count: 1 }], armor: [], offhand: null, enderChest: [] },
     savedAt: new Date(savedAt),
   });
   const sessions = () => dataSource.getRepository(PlayerSession).find({ order: { id: 'ASC' } });
-  const runScheduled = async () => {
-    for (const fn of scheduled.splice(0)) fn();
-    await new Promise((resolve) => setImmediate(resolve));
-    await new Promise((resolve) => setImmediate(resolve));
+  const openSession = (name: string, joinedAt: Date, extra: Partial<PlayerSession> = {}) => {
+    const repo = dataSource.getRepository(PlayerSession);
+    return repo.save(repo.create({ serverId: 'srv', playerKey: `java:${name.toLowerCase()}`, name, joinedAt, lastSeenAt: joinedAt, leftAt: null, endReason: null, ...extra }));
   };
 
   beforeEach(async () => {
@@ -35,11 +39,6 @@ describe('ActivityService', () => {
     await dataSource.initialize();
     players = { readStats: jest.fn().mockResolvedValue(null), findUuid: jest.fn().mockResolvedValue(null), readInventory: jest.fn().mockResolvedValue(null) };
     service = create();
-    scheduled = [];
-    jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void) => {
-      scheduled.push(fn);
-      return { unref: () => undefined };
-    }) as any);
   });
 
   afterEach(async () => {
@@ -48,14 +47,7 @@ describe('ActivityService', () => {
   });
 
   describe('ingest', () => {
-    it('turns a join, chat, death and leave into four events and one session', async () => {
-      players.readStats
-        .mockResolvedValueOnce({ 'minecraft:custom': { 'minecraft:deaths': 3, 'minecraft:play_time': 100 }, 'minecraft:mined': { 'minecraft:stone': 10 } })
-        .mockResolvedValueOnce({
-          'minecraft:custom': { 'minecraft:deaths': 4, 'minecraft:mob_kills': 2, 'minecraft:walk_one_cm': 900 },
-          'minecraft:mined': { 'minecraft:stone': 110, 'minecraft:diamond_ore': 3 },
-        });
-
+    it('records join, chat, death, advancement and leave as events without creating sessions', async () => {
       const count = await service.ingest(
         'srv',
         [
@@ -74,119 +66,193 @@ describe('ActivityService', () => {
       const events = await dataSource.getRepository(ActivityEvent).find({ order: { id: 'ASC' } });
       expect(events.map((event) => event.type)).toEqual(['join', 'chat', 'death', 'advancement', 'leave']);
       expect(events.every((event) => event.uuid === STEVE)).toBe(true);
-
-      let [session] = await sessions();
-      expect(session).toMatchObject({ name: 'Steve', uuid: STEVE, chatCount: 1, advancements: 1, loggedDeaths: 1, deaths: 1 });
-      expect(session.endAt?.toISOString()).toBe('2026-09-25T12:10:00.000Z');
-
-      await runScheduled();
-      [session] = await sessions();
-      expect(session).toMatchObject({ deaths: 1, mobKills: 2, blocksMined: 103, distanceCm: 900, baseline: null });
-      expect(session.oreDeltas).toEqual({ 'minecraft:stone': 100, 'minecraft:diamond_ore': 3 });
-    });
-
-    it('looks the UUID up when the log does not print it', async () => {
-      players.findUuid.mockResolvedValue(STEVE);
-
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
-
-      expect((await sessions())[0].uuid).toBe(STEVE);
-      expect(players.findUuid).toHaveBeenCalledWith('srv', 'Steve');
-    });
-
-    it('closes every open session when the server stops', async () => {
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:01:00', 'Alex joined the game'), line('13:00:00', 'Stopping server')], at);
-
-      expect((await sessions()).map((session) => session.endAt?.toISOString())).toEqual(['2026-09-25T13:00:00.000Z', '2026-09-25T13:00:00.000Z']);
-    });
-
-    it('closes a dangling session when the player joins again', async () => {
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:30:00', 'Steve joined the game')], at);
-
-      const [first, second] = await sessions();
-      expect(first.endAt?.toISOString()).toBe('2026-09-25T12:30:00.000Z');
-      expect(second.endAt).toBeNull();
-    });
-
-    it('resumes open sessions after a panel restart', async () => {
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
-
-      const restarted = create();
-      await restarted.ingest('srv', [line('12:01:00', '<Steve> back'), line('12:02:00', 'Steve left the game')], at);
-
-      const [session] = await sessions();
-      expect(session.chatCount).toBe(1);
-      expect(session.endAt?.toISOString()).toBe('2026-09-25T12:02:00.000Z');
-    });
-
-    it('keeps imports away from live sessions and without stats', async () => {
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
-      const state = service.newImportState();
-
-      await service.ingest('srv', [line('08:00:00', `UUID of player Steve is ${STEVE}`), line('08:00:01', 'Steve joined the game'), line('08:10:00', 'Steve fell from a high place')], at, state);
-      await service.closeOpenSessions('srv', undefined, state);
-
-      const [live, imported] = await sessions();
-      expect(live.endAt).toBeNull();
-      expect(imported).toMatchObject({ deaths: 1, mobKills: null, baseline: null });
-      expect(imported.endAt?.toISOString()).toBe('2026-09-25T08:10:00.000Z');
-      expect(players.readStats).toHaveBeenCalledTimes(0);
-      expect(players.readInventory).toHaveBeenCalledTimes(0);
-    });
-
-    it('ignores activity from players it never saw join', async () => {
-      await service.ingest('srv', [line('12:00:00', '<Ghost> hi')], at);
-
       expect(await sessions()).toEqual([]);
-      expect(await dataSource.getRepository(ActivityEvent).count()).toBe(1);
     });
 
-    it('forgets cached state on request', async () => {
+    it('knows who is online after a panel restart from the open player-activity sessions', async () => {
+      await openSession('Steve', at('11:00:00'), { uuid: STEVE });
+
+      await service.ingest('srv', [line('12:00:00', 'Steve fell from a high place')], at);
+
+      const [death] = await dataSource.getRepository(ActivityEvent).find();
+      expect(death).toMatchObject({ type: 'death', uuid: STEVE });
+    });
+
+    it('stops treating players as online once the server stops', async () => {
+      await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:30:00', 'Stopping server'), line('12:31:00', 'Steve fell from a high place')], at);
+
+      expect((await dataSource.getRepository(ActivityEvent).find()).map((event) => event.type)).toEqual(['join']);
+    });
+
+    it('reloads who is online after a reset', async () => {
       await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
-      await dataSource.getRepository(PlayerSession).update({ name: 'Steve' }, { endAt: at('12:05:00') });
-      service.forgetLiveState('srv');
+      service.resetLive('srv');
 
-      await service.ingest('srv', [line('12:06:00', 'Steve left the game')], at);
+      await service.ingest('srv', [line('12:01:00', 'Steve fell from a high place')], at);
 
-      expect((await sessions())[0].endAt?.toISOString()).toBe('2026-09-25T12:05:00.000Z');
-    });
-
-    it('closes open sessions at the last event when no time is given', async () => {
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:03:00', '<Steve> bye')], at);
-
-      await service.closeOpenSessions('srv');
-
-      expect((await sessions())[0].endAt?.toISOString()).toBe('2026-09-25T12:03:00.000Z');
+      expect((await dataSource.getRepository(ActivityEvent).find()).map((event) => event.type)).toEqual(['join']);
     });
   });
 
-  describe('finalizeSession', () => {
-    it('clears the baseline even when the stats cannot be read', async () => {
-      players.findUuid.mockResolvedValue(STEVE);
-      players.readStats.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('EACCES'));
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:01:00', 'Steve left the game')], at);
+  describe('history import', () => {
+    it('rebuilds left, rejoined, stopped and unfinished sessions', async () => {
+      const state = service.newImportState();
 
-      await runScheduled();
+      await service.ingest(
+        'srv',
+        [
+          line('08:00:00', `UUID of player Steve is ${STEVE}`),
+          line('08:00:01', 'Steve joined the game'),
+          line('08:10:00', 'Steve left the game'),
+          line('08:20:00', 'Alex joined the game'),
+          line('08:25:00', 'Alex joined the game'),
+          line('08:30:00', 'Stopping server'),
+          line('09:00:00', 'Steve joined the game'),
+          line('09:05:00', '<Steve> last line'),
+        ],
+        at,
+        state,
+      );
+      service.endLog(state);
 
-      expect((await sessions())[0]).toMatchObject({ baseline: null, deaths: 0, mobKills: null });
+      expect(state.closed.map((session) => [session.name, session.uuid, session.joinedAt.toISOString().slice(11, 19), session.leftAt.toISOString().slice(11, 19), session.endReason])).toEqual([
+        ['Steve', STEVE, '08:00:01', '08:10:00', 'left'],
+        ['Alex', null, '08:20:00', '08:25:00', 'interrupted'],
+        ['Alex', null, '08:25:00', '08:30:00', 'interrupted'],
+        ['Steve', STEVE, '09:00:00', '09:05:00', 'interrupted'],
+      ]);
+      expect(players.readStats).not.toHaveBeenCalled();
+      expect(players.readInventory).not.toHaveBeenCalled();
     });
 
-    it('does nothing for unknown or already finalized sessions', async () => {
-      await expect(service.finalizeSession(999)).resolves.toBeUndefined();
+    it('saves only the sessions older than the first recorded one', async () => {
+      await openSession('Steve', at('10:00:00'));
+      const imported = [
+        { name: 'Steve', uuid: STEVE, joinedAt: at('08:00:00'), leftAt: at('08:10:00'), endReason: 'left' as const },
+        { name: 'Steve', uuid: STEVE, joinedAt: at('10:05:00'), leftAt: at('10:10:00'), endReason: 'left' as const },
+      ];
+
+      expect(await service.saveImportedSessions('srv', imported)).toBe(1);
+      expect(await service.saveImportedSessions('srv', [imported[1]])).toBe(0);
+
+      const [, saved] = await sessions();
+      expect(saved).toMatchObject({ playerKey: 'java:steve', uuid: STEVE, endReason: 'left' });
+      expect(saved.lastSeenAt.toISOString()).toBe('2026-09-25T08:10:00.000Z');
     });
 
-    it('skips the stats when the session had no baseline', async () => {
-      players.findUuid.mockResolvedValue(STEVE);
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
-      await dataSource.getRepository(PlayerSession).update({ name: 'Steve' }, { baseline: null });
-      service.forgetLiveState('srv');
-      await service.ingest('srv', [line('12:01:00', 'Steve left the game')], at);
-      players.readStats.mockClear();
+    it('saves everything when nothing was recorded yet', async () => {
+      const imported = [{ name: 'Alex', uuid: null, joinedAt: at('08:00:00'), leftAt: at('08:10:00'), endReason: 'interrupted' as const }];
 
-      await runScheduled();
+      expect(await service.saveImportedSessions('srv', imported)).toBe(1);
+    });
+  });
+
+  describe('session enrichment', () => {
+    it('takes a baseline on join and turns it into deltas on leave', async () => {
+      players.findUuid.mockResolvedValue(STEVE);
+      players.readStats
+        .mockResolvedValueOnce({ 'minecraft:custom': { 'minecraft:deaths': 3, 'minecraft:play_time': 100 }, 'minecraft:mined': { 'minecraft:stone': 10 } })
+        .mockResolvedValueOnce({
+          'minecraft:custom': { 'minecraft:deaths': 4, 'minecraft:mob_kills': 2, 'minecraft:walk_one_cm': 900 },
+          'minecraft:mined': { 'minecraft:stone': 110, 'minecraft:diamond_ore': 3 },
+        });
+      const session = await openSession('Steve', at('12:00:00'));
+
+      await service.beginSession(session.id);
+      expect((await sessions())[0]).toMatchObject({ uuid: STEVE, baseline: { 'minecraft:custom': { 'minecraft:deaths': 3, 'minecraft:play_time': 100 } } });
+
+      await dataSource.getRepository(PlayerSession).update(session.id, { leftAt: at('12:10:00'), endReason: 'left' });
+      await service.finalizeSession(session.id);
+
+      const [done] = await sessions();
+      expect(done).toMatchObject({ deaths: 1, mobKills: 2, blocksMined: 103, distanceCm: 900, baseline: null });
+      expect(done.oreDeltas).toEqual({ 'minecraft:stone': 100, 'minecraft:diamond_ore': 3 });
+    });
+
+    it('counts everything for a player without a stats file yet', async () => {
+      players.findUuid.mockResolvedValue(STEVE);
+      const session = await openSession('Steve', at('12:00:00'));
+
+      await service.beginSession(session.id);
+
+      expect((await sessions())[0].baseline).toEqual({});
+    });
+
+    it('skips unknown, interrupted and unidentified sessions', async () => {
+      const interrupted = await openSession('Alex', at('12:00:00'), { endReason: 'interrupted', leftAt: at('12:01:00') });
+      const unknown = await openSession('Ghost', at('12:00:00'));
+
+      await service.beginSession(999);
+      await service.beginSession(interrupted.id);
+      await service.beginSession(unknown.id);
 
       expect(players.readStats).not.toHaveBeenCalled();
-      expect(players.readInventory).toHaveBeenCalledTimes(2);
+      expect((await sessions()).every((session) => session.baseline === null)).toBe(true);
+    });
+
+    it('clears the baseline even when the stats cannot be read', async () => {
+      players.readStats.mockRejectedValue(new Error('EACCES'));
+      const session = await openSession('Steve', at('12:00:00'), { uuid: STEVE, baseline: {}, leftAt: at('12:01:00'), endReason: 'left' });
+
+      await service.finalizeSession(session.id);
+
+      expect((await sessions())[0]).toMatchObject({ baseline: null, mobKills: null });
+    });
+
+    it('does nothing for unknown sessions and skips stats without a baseline', async () => {
+      await expect(service.finalizeSession(999)).resolves.toBeUndefined();
+      const session = await openSession('Steve', at('12:00:00'), { uuid: STEVE, leftAt: at('12:01:00'), endReason: 'left' });
+
+      await service.finalizeSession(session.id);
+
+      expect(players.readStats).not.toHaveBeenCalled();
+      expect(players.readInventory).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('session event counts', () => {
+    const tracked = async (historyImported = false) => {
+      const repo = dataSource.getRepository(LogCursor);
+      const cursor = await repo.save(repo.create({ serverId: 'srv', headHash: 'x', offset: 0, historyImported }));
+      await repo.update(cursor.serverId, { createdAt: at('09:00:00') });
+    };
+
+    it('counts chat, advancements and deaths inside each covered session', async () => {
+      await tracked();
+      await service.ingest(
+        'srv',
+        [
+          line('10:00:00', 'Steve joined the game'),
+          line('10:01:00', '<Steve> hi'),
+          line('10:02:00', '<Steve> again'),
+          line('10:03:00', 'Steve has made the advancement [Stone Age]'),
+          line('10:04:00', 'Steve fell from a high place'),
+          line('10:30:00', '<Steve> later'),
+        ],
+        at,
+      );
+      const before = await openSession('Steve', at('08:00:00'), { leftAt: at('08:30:00') });
+      const covered = await openSession('Steve', at('10:00:00'), { leftAt: at('10:10:00') });
+
+      const counts = await service.sessionEventCounts('srv', [before, covered]);
+
+      expect(counts.get(covered.id)).toEqual({ chat: 2, advancements: 1, deaths: 1 });
+      expect(counts.has(before.id)).toBe(false);
+    });
+
+    it('covers older sessions once the history was imported', async () => {
+      await tracked(true);
+      const before = await openSession('Steve', at('08:00:00'));
+
+      const counts = await service.sessionEventCounts('srv', [before], at('08:30:00'));
+
+      expect(counts.get(before.id)).toEqual({ chat: 0, advancements: 0, deaths: 0 });
+    });
+
+    it('knows nothing without a log cursor', async () => {
+      const session = await openSession('Steve', at('10:00:00'));
+
+      expect((await service.sessionEventCounts('srv', [session])).size).toBe(0);
     });
   });
 
@@ -221,33 +287,6 @@ describe('ActivityService', () => {
       expect(third.events).toHaveLength(1);
       expect(third.nextCursor).toBeNull();
     });
-
-    it('lists sessions by uuid or by name', async () => {
-      await dataSource.getRepository(PlayerSession).update({ name: 'Steve' }, { uuid: STEVE });
-
-      expect(await service.listSessions('srv', { uuid: STEVE.toUpperCase() })).toHaveLength(1);
-      expect(await service.listSessions('srv', { name: 'Alex' })).toHaveLength(1);
-      expect(await service.listSessions('srv', { uuid: STEVE, name: 'Steve' })).toHaveLength(1);
-      expect(await service.listSessions('srv', {})).toEqual([]);
-    });
-  });
-
-  describe('summarize', () => {
-    it('adds up sessions, weekdays and the play streak', async () => {
-      const repo = dataSource.getRepository(PlayerSession);
-      const base = { serverId: 'srv', name: 'Steve', uuid: STEVE, loggedDeaths: 0, advancements: 0, chatCount: 0 };
-      await repo.save([
-        repo.create({ ...base, startAt: new Date('2026-09-23T10:00:00Z'), endAt: new Date('2026-09-23T11:00:00Z'), deaths: 2 }),
-        repo.create({ ...base, startAt: new Date('2026-09-24T10:00:00Z'), endAt: new Date('2026-09-24T10:30:00Z'), loggedDeaths: 1 }),
-        repo.create({ ...base, startAt: new Date('2026-09-25T10:00:00Z'), endAt: null }),
-      ]);
-
-      const summary = await service.summarize('srv', { uuid: STEVE }, 'UTC', new Date('2026-09-25T10:15:00Z'));
-
-      expect(summary).toMatchObject({ sessions: 3, totalMs: 105 * 60_000, averageMs: 35 * 60_000, longestMs: 60 * 60_000, deaths: 3, streakDays: 3 });
-      expect(summary.playMsByWeekday[3]).toBe(60 * 60_000); // Wednesday
-      expect(await service.summarize('srv', {}, 'UTC')).toMatchObject({ sessions: 0, averageMs: 0, longestMs: 0, streakDays: 0 });
-    });
   });
 
   describe('inventory snapshots', () => {
@@ -262,11 +301,13 @@ describe('ActivityService', () => {
         .mockResolvedValueOnce(inventory('minecraft:dirt', '2026-09-25T12:10:00Z'))
         .mockResolvedValueOnce(inventory('minecraft:stick', '2026-09-25T12:20:00Z'));
 
-      await service.ingest('srv', [line('12:00:00', 'Steve joined the game')], at);
+      const session = await openSession('Steve', at('12:00:00'));
+      await service.beginSession(session.id);
       await service.snapshotOnline('srv');
       await service.snapshotOnline('srv');
       await service.ingest('srv', [line('12:15:00', 'Steve was slain by Zombie'), line('12:20:00', 'Steve left the game')], at);
-      await runScheduled();
+      await dataSource.getRepository(PlayerSession).update(session.id, { leftAt: at('12:20:00'), endReason: 'left' });
+      await service.finalizeSession(session.id);
 
       expect((await snapshots()).map((snapshot) => [snapshot.reason, snapshot.data.inventory[0].id])).toEqual([
         ['join', 'minecraft:diamond'],
@@ -303,34 +344,20 @@ describe('ActivityService', () => {
     });
 
     it('skips online players without a known UUID', async () => {
-      players.findUuid.mockResolvedValue(null);
-      await service.ingest('srv', [line('12:00:00', 'Ghost joined the game')], at);
+      await openSession('Ghost', at('12:00:00'));
       await service.snapshotOnline('srv');
       expect(players.readInventory).not.toHaveBeenCalled();
     });
   });
 
-  it('prunes events and closed sessions past the retention window', async () => {
-    await service.ingest('srv', [line('10:00:00', 'Steve joined the game'), line('10:10:00', 'Steve left the game'), line('10:20:00', 'Alex joined the game')], at);
+  it('prunes events and snapshots past the retention window but keeps sessions', async () => {
+    await service.ingest('srv', [line('10:00:00', 'Steve joined the game'), line('10:10:00', 'Steve left the game')], at);
+    await openSession('Steve', at('10:00:00'), { leftAt: at('10:10:00'), endReason: 'left' });
 
     await service.prune(new Date('2026-10-25T10:15:00Z'));
 
-    expect(await dataSource.getRepository(ActivityEvent).count()).toBe(1);
-    expect((await sessions()).map((session) => session.name)).toEqual(['Alex']);
-  });
-
-  it('prunes sessions that never closed once they are past the retention window', async () => {
-    await service.ingest('srv', [line('10:00:00', 'Steve joined the game')], at);
-
-    await service.prune(new Date('2026-10-20T00:00:00Z'));
+    expect(await dataSource.getRepository(ActivityEvent).count()).toBe(0);
     expect(await sessions()).toHaveLength(1);
-
-    await service.prune(new Date('2026-11-01T00:00:00Z'));
-    expect(await sessions()).toEqual([]);
-
-    // The cached session is gone too: a late leave line must not bring it back
-    await service.ingest('srv', [line('10:05:00', 'Steve left the game')], at);
-    expect(await sessions()).toEqual([]);
   });
 
   it('keeps only the newest events of a server over the cap', async () => {

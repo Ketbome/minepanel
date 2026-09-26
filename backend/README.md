@@ -40,8 +40,17 @@ pnpm test:e2e
 - `src/files/` - file operations
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
+- `src/metrics/` - live resources and tick performance, plus 7-day history. Native
+  NeoForge/CurseForge TPS is an estimate from mean tick time; compatible spark
+  responses provide 1-minute TPS and 10-second median/P95 MSPT. RCON stays inside
+  the container. Missing measurements remain null.
 
 ## References
 
 - Backend agent rules: `backend/AGENTS.md`
 - Root project guide: `Readme.md`
+
+Player activity is collected in `src/player-activity/` every 30 seconds from bounded Docker
+logs, with sessions and cursors persisted atomically in SQLite. Server-authorized list/detail
+endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
+file-size and realpath boundaries. No game files or RCON settings are changed.

@@ -13,7 +13,7 @@ describe('ActivityTailerService', () => {
   let logsDir: string;
   let cursors: Map<string, LogCursor>;
   let cursorRepo: { findOne: jest.Mock; save: jest.Mock; create: jest.Mock; find: jest.Mock; remove: jest.Mock };
-  let activity: { ingest: jest.Mock; closeOpenSessions: jest.Mock; newImportState: jest.Mock; forgetLiveState: jest.Mock; prune: jest.Mock; snapshotOnline: jest.Mock };
+  let activity: { ingest: jest.Mock; resetLive: jest.Mock; newImportState: jest.Mock; endLog: jest.Mock; saveImportedSessions: jest.Mock; prune: jest.Mock; snapshotOnline: jest.Mock };
   let store: { listServerDirs: jest.Mock; readConfig: jest.Mock };
   let service: ActivityTailerService;
 
@@ -37,9 +37,10 @@ describe('ActivityTailerService', () => {
     };
     activity = {
       ingest: jest.fn().mockResolvedValue(1),
-      closeOpenSessions: jest.fn().mockResolvedValue(undefined),
-      newImportState: jest.fn(() => ({ import: true })),
-      forgetLiveState: jest.fn(),
+      resetLive: jest.fn(),
+      newImportState: jest.fn(() => ({ closed: [{ name: 'Steve' }] })),
+      endLog: jest.fn(),
+      saveImportedSessions: jest.fn().mockResolvedValue(0),
       prune: jest.fn().mockResolvedValue(undefined),
       snapshotOnline: jest.fn().mockResolvedValue(undefined),
     };
@@ -111,7 +112,7 @@ describe('ActivityTailerService', () => {
 
       expect(ingestedMessages(0)).toEqual(['Stopping server', 'Steve left the game']);
       expect(activity.ingest.mock.calls[0][2]('10:00:02').toISOString()).toBe('2026-09-25T10:00:02.000Z');
-      expect(activity.closeOpenSessions).toHaveBeenCalledWith('srv');
+      expect(activity.resetLive).toHaveBeenCalledWith('srv');
       expect(ingestedMessages(1)).toEqual(['Starting minecraft server version 1.21.1', 'Alex joined the game']);
     });
 
@@ -122,7 +123,7 @@ describe('ActivityTailerService', () => {
 
       await service.tick(new Date('2026-09-25T10:00:05Z'));
 
-      expect(activity.closeOpenSessions).toHaveBeenCalled();
+      expect(activity.resetLive).toHaveBeenCalled();
       expect(cursors.get('srv')?.offset).toBe(HEADER.length);
     });
 
@@ -184,10 +185,9 @@ describe('ActivityTailerService', () => {
       expect(cursors.get('fresh')).toMatchObject({ headHash: '', offset: 0 });
     });
 
-    it('closes sessions when disabled', async () => {
+    it('forgets who is online when disabled', async () => {
       await service.setTracking('srv', false, 'UTC');
-      expect(activity.closeOpenSessions).toHaveBeenCalledWith('srv', expect.any(Date));
-      expect(activity.forgetLiveState).toHaveBeenCalledWith('srv');
+      expect(activity.resetLive).toHaveBeenCalledWith('srv');
     });
 
     it('rejects invalid server ids', async () => {
@@ -213,7 +213,8 @@ describe('ActivityTailerService', () => {
       expect(toDate('23:59:00').toISOString()).toBe('2026-09-20T23:59:00.000Z');
       expect(toDate('00:01:00').toISOString()).toBe('2026-09-21T00:01:00.000Z');
       expect(ingestedMessages(2)).toEqual(['Alex joined the game']);
-      expect(activity.closeOpenSessions).toHaveBeenCalledWith('srv', undefined, { import: true });
+      expect(activity.endLog).toHaveBeenCalledTimes(3);
+      expect(activity.saveImportedSessions).toHaveBeenCalledWith('srv', [{ name: 'Steve' }, { name: 'Steve' }, { name: 'Steve' }]);
       await expect(service.importHistory('srv', 'UTC')).rejects.toBeInstanceOf(ConflictException);
     });
 

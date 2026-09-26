@@ -45,18 +45,6 @@ export class ActivityEventsQueryDto {
   limit?: number;
 }
 
-export class PlayerSessionsQueryDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(36)
-  uuid?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(64)
-  name?: string;
-}
-
 export class UpdateActivitySettingsDto {
   @IsBoolean()
   enabled: boolean;

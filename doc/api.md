@@ -235,6 +235,22 @@ Examples:
 - `DELETE /users/:id`
 - `POST /users/change-password`
 
+### Server monitoring
+
+Both endpoints require authentication and access to the requested server.
+
+- `GET /metrics/:id/live` — resource usage, players, uptime, timestamp and tick
+  measurements, cached for 10 seconds with concurrent request deduplication.
+  `tickStatus` is `available`, `offline`, `unsupported`, `rcon_disabled`,
+  `spark_missing`, or `unavailable`. `tickSource` is `neoforge`, `spark`, or null.
+  NeoForge returns estimated `tps` and `msptMean`; spark returns 1-minute `tps`,
+  `msptMedian` and `msptP95` over 10 seconds. Unavailable values are null.
+- `GET /metrics/:id/history?hours=24` — `{ serverId, hours, points }`, with the
+  window clamped to 1–168 hours. Points contain `timestamp`, `cpuPercent`,
+  `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,
+  `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
+  Samples are collected every minute and retained for 7 days.
+
 ### Players
 
 Read-only player data from a Java server's world files (works while the server is stopped).
@@ -257,11 +273,10 @@ Activity log built from the server log (Java, opt-in per server). Requires acces
 - `GET /activity/:serverId/settings` / `PUT /activity/:serverId/settings` (`{ enabled }`) — turns
   tracking on or off; stored as `activityTracking` in `server.json` and ignored by `PUT /servers/:id`
 - `POST /activity/:serverId/import-history` — reads archived logs older than tracking, once
-  (`409` on a second call, `400` when tracking is off)
+  (`409` on a second call, `400` when tracking is off); also adds the sessions older than the first
+  one `player-activity` recorded
 - `GET /activity/:serverId/events?types=chat,death&name=&q=&from=&to=&before=&limit=` — newest
   first, paged by `nextCursor`; needs the **view logs** permission
-- `GET /activity/:serverId/sessions?uuid=&name=` and `.../sessions/summary?uuid=&name=` — one
-  player's sessions and totals (`uuid` or `name` required)
 - `GET /activity/:serverId/players/:uuid/snapshots` — inventory snapshots, newest first, each with
   the death it precedes (if any); `GET /activity/:serverId/snapshots/:id` — one snapshot's items
 
@@ -412,3 +427,23 @@ Validation errors usually come from NestJS validation pipes.
 - [Architecture](/architecture)
 - [Configuration](/configuration)
 - [Development](/development)
+
+## Player activity
+
+Authentication and access to the selected server are required.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/servers/:id/player-activity?page=0` | Recorded player summaries, newest observation first |
+| GET | `/servers/:id/player-activity/:key?page=0` | Profile, saved Java world statistics, session summary (average, longest, weekday totals, day streak, known deaths) and session history. Sessions of Java servers with the activity log on also carry stat deltas and `events` (chat, advancements, deaths); both are null otherwise |
+
+Pages are zero-based with 25 items and `hasMore`. Player keys are returned by the list;
+URL-encode them when requesting details (`java:alex` or `bedrock:<XUID>`).
+Both responses include `status` (`collecting`, `offline`, `unavailable`) and `sampledAt`.
+Profiles include `firstSeen`, `lastSeen`, `sessionCount`, `totalSeconds`, and nullable `online`.
+Sessions include `joinedAt`, `lastSeenAt`, nullable `leftAt`, `durationSeconds`, and nullable
+`endReason` (`left`, `interrupted`). An interrupted session ends at its last observation,
+not a known logout time. Unknown presence and unavailable statistics are null.
+
+Collection runs every 30 seconds from Docker logs; opening these endpoints does not run
+Docker commands. See [player activity limitations](/features#player-profiles-and-session-history).

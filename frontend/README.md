@@ -49,3 +49,19 @@ pnpm lint
 
 - Frontend agent rules: `frontend/AGENTS.md`
 - Root project guide: `Readme.md`
+
+## Server monitoring
+
+The Metrics tab combines live TPS/MSPT, container CPU/RAM and player count with
+1–168 hour history. NeoForge/ATM10 uses the native overall tick report, explicitly
+labelled as estimated TPS and mean MSPT. Compatible spark servers expose measured
+TPS and median/P95 durations. The view identifies disabled RCON, unavailable
+measurements and unsupported Bedrock ticks; resource charts remain available.
+Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Existing Discord alert
+settings remain below the charts.
+
+**Players** shows persistent player profiles and paginated sessions for both editions,
+including offline players: on Java inside each profile's Sessions tab (`PlayerSessions`), on
+Bedrock as the session list itself (`player-activity.tsx`). Saved Java world statistics are shown separately
+from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
+30 seconds after completion; unknown presence is explicitly labeled.

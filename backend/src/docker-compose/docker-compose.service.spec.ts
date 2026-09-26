@@ -749,6 +749,23 @@ describe('DockerComposeService', () => {
       expect((service as any).parseRestart(undefined)).toEqual({ restartPolicy: 'no' });
     });
 
+    it('should merge compose snippets into the generated file', async () => {
+      const config = (service as any).createDefaultConfig('snippet-server');
+      config.composeSnippets = [
+        { target: 'mc', yaml: 'networks:\n  custom: {}' },
+        { target: 'root', yaml: 'networks:\n  custom:\n    external: true' },
+      ];
+
+      await service.generateDockerComposeFile(config, false);
+
+      const [, yamlContent] = (fs.writeFile as unknown as jest.Mock).mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.networks).toEqual({ custom: {} });
+      expect(parsed.networks).toEqual({ custom: { external: true } });
+      expect(parsed.services.mc.image).toBeDefined();
+    });
+
     it('should generate valid yaml for docker labels with urls when proxy labels are also present', async () => {
       const config = (service as any).createDefaultConfig('label-server');
       config.dockerLabels = 'example.label=https://example.com/icon.png';

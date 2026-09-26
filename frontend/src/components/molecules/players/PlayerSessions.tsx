@@ -1,12 +1,14 @@
 import { FC, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { getPlayerSessions, getSessionSummary, PlayerRef, PlayerSession, SessionSummary } from "@/services/activity/activity.service";
+import { getPlayerDetail, PlayerDetail } from "@/services/player-activity/player-activity.service";
 import { formatDuration } from "./player-format";
 
 interface PlayerSessionsProps {
   serverId: string;
-  player: PlayerRef;
+  // Java session history is keyed by name, like the server log it is read from
+  name: string | null;
 }
 
 // 2026-09-20 was a Sunday; the backend buckets weekdays the same way (0 = Sunday)
@@ -19,33 +21,26 @@ const Stat: FC<{ label: string; value: string | number }> = ({ label, value }) =
   </div>
 );
 
-export const PlayerSessions: FC<PlayerSessionsProps> = ({ serverId, player }) => {
+export const PlayerSessions: FC<PlayerSessionsProps> = ({ serverId, name }) => {
   const { t, language } = useLanguage();
-  const [summary, setSummary] = useState<SessionSummary | null>(null);
-  const [sessions, setSessions] = useState<PlayerSession[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const { uuid, name } = player;
+  const [page, setPage] = useState(0);
+  const [detail, setDetail] = useState<PlayerDetail | null>(null);
+  const [loading, setLoading] = useState(Boolean(name));
 
   useEffect(() => {
-    let cancelled = false;
+    if (!name) return;
+    const controller = new AbortController();
     setLoading(true);
-    Promise.all([getSessionSummary(serverId, { uuid, name }), getPlayerSessions(serverId, { uuid, name })])
-      .then(([nextSummary, nextSessions]) => {
-        if (cancelled) return;
-        setSummary(nextSummary);
-        setSessions(nextSessions);
-      })
+    getPlayerDetail(serverId, `java:${name.toLowerCase()}`, page, controller.signal)
+      .then(setDetail)
       .catch(() => {
-        if (!cancelled) setSummary(null);
+        if (!controller.signal.aborted) setDetail(null);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [serverId, uuid, name]);
+    return () => controller.abort();
+  }, [serverId, name, page]);
 
   if (loading) {
     return (
@@ -54,19 +49,21 @@ export const PlayerSessions: FC<PlayerSessionsProps> = ({ serverId, player }) =>
       </div>
     );
   }
-  if (!summary || summary.sessions === 0) {
+  if (!detail || detail.profile.sessionCount === 0) {
     return <p className="text-gray-500 text-sm py-6">{t("noSessions")}</p>;
   }
 
-  const maxWeekday = Math.max(...summary.playMsByWeekday, 1);
+  const { profile, summary, sessions } = detail;
+  const maxWeekday = Math.max(...summary.playSecondsByWeekday, 1);
+  const unknown = (value: number | null | undefined) => value ?? "—";
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        <Stat label={t("totalSessions")} value={summary.sessions} />
-        <Stat label={t("playTime")} value={formatDuration(summary.totalMs)} />
-        <Stat label={t("averageSession")} value={formatDuration(summary.averageMs)} />
-        <Stat label={t("longestSession")} value={formatDuration(summary.longestMs)} />
+        <Stat label={t("totalSessions")} value={profile.sessionCount} />
+        <Stat label={t("playTime")} value={formatDuration(profile.totalSeconds * 1000)} />
+        <Stat label={t("averageSession")} value={formatDuration(summary.averageSeconds * 1000)} />
+        <Stat label={t("longestSession")} value={formatDuration(summary.longestSeconds * 1000)} />
         <Stat label={t("playStreak")} value={summary.streakDays} />
       </div>
 
@@ -74,8 +71,8 @@ export const PlayerSessions: FC<PlayerSessionsProps> = ({ serverId, player }) =>
         <p className="text-xs text-gray-400 mb-2">{t("playByWeekday")}</p>
         <div className="flex items-end gap-2 h-24">
           {[1, 2, 3, 4, 5, 6, 0].map((day) => (
-            <div key={day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end" title={formatDuration(summary.playMsByWeekday[day])}>
-              <div className="w-full bg-emerald-500/70" style={{ height: `${(summary.playMsByWeekday[day] / maxWeekday) * 100}%` }} />
+            <div key={day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end" title={formatDuration(summary.playSecondsByWeekday[day] * 1000)}>
+              <div className="w-full bg-emerald-500/70" style={{ height: `${(summary.playSecondsByWeekday[day] / maxWeekday) * 100}%` }} />
               <span className="text-[10px] text-gray-400">{weekdayLabel(day, language)}</span>
             </div>
           ))}
@@ -99,21 +96,33 @@ export const PlayerSessions: FC<PlayerSessionsProps> = ({ serverId, player }) =>
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id} className="border-b border-gray-800 text-gray-200 tabular-nums">
-                <td className="px-2 py-1.5">{new Date(session.startAt).toLocaleString(language)}</td>
+                <td className="px-2 py-1.5">{new Date(session.joinedAt).toLocaleString(language)}</td>
                 <td className="px-2 py-1.5 text-right">
-                  {session.endAt ? formatDuration(new Date(session.endAt).getTime() - new Date(session.startAt).getTime()) : <span className="text-emerald-400">{t("online")}</span>}
+                  {session.endReason === null ? <span className="text-emerald-400">{t("online")}</span> : formatDuration(session.durationSeconds * 1000)}
                 </td>
-                <td className="px-2 py-1.5 text-right">{session.deaths ?? session.loggedDeaths}</td>
-                <td className="px-2 py-1.5 text-right">{session.mobKills ?? "—"}</td>
-                <td className="px-2 py-1.5 text-right">{session.playerKills ?? "—"}</td>
-                <td className="px-2 py-1.5 text-right">{session.blocksMined ?? "—"}</td>
-                <td className="px-2 py-1.5 text-right">{session.chatCount}</td>
-                <td className="px-2 py-1.5 text-right">{session.advancements}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.deaths ?? session.events?.deaths)}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.mobKills)}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.playerKills)}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.blocksMined)}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.events?.chat)}</td>
+                <td className="px-2 py-1.5 text-right">{unknown(session.events?.advancements)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {(page > 0 || detail.hasMore) && (
+        <div className="flex items-center justify-end gap-3">
+          <Button type="button" variant="minepanelOutline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            {t("paPrevious")}
+          </Button>
+          <span className="text-sm tabular-nums text-gray-300">{page + 1}</span>
+          <Button type="button" variant="minepanelOutline" size="sm" disabled={!detail.hasMore} onClick={() => setPage(page + 1)}>
+            {t("paNext")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

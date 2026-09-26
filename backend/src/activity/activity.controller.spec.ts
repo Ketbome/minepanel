@@ -1,10 +1,10 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ActivityController } from './activity.controller';
 
 describe('ActivityController', () => {
   const req = { user: { userId: 1 } };
   const user = { id: 1 };
-  let activity: { listEvents: jest.Mock; listSessions: jest.Mock; summarize: jest.Mock; listSnapshots: jest.Mock; getSnapshot: jest.Mock };
+  let activity: { listEvents: jest.Mock; listSnapshots: jest.Mock; getSnapshot: jest.Mock };
   let tailer: { setTracking: jest.Mock; getCursor: jest.Mock; importHistory: jest.Mock };
   let store: { readConfig: jest.Mock; updateConfig: jest.Mock };
   let access: { assertServerAccess: jest.Mock; assertViewLogs: jest.Mock };
@@ -13,8 +13,6 @@ describe('ActivityController', () => {
   beforeEach(() => {
     activity = {
       listEvents: jest.fn().mockResolvedValue({ events: [] }),
-      listSessions: jest.fn().mockResolvedValue([]),
-      summarize: jest.fn().mockResolvedValue({ sessions: 0 }),
       listSnapshots: jest.fn().mockResolvedValue([]),
       getSnapshot: jest.fn().mockResolvedValue({ id: 3 }),
     };
@@ -64,15 +62,6 @@ describe('ActivityController', () => {
     expect(activity.listEvents).toHaveBeenCalledWith('srv', { types: ['chat'] });
   });
 
-  it('requires a player for sessions', async () => {
-    await expect(controller.listSessions(req, 'srv', {})).rejects.toBeInstanceOf(BadRequestException);
-    await expect(controller.summarizeSessions(req, 'srv', {})).rejects.toBeInstanceOf(BadRequestException);
-
-    await controller.listSessions(req, 'srv', { name: 'Steve' });
-    await controller.summarizeSessions(req, 'srv', { uuid: 'u' });
-    expect(activity.summarize).toHaveBeenCalledWith('srv', { uuid: 'u' }, 'Europe/Madrid');
-  });
-
   it('lists and reads inventory snapshots', async () => {
     expect(await controller.listSnapshots(req, 'srv', 'u')).toEqual([]);
     expect(await controller.getSnapshot(req, 'srv', 3)).toEqual({ id: 3 });
@@ -80,9 +69,6 @@ describe('ActivityController', () => {
   });
 
   it('falls back to UTC when the config has no time zone', async () => {
-    store.readConfig.mockResolvedValue({});
-    await controller.summarizeSessions(req, 'srv', { name: 'Steve' });
-    expect(activity.summarize).toHaveBeenCalledWith('srv', { name: 'Steve' }, 'UTC');
     store.updateConfig.mockResolvedValue({ id: 'srv' });
     await controller.updateSettings(req, 'srv', { enabled: false });
     expect(tailer.setTracking).toHaveBeenCalledWith('srv', false, 'UTC');

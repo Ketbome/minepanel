@@ -7,7 +7,7 @@ import { gunzipSync } from 'node:zlib';
 import * as fs from 'fs-extra';
 import { Repository } from 'typeorm';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
-import { ActivityService } from './activity.service';
+import { ActivityService, ImportedSession } from './activity.service';
 import { LogCursor } from './entities/log-cursor.entity';
 import { LogLine, parseLogLine } from './log-line.parser';
 import { addDays, resolveLiveTime, resolveTimeAfter, zonedToUtc } from './log-time';
@@ -87,7 +87,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Turning tracking on starts from the end of the current log: earlier lines only carry a time
-  // of day and could be days old. Turning it off closes the sessions it can no longer follow.
+  // of day and could be days old.
   async setTracking(serverId: string, enabled: boolean, tz: string): Promise<void> {
     this.assertServerId(serverId);
     if (enabled) {
@@ -99,8 +99,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
       this.tracked.set(serverId, tz);
     } else {
       this.tracked.delete(serverId);
-      await this.activityService.closeOpenSessions(serverId, new Date());
-      this.activityService.forgetLiveState(serverId);
+      this.activityService.resetLive(serverId);
     }
   }
 
@@ -123,6 +122,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
     const names = (await fs.readdir(logsDir).catch(() => [] as string[])).filter((name) => ARCHIVE_NAME.test(name)).sort(compareArchives);
     let imported = 0;
     let files = 0;
+    const sessions: ImportedSession[] = [];
 
     for (const name of names) {
       const file = path.join(logsDir, name);
@@ -142,16 +142,18 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
       };
       const lines = toLogLines(gunzipSync(await fs.readFile(file)).toString('utf8'));
       imported += await this.activityService.ingest(serverId, lines, toDate, state);
-      await this.activityService.closeOpenSessions(serverId, undefined, state);
+      this.activityService.endLog(state);
+      sessions.push(...state.closed);
       files += 1;
     }
+    await this.activityService.saveImportedSessions(serverId, sessions);
 
     cursor.historyImported = true;
     await this.cursorRepo.save(cursor);
     return { imported, files };
   }
 
-  // Cursors of deleted servers; their events and sessions expire with the TTL
+  // Cursors of deleted servers; their events expire with the TTL
   private async pruneCursors(): Promise<void> {
     const servers = new Set(await this.store.listServerDirs());
     const orphans = (await this.cursorRepo.find()).filter((cursor) => !servers.has(cursor.serverId));
@@ -182,7 +184,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
     const offsetBefore = cursor.offset;
     if (cursor.headHash !== head.hash || head.size < cursor.offset) {
       await this.drainRotated(serverId, cursor, tz);
-      await this.activityService.closeOpenSessions(serverId);
+      this.activityService.resetLive(serverId);
       cursor.headHash = head.hash;
       cursor.offset = 0;
     }

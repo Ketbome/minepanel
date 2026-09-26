@@ -127,6 +127,54 @@ sudo ufw allow 25565/tcp
 sudo ufw allow 19132/udp
 ```
 
+## Custom Compose Snippets
+
+The panel generates each server's `docker-compose.yml` from `server.json`, so edits made
+to that file by hand are overwritten on the next save. For settings the panel has no field
+for (an extra Docker network, `dns`, `extra_hosts`, a sidecar service...), open the server's
+**Advanced** tab and add a **Compose Snippet**.
+
+Each snippet has a placement and some YAML:
+
+| Placement | Merged into | Typical use |
+| --- | --- | --- |
+| Top level | the root of the compose file | `networks:`, `volumes:`, `x-` extension fields |
+| Services | the `services:` map | add a sidecar service next to the server |
+| Minecraft service | `services.mc` | `networks`, `dns`, `extra_hosts`, `cap_add`... |
+
+Example: attach the server to an existing external network. Add two snippets.
+
+```yaml
+# placement: Top level
+networks:
+  my-network:
+    external: true
+```
+
+```yaml
+# placement: Minecraft service
+networks:
+  my-network: {}
+```
+
+How snippets are merged, in the order they are listed:
+
+- Maps are merged key by key, so a snippet adds to what the panel generated.
+- Lists are appended (a duplicate entry is not added twice).
+- Any other value replaces the panel's. That includes a value of a different type: a
+  list-form `networks:` replaces the panel's map-form one, which drops the proxy network.
+  Use the map form, as above.
+
+::: warning Advanced and fragile
+A snippet can override anything the panel manages (image, ports, volumes, labels), and the
+panel does not check that the result is a valid compose file. A wrong snippet can stop the
+server from starting; remove it and save again to recover. Snippets are also a way to
+mount host paths or run privileged containers, so only admins can edit them (see
+[Admin-only container settings](/administration#admin-only-container-settings)).
+:::
+
+A snippet must be valid YAML and a single mapping; the panel refuses to save it otherwise.
+
 ## SSL/HTTPS
 
 <NetworkPulseFlow />

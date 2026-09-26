@@ -8,6 +8,7 @@ import * as path from 'node:path';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
+import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
 
 const GENERATED_FILE_HEADER = [
@@ -1488,6 +1489,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
     if (normalizedConfig.enableBackup) {
       await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir, useProxy);
     }
+
+    applyComposeSnippets(dockerComposeConfig, normalizedConfig.composeSnippets);
 
     const yamlContent = yaml.dump(dockerComposeConfig, { lineWidth: -1 });
 

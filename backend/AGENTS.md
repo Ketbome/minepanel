@@ -26,10 +26,11 @@ backend/src/
 |- proxy/                   mc-router routes.json generation
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
-|- metrics/                 Per-server CPU/RAM history (1-min sampler, query API)
+|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
 |- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
+|- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
-|- activity/                Opt-in activity log: tails logs/latest.log into events and player sessions
+|- activity/                Opt-in activity log: tails logs/latest.log into events and inventory snapshots
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
@@ -168,6 +169,13 @@ Path and filesystem patterns (critical):
   `server.json` from a server that never had one, so the caller re-imports from the
   generated `docker-compose.yml` and silently drops everything compose does not
   round-trip.
+- `composeSnippets` (`ServerConfigDto`) is raw compose YAML merged into the generated
+  document by `applyComposeSnippets` (`src/common/compose/compose-snippets.ts`) as the last
+  step of `generateDockerComposeFile`. It is structural (parsed and deep-merged), never text
+  concatenation, so it cannot emit duplicate keys. It is admin-only in both
+  `ADMIN_ONLY_*` lists in the controller, since it can mount host paths or add privileged
+  services, and the controller validates it on create/update so a bad snippet is rejected
+  at save rather than at start.
 - Per-server canonical layout is:
   - `/app/servers/<serverId>/server.json` (source of truth)
   - `/app/servers/<serverId>/docker-compose.yml` (generated)
@@ -216,12 +224,15 @@ Path and filesystem patterns (critical):
   the cursor when it moved: sql.js rewrites the whole database on every save.
 - `src/activity/log-line.parser.ts` - vanilla, Paper and Forge line prefixes. Deaths are any INFO line
   starting with an online player's name that matches nothing else; add exclusions to `NOT_DEATH`.
-- `src/activity/activity.service.ts` - sessions keep a stats `baseline` while open so a panel restart
-  can still compute deltas; imports use their own state (`newImportState`) and never touch live sessions.
+- `src/activity/activity.service.ts` - never creates live sessions: `player-activity` owns
+  `player_sessions` and calls `beginSession` (uuid, stats `baseline`, join snapshot) and
+  `finalizeSession` (deltas, leave snapshot) for Java servers with the log on. The baseline is kept
+  while the session is open so a panel restart can still compute deltas. History imports use their
+  own state (`newImportState`) and only save sessions older than the first recorded one.
   Inventory snapshots are deduplicated by content hash and capped at 50 per player.
-  Every table it writes has a TTL (`RETENTION_DAYS`, pruned hourly, open sessions included) and
-  events have a per-server cap (`MAX_EVENTS_PER_SERVER`): sql.js holds the whole DB in RAM.
-  New activity data must get the same treatment.
+  Events and snapshots have a TTL (`RETENTION_DAYS`, pruned hourly) and events have a per-server
+  cap (`MAX_EVENTS_PER_SERVER`): sql.js holds the whole DB in RAM. New activity data must get the
+  same treatment.
 - `src/files/files.service.ts` - path validation and file API boundaries.
 - `src/files/files.controller.ts` - upload/download API behavior.
 - `src/world-discovery/world-discovery.service.ts` - `.world` library import path and
@@ -307,6 +318,18 @@ Runtime stats (`/servers/:id/runtime-stats`, `/servers/all-runtime-stats`):
   add a docker spawn per server per request.
 - Bedrock permission fix depends on host path mount and UID/GID from compose; do not break this flow.
 
+Monitoring (`src/metrics/`):
+
+- `monitoring.service.ts` shares a 10s cache and in-flight requests between live views and
+  the sampler. Native `neoforge tps` is tried first for NeoForge/CurseForge; spark is
+  used where it returns usable RCON output (its async commands can return empty).
+- Native TPS is estimated from tick duration. Persist `tickSource` and keep native
+  `msptMean` separate from spark `msptMedian`/`msptP95`; never silently mix statistics.
+- Read only the overall NeoForge row, not a dimension. Fixed commands execute via
+  container-local `rcon-cli` with a timeout; credentials never reach the browser.
+- Failed, stopped, unsupported and RCON-disabled probes have null tick values.
+  Bedrock keeps CPU/RAM/player monitoring. Historical columns are nullable for old rows.
+
 ## Required AGENTS.md Content
 
 Every backend AGENTS update must include:
@@ -329,3 +352,10 @@ Every backend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `backend/AGENTS.md` and `backend/README.md` updated whenever backend workflow, architecture, commands, or conventions change.
+
+Player activity (`src/player-activity/`): commit session changes and the log cursor in one
+transaction. Bound Docker log windows to 10,001 lines; overflow is an unknown interval.
+Boot changes and gaps over two minutes interrupt open sessions at the last observation.
+Do not parse chat as join/leave events. Java identity is name-based; Bedrock uses XUID.
+`player-stats.service.ts` must keep realpath containment, file-size limits, and UUID validation;
+never expose raw player/world files through the activity API.

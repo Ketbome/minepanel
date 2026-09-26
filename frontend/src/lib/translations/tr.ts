@@ -1,6 +1,40 @@
 import type { TranslationKey } from './en';
 
 export const tr: Record<TranslationKey, string> = {
+  paTitle: "Oyuncular",
+  paPrevious: "Önceki",
+  paNext: "Sonraki",
+  paFirstSeen: "İlk görülme",
+  paLastSeen: "Son görülme",
+  paRecordedTime: "Kaydedilen oyun süresi",
+  paSessions: "Oturumlar",
+  paIdentityNote: "Java geçmişi oyuncu adına, Bedrock geçmişi XUID kimliğine göre tutulur.",
+  paSavedStats: "Kaydedilmiş dünya istatistikleri",
+  paUpdated: "Güncelleme",
+  paWorldTime: "Dünyadaki oyun süresi",
+  paDeaths: "Ölümler",
+  paMobKills: "Öldürülen yaratıklar",
+  paPlayerKills: "Öldürülen oyuncular",
+  paBlocksMined: "Kazılan bloklar",
+  paStatsNote: "Dünya toplamları Minecraft’ın son kaydından alınır ve paneldeki oturum süresinden ayrıdır.",
+  paStatsUnavailable: "İstatistikler alınamıyor. Java dünya istatistikleri ve eşleşen oyuncu önbelleği kaydı gerekir.",
+  paJoined: "Giriş",
+  paLeft: "Çıkış / son gözlem",
+  paDuration: "Süre (sa:dk:sn)",
+  paStatus: "Durum",
+  paInterrupted: "Kesintili",
+  paCompleted: "Tamamlandı",
+  paActive: "Aktif",
+  paUnknown: "Bilinmiyor",
+  paDescription: "Çevrimdışı oyuncular dahil oyuncu profilleri ve oturum geçmişi.",
+  paTrackingNote: "Sunucu giriş/çıkış logları her 30 saniyede okunur. İlk çalıştırmada mevcut logların son 24 saati taranır. Eksik loglar ve kesintiler boşluk bırakabilir; kaydedilen süre toplam yaşam boyu oyun süresi değildir.",
+  paUnavailable: "Takip kullanılamıyor veya güncel değil. Çevrimiçi durumu bilinmiyor.",
+  paError: "Oyuncu etkinliği yüklenemedi. Otomatik olarak yeniden denenecek.",
+  paPlayer: "Oyuncu",
+  paOnline: "Çevrimiçi",
+  paOffline: "Çevrimdışı",
+  paEmpty: "Henüz oturum kaydı yok. Oyuncular kaydedilen bir girişten sonra görünür.",
+
   // ===========================
   // AUTHENTICATION
   // ===========================
@@ -23,24 +57,20 @@ export const tr: Record<TranslationKey, string> = {
   createAdminAccount: 'Yönetici hesabı oluştur',
   setupComplete: 'İlk kurulum tamamlandı',
   setupError: 'İlk kurulum tamamlanamadı',
-  serverUnavailable: 'Bağlanılamıyor',
-  serverUnavailableDesc:
-    'Görünüşe göre bir yapılandırma sorunu var. Backend adresinin doğru ayarlandığını, sunucunun çalıştığını veya bir DNS sorunu olup olmadığını kontrol edin.',
+  serverUnavailable: 'Bağlantı kurulamıyor',
+  serverUnavailableDesc: 'Bir yapılandırma sorunu olabilir. Arka uç adresinin doğru ayarlandığını, sunucunun çalıştığını ve DNS sorunu olmadığını kontrol edin.',
   checkingServerStatus: 'Bağlantı kontrol ediliyor...',
   cannotConnectToServer: 'Sunucuya bağlanılamıyor',
-  cannotConnectToServerDesc:
-    'Uygulama backend sunucusuyla bağlantı kuramıyor. Lütfen yapılandırmanızı doğrulayın.',
+  cannotConnectToServerDesc: 'Uygulama arka uç sunucusuna bağlanamıyor. Lütfen yapılandırmanızı kontrol edin.',
   troubleshootingSteps: 'Sorun giderme adımları',
-  checkBackendUrl: 'Backend adresini kontrol edin',
-  checkBackendUrlDesc:
-    'NEXT_PUBLIC_BACKEND_URL ortam değişkeninin doğru yapılandırıldığını doğrulayın',
+  checkBackendUrl: 'Arka uç adresini kontrol edin',
+  checkBackendUrlDesc: 'NEXT_PUBLIC_BACKEND_URL ortam değişkeninin doğru yapılandırıldığını doğrulayın.',
   checkServerRunning: 'Sunucu durumunu doğrulayın',
-  checkServerRunningDesc:
-    'Backend sunucusunun çalıştığından ve ayarlanan portta erişilebilir olduğundan emin olun',
+  checkServerRunningDesc: 'Arka uç sunucusunun çalıştığından ve yapılandırılan portta erişilebilir olduğundan emin olun.',
   checkDNS: 'DNS/Ağ kontrolü',
-  checkDNSDesc: 'Bağlantıyı engelleyen bir DNS veya güvenlik duvarı sorunu olmadığını doğrulayın',
-  needMoreHelp: 'Daha fazla yardım mı lazım?',
-  needMoreHelpDesc: 'Belgelere göz atın veya destek ekibiyle iletişime geçin',
+  checkDNSDesc: 'Bağlantıyı engelleyen bir DNS veya güvenlik duvarı sorunu olmadığını doğrulayın.',
+  needMoreHelp: 'Daha fazla yardıma mı ihtiyacınız var?',
+  needMoreHelpDesc: 'Belgelere göz atın veya destek ekibiyle iletişime geçin.',
   retryConnection: 'Bağlantıyı yeniden dene',
   retrying: 'Yeniden deneniyor...',
 
@@ -150,15 +180,14 @@ export const tr: Record<TranslationKey, string> = {
   serverNeoforge:
     "NeoForge ile mod desteği sunan sunucu. Kullanılacak NeoForge sürümünün ayrıca belirtilmesi gerekir.",
   serverCurseForge:
-    "CurseForge modpacklerini otomatik olarak kurar. Modpackin bağlantısı veya kısa adı (slug) ile yapılandırılabilir.",
-  serverCurseForgeManual:
-    'CurseForge modpackleri için elle kurulum modu. Önceden yüklenmiş ZIP dosyalarını kullanır. Artık kullanılmayan bir özellik; CurseForge Modpack seçeneğini öneririz.',
+    "CurseForge mod paketlerini otomatik olarak kurar. Mod paketinin bağlantısı veya kısa adı (slug) ile yapılandırılabilir.",
+  serverCurseForgeManual: 'CurseForge mod paketleri için elle kurulum modu; önceden yüklenmiş ZIP dosyalarını kullanır. Bu özellik kullanımdan kaldırılmıştır; bunun yerine CurseForge Modpack seçeneğini kullanmanızı öneririz.',
   serverModrinth:
-    "Modrinth modpacklerini otomatik olarak kurar. Modpackin bağlantısı veya kısa adı (slug) ile yapılandırılabilir.",
+    "Modrinth mod paketlerini otomatik olarak kurar. Mod paketinin bağlantısı veya kısa adı (slug) ile yapılandırılabilir.",
   serverGtnh:
-    'GT New Horizons paketini kendine özel konteyner modu ve bu modpack için önerilen varsayılanlarla kurar.',
+    'GT New Horizons paketini kendine özel konteyner modu ve bu mod paketi için önerilen varsayılanlarla kurar.',
   serverFtba:
-    "Bir Feed The Beast (FTB) modpackini kimliğine göre otomatik kurar. Paket kendi Minecraft ve yükleyici sürümünü belirler.",
+    "Bir Feed The Beast (FTB) mod paketini kimliğine göre otomatik kurar. Paket kendi Minecraft ve yükleyici sürümünü belirler.",
   serverSpigot: 'Bukkit eklentileriyle uyumlu, optimize edilmiş sunucu',
   serverPaper: "Spigot tabanlı, ek optimizasyonlar içeren yüksek performanslı sunucu",
   serverBukkit: 'Standart eklenti API desteği sunan klasik sunucu',
@@ -191,7 +220,7 @@ export const tr: Record<TranslationKey, string> = {
   noServersDesc: 'Başlamak için ilk sunucunuzu oluşturun',
   noServersAvailable: 'Kullanılabilir sunucu yok',
   noServersAvailableDesc: 'Maceraya başlamak için ilk sunucunuzu oluşturun',
-  createFirstServer: 'İlk sunucumu oluştur',
+  createFirstServer: 'İlk sunucuyu oluştur',
   createNewServer: 'Yeni sunucu oluştur',
   systemActive: 'Sistem etkin',
   admin: 'Yönetici',
@@ -236,7 +265,7 @@ export const tr: Record<TranslationKey, string> = {
   apiSettings: 'API ayarları',
   apiSettingsDesc: 'Dış entegrasyonlar için API anahtarlarını yapılandırın',
   curseforgeApiKey: 'CurseForge API anahtarı',
-  curseforgeApiKeyDesc: "CurseForge'dan mod ve modpack indirmek için API anahtarı",
+  curseforgeApiKeyDesc: "CurseForge'dan mod ve mod paketi indirmek için API anahtarı",
   importFromSettings: 'Ayarlardan içe aktar',
   apiKeyImported: 'API anahtarı başarıyla içe aktarıldı',
   noApiKeyConfigured: 'Ayarlarda yapılandırılmış API anahtarı yok',
@@ -299,7 +328,7 @@ export const tr: Record<TranslationKey, string> = {
   settingsSaved: 'Ayarlar başarıyla kaydedildi',
   settingsSaveFailed: 'Ayarlar kaydedilemedi',
   test: 'Test',
-  webhookTestSuccess: 'Webhook testi başarılı! Discord kanalınızı kontrol edin',
+  webhookTestSuccess: 'Webhook testi başarılı. Discord kanalınızı kontrol edin.',
   webhookTestFailed: 'Webhook test edilemedi',
   securitySettings: 'Güvenlik',
   securitySettingsDesc: 'Parolanızı ve güvenlik tercihlerinizi yönetin',
@@ -321,7 +350,7 @@ export const tr: Record<TranslationKey, string> = {
   integrationUnset: 'Ayarlanmadı',
   integrationSourceDb: 'Panel',
   integrationSourceEnv: 'Ortam değişkeni',
-  secretConfiguredPlaceholder: 'Yapılandırıldı — korumak için boş bırakın',
+  secretConfiguredPlaceholder: 'Yapılandırıldı — mevcut değeri korumak için boş bırakın',
   smtpSettingsTitle: 'E-posta (SMTP)',
   smtpSettingsDesc:
     'Parola sıfırlama ve davet e-postalarını gönderir. Buradan veya .env üzerinden yönetilir.',
@@ -335,7 +364,7 @@ export const tr: Record<TranslationKey, string> = {
   oidcSettingsTitle: 'Tek oturum açma (OIDC)',
   oidcSettingsDesc:
     'Harici bir kimlik sağlayıcıyla giriş yapın. Buradan veya .env üzerinden yönetilir.',
-  oidcIssuer: 'Issuer adresi',
+  oidcIssuer: 'Yayıncı (Issuer) adresi',
   oidcClientId: 'İstemci kimliği',
   oidcClientSecret: 'İstemci gizli anahtarı',
   oidcRedirectUri: 'Yönlendirme adresi',
@@ -360,7 +389,7 @@ export const tr: Record<TranslationKey, string> = {
   invitationCreated: 'Davet oluşturuldu',
   invitationCreateFailed: 'Davet oluşturulamadı',
   invitationAccepted: 'Davet kabul edildi',
-  invalidInvitationToken: 'Geçersiz davet anahtarı',
+  invalidInvitationToken: 'Geçersiz veya süresi dolmuş davet bağlantısı',
   acceptInvitation: 'Daveti kabul et',
   acceptInvitationDesc: 'Devam etmek için Minepanel hesabınızı oluşturun.',
   createAccount: 'Hesap oluştur',
@@ -374,7 +403,7 @@ export const tr: Record<TranslationKey, string> = {
     'Tüm sunuculara ve entegrasyonlar dahil panel ayarlarına tam erişim. Bunu yalnızca bir yönetici verebilir.',
   roleUpdated: 'Rol güncellendi',
   roleUpdateFailed: 'Rol değiştirilemedi',
-  accessAllServers: 'Tüm sunuculara eriş',
+  accessAllServers: 'Tüm sunuculara erişim',
   serverAccess: 'Sunucu erişimi',
   viewLogsPermission: 'Günlükleri görüntüle',
   useConsolePermission: 'Konsolu kullan',
@@ -384,18 +413,16 @@ export const tr: Record<TranslationKey, string> = {
   manageServerFilesPermission: 'Sunucu dosyalarını yönet',
   changeServerVersionPermission: 'Sunucu sürümünü değiştir',
   adminOnlyPermission: 'Bu izni yalnızca bir yönetici verebilir',
-  manageGlobalFilesWarning:
-    'Bu izin aynı zamanda her sunucunun docker-compose.yml dosyasını düzenlemeye izin verir; bu da sürüm izni olmadan sunucunun sürümünü ve imajını değiştirebilir.',
-  changeServerVersionDenied:
-    'Bunu düzenlemek için "Sunucu sürümünü değiştir" iznine ihtiyacınız var.',
+  manageGlobalFilesWarning: 'Bu izin, her sunucunun docker-compose.yml dosyasının düzenlenmesine de olanak tanır; böylece sürüm izni olmadan sunucunun sürümü ve imajı değiştirilebilir.',
+  changeServerVersionDenied: 'Bu alanı düzenlemek için "Sunucu sürümünü değiştir" izni gerekir.',
   manageUsersPermission: 'Kullanıcıları yönet',
   grantAllPermissions: 'Tüm izinleri ver',
   grantAllPermissionsDesc: 'Bu kullanıcı için mevcut tüm izinleri etkinleştirir.',
   loadingAccessControls: 'Erişim ayarları yükleniyor...',
-  discardChanges: 'Değişiklikleri at',
+  discardChanges: 'Değişiklikleri geri al',
   invitationExpires: 'Geçerlilik sonu',
   noEmailAssigned: 'E-posta yok',
-  invitationLinkOnly: 'E-postasız bağlantı',
+  invitationLinkOnly: 'Yalnızca bağlantı',
   adminOnlySection: 'Bu bölüm yalnızca yönetici kullanıcılar için kullanılabilir.',
   passwordChangedSuccessfully: 'Parola başarıyla değiştirildi',
   passwordChangeFailed: 'Parola değiştirilemedi',
@@ -487,7 +514,7 @@ export const tr: Record<TranslationKey, string> = {
   unexpectedError: 'Beklenmeyen hata',
   unexpectedErrorDesc: 'Panel bu sayfayı oluşturamadı. Sayfayı yenilemek genellikle sorunu çözer.',
   reloadPage: 'Sayfayı yenile',
-  NO_ACCESS_TOKEN: 'Erişim anahtarı alınamadı',
+  NO_ACCESS_TOKEN: 'Erişim belirteci alınamadı',
   LOGIN_ERROR: 'Giriş hatası',
   SERVER_START_ERROR: 'Sunucu başlatılırken hata oluştu',
   SERVER_STOP_ERROR: 'Sunucu durdurulurken hata oluştu',
@@ -503,8 +530,8 @@ export const tr: Record<TranslationKey, string> = {
   serverNotFoundSpecified: 'Belirtilen sunucu bulunamadı',
   connectionErrorDocker: 'Docker bağlantı hatası',
   unknownError: 'Bilinmeyen hata',
-  logsError: 'Günlüklerde hata',
-  resourcesError: 'Kaynaklarda hata',
+  logsError: 'Günlük hatası',
+  resourcesError: 'Kaynak hatası',
   errorsDetected: 'Günlüklerde hata tespit edildi',
   errorsDetectedDesc: 'Sunucu günlüklerinde hata veya istisna bulundu',
   saveFailed: 'Kaydedilemedi',
@@ -560,7 +587,7 @@ export const tr: Record<TranslationKey, string> = {
   reportBug: 'Hata bildir',
   links: 'Bağlantılar',
   sourceCode: 'Kaynak kodu',
-  withLove: 'Sevgiyle yapan:',
+  withLove: 'Sevgiyle geliştiren:',
 
   // ===========================
   // GENERAL SETTINGS TAB
@@ -581,13 +608,13 @@ export const tr: Record<TranslationKey, string> = {
   game: 'Oyun',
   gameDesc: 'Dünyanın işleyişi: kimlik, zorluk, üretim ve görüş mesafesi',
   access: 'Erişim',
-  accessDesc: 'Kimler katılabilir ve neler yapabilir',
+  accessDesc: 'Sunucuya kimlerin katılabileceği ve neler yapabileceği',
   network: 'Ağ',
   networkDesc: 'Portlar, proxy yönlendirmesi ve ek port eşlemeleri',
   lifecycle: 'Yaşam döngüsü',
-  lifecycleDesc: 'Sunucunun kendiliğinden ne zaman durduğu, duraklatıldığı ve yeniden başladığı',
+  lifecycleDesc: 'Sunucunun otomatik olarak durdurulması, duraklatılması ve yeniden başlatılması',
   backups: 'Yedekler',
-  backupsDesc: 'Zamanlanmış dünya yedekleri ve nerede saklandıkları',
+  backupsDesc: 'Zamanlanmış dünya yedekleri ve saklandıkları konum',
 
   // ===========================
   // BASIC SETTINGS TAB
@@ -637,12 +664,12 @@ export const tr: Record<TranslationKey, string> = {
   singleBiomeSurface: 'Tek biyomlu yüzey',
   customLevelType: 'Özel',
   customLevelTypeDescription:
-    'Bir mod veya modpack tarafından sağlanan özel dünya türü (örn. ATM10 To The Sky için skyblockbuilder:skyblock).',
+    'Bir mod veya mod paketi tarafından sağlanan özel dünya türü (örn. ATM10 To The Sky için skyblockbuilder:skyblock).',
   gtnhWorldType: 'RWG (GTNH)',
 
   // World Options
   hardcore: 'Hardcore',
-  hardcoreDescription: 'Etkinleştirilirse oyuncular öldüklerinde izleyiciye dönüşür',
+  hardcoreDescription: 'Etkinleştirilirse oyuncular öldüğünde izleyici moduna geçer',
   pvp: 'PvP',
   pvpDescription: 'Oyuncular arası dövüşe izin ver',
   spawningOptions: 'Doğma seçenekleri',
@@ -694,7 +721,7 @@ export const tr: Record<TranslationKey, string> = {
   // Access Control
   accessControl: 'Erişim denetimi',
   serverOperators: 'Sunucu operatörleri',
-  serverOperatorsDesc: 'Yönetici yetkisine sahip oyuncular, virgülle ayrılmış',
+  serverOperatorsDesc: 'Operatör yetkisine sahip oyuncular (virgülle ayrılmış)',
   opPermissionLevel: 'OP yetki seviyesi',
   selectOpPermissionLevel: 'OP yetki seviyesini seçin',
   opPermissionLevel1: 'Seviye 1 (en düşük)',
@@ -709,11 +736,11 @@ export const tr: Record<TranslationKey, string> = {
   enableRcon: "RCON'u etkinleştir",
   enableRconDesc: 'Sunucunun RCON protokolüyle uzaktan denetlenmesine izin verir',
   backupRequiresRcon: 'Yedeklemelerin düzgün çalışması için RCON gereklidir.',
-  broadcastRconToOps: "RCON'u operatörlere duyur",
+  broadcastRconToOps: 'RCON komutlarını operatörlere bildir',
   broadcastRconToOpsDesc: 'Çalıştırılan RCON komutlarını bağlı operatörlere duyurur',
   rconPort: 'RCON portu',
   rconPassword: 'RCON parolası',
-  rconPasswordImportant: 'Önemli! Varsayılan parolayı değiştirmelisiniz',
+  rconPasswordImportant: 'Önemli: Varsayılan parolayı mutlaka değiştirin',
   backupRconDesc: 'Yedekleme işlemlerini yürüten RCON yedekleme servisi.',
 
   // Additional Permissions
@@ -735,8 +762,8 @@ export const tr: Record<TranslationKey, string> = {
   dockerImage: 'Docker imajı',
   dockerImageDesc: 'Sunucu için kullanılacak resmi Docker imajı',
   dockerImageHelp: 'Kullanılacak Docker imajı (latest, java21, java17)',
-  dockerImageCustom: 'Başka etiket (elle)',
-  dockerImageHelpTags: 'Kullanılabilir etiketler burada',
+  dockerImageCustom: 'Özel etiket (elle girin)',
+  dockerImageHelpTags: 'Kullanılabilir etiketleri görüntüle',
   dockerImageHelpDocumentation: 'Java sürümü belgeleri',
   dockerImageAuto: 'Otomatik',
   dockerImageAutoHint: 'Minecraft sürümüne göre otomatik seçilir',
@@ -763,7 +790,7 @@ export const tr: Record<TranslationKey, string> = {
   minecraftVersionDesc: 'Kurulacak belirli Minecraft sürümü',
   minecraftVersionHelp: 'Kullanılacak belirli Minecraft sürümü',
   curseforgeVersionAuto:
-    'Minecraft sürümü CurseForge modpackinden otomatik olarak alınır',
+    'Minecraft sürümü CurseForge mod paketinden otomatik olarak alınır',
   idleTimeout: 'Boşta kalma süresi (dk)',
   idleTimeoutDesc: 'Hareketsiz oyuncuların atılmasından önceki süre',
   idleTimeoutHelp:
@@ -773,14 +800,13 @@ export const tr: Record<TranslationKey, string> = {
   stopDelayHelp: 'Sunucu zorla durdurulmadan önce beklenecek süre, saniye',
   restartPolicy: 'Yeniden başlatma politikası',
   restartPolicyDesc: 'Konteynerin çalışması bittiğinde nasıl davranacağını belirler',
-  noRestart: 'Yeniden başlatma',
+  noRestart: 'Yeniden başlatılmasın',
   alwaysRestart: 'Her zaman yeniden başlat',
   restartOnFailure: 'Hata durumunda yeniden başlat',
   restartMaxRetries: 'Maksimum deneme',
   restartMaxRetriesHelp: 'Docker art arda bu kadar çökmeden sonra yeniden başlatmayı bırakır. Boş = sınırsız. Çökme uyarıları açıksa, çıkış kodu ve son günlük satırlarıyla bir Discord mesajı alırsın.',
   restartUnlessStopped: 'Elle durdurulmadıkça yeniden başlat',
-  autoStopForcesNoRestart:
-    'Otomatik durdurma, "Yeniden başlatma" politikasını gerektirir ve bunu otomatik olarak uygular.',
+  autoStopForcesNoRestart: 'Otomatik durdurma, "Yeniden başlatılmasın" politikasını gerektirir ve bu politika otomatik olarak uygulanır.',
   no: 'Hayır',
   always: 'Her zaman',
   onFailure: 'Hata durumunda',
@@ -800,6 +826,19 @@ export const tr: Record<TranslationKey, string> = {
     'Konteyner için özel etiketler; Traefik veya Caddy gibi ters proxyler için kullanışlıdır',
   dockerLabelsHelp:
     'Konteyner etiketleri (her satıra bir tane, biçim: anahtar=değer). Traefik, Caddy, nginx-proxy vb. için kullanışlıdır.',
+
+  // Compose Snippets
+  composeSnippets: 'Compose parçacıkları',
+  composeSnippetsDesc: 'Oluşturulan dosyaya birleştirilen ham docker-compose YAML\'ı',
+  composeSnippetsWarning:
+    'Gelişmiş ve kırılgan. Her parçacık oluşturulan docker-compose.yml dosyasına birleştirilir; bir hata veya panelin yönettiği bir anahtarda yapılan değişiklik sunucunun başlamasını engelleyebilir. Yalnızca yöneticiler düzenleyebilir.',
+  composeSnippetsHelp:
+    'Her parçacık, seçilen yere birleştirilen YAML\'dır. Haritalar birleştirilir, listelere eklenir, diğer tüm değerler panelinkinin yerini alır.',
+  composeSnippetTargetRoot: 'Üst düzey (networks, volumes, ...)',
+  composeSnippetTargetServices: 'Servisler (servis ekle)',
+  composeSnippetTargetMc: 'Minecraft servisi',
+  addComposeSnippet: 'Parçacık ekle',
+  removeComposeSnippet: 'Parçacığı kaldır',
 
   // Backup Configuration
   backupConfig: 'Yedekleme yapılandırması',
@@ -843,7 +882,7 @@ export const tr: Record<TranslationKey, string> = {
   backupHostDir: 'Ana makine yedek dizini',
   backupHostDirDesc:
     'Yedek dosyalarının fiziksel olarak saklandığı ana makine yolu (örn. /network-disk/minepanel). Genel varsayılan konumu kullanmak için boş bırakın.',
-  backupExcludes: 'Yedekleme dışında tutulacaklar',
+  backupExcludes: 'Hariç tutulanlar',
   backupExcludesDesc: 'Yedeğe dahil edilmeyecek dosya desenleri (virgülle ayrılmış)',
   backupExcludesHelp: 'Yedeğe dahil edilmeyecek dosya ve dizinler',
   tarCompressMethod: 'Tar sıkıştırma yöntemi',
@@ -859,7 +898,7 @@ export const tr: Record<TranslationKey, string> = {
   playersOnlineCheckInterval: 'Oyuncu kontrol aralığı',
   playersOnlineCheckIntervalDesc:
     'Yedekleme duraklatılmışken oyuncuların çevrimiçi olup olmadığının ne sıklıkla kontrol edileceği (örn. 5m, 1m)',
-  enableSaveAll: "Save All'u etkinleştir",
+  enableSaveAll: 'save-all komutunu etkinleştir',
   enableSaveAllDesc:
     "Yedeklemeden önce 'save-all' komutunu çalıştırır. Sunucunuz save-all sırasında çöküyorsa kapatın (büyük dünyalarda sık görülür).",
   enableSaveAllWarning:
@@ -903,10 +942,9 @@ export const tr: Record<TranslationKey, string> = {
 
   // JVM Options Tab
   useAikarFlags: "Aikar bayraklarını kullan",
-  aikarFlagsTooltip:
-    "Aikar, GC ayarı için en uygun JVM bayraklarını bulmak üzere araştırma yaptı; aynı anda bağlanan kullanıcı sayısı arttıkça bu ayar daha da önemli hale gelir.",
+  aikarFlagsTooltip: 'Aikar, çöp toplayıcı (GC) için en uygun JVM bayraklarını belirlemek amacıyla kapsamlı testler yaptı; bu ayarlar eşzamanlı oyuncu sayısı arttıkça daha da önem kazanır.',
   aikarFlagsRecommended: 'Çok oyunculu sunucular için önerilir',
-  aikarFlagsDesc: 'Çok oyuncusu olan sunucular için optimize edilmiş JVM ayarlarını kullanır',
+  aikarFlagsDesc: 'Kalabalık sunucular için optimize edilmiş JVM ayarlarını kullanır',
   enableJmx: "JMX'i etkinleştir",
   enableJmxTooltip:
     'VisualVM veya JMC ile profil çıkarma gibi uzaktan JMX izlemesini etkinleştirir',
@@ -933,15 +971,14 @@ export const tr: Record<TranslationKey, string> = {
   cannotUseWithAutoPause: 'Otomatik duraklatma ile birlikte kullanılamaz',
   initialTimeout: 'İlk bekleme süresi (saniye)',
   autoStopTimeoutInitDesc: 'Oyuncu yoksa sunucuyu durdurmadan önceki ilk bekleme süresi',
-  establishedTimeout: 'Yerleşik bekleme süresi (saniye)',
+  establishedTimeout: 'Çalışma sonrası bekleme süresi (saniye)',
   autoStopTimeoutEstDesc: 'Sunucu çalışır duruma geçtikten sonra durdurma bekleme süresi',
   enableAutoPause: 'Otomatik duraklatmayı etkinleştir',
   autoPauseTooltip:
     'Belirtilen süre boyunca oyuncu olmadığında sunucuyu otomatik olarak duraklatır',
   cannotUseWithAutoStop: 'Otomatik durdurma ile birlikte kullanılamaz',
   modCompatibilityWarning: '⚠️ Mod uyumluluğu uyarısı:',
-  modCompatibilityDesc:
-    'Sunucuda kurulu modlar varsa otomatik duraklatma özelliği, sunucu uyandırılırken sorun çıkarabilir. Bazı modlar bu özellikle uyumlu değildir ve uyanma sırasında sunucunun takılmasına veya çökmesine yol açabilir. Bu özelliği yalnızca Vanilla sunucularda kullanmanız veya üretime almadan önce uyumluluğu iyice test etmeniz önerilir.',
+  modCompatibilityDesc: 'Sunucuda mod kuruluysa otomatik duraklatma, sunucu uyandırılırken sorunlara yol açabilir. Bazı modlar bu özellikle uyumlu değildir ve uyanma sırasında sunucunun donmasına veya çökmesine neden olabilir. Bu özelliği yalnızca Vanilla sunucularda kullanmanızı ya da canlı ortama almadan önce uyumluluğu kapsamlı şekilde test etmenizi öneririz.',
   autoPauseTimeoutInitDesc: 'Oyuncu yoksa sunucuyu duraklatmadan önceki ilk bekleme süresi',
   autoPauseTimeoutEstDesc: 'Sunucu çalışır duruma geçtikten sonra duraklatma bekleme süresi',
   reconnectInterface: 'Yeniden bağlanma arayüzü',
@@ -1026,13 +1063,13 @@ export const tr: Record<TranslationKey, string> = {
   cmdSpectatorMode: 'İzleyici modu',
   cmdDayTime: 'Gündüz yap',
   cmdNightTime: 'Gece yap',
-  cmdClearWeather: 'Havayı açık yap',
+  cmdClearWeather: 'Açık hava',
   cmdRainWeather: 'Yağmurlu hava',
   cmdThunderWeather: 'Fırtınalı hava',
-  cmdPeacefulDifficulty: 'Barışçıl zorluk',
-  cmdEasyDifficulty: 'Kolay zorluk',
-  cmdNormalDifficulty: 'Normal zorluk',
-  cmdHardDifficulty: 'Zor zorluk',
+  cmdPeacefulDifficulty: 'Zorluk: Barışçıl',
+  cmdEasyDifficulty: 'Zorluk: Kolay',
+  cmdNormalDifficulty: 'Zorluk: Normal',
+  cmdHardDifficulty: 'Zorluk: Zor',
   cmdGiveDiamonds: 'Elmas ver',
   cmdGiveDiamondSword: 'Elmas kılıç ver',
   cmdGiveGoldenApples: 'Altın elma ver',
@@ -1116,7 +1153,7 @@ export const tr: Record<TranslationKey, string> = {
     "Eklentileri elle eklemek için (JAR dosyaları) dosya yöneticisini kullanarak sunucunun /plugins klasörüne yükleyin.",
   pluginsSpigetResources: 'Spiget kaynakları (SPIGET_RESOURCES)',
   pluginsSpigetResourcesDesc: 'SpigotMC kaynak kimlikleri (örn. LuckPerms=28140, Vault=34315)',
-  pluginsSpigetNote: 'Önemli not: Değişkenin adı SPIGOT değil, E harfli SPIGET.',
+  pluginsSpigetNote: "Not: Değişken adı SPIGOT değil, SPIGET'tir.",
   pluginsSpigetWarning:
     '⚠️ EssentialsX gibi bazı eklentiler otomatik indirmeye izin vermez.',
   pluginsManualTitle: 'Eklentileri elle ekleyin',
@@ -1202,8 +1239,8 @@ export const tr: Record<TranslationKey, string> = {
 
   // Plugin Server Configurations
   paperConfiguration: 'Paper yapılandırması',
-  paperBuild: 'Paper yapısı',
-  paperBuildDesc: 'Belirli Paper yapı numarası (en son sürüm için boş bırakın)',
+  paperBuild: 'Paper derlemesi',
+  paperBuildDesc: 'Belirli Paper derleme numarası (en son sürüm için boş bırakın)',
   paperChannel: 'Paper kanalı',
   paperChannelDesc: 'Kanal: default veya experimental',
   customDownloadUrl: 'Özel indirme adresi',
@@ -1217,24 +1254,24 @@ export const tr: Record<TranslationKey, string> = {
   buildFromSource: "Spigot'u kaynaktan derle",
 
   pufferfishConfiguration: 'Pufferfish yapılandırması',
-  pufferfishBuild: 'Pufferfish yapısı',
-  pufferfishBuildDesc: 'Belirli yapı numarası veya lastSuccessfulBuild',
+  pufferfishBuild: 'Pufferfish derlemesi',
+  pufferfishBuildDesc: 'Belirli derleme numarası veya lastSuccessfulBuild',
   useFlareFlags: 'Flare profil oluşturucu bayraklarını kullan',
 
   purpurConfiguration: 'Purpur yapılandırması',
-  purpurBuild: 'Purpur yapısı',
-  purpurBuildDesc: 'LATEST veya belirli bir yapı numarası',
+  purpurBuild: 'Purpur derlemesi',
+  purpurBuildDesc: 'LATEST veya belirli bir derleme numarası',
   purpurDownloadUrlDesc: 'Purpur indirme adresini geçersiz kıl (isteğe bağlı)',
 
   leafConfiguration: 'Leaf yapılandırması',
-  leafBuild: 'Leaf yapısı',
-  leafBuildDesc: 'Belirli Leaf yapı numarası (en son sürüm için boş bırakın)',
+  leafBuild: 'Leaf derlemesi',
+  leafBuildDesc: 'Belirli Leaf derleme numarası (en son sürüm için boş bırakın)',
 
   foliaConfiguration: 'Folia yapılandırması',
   foliaWarning:
     'Folia deneyseldir ve çok iş parçacıklı yapısı nedeniyle birçok eklenti düzgün çalışmayabilir.',
-  foliaBuild: 'Folia yapısı',
-  foliaBuildDesc: 'Belirli Folia yapı numarası',
+  foliaBuild: 'Folia derlemesi',
+  foliaBuildDesc: 'Belirli Folia derleme numarası',
   foliaChannel: 'Folia kanalı',
   foliaChannelDesc: 'Yayın kanalı (experimental önerilir)',
   foliaDownloadUrlDesc: 'Folia indirme adresini geçersiz kıl (isteğe bağlı)',
@@ -1256,11 +1293,11 @@ export const tr: Record<TranslationKey, string> = {
 
   // Forge Configuration
   forgeVersion: 'Forge sürümü',
-  forgeBuildDesc: 'Seçili Minecraft sürümü için Forge yapı numarası',
+  forgeBuildDesc: 'Seçili Minecraft sürümü için Forge derleme numarası',
 
   // Neoforge Configuration
   neoforgeVersion: 'NeoForge sürümü',
-  neoforgeBuildDesc: 'NeoForge yapı numarası (doğru Minecraft sürümü otomatik seçilir)',
+  neoforgeBuildDesc: 'NeoForge derleme numarası (doğru Minecraft sürümü otomatik seçilir)',
 
   // Fabric Configuration
   serverFabric:
@@ -1287,12 +1324,12 @@ export const tr: Record<TranslationKey, string> = {
   versionBeta: 'Beta (+ Release)',
   versionAlpha: 'Alpha (+ Beta + Release)',
   browseMods: 'Modlara göz at',
-  browseModpacks: 'Modpacklere göz at',
-  browseModpacksDesc: 'CurseForge şablonlarından bir modpack arayın ve seçin',
+  browseModpacks: 'Mod paketlerine göz at',
+  browseModpacksDesc: 'CurseForge şablonlarından bir mod paketi arayın ve seçin',
   browse: 'Göz at',
-  modpackSelected: 'Modpack seçildi',
-  modpackVersionDetected: 'Sürüm modpackten algılandı',
-  searchOrBrowsePopular: 'Bir modpack arayın veya popüler olanlara göz atın',
+  modpackSelected: 'Mod paketi seçildi',
+  modpackVersionDetected: 'Sürüm mod paketinden algılandı',
+  searchOrBrowsePopular: 'Bir mod paketi arayın veya popüler olanlara göz atın',
   searchModpacks: 'Ad, kısa ad veya CurseForge adresi...',
   searchMods: 'Mod ara',
   searchDatapacks: 'Datapack ara',
@@ -1313,7 +1350,7 @@ export const tr: Record<TranslationKey, string> = {
   loaderNotDetected:
     'Yükleyici algılanamadı. Uyumluluk yalnızca Minecraft sürümüne göre filtreleniyor.',
   errorSearchingMods: 'Mod aranırken hata oluştu',
-  sortRelevance: 'İlgi düzeyi',
+  sortRelevance: 'Alaka düzeyi',
   sortDownloads: 'İndirme sayısı',
   sortUpdated: 'Yakın zamanda güncellenen',
   allCategories: 'Tüm kategoriler',
@@ -1328,13 +1365,11 @@ export const tr: Record<TranslationKey, string> = {
   modVersionsEmpty: 'Bu Minecraft sürümü/yükleyicisi için sürüm yok',
   modUpdateAvailable: 'Güncelleme mevcut',
   updateAvailable: 'Güncelleme mevcut',
-  updateStarted:
-    'Güncelleme başladı. Panel birazdan yeniden başlayacak ve kendiliğinden geri gelecek',
+  updateStarted: 'Güncelleme başladı. Panel kısa süre içinde yeniden başlatılacak ve otomatik olarak yeniden erişilebilir olacak.',
   updateFailed: 'Güncelleme başlatılamadı',
   updating: 'Güncelleniyor...',
   updateNow: 'Şimdi güncelle',
-  updateNowDesc:
-    'Yeni imajları indirir ve yığını yeniden oluşturur. Panel kısa süre kapanır ve geri gelir; yeni sürüm açılmazsa önceki sürüm otomatik olarak geri yüklenir',
+  updateNowDesc: 'Yeni imajları indirir ve yığını yeniden oluşturur. Panel kısa bir süre erişilemez olur; yeni sürüm başlatılamazsa önceki sürüm otomatik olarak geri yüklenir.',
   updateManually:
     'Bu panel Docker Compose ile başlatılmadığı için kendini güncelleyemez. Compose dosyanızın bulunduğu yerde şunu çalıştırın:',
   checkForUpdates: 'Güncellemeleri denetle',
@@ -1342,30 +1377,27 @@ export const tr: Record<TranslationKey, string> = {
   versionLastChecked: 'Son denetim: {time}',
   updateHowTo: 'Nasıl güncellenir',
   updateOrManually: 'Ya da compose dosyanızın bulunduğu yerde kendiniz çalıştırın:',
-  updateInProgress:
-    'İmajlar indiriliyor ve yığın yeniden oluşturuluyor. Panel kısa süre kapanır ve kendiliğinden yeniden yüklenir; bu sekmeyi açık tutun.',
+  updateInProgress: 'İmajlar indiriliyor ve yığın yeniden oluşturuluyor. Panel kısa bir süre erişilemez olacak ve ardından otomatik olarak yeniden yüklenecek; lütfen bu sekmeyi açık tutun.',
   updateSucceeded: 'Güncellendi. Panel yeniden yükleniyor...',
-  updateRolledBack: 'Yeni sürüm açılmadı, bu yüzden önceki sürüm geri yüklendi',
+  updateRolledBack: 'Yeni sürüm başlatılamadığı için önceki sürüm geri yüklendi',
   updateRunFailed: 'Güncelleme tamamlanamadan durdu. Panel günlüklerini kontrol edin.',
-  updateTimeout:
-    'Güncelleme her zamankinden uzun sürüyor. Nasıl sonuçlandığını görmek için panel günlüklerine bakın.',
+  updateTimeout: 'Güncelleme beklenenden uzun sürüyor. Sonucu görmek için panel günlüklerini kontrol edin.',
   changelogActionRequired: 'Güncellemeden önce',
-  changelogCompare: 'Tüm commitleri gör',
+  changelogCompare: "Tüm commit'leri görüntüle",
   changelogSince: '{version} sürümünden bu yana değişenler',
   changelogUpToDate: 'En son sürümü kullanıyorsunuz',
-  changelogBreaking: 'Kırıcı değişiklik',
+  changelogBreaking: 'Uyumluluğu bozan değişiklik',
   changelogBreakingWarning:
     'Bu güncelleme mevcut davranışı değiştiriyor. Güncellemeden önce aşağıdaki notları okuyun.',
   changelogNoNotes: 'Sürüm notu yok',
   changelogUnavailable:
     "Sürüm notları yüklenemedi. Ayrıntılar için GitHub'a bakın.",
   modOptional: 'İsteğe bağlı',
-  modOptionalHelp:
-    'itzg, uyumlu bir sürüm bulunmadığında sunucuyu başlatmaya devam eder ve bu modu sürüm hesabının dışında bırakır',
+  modOptionalHelp: 'Uyumlu bir sürüm bulunamazsa itzg imajı sunucuyu yine de başlatır ve bu modu sürüm hesaplamasına dahil etmez',
   modWatchDesc:
     'Yapılandırılmış her mod için notlar, hedef sürüm takibi ve değişiklik geçmişi. Sunucu çalışırken de kullanılabilir.',
   modWatchEmpty: 'Henüz yapılandırılmış mod yok',
-  modWatchEmptyHint: 'Modlar sekmesinden mod ekleyin, burada görünsünler.',
+  modWatchEmptyHint: 'Modlar sekmesinden eklediğiniz modlar burada listelenir.',
   modWatchTargetVersion: 'Hedef Minecraft sürümü',
   modWatchTargetVersionDesc:
     'Sunucunun çalıştığı sürümü değiştirmeden, geçmeyi düşündüğünüz bir sürüme karşı mod uyumluluğunu kontrol edin.',
@@ -1375,7 +1407,7 @@ export const tr: Record<TranslationKey, string> = {
   modCompatible: 'Uyumlu',
   modIncompatible: 'Uyumlu sürüm bulunamadı',
   modCompatibilityUnknown: 'Uyumluluğu kontrol etmek için bir hedef sürüm belirleyin',
-  viewChangelog: 'Değişiklik günlüğünü gör',
+  viewChangelog: 'Değişiklik günlüğünü görüntüle',
   changelogSameVersionTitle: 'Aynı sürüm içindeki güncellemeler',
   changelogMcVersionTitle: 'Minecraft sürüm güncellemeleri',
   changelogNoTargetVersion:
@@ -1385,16 +1417,16 @@ export const tr: Record<TranslationKey, string> = {
   versionFromModrinthProjects: 'Sürümü modlardan belirle',
   versionFromModrinthProjectsDesc:
     'Listedeki isteğe bağlı olmayan tüm modların desteklediği en yeni Minecraft sürümünü kullanır',
-  modpackNotSelected: 'Modpack seçilmedi',
-  removeModpack: 'Modpacki kaldır',
+  modpackNotSelected: 'Mod paketi seçilmedi',
+  removeModpack: 'Mod paketini kaldır',
   modpackVersion: 'Sürüm',
   errorLoadingVersions: 'Mod sürümleri yüklenirken hata oluştu',
   cfApiKeyFromSettings: 'CurseForge API anahtarı genel ayarlarınızdan alınır.',
 
   // Modrinth Modpack Configuration
-  modrinthModpack: 'Modrinth modpacki',
+  modrinthModpack: 'Modrinth mod paketi',
   modrinthModpackDesc:
-    'Kullanmak istediğiniz Modrinth modpackinin kısa adını veya adresini girin.',
+    'Kullanmak istediğiniz Modrinth mod paketinin kısa adını veya adresini girin.',
   modrinthModpackTooltip:
     'Modrinth proje kısa adını veya adresini girin. Belirli bir sürümü de belirtebilirsiniz (örn. https://modrinth.com/modpack/surface-living/version/1.2.1).',
   gtnhRequirementsTitle: 'GTNH için önerilen kaynaklar',
@@ -1413,12 +1445,12 @@ export const tr: Record<TranslationKey, string> = {
     'Otomatik GTNH güncellemelerinin çalışmasını istemiyorsanız ilk kurulumdan sonra güncelleme denetimini kapatın.',
 
   // FTB (Feed The Beast)
-  ftbaRequirementsTitle: 'Feed The Beast modpacki',
+  ftbaRequirementsTitle: 'Feed The Beast mod paketi',
   ftbaRequirementsBody:
-    'Bir FTB modpackini sayısal kimliğine göre otomatik kurar. Paket kendi Minecraft ve yükleyici sürümünü belirler. Modpack kimliğini feed-the-beast.com üzerindeki paket sayfasında bulabilirsiniz.',
-  ftbModpackId: 'FTB modpack kimliği',
+    'Bir FTB mod paketini sayısal kimliğine göre otomatik kurar. Paket kendi Minecraft ve yükleyici sürümünü belirler. Mod paketi kimliğini feed-the-beast.com üzerindeki paket sayfasında bulabilirsiniz.',
+  ftbModpackId: 'FTB mod paketi kimliği',
   ftbModpackIdDesc:
-    'feed-the-beast.com üzerindeki modpackin sayısal kimliği (örneğin FTB Presents Direwolf20 için 119). Zorunlu.',
+    'feed-the-beast.com üzerindeki mod paketinin sayısal kimliği (örneğin FTB Presents Direwolf20 için 119). Zorunlu.',
   ftbModpackVersionId: 'FTB sürüm kimliği (isteğe bağlı)',
   ftbModpackVersionIdDesc:
     'Belirli bir paket sürümünün sayısal kimliği. Her zaman en son sürümü kurmak için boş bırakın.',
@@ -1427,45 +1459,45 @@ export const tr: Record<TranslationKey, string> = {
   // Manual CurseForge (Deprecated)
   deprecatedFeature: 'Kullanımdan kaldırılmış özellik',
   manualCurseForgeDeprecated:
-    'CurseForge için bu elle kurulum yöntemi kullanımdan kaldırıldı. Yeni kurulumlarda "CurseForge Modpack" (AUTO_CURSEFORGE) seçeneğini öneririz. Bu mod, modpack dosyalarını sunucuya elle yüklemenizi gerektirir.',
-  modpackFile: 'Modpack dosyası (CF_SERVER_MOD)',
-  modpackFileHelp: 'Konteyner içindeki modpack .zip dosyasının tam yolu.',
+    'CurseForge için bu elle kurulum yöntemi kullanımdan kaldırıldı. Yeni kurulumlarda "CurseForge Modpack" (AUTO_CURSEFORGE) seçeneğini öneririz. Bu mod, mod paketi dosyalarını sunucuya elle yüklemenizi gerektirir.',
+  modpackFile: 'Mod paketi dosyası (CF_SERVER_MOD)',
+  modpackFileHelp: 'Konteyner içindeki mod paketi .zip dosyasının tam yolu.',
   modpackFileExample: 'Örnek: /modpacks/SkyFactory_4_Server_4.1.0.zip',
-  modpackFilePath: 'Konteyner içindeki CurseForge modpack ZIP dosyasının yolu',
+  modpackFilePath: 'Konteyner içindeki CurseForge mod paketi ZIP dosyasının yolu',
   baseDirectory: 'Temel dizin (CF_BASE_DIR)',
-  baseDirectoryHelp: 'Modpackin açılacağı dizin. Varsayılan: /data',
-  baseDirectoryPath: 'Modpackin çıkarılacağı ve çalıştırılacağı dizin',
-  useModpackStartScript: 'Modpack başlatma betiğini kullan',
+  baseDirectoryHelp: 'Mod paketinin açılacağı dizin. Varsayılan: /data',
+  baseDirectoryPath: 'Mod paketinin çıkarılacağı ve çalıştırılacağı dizin',
+  useModpackStartScript: 'Mod paketi başlatma betiğini kullan',
   useModpackStartScriptDesc:
-    'Kapatılırsa modpackin kendi başlatma betiği kullanılmaz ve standart sunucu mantığı uygulanır',
+    'Kapatılırsa mod paketinin kendi başlatma betiği kullanılmaz ve standart sunucu mantığı uygulanır',
   ftbLegacyJavaFixer: 'FTB Legacy Java Fixer',
   ftbLegacyJavaFixerDesc:
-    '"unable to launch forgemodloader" hatasıyla açılmayan modpackler için düzeltmeyi etkinleştirir',
-  cfApiKeyOptional: 'Bazı modpacklerle uyumluluk için isteğe bağlı API anahtarı',
+    '"unable to launch forgemodloader" hatasıyla açılmayan mod paketleri için düzeltmeyi etkinleştirir',
+  cfApiKeyOptional: 'Bazı mod paketleriyle uyumluluk için isteğe bağlı API anahtarı',
 
   // CurseForge Auto Configuration
   importantInfo: 'Önemli bilgi',
   cfApiKeyRequired:
-    'CurseForge özelliklerini düzgün kullanmak için bir API anahtarı gereklidir. Özel veya kısıtlı modpackleri indirmek için bu anahtar şarttır.',
+    'CurseForge özelliklerini düzgün kullanmak için bir API anahtarı gereklidir. Özel veya kısıtlı mod paketlerini indirmek için bu anahtar şarttır.',
   cfApiKeyConfigured: 'CurseForge API anahtarı yapılandırıldı. Sunucu oluşturmaya hazır.',
   installationMethod: 'Kurulum yöntemi',
-  installationMethodHelp: 'Modpacki nasıl edinmek istediğinizi seçin:',
+  installationMethodHelp: 'Mod paketini nasıl edinmek istediğinizi seçin:',
   methodUrl: 'Adres',
-  methodUrlDesc: "CurseForge'daki modpackin doğrudan web adresi",
+  methodUrlDesc: "CurseForge'daki mod paketinin doğrudan web adresi",
   methodSlug: 'Kısa ad',
-  methodSlugDesc: 'Benzersiz modpack tanımlayıcısı (örn. "all-the-mods-7")',
+  methodSlugDesc: 'Benzersiz mod paketi tanımlayıcısı (örn. "all-the-mods-7")',
   methodFile: 'Dosya',
-  methodFileDesc: 'Bu sunucuya yüklenmiş bir modpack dosyasından kur',
+  methodFileDesc: 'Bu sunucuya yüklenmiş bir mod paketi dosyasından kur',
   installFromUrl: 'Doğrudan adresten kur',
-  useIdSlug: 'Modpack kimliğini/kısa adını kullan',
+  useIdSlug: 'Mod paketi kimliğini/kısa adını kullan',
   useLocalFile: 'Sunucudaki yerel dosyayı kullan',
 
-  modpackUrl: 'Modpack adresi (CF_PAGE_URL)',
-  modpackUrlHelp: 'Modpack sayfasının veya belirli bir dosyanın tam adresi.',
-  modpackUrlDesc: 'CurseForge modpackinin doğrudan indirme adresi',
+  modpackUrl: 'Mod paketi adresi (CF_PAGE_URL)',
+  modpackUrlHelp: 'Mod paketi sayfasının veya belirli bir dosyanın tam adresi.',
+  modpackUrlDesc: 'CurseForge mod paketinin doğrudan indirme adresi',
 
   curseForgeProject: 'CurseForge projesi (CF_SLUG)',
-  curseForgeProjectHelp: "Modpackin CurseForge'daki tanımlayıcısı (slug).",
+  curseForgeProjectHelp: "Mod paketinin CurseForge'daki tanımlayıcısı (slug).",
   projectNameOrSlug: "CurseForge'daki proje adı veya kısa adı",
 
   fileId: 'Dosya kimliği (CF_FILE_ID)',
@@ -1477,15 +1509,15 @@ export const tr: Record<TranslationKey, string> = {
   filePatternHelp:
     'İsteğe bağlı. Hangi yayımlanmış dosyanın indirileceğini daraltan bir metin parçası veya /regex/.',
   filePatternDesc: 'Her zaman en son uyumlu dosyayı kullanmak için boş bırakın',
-  modpackFiles: 'Modpack dosyaları',
-  modpackUpload: 'Modpack yükle',
-  modpackEmpty: 'Henüz modpack dosyası yüklenmedi',
-  modpackUploaded: 'Modpack yüklendi',
-  modpackDeleted: 'Modpack silindi',
-  modpackUploadError: 'Modpack yüklenemedi',
-  modpackDeleteError: 'Modpack silinemedi',
+  modpackFiles: 'Mod paketi dosyaları',
+  modpackUpload: 'Mod paketi yükle',
+  modpackEmpty: 'Henüz mod paketi dosyası yüklenmedi',
+  modpackUploaded: 'Mod paketi yüklendi',
+  modpackDeleted: 'Mod paketi silindi',
+  modpackUploadError: 'Mod paketi yüklenemedi',
+  modpackDeleteError: 'Mod paketi silinemedi',
   modpackWrongFormat: 'Beklenen dosya türü:',
-  modpackLoadError: 'Modpack dosyaları yüklenemedi',
+  modpackLoadError: 'Mod paketi dosyaları yüklenemedi',
   modpackHint:
     'Dosyalar sunucunun modpacks/ klasöründe saklanır ve /modpacks altına salt okunur olarak bağlanır',
   modpackCount: '{count} dosya',
@@ -1497,10 +1529,10 @@ export const tr: Record<TranslationKey, string> = {
   modpackKindGeneric: 'Modlar ve yapılandırmalar',
   modpackNeedsLoaderTitle: 'Bu arşiv hiçbir mod yükleyicisi belirtmiyor',
   modpackNeedsLoaderDesc:
-    'İçinde modlar ve yapılandırmalar var ama manifest ya da yükleyici kurulumu yok; bu haliyle tek başına kurulamaz. Modpackin hazırlandığı yükleyiciyi ve Minecraft sürümünü seçin: sunucu türü o yükleyiciye geçirilir ve arşiv sunucu verilerinin üzerine açılır.',
+    'İçinde modlar ve yapılandırmalar var ama manifest ya da yükleyici kurulumu yok; bu haliyle tek başına kurulamaz. Mod paketinin hazırlandığı yükleyiciyi ve Minecraft sürümünü seçin: sunucu türü o yükleyiciye geçirilir ve arşiv sunucu verilerinin üzerine açılır.',
   modpackLoaderLabel: 'Mod yükleyicisi',
   modpackGuidanceApply: 'Uygula',
-  modpackGuidanceApplied: 'Sunucu yapılandırması modpacke göre güncellendi',
+  modpackGuidanceApplied: 'Sunucu yapılandırması mod paketine göre güncellendi',
   modpackGuidanceOk:
     'Arşiv bu sunucu türüyle uyumlu. Minecraft sürümü ve Java imajı arşivin belirttiğine göre ayarlanır.',
   modpackWrongTypeTitle: 'Bu arşiv başka bir sunucu türü gerektiriyor',
@@ -1508,14 +1540,14 @@ export const tr: Record<TranslationKey, string> = {
     'Mevcut sunucu türü bunu kuramaz. {type} olarak kurulması gerekir.',
   modpackGuidanceSwitchTo: '{type} türüne geç',
   modpackUseUpload: 'Bunun yerine dosya yükle',
-  modpackUseManualPath: 'Bunun yerine bir konteyner yolu yaz',
+  modpackUseManualPath: 'Bunun yerine konteyner yolunu girin',
   modsReviewTitle: 'İstemci modları',
   modsReviewIntro:
     'Bu şekilde kurulan bir zip olduğu gibi açılır; yani yalnızca istemciye ait modlar da sunucuya gider ve açılışta çökmeye yol açabilir. Panel, arşivdeki her jar dosyasını okuyup hangilerinin burada yeri olmadığını söyleyebilir.',
   modsReviewAction: 'Modları gözden geçir',
   modsReviewScanning: 'Jar dosyaları okunuyor...',
   modsReviewNone: 'Bu arşivde gözden geçirilecek bir mods klasörü yok.',
-  modsReviewCount: '{count} mod · {client} tanesi yalnızca istemci gibi görünüyor',
+  modsReviewCount: '{count} mod · {client} tanesi yalnızca istemci modu olabilir',
   modsReviewUndeclared:
     'Forge ve NeoForge, bir modun hangi tarafa ait olduğunu üstverisinde belirtmez; bu yüzden {count} jar sınıflandırılamadı. Bunlar işaretsiz bırakıldı: yalnızca istemciye ait olduğunu bildiklerinizi işaretleyin, kalanına dokunmayın.',
   modsReviewTruncated:
@@ -1525,28 +1557,28 @@ export const tr: Record<TranslationKey, string> = {
   modsSideServer: 'Yalnızca sunucu',
   modsSideBoth: 'Her iki taraf',
   modsSideUnknown: 'Belirtilmemiş',
-  modsStripAction: '{count} mod olmadan bir kopya yaz',
+  modsStripAction: '{count} mod çıkarılmış bir kopya oluştur',
   modsStripHint:
     'Kopya, orijinalin yanına kaydedilir; orijinale dokunulmaz ve sunucu kopyayı kullanacak şekilde ayarlanır.',
-  modsStripped: '{name} yazıldı ve seçildi',
-  modsStripError: 'Filtrelenmiş kopya yazılamadı',
+  modsStripped: '{name} oluşturuldu ve seçildi',
+  modsStripError: 'Filtrelenmiş kopya oluşturulamadı',
   modsScanError: 'Bu arşivdeki modlar okunamadı',
 
   cfApiKey: 'CurseForge API anahtarı (CF_API_KEY)',
   cfApiKeyHelp:
-    'Bazı modpackleri indirmek için gereken CurseForge API anahtarı (Eternal).',
+    'Bazı mod paketlerini indirmek için gereken CurseForge API anahtarı (Eternal).',
   cfApiKeyDesc:
-    'Kısıtlı modpackleri indirmek için API anahtarı (çoğu modpack için gereklidir)',
+    'Kısıtlı mod paketlerini indirmek için API anahtarı (çoğu mod paketi için gereklidir)',
 
   // CurseForge Advanced Options
   advancedOptions: 'Gelişmiş seçenekler',
   synchronizeCurseForge: "CurseForge'u eşitle (CF_FORCE_SYNCHRONIZE)",
   synchronizeCurseForgeDesc:
-    'Sunucu yeniden başladığında modpack güncellemelerini otomatik olarak eşitler',
-  parallelDownloads: 'Paralel indirmeler (CF_PARALLEL_DOWNLOADS)',
+    'Sunucu yeniden başladığında mod paketi güncellemelerini otomatik olarak eşitler',
+  parallelDownloads: 'Eşzamanlı indirmeler (CF_PARALLEL_DOWNLOADS)',
   parallelDownloadsHelp:
     'Aynı anda yapılacak mod indirme sayısı. Varsayılan değer: 4',
-  parallelDownloadsDesc: 'Kaç modun paralel indirileceğini belirtin',
+  parallelDownloadsDesc: 'Aynı anda kaç modun indirileceğini belirtin',
   download1: '1 indirme',
   download2: '2 indirme',
   download4: '4 indirme (önerilen)',
@@ -1556,26 +1588,26 @@ export const tr: Record<TranslationKey, string> = {
   skipExistingFilesDesc:
     'Etkinleştirilirse veri dizininde zaten bulunan dosyaların üzerine yazılmaz',
   setLevelFrom: 'Dünya kaynağı (CF_SET_LEVEL_FROM)',
-  setLevelFromHelp: 'Dünya verilerinin modpackten nasıl alınacağını belirler.',
-  setLevelFromDesc: 'Dünya verilerinin modpackten nasıl alınacağını yapılandırın',
-  doNotSet: 'Ayarlama',
+  setLevelFromHelp: 'Dünya verilerinin mod paketinden nasıl alınacağını belirler.',
+  setLevelFromDesc: 'Dünya verilerinin mod paketinden nasıl alınacağını yapılandırın',
+  doNotSet: 'Ayarlanmasın',
   worldFile: 'Dünya dosyası',
-  modpackOverrides: 'Modpack geçersiz kılmaları',
-  curseforgeFiles: 'Ek mod indir (CURSEFORGE_FILES)',
+  modpackOverrides: 'Mod paketi geçersiz kılmaları',
+  curseforgeFiles: 'Ek modlar (CURSEFORGE_FILES)',
   curseforgeFilesHelp:
     "CurseForge'dan tek tek mod indirir. Biçimler: 'jei' (en son), 'jei:4593548' (dosya kimliği), 'jei@10.2.1' (sürüm), tam adres veya '@/yol/dosya.txt' (liste dosyası). Otomatik yönetilir; kaldırılan kayıtlar temizlenir. Tüm biçimler için belgelere bakın.",
   curseforgeFilesDesc:
     'Virgülle veya satır sonuyla ayrılmış liste (örn. jei, geckolib:4593548, aquaculture@1.0.0)',
   forceIncludeMods: 'İstemci modlarını zorla dahil et (CF_FORCE_INCLUDE_MODS)',
   forceIncludeModsHelp:
-    'Yanlışlıkla yalnızca istemci olarak etiketlenmiş modları zorla dahil eder. Ek mod İNDİRMEZ; yalnızca modpackte veya CURSEFORGE_FILES içinde zaten bulunan modların istemci etiketini geçersiz kılar.',
+    'Yanlışlıkla yalnızca istemci olarak etiketlenmiş modları zorla dahil eder. Ek mod İNDİRMEZ; yalnızca mod paketinde veya CURSEFORGE_FILES içinde zaten bulunan modların istemci etiketini geçersiz kılar.',
   forceIncludeModsDesc:
     'Yalnızca istemci etiketine rağmen zorla dahil edilecek proje kısa adları veya kimlikleri (virgül veya boşlukla ayrılmış)',
   excludeMods: 'Modları hariç tut (CF_EXCLUDE_MODS)',
   excludeModsHelp:
-    'Modpack kimliklerinden veya kısa adlarından hariç tutulacak modların listesi (boşluk veya satırla ayrılmış).',
+    'Mod paketi kimliklerinden veya kısa adlarından hariç tutulacak modların listesi (boşluk veya satırla ayrılmış).',
   excludeModsDesc:
-    'Modpack kimliklerinden veya kısa adlarından hariç tutulacak modların listesi (her satıra bir tane, glob desenlerini destekler)',
+    'Mod paketi kimliklerinden veya kısa adlarından hariç tutulacak modların listesi (her satıra bir tane, glob desenlerini destekler)',
 
   // ===========================
   // UI COMPONENTS
@@ -1590,29 +1622,29 @@ export const tr: Record<TranslationKey, string> = {
   // MODPACK TEMPLATES
   // ===========================
   templates: 'Şablonlar',
-  modpackTemplates: 'Modpack şablonları',
-  modpackTemplatesDescription: "CurseForge'daki modpackleri keşfedin ve kurun",
-  loadingModpacks: 'Modpackler yükleniyor...',
-  errorLoadingModpacks: 'Modpackler yüklenirken hata oluştu',
-  errorSearchingModpacks: 'Modpack aranırken hata oluştu',
-  noModpacksFound: 'Modpack bulunamadı',
+  modpackTemplates: 'Mod paketi şablonları',
+  modpackTemplatesDescription: "CurseForge'daki mod paketlerini keşfedin ve kurun",
+  loadingModpacks: 'Mod paketleri yükleniyor...',
+  errorLoadingModpacks: 'Mod paketleri yüklenirken hata oluştu',
+  errorSearchingModpacks: 'Mod paketi aranırken hata oluştu',
+  noModpacksFound: 'Mod paketi bulunamadı',
   modpackNotFoundIntro:
     'CurseForge araması her paketi sıralamaz. Yapıştırılan bir paket adresi veya tam kısa adı doğrudan aranır, bu yüzden önce onu deneyin.',
   modpackNotFoundPasteUrl:
-    'Modpack sayfasının adresini (veya kısa adını) yukarıdaki kutuya yapıştırın — arama bulamasa bile panel onu çözümler.',
+    'Mod paketi sayfasının adresini (veya kısa adını) yukarıdaki kutuya yapıştırın — arama bulamasa bile panel onu çözümler.',
   modpackNotFoundUseZip:
     "Yine de bulunamadı mı? Paketin .zip dosyasını CurseForge'dan indirip Dosya yöntemiyle kurun: panel dosyayı okur ve yükleyiciyle Minecraft sürümünü kendisi ayarlar.",
   modpackNotFoundPickLoader:
     'Zip içinde yükleyici yoksa panel size yükleyiciyi (Forge, NeoForge, Fabric veya Quilt) ve Minecraft sürümünü sorar, ardından arşivi sunucu verilerinin üzerine açar.',
   modpackNotFoundZipAction: '.zip dosyasından kur',
   modpackNotFoundSearchOnCurseForge: "CurseForge'da ara",
-  selectModpack: 'Modpack seç',
+  selectModpack: 'Mod paketi seç',
   modpackLikes: 'Beğeni',
   modpackSupportedVersions: 'Desteklenen sürümler',
   modpackFileSize: 'Boyut',
   modpackServerPack: 'Sunucu paketi',
   modpackNoDistribution:
-    "Bu modpack için yazar, CurseForge üzerinden otomatik indirmeyi engellemiş; bu yüzden otomatik kurulum başarısız olacak. .zip dosyasını kendiniz indirip sunucunun Modlar sekmesinden yükleyin.",
+    "Bu mod paketi için yazar, CurseForge üzerinden otomatik indirmeyi engellemiş; bu yüzden otomatik kurulum başarısız olacak. .zip dosyasını kendiniz indirip sunucunun Modlar sekmesinden yükleyin.",
   modpackNoDistributionTitle: 'Bu paket otomatik indirmeyi engelliyor',
   modpackNoDistributionShort: 'Elle indirme',
   modpackSwitchToFile: 'Dosya yöntemine geç',
@@ -1622,7 +1654,7 @@ export const tr: Record<TranslationKey, string> = {
   modpackInstallMethodHelp:
     'İkisi de aynı paketi kurar: Adres, CurseForge sayfasını; Kısa ad ise paket tanımlayıcısı ile dosya kimliğini kullanır.',
   modpackWillCreate: 'Bu şunu oluşturacak',
-  modpackDetails: 'Modpack ayrıntıları',
+  modpackDetails: 'Mod paketi ayrıntıları',
   description: 'Açıklama',
   downloads: 'İndirme',
   created: 'Oluşturulma',
@@ -1633,8 +1665,8 @@ export const tr: Record<TranslationKey, string> = {
   gameVersions: 'Oyun sürümleri',
   releaseDate: 'Yayın tarihi',
   quickCopy: 'Hızlı kopyala',
-  modpackId: 'Modpack kimliği',
-  modpackSlug: 'Modpack kısa adı',
+  modpackId: 'Mod paketi kimliği',
+  modpackSlug: 'Mod paketi kısa adı',
   curseforgeUrl: 'CurseForge adresi',
   copiedToClipboard: 'panoya kopyalandı',
   copyError: 'Panoya kopyalanamadı',
@@ -1671,7 +1703,7 @@ export const tr: Record<TranslationKey, string> = {
   cfApiKeyStep3:
     'Ayarlar > Entegrasyonlar > CurseForge API anahtarı alanına yapıştırıp kaydedin.',
   getCurseforgeApiKey: 'API anahtarı alın',
-  createServerFromModpack: 'Bu modpacki kullanarak yeni bir sunucu oluştur',
+  createServerFromModpack: 'Bu mod paketiyle yeni bir sunucu oluştur',
   serverIdRequired: 'Sunucu kimliği zorunludur',
   optional: 'isteğe bağlı',
 
@@ -1757,12 +1789,12 @@ export const tr: Record<TranslationKey, string> = {
   ban: 'Yasakla',
   unban: 'Yasağı kaldır',
   remove: 'Kaldır',
-  demote: 'Yetkisini al',
-  promoteToOp: "OP'ye yükselt",
+  demote: 'Operatörlükten çıkar',
+  promoteToOp: 'Operatör yap',
   playerAddedToWhitelist: 'Oyuncu beyaz listeye eklendi',
   playerRemovedFromWhitelist: 'Oyuncu beyaz listeden çıkarıldı',
-  playerPromotedToOp: 'Oyuncu operatörlüğe yükseltildi',
-  playerDemotedFromOp: 'Oyuncunun operatörlüğü alındı',
+  playerPromotedToOp: 'Oyuncu operatör yapıldı',
+  playerDemotedFromOp: 'Oyuncu operatörlükten çıkarıldı',
   playerKicked: 'Oyuncu atıldı',
   playerBanned: 'Oyuncu yasaklandı',
   playerUnbanned: 'Oyuncunun yasağı kaldırıldı',
@@ -1772,7 +1804,7 @@ export const tr: Record<TranslationKey, string> = {
   timeWeather: 'Zaman/Hava',
   setDay: 'Gündüz yap',
   setNight: 'Gece yap',
-  weatherClear: 'Havayı açık yap',
+  weatherClear: 'Açık hava',
   weatherRain: 'Yağmur',
   broadcast: 'Duyuru',
   broadcastPlaceholder: 'Tüm oyunculara mesaj...',
@@ -1841,7 +1873,7 @@ export const tr: Record<TranslationKey, string> = {
   autoScaleAsleepMotd: 'Uyuyan sunucu mesajı',
   autoScaleAsleepMotdDesc: 'Sunucu durdurulmuşken sunucu listesinde gösterilir',
   autoScaleWarning:
-    'Proxy arkasındaki her Java sunucusu, Bağlantı ayarlarından otomatik ölçekleme kapatılmadıkça boşken durdurulur. Ağır bir modpackin uyanması istemcinin beklediğinden uzun sürebilir, bu yüzden ilk katılım zaman aşımına uğrayabilir. Bedrock bundan hiç etkilenmez.',
+    'Proxy arkasındaki her Java sunucusu, Bağlantı ayarlarından otomatik ölçekleme kapatılmadıkça boşken durdurulur. Ağır bir mod paketinin uyanması istemcinin beklediğinden uzun sürebilir, bu yüzden ilk katılım zaman aşımına uğrayabilir. Bedrock bundan hiç etkilenmez.',
   proxyExtraNetworks: 'Ek Docker ağları',
   proxyExtraNetworksDesc:
     "Router'ın bağlanacağı mevcut dış ağlar, her satıra bir tane. Trafiği başka bir yığın üzerinden yönlendirmiyorsanız boş bırakın",
@@ -1887,7 +1919,7 @@ export const tr: Record<TranslationKey, string> = {
   javaServerDefaultsTitle: 'Yeni Java sunucusu varsayılanları',
   javaServerDefaultsDesc:
     'Yeni Java sunucuları (vanilla ve modlu) oluşturulurken uygulanan genel varsayılanlar.',
-  javaServerDefaultsOnlineModeDesc: 'Çevrimdışı/crack ortamlar için kapatın.',
+  javaServerDefaultsOnlineModeDesc: 'Çevrimdışı modda çalışan ortamlar için kapatın.',
   javaServerDefaultsBackupDesc: 'Yeni Java sunucularında yedeklemeyi otomatik olarak açar.',
   javaServerDefaultsApplyOnlyNewServers:
     'Bu varsayılanlar yalnızca sunucu oluşturulurken uygulanır. Mevcut sunucular değiştirilmez.',
@@ -1895,9 +1927,9 @@ export const tr: Record<TranslationKey, string> = {
   // ===========================
   // BEDROCK EDITION
   // ===========================
-  serverEdition: 'Sunucu sürümü',
+  serverEdition: 'Oyun sürümü (Edition)',
   javaEditionDesc: 'Mod desteği olan PC/Mac sürümü',
-  bedrockEditionDesc: 'Çapraz platform (mobil, konsol, Win10)',
+  bedrockEditionDesc: 'Çapraz platform (mobil, konsol, Windows)',
   editionLocked: 'Sunucu oluşturulduktan sonra değiştirilemez',
   bedrockVersion: 'Bedrock sürümü',
   bedrockVersionDesc:
@@ -2067,10 +2099,39 @@ export const tr: Record<TranslationKey, string> = {
   // ===========================
   metrics: 'Ölçümler',
   tasks: 'Görevler',
+  monitoringEstimatedTps: 'Tahmini TPS',
+  monitoringNativeHelp: 'NeoForge TPS değeri, ölçülen tick sayısından değil ortalama tick süresinden tahmin edilir.',
+  monitoringMeanHelp: "NeoForge'un son tick arabelleğindeki ortalama tick süresi",
+  monitoringTitle: 'Sunucu izleme',
+  monitoringDescription: 'Oyun performansı ve konteyner kaynakları tek ekranda. CurseForge mod paketlerinde yerel NeoForge izlemesi, destekleniyorsa spark kullanılır.',
+  monitoringCadence: 'Canlı: 10 saniyede bir · Geçmiş: dakikada bir, 7 gün boyunca saklanır',
+  monitoringTpsWindow: '1 dakikalık ortalama · Varsayılan hedef: 20',
+  monitoringMsptWindow: '10 saniyelik medyan',
+  monitoringCpuHelp: 'Konteyner CPU kullanımı · %100 = tamamen kullanılan bir çekirdek',
+  monitoringMemoryHelp: 'Java ve yerel (native) bellek ayırmaları dahil konteyner belleği',
+  monitoringConnected: 'Tick ölçümleri kullanılabilir',
+  monitoringOffline: 'Sunucu kapalı veya başlatılıyor. Tick ölçümleri şu anda kullanılamıyor.',
+  monitoringUnsupported: 'Tick izleme Bedrock sunucularında desteklenmez. Kaynak izleme kullanılabilir durumda.',
+  monitoringRconDisabled: "Tick ölçümlerinin toplanması için sunucunun Erişim sekmesinden RCON'u etkinleştirin ve sunucuyu yeniden başlatın.",
+  monitoringSparkMissing: 'spark komutu bu sunucuda kullanılamıyor.',
+  monitoringUnavailable: "spark'tan kullanılabilir bir yanıt alınamadı. Sunucu hâlâ başlatılıyor olabilir; RCON ve spark durumunu konsoldan kontrol edin.",
+  monitoringSource: 'Tick izleme',
+  monitoringTickHelp: "Varsayılan 20 TPS'de her tick için 50 ms'lik bir süre bütçesi vardır. P95, ölçülen tick'lerin %95'inin altında kaldığı süreyi gösterir.",
+  monitoringSetup: "Bu sunucuda tick ölçümleri için spark gerekir. Minecraft sürümü ve mod yükleyicisiyle uyumlu spark sunucu modunu veya eklentisini kurup sunucuyu yeniden başlatın.",
+  monitoringSparkDocs: 'spark kurulum kılavuzu',
+  monitoringHistory: 'Performans geçmişi',
+  monitoringRange: 'Zaman aralığı',
+  monitoringFetchError: 'Canlı izleme verileri yüklenemedi. Değerler bir sonraki başarılı yenilemeye kadar gösterilemez.',
+  monitoringHistoryError: 'Geçmiş yenilenemedi. Daha önce yüklenen örnekler güncel olmayabilir.',
+  monitoringP95Help: "10 saniyelik pencerede 95. yüzdelik tick süresi · Referans: 20 TPS'de 50 ms",
+  monitoringPlayersHelp: 'Her örnekleme anındaki çevrimiçi oyuncu sayısı',
+  monitoringLatest: "Son örnek",
+  monitoringMinimum: "En düşük",
+  monitoringMaximum: "En yüksek",
+  monitoringReference: 'Referans',
   metricsTitle: 'Kaynak geçmişi',
   metricsDescription: 'Bu sunucunun geçmiş CPU ve bellek kullanımı.',
-  metricsEmpty:
-    'Henüz ölçüm yok. Sunucu çalışırken her dakika örnek toplanır.',
+  metricsEmpty: 'Henüz ölçüm verisi yok. Sunucu çalışırken dakikada bir örnek toplanır.',
   alertsTitle: 'Uyarılar',
   alertsDescription:
     'Bu sunucu kapandığında veya kaynak eşiklerini aştığında Discord bildirimi alın.',
@@ -2078,8 +2139,8 @@ export const tr: Record<TranslationKey, string> = {
   resourceAlert: 'Sürekli yüksek CPU/RAM kullanımında uyar',
   cpuThreshold: 'CPU eşiği (%)',
   memoryThreshold: 'Bellek eşiği (%)',
-  sustainedMinutes: 'Süreklilik (dk)',
-  cooldownMinutes: 'Bekleme süresi (dk)',
+  sustainedMinutes: 'Süre eşiği (dk)',
+  cooldownMinutes: 'Tekrar bildirim aralığı (dk)',
   alertsNeedWebhook:
     'Uyarılar, Ayarlar > Entegrasyonlar bölümünde yapılandırılan Discord webhook adresine gönderilir.',
   saveAlerts: 'Uyarıları kaydet',
@@ -2116,7 +2177,7 @@ export const tr: Record<TranslationKey, string> = {
   tasksLastResult: 'Son sonuç',
   tasksCreated: 'Görev oluşturuldu',
   tasksDeleted: 'Görev silindi',
-  tasksRunQueued: 'Görev çalıştırıldı',
+  tasksRunQueued: 'Görev çalıştırma sırasına alındı',
   tasksLoadError: 'Görevler yüklenemedi',
   tasksSaveError: 'Görev kaydedilemedi',
   tasksDeleteError: 'Görev silinemedi',
@@ -2128,7 +2189,7 @@ export const tr: Record<TranslationKey, string> = {
   tabSearchPlaceholder: 'Sekmelerde ve bölümlerde ara...',
   tabSearchEmpty: 'Eşleşme bulunamadı.',
   tabGroupConfig: 'Yapılandırma',
-  tabGroupOperation: 'İşletim',
+  tabGroupOperation: 'İşlemler',
   tabGroupMonitoring: 'İzleme',
   back: 'Geri',
   pageNotFoundTitle: 'Sayfa bulunamadı',

@@ -4,6 +4,7 @@ import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { UsersService } from 'src/users/services/users.service';
 import { MetricsService } from './metrics.service';
+import { MonitoringService } from './monitoring.service';
 
 const MIN_HOURS = 1;
 const MAX_HOURS = 168;
@@ -16,7 +17,16 @@ export class MetricsController {
     private readonly metricsService: MetricsService,
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
+    private readonly monitoring: MonitoringService,
   ) {}
+
+  @Get(':id/live')
+  async getLive(@Request() req, @Param('id') id: string) {
+    const payload = req.user as PayloadToken;
+    const user = await this.usersService.getRequiredUserById(payload.userId);
+    this.accessControlService.assertServerAccess(user, id);
+    return this.monitoring.getSnapshot(id);
+  }
 
   @Get(':id/history')
   async getHistory(@Request() req, @Param('id') id: string, @Query('hours') hours?: string) {

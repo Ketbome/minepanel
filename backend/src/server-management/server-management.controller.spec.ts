@@ -369,6 +369,27 @@ describe('ServerManagementController', () => {
       );
     });
 
+    it('should reject a compose snippet change from a server-scoped user', async () => {
+      await expect(
+        controller.updateServer(mockReq, 'victim', { composeSnippets: [{ target: 'mc', yaml: 'privileged: true' }] } as any),
+      ).rejects.toThrow(/composeSnippets/);
+
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+    });
+
+    it('should let an admin save valid snippets and reject invalid ones', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 2, role: 'ADMIN' });
+      accessControlService.isAdmin.mockReturnValue(true);
+
+      await controller.updateServer(mockReq, 'victim', { composeSnippets: [{ target: 'mc', yaml: 'dns:\n  - 1.1.1.1' }] } as any);
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+
+      await expect(
+        controller.updateServer(mockReq, 'victim', { composeSnippets: [{ target: 'mc', yaml: '- not a mapping' }] } as any),
+      ).rejects.toThrow(BadRequestException);
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+    });
+
     it('should let an admin change advanced fields', async () => {
       (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 2, role: 'ADMIN' });
       accessControlService.isAdmin.mockReturnValue(true);
@@ -477,6 +498,7 @@ describe('ServerManagementController', () => {
       ['gid', { gid: '0' }],
       ['dockerImage', { dockerImage: 'attacker/evil:latest' }],
       ['dockerLabels', { dockerLabels: 'traefik.enable=true' }],
+      ['composeSnippets', { composeSnippets: [{ target: 'mc', yaml: 'privileged: true' }] }],
       ['paperDownloadUrl', { paperDownloadUrl: 'https://attacker.invalid/evil.jar' }],
       ['fabricLauncherUrl', { fabricLauncherUrl: 'https://attacker.invalid/evil.jar' }],
     ])('should reject a non-admin creating a server with %s', async (_field, overrides) => {
@@ -650,6 +672,7 @@ describe('ServerManagementController', () => {
 
         accessControlService.isAdmin.mockReturnValue(true);
         expect((await controller.createServer(req, { id: 'ok', dockerVolumes: '/host:/data', uid: '0' } as any)).success).toBe(true);
+        await expect(controller.createServer(req, { id: 'ok', composeSnippets: [{ target: 'root', yaml: 'a: [' }] } as any)).rejects.toThrow(/Compose snippet 1/);
       });
 
       it('regenerates proxy routes when the proxy is on', async () => {

@@ -109,7 +109,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, prof
         </TabsContent>
 
         <TabsContent value="sessions" className="pt-3">
-          <PlayerSessions serverId={serverId} player={{ uuid: profile.uuid, name: profile.name ?? undefined }} />
+          <PlayerSessions key={profile.uuid} serverId={serverId} name={profile.name} />
         </TabsContent>
 
         <TabsContent value="statistics" className="space-y-3 pt-3">

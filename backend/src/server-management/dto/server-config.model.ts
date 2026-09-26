@@ -1,10 +1,21 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max, IsArray, ValidateNested, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
+import { COMPOSE_SNIPPET_TARGETS, type ComposeSnippetTarget } from 'src/common/compose/compose-snippets';
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
 
 // Seconds Docker must keep waiting after the stop announcement so Minecraft can flush its final save
 export const SHUTDOWN_BUFFER_SECONDS = 60;
+
+export class ComposeSnippetDto {
+  @IsEnum(COMPOSE_SNIPPET_TARGETS)
+  target: ComposeSnippetTarget;
+
+  @IsString()
+  @MaxLength(20000)
+  yaml: string;
+}
 
 export class ServerConfigDto {
   @IsString()
@@ -364,6 +375,13 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   dockerLabels?: string;
+
+  // Raw compose YAML merged into the generated file (advanced, admin-only)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ComposeSnippetDto)
+  @IsOptional()
+  composeSnippets?: ComposeSnippetDto[];
 
   // Backup includes/excludes
   @IsString()

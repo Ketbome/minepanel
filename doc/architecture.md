@@ -159,3 +159,30 @@ This is the same pattern used by Portainer, Yacht, and other Docker management p
 - [Development](/development) - Contributing
 - [Configuration](/configuration) - Settings
 - [Features](/features) - Capabilities
+
+## Game-performance monitoring
+
+`MetricsController` checks server access for live and history queries.
+`MonitoringService` combines runtime status with fixed, bounded, container-local
+RCON probes; it shares cached results between the UI and the background sampler.
+NeoForge/CurseForge uses native overall tick data first, with spark support on
+compatible Java servers. `MetricSample` stores the source alongside distinct
+mean, median and P95 columns; schema synchronization adds nullable fields so
+existing resource history is preserved. No generated compose files are parsed.
+
+## Player activity collection
+
+`backend/src/player-activity/` polls bounded Docker log windows through
+`ServerManagementService.readPlayerLogWindow`. Each server's session changes and cursor
+commit together in a SQLite transaction (`player_sessions`, `player_tracking`). The sampler
+prevents overlapping runs and handles servers sequentially. Container boot identity and
+sampling gaps prevent open sessions from silently spanning unknown downtime. On Java servers
+with the activity log on, a live join and a leave hand the session to `ActivityService`, which
+adds the uuid, a stats baseline and inventory snapshots, then the per-session stat deltas; an
+interrupted session drops its baseline, since its deltas are unknown.
+
+`PlayerStatsService` reads only bounded, server-contained Java `usercache.json`,
+`server.properties`, and world `stats/<uuid>.json` files. It resolves symlinks before reading,
+rejects escapes and returns selected numeric counters. Game files are never modified.
+The frontend lazily loads the Players tab, polls after request completion, and cancels
+requests on player/server/page changes.

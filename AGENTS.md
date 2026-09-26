@@ -119,6 +119,10 @@ production tree, and `frontend/Dockerfile` copies the Next standalone output.
 - Scope: make minimal, task-focused changes; no unrelated refactors.
 - Commits: `type(scope): short description`.
 
+Monitoring uses `backend/src/metrics/monitoring.service.ts`: native NeoForge tick measurements
+for CurseForge/NeoForge, with spark support on other compatible Java servers. Keep the
+estimated native TPS distinct from spark measurements; unavailable metrics stay null.
+
 ## Critical Files
 
 - `AGENTS.md`
@@ -166,3 +170,10 @@ Every AGENTS file in this repo must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `AGENTS.md` and `README.md` updated whenever workflow, architecture, commands, or conventions change.
+
+Player activity lives in `backend/src/player-activity/` and is the only session store: the
+opt-in activity log (`backend/src/activity/`) adds events, inventory snapshots and per-session
+stat deltas to those sessions, never sessions of its own. It shows in the Players tab.
+Session history comes from bounded Docker join/leave logs and SQLite cursors, not browser
+polling or `server.json`. Unknown intervals must not be counted as playtime; Java saved-world
+statistics are separate from recorded session totals.

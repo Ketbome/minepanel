@@ -18,6 +18,24 @@ export class MetricSample {
   @Column({ type: 'float', name: 'memory_limit_mb', nullable: true })
   memoryLimitMb: number | null;
 
+  @Column({ type: 'float', nullable: true })
+  tps: number | null;
+
+  @Column({ type: 'text', name: 'tick_source', nullable: true })
+  tickSource: 'neoforge' | 'spark' | null;
+
+  @Column({ type: 'float', name: 'mspt_mean', nullable: true })
+  msptMean: number | null;
+
+  @Column({ type: 'float', name: 'mspt_median', nullable: true })
+  msptMedian: number | null;
+
+  @Column({ type: 'float', name: 'mspt_p95', nullable: true })
+  msptP95: number | null;
+
+  @Column({ type: 'integer', name: 'players_online', nullable: true })
+  playersOnline: number | null;
+
   @Column({ type: 'datetime', name: 'created_at' })
   createdAt: Date;
 }

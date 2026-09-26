@@ -1,17 +1,15 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'node:crypto';
-import { Between, FindOptionsWhere, In, IsNull, LessThan, Like, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, In, IsNull, LessThan, Like, Not, Repository } from 'typeorm';
 import { PlayersService, summarizeStats } from 'src/players/players.service';
+import { PlayerSession, StatsSnapshot } from 'src/player-activity/entities/player-session.entity';
 import { ActivityEvent } from './entities/activity-event.entity';
 import { InventorySnapshot, SnapshotReason } from './entities/inventory-snapshot.entity';
-import { PlayerSession, StatsSnapshot } from './entities/player-session.entity';
+import { LogCursor } from './entities/log-cursor.entity';
 import { ActivityType, classifyLine, LogLine } from './log-line.parser';
-import { localDay, tzOffsetMs } from './log-time';
 
 export const RETENTION_DAYS = 30;
-// Minecraft writes the stats file right after the leave line; read it once that has happened.
-const STATS_FLUSH_DELAY_MS = 5_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EVENTS_PAGE = 200;
 const MAX_SNAPSHOTS_PER_PLAYER = 50;
@@ -38,11 +36,33 @@ export const ORE_IDS = [
   'minecraft:nether_gold_ore',
 ];
 
+export interface OnlinePlayer {
+  name: string;
+  uuid: string | null;
+  joinedAt: Date;
+}
+
+export interface ImportedSession {
+  name: string;
+  uuid: string | null;
+  joinedAt: Date;
+  leftAt: Date;
+  endReason: 'left' | 'interrupted';
+}
+
+// Who is online is only needed to recognise death lines; live sessions belong to player-activity.
 export interface IngestState {
-  open: Map<string, PlayerSession>;
+  online: Map<string, OnlinePlayer>;
   uuids: Map<string, string>;
   lastEventAt: Date | null;
-  live: boolean;
+  // History imports rebuild the sessions of logs older than player-activity's first session
+  closed: ImportedSession[] | null;
+}
+
+export interface SessionEventCounts {
+  chat: number;
+  advancements: number;
+  deaths: number;
 }
 
 export interface EventQuery {
@@ -69,16 +89,6 @@ export interface SnapshotListItem {
   deathMessage: string | null;
 }
 
-export interface SessionSummary {
-  sessions: number;
-  totalMs: number;
-  averageMs: number;
-  longestMs: number;
-  deaths: number;
-  playMsByWeekday: number[];
-  streakDays: number;
-}
-
 @Injectable()
 export class ActivityService {
   private readonly logger = new Logger(ActivityService.name);
@@ -91,21 +101,21 @@ export class ActivityService {
     private readonly sessionRepo: Repository<PlayerSession>,
     @InjectRepository(InventorySnapshot)
     private readonly snapshotRepo: Repository<InventorySnapshot>,
+    @InjectRepository(LogCursor)
+    private readonly cursorRepo: Repository<LogCursor>,
     private readonly playersService: PlayersService,
   ) {}
 
-  // Imports run on their own state so they never touch the sessions of players online right now.
   newImportState(): IngestState {
-    return { open: new Map(), uuids: new Map(), lastEventAt: null, live: false };
+    return { online: new Map(), uuids: new Map(), lastEventAt: null, closed: [] };
   }
 
   async ingest(serverId: string, lines: LogLine[], toDate: (time: string) => Date, state?: IngestState): Promise<number> {
     const current = state ?? (await this.getLiveState(serverId));
     const events: ActivityEvent[] = [];
-    const touched = new Set<PlayerSession>();
 
     for (const line of lines) {
-      const signal = classifyLine(line, new Set(current.open.keys()));
+      const signal = classifyLine(line, new Set(current.online.keys()));
       if (!signal) continue;
       const at = toDate(line.time);
 
@@ -114,45 +124,71 @@ export class ActivityService {
         continue;
       }
       if (signal.kind === 'stop') {
-        await this.closeOpenSessions(serverId, at, current);
+        endEveryone(current, at);
         continue;
       }
 
       const key = signal.name.toLowerCase();
-      const uuid = current.uuids.get(key) ?? current.open.get(key)?.uuid ?? null;
+      const uuid = current.uuids.get(key) ?? current.online.get(key)?.uuid ?? null;
       events.push(this.eventRepo.create({ serverId, type: signal.type, name: signal.name, uuid, message: signal.message, createdAt: at }));
       current.lastEventAt = at;
 
       if (signal.type === 'join') {
-        await this.openSession(serverId, current, signal.name, uuid, at);
+        if (current.online.has(key)) endPlayer(current, key, at, 'interrupted');
+        current.online.set(key, { name: signal.name, uuid, joinedAt: at });
       } else if (signal.type === 'leave') {
-        await this.closeSession(serverId, current, key, at);
-      } else {
-        const session = current.open.get(key);
-        if (!session) continue;
-        if (signal.type === 'chat') session.chatCount += 1;
-        if (signal.type === 'advancement') session.advancements += 1;
-        if (signal.type === 'death') session.loggedDeaths += 1;
-        touched.add(session);
+        endPlayer(current, key, at, 'left');
       }
     }
 
     if (events.length > 0) await this.eventRepo.save(events);
-    if (touched.size > 0) await this.sessionRepo.save([...touched]);
     return events.length;
   }
 
-  // Sessions still open when a log ends without leave lines (crash, rotation, tracking turned off)
-  async closeOpenSessions(serverId: string, at?: Date, state?: IngestState): Promise<void> {
-    const current = state ?? (await this.getLiveState(serverId));
-    const end = at ?? current.lastEventAt ?? new Date();
-    for (const key of [...current.open.keys()]) {
-      await this.closeSession(serverId, current, key, end);
-    }
+  // A log that ends without leave lines (crash, rotation) leaves nobody we can still follow
+  endLog(state: IngestState, at?: Date): void {
+    endEveryone(state, at ?? state.lastEventAt ?? new Date());
   }
 
-  forgetLiveState(serverId: string): void {
+  resetLive(serverId: string): void {
     this.liveStates.delete(serverId);
+  }
+
+  // Imported sessions only fill the time before player-activity started recording, so the two
+  // sources never describe the same stretch twice.
+  async saveImportedSessions(serverId: string, sessions: ImportedSession[]): Promise<number> {
+    const [first] = await this.sessionRepo.find({ select: { joinedAt: true }, where: { serverId }, order: { joinedAt: 'ASC' }, take: 1 });
+    const kept = sessions.filter((session) => !first || session.joinedAt < first.joinedAt);
+    if (kept.length === 0) return 0;
+    await this.sessionRepo.save(
+      kept.map((session) =>
+        this.sessionRepo.create({
+          serverId,
+          playerKey: `java:${session.name.toLowerCase()}`,
+          name: session.name,
+          uuid: session.uuid,
+          joinedAt: session.joinedAt,
+          lastSeenAt: session.leftAt,
+          leftAt: session.leftAt,
+          endReason: session.endReason,
+        }),
+      ),
+    );
+    return kept.length;
+  }
+
+  // Runs right after player-activity opens a live session on a Java server with the log on.
+  // A player without a stats file yet is new, so everything they earn counts for this session.
+  async beginSession(sessionId: number): Promise<void> {
+    const session = await this.sessionRepo.findOne({ where: { id: sessionId } });
+    if (!session) return;
+    const uuid = await this.playersService.findUuid(session.serverId, session.name).catch(() => null);
+    if (!uuid) return;
+    const baseline = await this.playersService.readStats(session.serverId, uuid).catch(() => null);
+    session.uuid = uuid;
+    session.baseline = baseline ?? {};
+    await this.sessionRepo.save(session);
+    await this.snapshotInventory(session.serverId, uuid, session.name, 'join');
   }
 
   // Runs once Minecraft has written the player's files after a leave
@@ -171,11 +207,38 @@ export class ActivityService {
     await this.sessionRepo.save(session);
   }
 
+  // Chat, advancements and logged deaths per session; unknown (absent) where the log was not
+  // being read at the time
+  async sessionEventCounts(serverId: string, sessions: PlayerSession[], now = new Date()): Promise<Map<number, SessionEventCounts>> {
+    const counts = new Map<number, SessionEventCounts>();
+    const cursor = await this.cursorRepo.findOne({ where: { serverId } });
+    const covered = cursor ? sessions.filter((session) => cursor.historyImported || session.joinedAt >= cursor.createdAt) : [];
+    if (covered.length === 0) return counts;
+
+    const from = new Date(Math.min(...covered.map((session) => session.joinedAt.getTime())));
+    const to = new Date(Math.max(...covered.map((session) => (session.leftAt ?? now).getTime())));
+    const names = [...new Set(covered.map((session) => session.name))];
+    const events = await this.eventRepo.find({
+      select: { type: true, name: true, createdAt: true },
+      where: { serverId, name: In(names), type: In(['chat', 'advancement', 'death']), createdAt: Between(from, to) },
+    });
+    for (const session of covered) {
+      const end = (session.leftAt ?? now).getTime();
+      const mine = events.filter((event) => event.name === session.name && event.createdAt >= session.joinedAt && event.createdAt.getTime() <= end);
+      counts.set(session.id, {
+        chat: mine.filter((event) => event.type === 'chat').length,
+        advancements: mine.filter((event) => event.type === 'advancement').length,
+        deaths: mine.filter((event) => event.type === 'death').length,
+      });
+    }
+    return counts;
+  }
+
   // Picks up autosaves of online players; unchanged inventories are skipped by hash
   async snapshotOnline(serverId: string): Promise<void> {
-    const state = await this.getLiveState(serverId);
-    for (const session of state.open.values()) {
-      if (session.uuid) await this.snapshotInventory(serverId, session.uuid, session.name, 'autosave');
+    const online = await this.sessionRepo.find({ where: { serverId, leftAt: IsNull(), uuid: Not(IsNull()) } });
+    for (const session of online) {
+      await this.snapshotInventory(serverId, session.uuid, session.name, 'autosave');
     }
   }
 
@@ -238,53 +301,11 @@ export class ActivityService {
     return { events, nextCursor: hasMore ? events[events.length - 1].id : null };
   }
 
-  async listSessions(serverId: string, player: PlayerRef, limit = 100): Promise<PlayerSession[]> {
-    const where = this.playerWhere(serverId, player);
-    if (!where) return [];
-    const sessions = await this.sessionRepo.find({ where, order: { startAt: 'DESC' }, take: limit });
-    return sessions.map((session) => ({ ...session, baseline: null }));
-  }
-
-  async summarize(serverId: string, player: PlayerRef, tz: string, now = new Date()): Promise<SessionSummary> {
-    const where = this.playerWhere(serverId, player);
-    const sessions = where ? await this.sessionRepo.find({ where }) : [];
-    const durations = sessions.map((session) => Math.max(0, (session.endAt ?? now).getTime() - session.startAt.getTime()));
-    const totalMs = durations.reduce((sum, ms) => sum + ms, 0);
-    const playMsByWeekday = [0, 0, 0, 0, 0, 0, 0];
-    const days = new Set<string>();
-
-    sessions.forEach((session, index) => {
-      const local = new Date(session.startAt.getTime() + tzOffsetMs(session.startAt, tz));
-      playMsByWeekday[local.getUTCDay()] += durations[index];
-      days.add(localDay(session.startAt, tz));
-    });
-
-    let streakDays = 0;
-    for (let day = now.getTime(); days.has(localDay(new Date(day), tz)); day -= DAY_MS) {
-      streakDays += 1;
-    }
-
-    return {
-      sessions: sessions.length,
-      totalMs,
-      averageMs: sessions.length ? Math.round(totalMs / sessions.length) : 0,
-      longestMs: durations.length ? Math.max(...durations) : 0,
-      deaths: sessions.reduce((sum, session) => sum + (session.deaths ?? session.loggedDeaths), 0),
-      playMsByWeekday,
-      streakDays,
-    };
-  }
-
   async prune(now = new Date(), maxEventsPerServer = MAX_EVENTS_PER_SERVER): Promise<void> {
     const cutoff = new Date(now.getTime() - RETENTION_DAYS * DAY_MS);
     await this.eventRepo.delete({ createdAt: LessThan(cutoff) });
-    await this.sessionRepo.delete({ endAt: LessThan(cutoff) });
-    // Sessions that never closed (server deleted, log lost) would otherwise stay forever
-    await this.sessionRepo.delete({ endAt: IsNull(), startAt: LessThan(cutoff) });
     await this.snapshotRepo.delete({ createdAt: LessThan(cutoff) });
     await this.capEvents(maxEventsPerServer);
-    // Cached open sessions may have just been deleted; reload them from the database
-    this.liveStates.clear();
   }
 
   private async capEvents(max: number): Promise<void> {
@@ -300,53 +321,32 @@ export class ActivityService {
     }
   }
 
-  // Sessions recorded before the player's UUID was known only carry the name
-  private playerWhere(serverId: string, player: PlayerRef): FindOptionsWhere<PlayerSession>[] | null {
-    const where: FindOptionsWhere<PlayerSession>[] = [];
-    if (player.uuid) where.push({ serverId, uuid: player.uuid.toLowerCase() });
-    if (player.name) where.push({ serverId, name: player.name, ...(player.uuid ? { uuid: IsNull() } : {}) });
-    return where.length ? where : null;
-  }
-
+  // After a panel restart, the players still online come from player-activity's open sessions
   private async getLiveState(serverId: string): Promise<IngestState> {
     let state = this.liveStates.get(serverId);
     if (!state) {
-      const open = await this.sessionRepo.find({ where: { serverId, endAt: IsNull() } });
-      state = { open: new Map(open.map((session) => [session.name.toLowerCase(), session])), uuids: new Map(), lastEventAt: null, live: true };
+      const open = await this.sessionRepo.find({ where: { serverId, leftAt: IsNull() } });
+      state = {
+        online: new Map(open.map((session) => [session.name.toLowerCase(), { name: session.name, uuid: session.uuid, joinedAt: session.joinedAt }])),
+        uuids: new Map(open.filter((session) => session.uuid).map((session) => [session.name.toLowerCase(), session.uuid])),
+        lastEventAt: null,
+        closed: null,
+      };
       this.liveStates.set(serverId, state);
     }
     return state;
   }
+}
 
-  private async openSession(serverId: string, state: IngestState, name: string, knownUuid: string | null, at: Date): Promise<void> {
-    const key = name.toLowerCase();
-    if (state.open.has(key)) {
-      await this.closeSession(serverId, state, key, at);
-    }
-    const uuid = knownUuid ?? (await this.playersService.findUuid(serverId, name).catch(() => null));
-    const baseline = state.live && uuid ? await this.playersService.readStats(serverId, uuid).catch(() => null) : null;
-    const session = await this.sessionRepo.save(
-      this.sessionRepo.create({ serverId, name, uuid, startAt: at, endAt: null, loggedDeaths: 0, advancements: 0, chatCount: 0, baseline: baseline ?? {} }),
-    );
-    state.open.set(key, session);
-    if (state.live && uuid) {
-      await this.snapshotInventory(serverId, uuid, name, 'join');
-    }
-  }
+function endPlayer(state: IngestState, key: string, at: Date, endReason: ImportedSession['endReason']): void {
+  const player = state.online.get(key);
+  if (!player) return;
+  state.online.delete(key);
+  state.closed?.push({ name: player.name, uuid: player.uuid, joinedAt: player.joinedAt, leftAt: at, endReason });
+}
 
-  private async closeSession(serverId: string, state: IngestState, key: string, at: Date): Promise<void> {
-    const session = state.open.get(key);
-    if (!session) return;
-    state.open.delete(key);
-    session.endAt = at;
-    session.deaths = session.loggedDeaths;
-    const awaitFiles = state.live && session.uuid;
-    if (!awaitFiles) session.baseline = null;
-    const saved = await this.sessionRepo.save(session);
-    if (awaitFiles) {
-      setTimeout(() => void this.finalizeSession(saved.id), STATS_FLUSH_DELAY_MS).unref();
-    }
-  }
+function endEveryone(state: IngestState, at: Date): void {
+  for (const key of [...state.online.keys()]) endPlayer(state, key, at, 'interrupted');
 }
 
 export function sessionDeltas(before: StatsSnapshot, after: StatsSnapshot): Partial<PlayerSession> {
