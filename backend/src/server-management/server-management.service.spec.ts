@@ -411,6 +411,70 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('getGamerules', () => {
+    beforeEach(() => {
+      jest.spyOn(service as any, 'getServerEdition').mockResolvedValue('JAVA');
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+    });
+
+    it('lists rules from help and reads each value in one exec', async () => {
+      const execute = jest
+        .spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: '/gamerule keepInventory [<value>]/gamerule randomTickSpeed [<value>]\n/gamerule (mod:a|mod:b)', exitCode: 0 })
+        .mockResolvedValueOnce({
+          stdout: '@@keepInventory@@\nGamerule keepInventory is currently set to: false\n@@randomTickSpeed@@\nGamerule randomTickSpeed is currently set to: 3\n@@mod:a@@\nUnknown command\n@@mod:b@@\n',
+          exitCode: 0,
+        });
+
+      const result = await service.getGamerules('survival');
+
+      expect(result).toEqual({
+        success: true,
+        supported: true,
+        complete: true,
+        rules: [
+          { name: 'keepInventory', value: 'false' },
+          { name: 'randomTickSpeed', value: '3' },
+        ],
+      });
+      expect(execute).toHaveBeenLastCalledWith(
+        'docker',
+        ['exec', 'container123', 'sh', '-c', expect.any(String), 'sh', 'keepInventory', 'randomTickSpeed', 'mod:a', 'mod:b'],
+        { timeout: 30000 },
+      );
+    });
+
+    it('falls back to the vanilla registry list when help only prints the syntax (1.21.11+)', async () => {
+      const execute = jest
+        .spyOn(service as any, 'executeProcess')
+        .mockResolvedValueOnce({ stdout: '/gamerule <rule> [<value>]', exitCode: 0 })
+        .mockResolvedValueOnce({ stdout: '@@advance_time@@Gamerule minecraft:advance_time is currently set to: true@@max_minecart_speed@@Unknown game rule', exitCode: 0 });
+
+      expect(await service.getGamerules('survival')).toEqual({ success: true, supported: true, complete: false, rules: [{ name: 'advance_time', value: 'true' }] });
+      const args = execute.mock.calls[1][1] as string[];
+      expect(args).toEqual(expect.arrayContaining(['keep_inventory', 'advance_time', 'show_advancement_messages']));
+    });
+
+    it('reports Bedrock as unsupported and failures as empty', async () => {
+      const empty = { success: false, supported: true, complete: false, rules: [] };
+      (service as any).getServerEdition.mockResolvedValueOnce('BEDROCK');
+      expect(await service.getGamerules('bds')).toEqual({ ...empty, supported: false });
+      expect(await service.getGamerules('../x')).toEqual(empty);
+
+      const execute = jest.spyOn(service as any, 'executeProcess');
+      // RCON unreachable, nothing answered, and an exec failure
+      execute.mockResolvedValueOnce({ stdout: '', exitCode: 1 });
+      expect(await service.getGamerules('survival')).toEqual(empty);
+      execute.mockResolvedValueOnce({ stdout: 'Unknown command', exitCode: 0 }).mockResolvedValueOnce({ stdout: '', exitCode: 0 });
+      expect(await service.getGamerules('survival')).toEqual(empty);
+      execute.mockRejectedValueOnce(new Error('boom'));
+      expect(await service.getGamerules('survival')).toEqual(empty);
+
+      (service as any).findContainerId.mockResolvedValueOnce(null);
+      expect(await service.getGamerules('survival')).toEqual(empty);
+    });
+  });
+
   describe('readTickStats', () => {
     it('uses a fixed bounded command and container-side credentials', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
