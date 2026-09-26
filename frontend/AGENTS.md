@@ -221,6 +221,12 @@ Tooling / build (Next.js 16):
   These return `null` for unknown values on purpose: an unreachable game must render as `-`, never `0`.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
+- `src/components/organisms/settings/end/` - the Danger Zone easter egg. The R3F scene
+  (`JourneyScene`) is loaded with `next/dynamic` only on click, so `three` never reaches the
+  settings bundle; nothing outside this folder may import from it. Game state lives in
+  `end-game-store.ts`, sounds and their subtitles in `end-audio.ts` (CC0 clips + WebAudio synths),
+  block textures are painted at runtime in `voxels.tsx`. The overlay is exempt from the
+  no-perpetual-motion rule; it is not an operating screen.
 - `src/lib/store/servers-store.ts`
 - `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
