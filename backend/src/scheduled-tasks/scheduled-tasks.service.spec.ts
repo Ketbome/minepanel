@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ScheduledTasksService } from './scheduled-tasks.service';
 import { ScheduledTask } from './entities/scheduled-task.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
@@ -60,6 +60,21 @@ describe('ScheduledTasksService', () => {
       } as any);
 
       expect(task.command).toBe('say hi');
+    });
+  });
+
+  describe('console permission', () => {
+    it('keeps command tasks away from users without useConsole', async () => {
+      await expect(service.create('srv', { name: 'x', type: 'command', command: 'op me', intervalMinutes: 5 } as any, false)).rejects.toThrow(ForbiddenException);
+      expect(await service.create('srv', { name: 'r', type: 'restart', intervalMinutes: 5 } as any, false)).toMatchObject({ type: 'restart' });
+
+      taskRepo.findOne.mockResolvedValue({ id: 1, serverId: 'srv', type: 'command', command: 'say hi', enabled: false });
+      await expect(service.update('srv', 1, { enabled: true }, false)).rejects.toThrow(ForbiddenException);
+      await expect(service.runNow('srv', 1, false)).rejects.toThrow(ForbiddenException);
+      expect(serverManagement.executeCommand).not.toHaveBeenCalled();
+
+      taskRepo.findOne.mockResolvedValue({ id: 2, serverId: 'srv', type: 'restart', command: null });
+      await expect(service.update('srv', 2, { type: 'command', command: 'op me' } as any, false)).rejects.toThrow(ForbiddenException);
     });
   });
 

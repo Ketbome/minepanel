@@ -7,6 +7,7 @@ import { gunzipSync } from 'node:zlib';
 import * as fs from 'fs-extra';
 import { Repository } from 'typeorm';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
+import { assertContained } from 'src/common/fs/contained-path';
 import { ActivityService, ImportedSession } from './activity.service';
 import { LogCursor } from './entities/log-cursor.entity';
 import { LogLine, parseLogLine } from './log-line.parser';
@@ -126,6 +127,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
 
     for (const name of names) {
       const file = path.join(logsDir, name);
+      if (!(await this.insideMcData(serverId, file))) continue;
       if ((await fs.stat(file)).mtime >= cursor.createdAt) continue;
       const state = this.activityService.newImportState();
       let day = ARCHIVE_NAME.exec(name)[1];
@@ -172,6 +174,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
 
   private async tailServer(serverId: string, tz: string, now: Date): Promise<void> {
     const file = this.latestLog(serverId);
+    if (!(await this.insideMcData(serverId, file))) return;
     const head = await this.readHead(file);
     if (!head) return;
 
@@ -211,6 +214,7 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
       .slice(0, ROTATED_CANDIDATES);
 
     for (const { name } of newest) {
+      if (!(await this.insideMcData(serverId, path.join(logsDir, name)))) continue;
       const content = gunzipSync(await fs.readFile(path.join(logsDir, name)));
       if (hashHead(content) !== cursor.headHash) continue;
       let after = cursor.updatedAt ?? new Date();
@@ -243,6 +247,15 @@ export class ActivityTailerService implements OnModuleInit, OnModuleDestroy {
     if (!SERVER_ID_PATTERN.test(serverId)) {
       throw new BadRequestException('Invalid server ID');
     }
+  }
+
+  // mc-data belongs to the game container: a planted link must not make the panel
+  // ingest another server's logs or the panel's own files.
+  private insideMcData(serverId: string, file: string): Promise<boolean> {
+    return assertContained(path.join(this.serversDir, serverId, 'mc-data'), file).then(
+      () => true,
+      () => false,
+    );
   }
 
   private logsDir(serverId: string): string {

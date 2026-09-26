@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
@@ -172,6 +173,15 @@ describe('ProxyService', () => {
       await service.addServerToProxy('a', 'proxy.test', 'new');
 
       expect(fs.writeJson).toHaveBeenCalledWith(expect.any(String), { mappings: { 'other.proxy.test': 'b:25565', 'new.proxy.test': 'a:25565' } }, { spaces: 2 });
+    });
+
+    it('addServerToProxy refuses a hostname that belongs to another server', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.readJson as jest.Mock).mockResolvedValue({ mappings: { 'victim.proxy.test': 'b:25565' } });
+      (fs.writeJson as jest.Mock).mockClear();
+
+      await expect(service.addServerToProxy('a', 'proxy.test', 'victim')).rejects.toThrow(ConflictException);
+      expect(fs.writeJson).not.toHaveBeenCalled();
     });
 
     it('removeServerFromProxy and clearRoutesFile drop mappings', async () => {

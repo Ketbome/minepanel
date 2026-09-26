@@ -430,6 +430,7 @@ export const nl: Record<TranslationKey, string> = {
   updateEmail: 'E-mail bijwerken',
   emailUpdatedSuccessfully: 'E-mail succesvol bijgewerkt',
   emailUpdateFailed: 'E-mail bijwerken mislukt',
+  emailChangeNeedsSmtp: 'E-mail wijzigen vereist SMTP om het adres te bevestigen. Vraag een beheerder om het te wijzigen.',
   emailRequired: 'E-mail is verplicht',
   emailChangeCodeSent: 'Bevestigingscode naar het nieuwe e-mailadres verzonden',
   emailChangeCodeSentDesc: 'Controleer het nieuwe e-mailadres en voer de code in om de wijziging te voltooien.',

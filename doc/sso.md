@@ -107,6 +107,9 @@ Configure SSO first, sign in through it, make sure an **admin** account is on th
 disable password login.
 :::
 
+With password login disabled, invitation links cannot be accepted either (accepting one creates
+a password account). New users sign in through SSO and an admin grants their access afterwards.
+
 The setting is stored in the database when saved from the panel, so it **overrides**
 `OIDC_DISABLE_PASSWORD_LOGIN` in `.env`. If a panel is already locked out, see
 [Locked out with SSO only](/administration#locked-out-with-sso-only).

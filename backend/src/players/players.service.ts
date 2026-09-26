@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
+import { assertContained } from 'src/common/fs/contained-path';
 import * as path from 'node:path';
 import { PlayerItem, PlayerLocation, PlayerNbtData, readPlayerNbt } from './player-nbt';
 
@@ -259,8 +260,15 @@ export class PlayersService {
     return path.join(files.worldDir, dir, `${uuid}.${extension}`);
   }
 
+  // Every player file lives in mc-data, which the game container can fill with links.
+  private assertInsideMcData(file: string): Promise<void> {
+    const [serverId] = path.relative(this.serversDir, file).split(path.sep);
+    return assertContained(path.join(this.serversDir, serverId, 'mc-data'), file);
+  }
+
   private async readJson<T>(file: string): Promise<T | null> {
     try {
+      await this.assertInsideMcData(file);
       return JSON.parse(await fs.readFile(file, 'utf8')) as T;
     } catch {
       return null;
@@ -277,6 +285,7 @@ export class PlayersService {
 
   private async readNbt(file: string) {
     try {
+      await this.assertInsideMcData(file);
       return await readPlayerNbt(await fs.readFile(file));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {

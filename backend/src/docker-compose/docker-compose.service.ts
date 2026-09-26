@@ -9,6 +9,7 @@ import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfi
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
+import { escapeComposeValues } from 'src/common/compose/compose-escape';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
 
 const GENERATED_FILE_HEADER = [
@@ -1079,6 +1080,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const updatedConfig = this.normalizeAutoStopRestartPolicy({
       ...currentConfig,
       ...config,
+      id,
     } as ServerConfig);
 
     await this.generateDockerComposeFile(updatedConfig, proxyEnabled);
@@ -1490,9 +1492,11 @@ export class DockerComposeService implements OnApplicationBootstrap {
       await this.addBackupService(dockerComposeConfig, normalizedConfig, serverDir, useProxy);
     }
 
-    applyComposeSnippets(dockerComposeConfig, normalizedConfig.composeSnippets);
+    // Snippets are admin-only and applied after escaping, so they keep Compose interpolation.
+    const composeFile = escapeComposeValues(dockerComposeConfig);
+    applyComposeSnippets(composeFile, normalizedConfig.composeSnippets);
 
-    const yamlContent = yaml.dump(dockerComposeConfig, { lineWidth: -1 });
+    const yamlContent = yaml.dump(composeFile, { lineWidth: -1 });
 
     await fs.writeFile(this.getDockerComposePath(normalizedConfig.id), GENERATED_FILE_HEADER + yamlContent);
 

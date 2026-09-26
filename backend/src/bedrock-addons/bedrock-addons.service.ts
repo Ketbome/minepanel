@@ -12,8 +12,11 @@ import AdmZip from 'adm-zip';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
+import { assertContained } from 'src/common/fs/contained-path';
 import { SettingsService } from 'src/users/services/settings.service';
 import { ImportBedrockAddonDto } from './dto/import-bedrock-addon.dto';
+
+const PACK_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type AddonPackKind = 'behavior' | 'resource';
 type AddonSource = 'upload' | 'curseforge';
@@ -488,7 +491,8 @@ export class BedrockAddonsService {
       const version = this.normalizePackVersion(header?.version);
       const name = typeof header?.name === 'string' && header.name.trim() ? header.name.trim() : path.basename(path.dirname(manifestPath));
 
-      if (!uuid || version.length === 0) {
+      // The uuid names directories on disk, so anything but a real UUID is refused.
+      if (!PACK_UUID_PATTERN.test(uuid) || version.length === 0) {
         return null;
       }
 
@@ -533,6 +537,9 @@ export class BedrockAddonsService {
     const mcDataPath = this.getMcDataPath(serverId);
     const behaviorPath = path.join(mcDataPath, 'behavior_packs');
     const resourcePath = path.join(mcDataPath, 'resource_packs');
+    // mc-data is writable from the game container, which can plant links there.
+    await assertContained(mcDataPath, behaviorPath);
+    await assertContained(mcDataPath, resourcePath);
     await fs.ensureDir(behaviorPath);
     await fs.ensureDir(resourcePath);
 
@@ -558,19 +565,24 @@ export class BedrockAddonsService {
         const sourcePath = path.join(this.getExtractedPath(serverId), addon.id, pack.relativePath);
         const targetBase = pack.kind === 'behavior' ? behaviorPath : resourcePath;
         const targetPath = path.join(targetBase, pack.uuid);
+        await assertContained(targetBase, targetPath);
         await fs.copy(sourcePath, targetPath, { overwrite: true, errorOnExist: false });
       }
     }
 
     const levelName = await this.resolveLevelName(serverId);
     const worldPath = path.join(mcDataPath, 'worlds', levelName);
+    const behaviorFile = path.join(worldPath, 'world_behavior_packs.json');
+    const resourceFile = path.join(worldPath, 'world_resource_packs.json');
+    await assertContained(path.join(mcDataPath, 'worlds'), behaviorFile);
+    await assertContained(path.join(mcDataPath, 'worlds'), resourceFile);
     await fs.ensureDir(worldPath);
 
     const behaviorEntries = enabledAddons.flatMap((addon) => addon.packs.filter((pack) => pack.kind === 'behavior').map((pack) => this.createPackReference(pack)));
     const resourceEntries = enabledAddons.flatMap((addon) => addon.packs.filter((pack) => pack.kind === 'resource').map((pack) => this.createPackReference(pack)));
 
-    await this.mergeManagedWorldPackFile(path.join(worldPath, 'world_behavior_packs.json'), managedBehaviorUuids, behaviorEntries);
-    await this.mergeManagedWorldPackFile(path.join(worldPath, 'world_resource_packs.json'), managedResourceUuids, resourceEntries);
+    await this.mergeManagedWorldPackFile(behaviorFile, managedBehaviorUuids, behaviorEntries);
+    await this.mergeManagedWorldPackFile(resourceFile, managedResourceUuids, resourceEntries);
 
     return levelName;
   }
@@ -623,6 +635,8 @@ export class BedrockAddonsService {
 
   private async removeManagedPackDirs(basePath: string, uuids: Set<string>) {
     for (const uuid of uuids) {
+      if (!PACK_UUID_PATTERN.test(uuid)) continue;
+      // fs.remove drops a planted link itself, never what it points to.
       await fs.remove(path.join(basePath, uuid));
     }
   }
@@ -826,8 +840,9 @@ export class BedrockAddonsService {
       return this.resolveFallbackLevelName(serverId);
     }
 
+    // server.properties is written by the game container, so the name must stay one path segment.
     const value = levelLine.slice('level-name='.length).trim();
-    return value || this.resolveFallbackLevelName(serverId);
+    return value && value !== '..' && path.basename(value) === value && !value.includes('\\') ? value : this.resolveFallbackLevelName(serverId);
   }
 
   private async resolveFallbackLevelName(serverId: string) {
