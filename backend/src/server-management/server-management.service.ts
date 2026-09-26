@@ -9,6 +9,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PlayerSession, PlayerTracking } from 'src/player-activity/entities/player-session.entity';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
+import { Users } from 'src/users/entities/users.entity';
+import { UserInvitation } from 'src/users/entities/user-invitation.entity';
+import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
@@ -18,6 +21,7 @@ import { InstanceSettingsService } from 'src/settings/instance-settings.service'
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { MinecraftStatusProbe, parseMinecraftStatus } from './minecraft-status.util';
+import { assertContained } from 'src/common/fs/contained-path';
 
 const execAsync = promisify(exec);
 
@@ -39,7 +43,8 @@ const DOCKER_COMMANDS = {
     return `echo "Commands not supported for Bedrock servers yet"`;
   },
   RESTIC_SNAPSHOTS: (serverId: string) => `docker exec ${serverId}-backup restic snapshots --json`,
-  VOLUME_LIST: (serverId: string) => `docker volume ls --filter "name=${serverId}" --format "{{.Name}}"`,
+  // `name=` matches substrings, so it would also catch other stacks' volumes.
+  VOLUME_LIST: (project: string) => `docker volume ls --filter "label=com.docker.compose.project=${project}" --format "{{.Name}}"`,
   VOLUME_REMOVE: (volume: string) => `docker volume rm ${volume}`,
   DU_SIZE: (worldPath: string) => `du -sb "${worldPath}" | cut -f1`,
 } as const;
@@ -239,8 +244,10 @@ export class ServerManagementService {
     const localWorldsPath = this.getWorldsPath(serverId);
     const legacyWorldsPath = this.getLegacyWorldsPath(serverId);
 
-    const hasLegacy = await fs.pathExists(legacyWorldsPath);
-    if (!hasLegacy) return;
+    // mc-data belongs to the game container: a planted link here would make the
+    // panel move another server's data (or its own DB) into this world library.
+    const legacyStat = await fs.lstat(legacyWorldsPath).catch(() => null);
+    if (!legacyStat?.isDirectory()) return;
 
     await fs.ensureDir(localWorldsPath);
 
@@ -252,6 +259,8 @@ export class ServerManagementService {
       const from = path.join(legacyWorldsPath, entry);
       const to = path.join(localWorldsPath, entry);
       if (await fs.pathExists(to)) continue;
+      if ((await fs.lstat(from)).isSymbolicLink()) continue;
+      await assertContained(this.getMcDataPath(serverId), from);
       await fs.move(from, to);
     }
   }
@@ -1031,18 +1040,25 @@ export class ServerManagementService {
       await fs.remove(serverDir);
       await this.store.removeFromIndex(serverId);
 
-      // Server IDs are reusable: a new server with this ID must not inherit its player history.
+      // Server IDs are reusable: a new server with this ID must not inherit its player
+      // history, its scheduled tasks or the users that were granted access to it.
       try {
         await this.settingsRepo.manager.transaction(async (manager) => {
           await manager.delete(PlayerSession, { serverId });
           await manager.delete(PlayerTracking, { serverId });
+          await manager.delete(ScheduledTask, { serverId });
+          for (const entity of [Users, UserInvitation]) {
+            const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
+            for (const row of grantees) row.serverAccess = row.serverAccess.filter((id) => id !== serverId);
+            if (grantees.length) await manager.save(grantees);
+          }
         });
       } catch (error) {
-        this.logger.warn(`Could not clean up player activity for ${serverId}`, error);
+        this.logger.warn(`Could not clean up player activity, tasks and access grants for ${serverId}`, error);
       }
 
       try {
-        const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(serverId));
+        const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(this.getComposeProjectName(serverId) ?? serverId.toLowerCase()));
         if (volumeList.trim()) {
           const volumes = volumeList.trim().split('\n');
           for (const volume of volumes) {
@@ -2055,6 +2071,7 @@ export class ServerManagementService {
       if (!(await fs.pathExists(whitelistPath))) {
         return [];
       }
+      await assertContained(this.getMcDataPath(serverId), whitelistPath);
       const content = await fs.readFile(whitelistPath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {
@@ -2069,6 +2086,7 @@ export class ServerManagementService {
       if (!(await fs.pathExists(opsPath))) {
         return [];
       }
+      await assertContained(this.getMcDataPath(serverId), opsPath);
       const content = await fs.readFile(opsPath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {
@@ -2083,6 +2101,7 @@ export class ServerManagementService {
       if (!(await fs.pathExists(bannedPath))) {
         return [];
       }
+      await assertContained(this.getMcDataPath(serverId), bannedPath);
       const content = await fs.readFile(bannedPath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {

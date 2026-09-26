@@ -356,7 +356,7 @@ describe('AuthController', () => {
       expect(await controller.createInvitation(req, { email: 'x@y.com' })).toEqual({ id: 3 });
       expect(authService.createInvitation).toHaveBeenCalledWith({ email: 'x@y.com' }, req.user, false);
       expect(await controller.getInvitationLink(req, '3' as any)).toEqual({ inviteUrl: 'u' });
-      expect(authService.getInvitationLink).toHaveBeenCalledWith(3, req.user);
+      expect(authService.getInvitationLink).toHaveBeenCalledWith(3, req.user, false);
     });
 
     it('public invitation lookup and acceptance', async () => {
@@ -367,6 +367,12 @@ describe('AuthController', () => {
       const result = await controller.acceptInvitation({ token: 'tok', username: 'newbie', password: 'secret12', email: 'n@x.com' }, mockResponse as Response);
       expect(result).toEqual({ username: 'newbie', expires_in: 60 });
       expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', 'a', expect.any(Object));
+    });
+
+    it('refuses invitation acceptance in SSO-only mode', async () => {
+      ((controller as any).instanceSettings.getOidc as jest.Mock).mockResolvedValueOnce({ enabled: true, disablePasswordLogin: true });
+      await expect(controller.acceptInvitation({ token: 'tok', username: 'newbie', password: 'secret12' } as any, mockResponse as Response)).rejects.toThrow(ForbiddenException);
+      expect(authService.acceptInvitation).not.toHaveBeenCalled();
     });
   });
 });

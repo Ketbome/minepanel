@@ -7,6 +7,7 @@ jest.mock('fs-extra', () => ({
   pathExists: jest.fn(),
   stat: jest.fn(),
   createReadStream: jest.fn(),
+  remove: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('FilesController', () => {
@@ -26,11 +27,11 @@ describe('FilesController', () => {
       getFileInfo: jest.fn().mockResolvedValue({ name: 'a' }),
       writeFile: jest.fn().mockResolvedValue(undefined),
       createDirectory: jest.fn().mockResolvedValue(undefined),
-      writeFileBuffer: jest.fn().mockResolvedValue(undefined),
+      saveUpload: jest.fn().mockResolvedValue(undefined),
       rename: jest.fn().mockResolvedValue(undefined),
       deleteFile: jest.fn().mockResolvedValue(undefined),
     };
-    accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn() };
+    accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
     const usersService = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
     controller = new FilesController(filesService as any, usersService as any, accessControl as any);
     res = { setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
@@ -63,7 +64,11 @@ describe('FilesController', () => {
     expect(await controller.createDirectory(req, 'srv', { path: 'dir' })).toEqual({ success: true });
     expect(await controller.rename(req, 'srv', { path: 'a', newName: 'b' })).toEqual({ success: true });
     expect(await controller.deleteFile(req, 'srv', 'a')).toEqual({ success: true });
-    expect(filesService.rename).toHaveBeenCalledWith('srv', 'a', 'b');
+    expect(filesService.rename).toHaveBeenCalledWith('srv', 'a', 'b', false);
+
+    accessControl.isAdmin.mockReturnValue(true);
+    await controller.deleteFile(req, '_root', 'srv/server.json');
+    expect(filesService.deleteFile).toHaveBeenLastCalledWith('_root', 'srv/server.json', true);
   });
 
   it('downloads a file as an attachment', async () => {
@@ -105,22 +110,36 @@ describe('FilesController', () => {
   it('uploads a single file preserving the relative path', async () => {
     await expect(controller.uploadFile(req, 'srv', '', '', undefined as any)).rejects.toThrow('File is required');
 
-    const file = { originalname: 'orig.txt', buffer: Buffer.from('x') } as Express.Multer.File;
+    const file = { originalname: 'orig.txt', path: '/app/servers/.uploads/abc' } as Express.Multer.File;
     expect(await controller.uploadFile(req, 'srv', 'mods', 'sub/a.txt', file)).toEqual({ success: true, path: 'mods/sub/a.txt' });
     expect(await controller.uploadFile(req, 'srv', '', '', file)).toEqual({ success: true, path: 'orig.txt' });
-    expect(filesService.writeFileBuffer).toHaveBeenLastCalledWith('srv', 'orig.txt', file.buffer);
+    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false);
+    expect(fs.remove).toHaveBeenLastCalledWith(file.path);
+  });
+
+  it('drops the staged upload when the caller may not write there', async () => {
+    accessControl.assertServerFiles.mockImplementation(() => {
+      throw new BadRequestException('denied');
+    });
+    const file = { originalname: 'a.txt', path: '/app/servers/.uploads/abc' } as Express.Multer.File;
+
+    await expect(controller.uploadFile(req, 'srv', '', '', file)).rejects.toThrow('denied');
+    await expect(controller.uploadMultipleFiles(req, 'srv', '', [file], {})).rejects.toThrow('denied');
+    expect(filesService.saveUpload).not.toHaveBeenCalled();
+    expect(fs.remove).toHaveBeenCalledTimes(2);
   });
 
   it('uploads multiple files and counts failures', async () => {
     await expect(controller.uploadMultipleFiles(req, 'srv', '', [], {})).rejects.toThrow('At least one file');
 
-    const files = [{ originalname: 'a.txt', buffer: Buffer.from('a') }, { originalname: 'b.txt', buffer: Buffer.from('b') }] as Express.Multer.File[];
-    filesService.writeFileBuffer.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk'));
+    const files = [{ originalname: 'a.txt', path: '/tmp/a' }, { originalname: 'b.txt', path: '/tmp/b' }] as Express.Multer.File[];
+    filesService.saveUpload.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk'));
 
     const result = await controller.uploadMultipleFiles(req, 'srv', 'dir', files, { relativePaths: JSON.stringify(['x/a.txt']) });
 
     expect(result).toEqual({ success: true, uploaded: 1, errors: 1 });
-    expect(filesService.writeFileBuffer).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', files[0].buffer);
-    expect(filesService.writeFileBuffer).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', files[1].buffer);
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false);
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false);
+    expect(fs.remove).toHaveBeenCalledWith('/tmp/b');
   });
 });

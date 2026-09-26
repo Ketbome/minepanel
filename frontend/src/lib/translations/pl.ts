@@ -428,6 +428,7 @@ export const pl: Record<TranslationKey, string> = {
   updateEmail: 'Zaktualizuj e-mail',
   emailUpdatedSuccessfully: 'E-mail został zaktualizowany',
   emailUpdateFailed: 'Nie udało się zaktualizować e-maila',
+  emailChangeNeedsSmtp: 'Zmiana e-maila wymaga SMTP do potwierdzenia. Poproś administratora o zmianę.',
   emailRequired: 'E-mail jest wymagany',
   emailChangeCodeSent: 'Kod potwierdzający został wysłany na nowy adres e-mail',
   emailChangeCodeSentDesc: 'Sprawdź nowy adres e-mail i wpisz kod, aby dokończyć zmianę.',

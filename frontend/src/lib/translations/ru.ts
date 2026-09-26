@@ -427,6 +427,7 @@ export const ru: Record<TranslationKey, string> = {
   updateEmail: 'Обновить email',
   emailUpdatedSuccessfully: 'Email обновлён',
   emailUpdateFailed: 'Не удалось обновить email',
+  emailChangeNeedsSmtp: 'Для смены email нужен SMTP для подтверждения адреса. Попросите администратора изменить его.',
   emailRequired: 'Укажите email',
   emailChangeCodeSent: 'Код подтверждения отправлен на новый email',
   emailChangeCodeSentDesc: 'Проверьте новый адрес email и введите код для завершения изменения.',

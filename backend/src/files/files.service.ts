@@ -3,8 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { Archiver, ZipArchive } from 'archiver';
+import { assertContained } from 'src/common/fs/contained-path';
 
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export const UPLOADS_DIR = '.uploads';
 
 export interface FileItem {
   name: string;
@@ -22,6 +25,8 @@ export class FilesService {
   constructor(private readonly configService: ConfigService) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     fs.ensureDirSync(path.join(this.SERVERS_DIR, '.world', 'worlds'));
+    // Leftovers from uploads cut short by a restart.
+    fs.emptyDirSync(path.join(this.SERVERS_DIR, UPLOADS_DIR));
   }
 
   private getBasePath(serverId: string): string {
@@ -43,7 +48,9 @@ export class FilesService {
     return path.join(this.SERVERS_DIR, serverId, 'mc-data');
   }
 
-  private validatePath(serverId: string, filePath: string): string {
+  // `followLast` is off for operations on the entry itself (delete, rename), so
+  // a link planted by the container can still be removed without following it.
+  private async validatePath(serverId: string, filePath: string, write = false, followLast = true, admin = false): Promise<string> {
     const basePath = this.getBasePath(serverId);
     const fullPath = path.join(basePath, filePath || '');
     const normalized = path.normalize(fullPath);
@@ -53,11 +60,30 @@ export class FilesService {
       throw new BadRequestException('Invalid path');
     }
 
+    await assertContained(write && !admin ? this.getWritableRoot(serverId, normalized) : basePath, followLast ? normalized : path.dirname(normalized));
     return normalized;
   }
 
+  // "_root" can read the whole servers directory, but non-admin writes stay inside a
+  // server's mc-data or the world library: server.json, compose files and
+  // .env there are compiled into host mounts and the panel's own environment.
+  private getWritableRoot(serverId: string, fullPath: string): string {
+    if (serverId !== '_root') {
+      return this.getBasePath(serverId);
+    }
+
+    const [first, second] = path.relative(this.SERVERS_DIR, fullPath).split(path.sep);
+    const root = first === '.world' ? path.join(this.SERVERS_DIR, '.world') : second === 'mc-data' && SERVER_ID_PATTERN.test(first) ? path.join(this.SERVERS_DIR, first, 'mc-data') : null;
+
+    if (!root || fullPath === root) {
+      throw new BadRequestException('Only server data and the world library can be modified here');
+    }
+
+    return root;
+  }
+
   async listFiles(serverId: string, dirPath: string = ''): Promise<FileItem[]> {
-    const fullPath = this.validatePath(serverId, dirPath);
+    const fullPath = await this.validatePath(serverId, dirPath);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('Directory not found');
@@ -99,7 +125,7 @@ export class FilesService {
   }
 
   async readFile(serverId: string, filePath: string): Promise<{ content: string; encoding: string }> {
-    const fullPath = this.validatePath(serverId, filePath);
+    const fullPath = await this.validatePath(serverId, filePath);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('File not found');
@@ -119,41 +145,42 @@ export class FilesService {
     return { content, encoding: 'utf-8' };
   }
 
-  async writeFile(serverId: string, filePath: string, content: string): Promise<void> {
-    const fullPath = this.validatePath(serverId, filePath);
+  async writeFile(serverId: string, filePath: string, content: string, admin = false): Promise<void> {
+    const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
     await fs.ensureDir(path.dirname(fullPath));
     await fs.writeFile(fullPath, content, 'utf-8');
   }
 
-  async writeFileBuffer(serverId: string, filePath: string, buffer: Buffer): Promise<void> {
-    const fullPath = this.validatePath(serverId, filePath);
+  // Multer stages complete uploads under UPLOADS_DIR; only then are they moved into place.
+  async saveUpload(serverId: string, filePath: string, stagedPath: string, admin = false): Promise<void> {
+    const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
     await fs.ensureDir(path.dirname(fullPath));
-    await fs.writeFile(fullPath, buffer);
+    await fs.move(stagedPath, fullPath, { overwrite: true });
   }
 
-  async deleteFile(serverId: string, filePath: string): Promise<void> {
-    const fullPath = this.validatePath(serverId, filePath);
+  async deleteFile(serverId: string, filePath: string, admin = false): Promise<void> {
+    const fullPath = await this.validatePath(serverId, filePath, true, false, admin);
 
-    if (!(await fs.pathExists(fullPath))) {
+    if (!(await fs.lstat(fullPath).catch(() => null))) {
       throw new NotFoundException('File not found');
     }
 
     await fs.remove(fullPath);
   }
 
-  async createDirectory(serverId: string, dirPath: string): Promise<void> {
-    const fullPath = this.validatePath(serverId, dirPath);
+  async createDirectory(serverId: string, dirPath: string, admin = false): Promise<void> {
+    const fullPath = await this.validatePath(serverId, dirPath, true, true, admin);
     await fs.ensureDir(fullPath);
   }
 
-  async rename(serverId: string, oldPath: string, newName: string): Promise<void> {
-    const fullOldPath = this.validatePath(serverId, oldPath);
+  async rename(serverId: string, oldPath: string, newName: string, admin = false): Promise<void> {
+    const fullOldPath = await this.validatePath(serverId, oldPath, true, false, admin);
     const newPath = path.join(path.dirname(fullOldPath), newName);
 
     // Validate new path is still within server directory
-    this.validatePath(serverId, path.join(path.dirname(oldPath), newName));
+    await this.validatePath(serverId, path.join(path.dirname(oldPath), newName), true, false, admin);
 
-    if (!(await fs.pathExists(fullOldPath))) {
+    if (!(await fs.lstat(fullOldPath).catch(() => null))) {
       throw new NotFoundException('File not found');
     }
 
@@ -165,7 +192,7 @@ export class FilesService {
   }
 
   async getFileInfo(serverId: string, filePath: string): Promise<FileItem> {
-    const fullPath = this.validatePath(serverId, filePath);
+    const fullPath = await this.validatePath(serverId, filePath);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('File not found');
@@ -184,12 +211,12 @@ export class FilesService {
     };
   }
 
-  getFullPath(serverId: string, filePath: string): string {
+  getFullPath(serverId: string, filePath: string): Promise<string> {
     return this.validatePath(serverId, filePath);
   }
 
   async createZipStream(serverId: string, dirPath: string): Promise<{ stream: Archiver; name: string }> {
-    const fullPath = this.validatePath(serverId, dirPath);
+    const fullPath = await this.validatePath(serverId, dirPath);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('Directory not found');

@@ -35,6 +35,7 @@ backend/src/
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
 |- common/crypto/           Secret encryption at rest (AES-GCM, key derived from JWT_SECRET)
+|- common/fs/               `assertContained`: symlink-safe containment for paths under mc-data
 |- database/                TypeORM/sql.js setup
 ```
 
@@ -114,6 +115,11 @@ Path and filesystem patterns (critical):
   a mount with `volume: subpath:` still lists the volume root as its `Source`. `readOwnMounts`
   reads `.HostConfig.Mounts` in the same inspect and copies `VolumeOptions.Subpath` onto the
   mount so `resolveHostPath` can append it. Any new mount lookup must go through that helper.
+- `mc-data` is writable by the game container, which can plant symlinks. Any backend read or
+  write under it goes through `assertContained` (`common/fs/contained-path.ts`), which resolves
+  links and rejects targets outside the given root.
+- Generated compose files are passed through `escapeComposeValues` before dumping, so no
+  config value can interpolate the panel's environment; only admin compose snippets keep `${VAR}`.
 - The own container id comes from `common/docker/own-container.ts` (`ownContainerIds`):
   `HOSTNAME` first, then the id in `/proc/self/mountinfo`. Watchtower recreates a container
   with the old hostname, so `HOSTNAME` alone names a container that no longer exists. Never

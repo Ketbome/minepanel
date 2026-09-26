@@ -4,11 +4,17 @@ import { PayloadToken } from 'src/auth/models/token.model';
 import { ImportWorldDto } from './dto/import-world.dto';
 import { SearchWorldsQueryDto } from './dto/search-worlds.query.dto';
 import { WorldDiscoveryService } from './world-discovery.service';
+import { UsersService } from 'src/users/services/users.service';
+import { AccessControlService } from 'src/users/services/access-control.service';
 
 @Controller('world-discovery')
 @UseGuards(JwtAuthGuard)
 export class WorldDiscoveryController {
-  constructor(private readonly worldDiscoveryService: WorldDiscoveryService) {}
+  constructor(
+    private readonly worldDiscoveryService: WorldDiscoveryService,
+    private readonly usersService: UsersService,
+    private readonly accessControlService: AccessControlService,
+  ) {}
 
   @Get('library')
   async listLibraryWorlds() {
@@ -36,6 +42,8 @@ export class WorldDiscoveryController {
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: ImportWorldDto,
   ) {
     const user = req.user as PayloadToken;
+    // Imports land in the global world library, which every server can load.
+    this.accessControlService.assertGlobalFiles(await this.usersService.getRequiredUserById(user.userId), true);
 
     if (body.provider === 'curseforge') {
       return this.worldDiscoveryService.importFromCurseForge(user.userId, {

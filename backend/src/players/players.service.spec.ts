@@ -89,6 +89,14 @@ describe('PlayersService', () => {
       expect((await service.list('srv')).map((p) => p.uuid)).toEqual([STEVE]);
     });
 
+    it('ignores player files that are links leaving mc-data', async () => {
+      const other = path.join(serversDir, 'other', 'mc-data');
+      await fs.outputJson(path.join(other, 'whitelist.json'), [{ name: 'Secret', uuid: ALEX }]);
+      await fs.symlink(path.join(other, 'whitelist.json'), path.join(mcData, 'whitelist.json'));
+
+      expect(await service.list('srv')).toEqual([]);
+    });
+
     it('returns an empty list for a server that never started', async () => {
       expect(await service.list('srv')).toEqual([]);
       expect(await service.list('missing')).toEqual([]);

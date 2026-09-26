@@ -107,7 +107,7 @@ export class AuthController {
       throw new ForbiddenException('Forbidden');
     }
 
-    return this.authService.getInvitationLink(Number(id), req.user);
+    return this.authService.getInvitationLink(Number(id), req.user, sessionUser.role === 'ADMIN');
   }
 
   @Public()
@@ -121,6 +121,8 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Post('invitations/accept')
   async acceptInvitation(@Body() body: AcceptInvitationDto, @Res({ passthrough: true }) res: Response) {
+    // Accepting creates a password account, which SSO-only mode must not hand out.
+    await this.assertPasswordLoginEnabled();
     const tokens = await this.authService.acceptInvitation(body.token, body.username, body.password, body.email);
     setAuthCookies(res, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 

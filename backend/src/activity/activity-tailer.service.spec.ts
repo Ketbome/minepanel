@@ -80,6 +80,17 @@ describe('ActivityTailerService', () => {
       expect(ingestedMessages(1)).toEqual(['<Steve> partial line']);
     });
 
+    it('does not tail a latest.log that links outside mc-data', async () => {
+      const outside = path.join(serversDir, 'other.log');
+      await fs.writeFile(outside, `${HEADER}[09:00:00] [Server thread/INFO]: <Admin> secret\n`);
+      await fs.symlink(outside, latest());
+
+      await service.tick(new Date('2026-09-25T10:00:00Z'));
+
+      expect(cursors.has('srv')).toBe(false);
+      expect(activity.ingest).not.toHaveBeenCalled();
+    });
+
     it('snapshots online players once a minute', async () => {
       await fs.writeFile(latest(), HEADER);
       await service.tick(new Date('2026-09-25T10:00:00Z'));

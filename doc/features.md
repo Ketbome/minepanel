@@ -190,7 +190,9 @@ Built-in browser for each server under `servers/<id>/mc-data`:
 
 - Upload/download files, with a live transfer panel (speed, ETA, cancel); folders are
   downloaded as a ZIP that streams while it is compressed, so only the transferred
-  bytes are shown until it finishes
+  bytes are shown until it finishes. Uploads stream to disk (`servers/.uploads/`) rather than
+  memory, so large files do not depend on the backend's RAM; an upload only lands in its folder
+  once it is complete, and a cancelled or interrupted one is discarded
 - Edit configs (syntax highlighting)
 - Create/delete/rename
 - Drag & drop support

@@ -6,11 +6,14 @@ import * as fs from 'fs-extra';
 
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
+  emptyDirSync: jest.fn(),
   pathExists: jest.fn(),
   stat: jest.fn(),
   readdir: jest.fn(),
   readFile: jest.fn(),
 }));
+
+jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
 describe('FilesService', () => {
   let service: FilesService;
@@ -30,37 +33,37 @@ describe('FilesService', () => {
   });
 
   describe('getFullPath', () => {
-    it('should map "_root" to the servers directory', () => {
-      expect(service.getFullPath('_root', 'a/b')).toBe(`${SERVERS_DIR}/a/b`);
+    it('should map "_root" to the servers directory', async () => {
+      expect(await service.getFullPath('_root', 'a/b')).toBe(`${SERVERS_DIR}/a/b`);
     });
 
-    it('should map ".world" to the global world library', () => {
-      expect(service.getFullPath('.world', 'level')).toBe(`${SERVERS_DIR}/.world/worlds/level`);
+    it('should map ".world" to the global world library', async () => {
+      expect(await service.getFullPath('.world', 'level')).toBe(`${SERVERS_DIR}/.world/worlds/level`);
     });
 
-    it('should map a normal server id to its mc-data directory', () => {
-      expect(service.getFullPath('srv', 'config/server.properties')).toBe(
+    it('should map a normal server id to its mc-data directory', async () => {
+      expect(await service.getFullPath('srv', 'config/server.properties')).toBe(
         `${SERVERS_DIR}/srv/mc-data/config/server.properties`,
       );
     });
 
-    it('should return the base path when filePath is empty', () => {
-      expect(service.getFullPath('srv', '')).toBe(`${SERVERS_DIR}/srv/mc-data`);
+    it('should return the base path when filePath is empty', async () => {
+      expect(await service.getFullPath('srv', '')).toBe(`${SERVERS_DIR}/srv/mc-data`);
     });
 
-    it('should reject path traversal that escapes the base directory', () => {
-      expect(() => service.getFullPath('srv', '../../../etc/passwd')).toThrow(BadRequestException);
+    it('should reject path traversal that escapes the base directory', async () => {
+      await expect(service.getFullPath('srv', '../../../etc/passwd')).rejects.toThrow(BadRequestException);
     });
 
-    it('should reject a server id that is not a plain folder name', () => {
+    it('should reject a server id that is not a plain folder name', async () => {
       for (const serverId of ['../outside', '../../tmp/x', 'a/b', '..', '']) {
-        expect(() => service.getFullPath(serverId, 'file.txt')).toThrow(BadRequestException);
+        await expect(service.getFullPath(serverId, 'file.txt')).rejects.toThrow(BadRequestException);
       }
     });
 
-    it('should reject paths that escape into a sibling of the base directory', () => {
-      expect(() => service.getFullPath('_root', '../servers-evil/secret.txt')).toThrow(BadRequestException);
-      expect(() => service.getFullPath('.world', '../worlds-old')).toThrow(BadRequestException);
+    it('should reject paths that escape into a sibling of the base directory', async () => {
+      await expect(service.getFullPath('_root', '../servers-evil/secret.txt')).rejects.toThrow(BadRequestException);
+      await expect(service.getFullPath('.world', '../worlds-old')).rejects.toThrow(BadRequestException);
     });
   });
 

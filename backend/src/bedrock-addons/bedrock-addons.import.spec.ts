@@ -4,15 +4,22 @@ import * as path from 'node:path';
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 import { BadRequestException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { BedrockAddonsService } from './bedrock-addons.service';
 
 jest.mock('axios');
+
+// Pack uuids name directories, so the service only accepts real UUIDs.
+const uid = (label: string) => {
+  const hash = createHash('md5').update(label).digest('hex');
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20)}`;
+};
 
 const manifest = (kind: 'resource' | 'behavior' | 'none', uuid: string, extra: Record<string, unknown> = {}) =>
   Buffer.from(
     JSON.stringify({
       format_version: 2,
-      header: { name: `${kind} ${uuid}`, uuid, version: [1, 0, 0], ...extra },
+      header: { name: `${kind} ${uuid}`, uuid: uid(uuid), version: [1, 0, 0], ...extra },
       modules: kind === 'none' ? [{ type: 'weird' }] : [{ type: kind === 'resource' ? 'resources' : 'data' }],
     }),
   );
@@ -98,8 +105,8 @@ describe('BedrockAddonsService import and sync', () => {
 
       expect(result.success).toBe(true);
       expect(result.addon).toMatchObject({ name: 'behavior bp-1', source: 'upload', fileName: 'My-Addon-.mcaddon', enabled: false, downloadPath: path.join('downloads', 'My-Addon-.mcaddon') });
-      expect(result.addon.packs.map((pack) => `${pack.kind}:${pack.uuid}`)).toEqual(['behavior:bp-1', 'resource:rp-1']);
-      expect(await fs.pathExists(path.join(serverDir(), 'addons', 'extracted', result.addon.id, 'behavior_packs', 'bp-1', 'scripts', 'main.js'))).toBe(true);
+      expect(result.addon.packs.map((pack) => `${pack.kind}:${pack.uuid}`)).toEqual([`behavior:${uid('bp-1')}`, `resource:${uid('rp-1')}`]);
+      expect(await fs.pathExists(path.join(serverDir(), 'addons', 'extracted', result.addon.id, 'behavior_packs', uid('bp-1'), 'scripts', 'main.js'))).toBe(true);
       expect(await fs.pathExists(path.join(serverDir(), 'addons', 'extracted', result.addon.id, 'unpacked'))).toBe(false);
 
       const registry = await fs.readJson(path.join(serverDir(), 'addons', 'registry.json'));
@@ -113,7 +120,7 @@ describe('BedrockAddonsService import and sync', () => {
       const first = await service.importUploadedAddon('bed', upload('bundle.mcaddon', outer));
       const second = await service.importUploadedAddon('bed', upload('bundle.mcaddon', outer));
 
-      expect(first.addon.packs[0]).toMatchObject({ uuid: 'rp-nested', version: [2, 1, 0], kind: 'resource' });
+      expect(first.addon.packs[0]).toMatchObject({ uuid: uid('rp-nested'), version: [2, 1, 0], kind: 'resource' });
       expect(second.addon.fileName).toBe('bundle-1.mcaddon');
     });
 
@@ -131,6 +138,11 @@ describe('BedrockAddonsService import and sync', () => {
         'c/manifest.json': Buffer.from(JSON.stringify({ header: { uuid: 'c', version: 7 }, modules: [{ type: 'data' }] })),
       });
       await expect(service.importUploadedAddon('bed', upload('bad.zip', buffer))).rejects.toThrow(/manifest\.json/);
+    });
+
+    it('refuses a uuid that is not a UUID, since it names directories on disk', async () => {
+      const buffer = buildZip({ 'bp/manifest.json': Buffer.from(JSON.stringify({ header: { uuid: '../../../victim', version: [1, 0, 0] }, modules: [{ type: 'data' }] })) });
+      await expect(service.importUploadedAddon('bed', upload('evil.zip', buffer))).rejects.toThrow(/manifest\.json/);
     });
   });
 
@@ -152,16 +164,16 @@ describe('BedrockAddonsService import and sync', () => {
       const enabled = await service.setAddonEnabled('bed', addon.id, true);
 
       expect(enabled.levelName).toBe('Survival World');
-      expect(await fs.pathExists(path.join(mcData(), 'behavior_packs', 'bp-one', 'manifest.json'))).toBe(true);
+      expect(await fs.pathExists(path.join(mcData(), 'behavior_packs', uid('bp-one'), 'manifest.json'))).toBe(true);
       expect(await fs.readJson(path.join(worldDir, 'world_behavior_packs.json'))).toEqual([
-        { pack_id: 'bp-one', version: [1, 0, 0] },
+        { pack_id: uid('bp-one'), version: [1, 0, 0] },
         { pack_id: 'manual', version: [1, 0, 0] },
       ]);
-      expect(await fs.readJson(path.join(worldDir, 'world_resource_packs.json'))).toEqual([{ pack_id: 'rp-one', version: [1, 0, 0] }]);
+      expect(await fs.readJson(path.join(worldDir, 'world_resource_packs.json'))).toEqual([{ pack_id: uid('rp-one'), version: [1, 0, 0] }]);
 
       const disabled = await service.setAddonEnabled('bed', addon.id, false);
       expect(disabled.addon.enabled).toBe(false);
-      expect(await fs.pathExists(path.join(mcData(), 'behavior_packs', 'bp-one'))).toBe(false);
+      expect(await fs.pathExists(path.join(mcData(), 'behavior_packs', uid('bp-one')))).toBe(false);
       expect(await fs.readJson(path.join(worldDir, 'world_behavior_packs.json'))).toEqual([{ pack_id: 'manual', version: [1, 0, 0] }]);
     });
 
@@ -184,6 +196,27 @@ describe('BedrockAddonsService import and sync', () => {
       expect(listed.levelName).toBe('world');
       expect(listed.addons[0].enabled).toBe(true);
       expect(await fs.pathExists(path.join(mcData(), 'worlds', 'world', 'world_behavior_packs.json'))).toBe(true);
+    });
+
+    it('refuses to sync through links the game container planted in mc-data', async () => {
+      const outside = path.join(serverDir(), 'outside');
+      await fs.ensureDir(outside);
+      await fs.remove(path.join(mcData(), 'behavior_packs'));
+      await fs.symlink(outside, path.join(mcData(), 'behavior_packs'));
+
+      const { addon } = await importPacks('link');
+      await expect(service.setAddonEnabled('bed', addon.id, true)).rejects.toThrow('Invalid path');
+      expect(await fs.readdir(outside)).toEqual([]);
+    });
+
+    it('ignores a level-name that would leave the worlds folder', async () => {
+      await fs.writeFile(path.join(mcData(), 'server.properties'), 'level-name=../../../outside\n');
+      const { addon } = await importPacks('level');
+
+      const enabled = await service.setAddonEnabled('bed', addon.id, true);
+
+      expect(enabled.levelName).toBe('world');
+      expect(await fs.pathExists(path.join(serverDir(), '..', '..', 'outside'))).toBe(false);
     });
 
     it('deleteAddon rejects unknown addons', async () => {

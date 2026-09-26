@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, ConflictException } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
@@ -46,6 +46,11 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
   'spigotDownloadUrl',
   'purpurDownloadUrl',
   'foliaDownloadUrl',
+  'jvmOpts',
+  'jvmXxOpts',
+  'jvmDdOpts',
+  'execDirectly',
+  'extraPorts',
 ] as const;
 
 // Creation has no persisted config to compare against, so these are rejected
@@ -63,7 +68,19 @@ const ADMIN_ONLY_ON_CREATE_FIELDS = [
   'spigotDownloadUrl',
   'purpurDownloadUrl',
   'foliaDownloadUrl',
+  'jvmOpts',
+  'jvmXxOpts',
+  'jvmDdOpts',
 ] as const;
+
+// Templates publish a game port straight through (Geyser's 19132/udp). Host IPs,
+// ranges and remapped ports stay admin-only.
+const SAME_PORT_MAPPING = /^(\d{4,5}):(\d{4,5})(\/(tcp|udp))?$/;
+
+function isSamePortMapping(mapping: string): boolean {
+  const match = SAME_PORT_MAPPING.exec(mapping.trim());
+  return !!match && match[1] === match[2] && Number(match[1]) >= 1024 && Number(match[1]) <= 65535;
+}
 
 // `dockerImage` is only the tag of the fixed itzg image (see the server strategies),
 // and the panel derives it from the Minecraft version. These are the tags the
@@ -108,6 +125,14 @@ function isTrustedArtifactRef(value: string): boolean {
   }
 }
 
+// The CurseForge key is copied from the creator's settings into server.json for the
+// compose file. Anyone else with access to the server must not read it back.
+function withoutSecrets<T extends { cfApiKey?: string } | null | undefined>(config: T): T {
+  if (!config) return config;
+  const { cfApiKey: _cfApiKey, ...rest } = config;
+  return rest as T;
+}
+
 function normalizeConfigValue(value: unknown): string {
   if (value === undefined || value === null) return '';
   return (typeof value === 'object' ? JSON.stringify(value) : String(value))
@@ -121,7 +146,7 @@ function normalizeConfigValue(value: unknown): string {
 // Everything else (absolute paths, named volumes, `../` escapes) is a raw bind.
 function isSelfContainedVolume(volume: string): boolean {
   const source = volume.split(':')[0];
-  return source.startsWith('./') && !source.split('/').includes('..');
+  return source.startsWith('./') && !source.includes('$') && !source.split('/').includes('..');
 }
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
@@ -230,6 +255,19 @@ export class ServerManagementController {
     if (changed.length > 0) {
       throw new ForbiddenException(`Only admins can change these settings: ${changed.join(', ')}`);
     }
+
+    if (incoming.genericPack !== undefined && normalizeConfigValue(incoming.genericPack) !== normalizeConfigValue(current.genericPack)) {
+      this.assertTrustedGenericPack(incoming.genericPack);
+    }
+  }
+
+  // A local zip from the modpacks folder is fine; a URL is only fetched from the
+  // same hosts as PLUGINS/MODS.
+  private assertTrustedGenericPack(genericPack: string | undefined): void {
+    const value = normalizeConfigValue(genericPack);
+    if (value && !isTrustedArtifactRef(value)) {
+      throw new ForbiddenException(`Only admins can load GENERIC_PACK from an untrusted source: ${value}`);
+    }
   }
 
   private assertValidComposeSnippets(snippets: ServerConfig['composeSnippets']): void {
@@ -270,6 +308,16 @@ export class ServerManagementController {
       throw new ForbiddenException(`Only admins can set these settings: ${provided.join(', ')}`);
     }
 
+    const customPorts = (config.extraPorts ?? []).filter((mapping) => !isSamePortMapping(String(mapping)));
+    if (customPorts.length > 0) {
+      throw new ForbiddenException(`Only admins can publish these ports: ${customPorts.join(', ')}`);
+    }
+
+    if (config.execDirectly === false) {
+      throw new ForbiddenException('Only admins can set these settings: execDirectly');
+    }
+
+    this.assertTrustedGenericPack(config.genericPack);
     this.assertSafeEnvVars(config.envVars);
   }
 
@@ -335,6 +383,27 @@ export class ServerManagementController {
     await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
   }
 
+  // mc-router maps each hostname to one backend, so taking another server's name
+  // would silently steal its players.
+  private async assertProxyHostnameFree(id: string, hostname: string | undefined): Promise<void> {
+    if (!hostname?.trim()) return;
+
+    const { baseDomain } = await this.proxyService.getProxySettings();
+    const wanted = this.proxyService.generateHostname(id, baseDomain, hostname.trim()).toLowerCase();
+    const index = await this.dockerComposeService.getServerIndex();
+    const owner = index.find(
+      (server) =>
+        server.id !== id &&
+        server.useProxy !== false &&
+        server.edition !== 'BEDROCK' &&
+        this.proxyService.generateHostname(server.id, baseDomain, server.proxyHostname).toLowerCase() === wanted,
+    );
+
+    if (owner) {
+      throw new ConflictException(`The hostname ${wanted} is already used by another server`);
+    }
+  }
+
   @Get('all-status')
   async getAllServersStatus(@Request() req) {
     const allStatus = await this.managementService.getAllServersStatus();
@@ -366,7 +435,7 @@ export class ServerManagementController {
     if (!config) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
-    return config;
+    return withoutSecrets(config);
   }
 
   @Post()
@@ -381,6 +450,7 @@ export class ServerManagementController {
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
+      await this.assertProxyHostnameFree(id, data.proxyHostname);
 
       const user = req.user as PayloadToken;
 
@@ -416,7 +486,7 @@ export class ServerManagementController {
         server: serverConfig,
       };
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof ForbiddenException) throw error;
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof ConflictException) throw error;
       throw new BadRequestException(error.message || 'Failed to create server');
     }
   }
@@ -566,6 +636,9 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
     this.assertValidComposeSnippets(config.composeSnippets);
+    if (config.proxyHostname !== undefined && config.proxyHostname !== currentConfig.proxyHostname) {
+      await this.assertProxyHostnameFree(id, config.proxyHostname);
+    }
 
     // Mod Watch and activity tracking save through their own endpoints; dropping them here stops
     // a stale whole-form save from clobbering what's on disk.
@@ -585,7 +658,7 @@ export class ServerManagementController {
 
     await this.recordServerAudit(currentUser, 'update_server_config', id, `Updated server configuration for ${id}`);
 
-    return updatedConfig;
+    return withoutSecrets(updatedConfig);
   }
 
   // Separate from PUT :id: the Mod Watch tab stays open while the server runs, so this write
@@ -603,7 +676,7 @@ export class ServerManagementController {
     const changed = [body.notes !== undefined ? 'notes' : null, body.targetVersion !== undefined ? 'target version' : null].filter(Boolean).join(' and ');
     await this.recordServerAudit(currentUser, 'update_mod_watch', id, `Updated Mod Watch ${changed || 'annotations'} for ${id}`);
 
-    return updatedConfig;
+    return withoutSecrets(updatedConfig);
   }
 
   @Get(':id/worlds')
@@ -682,7 +755,7 @@ export class ServerManagementController {
     return {
       success: true,
       restarted,
-      config: updatedConfig,
+      config: withoutSecrets(updatedConfig),
     };
   }
 
@@ -736,7 +809,7 @@ export class ServerManagementController {
     }
 
     const config = await this.dockerComposeService.getServerConfig(id);
-    return { ...serverInfo, config: config || undefined };
+    return { ...serverInfo, config: withoutSecrets(config) || undefined };
   }
 
   @Get(':id/backups/snapshots')

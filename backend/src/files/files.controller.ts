@@ -15,15 +15,17 @@ export class FilesController {
     private readonly accessControlService: AccessControlService,
   ) {}
 
-  private async assertFilesAccess(req, serverId: string, write: boolean) {
+  // Returns whether the caller is an admin, which lifts the global write restriction.
+  private async assertFilesAccess(req, serverId: string, write: boolean): Promise<boolean> {
     const user = await this.usersService.getRequiredUserById(req.user.userId);
 
     if (serverId === '_root' || serverId === '.world') {
       this.accessControlService.assertGlobalFiles(user, write);
-      return;
+    } else {
+      this.accessControlService.assertServerFiles(user, serverId, write);
     }
 
-    this.accessControlService.assertServerFiles(user, serverId, write);
+    return this.accessControlService.isAdmin(user);
   }
 
   @Get(':serverId/list')
@@ -48,7 +50,7 @@ export class FilesController {
       throw new BadRequestException('Path is required');
     }
 
-    const fullPath = this.filesService.getFullPath(serverId, filePath);
+    const fullPath = await this.filesService.getFullPath(serverId, filePath);
 
     // Verificar que el archivo existe
     if (!await fs.pathExists(fullPath)) {
@@ -101,21 +103,21 @@ export class FilesController {
 
   @Post(':serverId/write')
   async writeFile(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string; content: string }): Promise<{ success: boolean }> {
-    await this.assertFilesAccess(req, serverId, true);
+    const admin = await this.assertFilesAccess(req, serverId, true);
     if (!body.path) {
       throw new BadRequestException('Path is required');
     }
-    await this.filesService.writeFile(serverId, body.path, body.content);
+    await this.filesService.writeFile(serverId, body.path, body.content, admin);
     return { success: true };
   }
 
   @Post(':serverId/mkdir')
   async createDirectory(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string }): Promise<{ success: boolean }> {
-    await this.assertFilesAccess(req, serverId, true);
+    const admin = await this.assertFilesAccess(req, serverId, true);
     if (!body.path) {
       throw new BadRequestException('Path is required');
     }
-    await this.filesService.createDirectory(serverId, body.path);
+    await this.filesService.createDirectory(serverId, body.path, admin);
     return { success: true };
   }
 
@@ -128,17 +130,22 @@ export class FilesController {
     @Query('relativePath') relativePath: string = '',
     @UploadedFile() file: Express.Multer.File,
   ): Promise<{ success: boolean; path: string }> {
-    await this.assertFilesAccess(req, serverId, true);
-    if (!file) {
-      throw new BadRequestException('File is required');
+    // Whatever happens below, the staged upload must not stay behind.
+    try {
+      const admin = await this.assertFilesAccess(req, serverId, true);
+      if (!file) {
+        throw new BadRequestException('File is required');
+      }
+
+      // Si viene relativePath, usarlo para preservar estructura de carpetas
+      const fileName = relativePath || file.originalname;
+      const filePath = path.join(dirPath, fileName);
+      await this.filesService.saveUpload(serverId, filePath, file.path, admin);
+
+      return { success: true, path: filePath };
+    } finally {
+      if (file) await fs.remove(file.path);
     }
-
-    // Si viene relativePath, usarlo para preservar estructura de carpetas
-    const fileName = relativePath || file.originalname;
-    const filePath = path.join(dirPath, fileName);
-    await this.filesService.writeFileBuffer(serverId, filePath, file.buffer);
-
-    return { success: true, path: filePath };
   }
 
   @Post(':serverId/upload-multiple')
@@ -150,49 +157,53 @@ export class FilesController {
     @UploadedFiles() files: Express.Multer.File[],
     @Body() body: { relativePaths?: string },
   ): Promise<{ success: boolean; uploaded: number; errors: number }> {
-    await this.assertFilesAccess(req, serverId, true);
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file is required');
-    }
-
-    // relativePaths viene como JSON string desde FormData
-    const relativePaths: string[] = body.relativePaths ? JSON.parse(body.relativePaths) : [];
-
-    let uploaded = 0;
-    let errors = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      try {
-        const file = files[i];
-        const fileName = relativePaths[i] || file.originalname;
-        const filePath = path.join(dirPath, fileName);
-        await this.filesService.writeFileBuffer(serverId, filePath, file.buffer);
-        uploaded++;
-      } catch {
-        errors++;
+    try {
+      const admin = await this.assertFilesAccess(req, serverId, true);
+      if (!files || files.length === 0) {
+        throw new BadRequestException('At least one file is required');
       }
-    }
 
-    return { success: true, uploaded, errors };
+      // relativePaths viene como JSON string desde FormData
+      const relativePaths: string[] = body.relativePaths ? JSON.parse(body.relativePaths) : [];
+
+      let uploaded = 0;
+      let errors = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const file = files[i];
+          const fileName = relativePaths[i] || file.originalname;
+          const filePath = path.join(dirPath, fileName);
+          await this.filesService.saveUpload(serverId, filePath, file.path, admin);
+          uploaded++;
+        } catch {
+          errors++;
+        }
+      }
+
+      return { success: true, uploaded, errors };
+    } finally {
+      await Promise.all((files ?? []).map((file) => fs.remove(file.path)));
+    }
   }
 
   @Put(':serverId/rename')
   async rename(@Request() req, @Param('serverId') serverId: string, @Body() body: { path: string; newName: string }): Promise<{ success: boolean }> {
-    await this.assertFilesAccess(req, serverId, true);
+    const admin = await this.assertFilesAccess(req, serverId, true);
     if (!body.path || !body.newName) {
       throw new BadRequestException('Path and newName are required');
     }
-    await this.filesService.rename(serverId, body.path, body.newName);
+    await this.filesService.rename(serverId, body.path, body.newName, admin);
     return { success: true };
   }
 
   @Delete(':serverId/delete')
   async deleteFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ success: boolean }> {
-    await this.assertFilesAccess(req, serverId, true);
+    const admin = await this.assertFilesAccess(req, serverId, true);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
-    await this.filesService.deleteFile(serverId, filePath);
+    await this.filesService.deleteFile(serverId, filePath, admin);
     return { success: true };
   }
 }

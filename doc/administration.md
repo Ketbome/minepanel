@@ -176,6 +176,9 @@ Minepanel also supports delegated operators through the `manageUsers` permission
 - They can create and manage invitation links
 - They can open the audit page
 - They do not become full administrators
+- They cannot edit `ADMIN` accounts (username, email or any other field), since changing an
+  admin's email and then requesting a password reset would hand over the account
+- They cannot copy the link of an invitation that grants an admin-only permission
 - Audit retention and other high-risk settings remain restricted to `ADMIN`
 
 ### User Access Controls
@@ -192,7 +195,7 @@ For `USER` accounts, Minepanel can now control:
 - Server file management
 - Server version changes
 
-If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands.
+If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands. Scheduled tasks of type **command** count as console usage: creating, editing, enabling or running one requires the console permission.
 
 ### Admin-only container settings
 
@@ -204,8 +207,15 @@ Operating an assigned server does not include changing how its container is buil
 - UID and GID
 - Custom environment variables
 - Custom server binary download URLs (Paper, Bukkit, Spigot, Purpur, Folia, Fabric)
+- JVM options (`jvmOpts`, `-XX` and `-D` options) and running Java directly (`execDirectly`)
+- Extra published ports
+- A generic pack loaded from a URL outside the trusted hosts (a zip from the server's modpacks folder is fine)
 
-`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes relative to the server's own directory (`./mc-data:/data`), never host paths.
+`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes relative to the server's own directory (`./mc-data:/data`), never host paths or Compose variables, and can only publish a port straight through (`19132:19132/udp`, as the Geyser template does).
+
+Every value the panel writes into a generated compose file has its `$` escaped, so a field such as the MOTD can never read the panel's environment through Compose interpolation. Custom compose snippets are the exception: they are admin-only and keep `${VAR}` interpolation.
+
+Proxy hostnames are unique: saving a hostname that another server already routes is rejected with `409`.
 
 ### Changing the server version
 
@@ -219,13 +229,15 @@ The `changeServerVersion` permission covers both halves of that change:
 Any other Docker image value stays admin-only. Without the permission the backend answers
 `403` and the version controls are disabled in the **Server type** tab.
 
-Global file management is a way around it: that permission reaches every server's
-`server.json`, which is the source of truth for its configuration, so editing it changes the
-image and version directly. The permission list warns about this next to the switch while it
-is on.
+Global file management does not reach around it. The global file browser can read the whole
+servers directory, but for non-admins it only writes inside a server's `mc-data` folder and the
+world library: `server.json`, the generated compose files and any `.env` next to them are
+read-only there. Admins keep write access to the whole servers directory.
+Global file management is still broad (it writes into every server's data), so it is also
+**granted by `ADMIN` only**, and it is required to import worlds into the global library.
 
-(Editing a server's generated `docker-compose.yml` is not a way around it, since that file is
-rebuilt from `server.json` on the next start.)
+(Editing a server's generated `docker-compose.yml` is not a way around it either, since that
+file is rebuilt from `server.json` on the next start.)
 
 This permission is **granted by `ADMIN` only**. An operator with `manageUsers` cannot turn it
 on for another account, for a new invitation, or for themselves: the backend keeps the stored
@@ -242,6 +254,19 @@ Minepanel does not trust permissions edited in the browser.
 - The backend still loads the current user and enforces permission checks again before returning protected data or executing actions
 
 Changing local browser state does not grant real access if the backend denies the request.
+
+Files inside `mc-data` are written by the game container, so plugins or mods can plant symbolic
+links there. The file browser, Bedrock add-on sync, player lists, the Players tab, the activity log and the legacy world migration
+follow a link only when it resolves inside the same `mc-data`; anything pointing elsewhere is
+rejected. Deleting or renaming a link acts on the link itself.
+
+Changing your password signs out every other session: all refresh tokens of the account are
+revoked except the one of the session that made the change.
+
+Without SMTP there is no way to confirm a new email address, so only admins can change their
+own email in that case; other accounts ask an admin (or a `manageUsers` operator) to set it.
+Otherwise an unconfirmed address could be linked to whoever signs in through SSO with it first. Deleting a server also removes its scheduled tasks and every per-server access grant
+for it, so a new server created later with the same ID starts with no inherited access.
 
 ### Invitations
 

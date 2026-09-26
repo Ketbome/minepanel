@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { CronExpressionParser } from 'cron-parser';
@@ -40,7 +40,8 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     return this.taskRepo.find({ where: { serverId }, order: { createdAt: 'ASC' } });
   }
 
-  async create(serverId: string, dto: CreateScheduledTaskDto): Promise<ScheduledTask> {
+  async create(serverId: string, dto: CreateScheduledTaskDto, canUseConsole = true): Promise<ScheduledTask> {
+    this.assertCanRunCommands(dto.type, canUseConsole);
     this.assertCommandPayload(dto.type, dto.command);
     const scheduleKind = dto.scheduleKind ?? 'interval';
     this.assertSchedulePayload(scheduleKind, dto.intervalMinutes, dto.cronExpression);
@@ -62,9 +63,11 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     return this.taskRepo.save(task);
   }
 
-  async update(serverId: string, taskId: number, dto: UpdateScheduledTaskDto): Promise<ScheduledTask> {
+  async update(serverId: string, taskId: number, dto: UpdateScheduledTaskDto, canUseConsole = true): Promise<ScheduledTask> {
     const task = await this.getOwnedTask(serverId, taskId);
     const nextType = dto.type ?? task.type;
+    this.assertCanRunCommands(task.type, canUseConsole);
+    this.assertCanRunCommands(nextType, canUseConsole);
     const nextCommand = dto.command ?? task.command ?? undefined;
     this.assertCommandPayload(nextType, nextCommand);
 
@@ -101,8 +104,9 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     await this.taskRepo.remove(task);
   }
 
-  async runNow(serverId: string, taskId: number): Promise<ScheduledTask> {
+  async runNow(serverId: string, taskId: number, canUseConsole = true): Promise<ScheduledTask> {
     const task = await this.getOwnedTask(serverId, taskId);
+    this.assertCanRunCommands(task.type, canUseConsole);
     await this.executeTask(task);
     return task;
   }
@@ -167,6 +171,13 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException(`Scheduled task ${taskId} not found for server ${serverId}`);
     }
     return task;
+  }
+
+  // A command task is console access on a timer, so it needs the same permission.
+  private assertCanRunCommands(type: string, canUseConsole: boolean): void {
+    if (type === 'command' && !canUseConsole) {
+      throw new ForbiddenException('You do not have permission to use the console');
+    }
   }
 
   private assertCommandPayload(type: string, command: string | undefined): void {

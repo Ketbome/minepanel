@@ -378,11 +378,31 @@ describe('server index reconciliation', () => {
       expect(stored?.maxPlayers).toBe('99');
       expect(stored?.serverName).toBe('Fresh');
     });
+
+    it('ignores an id in the update body, so it cannot redirect the write to another server', async () => {
+      await service.createServer('fresh', { serverName: 'Fresh' });
+      await service.createServer('victim', { serverName: 'Victim' });
+
+      const updated = await service.updateServerConfig('fresh', { id: 'victim', motd: 'hijack' } as any);
+
+      expect(updated?.id).toBe('fresh');
+      expect((await store.readConfig('fresh'))?.motd).toBe('hijack');
+      expect((await store.readConfig('victim'))?.motd).not.toBe('hijack');
+    });
   });
 
   // This is what makes server.json the source of truth rather than just a second
   // copy: the compose file is rebuilt from it right before the server runs.
   describe('refreshing the compose file from the stored config', () => {
+    it('escapes Compose interpolation in panel values but not in admin snippets', async () => {
+      await service.createServer('fresh', { motd: '${JWT_SECRET}', composeSnippets: [{ target: 'mc', yaml: 'labels:\n  owner: ${USER}' }] } as any);
+
+      const raw = await fs.readFile(path.join(serversDir, 'fresh', 'docker-compose.yml'), 'utf8');
+      const compose = yaml.load(raw) as any;
+      expect(compose.services.mc.environment.MOTD).toBe('$${JWT_SECRET}');
+      expect(compose.services.mc.labels.owner).toBe('${USER}');
+    });
+
     it('discards hand edits to the generated compose file', async () => {
       await service.createServer('fresh', { serverName: 'Fresh', motd: 'from the panel' });
       const composePath = path.join(serversDir, 'fresh', 'docker-compose.yml');

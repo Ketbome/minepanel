@@ -3,7 +3,7 @@ import { ProxyController } from './proxy.controller';
 describe('ProxyController', () => {
   const req = { user: { userId: 1 } };
   let proxyService: Record<string, jest.Mock>;
-  let accessControl: { assertServerAccess: jest.Mock };
+  let accessControl: { assertServerAccess: jest.Mock; getVisibleServerIds: jest.Mock };
   let controller: ProxyController;
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('ProxyController', () => {
       addServerToProxy: jest.fn().mockResolvedValue(undefined),
       removeServerFromProxy: jest.fn().mockResolvedValue(undefined),
     };
-    accessControl = { assertServerAccess: jest.fn() };
+    accessControl = { assertServerAccess: jest.fn(), getVisibleServerIds: jest.fn((_user, ids: string[]) => ids.filter((id) => id === 'a')) };
     controller = new ProxyController(
       proxyService as any,
       { getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: 25565, autoScaleEnabled: true, autoScaleToken: 't' }) } as any,
@@ -36,7 +36,11 @@ describe('ProxyController', () => {
       hasRoutesFile: true,
       routesCount: 2,
     });
-    expect(await controller.getMappings()).toEqual([{ host: 'a', backend: 'a:25565' }]);
+  });
+
+  it('only lists mappings of servers the caller can see', async () => {
+    proxyService.getAllMappings.mockResolvedValue([{ host: 'a', backend: 'a:25565' }, { host: 'secret', backend: 'b:25565' }]);
+    expect(await controller.getMappings({ user: { userId: 1 } })).toEqual([{ host: 'a', backend: 'a:25565' }]);
   });
 
   it('reports the proxy as unavailable without a base domain', async () => {
@@ -46,7 +50,7 @@ describe('ProxyController', () => {
 
   it('checks server access before per-server routes', async () => {
     expect(await controller.getServerHostname(req, 'a')).toEqual({ hostname: 'a.mc.example.com' });
-    expect(await controller.addServer(req, 'a', { baseDomain: 'mc.example.com', hostname: 'play' })).toEqual({ success: true });
+    expect(await controller.addServer(req, 'a', { baseDomain: 'evil.example.com', hostname: 'play' } as any)).toEqual({ success: true });
     expect(proxyService.addServerToProxy).toHaveBeenCalledWith('a', 'mc.example.com', 'play');
     expect(await controller.removeServer(req, 'a')).toEqual({ success: true });
     expect(accessControl.assertServerAccess).toHaveBeenCalledTimes(3);

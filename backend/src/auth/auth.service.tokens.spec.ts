@@ -208,7 +208,8 @@ describe('AuthService tokens, recovery and invitations', () => {
     usersService.getActiveInvitations.mockResolvedValue([{ id: 8, email: 'e', role: 'USER', permissions: null, serverAccess: ['s'], expiresAt: new Date(), createdAt: new Date() }]);
     expect(await service.getActiveInvitations()).toEqual([expect.objectContaining({ id: 8, access: { permissions: null, serverAccess: ['s'] } })]);
 
-    expect(await service.getInvitationLink(8, { userId: 1, username: 'admin', role: 'ADMIN' })).toEqual({ inviteUrl: 'https://panel/?inviteToken=t' });
+    expect(await service.getInvitationLink(8, { userId: 1, username: 'admin', role: 'ADMIN' }, true)).toEqual({ inviteUrl: 'https://panel/?inviteToken=t' });
+    expect(usersService.getInvitationLink).toHaveBeenLastCalledWith(8, true);
     expect(audit.record).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'copy_invitation_link', metadata: { invitationId: 8 } }));
 
     usersService.getInvitationByToken.mockResolvedValue({ email: 'e', role: 'USER', permissions: null, serverAccess: null, expiresAt: new Date() });

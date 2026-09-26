@@ -434,6 +434,7 @@ export const tr: Record<TranslationKey, string> = {
   updateEmail: 'E-postayı güncelle',
   emailUpdatedSuccessfully: 'E-posta başarıyla güncellendi',
   emailUpdateFailed: 'E-posta güncellenemedi',
+  emailChangeNeedsSmtp: 'E-posta değişikliği için adresi onaylamak üzere SMTP gerekir. Bir yöneticiden değiştirmesini isteyin.',
   emailRequired: 'E-posta zorunludur',
   emailChangeCodeSent: 'Onay kodu yeni e-posta adresine gönderildi',
   emailChangeCodeSentDesc:
