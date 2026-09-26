@@ -1,4 +1,7 @@
-import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, NotFoundException, Param, Query, Request, StreamableFile, UseGuards } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { ItemTexturesService } from './item-textures.service';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
@@ -36,5 +39,22 @@ export class PlayersController {
     const payload = req.user as PayloadToken;
     const user = await this.usersService.getRequiredUserById(payload.userId);
     this.accessControlService.assertServerAccess(user, serverId);
+  }
+}
+
+// Public so <img> tags can load them without credentials; it only serves already-cached
+// vanilla textures and never triggers a download (that needs an authenticated profile read).
+@Controller('item-textures')
+export class ItemTexturesController {
+  constructor(private readonly textures: ItemTexturesService) {}
+
+  @Public()
+  @Get(':version/:item')
+  @Header('Content-Type', 'image/png')
+  @Header('Cache-Control', 'public, max-age=604800, immutable')
+  async texture(@Param('version') version: string, @Param('item') item: string) {
+    const file = await this.textures.resolve(version, item);
+    if (!file) throw new NotFoundException();
+    return new StreamableFile(createReadStream(file));
   }
 }

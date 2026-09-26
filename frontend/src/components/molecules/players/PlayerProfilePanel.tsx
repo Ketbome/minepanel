@@ -8,6 +8,7 @@ import { PlayerLocation, PlayerProfile } from "@/services/players/players.servic
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PlayerInventoryHistory } from "./PlayerInventoryHistory";
 import { PlayerSessions } from "./PlayerSessions";
+import { PlayerVitals } from "./PlayerVitals";
 import { formatDimension, formatDistance, formatPlayTime, humanizeId, idNamespace } from "./player-format";
 
 interface PlayerProfilePanelProps {
@@ -85,6 +86,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, prof
         </TabsList>
 
         <TabsContent value="profile" className="space-y-3 pt-3">
+          {profile.vitals && <PlayerVitals vitals={profile.vitals} effects={profile.effects} />}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <StatCard label={t("playTime")} value={formatPlayTime(profile.stats.playTimeTicks)} />
             <StatCard label={t("deaths")} value={profile.stats.deaths} />

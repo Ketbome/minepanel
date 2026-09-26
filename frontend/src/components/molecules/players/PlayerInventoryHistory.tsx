@@ -119,7 +119,7 @@ export const PlayerInventoryHistory: FC<PlayerInventoryHistoryProps> = ({ server
         </div>
       )}
 
-      <PlayerInventory profile={shown} />
+      <PlayerInventory profile={shown} textureVersion={profile.textureVersion} />
     </div>
   );
 };
