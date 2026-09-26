@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,20 +20,26 @@ export const GamerulesEditor: FC<GamerulesEditorProps> = ({ serverId, rconPort, 
   const [rules, setRules] = useState<{ name: string; value: string }[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [supported, setSupported] = useState(true);
+  const [complete, setComplete] = useState(true);
+  const latestRequest = useRef(0);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
+    // A slower response for a previous server must not overwrite the current one.
+    const request = ++latestRequest.current;
     setLoading(true);
     try {
       const result = await getGamerules(serverId);
+      if (request !== latestRequest.current) return;
       setSupported(result.supported);
+      setComplete(result.complete);
       setRules(result.rules);
       setDrafts({});
     } catch (error) {
-      console.error("Error fetching gamerules:", error);
+      if (request === latestRequest.current) console.error("Error fetching gamerules:", error);
     } finally {
-      setLoading(false);
+      if (request === latestRequest.current) setLoading(false);
     }
   }, [serverId]);
 
@@ -66,6 +72,7 @@ export const GamerulesEditor: FC<GamerulesEditorProps> = ({ serverId, rconPort, 
         </Button>
       </div>
       <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("searchGamerules")} className="h-8 mb-3 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
+      {!complete && rules.length > 0 && <p className="text-xs text-gray-400 mb-2">{t("gamerulesVanillaOnly")}</p>}
       {rules.length === 0 ? (
         <p className="text-xs text-gray-400">{loading ? t("loading") : t("gamerulesUnavailable")}</p>
       ) : (
@@ -79,10 +86,10 @@ export const GamerulesEditor: FC<GamerulesEditorProps> = ({ serverId, rconPort, 
                 <Switch checked={value === "true"} onCheckedChange={(checked) => setRule(name, String(checked))} aria-label={name} />
               ) : (
                 <Input
-                  type="number"
+                  type={/^-?\d+$/.test(value) ? "number" : "text"}
                   value={drafts[name] ?? value}
                   onChange={(e) => setDrafts((current) => ({ ...current, [name]: e.target.value }))}
-                  onBlur={() => drafts[name] !== undefined && drafts[name] !== value && /^-?\d+$/.test(drafts[name]) && setRule(name, drafts[name])}
+                  onBlur={() => drafts[name] !== undefined && drafts[name] !== value && /^[\w.:-]+$/.test(drafts[name]) && setRule(name, drafts[name])}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                   aria-label={name}
                   className="w-24 h-7 text-xs bg-gray-900/60 border-gray-700/50 text-gray-200"

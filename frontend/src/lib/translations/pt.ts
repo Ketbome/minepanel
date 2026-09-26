@@ -1113,6 +1113,7 @@ export const pt: Record<TranslationKey, string> = {
   allGamerules: 'Todas as regras do jogo',
   searchGamerules: 'Buscar regras...',
   gamerulesUnavailable: 'Não foi possível ler as regras. O servidor terminou de iniciar?',
+  gamerulesVanillaOnly: 'Apenas regras vanilla são exibidas: esta versão do servidor não consegue listar regras de mods via RCON.',
   entitiesKilled: 'Entidades eliminadas',
   itemsCleared: 'Itens limpos',
   worldBorderSet: 'Borda do mundo definida',

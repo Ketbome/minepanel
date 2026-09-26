@@ -1101,6 +1101,7 @@ export const pl: Record<TranslationKey, string> = {
   allGamerules: 'Wszystkie zasady gry',
   searchGamerules: 'Szukaj zasad...',
   gamerulesUnavailable: 'Nie udało się odczytać zasad gry. Czy serwer w pełni wystartował?',
+  gamerulesVanillaOnly: 'Pokazano tylko zasady vanilla: ta wersja serwera nie potrafi wypisać zasad z modów przez RCON.',
   itemsCleared: 'Wyczyszczone przedmioty',
   worldBorderSet: 'Ustawiono granicę świata',
   worldSpawnSet: 'Ustawiono odradzanie się świata',

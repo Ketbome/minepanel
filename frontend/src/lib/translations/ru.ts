@@ -1105,6 +1105,7 @@ export const ru: Record<TranslationKey, string> = {
   allGamerules: 'Все правила игры',
   searchGamerules: 'Поиск правил...',
   gamerulesUnavailable: 'Не удалось прочитать правила игры. Сервер полностью запущен?',
+  gamerulesVanillaOnly: 'Показаны только ванильные правила: эта версия сервера не может перечислить правила модов через RCON.',
   entitiesKilled: 'Сущности уничтожены',
   itemsCleared: 'Предметы очищены',
   worldBorderSet: 'Граница мира установлена',

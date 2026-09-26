@@ -336,6 +336,8 @@ export const getBannedPlayers = async (serverId: string): Promise<BannedPlayer[]
 export interface GamerulesResponse {
   success: boolean;
   supported: boolean;
+  // false when the server could not list its rules and only vanilla ones were probed
+  complete: boolean;
   rules: { name: string; value: string }[];
 }
 

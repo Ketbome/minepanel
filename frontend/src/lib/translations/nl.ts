@@ -1129,6 +1129,7 @@ export const nl: Record<TranslationKey, string> = {
   allGamerules: 'Alle spelregels',
   searchGamerules: 'Spelregels zoeken...',
   gamerulesUnavailable: 'Spelregels konden niet worden gelezen. Is de server volledig opgestart?',
+  gamerulesVanillaOnly: 'Alleen vanilla-regels worden getoond: deze serverversie kan spelregels van mods niet via RCON opsommen.',
   entitiesKilled: 'Entiteiten gedood',
   itemsCleared: 'Items gewist',
   worldBorderSet: 'Wereld grens ingesteld',

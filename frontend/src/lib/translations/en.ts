@@ -1103,6 +1103,7 @@ export const en = {
   allGamerules: 'All gamerules',
   searchGamerules: 'Search gamerules...',
   gamerulesUnavailable: 'Could not read gamerules. Is the server fully started?',
+  gamerulesVanillaOnly: 'Only vanilla rules are shown: this server version can\'t list modded game rules over RCON.',
   entitiesKilled: 'Entities killed',
   itemsCleared: 'Items cleared',
   worldBorderSet: 'World border set',

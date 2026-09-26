@@ -494,7 +494,7 @@ Unlike RCON, Bedrock commands don't return output directly. Check the Logs tab t
 
 - `gamerule` quick actions are compatible with both naming styles (`keepInventory` for older versions and `keep_inventory` for 1.21+)
 - PvP toggle uses the server command `pvp true|false` (not `gamerule pvp`)
-- **All gamerules** (Java only, World section) lists every rule the running server reports via `help gamerule`, including modded ones, with its current value. Boolean rules are switches, numeric rules are number fields; changes are sent with `gamerule <rule> <value>`. Backed by `GET /api/servers/:id/gamerules` (requires console permission).
+- **All gamerules** (Java only, World section) lists every rule the running server reports via `help gamerule`, including modded ones, with its current value. From 1.21.11 game rules are a registry and `help` no longer lists them; those servers show the vanilla rules only, with a note that modded rules may be missing. Boolean rules are switches, numeric rules are number fields; changes are sent with `gamerule <rule> <value>`. Backed by `GET /api/servers/:id/gamerules` (requires console permission).
 
 ---
 

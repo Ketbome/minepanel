@@ -1129,6 +1129,7 @@ export const tr: Record<TranslationKey, string> = {
   allGamerules: 'Tüm oyun kuralları',
   searchGamerules: 'Oyun kuralı ara...',
   gamerulesUnavailable: 'Oyun kuralları okunamadı. Sunucu tamamen açıldı mı?',
+  gamerulesVanillaOnly: 'Yalnızca vanilla kurallar gösteriliyor: bu sunucu sürümü mod kurallarını RCON üzerinden listeleyemiyor.',
   entitiesKilled: 'Varlıklar öldürüldü',
   itemsCleared: 'Eşyalar temizlendi',
   worldBorderSet: 'Dünya sınırı ayarlandı',

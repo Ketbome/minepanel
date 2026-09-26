@@ -1115,6 +1115,7 @@ export const de: Record<TranslationKey, string> = {
   allGamerules: 'Alle Spielregeln',
   searchGamerules: 'Spielregeln suchen...',
   gamerulesUnavailable: 'Spielregeln konnten nicht gelesen werden. Ist der Server vollständig gestartet?',
+  gamerulesVanillaOnly: 'Nur Vanilla-Regeln werden angezeigt: Diese Serverversion kann Mod-Spielregeln nicht über RCON auflisten.',
   entitiesKilled: 'Entitäten getötet',
   itemsCleared: 'Items gelöscht',
   worldBorderSet: 'Weltgrenze gesetzt',

@@ -853,7 +853,7 @@ describe('ServerManagementController', () => {
       expect(await controller.executeCommand(req, 'a', { command: 'say hi', rconPort: '25575' } as any)).toEqual({ success: true, output: 'ok' });
       expect(accessControlService.assertUseConsole).toHaveBeenCalled();
 
-      serverService.getGamerules.mockResolvedValue({ success: true, supported: true, rules: [] });
+      serverService.getGamerules.mockResolvedValue({ success: true, supported: true, complete: true, rules: [] });
       expect((await controller.getGamerules(req, 'a')).success).toBe(true);
 
       expect(await controller.forceStopServer(req, 'a')).toEqual({ success: true, message: 'Server force stopped successfully' });
