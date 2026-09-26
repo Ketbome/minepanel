@@ -26,6 +26,13 @@ interface NetworkTabProps {
 }
 
 // "3091" -> "3091:3091", "3091/udp" -> "3091:3091/udp"; anything with a colon is kept as typed.
+// Docker treats a missing protocol as tcp and the protocol case-insensitively, so
+// "25565:25565" and "25565:25565/TCP" are the same binding.
+const portMappingKey = (mapping: string) => {
+  const lower = mapping.toLowerCase();
+  return /\/(tcp|udp|sctp)$/.test(lower) ? lower : `${lower}/tcp`;
+};
+
 const normalizeExtraPort = (input: string) => {
   const port = input.trim();
   if (port.includes(':')) return port;
@@ -59,7 +66,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
   const defaultPort = isBedrock ? '19132' : '25565';
 
   const normalizedNewPort = normalizeExtraPort(newPort);
-  const canAddPort = isValidPortMapping(normalizedNewPort) && !config.extraPorts?.includes(normalizedNewPort);
+  const canAddPort = isValidPortMapping(normalizedNewPort) && !config.extraPorts?.some((port) => portMappingKey(port) === portMappingKey(normalizedNewPort));
 
   const addExtraPort = () => {
     if (!canAddPort) return;
