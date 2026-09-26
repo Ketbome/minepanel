@@ -57,8 +57,11 @@ describe('ItemTexturesService', () => {
 
   it('rejects unsafe input and non-Mojang downloads, and allows a retry after failure', async () => {
     service.ensure('../../etc');
+    service.ensure('..');
     expect(mockedGet).not.toHaveBeenCalled();
     expect(await service.resolve('../x', 'stone')).toBeNull();
+    expect(await service.resolve('..', 'stone')).toBeNull();
+    expect(await service.resolve('.', 'stone')).toBeNull();
     expect(await service.resolve('1.21.1', '../stone')).toBeNull();
 
     mojang('1.21.1', 'https://evil.example/client.jar');
