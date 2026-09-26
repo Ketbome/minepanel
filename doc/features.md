@@ -134,9 +134,9 @@ while the server is stopped because it reads the world files directly.
 | Feature        | Description                                |
 | -------------- | ------------------------------------------ |
 | Player list    | Search and filter by online, whitelisted, operator or banned; last seen, play time and advancements at a glance |
-| Profile        | Play time, deaths, mob and PvP kills, distance, blocks mined, last position and spawn point |
+| Profile        | Health, hunger, XP level, game mode and active effects; play time, deaths, mob and PvP kills, distance, blocks mined, last position and spawn point |
 | Statistics     | Every vanilla (and modded) statistic, by category, searchable |
-| Inventory      | Inventory, armor, offhand and ender chest, including renamed items and what carried shulker boxes and bundles hold |
+| Inventory      | Inventory, armor, offhand and ender chest with the game's own item icons, including renamed items and what carried shulker boxes and bundles hold. Hovering an item shows an in-game style tooltip with enchantments and durability; damaged tools show a durability bar and enchanted items shimmer |
 | Find item      | "Who has my diamonds?": search every player's saved inventory, ender chest and carried containers by item or custom name |
 | Advancements   | Completed ones with their date, and the ones still pending |
 | Player actions | Gamemode, teleport, heal, give, kick, ban/unban, op/deop, whitelist add/remove (server running, needs console permission) |
@@ -144,6 +144,11 @@ while the server is stopped because it reads the world files directly.
 
 Minecraft writes player files on autosave and on logout, so data for online players can be a few
 minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
+
+Item icons are the vanilla textures of the server's game version (read from `level.dat`). The
+backend downloads that version's official client jar from Mojang once and keeps only the item and
+block images under `data/textures/<version>/` (about 6 MB). Until then, and for modded items or
+items without a flat icon, slots fall back to the panel's built-in icons or the item name.
 
 ### Activity log
 
