@@ -2,7 +2,9 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
-import { PlayerItem, PlayerLocation, PlayerNbtData, readPlayerNbt } from './player-nbt';
+import { parse, simplify } from 'prismarine-nbt';
+import { PlayerEffect, PlayerItem, PlayerLocation, PlayerNbtData, PlayerVitals, readPlayerNbt } from './player-nbt';
+import { ItemTexturesService } from './item-textures.service';
 
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -59,6 +61,10 @@ export interface PlayerProfile extends PlayerSummary {
   enderChest: PlayerItem[];
   position: PlayerLocation | null;
   spawn: PlayerLocation | null;
+  vitals: PlayerVitals | null;
+  effects: PlayerEffect[];
+  // Game version whose vanilla textures /item-textures serves; null when level.dat is unreadable
+  textureVersion: string | null;
 }
 
 interface NamedEntry {
@@ -84,7 +90,10 @@ export class PlayersService {
   private readonly logger = new Logger(PlayersService.name);
   private readonly serversDir: string;
 
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private readonly textures: ItemTexturesService,
+  ) {
     this.serversDir = configService.get<string>('serversDir');
   }
 
@@ -108,6 +117,8 @@ export class PlayersService {
     const stats = await this.readJson<StatsFile>(this.playerFile(files, 'stats', key, 'json'));
     const advancements = await this.readJson<AdvancementsFile>(this.playerFile(files, 'advancements', key, 'json'));
     const nbt = await this.readNbt(this.playerFile(files, 'playerdata', key, 'dat'));
+    const textureVersion = await this.readGameVersion(files.worldDir);
+    if (textureVersion) this.textures.ensure(textureVersion);
 
     return {
       ...summary,
@@ -119,7 +130,19 @@ export class PlayersService {
       enderChest: nbt?.enderChest ?? [],
       position: nbt?.position ?? null,
       spawn: nbt?.spawn ?? null,
+      vitals: nbt?.vitals ?? null,
+      effects: nbt?.effects ?? [],
+      textureVersion,
     };
+  }
+
+  private async readGameVersion(worldDir: string): Promise<string | null> {
+    try {
+      const level = simplify((await parse(await fs.readFile(path.join(worldDir, 'level.dat')))).parsed);
+      return typeof level?.Data?.Version?.Name === 'string' ? level.Data.Version.Name : null;
+    } catch {
+      return null;
+    }
   }
 
   // Current stats file of a player, as written on the last autosave or logout

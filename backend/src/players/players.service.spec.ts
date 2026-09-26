@@ -3,7 +3,7 @@ import * as fs from 'fs-extra';
 import os from 'node:os';
 import * as path from 'node:path';
 import { PlayersService, summarizeStats } from './players.service';
-import { legacyPlayerDat } from './player-nbt.fixtures';
+import { levelDat, legacyPlayerDat } from './player-nbt.fixtures';
 
 const STEVE = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
 const ALEX = 'ec561538-f3fd-461d-aff5-086b22154bce';
@@ -13,16 +13,18 @@ describe('PlayersService', () => {
   let serversDir: string;
   let mcData: string;
   let service: PlayersService;
+  const textures = { ensure: jest.fn() };
 
   const writeWorldFile = async (world: string, dir: string, file: string, content: string | Buffer) => {
     await fs.outputFile(path.join(mcData, world, dir, file), content);
   };
 
   beforeEach(async () => {
+    textures.ensure.mockClear();
     serversDir = await fs.mkdtemp(path.join(os.tmpdir(), 'minepanel-players-'));
     mcData = path.join(serversDir, 'srv', 'mc-data');
     await fs.ensureDir(mcData);
-    service = new PlayersService({ get: () => serversDir } as any);
+    service = new PlayersService({ get: () => serversDir } as any, textures as any);
   });
 
   afterEach(async () => {
@@ -119,6 +121,19 @@ describe('PlayersService', () => {
       expect(profile.inventory).toHaveLength(3);
       expect(profile.enderChest).toEqual([{ slot: 3, id: 'minecraft:emerald', count: 64 }]);
       expect(profile.position?.dimension).toBe('minecraft:the_nether');
+      expect(profile.vitals?.gameMode).toBe('creative');
+      expect(profile.textureVersion).toBeNull();
+      expect(textures.ensure).not.toHaveBeenCalled();
+    });
+
+    it('reports the world version and starts caching its textures', async () => {
+      await writeWorldFile('world', 'playerdata', `${STEVE}.dat`, legacyPlayerDat());
+      await writeWorldFile('world', '', 'level.dat', levelDat('1.21.1'));
+
+      const profile = await service.profile('srv', STEVE);
+
+      expect(profile.textureVersion).toBe('1.21.1');
+      expect(textures.ensure).toHaveBeenCalledWith('1.21.1');
     });
 
     it('parses advancement dates', async () => {
@@ -138,6 +153,8 @@ describe('PlayersService', () => {
 
       expect(profile.inventory).toEqual([]);
       expect(profile.offhand).toBeNull();
+      expect(profile.vitals).toBeNull();
+      expect(profile.effects).toEqual([]);
     });
 
     it('rejects invalid uuids and unknown players', async () => {

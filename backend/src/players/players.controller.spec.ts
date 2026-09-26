@@ -1,5 +1,8 @@
-import { ForbiddenException } from '@nestjs/common';
-import { PlayersController } from './players.controller';
+import { ForbiddenException, StreamableFile } from '@nestjs/common';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { ItemTexturesController, PlayersController } from './players.controller';
 
 describe('PlayersController', () => {
   const req = { user: { userId: 1 } };
@@ -37,5 +40,17 @@ describe('PlayersController', () => {
 
     await expect(controller.list(req, 'srv')).rejects.toBeInstanceOf(ForbiddenException);
     expect(players.list).not.toHaveBeenCalled();
+  });
+});
+
+describe('ItemTexturesController', () => {
+  it('streams cached textures and 404s the rest', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'minepanel-texture-ctl-'));
+    const file = path.join(dir, 'stone.png');
+    await fs.writeFile(file, 'png');
+    const controller = new ItemTexturesController({ resolve: jest.fn().mockResolvedValueOnce(file).mockResolvedValueOnce(null) } as any);
+    expect(await controller.texture('1.21.1', 'stone')).toBeInstanceOf(StreamableFile);
+    await expect(controller.texture('1.21.1', 'nope')).rejects.toThrow();
+    await fs.rm(dir, { recursive: true, force: true });
   });
 });
