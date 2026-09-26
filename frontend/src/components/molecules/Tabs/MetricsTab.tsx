@@ -216,7 +216,7 @@ const AlertsCard: FC<{ serverId: string }> = ({ serverId }) => {
 
         <p className="text-xs text-gray-400">{t("alertsNeedWebhook")}</p>
 
-        <Button type="button" size="sm" onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+        <Button type="button" size="sm" onClick={save} disabled={saving} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950">
           {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
           {t("saveAlerts")}
         </Button>
@@ -275,7 +275,7 @@ export const MetricsTab: FC<MetricsTabProps> = ({ serverId }) => {
                   type="button"
                   size="sm"
                   variant={hours === range.hours ? "default" : "outline"}
-                  className={hours === range.hours ? "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/40" : "bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white"}
+                  className={hours === range.hours ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white"}
                   onClick={() => setHours(range.hours)}
                 >
                   {range.label}

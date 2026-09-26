@@ -157,7 +157,7 @@ export function ConnectionErrorDialog({ isOpen, onRetry }: ConnectionErrorDialog
           <Button
             onClick={handleRetry}
             disabled={isRetrying}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft"
+            className="w-full bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft"
           >
             {isRetrying ? (
               <>

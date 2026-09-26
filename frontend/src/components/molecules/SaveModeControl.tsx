@@ -39,7 +39,7 @@ export const SaveModeControl: FC<SaveModeControlProps> = ({ onManualSave, isSavi
           onClick={handleManualSave}
           disabled={isSaving || !hasUnsavedChanges}
           size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft gap-2 transition-all disabled:opacity-50"
+          className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft gap-2 transition-all disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {t("saveChanges")}

@@ -243,7 +243,7 @@ export default function IntegrationsSettingsPage() {
                 </div>
                 <p className="text-xs text-gray-400">{t('discordWebhookDesc')}</p>
               </div>
-              <Button onClick={saveBasic} disabled={savingBasic} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+              <Button onClick={saveBasic} disabled={savingBasic} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 {savingBasic ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {savingBasic ? t('saving') : t('saveChanges')}
               </Button>
@@ -296,7 +296,7 @@ export default function IntegrationsSettingsPage() {
                 <Label className="text-gray-200">{t('smtpSecure')}</Label>
               </div>
               <div className="flex gap-2">
-                <Button onClick={saveSmtp} disabled={savingSmtp} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+                <Button onClick={saveSmtp} disabled={savingSmtp} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                   {savingSmtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {savingSmtp ? t('saving') : t('saveChanges')}
                 </Button>
@@ -359,7 +359,7 @@ export default function IntegrationsSettingsPage() {
                   </p>
                 ) : null}
               </div>
-              <Button onClick={saveOidc} disabled={savingOidc} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+              <Button onClick={saveOidc} disabled={savingOidc} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 {savingOidc ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {savingOidc ? t('saving') : t('saveChanges')}
               </Button>

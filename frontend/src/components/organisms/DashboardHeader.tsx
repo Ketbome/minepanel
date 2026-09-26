@@ -81,8 +81,11 @@ export function DashboardHeader() {
           {crumbs.map((crumb, index) => {
             const isLast = index === crumbs.length - 1;
             return (
-              <span key={crumb.label} className="flex min-w-0 items-center gap-2">
-                {index > 0 && <span className="text-gray-600">/</span>}
+              <span
+                key={crumb.label}
+                className={cn('items-center gap-2', isLast ? 'flex min-w-0' : 'hidden shrink-0 sm:flex')}
+              >
+                {index > 0 && <span className="hidden text-gray-600 sm:inline">/</span>}
                 {crumb.href && !isLast ? (
                   <Link
                     href={crumb.href}

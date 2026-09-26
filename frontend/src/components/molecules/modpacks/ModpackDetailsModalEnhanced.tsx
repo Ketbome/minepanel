@@ -26,7 +26,7 @@ interface ModpackDetailsModalEnhancedProps {
 const MC_VERSION = /^\d+\.\d+(\.\d+)?$/;
 
 const RELEASE_LABELS: Record<number, { label: string; className: string }> = {
-  1: { label: "Release", className: "bg-emerald-600 text-white" },
+  1: { label: "Release", className: "bg-emerald-400 text-gray-950" },
   2: { label: "Beta", className: "bg-yellow-600 text-black" },
   3: { label: "Alpha", className: "bg-red-600 text-white" },
 };
@@ -142,11 +142,11 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
 
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="mx-6 mt-4 grid w-full max-w-lg grid-cols-2 bg-gray-800">
-            <TabsTrigger value="info" className="text-white data-[state=active]:bg-emerald-600">
+            <TabsTrigger value="info" className="text-white">
               <Package className="mr-2 h-4 w-4" />
               {t("modpackDetails")}
             </TabsTrigger>
-            <TabsTrigger value="create" className="text-white data-[state=active]:bg-blue-600">
+            <TabsTrigger value="create" className="text-white">
               <Rocket className="mr-2 h-4 w-4" />
               {t("createServer")}
             </TabsTrigger>
@@ -309,7 +309,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
                 </div>
               </div>
 
-              <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 font-minecraft hover:from-emerald-500 hover:to-emerald-600">
+              <Button onClick={handleCreateServer} disabled={isCreating || !serverId.trim()} className="w-full bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 <Rocket className="mr-2 h-4 w-4" />
                 {isCreating ? t("creating") : t("createServer")}
               </Button>

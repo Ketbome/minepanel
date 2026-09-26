@@ -180,11 +180,11 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
         )}
 
         <div className="flex gap-2 border-b border-gray-700/50 pb-2">
-          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
+          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Terminal className="h-4 w-4 mr-1" />
             {t("commands")}
           </Button>
-          <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
+          <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Globe className="h-4 w-4 mr-1" />
             {t("world")}
           </Button>
@@ -214,7 +214,7 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               <div className="relative">
                 <div className="flex space-x-2">
                   <Input ref={inputRef} value={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => command && setShowSuggestions(filteredCommands.length > 0)} onBlur={() => setTimeout(() => setShowSuggestions(false), 100)} placeholder={t("enterMinecraftCommand")} disabled={!isServerRunning || executing} className="flex-1 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono" />
-                  <Button type="button" onClick={() => executeCommand()} disabled={!isServerRunning || !command.trim() || executing} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+                  <Button type="button" onClick={() => executeCommand()} disabled={!isServerRunning || !command.trim() || executing} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                     {executing ? (
                       <>
                         <Send className="h-4 w-4 animate-pulse" />

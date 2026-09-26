@@ -68,7 +68,7 @@ const ModpackCard: FC<ModpackCardProps> = ({ modpack, onSelect }) => {
             <p className="line-clamp-2 text-xs leading-relaxed text-gray-400">{modpack.summary}</p>
 
             <div className="mt-auto flex flex-wrap items-center gap-1.5">
-              <span className="mc-tag flex items-center bg-emerald-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+              <span className="mc-tag flex items-center bg-emerald-400 px-1.5 py-0.5 text-xs font-semibold text-gray-950">
                 <Download className="mr-1 h-3 w-3" />
                 {formatDownloadCount(modpack.downloadCount)}
               </span>

@@ -311,7 +311,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
             <Button
               type="button"
               onClick={addExtraPort}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-400 hover:bg-emerald-300 text-gray-950"
             >
               <Plus className="h-4 w-4" />
             </Button>

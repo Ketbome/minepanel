@@ -58,7 +58,7 @@ export const QuickCommandConsole: FC<QuickCommandConsoleProps> = ({ serverId, rc
         </div>
         <div className="flex gap-2">
           <Input ref={inputRef} value={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={handleKeyDown} placeholder={t("enterMinecraftCommand")} disabled={!hasRconConfigured || !isServerRunning || executing} className="flex-1 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono text-sm" />
-          <Button type="button" onClick={() => executeCommand()} disabled={!hasRconConfigured || !isServerRunning || !command.trim() || executing} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+          <Button type="button" onClick={() => executeCommand()} disabled={!hasRconConfigured || !isServerRunning || !command.trim() || executing} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
             {executing ? (
               <>
                 <Send className="h-4 w-4 animate-pulse" />

@@ -172,7 +172,7 @@ export function Sidebar() {
             >
               <ArrowLeft size={18} className="shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-wider text-gray-500 font-minecraft">{t('back')}</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-gray-500 font-minecraft">{t('back')}</p>
                 <p className="font-minecraft text-sm text-white truncate">{serverDisplayName}</p>
               </div>
             </Link>
@@ -222,7 +222,7 @@ export function Sidebar() {
           <div className={cn('py-4', isCollapsed ? 'px-2' : 'px-3')}>
             <p
               className={cn(
-                'text-xs text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
+                'text-xs text-gray-500 uppercase tracking-[0.08em] font-minecraft mb-2 px-3 transition-opacity duration-200',
                 isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
@@ -252,7 +252,7 @@ export function Sidebar() {
                   />
                   <span
                     className={cn(
-                      'font-minecraft text-sm whitespace-nowrap overflow-hidden',
+                      'font-minecraft font-medium text-sm whitespace-nowrap overflow-hidden',
                       isCollapsed ? 'hidden' : 'block',
                     )}
                   >
@@ -272,7 +272,7 @@ export function Sidebar() {
           >
             <p
               className={cn(
-                'text-xs text-gray-500 uppercase tracking-[0.18em] font-minecraft mb-2 px-1 transition-opacity duration-200',
+                'text-xs text-gray-500 uppercase tracking-[0.08em] font-minecraft mb-2 px-3 transition-opacity duration-200',
                 isCollapsed ? 'opacity-0' : 'opacity-100',
               )}
             >
@@ -295,7 +295,7 @@ export function Sidebar() {
                   <link.icon size={16} />
                   <span
                     className={cn(
-                      'font-minecraft text-xs whitespace-nowrap overflow-hidden',
+                      'font-minecraft font-medium text-xs whitespace-nowrap overflow-hidden',
                       isCollapsed ? 'hidden' : 'block',
                     )}
                   >

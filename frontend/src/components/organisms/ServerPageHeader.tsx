@@ -102,7 +102,7 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
               {t("stopServer")}
             </Button>
           ) : (
-            <Button type="button" variant="default" onClick={onStartServer} className="gap-2 bg-emerald-600 hover:bg-emerald-700 font-minecraft text-white">
+            <Button type="button" variant="default" onClick={onStartServer} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
               <PowerIcon className="h-4 w-4" />
               {t("startServer")}
             </Button>

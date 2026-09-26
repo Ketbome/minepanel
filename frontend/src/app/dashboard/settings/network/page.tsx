@@ -147,7 +147,7 @@ export default function NetworkSettingsPage() {
               type="button"
               onClick={() => handlePower(!isRunning)}
               disabled={isPowering || !proxyBaseDomain || isRunning === null}
-              className={cn('font-minecraft text-white', isRunning ? 'bg-red-700 hover:bg-red-800' : 'bg-emerald-600 hover:bg-emerald-700')}
+              className={cn('font-minecraft', isRunning ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-emerald-400 hover:bg-emerald-300 text-gray-950')}
             >
               {isPowering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Power className="mr-2 h-4 w-4" />}
               {isRunning ? t('stopProxy') : t('startProxy')}

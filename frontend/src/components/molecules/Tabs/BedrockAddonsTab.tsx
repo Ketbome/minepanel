@@ -300,7 +300,7 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
         <div className="rounded-xl border border-emerald-900/40 bg-linear-to-r from-gray-900/90 via-gray-800/75 to-gray-900/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.18em] text-emerald-300">
+              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 text-xs font-minecraft uppercase tracking-[0.08em] text-emerald-300">
                 Bedrock
               </Badge>
               <p className="text-sm text-gray-300">
@@ -334,7 +334,7 @@ export const BedrockAddonsTab: FC<BedrockAddonsTabProps> = ({ serverId, refreshT
                     <FileArchive className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-minecraft uppercase tracking-[0.18em] text-gray-400">{t("bedrockAddonsFileLabel")}</p>
+                    <p className="text-xs font-minecraft uppercase tracking-[0.08em] text-gray-400">{t("bedrockAddonsFileLabel")}</p>
                     <p className="mt-1 truncate text-sm text-gray-100">
                       {selectedFileName || t("bedrockAddonsSupportedFiles")}
                     </p>

@@ -366,7 +366,7 @@ export default function Dashboard() {
                   }}
                   className={
                     createMode === 'quick'
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }
                 >
@@ -379,7 +379,7 @@ export default function Dashboard() {
                   onClick={() => setCreateMode('template')}
                   className={
                     createMode === 'template'
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }
                 >

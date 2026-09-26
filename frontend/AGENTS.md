@@ -73,8 +73,10 @@ Design system (Minecraft GUI, converged with the docs brand):
   brand DNA with the docs site (`doc/.vitepress/theme/style.css`): acid green `#9dff3f` on
   near-black `#0a0e08`, hard offset shadows, and a blueprint-grid backdrop (`mp-blueprint`).
 - Fonts (loaded via `next/font/google` in `app/layout.tsx`): Archivo (variable) carries the
-  whole UI. `font-minecraft` and `mc-btn` are the heading/label voice: Archivo semibold in
-  natural case, never forced uppercase. Archivo Black uppercase is reserved for the one page
+  whole UI at its natural width (no `font-stretch`; the expanded width axis read as squashed).
+  `font-minecraft` and `mc-btn` are the heading/label voice: Archivo semibold in
+  natural case, never forced uppercase. Nav items drop to `font-medium`; small uppercase
+  group labels use `tracking-[0.08em] text-gray-500`, never wide green tracking. Archivo Black uppercase is reserved for the one page
   title per screen (`h1.font-minecraft`) and the wordmark (`mc-display`). `mc-tag` (status
   chips) is Archivo bold small caps; `mc-count` is Archivo extra-bold tabular numbers.
   JetBrains Mono (`--font-mono`, tabular numerals) is for data, ports, paths and `mp-tag`.
@@ -85,7 +87,10 @@ Design system (Minecraft GUI, converged with the docs brand):
   the `sky`/`indigo`/`violet` aliases) are retuned in `globals.css` `@theme` to sit on the
   green-black surfaces; `green` aliases `emerald`. Secondary actions use the neutral stone
   `mc-btn`, not extra colored fills. Save/confirm/search actions use the acid primary
-  (`bg-emerald-400 text-gray-950`); section icon tiles are emerald (red only for danger).
+  (`bg-emerald-400 text-gray-950`, also the `minepanel` Button variant); never white text on
+  `emerald-600` (~3:1). Selected state (active tab, segmented toggle, nav item) is the tint
+  `bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)]`, not a solid fill, so it never reads as
+  a primary action. Section icon tiles are emerald (red only for danger).
   A stopped server is neutral gray, not warning yellow.
 - Panels/windows: `mc-panel` (beveled stone window) + `mc-titlebar` (header strip). Inventory
   slots: `mc-slot` / `mc-slot--active`. Buttons: `mc-btn` (+ `-emerald` `-lapis` `-gold` `-amethyst`).

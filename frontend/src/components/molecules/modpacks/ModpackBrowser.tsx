@@ -252,7 +252,7 @@ export function ModpackBrowser({ open, onClose, onSelect, onUseZip }: ModpackBro
                   </div>
 
                   <div className="mt-auto pt-4 flex gap-2">
-                    <Button type="button" size="sm" onClick={() => handleSelect(modpack)} className="h-auto flex-1 bg-emerald-600 px-3 py-2 text-xs font-minecraft text-white hover:bg-emerald-500">
+                    <Button type="button" size="sm" onClick={() => handleSelect(modpack)} className="h-auto flex-1 bg-emerald-400 px-3 py-2 text-xs font-minecraft text-gray-950 hover:bg-emerald-300">
                       {t("selectModpack")}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => handleExternalLink(modpack)} className="h-auto border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700">

@@ -58,11 +58,11 @@ const LogsControls: FC<LogsControlsProps> = ({ searchTerm, setSearchTerm, levelF
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button type="button" onClick={toggleRealTime} variant={isRealTime ? "default" : "outline"} className={`gap-2 font-minecraft ${isRealTime ? "bg-green-600 hover:bg-green-700 text-white" : "bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300"}`}>
+        <Button type="button" onClick={toggleRealTime} variant={isRealTime ? "default" : "outline"} className={`gap-2 font-minecraft ${isRealTime ? "bg-emerald-400 hover:bg-emerald-300 text-gray-950" : "bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300"}`}>
           {isRealTime ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           {isRealTime ? t("pause") : t("resume")}
         </Button>
-        <Button type="button" size="sm" onClick={handleRefreshLogs} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white font-minecraft">
+        <Button type="button" size="sm" onClick={handleRefreshLogs} disabled={loading} className="bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300 font-minecraft">
           {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
         </Button>
       </div>

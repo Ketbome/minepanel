@@ -165,7 +165,7 @@ export function WorldDiscoverPanel({ onImported }: WorldDiscoverPanelProps) {
                   className="bg-gray-800 border-gray-700 text-gray-100 pl-9"
                 />
               </div>
-              <Button onClick={() => runSearch(0)} disabled={loadingSearch} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button onClick={() => runSearch(0)} disabled={loadingSearch} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950">
                 {loadingSearch ? <Loader2 className="h-4 w-4 animate-spin" /> : t("search")}
               </Button>
             </div>

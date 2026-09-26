@@ -274,7 +274,8 @@
   }
 }
 
-/* Type roles. Archivo carries the whole panel: `font-minecraft` is the UI
+/* Type roles. Archivo carries the whole panel at its natural width (the
+   expanded width axis read as squashed): `font-minecraft` is the UI
    heading/label voice (semibold, natural case) so nav, card titles and buttons
    stay readable for hours. Archivo Black uppercase, the docs' display voice,
    is kept for the one page title per screen (h1) and the brand wordmark.
@@ -284,9 +285,6 @@
   .mc-btn {
     font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
     font-weight: 600;
-    /* Archivo's width axis gives labels the presence Archivo Black had
-       without the all-caps weight. */
-    font-stretch: 112%;
     letter-spacing: 0;
   }
   h1.font-minecraft,
@@ -299,7 +297,6 @@
   .mc-tag {
     font-family: var(--font-archivo), 'Segoe UI', Roboto, sans-serif;
     font-weight: 700;
-    font-stretch: 112%;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -946,6 +943,11 @@
   box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.42), 0 3px 0 rgba(0, 0, 0, 0.4);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
   transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.05s ease;
+}
+/* Dark label on the acid primary: the bevel's drop shadow only smears it. */
+.mc-bevel.text-gray-950,
+.mc-tag.text-gray-950 {
+  text-shadow: none;
 }
 .mc-bevel:hover {
   filter: brightness(1.12);

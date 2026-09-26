@@ -408,7 +408,7 @@ export function ModsBrowserDialog({
                         type="button"
                         size="sm"
                         onClick={() => handleToggleMod(mod)}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                        className="w-full bg-emerald-400 hover:bg-emerald-300 text-gray-950"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         {t('addMod')}

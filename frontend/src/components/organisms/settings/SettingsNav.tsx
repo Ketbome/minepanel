@@ -47,7 +47,7 @@ export function SettingsNav() {
   return (
     <aside className="mc-panel h-fit p-3">
       <div className="mb-3 px-3 pt-2">
-        <p className="font-minecraft text-xs uppercase tracking-[0.25em] text-emerald-300/80">{t('settingsTitle')}</p>
+        <p className="font-minecraft text-xs uppercase tracking-[0.08em] text-gray-500">{t('settingsTitle')}</p>
         <p className="mt-2 text-sm text-gray-400">{t('settingsNavDescription')}</p>
       </div>
       <nav className="space-y-1">
