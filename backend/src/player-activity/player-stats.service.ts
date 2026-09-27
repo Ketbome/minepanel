@@ -45,7 +45,9 @@ export class PlayerStatsService {
       // server.properties reflects the world's actual directory, including custom LEVEL overrides.
       const properties = (await this.readFile(base, 'server.properties')).text;
       const world = /^level-name=(.+)$/m.exec(properties)?.[1].trim() || config.worldLevelName || 'world';
-      const file = await this.readFile(base, path.join(world, 'stats', `${player.uuid}.json`));
+      // 26.1+ keeps stats under players/stats; older worlds at the top level.
+      const statsFile = (dir: string) => this.readFile(base, path.join(world, dir, `${player.uuid}.json`));
+      const file = await statsFile(path.join('players', 'stats')).catch(() => statsFile('stats'));
       const stats = JSON.parse(file.text)?.stats;
       if (!stats || typeof stats !== 'object') return null;
       const custom = stats['minecraft:custom'] ?? {};

@@ -67,8 +67,21 @@ interface NamedEntry {
   level?: number;
 }
 
+type PlayerFileKind = 'playerdata' | 'stats' | 'advancements';
+
+// Minecraft 26.1 moved player files under `players/` (see LevelResource in the server jar).
+const MODERN_PLAYER_DIRS: Record<PlayerFileKind, string> = { playerdata: 'players/data', stats: 'players/stats', advancements: 'players/advancements' };
+
+/** Where a world keeps its player files: `players/...` since 26.1, top-level folders before. */
+export async function playerDirs(worldDir: string): Promise<Record<PlayerFileKind, string>> {
+  const modern = await fs.pathExists(path.join(worldDir, 'players'));
+  const dir = (kind: PlayerFileKind) => path.join(worldDir, modern ? MODERN_PLAYER_DIRS[kind] : kind);
+  return { playerdata: dir('playerdata'), stats: dir('stats'), advancements: dir('advancements') };
+}
+
 interface ServerPlayerFiles {
   worldDir: string;
+  dirs: Record<PlayerFileKind, string>;
   names: Map<string, string>;
   whitelist: Set<string>;
   ops: Map<string, number>;
@@ -217,6 +230,7 @@ export class PlayersService {
     const toUuids = (entries: NamedEntry[]) => entries.filter((entry) => entry?.uuid).map((entry) => entry.uuid.toLowerCase());
     const files: ServerPlayerFiles = {
       worldDir,
+      dirs: await playerDirs(worldDir),
       names,
       whitelist: new Set(toUuids(whitelist)),
       ops: new Map(ops.filter((entry) => entry?.uuid).map((entry) => [entry.uuid.toLowerCase(), entry.level ?? 4])),
@@ -226,8 +240,8 @@ export class PlayersService {
 
     // usercache only names players; it also holds names looked up by commands, so it does not add members.
     for (const uuid of [...files.whitelist, ...files.ops.keys(), ...files.banned]) files.uuids.add(uuid);
-    for (const dir of ['playerdata', 'stats', 'advancements']) {
-      for (const uuid of await this.listUuidFiles(path.join(worldDir, dir))) files.uuids.add(uuid);
+    for (const dir of Object.values(files.dirs)) {
+      for (const uuid of await this.listUuidFiles(dir)) files.uuids.add(uuid);
     }
     return files;
   }
@@ -255,8 +269,8 @@ export class PlayersService {
     }
   }
 
-  private playerFile(files: ServerPlayerFiles, dir: string, uuid: string, extension: string): string {
-    return path.join(files.worldDir, dir, `${uuid}.${extension}`);
+  private playerFile(files: ServerPlayerFiles, kind: PlayerFileKind, uuid: string, extension: string): string {
+    return path.join(files.dirs[kind], `${uuid}.${extension}`);
   }
 
   private async readJson<T>(file: string): Promise<T | null> {

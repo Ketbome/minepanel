@@ -144,6 +144,8 @@ while the server is stopped because it reads the world files directly.
 
 Minecraft writes player files on autosave and on logout, so data for online players can be a few
 minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
+Both world layouts are read: `players/data`, `players/stats` and `players/advancements` from
+Minecraft 26.1 on, and the top-level `playerdata`, `stats` and `advancements` folders before it.
 
 ### Activity log
 
@@ -169,6 +171,11 @@ every few seconds and keeps:
 - Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft
   writes on logout; imported history only has what the log says (deaths, chat, advancements).
 - Chat reformatted by server plugins may not be recognised.
+- Commands: Paper and Spigot log every player command (`issued server command`). Vanilla only logs
+  the feedback that operators see (`[Steve: Set the time to 1000]`), so a vanilla timeline shows
+  that text for commands with feedback, and nothing when `log_admin_commands` is off.
+- Players who were already online when tracking was turned on are known from the session history,
+  so their deaths are recorded even though their join happened before recording started.
 - Minecraft does not write the inventory at the moment of death, so "before death" is the last
   save before it (join or autosave, up to 5 minutes earlier). Chests placed in the world are not tracked.
 

@@ -99,6 +99,31 @@ describe('PlayersService', () => {
     });
   });
 
+  describe('Minecraft 26.1+ world layout (issue #280)', () => {
+    it('reads player data, stats and advancements from players/', async () => {
+      await fs.writeJson(path.join(mcData, 'usercache.json'), [{ name: 'Steve', uuid: STEVE }]);
+      await writeWorldFile('world', 'players/data', `${STEVE}.dat`, legacyPlayerDat());
+      await writeWorldFile('world', 'players/stats', `${STEVE}.json`, JSON.stringify({ stats: { 'minecraft:custom': { 'minecraft:deaths': 2, 'minecraft:play_time': 72000 } } }));
+      await writeWorldFile('world', 'players/advancements', `${STEVE}.json`, JSON.stringify({ 'minecraft:story/root': { done: true, criteria: {} } }));
+
+      const [summary] = await service.list('srv');
+      const profile = await service.profile('srv', STEVE);
+
+      expect(summary).toMatchObject({ uuid: STEVE, name: 'Steve', advancements: 1 });
+      expect(summary.lastSeen).not.toBeNull();
+      expect(profile.stats).toMatchObject({ deaths: 2, playTimeTicks: 72000 });
+      expect(profile.inventory).toHaveLength(3);
+      expect((await service.readInventory('srv', STEVE))?.inventory.enderChest).toHaveLength(1);
+    });
+
+    it('ignores top-level folders once a world uses players/', async () => {
+      await writeWorldFile('world', 'players/data', `${ALEX}.dat`, legacyPlayerDat());
+      await writeWorldFile('world', 'playerdata', `${STEVE}.dat`, legacyPlayerDat());
+
+      expect((await service.list('srv')).map((player) => player.uuid)).toEqual([ALEX]);
+    });
+  });
+
   describe('profile', () => {
     it('returns stats, advancements and inventory', async () => {
       await fs.writeJson(path.join(mcData, 'usercache.json'), [{ name: 'Steve', uuid: STEVE }]);

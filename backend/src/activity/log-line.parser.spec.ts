@@ -61,4 +61,18 @@ describe('classifyLine', () => {
     expect(classify('[12:00:00] [Server thread/INFO]: Done (3.2s)! For help, type "help"')).toBeNull();
     expect(classify('[12:00:00] [Server thread/INFO]: Steve')).toBeNull();
   });
+
+  it('records vanilla command feedback as a command, but not the console or RCON (issue #280)', () => {
+    expect(classify('[18:20:00] [Server thread/INFO]: [Mokkq: Teleported Mokkq to 0.500000, 0.000000, 0.500000]')).toEqual({
+      kind: 'event',
+      type: 'command',
+      name: 'Mokkq',
+      message: 'Teleported Mokkq to 0.500000, 0.000000, 0.500000',
+    });
+    expect(classify('[18:20:00] [Server thread/INFO]: [Steve: Gave 1 [Diamond] to Alex]')).toMatchObject({ type: 'command', message: 'Gave 1 [Diamond] to Alex' });
+    expect(classify('[18:20:00] [Server thread/INFO]: [Server: Set the time to 1000]')).toBeNull();
+    expect(classify('[18:20:00] [Server thread/INFO]: [Rcon: Saved the game]')).toBeNull();
+    // /say output is an announcement, not command feedback
+    expect(classify('[18:20:00] [Server thread/INFO]: [Steve] hello')).toBeNull();
+  });
 });
