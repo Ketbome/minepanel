@@ -8,6 +8,12 @@ import { COMPOSE_SNIPPET_TARGETS, type ComposeSnippetTarget } from 'src/common/c
 // Minecraft only reads INITIAL_ENABLED_PACKS when it creates the world.
 export const EXPERIMENTAL_PACKS = ['minecart_improvements', 'redstone_experiments', 'trade_rebalance'] as const;
 
+/** The packs of an INITIAL_ENABLED_PACKS value, or null when it names one the panel does not offer. */
+export function knownExperimentalPacks(value: string | undefined): string[] | null {
+  const packs = (value ?? '').split(',').map((pack) => pack.trim()).filter(Boolean);
+  return packs.every((pack) => (EXPERIMENTAL_PACKS as readonly string[]).includes(pack)) ? packs : null;
+}
+
 export type ServerEdition = 'JAVA' | 'BEDROCK';
 
 // Seconds Docker must keep waiting after the stop announcement so Minecraft can flush its final save

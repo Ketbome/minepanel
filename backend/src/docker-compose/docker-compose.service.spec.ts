@@ -243,6 +243,16 @@ describe('DockerComposeService', () => {
       expect(result?.envVars ?? '').not.toContain('INITIAL_ENABLED_PACKS');
     });
 
+    it('should keep INITIAL_ENABLED_PACKS in envVars when it names a pack the panel does not offer', async () => {
+      const result = await loadFromCompose('java-server', {
+        services: { mc: { image: 'itzg/minecraft-server:latest', environment: { ID_MANAGER: 'java-server', TYPE: 'VANILLA', INITIAL_ENABLED_PACKS: 'update_1_20,bundle' } } },
+      });
+
+      // Otherwise the DTO would reject every later save of this unchanged config.
+      expect(result?.experimentalPacks).toEqual([]);
+      expect(result?.envVars).toContain('INITIAL_ENABLED_PACKS=update_1_20,bundle');
+    });
+
     it('should read the Bedrock seed and game mode from the keys Bedrock writes', async () => {
       const result = await loadFromCompose('bedrock-server', {
         services: {

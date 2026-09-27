@@ -227,6 +227,10 @@ describe('JavaServerStrategy', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: ['minecart_improvements', 'trade_rebalance'] } as any).INITIAL_ENABLED_PACKS).toBe('minecart_improvements,trade_rebalance');
       expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBeUndefined();
       expect(strategy.buildEnvironment(baseConfig() as any).INITIAL_ENABLED_PACKS).toBeUndefined();
+      // A panel choice wins over a custom value; without one, the custom value is kept.
+      const custom = { ...baseConfig(), envVars: 'INITIAL_ENABLED_PACKS=update_1_20,bundle' };
+      expect(strategy.buildEnvironment({ ...custom, experimentalPacks: ['trade_rebalance'] } as any).INITIAL_ENABLED_PACKS).toBe('trade_rebalance');
+      expect(strategy.buildEnvironment({ ...custom, experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBe('update_1_20,bundle');
     });
 
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
