@@ -121,17 +121,34 @@ Part of the same self-hosted game-server ecosystem:
 
 ---
 
+## Support Minepanel
+
+Minepanel is a side project I build in my free time, and it grows mostly by word of mouth. If it
+saves you some work, here are a few ways to help that cost nothing:
+
+- **Give it a star** on [GitHub](https://github.com/Ketbome/minepanel). It sounds small, but it is
+  how most people decide whether a project is worth trying.
+- **Tell someone about it.** A post on [Reddit](https://www.reddit.com/submit?url=https://github.com/Ketbome/minepanel&title=Minepanel%20-%20self-hosted%20panel%20for%20Minecraft%20Java%20%26%20Bedrock%20servers)
+  or [X](https://x.com/intent/post?url=https://github.com/Ketbome/minepanel&text=I%20run%20my%20Minecraft%20servers%20with%20Minepanel%2C%20a%20free%20self-hosted%20panel%20for%20Java%20%26%20Bedrock),
+  a message in your Discord, or a mention to a friend who runs a server goes a long way.
+- **Report what breaks** or suggest what is missing in the
+  [issues](https://github.com/Ketbome/minepanel/issues). Pull requests are welcome too; the
+  [development guide](https://minepanel.ketbome.com/development) shows how to get it running.
+
+And if you feel like buying me a coffee, I will gladly drink it while fixing the next bug.
+
 <div align="center">
-
-**[⭐ Star this repo](https://github.com/Ketbome/minepanel)** if you find it useful!
-
-Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
-
-</div>
-<div align="center" style="margin-top: 8px;">
   <a href="https://buymeacoffee.com/pims2711y" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150" height="40">
   </a>
-  <br>
-  <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
+</div>
+
+Thanks for being here.
+
+---
+
+<div align="center">
+
+Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
+
 </div>
