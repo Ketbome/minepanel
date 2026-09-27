@@ -27,6 +27,23 @@ export interface PlayerItem {
   count: number;
   name?: string;
   contents?: PlayerItem[];
+  enchantments?: { id: string; level: number }[];
+  damage?: number;
+  maxDamage?: number;
+}
+
+export interface PlayerVitals {
+  health: number | null;
+  food: number | null;
+  xpLevel: number | null;
+  xpProgress: number | null;
+  gameMode: string | null;
+}
+
+export interface PlayerEffect {
+  id: string;
+  amplifier: number;
+  duration: number;
 }
 
 export interface PlayerInventoryData {
@@ -70,6 +87,9 @@ export interface PlayerProfile extends PlayerSummary {
   enderChest: PlayerItem[];
   position: PlayerLocation | null;
   spawn: PlayerLocation | null;
+  vitals: PlayerVitals | null;
+  effects: PlayerEffect[];
+  textureVersion: string | null;
 }
 
 export const getPlayers = async (serverId: string): Promise<PlayerSummary[]> => {

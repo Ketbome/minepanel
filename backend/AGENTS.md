@@ -30,6 +30,7 @@ backend/src/
 |- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
+|                           + public `GET /item-textures/:version/:item` (cached vanilla PNGs, see item-textures.service.ts)
 |- activity/                Opt-in activity log: tails logs/latest.log into events and inventory snapshots
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
@@ -223,7 +224,15 @@ Path and filesystem patterns (critical):
   case there when Mojang changes the format; never let an unknown key throw.
 - `src/players/players.service.ts` - resolves the world from `level-name` in `server.properties`
   and refuses one that escapes `mc-data`. `usercache.json` only names players; membership comes
-  from world files, whitelist, ops and bans.
+  from world files, whitelist, ops and bans. `level.dat` (the world's game version, used for
+  item textures) is read through `assertContained` like every player file.
+- `src/players/item-textures.service.ts` - item/block textures are Mojang assets, so they are
+  never shipped: the first authenticated profile read of a version downloads that version's
+  client jar from Mojang (hosts allowlisted) and extracts `textures/item|block` into
+  `data/textures/<version>/` (next to the SQLite file), staged and marked with `.done`. The
+  `item-textures` route is `@Public()` so `<img>` tags work without credentials; it only serves
+  that cache, never starts a download, and must not cache its 404 (the texture may still be
+  downloading). Version and item names are regex-checked before they become paths.
 - `src/activity/activity-tailer.service.ts` - reads `latest.log` by byte offset every 5s. A log is
   identified by the hash of its complete first line; a different hash (or a shorter file) is a
   rotation, and the lines between the last read and the rotation are drained from the newest

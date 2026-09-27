@@ -48,6 +48,7 @@ These routes do not require an authenticated session:
 | `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
 | `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
 | `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless auto-scaling is enabled in Settings |
+| `GET` | `/item-textures/:version/:item` | Cached vanilla item PNG, so `<img>` tags load without credentials; never starts a download |
 
 All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
 
@@ -259,7 +260,12 @@ Requires access to the server.
 - `GET /players/:serverId` — everyone in `playerdata`/`stats`/`advancements`, the whitelist,
   ops and ban list: flags, last seen (player file mtime), stats summary and advancement count
 - `GET /players/:serverId/:uuid` — the same plus all statistics by category, advancements with
-  completion date, inventory, armor, offhand, ender chest, last position and spawn point
+  completion date, inventory, armor, offhand, ender chest (items carry enchantments and, when
+  damaged, `damage`/`maxDamage`), last position and spawn point, `vitals` (health, food, XP level
+  and progress, game mode), active `effects`, and `textureVersion` (the world's game version)
+- `GET /item-textures/:version/:item` — public; the cached vanilla PNG for an item id (without
+  `minecraft:`), 404 until that version's textures have been fetched. Fetching is only started by
+  an authenticated profile read.
 - `GET /players/:serverId/items/search?q=` — who holds an item now (saved inventories, ender
   chests, carried shulker boxes and bundles); matches the item id or custom name, 2+ characters
 

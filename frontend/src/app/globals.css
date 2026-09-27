@@ -870,3 +870,54 @@
     padding-inline: 1rem;
   }
 }
+
+/* Enchantment glint over an item icon. The sheen is masked to the item's own
+   pixels via --glint-mask (the texture URL), like the in-game shimmer. */
+.mc-glint::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(179, 136, 255, 0.7) 47%, rgba(226, 208, 255, 0.45) 52%, transparent 64%);
+  background-size: 300% 100%;
+  mix-blend-mode: screen;
+  -webkit-mask: var(--glint-mask, none) center / contain no-repeat;
+  mask: var(--glint-mask, none) center / contain no-repeat;
+  animation: mc-glint 3.5s linear infinite;
+}
+
+@keyframes mc-glint {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-glint::after {
+    animation: none;
+    background-position: 40% 0;
+  }
+}
+
+/* In-game item tooltip: near-black violet box with the purple gradient rim */
+.mc-tooltip {
+  background: rgba(16, 0, 16, 0.95);
+  border: 2px solid transparent;
+  border-image: linear-gradient(180deg, #5000ff, #28007f) 1;
+  outline: 2px solid rgba(16, 0, 16, 0.95);
+  border-radius: 0;
+  padding: 4px 8px;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
+  text-align: left;
+}
+
+/* The in-game tooltip has no pointer arrow (Radix sets display inline, hence !important) */
+.mc-tooltip svg {
+  display: none !important;
+}
