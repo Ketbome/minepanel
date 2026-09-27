@@ -6,6 +6,7 @@ export interface PlayerEvent {
 }
 
 // Match the server's complete message, never chat text containing a join/leave phrase.
+// Minecraft 26.3 prefixes server messages with "System chat: ".
 export function parsePlayerEvents(logs: string, bedrock: boolean): PlayerEvent[] {
   const events: PlayerEvent[] = [];
   for (const line of logs.split('\n')) {
@@ -19,7 +20,7 @@ export function parsePlayerEvents(logs: string, bedrock: boolean): PlayerEvent[]
       const match = /^\[[^\]]+ INFO\]\s+Player (connected|disconnected): (.{1,64}), xuid: (\d+)(?:,.*)?$/.exec(message);
       if (match) events.push({ at, key: `bedrock:${match[3]}`, name: match[2], joined: match[1] === 'connected' });
     } else {
-      const match = /^(?:\[[^\]]+\] \[Server thread\/INFO\](?: \[[^\]]+\])?|\[\d{2}:\d{2}:\d{2} INFO\]): ([a-zA-Z0-9_.-]{1,32}) (joined|left) the game$/.exec(message);
+      const match = /^(?:\[[^\]]+\] \[Server thread\/INFO\](?: \[[^\]]+\])?|\[\d{2}:\d{2}:\d{2} INFO\]): (?:System chat: )?([a-zA-Z0-9_.-]{1,32}) (joined|left) the game$/.exec(message);
       if (match) events.push({ at, key: `java:${match[1].toLowerCase()}`, name: match[1], joined: match[2] === 'joined' });
     }
   }
