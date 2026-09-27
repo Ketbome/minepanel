@@ -103,7 +103,7 @@ const VILLAGERS: Record<Profession, SkinArt> = {
 
 const SHAKE_S = 0.9;
 
-export function Villager({ wander, profession }: { readonly wander: Wander; readonly profession: Profession }) {
+export function Villager({ wander, profession, name }: { readonly wander: Wander; readonly profession: Profession; readonly name?: string }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const nod = useRef<THREE.Group>(null);
@@ -151,6 +151,7 @@ export function Villager({ wander, profession }: { readonly wander: Wander; read
 
   return (
     <group ref={root} position={wander.home}>
+      {name && <NameTag text={name} y={2.2} />}
       {[-2, 2].map((x, index) => (
         <group
           key={x}
@@ -560,6 +561,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
     hostile: true,
     hit: (amount) => {
       if (control.dead) return;
+      useEndGame.getState().setFlag('kevinHit');
       health.current -= amount;
       damage.hurt();
       control.knock(runtime.player.pos);

@@ -10,7 +10,9 @@ import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { Admin, type AdminAct, type AdminId } from '../mobs/admins';
 import { Shulker } from '../mobs/shulker';
-import { BFUUNY, BLASTER, useEndGame, type EndGameState } from '../store';
+import { countOf } from '../items';
+import type { LoreKey } from '../lore/en';
+import { BFUUNY, BLASTER, useEndGame, type AdvancementIcon, type EndGameState } from '../store';
 import { UNIT_BOX } from '../voxels';
 import { EndSky, floatingIsland, growChorus, type SceneFx } from './end-world';
 import { Sign, Torch } from './props';
@@ -69,8 +71,24 @@ const SCRIPT: readonly (readonly [number, (game: EndGameState, act: (who: AdminI
   }],
   [22.5, (game) => game.say('endBfuunyBack', BFUUNY)],
   [24, (game) => game.showTitle('stayTitle', 'staySubtitle')],
+  [26, (game) => secrets(game)],
   [30, (game) => game.setFlag('stayed')],
 ];
+
+// the secret achievements a landing can reveal, once the admins are done talking
+function secrets(game: EndGameState) {
+  const earned: (readonly [LoreKey, AdvancementIcon, LoreKey, string])[] = [];
+  if (game.flags.bfuunyChest && !game.flags.bfuunyDirt && countOf(game.inventory, 'dirt') > 0) earned.push(['advTreasure', 'dirt', 'lineTreasure', BFUUNY]);
+  if (game.flags.camp && !game.flags.kevinHit) earned.push(['advKevin', 'creeper', 'lineKevin', 'Kevin']);
+  if (!game.flags.glided) earned.push(['advNoElytra', 'barrier', 'lineNoElytra', BLASTER]);
+  earned.forEach(([title, icon, line, author], index) =>
+    window.setTimeout(() => {
+      const state = useEndGame.getState();
+      state.advance('goal', title, icon);
+      state.say(line, author);
+    }, index * 1500)
+  );
+}
 
 function buildCity() {
   const world = new World();
@@ -248,6 +266,7 @@ export function EndCity() {
     }
     if (!r.glided && runtime.player.gliding) {
       r.glided = true;
+      game.setFlag('glided');
       game.advance('goal', 'advSky', 'elytra');
       cue('wind');
     }

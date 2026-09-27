@@ -8,6 +8,7 @@ import { End } from './acts/End';
 import { EndCity } from './acts/EndCity';
 import { Nether } from './acts/Nether';
 import { Overworld } from './acts/Overworld';
+import { Server48 } from './acts/Server48';
 import { Stronghold } from './acts/Stronghold';
 import { resetClock } from './engine/clock';
 import { Drops } from './engine/Drops';
@@ -26,6 +27,7 @@ const ZONES: Partial<Record<Zone, ComponentType>> = {
   stronghold: Stronghold,
   end: End,
   endcity: EndCity,
+  server48: Server48,
 };
 
 export default function JourneyScene() {

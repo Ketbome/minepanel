@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Language } from '@/lib/translations';
-import { daysSince, useEndGame, type Ghost } from '../store';
+import { daysSince, storedDeaths, useEndGame, type Ghost } from '../store';
 import type { LoreKey } from './en';
 
 // The story ships in its own per-language chunk, fetched when the button is pressed,
@@ -29,8 +29,8 @@ export async function loadLore(language: Language) {
 }
 
 export function fillLore(text: string, player: string, ghost: Ghost) {
-  const values: Record<string, string> = { player, ghost: ghost.name, days: String(daysSince(ghost.at)) };
-  return text.replace(/\{(player|ghost|days)\}/g, (_, name: string) => values[name]);
+  const values: Record<string, string> = { player, ghost: ghost.name, days: String(daysSince(ghost.at)), deaths: String(storedDeaths()) };
+  return text.replace(/\{(player|ghost|days|deaths)\}/g, (_, name: string) => values[name]);
 }
 
 // the same lookup outside React, for canvases and sprites painted once

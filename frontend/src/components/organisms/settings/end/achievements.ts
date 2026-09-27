@@ -15,4 +15,11 @@ export const ACHIEVEMENTS: readonly { key: LoreKey; icon: AdvancementIcon }[] = 
   { key: 'advNextGen', icon: 'egg' },
   { key: 'advGetaway', icon: 'pearl' },
   { key: 'advSky', icon: 'elytra' },
+  // secret: nothing in the run points at these
+  { key: 'advTreasure', icon: 'dirt' },
+  { key: 'advPacifist', icon: 'pearl' },
+  { key: 'advKevin', icon: 'creeper' },
+  { key: 'advNotAJoke', icon: 'button' },
+  { key: 'advRake', icon: 'totem' },
+  { key: 'advNoElytra', icon: 'barrier' },
 ];

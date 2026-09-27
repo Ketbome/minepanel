@@ -2,7 +2,7 @@
 
 import { Sparkles } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
@@ -10,7 +10,7 @@ import type { World } from '../engine/world';
 import { overworldKit } from '../overworld-voxels';
 import { createNetherPortalMaterial } from '../shaders';
 import type { LoreKey } from '../lore/en';
-import { BFUUNY, useEndGame, type BookId, type ChestId, type SignId } from '../store';
+import { BFUUNY, season, useEndGame, type BookId, type ChestId, type SignId } from '../store';
 import { kit, UNIT_BOX } from '../voxels';
 
 // Things you can walk up to and use. Each one claims its cell in the world so you cannot walk
@@ -39,6 +39,7 @@ export function bfuunyLaughs(key: LoreKey) {
 
 export function Chest({ world, id, at, facing = 0 }: { readonly world: World; readonly id: ChestId; readonly at: Cell; readonly facing?: number }) {
   const { mat } = overworldKit();
+  const [christmas] = useState(() => season() === 'christmas');
   const open = useEndGame((state) => state.panel?.kind === 'chest' && state.panel.id === id);
   const lid = useRef<THREE.Group>(null);
   const [x, y, z] = at;
@@ -73,9 +74,9 @@ export function Chest({ world, id, at, facing = 0 }: { readonly world: World; re
 
   return (
     <group position={[at[0], at[1] - 0.5, at[2]]} rotation={[0, facing, 0]}>
-      <mesh geometry={CHEST_BODY} material={mat.chest} position={[0, 5 / 16, 0]} />
+      <mesh geometry={CHEST_BODY} material={christmas ? mat.giftChest : mat.chest} position={[0, 5 / 16, 0]} />
       <group ref={lid} position={[0, 10 / 16, -7 / 16]}>
-        <mesh geometry={CHEST_LID} material={mat.lid} position={[0, 2 / 16, 7 / 16]} />
+        <mesh geometry={CHEST_LID} material={christmas ? mat.giftLid : mat.lid} position={[0, 2 / 16, 7 / 16]} />
         <mesh geometry={LATCH} material={kit().mat.iron} position={[0, 0, 14.5 / 16]} />
       </group>
     </group>

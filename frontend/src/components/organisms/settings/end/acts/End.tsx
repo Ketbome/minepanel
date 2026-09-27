@@ -161,6 +161,13 @@ export function End() {
     setOrbs(dragon.clone());
     const game = useEndGame.getState();
     game.advance('goal', 'advFreeEnd', 'dragon');
+    if (!game.flags.endermanKilled) {
+      later(3500, () => {
+        const state = useEndGame.getState();
+        state.advance('goal', 'advPacifist', 'pearl');
+        state.say('linePacifist', BLASTER);
+      });
+    }
     later(1300, () => {
       useEndGame.getState().openPortal();
       cue('portal');
@@ -377,7 +384,11 @@ export function End() {
       <EnderDragon report={dragon} onHit={hitDragon} onMode={onDragonMode} onVanish={onVanish} />
       {ENDERMEN.map((seed) => {
         const life = endermen.life(String(seed));
-        return <Enderman key={`${seed}:${life}`} seed={seed + life * 101} onTeleport={burst} onNotice={onNotice} onDeath={() => endermen.died(String(seed))} />;
+        return <Enderman key={`${seed}:${life}`} seed={seed + life * 101} onTeleport={burst} onNotice={onNotice} onDeath={() => {
+              useEndGame.getState().setFlag('endermanKilled');
+              endermen.died(String(seed));
+            }}
+          />;
       })}
       <Enderman seed={55} carrying={{ home: KEEPER_HOME, facing: KEEPER_FACING, holding: true, leave: leaving }} onTeleport={burst} onNotice={onWatched} />
       <Sign id="tomb" at={[TOMB.x, surfaceY(TOMB.x, TOMB.z) + 0.5, TOMB.z]} facing={Math.PI / 2} />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { isBright } from '../engine/clock';
@@ -10,7 +10,7 @@ import { spawnEffect } from '../engine/Effects';
 import { spawnProjectile } from '../engine/Projectiles';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
-import { useEndGame } from '../store';
+import { season, useEndGame } from '../store';
 import { flat, Part, PX, useDamage, useMob, useMobTarget, type Wander } from './parts';
 import { Box, sides, useSkin, type SkinArt } from './skins';
 
@@ -49,6 +49,27 @@ const SKELETON: SkinArt = {
   },
 };
 
+// a carved pumpkin, worn over the head around Halloween like the game's mobs do
+const PUMPKIN: SkinArt = {
+  palette: { o: ['#e3901d', '#d9851a', '#ec9a24'], r: '#b8650f', k: '#3b1f05', g: ['#4f7a28', '#5d8a30'] },
+  boxes: {
+    pumpkin: {
+      size: [10, 10, 10],
+      base: 'o',
+      faces: {
+        ...sides(Array.from({ length: 10 }, () => '.r..r..r..')),
+        front: ['..........', '..........', '.kk....kk.', '.kkk..kkk.', '..........', '..........', '.kkkkkkkk.', '..kk..kk..', '..........', '..........'],
+        top: ['..........', '..........', '..........', '..........', '....gg....', '....gg....', '..........', '..........', '..........', '..........'],
+      },
+    },
+  },
+};
+
+function Pumpkin() {
+  const { skin, material } = useSkin(PUMPKIN);
+  return <Box skin={skin} name="pumpkin" at={[0, 4, 0]} material={material} />;
+}
+
 // nothing solid above it all the way up: the sun reaches it
 function underSky(at: THREE.Vector3) {
   const world = runtime.world;
@@ -72,6 +93,7 @@ export function Skeleton({ wander, onDeath, burns = false }: { readonly wander: 
   const control = useMob(root, wander, legs, { half: 0.3, height: 1.95 }, head);
   const damage = useDamage(root, materials, 1.95);
   const state = useRef({ hp: 20, drawAt: -1, nextShot: 0, rattleAt: Math.random() * 6, burnAt: 0 });
+  const [halloween] = useState(() => season() === 'halloween');
   const bow = flat('#6b4a2b');
 
   const harm = (amount: number) => {
@@ -175,6 +197,7 @@ export function Skeleton({ wander, onDeath, burns = false }: { readonly wander: 
       ))}
       <group ref={head} position={[0, 24 * PX, 0]}>
         <Box skin={skin} name="head" at={[0, 4, 0]} material={material} />
+        {halloween && <Pumpkin />}
       </group>
     </group>
   );

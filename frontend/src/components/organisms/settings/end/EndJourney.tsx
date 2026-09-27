@@ -180,7 +180,17 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
           <Intro />
         </>
       )}
-      {thanks && <Thanks onClose={onClose} />}
+      {thanks && (
+        <Thanks
+          onClose={onClose}
+          onVisit={() => {
+            setThanks(false);
+            const game = useEndGame.getState();
+            game.setPaused(false);
+            game.travel('server48', 'arrive', 'black');
+          }}
+        />
+      )}
       <div className="absolute right-2 top-2 z-[47] flex gap-1.5 md:right-4 md:top-4">
         {!calm && (
           <HudButton label={lore(muted ? 'unmute' : 'mute')} onClick={() => setMuted(!muted)}>

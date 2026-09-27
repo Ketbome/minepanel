@@ -16,7 +16,7 @@ import { Skeleton } from '../mobs/skeleton';
 import { useSpawner } from '../mobs/spawner';
 import { createOverworldSkyMaterial } from '../shaders';
 import { lastSeenKey } from '../lore';
-import { BFUUNY, BLASTER, useEndGame } from '../store';
+import { BFUUNY, BLASTER, FIRST_GHOST, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
 import { CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
 import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
@@ -258,7 +258,7 @@ function mix(pick: (look: Look) => number, day: number, dusk: number) {
 }
 
 // sky, fog and lights follow the clock (clock.ts); the moon lights the night from the other side
-function DayCycle() {
+export function DayCycle() {
   const material = useMemo(() => createOverworldSkyMaterial(SUN_SIDE), []);
   const mesh = useRef<THREE.Mesh>(null);
   const ambient = useRef<THREE.AmbientLight>(null);
@@ -426,6 +426,25 @@ function CampBed({ world }: { readonly world: World }) {
   return <Bed world={world} at={BED} use={sleep} />;
 }
 
+// the village is named after the people who build Minepanel (minus the three admins, who have
+// their own parts); no names when GitHub does not answer
+function useContributorNames() {
+  const [names, setNames] = useState<readonly string[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const admins = [FIRST_GHOST.name, BLASTER, BFUUNY].map((name) => name.toLowerCase());
+    fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/api/github-contributors`, { signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ contributors: { login: string }[] | null }>) : null))
+      .then((body) => {
+        const logins = (body?.contributors ?? []).map(({ login }) => login).filter((login) => !admins.includes(login.toLowerCase()));
+        setNames(logins.sort(() => Math.random() - 0.5));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  return names;
+}
+
 export function Overworld() {
   // where you came in from, read once: `entry` already names the next zone while this one unmounts
   const [entry] = useState(() => useEndGame.getState().entry);
@@ -437,6 +456,7 @@ export function Overworld() {
   const { world } = scenery;
   const [thrown, setThrown] = useState<THREE.Vector3 | null>(null);
   const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false, obituary: false });
+  const names = useContributorNames();
   const skeletons = useSpawner('skeleton', { cap: 3, min: 20, max: 40, despawn: 64, every: 4, allowed: () => isNight(), spot: (x, z) => monsterSpot(world, x, z) });
 
   useEffect(() => {
@@ -572,10 +592,10 @@ export function Overworld() {
         <Torch key={`${x}:${z}`} position={[x, 0.78, z]} />
       ))}
 
-      <Villager profession="librarian" wander={HOMES.librarian} />
-      <Villager profession="farmer" wander={HOMES.farmer} />
-      <Villager profession="nitwit" wander={HOMES.nitwit} />
-      <Villager profession="mason" wander={HOMES.mason} />
+      <Villager profession="librarian" wander={HOMES.librarian} name={names[0]} />
+      <Villager profession="farmer" wander={HOMES.farmer} name={names[1]} />
+      <Villager profession="nitwit" wander={HOMES.nitwit} name={names[2]} />
+      <Villager profession="mason" wander={HOMES.mason} name={names[3]} />
       <Sheep wander={HOMES.sheep} />
       <Rabbit name="Toast" wander={HOMES.rabbit} />
       <Pig name="Producción" wander={HOMES.pig} />

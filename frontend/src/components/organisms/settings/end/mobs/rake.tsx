@@ -8,7 +8,7 @@ import { spawnEffect } from '../engine/Effects';
 import { surface } from '../engine/physics';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { runtime } from '../engine/runtime';
-import { BFUUNY, BLASTER, useEndGame, type Zone } from '../store';
+import { BFUUNY, BLASTER, season, useEndGame, type Zone } from '../store';
 import { PX, useDamage, useMobTarget } from './parts';
 import { Box, sides, useSkin, type SkinArt } from './skins';
 
@@ -88,17 +88,23 @@ export function Rake() {
     if (useEndGame.getState().flags.buttonPressed) prefetch(['rake', 'scream', 'breath']);
   }, []);
 
-  const vanish = () => {
+  // `survived`: it gave up or fled, rather than getting you
+  const vanish = (survived = true) => {
     const s = state.current;
     const group = root.current;
     if (s.phase === 'gone' || !group) return;
     const seen = s.phase !== 'stalking';
     s.phase = 'gone';
     group.visible = false;
-    s.nextAt = runtime.time + between(AGAIN);
+    s.nextAt = runtime.time + between(AGAIN) / (season() === 'halloween' ? 2 : 1);
     if (!seen) return;
     spawnEffect('poof', group.position.clone().setY(group.position.y + 1.4));
     const game = useEndGame.getState();
+    if (survived && !game.dead && !game.flags.rakeSurvived) {
+      game.setFlag('rakeSurvived');
+      game.advance('goal', 'advRake', 'totem');
+      window.setTimeout(() => useEndGame.getState().say('lineRake', BFUUNY), game.flags.rakeMet ? 1500 : 5500);
+    }
     if (game.flags.rakeMet) return;
     game.setFlag('rakeMet');
     window.setTimeout(() => useEndGame.getState().say('rakeBfuuny', BFUUNY), 1500);
@@ -243,7 +249,7 @@ export function Rake() {
     if (distance < 1.3 && Math.abs(p.pos.y - group.position.y) < 2) {
       cue('rake', 1.2);
       game.hurt(999, 'rake');
-      vanish();
+      vanish(false);
     } else if (age > CHASE_S) vanish();
   });
 

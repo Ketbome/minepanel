@@ -262,7 +262,13 @@ Tooling / build (Next.js 16):
     `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Natural spawns go through
     `useSpawner` (`mobs/spawner.ts`: a cap, a distance band around the player, a condition such as
     night, and unloading far away); the Overworld's skeletons spawn that way at night and burn by day.
-    Monsters mark their target `hostile`, which is what the bed checks. Skins are painted in code
+    Monsters mark their target `hostile`, which is what the bed checks.
+  - Secret achievements are ordinary keys at the end of `achievements.ts` (the trophy shows every
+    missing key as `???`); the flags they look back on (`endermanKilled`, `kevinHit`, `glided`...)
+    are set where it happens, and the islet ones are granted at the end of the islet script.
+    `store/persist.ts` keeps what outlives a run in `localStorage` (the egg, the death count behind
+    `{deaths}`) and `season()` (Halloween pumpkins, Christmas chests). `acts/Server48.tsx` is the
+    epilogue the thanks screen opens. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
     shared red hurt flash and the topple-and-poof death. Boxes, pivots and rotations follow the

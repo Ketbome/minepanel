@@ -8,7 +8,7 @@ import { useLore } from './lore';
 
 // The last screen of either ending: the admins' thanks for supporting Minepanel, with the star
 // button and a word on sharing it.
-export function Thanks({ onClose }: { readonly onClose: () => void }) {
+export function Thanks({ onClose, onVisit }: { readonly onClose: () => void; readonly onVisit: () => void }) {
   const lore = useLore();
 
   useEffect(() => {
@@ -35,11 +35,16 @@ export function Thanks({ onClose }: { readonly onClose: () => void }) {
               <p key={index}>{line}</p>
             ))}
           <p className="text-[11px] text-gray-500">— Ketbome, BlasterDaster & Bfuuny</p>
-          <div className="flex items-center justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <GitHubStarButton label={lore('thanksStar')} />
-            <Button variant="minepanel" onClick={onClose} autoFocus>
-              {lore('thanksClose')}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onVisit}>
+                {lore('thanksServer48')}
+              </Button>
+              <Button variant="minepanel" onClick={onClose} autoFocus>
+                {lore('thanksClose')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

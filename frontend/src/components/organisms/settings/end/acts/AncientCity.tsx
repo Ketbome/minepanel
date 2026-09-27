@@ -196,7 +196,13 @@ function Button() {
         cue('pick');
         spawnEffect('burst', new THREE.Vector3(0, 5, FRAME.z + 0.6), '#29dfeb');
         cue('shriek', 0.5);
-        if (game.flags.buttonPressed) return;
+        if (game.flags.buttonPressed) {
+          if (game.flags.buttonTwice) return;
+          game.setFlag('buttonTwice');
+          game.advance('goal', 'advNotAJoke', 'button');
+          window.setTimeout(() => useEndGame.getState().say('lineNotAJoke', BLASTER), 1500);
+          return;
+        }
         game.setFlag('buttonPressed');
         prefetch(['rake', 'scream', 'breath']);
         game.advance('goal', 'advButton', 'button');

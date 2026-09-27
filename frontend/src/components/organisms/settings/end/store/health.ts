@@ -1,4 +1,5 @@
 import { BFUUNY, BLASTER } from './admins';
+import { countDeath } from './persist';
 import type { HealthSlice, Slice } from './types';
 
 export const MAX_HP = 20;
@@ -23,6 +24,7 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
     }
     // whatever was on the crafting grid goes back to the inventory before the death screen
     state.closePanel();
+    countDeath();
     set({ hp: 0, hurtAt: now, dead: cause, deaths: state.deaths + 1, levitateUntil: 0 });
   },
   heal: (amount) => set((state) => (state.dead ? state : { hp: Math.min(20, state.hp + amount) })),

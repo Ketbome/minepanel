@@ -15,8 +15,9 @@ const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestB
 const BOOKS: Record<BookId, { readonly title: LoreKey; readonly by?: LoreKey; readonly pages: readonly LoreKey[] }> = {
   note: { title: 'itemNote', pages: ['note'] },
   diary: { title: 'diaryTitle', by: 'diaryBy', pages: ['diary1', 'diary2', 'diary3', 'diary5', 'diary4'] },
-  register: { title: 'itemRegister', pages: ['register1', 'register2'] },
+  register: { title: 'itemRegister', pages: ['register1', 'register2', 'register3'] },
   admin2011: { title: 'bookAdmin2011', by: 'bookAdmin2011By', pages: ['admin2011a', 'admin2011b'] },
+  guide3: { title: 'bookAdmin2011', by: 'bookAdmin2011By', pages: ['guide3a', 'guide3b'] },
   stop: { title: 'bookStop', pages: ['stopBook'] },
 };
 
@@ -40,6 +41,8 @@ const SIGNS: Record<SignId, LoreKey> = {
   blasterRods: 'signBlasterRods',
   bfuunyGrave: 'signBfuunyGrave',
   server48: 'signServer48',
+  server48Day1: 'signServer48Day1',
+  server48Blaster: 'signServer48Blaster',
 };
 
 const TRADES: readonly { readonly item: ItemId; readonly cost: number; readonly flag: Flag }[] = [

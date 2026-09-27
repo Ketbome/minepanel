@@ -114,8 +114,33 @@ const chestWood = (dot: Parameters<Painter>[0], rand: () => number, size: number
   }
 };
 
-const latch = (dot: Parameters<Painter>[0], from: number, to: number) => {
-  for (let y = from; y <= to; y += 1) for (let x = 7; x <= 8; x += 1) dot(x, y, y === from ? '#e0e0e0' : '#9a9a9a');
+const latch = (dot: Parameters<Painter>[0], from: number, to: number, [light, body]: readonly [string, string] = ['#e0e0e0', '#9a9a9a']) => {
+  for (let y = from; y <= to; y += 1) for (let x = 7; x <= 8; x += 1) dot(x, y, y === from ? light : body);
+};
+
+// the game's Christmas chest: wrapped in red with a green ribbon and a gold latch
+const GIFT = ['#b3262a', '#a32226', '#c02d30'];
+const GOLD = ['#f6e27a', '#d9a520'] as const;
+
+const gift: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, GIFT);
+  for (let i = 0; i < size; i += 1) {
+    dot(i, 0, '#5a1012');
+    dot(i, size - 1, '#5a1012');
+    dot(0, i, '#5a1012');
+    dot(size - 1, i, '#5a1012');
+  }
+  for (let y = 1; y < size - 1; y += 1) for (let x = 6; x <= 9; x += 1) dot(x, y, x === 6 || x === 9 ? '#2a6b2c' : '#3c8f3f');
+};
+
+const giftFront: Painter = (dot, rand, size) => {
+  gift(dot, rand, size);
+  latch(dot, 0, 3, GOLD);
+};
+
+const giftLidFront: Painter = (dot, rand, size) => {
+  gift(dot, rand, size);
+  latch(dot, 10, 15, GOLD);
 };
 
 const chestSide: Painter = (dot, rand, size) => chestWood(dot, rand, size);
@@ -319,6 +344,9 @@ function buildOverworldKit() {
     chestSide: paint(50, chestSide),
     chestFront: paint(51, chestFront),
     lidFront: paint(52, lidFront),
+    gift: paint(55, gift),
+    giftFront: paint(56, giftFront),
+    giftLidFront: paint(57, giftLidFront),
     bookshelf: paint(53, bookshelf),
     tallGrass: paint(54, tallGrass),
     cracks: Array.from({ length: CRACK_STAGES }, (_, stage) => paint(60, crack(stage))),
@@ -346,6 +374,7 @@ function buildOverworldKit() {
   const tableSideMat = lambert(tex.tableSide);
   const chestSideMat = lambert(tex.chestSide);
   const chestInside = new THREE.MeshLambertMaterial({ color: '#2a1a0c' });
+  const giftMat = lambert(tex.gift);
   const shelfMat = lambert(tex.bookshelf);
   // box face order is +x, -x, +y, -y, +z, -z
   const mat = {
@@ -357,6 +386,8 @@ function buildOverworldKit() {
     table: [tableSideMat, tableSideMat, lambert(tex.tableTop), planksMat, lambert(tex.tableFront), tableSideMat],
     chest: [chestSideMat, chestSideMat, chestInside, chestSideMat, lambert(tex.chestFront), chestSideMat],
     lid: [chestSideMat, chestSideMat, chestSideMat, chestInside, lambert(tex.lidFront), chestSideMat],
+    giftChest: [giftMat, giftMat, chestInside, giftMat, lambert(tex.giftFront), giftMat],
+    giftLid: [giftMat, giftMat, giftMat, chestInside, lambert(tex.giftLidFront), giftMat],
     bookshelf: [shelfMat, shelfMat, planksMat, planksMat, shelfMat, shelfMat],
     tallGrass: new THREE.MeshLambertMaterial({ map: tex.tallGrass, alphaTest: 0.5, side: THREE.DoubleSide }),
     stone: lambert(tex.stone),

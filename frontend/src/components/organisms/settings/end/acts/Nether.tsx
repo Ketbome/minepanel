@@ -15,7 +15,7 @@ import { useRespawns } from '../mobs/parts';
 import { calmPiglins, Piglin } from '../mobs/piglin';
 import { BFUUNY, BLAZES, useEndGame } from '../store';
 import { hash, kit, UNIT_BOX } from '../voxels';
-import { Bed, bfuunyLaughs, inside, NetherPortalSheet, Sign } from './props';
+import { Bed, bfuunyLaughs, inside, Lectern, NetherPortalSheet, Sign } from './props';
 
 // The Nether: a portal island, a lava lake, a nether brick bridge and the fortress where the
 // blazes guard the rods. One unit is one block; walkable ground tops out at y = 0.5.
@@ -233,6 +233,7 @@ export function Nether() {
       <Sign id="bfuunyBed" at={[BED[0] - 1.3, 1, BED[2] - 0.2]} facing={0.5} />
       <Sign id="diamond" at={[FORTRESS.x0 + 0.52, 2, -32]} facing={Math.PI / 2} wall />
       <Sign id="blasterRods" at={[FORTRESS.x1 - 0.52, 2, -34]} facing={-Math.PI / 2} wall />
+      <Lectern world={world} at={[FORTRESS.x1 - 3, 1, -29]} book="guide3" facing={-Math.PI / 2} />
       <Spawner />
       {PIGLINS.map(({ id, wander }) => (
         <Piglin key={`${id}:${piglins.life(id)}`} wander={wander} onDeath={() => piglins.died(id)} />
