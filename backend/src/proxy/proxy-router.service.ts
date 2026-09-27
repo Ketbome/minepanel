@@ -6,6 +6,7 @@ import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import { HostContextService } from 'src/common/docker/host-context.service';
+import { escapeComposeValues } from 'src/common/compose/compose-escape';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 const execAsync = promisify(exec);
@@ -141,7 +142,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     };
 
     await fs.ensureDir(this.PROJECT_DIR);
-    const content = GENERATED_HEADER + yaml.dump(compose, { lineWidth: -1 });
+    const content = GENERATED_HEADER + yaml.dump(escapeComposeValues(compose), { lineWidth: -1 });
     await fs.writeFile(this.getComposePath(), content);
     return content;
   }

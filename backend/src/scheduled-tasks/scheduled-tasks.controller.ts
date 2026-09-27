@@ -24,6 +24,10 @@ export class ScheduledTasksController {
     return user;
   }
 
+  private canUseConsole(user: Users): boolean {
+    return this.accessControlService.canUsePermission(user, 'useConsole');
+  }
+
   @Get(':serverId')
   async list(@Request() req, @Param('serverId') serverId: string) {
     await this.requireServerAccess(req, serverId);
@@ -32,14 +36,14 @@ export class ScheduledTasksController {
 
   @Post(':serverId')
   async create(@Request() req, @Param('serverId') serverId: string, @Body(new ValidationPipe({ whitelist: true })) dto: CreateScheduledTaskDto) {
-    await this.requireServerAccess(req, serverId);
-    return this.scheduledTasksService.create(serverId, dto);
+    const user = await this.requireServerAccess(req, serverId);
+    return this.scheduledTasksService.create(serverId, dto, this.canUseConsole(user));
   }
 
   @Put(':serverId/:taskId')
   async update(@Request() req, @Param('serverId') serverId: string, @Param('taskId', ParseIntPipe) taskId: number, @Body(new ValidationPipe({ whitelist: true })) dto: UpdateScheduledTaskDto) {
-    await this.requireServerAccess(req, serverId);
-    return this.scheduledTasksService.update(serverId, taskId, dto);
+    const user = await this.requireServerAccess(req, serverId);
+    return this.scheduledTasksService.update(serverId, taskId, dto, this.canUseConsole(user));
   }
 
   @Delete(':serverId/:taskId')
@@ -51,7 +55,7 @@ export class ScheduledTasksController {
 
   @Post(':serverId/:taskId/run')
   async runNow(@Request() req, @Param('serverId') serverId: string, @Param('taskId', ParseIntPipe) taskId: number) {
-    await this.requireServerAccess(req, serverId);
-    return this.scheduledTasksService.runNow(serverId, taskId);
+    const user = await this.requireServerAccess(req, serverId);
+    return this.scheduledTasksService.runNow(serverId, taskId, this.canUseConsole(user));
   }
 }

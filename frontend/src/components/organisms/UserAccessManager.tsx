@@ -60,7 +60,7 @@ const permissionLabels: Array<{ key: keyof UserPermissions; label: string; admin
   { key: 'viewLogs', label: 'viewLogsPermission' },
   { key: 'useConsole', label: 'useConsolePermission' },
   { key: 'viewGlobalFiles', label: 'viewGlobalFilesPermission' },
-  { key: 'useGlobalFiles', label: 'manageGlobalFilesPermission', warning: 'manageGlobalFilesWarning' },
+  { key: 'useGlobalFiles', label: 'manageGlobalFilesPermission', warning: 'manageGlobalFilesWarning', adminOnly: true },
   { key: 'viewServerFiles', label: 'viewServerFilesPermission' },
   { key: 'useServerFiles', label: 'manageServerFilesPermission' },
   { key: 'changeServerVersion', label: 'changeServerVersionPermission', adminOnly: true },

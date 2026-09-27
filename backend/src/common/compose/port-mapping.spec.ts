@@ -65,6 +65,8 @@ describe('isValidPortMapping', () => {
     '01.2.3.4:80:80',
     '[::1:80:80',
     '[fe80::1%eth0]:3091:3091',
+    '::1]/#:80:80',
+    '[::1]/#]:80:80',
   ])('rejects %s', (spec) => {
     expect(isValidPortMapping(spec)).toBe(false);
   });

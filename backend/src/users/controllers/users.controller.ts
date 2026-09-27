@@ -7,6 +7,7 @@ import { AccessControlService } from '../services/access-control.service';
 import { Request as ExpressRequest } from 'express';
 import { AuditLogService } from '../services/audit-log.service';
 import { BadRequestException } from '@nestjs/common';
+import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -67,7 +68,10 @@ export class UsersController {
     };
   }
 
+  // The code is six digits, so guessing has to be rate limited.
   @Post('profile/confirm-email')
+  @Throttle({ default: { limit: 10, ttl: seconds(300) } })
+  @UseGuards(ThrottlerGuard)
   async confirmEmailChange(@Request() req, @Body(new ValidationPipe()) dto: ConfirmEmailChangeDto) {
     const user = req.user as PayloadToken;
 
@@ -121,14 +125,16 @@ export class UsersController {
 
   @Put('/username/:username')
   async updateUserByUsername(@Request() req, @Param('username') username: string, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
-    this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
-    return this.usersService.updateUserByUsername(username, dto).then((user) => this.usersService.serializeUser(user));
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertManageUsers(currentUser);
+    return this.usersService.updateUserByUsername(username, dto, this.accessControlService.isAdmin(currentUser)).then((user) => this.usersService.serializeUser(user));
   }
 
   @Patch(':id')
   async updateUser(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
-    this.accessControlService.assertManageUsers(await this.getCurrentUser(req));
-    return this.usersService.updateUser(id, dto).then((user) => this.usersService.serializeUser(user));
+    const currentUser = await this.getCurrentUser(req);
+    this.accessControlService.assertManageUsers(currentUser);
+    return this.usersService.updateUser(id, dto, this.accessControlService.isAdmin(currentUser)).then((user) => this.usersService.serializeUser(user));
   }
 
   // Role changes are admin-only on purpose: `manageUsers` is delegated, and a
@@ -194,7 +200,7 @@ export class UsersController {
   @Post('change-password')
   async changePassword(@Request() req, @Body(new ValidationPipe()) dto: ChangePasswordDto) {
     const user = req.user as PayloadToken;
-    const result = await this.usersService.changePassword(user.userId, dto);
+    const result = await this.usersService.changePassword(user.userId, dto, req.cookies?.refresh_token);
 
     await this.auditLogService.record({
       actorUserId: user.userId,

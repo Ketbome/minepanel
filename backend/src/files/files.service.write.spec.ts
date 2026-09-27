@@ -4,6 +4,7 @@ import { FilesService } from './files.service';
 
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
+  emptyDirSync: jest.fn(),
   ensureDir: jest.fn().mockResolvedValue(undefined),
   pathExists: jest.fn(),
   stat: jest.fn(),
@@ -11,7 +12,14 @@ jest.mock('fs-extra', () => ({
   writeFile: jest.fn().mockResolvedValue(undefined),
   remove: jest.fn().mockResolvedValue(undefined),
   rename: jest.fn().mockResolvedValue(undefined),
+  move: jest.fn().mockResolvedValue(undefined),
+  chown: jest.fn().mockResolvedValue(undefined),
+  chmod: jest.fn().mockResolvedValue(undefined),
+  lstat: jest.fn(),
+  realpath: jest.fn(async (target: string) => target),
 }));
+
+jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
 const mockArchive = { directory: jest.fn(), finalize: jest.fn() };
 jest.mock('archiver', () => ({ ZipArchive: jest.fn(() => mockArchive) }));
@@ -30,18 +38,29 @@ describe('FilesService writes', () => {
     expect(fs.ensureDir).toHaveBeenCalledWith(`${BASE}/config`);
     expect(fs.writeFile).toHaveBeenCalledWith(`${BASE}/config/a.txt`, 'hello', 'utf-8');
 
-    const buffer = Buffer.from('x');
-    await service.writeFileBuffer('srv', 'b.bin', buffer);
-    expect(fs.writeFile).toHaveBeenLastCalledWith(`${BASE}/b.bin`, buffer);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await service.saveUpload('srv', 'b.bin', '/app/servers/.uploads/abc');
+    expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/b.bin`, { overwrite: true });
+    expect(fs.chown).not.toHaveBeenCalled();
+    expect(fs.emptyDirSync).toHaveBeenCalledWith('/app/servers/.uploads');
 
     await expect(service.writeFile('srv', '../../etc/passwd', 'x')).rejects.toThrow(BadRequestException);
   });
 
+  it('keeps the owner and mode of a file an upload replaces', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664 });
+    await service.saveUpload('srv', 'server.properties', '/app/servers/.uploads/abc');
+
+    expect(fs.chown).toHaveBeenCalledWith('/app/servers/.uploads/abc', 1000, 1000);
+    expect(fs.chmod).toHaveBeenCalledWith('/app/servers/.uploads/abc', 0o100664);
+    expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/server.properties`, { overwrite: true });
+  });
+
   it('deletes existing paths only', async () => {
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(false);
+    (fs.lstat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
     await expect(service.deleteFile('srv', 'a')).rejects.toThrow(NotFoundException);
 
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true);
+    (fs.lstat as unknown as jest.Mock).mockResolvedValueOnce({});
     await service.deleteFile('srv', 'a');
     expect(fs.remove).toHaveBeenCalledWith(`${BASE}/a`);
   });
@@ -52,13 +71,14 @@ describe('FilesService writes', () => {
   });
 
   it('renames within the same directory', async () => {
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(false);
+    (fs.lstat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
     await expect(service.rename('srv', 'dir/a', 'b')).rejects.toThrow(NotFoundException);
 
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+    (fs.lstat as unknown as jest.Mock).mockResolvedValue({});
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true);
     await expect(service.rename('srv', 'dir/a', 'b')).rejects.toThrow('already exists');
 
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(false);
     await service.rename('srv', 'dir/a', 'b');
     expect(fs.rename).toHaveBeenCalledWith(`${BASE}/dir/a`, `${BASE}/dir/b`);
 
@@ -89,8 +109,25 @@ describe('FilesService writes', () => {
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true });
     const result = await service.createZipStream('srv', 'world');
     expect(result).toEqual({ stream: mockArchive, name: 'world.zip' });
-    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world');
+    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world', expect.any(Function));
     expect(mockArchive.finalize).toHaveBeenCalled();
+  });
+
+  it('leaves server.json and the compose file out of global zips for non-admins', async () => {
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+    (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true });
+    const root = new FilesService({ get: () => '/app/servers' } as any);
+    const entry = (name: string) => ({ name });
+
+    await root.createZipStream('_root', 'srv');
+    const lastFilter = () => mockArchive.directory.mock.calls[mockArchive.directory.mock.calls.length - 1][2];
+    const filter = lastFilter();
+    expect(filter(entry('server.json'))).toBe(false);
+    expect(filter(entry('docker-compose.yml'))).toBe(false);
+    expect(filter(entry('mc-data/server.json'))).toEqual(entry('mc-data/server.json'));
+
+    await root.createZipStream('_root', 'srv', true);
+    expect(lastFilter()(entry('server.json'))).toEqual(entry('server.json'));
   });
 
   it('listFiles rejects non-directories and skips entries it cannot stat', async () => {
@@ -106,5 +143,30 @@ describe('FilesService writes', () => {
     const files = await service.listFiles('srv', '');
     expect(files.map((f) => f.name)).toEqual(['noext']);
     expect(files[0].extension).toBeUndefined();
+  });
+});
+
+describe('FilesService global writes', () => {
+  const service = new FilesService({ get: () => '/app/servers' } as any);
+
+  it('only lets _root write inside a server mc-data or the world libraries', async () => {
+    await service.writeFile('_root', 'srv/mc-data/server.properties', 'x');
+    expect(fs.writeFile).toHaveBeenLastCalledWith('/app/servers/srv/mc-data/server.properties', 'x', 'utf-8');
+    await service.createDirectory('_root', '.world/worlds/new');
+    await service.createDirectory('_root', 'srv/worlds/new');
+
+    for (const target of ['srv/server.json', 'srv/docker-compose.yml', '.env', 'servers.json', 'srv/mc-data', 'srv/worlds', '.world/other', '../data/x', 'bad id/mc-data/a']) {
+      await expect(service.writeFile('_root', target, 'x')).rejects.toThrow(BadRequestException);
+    }
+    await expect(service.deleteFile('_root', 'srv/server.json')).rejects.toThrow(BadRequestException);
+    await expect(service.deleteFile('_root', '.world/worlds')).rejects.toThrow(BadRequestException);
+    await expect(service.rename('_root', 'srv/worlds', 'gone')).rejects.toThrow(BadRequestException);
+    await expect(service.rename('_root', 'srv/mc-data/a', '../server.json')).rejects.toThrow(BadRequestException);
+  });
+
+  it('lets an admin write anywhere under the servers directory', async () => {
+    await service.writeFile('_root', 'srv/server.json', '{}', true);
+    expect(fs.writeFile).toHaveBeenLastCalledWith('/app/servers/srv/server.json', '{}', 'utf-8');
+    await expect(service.writeFile('_root', '../data/x', '{}', true)).rejects.toThrow(BadRequestException);
   });
 });

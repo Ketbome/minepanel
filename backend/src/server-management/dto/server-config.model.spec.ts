@@ -23,3 +23,20 @@ describe('UpdateServerConfigDto extraPorts', () => {
     expect(await extraPortsErrors([3091])).toHaveLength(1);
   });
 });
+
+describe('UpdateServerConfigDto experimentalPacks', () => {
+  const errorsFor = async (experimentalPacks: unknown) =>
+    (await validate(plainToInstance(UpdateServerConfigDto, { experimentalPacks }))).filter((error) => error.property === 'experimentalPacks');
+
+  it('accepts the built-in feature packs and an empty list', async () => {
+    expect(await errorsFor(['minecart_improvements', 'redstone_experiments', 'trade_rebalance'])).toHaveLength(0);
+    expect(await errorsFor([])).toHaveLength(0);
+  });
+
+  it('rejects unknown packs, non-lists and oversized lists', async () => {
+    expect(await errorsFor(['vanilla'])).toHaveLength(1);
+    expect(await errorsFor(['bundle,update_1_21'])).toHaveLength(1);
+    expect(await errorsFor('minecart_improvements')).toHaveLength(1);
+    expect(await errorsFor(['trade_rebalance', 'trade_rebalance', 'trade_rebalance', 'trade_rebalance'])).toHaveLength(1);
+  });
+});

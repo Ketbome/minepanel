@@ -223,6 +223,16 @@ describe('JavaServerStrategy', () => {
       });
     });
 
+    it('passes experimental feature packs as INITIAL_ENABLED_PACKS only when some are chosen', () => {
+      expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: ['minecart_improvements', 'trade_rebalance'] } as any).INITIAL_ENABLED_PACKS).toBe('minecart_improvements,trade_rebalance');
+      expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBeUndefined();
+      expect(strategy.buildEnvironment(baseConfig() as any).INITIAL_ENABLED_PACKS).toBeUndefined();
+      // A panel choice wins over a custom value; without one, the custom value is kept.
+      const custom = { ...baseConfig(), envVars: 'INITIAL_ENABLED_PACKS=update_1_20,bundle' };
+      expect(strategy.buildEnvironment({ ...custom, experimentalPacks: ['trade_rebalance'] } as any).INITIAL_ENABLED_PACKS).toBe('trade_rebalance');
+      expect(strategy.buildEnvironment({ ...custom, experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBe('update_1_20,bundle');
+    });
+
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), enableRcon: false, worldSource: 'w' } as any)).toMatchObject({ ENABLE_RCON: 'false', WORLD: '/data/.world-library/local/w' });
       expect(strategy.buildEnvironment({ ...baseConfig(), worldSource: '/abs/world' } as any).WORLD).toBe('/abs/world');
@@ -230,7 +240,7 @@ describe('JavaServerStrategy', () => {
 
     it('builds fabric, modrinth, gtnh and ftba specific variables', () => {
       const fabric = strategy.buildEnvironment({ ...baseConfig(), serverType: 'FABRIC', fabricLoaderVersion: '0.15', fabricLauncherVersion: '1.0', fabricLauncher: 'l.jar', fabricLauncherUrl: 'https://x', fabricForceReinstall: true, modrinthProjects: 'sodium', modrinthDownloadDependencies: 'required', modrinthDefaultVersionType: 'beta', modrinthLoader: 'fabric', versionFromModrinthProjects: true, cfApiKey: 'k$1', cfFiles: 'a,b' } as any);
-      expect(fabric).toMatchObject({ TYPE: 'FABRIC', FABRIC_LOADER_VERSION: '0.15', FABRIC_LAUNCHER_VERSION: '1.0', FABRIC_LAUNCHER: 'l.jar', FABRIC_LAUNCHER_URL: 'https://x', FABRIC_FORCE_REINSTALL: 'true', MODRINTH_PROJECTS: 'sodium', MODRINTH_DOWNLOAD_DEPENDENCIES: 'required', MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: 'beta', MODRINTH_LOADER: 'fabric', VERSION_FROM_MODRINTH_PROJECTS: 'true', CF_API_KEY: 'k$$1', CURSEFORGE_FILES: 'a,b' });
+      expect(fabric).toMatchObject({ TYPE: 'FABRIC', FABRIC_LOADER_VERSION: '0.15', FABRIC_LAUNCHER_VERSION: '1.0', FABRIC_LAUNCHER: 'l.jar', FABRIC_LAUNCHER_URL: 'https://x', FABRIC_FORCE_REINSTALL: 'true', MODRINTH_PROJECTS: 'sodium', MODRINTH_DOWNLOAD_DEPENDENCIES: 'required', MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: 'beta', MODRINTH_LOADER: 'fabric', VERSION_FROM_MODRINTH_PROJECTS: 'true', CF_API_KEY: 'k$1', CURSEFORGE_FILES: 'a,b' });
       expect(fabric.MODRINTH_MODPACK).toBeUndefined();
 
       const modrinth = strategy.buildEnvironment({ ...baseConfig(), serverType: 'MODRINTH', modrinthModpack: 'atm' } as any);

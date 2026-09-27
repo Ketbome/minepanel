@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
+import { assertContained } from 'src/common/fs/contained-path';
 import * as path from 'node:path';
 import { PlayerItem, PlayerLocation, PlayerNbtData, readPlayerNbt } from './player-nbt';
 
@@ -72,9 +73,12 @@ type PlayerFileKind = 'playerdata' | 'stats' | 'advancements';
 // Minecraft 26.1 moved player files under `players/` (see LevelResource in the server jar).
 const MODERN_PLAYER_DIRS: Record<PlayerFileKind, string> = { playerdata: 'players/data', stats: 'players/stats', advancements: 'players/advancements' };
 
-/** Where a world keeps its player files: `players/...` since 26.1, top-level folders before. */
+/**
+ * Where a world keeps its player files: `players/...` since 26.1, top-level folders before.
+ * Detected by `players/data`, since worlds from before 1.7.6 can still carry a leftover `players/`.
+ */
 export async function playerDirs(worldDir: string): Promise<Record<PlayerFileKind, string>> {
-  const modern = await fs.pathExists(path.join(worldDir, 'players'));
+  const modern = await fs.pathExists(path.join(worldDir, 'players', 'data'));
   const dir = (kind: PlayerFileKind) => path.join(worldDir, modern ? MODERN_PLAYER_DIRS[kind] : kind);
   return { playerdata: dir('playerdata'), stats: dir('stats'), advancements: dir('advancements') };
 }
@@ -222,18 +226,21 @@ export class PlayersService {
       ['usercache.json', 'whitelist.json', 'ops.json', 'banned-players.json'].map(async (file) => (await this.readJson<NamedEntry[]>(path.join(mcDataDir, file))) ?? []),
     );
 
+    // Player file paths are built from these uuids, and the game container writes these lists.
+    const valid = (entries: NamedEntry[]) => entries.filter((entry) => typeof entry?.uuid === 'string' && UUID_PATTERN.test(entry.uuid));
+
     const names = new Map<string, string>();
-    for (const entry of [...usercache, ...whitelist, ...ops, ...banned]) {
-      if (entry?.uuid && entry.name) names.set(entry.uuid.toLowerCase(), entry.name);
+    for (const entry of valid([...usercache, ...whitelist, ...ops, ...banned])) {
+      if (entry.name) names.set(entry.uuid.toLowerCase(), entry.name);
     }
 
-    const toUuids = (entries: NamedEntry[]) => entries.filter((entry) => entry?.uuid).map((entry) => entry.uuid.toLowerCase());
+    const toUuids = (entries: NamedEntry[]) => valid(entries).map((entry) => entry.uuid.toLowerCase());
     const files: ServerPlayerFiles = {
       worldDir,
       dirs: await playerDirs(worldDir),
       names,
       whitelist: new Set(toUuids(whitelist)),
-      ops: new Map(ops.filter((entry) => entry?.uuid).map((entry) => [entry.uuid.toLowerCase(), entry.level ?? 4])),
+      ops: new Map(valid(ops).map((entry) => [entry.uuid.toLowerCase(), entry.level ?? 4])),
       banned: new Set(toUuids(banned)),
       uuids: new Set<string>(),
     };
@@ -273,8 +280,15 @@ export class PlayersService {
     return path.join(files.dirs[kind], `${uuid}.${extension}`);
   }
 
+  // Every player file lives in mc-data, which the game container can fill with links.
+  private assertInsideMcData(file: string): Promise<void> {
+    const [serverId] = path.relative(this.serversDir, file).split(path.sep);
+    return assertContained(path.join(this.serversDir, serverId, 'mc-data'), file);
+  }
+
   private async readJson<T>(file: string): Promise<T | null> {
     try {
+      await this.assertInsideMcData(file);
       return JSON.parse(await fs.readFile(file, 'utf8')) as T;
     } catch {
       return null;
@@ -291,6 +305,7 @@ export class PlayersService {
 
   private async readNbt(file: string) {
     try {
+      await this.assertInsideMcData(file);
       return await readPlayerNbt(await fs.readFile(file));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {

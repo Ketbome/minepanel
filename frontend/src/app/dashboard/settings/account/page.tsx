@@ -63,7 +63,8 @@ export default function AccountSettingsPage() {
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      mcToast.error(t('emailUpdateFailed'));
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      mcToast.error(err.response?.status === 400 && err.response.data?.message?.includes('SMTP') ? t('emailChangeNeedsSmtp') : t('emailUpdateFailed'));
     } finally {
       setIsUpdatingProfile(false);
     }

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Settings } from '../users/entities/settings.entity';
+import { Users } from '../users/entities/users.entity';
+import { ScheduledTask } from '../scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService } from '../discord/discord.service';
 
 // Mock fs-extra with factory function
@@ -14,6 +16,8 @@ jest.mock('fs-extra', () => ({
   ensureDir: jest.fn(),
   ensureDirSync: jest.fn(),
 }));
+
+jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
 // Mock child_process
 jest.mock('node:child_process', () => ({
@@ -383,14 +387,26 @@ describe('ServerManagementService', () => {
       expect(result).toBe(false);
     });
 
-    it('removes player activity so a reused server ID starts without history', async () => {
+    it('removes player activity, tasks and access grants so a reused server ID starts clean', async () => {
       const deleted: [unknown, unknown][] = [];
-      mockSettingsRepo.manager = { transaction: jest.fn((run) => run({ delete: jest.fn(async (entity, where) => deleted.push([entity, where])) })) };
+      const saved: unknown[] = [];
+      const rows = {
+        users: [{ id: 1, serverAccess: ['survival', 'other'] }, { id: 2, serverAccess: null }],
+        invitations: [{ id: 3, serverAccess: ['survival'] }],
+      };
+      const manager = {
+        delete: jest.fn(async (entity, where) => deleted.push([entity, where])),
+        find: jest.fn(async (entity) => (entity === Users ? rows.users : rows.invitations)),
+        save: jest.fn(async (entities) => saved.push(...entities)),
+      };
+      mockSettingsRepo.manager = { transaction: jest.fn((run) => run(manager)) };
       (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
       mockExec.mockResolvedValue({ stdout: '' });
 
       expect(await service.deleteServer('survival')).toBe(true);
-      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }]]);
+      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }], [ScheduledTask, { serverId: 'survival' }]]);
+      expect(saved).toEqual([{ id: 1, serverAccess: ['other'] }, { id: 3, serverAccess: [] }]);
+      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('label=com.docker.compose.project=survival'));
     });
 
     it('still deletes the server when player activity cleanup fails', async () => {
@@ -473,6 +489,13 @@ describe('ServerManagementService', () => {
       (service as any).findContainerId.mockResolvedValueOnce(null);
       expect(await service.getGamerules('survival')).toEqual(empty);
     });
+
+    it('does not look for a container of a server that does not exist', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(false);
+
+      expect((await service.getGamerules('backend')).success).toBe(false);
+      expect((service as any).findContainerId).not.toHaveBeenCalled();
+    });
   });
 
   describe('readTickStats', () => {
@@ -495,6 +518,11 @@ describe('ServerManagementService', () => {
       expect((await service.readTickStats('../data', 'spark')).success).toBe(false);
       expect(find).not.toHaveBeenCalled();
       expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect(find).toHaveBeenCalledTimes(1);
+
+      (fs.pathExists as jest.Mock).mockResolvedValue(false);
+      expect((await service.readTickStats('backend', 'spark')).success).toBe(false);
+      expect(find).toHaveBeenCalledTimes(1);
     });
 
     it('treats timeouts and failed commands as missing measurements', async () => {
