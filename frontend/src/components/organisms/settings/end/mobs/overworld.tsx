@@ -4,10 +4,9 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue, type CueName } from '../end-audio';
-import { spawnEffect } from '../engine/Effects';
+import { explode } from '../engine/explode';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
-import { cellKey } from '../engine/world';
 import { useEndGame } from '../store';
 import { NameTag, PX, useDamage, useMob, useMobTarget, type Wander } from './parts';
 import { Box, sides, useSkin, type BoxArt, type Palette, type SkinArt } from './skins';
@@ -470,8 +469,6 @@ export function Rabbit({ wander, name }: { readonly wander: Wander; readonly nam
 
 const FUSE_S = 1.5;
 const BLAST = 3;
-// what a creeper can tear up; the stone floor, obsidian and the camp's props stay
-const BRITTLE = new Set(['grass', 'dirt', 'leaves', 'planks', 'glass', 'hay', 'path', 'cobble', 'log']);
 
 // the game's creeper: mottled green with pale flecks, and the face everyone knows
 const CREEPER: SkinArt = {
@@ -497,35 +494,15 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
   const damage = useDamage(root, materials, 1.7);
   const health = useRef(20);
 
-  const explode = () => {
+  const blow = () => {
     const group = root.current;
     const world = runtime.world;
     if (!group || !world) return;
     const at = group.position.clone().setY(group.position.y + 0.8);
     control.dead = true;
     group.visible = false;
-    spawnEffect('explosion', at);
-    cue('boom');
-    const game = useEndGame.getState();
-    const mined: number[] = [];
-    for (let x = Math.floor(at.x - BLAST); x <= at.x + BLAST; x += 1) {
-      for (let y = Math.floor(at.y - BLAST); y <= at.y + BLAST; y += 1) {
-        for (let z = Math.floor(at.z - BLAST); z <= at.z + BLAST; z += 1) {
-          const id = world.get(x, y, z);
-          if (!id || !BRITTLE.has(id) || y <= -3 || Math.hypot(x - at.x, y - at.y, z - at.z) > BLAST - Math.random() * 0.8) continue;
-          world.remove(x, y, z);
-          mined.push(cellKey(x, y, z));
-        }
-      }
-    }
-    mined.forEach((key) => game.mine(key));
-    playerCenter(center);
-    const distance = center.distanceTo(at);
-    game.say('creeperGranted', name);
-    if (distance < 6) {
-      game.hurt(Math.round(16 * (1 - distance / 6)) + 1, 'creeper');
-      runtime.player.vel.add(center.clone().sub(at).normalize().multiplyScalar(9)).setY(7);
-    }
+    explode(at, BLAST, 'creeper');
+    useEndGame.getState().say('creeperGranted', name);
   };
 
   useFrame(() => {
@@ -552,7 +529,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
         group.scale.setScalar(1);
         material.emissive.set('#000000');
         useEndGame.getState().say('creeperDenied', name);
-      } else if (age > FUSE_S) explode();
+      } else if (age > FUSE_S) blow();
     }
   });
 

@@ -372,6 +372,17 @@ const ru: Record<LoreKey, string> = {
   register3: "Страница 41: гости.\n{player}: {deaths}.\nBfuuny говорит, что твои не считаются.\nСчитаются.",
   rabbitName: "Пушок",
   signVillage: "Деревня Minepanel.\nЕё жители помогли\nсоздать панель.\nСпасибо!",
+  signTempleBfuuny: "Не наступай\nв центр.\n(я наступил)\n—Bfuuny",
+  signRuinDesert: "Сервер #12:\nпирамида.\nСделал один угол.\n—Ketbome",
+  signRuinTaiga: "Сервер #23:\nиглу. Должно было быть\nиз снега. Оно из земли.\n—Ketbome",
+  signRuinSwamp: "Сервер #31:\nферма слизней.\nСлизней пока: 0.\n—Ketbome",
+  signRuinCoast: "Сервер #40:\nгавань.\nТабличку доделал.\n—Ketbome",
+  signWreckNote: "Закопанный клад:\n3 шага на север\nот кактуса на пляже.\n—Bfuuny",
+  ghostTreasure: "мой алмаз! я потерял его в незере. не спрашивай, как он сюда попал.",
+  advRuins: "Недострой",
+  ghostRuins: "ты видел их все. теперь ты знаешь, почему я ничего не доделываю.",
+  deathTnt: "наступил в центр. Bfuuny предупреждал.",
+  deathCactus: "прислонился к кактусу. Слишком надолго.",
   pigName: "Бекон",
 };
 

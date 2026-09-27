@@ -370,6 +370,17 @@ export const en = {
   register3: "Page 41: guests.\n{player}: {deaths}.\nBfuuny says yours don't count.\nThey count.",
   rabbitName: "Fluffy",
   signVillage: "Minepanel Village.\nIts neighbors helped\nbuild the panel.\nThank you!",
+  signTempleBfuuny: "Don't step in\nthe middle.\n(I stepped in the middle)\n—Bfuuny",
+  signRuinDesert: "Server #12:\nthe pyramid.\nI made a corner.\n—Ketbome",
+  signRuinTaiga: "Server #23:\nthe igloo. It was\ngoing to be snow.\nIt's dirt.\n—Ketbome",
+  signRuinSwamp: "Server #31:\nslime farm.\nSlimes so far: 0.\n—Ketbome",
+  signRuinCoast: "Server #40:\nthe harbor.\nI finished the sign.\n—Ketbome",
+  signWreckNote: "Buried treasure:\n3 steps north\nof the beach cactus.\n—Bfuuny",
+  ghostTreasure: "my diamond! I lost it in the Nether. don't ask how it got here.",
+  advRuins: "Unfinished Business",
+  ghostRuins: "you saw them all. now you know why I never finish anything.",
+  deathTnt: "stepped in the middle. Bfuuny warned you.",
+  deathCactus: "leaned on a cactus. For too long.",
   pigName: "Bacon",
 };
 

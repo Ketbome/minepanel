@@ -372,6 +372,17 @@ const pt: Record<LoreKey, string> = {
   register3: "Página 41: convidados.\n{player}: {deaths}.\nO Bfuuny diz que as suas não contam.\nContam.",
   rabbitName: "Fofinho",
   signVillage: "Vila Minepanel.\nSeus moradores ajudaram\na construir o painel.\nObrigado!",
+  signTempleBfuuny: "Não pise\nno meio.\n(eu pisei no meio)\n—Bfuuny",
+  signRuinDesert: "Servidor #12:\na pirâmide.\nFiz uma quina.\n—Ketbome",
+  signRuinTaiga: "Servidor #23:\no iglu. Ia ser\nde neve. É de terra.\n—Ketbome",
+  signRuinSwamp: "Servidor #31:\nfazenda de slimes.\nSlimes até agora: 0.\n—Ketbome",
+  signRuinCoast: "Servidor #40:\no porto.\nTerminei a placa.\n—Ketbome",
+  signWreckNote: "Tesouro enterrado:\n3 passos ao norte\ndo cacto da praia.\n—Bfuuny",
+  ghostTreasure: "meu diamante! perdi no nether. não pergunta como veio parar aqui.",
+  advRuins: "Obras inacabadas",
+  ghostRuins: "você viu todas. agora sabe por que eu nunca termino nada.",
+  deathTnt: "pisou no meio. O Bfuuny avisou.",
+  deathCactus: "se encostou num cacto. Por tempo demais.",
   pigName: "Bacon",
 };
 

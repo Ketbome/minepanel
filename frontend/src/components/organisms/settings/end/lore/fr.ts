@@ -372,6 +372,17 @@ const fr: Record<LoreKey, string> = {
   register3: "Page 41 : invités.\n{player} : {deaths}.\nBfuuny dit que les tiennes ne comptent pas.\nElles comptent.",
   rabbitName: "Pompon",
   signVillage: "Village Minepanel.\nSes habitants ont aidé\nà construire le panel.\nMerci !",
+  signTempleBfuuny: "Ne marchez pas\nau milieu.\n(j'ai marché au milieu)\n—Bfuuny",
+  signRuinDesert: "Serveur #12 :\nla pyramide.\nJ'ai fait un coin.\n—Ketbome",
+  signRuinTaiga: "Serveur #23 :\nl'igloo. Il devait\nêtre en neige. Il est en terre.\n—Ketbome",
+  signRuinSwamp: "Serveur #31 :\nferme à slimes.\nSlimes pour l'instant : 0.\n—Ketbome",
+  signRuinCoast: "Serveur #40 :\nle port.\nJ'ai fini le panneau.\n—Ketbome",
+  signWreckNote: "Trésor enterré :\n3 pas au nord\ndu cactus de la plage.\n—Bfuuny",
+  ghostTreasure: "mon diamant ! je l'avais perdu dans le nether. ne demande pas comment il est arrivé ici.",
+  advRuins: "Chantiers inachevés",
+  ghostRuins: "tu les as toutes vues. maintenant tu sais pourquoi je ne finis jamais rien.",
+  deathTnt: "a marché au milieu. Bfuuny avait prévenu.",
+  deathCactus: "s'est adossé à un cactus. Trop longtemps.",
   pigName: "Lardon",
 };
 

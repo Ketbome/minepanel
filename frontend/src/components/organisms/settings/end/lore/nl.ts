@@ -372,6 +372,17 @@ const nl: Record<LoreKey, string> = {
   register3: "Pagina 41: gasten.\n{player}: {deaths}.\nBfuuny zegt dat die van jou niet tellen.\nZe tellen.",
   rabbitName: "Pluisje",
   signVillage: "Dorp Minepanel.\nDe bewoners hielpen\nhet paneel bouwen.\nBedankt!",
+  signTempleBfuuny: "Niet in het\nmidden stappen.\n(ik stapte in het midden)\n—Bfuuny",
+  signRuinDesert: "Server #12:\nde piramide.\nEén hoek staat.\n—Ketbome",
+  signRuinTaiga: "Server #23:\nde iglo. Zou van sneeuw\nzijn. Is van aarde.\n—Ketbome",
+  signRuinSwamp: "Server #31:\nslijmboerderij.\nSlijmen tot nu toe: 0.\n—Ketbome",
+  signRuinCoast: "Server #40:\nde haven.\nHet bord is af.\n—Ketbome",
+  signWreckNote: "Begraven schat:\n3 stappen ten noorden\nvan de strandcactus.\n—Bfuuny",
+  ghostTreasure: "mijn diamant! ik was hem kwijt in de nether. vraag niet hoe hij hier kwam.",
+  advRuins: "Onafgemaakt werk",
+  ghostRuins: "je hebt ze allemaal gezien. nu weet je waarom ik nooit iets afmaak.",
+  deathTnt: "stapte in het midden. Bfuuny had gewaarschuwd.",
+  deathCactus: "leunde tegen een cactus. Te lang.",
   pigName: "Spekje",
 };
 

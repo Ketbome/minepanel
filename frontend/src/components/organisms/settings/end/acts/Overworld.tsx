@@ -10,7 +10,7 @@ import { spawnEffect } from '../engine/Effects';
 import { countOf } from '../items';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import { cellKey, cellOf, World, type BlockId } from '../engine/world';
-import { WorldMesh } from '../engine/WorldMesh';
+import { WorldMesh, type Plant } from '../engine/WorldMesh';
 import { Creeper, Pig, Rabbit, Sheep, Villager } from '../mobs/overworld';
 import { Skeleton } from '../mobs/skeleton';
 import { useSpawner } from '../mobs/spawner';
@@ -18,7 +18,9 @@ import { createOverworldSkyMaterial } from '../shaders';
 import { lastSeenKey, useLore } from '../lore';
 import { BFUUNY, BLASTER, FIRST_GHOST, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
-import { CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
+import { Biomes } from './Biomes';
+import { buildBiomeColumn, buildStructures, oak } from './overworld-biomes';
+import { biomeAt, CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
 import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
 
 const R = OVERWORLD_RADIUS;
@@ -79,13 +81,15 @@ const LIT = [
   { ...VILLAGE, radius: 15 },
 ];
 
+const NATURAL = new Set<BlockId>(['grass', 'dirt', 'stone', 'sand', 'snowyGrass']);
+
 // where a monster can stand at this column: on natural ground, inside the border, away from light
 function monsterSpot(world: World, x: number, z: number) {
   if (Math.abs(x) > R - 2 || Math.abs(z) > R - 2) return null;
   if (LIT.some((lit) => Math.hypot(x - lit.x, z - lit.z) < lit.radius)) return null;
   for (let y = 24; y >= -3; y -= 1) {
     const id = world.get(x, y, z);
-    if (id) return id === 'grass' || id === 'dirt' || id === 'stone' ? new THREE.Vector3(x, y + 0.5, z) : null;
+    if (id) return NATURAL.has(id) ? new THREE.Vector3(x, y + 0.5, z) : null;
   }
   return null;
 }
@@ -125,20 +129,25 @@ function house(world: World, cx: number, cz: number, w: number, d: number, door:
 
 interface Scenery {
   readonly world: World;
-  readonly tallGrass: Block[];
+  readonly plants: Plant[];
 }
 
 function buildOverworld(mined: readonly number[], placed: readonly (readonly [number, BlockId])[], obsidian: readonly number[], eyeLanded: boolean): Scenery {
   const world = new World({ floor: -3 });
-  const tallGrass: Block[] = [];
+  const plants: Plant[] = [];
   for (let x = -R; x <= R; x += 1) {
     for (let z = -R; z <= R; z += 1) {
+      if (biomeAt(x, z) !== 'plains') {
+        buildBiomeColumn(world, plants, x, z);
+        continue;
+      }
       const h = groundHeight(x, z);
       world.set(x, h, z, 'grass', 0.88 + hash(x, z, 3) * 0.12);
       for (let y = h - 1; y >= -2; y -= 1) world.set(x, y, z, 'dirt', 0.9);
       world.set(x, -3, z, 'stone');
       const open = Math.hypot(x - CAMP.x, z - CAMP.z) > 3 && Math.hypot(x - VILLAGE.x, z - VILLAGE.z) > 12 && Math.hypot(x - RUINED.x, z - RUINED.z) > 5;
-      if (open && hash(x, z, 5) > 0.86) tallGrass.push({ x, y: h + 1, z, tint: 0.85 + hash(z, x, 6) * 0.15 });
+      if (open && hash(x, z, 5) > 0.86) plants.push({ x, y: h + 1, z, kind: 'grass', tint: 0.85 + hash(z, x, 6) * 0.15 });
+      else if (open && hash(x, z, 8) > 0.988) plants.push({ x, y: h + 1, z, kind: 'flower' });
     }
   }
   // the world border: invisible barrier walls, like the game's
@@ -150,22 +159,8 @@ function buildOverworld(mined: readonly number[], placed: readonly (readonly [nu
       world.set(R + 1, y, i, 'barrier');
     }
   }
-  TREES.forEach(([x, z], index) => {
-    const base = groundHeight(x, z) + 1;
-    const trunk = 4 + (index % 2);
-    for (let y = 0; y < trunk; y += 1) world.set(x, base + y, z, 'log');
-    const top = base + trunk;
-    for (let layer = -2; layer <= 1; layer += 1) {
-      const reach = layer < 0 ? 2 : 1;
-      for (let dx = -reach; dx <= reach; dx += 1) {
-        for (let dz = -reach; dz <= reach; dz += 1) {
-          const corner = Math.abs(dx) === reach && Math.abs(dz) === reach;
-          if ((dx === 0 && dz === 0 && layer < 0) || (corner && (layer === 1 || hash(x + dx, layer, z + dz) < 0.5))) continue;
-          world.set(x + dx, top + layer, z + dz, 'leaves', 0.85 + hash(dx, layer, dz) * 0.15);
-        }
-      }
-    }
-  });
+  TREES.forEach(([x, z], index) => oak(world, x, groundHeight(x, z) + 1, z, 4 + (index % 2)));
+  buildStructures(world);
 
   // the village: four houses, a well and paths between them
   const houses = [
@@ -236,7 +231,8 @@ function buildOverworld(mined: readonly number[], placed: readonly (readonly [nu
     world.remove(x, y, z);
   });
   placed.forEach(([key, id]) => world.set(...cellOf(key), id));
-  return { world, tallGrass };
+  // nothing grows inside a trunk, a wall or a cactus
+  return { world, plants: plants.filter((plant) => !world.get(plant.x, plant.y, plant.z)) };
 }
 
 // what the Overworld looks like at noon, at midnight and at dusk; the cycle blends between them
@@ -565,12 +561,13 @@ export function Overworld() {
   return (
     <>
       <DayCycle />
-      <WorldMesh world={world} grass={scenery.tallGrass} />
+      <WorldMesh world={world} plants={scenery.plants} />
 
       <Chest world={world} id="camp" at={[CAMP.x, 1, CAMP.z]} />
       <Chest world={world} id="backups" at={[CAMP.x - 2, 1, CAMP.z]} />
       <CraftingTable world={world} at={[CAMP.x + 2, 1, CAMP.z]} />
       <CampBed world={world} />
+      <Biomes world={world} />
       <Torch position={[CAMP.x - 1, 0.78, CAMP.z + 1.3]} />
       <Sign id="incidents" at={[CAMP.x + 1, 1, CAMP.z - 2]} />
       <Sign id="restart" at={[CAMP.x + 3, 1, CAMP.z + 1]} facing={-0.6} />

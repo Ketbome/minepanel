@@ -372,6 +372,17 @@ const de: Record<LoreKey, string> = {
   register3: "Seite 41: Gäste.\n{player}: {deaths}.\nBfuuny sagt, deine zählen nicht.\nSie zählen.",
   rabbitName: "Flocke",
   signVillage: "Dorf Minepanel.\nSeine Bewohner haben\ndas Panel mitgebaut.\nDanke!",
+  signTempleBfuuny: "Nicht in die\nMitte treten.\n(ich bin reingetreten)\n—Bfuuny",
+  signRuinDesert: "Server #12:\ndie Pyramide.\nEine Ecke steht.\n—Ketbome",
+  signRuinTaiga: "Server #23:\ndas Iglu. Sollte aus\nSchnee sein. Ist aus Erde.\n—Ketbome",
+  signRuinSwamp: "Server #31:\nSchleimfarm.\nSchleime bisher: 0.\n—Ketbome",
+  signRuinCoast: "Server #40:\nder Hafen.\nDas Schild ist fertig.\n—Ketbome",
+  signWreckNote: "Vergrabener Schatz:\n3 Schritte nördlich\nvom Strandkaktus.\n—Bfuuny",
+  ghostTreasure: "mein diamant! ich hab ihn im nether verloren. frag nicht, wie er hierher kam.",
+  advRuins: "Unvollendete Werke",
+  ghostRuins: "du hast alle gesehen. jetzt weißt du, warum ich nie etwas fertig mache.",
+  deathTnt: "ist in die Mitte getreten. Bfuuny hat gewarnt.",
+  deathCactus: "hat sich an einen Kaktus gelehnt. Zu lange.",
   pigName: "Speck",
 };
 

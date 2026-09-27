@@ -17,7 +17,7 @@ describe('AchievementsController', () => {
 
   it('rejects keys the journey does not grant', async () => {
     expect(await validate(plainToInstance(UnlockAchievementDto, { key: 'advSky' }))).toHaveLength(0);
-    expect(await validate(plainToInstance(UnlockAchievementDto, { key: 'advNoElytra' }))).toHaveLength(0);
+    expect(await validate(plainToInstance(UnlockAchievementDto, { key: 'advRuins' }))).toHaveLength(0);
     expect(await validate(plainToInstance(UnlockAchievementDto, { key: 'advCheat' }))).not.toHaveLength(0);
   });
 });

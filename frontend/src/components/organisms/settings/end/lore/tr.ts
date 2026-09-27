@@ -372,6 +372,17 @@ const tr: Record<LoreKey, string> = {
   register3: "Sayfa 41: misafirler.\n{player}: {deaths}.\nBfuuny seninkilerin sayılmadığını söylüyor.\nSayılıyor.",
   rabbitName: "Pamuk",
   signVillage: "Minepanel Köyü.\nSakinleri paneli\ninşa etmeye yardım etti.\nTeşekkürler!",
+  signTempleBfuuny: "Ortaya\nbasmayın.\n(ben bastım)\n—Bfuuny",
+  signRuinDesert: "Sunucu #12:\npiramit.\nBir köşe yaptım.\n—Ketbome",
+  signRuinTaiga: "Sunucu #23:\nigloo. Kardan olacaktı.\nTopraktan oldu.\n—Ketbome",
+  signRuinSwamp: "Sunucu #31:\nbalçık çiftliği.\nŞimdiye kadar balçık: 0.\n—Ketbome",
+  signRuinCoast: "Sunucu #40:\nliman.\nTabelayı bitirdim.\n—Ketbome",
+  signWreckNote: "Gömülü hazine:\nplajdaki kaktüsün\n3 adım kuzeyi.\n—Bfuuny",
+  ghostTreasure: "elmasım! nether'da kaybetmiştim. buraya nasıl geldiğini sorma.",
+  advRuins: "Yarım kalan işler",
+  ghostRuins: "hepsini gördün. artık neden hiçbir şeyi bitirmediğimi biliyorsun.",
+  deathTnt: "ortaya bastı. Bfuuny uyarmıştı.",
+  deathCactus: "bir kaktüse yaslandı. Fazla uzun süre.",
   pigName: "Pastırma",
 };
 

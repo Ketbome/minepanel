@@ -8,7 +8,7 @@ import { useLore } from '../lore';
 import { useEndGame } from '../store';
 import { PanelWindow } from './PanelWindow';
 
-const SCALE = 3;
+const SCALE = 2;
 const COLORS: Partial<Record<BlockId, string>> = {
   grass: '#6aa33c',
   dirt: '#976d4d',
@@ -25,6 +25,15 @@ const COLORS: Partial<Record<BlockId, string>> = {
   crying: '#5a1f9e',
   netherrack: '#7c3030',
   goldBlock: '#f5d33a',
+  sand: '#dbd3a0',
+  sandstone: '#d8cf98',
+  snowyGrass: '#eef5f8',
+  snow: '#f4fafc',
+  ice: '#96bfff',
+  spruceLog: '#3b2a19',
+  spruceLeaves: '#2e5a2e',
+  cactus: '#5d8a2a',
+  tnt: '#c83c2a',
 };
 
 // A top-down map of the Overworld, drawn from the same blocks you walk on, with the places the
@@ -102,7 +111,7 @@ export function MapPanel() {
             ref={canvas}
             width={size * SCALE}
             height={size * SCALE}
-            className="max-w-full border-4 border-[#8a6a3f] [image-rendering:pixelated]"
+            className="max-h-[60vh] w-auto max-w-full border-4 border-[#8a6a3f] [image-rendering:pixelated]"
             aria-label={lore('itemMap')}
           />
           <p className="text-[11px] text-gray-400">{lore('mapLegend')}</p>

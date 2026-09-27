@@ -30,6 +30,10 @@ export const initialChests = (): Record<ChestId, Slot[]> => ({
   city2: chest(27, { 2: { item: 'gold', count: 8 }, 13: { item: 'diamond', count: 3 }, 15: { item: 'stick', count: 2 } }),
   city3: chest(27, { 6: { item: 'arrow', count: 24 }, 11: { item: 'apple', count: 3 }, 22: { item: 'obsidian', count: 3 } }),
   city4: chest(27, { 9: { item: 'pearl', count: 4 }, 13: { item: 'apple', count: 6 }, 17: { item: 'gold', count: 6 } }),
+  // the biomes: the igloo's supplies, the wreck's cargo, and the treasure under the beach
+  igloo: chest(27, { 11: { item: 'apple', count: 2 }, 15: { item: 'arrow', count: 16 } }),
+  wreck: chest(27, { 4: { item: 'gold', count: 5 }, 13: { item: 'emerald', count: 3 }, 22: { item: 'arrow', count: 8 } }),
+  buried: chest(27, { ...Object.fromEntries(Array.from({ length: 8 }, (_, index) => [index, { item: 'dirt', count: 64 }])), 13: { item: 'diamond', count: 1 } }),
 });
 
 // what skipping into a zone hands you, so every zone can be played on its own

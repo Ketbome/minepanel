@@ -42,7 +42,16 @@ export type BlockId =
   | 'purpurPillar'
   | 'chorus'
   | 'chorusFlower'
-  | 'endRod';
+  | 'endRod'
+  | 'sand'
+  | 'sandstone'
+  | 'snowyGrass'
+  | 'snow'
+  | 'ice'
+  | 'spruceLog'
+  | 'spruceLeaves'
+  | 'cactus'
+  | 'tnt';
 
 interface BlockDef {
   readonly solid: boolean;
@@ -97,6 +106,16 @@ export const BLOCKS: Record<BlockId, BlockDef> = {
   chorus: { solid: false },
   chorusFlower: { solid: false },
   endRod: { solid: false },
+  // the biomes' blocks drop nothing: there are no items for them yet
+  sand: { solid: true, mine: 0.5, pick: 0.3 },
+  sandstone: { solid: true, pick: 0.8 },
+  snowyGrass: { solid: true, mine: 0.9, pick: 0.45, drop: 'dirt' },
+  snow: { solid: true, mine: 0.3 },
+  ice: { solid: true, clear: true, mine: 0.5 },
+  spruceLog: { solid: true, mine: 2.4, pick: 1.4, drop: 'log' },
+  spruceLeaves: { solid: true, clear: true, mine: 0.3 },
+  cactus: { solid: true, clear: true, mine: 0.4 },
+  tnt: { solid: true, mine: 0.1 },
 };
 
 const OFFSET = 512;

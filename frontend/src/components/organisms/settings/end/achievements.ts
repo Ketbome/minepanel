@@ -22,4 +22,5 @@ export const ACHIEVEMENTS: readonly { key: LoreKey; icon: AdvancementIcon }[] = 
   { key: 'advNotAJoke', icon: 'button' },
   { key: 'advRake', icon: 'totem' },
   { key: 'advNoElytra', icon: 'barrier' },
+  { key: 'advRuins', icon: 'ruins' },
 ];

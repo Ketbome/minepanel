@@ -182,6 +182,127 @@ const tallGrass: Painter = (dot, rand, size) => {
   }
 };
 
+// the biomes around the story: desert, snowy taiga and the beach
+const SAND = ['#dbd3a0', '#d6cf98', '#e0d8a8', '#cfc690', '#d9d19c'];
+const SNOW = ['#f4fafc', '#eef6fa', '#ffffff', '#e6f0f5'];
+const SPRUCE = ['#2e5a2e', '#355f35', '#284f28', '#3a6a3a', '#24472a'];
+const CACTUS = ['#5d8a2a', '#548024', '#669530'];
+
+const sand: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, SAND);
+  for (let grain = 0; grain < 10; grain += 1) dot(Math.floor(rand() * size), Math.floor(rand() * size), rand() < 0.5 ? '#bfb57e' : '#ece6c0');
+};
+
+// the game's sandstone: a pale top, and sides banded top and bottom
+const sandstoneTop: Painter = (dot, rand, size) => fill(dot, rand, size, ['#e0d8a8', '#dcd4a2', '#e4dcae']);
+
+const sandstoneSide: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, ['#d8cf98', '#d2c990', '#dcd39e']);
+  for (let x = 0; x < size; x += 1) {
+    for (let y = 0; y < 3; y += 1) dot(x, y, y === 2 ? '#c2b77e' : pick(['#e0d8a8', '#e4dcae'], rand()));
+    for (let y = size - 3; y < size; y += 1) dot(x, y, y === size - 3 ? '#c2b77e' : pick(['#cabf86', '#c6bb82'], rand()));
+    if (x % 5 === 2) dot(x, 7, '#c8bd84');
+  }
+};
+
+const snow: Painter = (dot, rand, size) => fill(dot, rand, size, SNOW);
+
+// dirt with snow over the top edge, like snowy grass
+const snowySide: Painter = (dot, rand, size) => {
+  dirt(dot, rand, size);
+  for (let x = 0; x < size; x += 1) {
+    const drip = 3 + Math.floor(rand() * 2);
+    for (let y = 0; y < drip; y += 1) dot(x, y, pick(SNOW, rand()));
+  }
+};
+
+const ice: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, ['rgba(150,190,255,0.8)', 'rgba(140,182,250,0.8)', 'rgba(160,198,255,0.8)']);
+  line(dot, 2, 12, 6, 8, 'rgba(235,245,255,0.9)');
+  line(dot, 9, 5, 12, 2, 'rgba(235,245,255,0.9)');
+};
+
+const spruceSide: Painter = (dot, rand, size) => {
+  for (let x = 0; x < size; x += 1) {
+    const groove = x % 3 === 1;
+    for (let y = 0; y < size; y += 1) dot(x, y, groove ? pick(['#2a1d10', '#2f2213'], rand()) : pick(['#3b2a19', '#45321e', '#3f2d1a'], rand()));
+  }
+};
+
+const spruceTop: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const ring = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5));
+      dot(x, y, ring > 6.5 ? pick(['#3b2a19', '#45321e'], rand()) : Math.floor(ring) % 2 ? '#6b4f31' : '#7d5e3b');
+    }
+  }
+};
+
+const spruceLeaves: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) dot(x, y, rand() < 0.12 ? CLEAR : pick(SPRUCE, rand()));
+};
+
+// ribbed green with pale spines, a lighter crown on top
+const cactusSide: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, CACTUS);
+  for (let y = 0; y < size; y += 1) {
+    [3, 8, 12].forEach((x) => dot(x, y, '#3f6a1a'));
+    if (y % 4 === 1) [2, 7, 13].forEach((x) => dot(x, y, '#e2e8b8'));
+  }
+};
+
+const cactusTop: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, CACTUS);
+  for (let y = 4; y < 12; y += 1) for (let x = 4; x < 12; x += 1) dot(x, y, pick(['#7aab3c', '#86b545'], rand()));
+};
+
+// red wrapping around a white band that says TNT
+const tntSide: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, ['#c83c2a', '#b8321f', '#d04430']);
+  for (let x = 0; x < size; x += 1) for (let y = 5; y <= 10; y += 1) dot(x, y, '#ececec');
+  const letters = ['xxx.x..x.xxx', '.x..xx.x..x.', '.x..x.xx..x.', '.x..x..x..x.'];
+  letters.forEach((row, y) => [...row].forEach((cell, x) => cell === 'x' && dot(x + 2, y + 6, '#1a1a1a')));
+};
+
+const tntTop: Painter = (dot, rand, size) => {
+  fill(dot, rand, size, ['#b8321f', '#c83c2a']);
+  for (let y = 3; y < 13; y += 1) for (let x = 3; x < 13; x += 1) dot(x, y, pick(['#a8a8a8', '#9a9a9a'], rand()));
+  for (let y = 7; y <= 8; y += 1) for (let x = 7; x <= 8; x += 1) dot(x, y, '#3a3a3a');
+};
+
+// crossed plants: a poppy, a fern, a dead bush
+const flower: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) dot(x, y, CLEAR);
+  line(dot, 8, 15, 8, 8, '#3f7a26');
+  dot(7, 12, '#4a8a2e');
+  dot(9, 11, '#4a8a2e');
+  for (let y = 4; y <= 7; y += 1) for (let x = 6; x <= 10; x += 1) if (Math.abs(x - 8) + Math.abs(y - 5.5) < 3.2) dot(x, y, pick(['#d8261c', '#c21d15', '#e03a2c'], rand()));
+  dot(8, 5, '#2a1a0c');
+};
+
+const fern: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) dot(x, y, CLEAR);
+  [3, 8, 12].forEach((root) => {
+    for (let y = 15; y >= 4; y -= 1) {
+      const x = root + Math.round((15 - y) * (root < 8 ? -0.2 : root > 8 ? 0.2 : 0));
+      dot(x, y, pick(['#4f8a2c', '#5f9f35'], rand()));
+      if (y % 2 === 0 && y < 13) {
+        dot(x - 1, y, '#578f30');
+        dot(x + 1, y, '#578f30');
+      }
+    }
+  });
+};
+
+const deadBush: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) dot(x, y, CLEAR);
+  line(dot, 8, 15, 8, 9, '#6b4a26');
+  line(dot, 8, 11, 4, 6, '#7a5530');
+  line(dot, 8, 10, 12, 5, '#7a5530');
+  line(dot, 6, 8, 6, 4, '#6b4a26');
+  line(dot, 10, 7, 11, 3, '#6b4a26');
+};
+
 const STONE = ['#7f7f7f', '#767676', '#888888', '#6e6e6e', '#838383'];
 
 const stone: Painter = (dot, rand, size) => {
@@ -364,6 +485,22 @@ function buildOverworldKit() {
     reinforcedSide: paint(81, reinforcedSide),
     reinforcedTop: paint(82, reinforcedTop),
     sculk: paint(83, sculk),
+    sand: paint(90, sand),
+    sandstoneTop: paint(91, sandstoneTop),
+    sandstoneSide: paint(92, sandstoneSide),
+    snow: paint(93, snow),
+    snowySide: paint(94, snowySide),
+    ice: paint(95, ice),
+    spruceSide: paint(96, spruceSide),
+    spruceTop: paint(97, spruceTop),
+    spruceLeaves: paint(98, spruceLeaves),
+    cactusSide: paint(99, cactusSide),
+    cactusTop: paint(100, cactusTop),
+    tntSide: paint(101, tntSide),
+    tntTop: paint(102, tntTop),
+    flower: paint(103, flower),
+    fern: paint(104, fern),
+    deadBush: paint(105, deadBush),
   };
   const lambert = (map: THREE.Texture) => new THREE.MeshLambertMaterial({ map });
   const dirtMat = lambert(tex.dirt);
@@ -376,6 +513,13 @@ function buildOverworldKit() {
   const chestInside = new THREE.MeshLambertMaterial({ color: '#2a1a0c' });
   const giftMat = lambert(tex.gift);
   const shelfMat = lambert(tex.bookshelf);
+  const sandstoneSideMat = lambert(tex.sandstoneSide);
+  const snowMat = lambert(tex.snow);
+  const snowySideMat = lambert(tex.snowySide);
+  const spruceSideMat = lambert(tex.spruceSide);
+  const spruceTopMat = lambert(tex.spruceTop);
+  const cactusSideMat = lambert(tex.cactusSide);
+  const tntSideMat = lambert(tex.tntSide);
   // box face order is +x, -x, +y, -y, +z, -z
   const mat = {
     dirt: dirtMat,
@@ -409,6 +553,18 @@ function buildOverworldKit() {
       lambert(tex.reinforcedSide),
     ],
     sculk: new THREE.MeshLambertMaterial({ map: tex.sculk, emissive: '#021016' }),
+    sand: lambert(tex.sand),
+    sandstone: [sandstoneSideMat, sandstoneSideMat, lambert(tex.sandstoneTop), lambert(tex.sandstoneTop), sandstoneSideMat, sandstoneSideMat],
+    snowyGrass: [snowySideMat, snowySideMat, snowMat, dirtMat, snowySideMat, snowySideMat],
+    snow: snowMat,
+    ice: new THREE.MeshLambertMaterial({ map: tex.ice, transparent: true, depthWrite: false }),
+    spruceLog: [spruceSideMat, spruceSideMat, spruceTopMat, spruceTopMat, spruceSideMat, spruceSideMat],
+    spruceLeaves: new THREE.MeshLambertMaterial({ map: tex.spruceLeaves, alphaTest: 0.5 }),
+    cactus: [cactusSideMat, cactusSideMat, lambert(tex.cactusTop), lambert(tex.cactusTop), cactusSideMat, cactusSideMat],
+    tnt: [tntSideMat, tntSideMat, lambert(tex.tntTop), lambert(tex.tntTop), tntSideMat, tntSideMat],
+    flower: new THREE.MeshLambertMaterial({ map: tex.flower, alphaTest: 0.5, side: THREE.DoubleSide }),
+    fern: new THREE.MeshLambertMaterial({ map: tex.fern, alphaTest: 0.5, side: THREE.DoubleSide }),
+    deadBush: new THREE.MeshLambertMaterial({ map: tex.deadBush, alphaTest: 0.5, side: THREE.DoubleSide }),
     cracks: tex.cracks.map(
       (map) => new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
     ),

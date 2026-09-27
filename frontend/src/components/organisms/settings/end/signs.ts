@@ -25,4 +25,10 @@ export const SIGN_TEXT: Record<SignId, LoreKey> = {
   server48Day1: 'signServer48Day1',
   server48Blaster: 'signServer48Blaster',
   village: 'signVillage',
+  templeBfuuny: 'signTempleBfuuny',
+  ruinDesert: 'signRuinDesert',
+  ruinTaiga: 'signRuinTaiga',
+  ruinSwamp: 'signRuinSwamp',
+  ruinCoast: 'signRuinCoast',
+  wreckNote: 'signWreckNote',
 };

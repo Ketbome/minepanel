@@ -269,6 +269,12 @@ Tooling / build (Next.js 16):
     `store/persist.ts` keeps what outlives a run in `localStorage` (the egg, the death count behind
     `{deaths}`) and `season()` (Halloween pumpkins, Christmas chests). `acts/Server48.tsx` is the
     epilogue the thanks screen opens.
+  - The Overworld is 257×257: `acts/overworld-layout.ts` keeps the story core (plains, inside 50
+    blocks) and bends four biomes around it with `simplex-noise` (`biomeAt`, `groundHeight`,
+    `FLAT` spots for every structure); `acts/overworld-biomes.ts` builds their columns, trees and
+    structures, and `acts/Biomes.tsx` holds their props (ruin signs, chests, the TNT plate, cactus
+    damage). `engine/explode.ts` is the shared blast (Kevin, TNT). Blocks whose four sides share a
+    texture are drawn with a three-group box (`WorldMesh`), so they cost three draw calls per chunk.
   - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
     them large. The text of every sign lives in `signs.ts`.
   - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.
