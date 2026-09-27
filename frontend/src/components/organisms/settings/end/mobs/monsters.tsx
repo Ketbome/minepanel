@@ -49,6 +49,7 @@ export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wa
   useMobTarget(root, [width, height, width], {
     label: () => null,
     solid: true,
+    hostile: true,
     hit: (amount) => {
       const s = state.current;
       if (control.dead) return;
@@ -591,6 +592,7 @@ export function Phantom({ wander, onDeath }: { readonly wander: Wander; readonly
   useMobTarget(root, [0.9, 0.5, 0.9], {
     label: () => null,
     solid: true,
+    hostile: true,
     hit: (amount) => {
       const s = state.current;
       if (s.dead) return;
