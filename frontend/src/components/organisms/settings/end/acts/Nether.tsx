@@ -231,8 +231,8 @@ export function Nether() {
       <Bed world={world} at={BED} use={sleep} />
       <Sign id="bed" at={[BED[0] + 1.3, 1, BED[2] - 0.2]} facing={-0.5} />
       <Sign id="bfuunyBed" at={[BED[0] - 1.3, 1, BED[2] - 0.2]} facing={0.5} />
-      <Sign id="diamond" at={[FORTRESS.x0 + 0.52, 2, -32]} facing={Math.PI / 2} wall />
-      <Sign id="blasterRods" at={[FORTRESS.x1 - 0.52, 2, -34]} facing={-Math.PI / 2} wall />
+      <Sign id="diamond" at={[FORTRESS.x0 + 1, 2, -32]} facing={Math.PI / 2} wall />
+      <Sign id="blasterRods" at={[FORTRESS.x1 - 1, 2, -34]} facing={-Math.PI / 2} wall />
       <Lectern world={world} at={[FORTRESS.x1 - 3, 1, -29]} book="guide3" facing={-Math.PI / 2} />
       <Spawner />
       {PIGLINS.map(({ id, wander }) => (

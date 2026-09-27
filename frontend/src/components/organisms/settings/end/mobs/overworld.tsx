@@ -216,7 +216,8 @@ export function useAnimal(
       if (health.current > 0) return;
       control.dead = true;
       damage.die();
-      if (name) useEndGame.getState().obituary(name, name === 'Producción' ? 'pigDown' : 'mobSlain');
+      // a named pig always saw it coming
+      if (name) useEndGame.getState().obituary(name, sound === 'oink' ? 'pigDown' : 'mobSlain');
     },
   });
   return control;

@@ -268,7 +268,11 @@ Tooling / build (Next.js 16):
     are set where it happens, and the islet ones are granted at the end of the islet script.
     `store/persist.ts` keeps what outlives a run in `localStorage` (the egg, the death count behind
     `{deaths}`) and `season()` (Halloween pumpkins, Christmas chests). `acts/Server48.tsx` is the
-    epilogue the thanks screen opens. Skins are painted in code
+    epilogue the thanks screen opens.
+  - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
+    them large. The text of every sign lives in `signs.ts`.
+  - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.
+    Every joke must land in all 9 languages without knowing a meme, a game tribute or server jargon. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
     shared red hurt flash and the topple-and-poof death. Boxes, pivots and rotations follow the

@@ -9,7 +9,9 @@ import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import type { World } from '../engine/world';
 import { overworldKit } from '../overworld-voxels';
 import { createNetherPortalMaterial } from '../shaders';
+import { useLore } from '../lore';
 import type { LoreKey } from '../lore/en';
+import { SIGN_TEXT } from '../signs';
 import { BFUUNY, season, useEndGame, type BookId, type ChestId, type SignId } from '../store';
 import { kit, UNIT_BOX } from '../voxels';
 
@@ -116,6 +118,50 @@ const BOARD = new THREE.BoxGeometry(0.9, 0.55, 0.08);
 const POST = new THREE.BoxGeometry(0.08, 0.8, 0.08);
 
 // a standing sign on a post, or a wall sign flush against the block behind it
+// the words painted on the board like the game's, wrapped and shrunk to fit; the click still opens
+// the sign large
+function useSignText(text: string) {
+  const material = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 312;
+    const ctx = canvas.getContext('2d')!;
+    const lines = text.split('\n').flatMap((line) => {
+      const out = [''];
+      line.split(' ').forEach((word) => {
+        const last = out.length - 1;
+        if (out[last] && (out[last] + ' ' + word).length > 18) out.push(word);
+        else out[last] = out[last] ? `${out[last]} ${word}` : word;
+      });
+      return out;
+    });
+    let size = 60;
+    const fits = () => {
+      ctx.font = `600 ${size}px Archivo, system-ui, sans-serif`;
+      return lines.length * size * 1.15 <= 290 && lines.every((line) => ctx.measureText(line).width <= 480);
+    };
+    while (size > 16 && !fits()) size -= 2;
+    ctx.fillStyle = '#1e1307';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    lines.forEach((line, index) => ctx.fillText(line, 256, 156 + (index - (lines.length - 1) / 2) * size * 1.15));
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 4;
+    return new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+  }, [text]);
+  useEffect(
+    () => () => {
+      material.map?.dispose();
+      material.dispose();
+    },
+    [material]
+  );
+  return material;
+}
+
+const TEXT = new THREE.PlaneGeometry(0.86, 0.52);
+
 export function Sign({ id, at, facing = 0, wall = false }: { readonly id: SignId; readonly at: Cell; readonly facing?: number; readonly wall?: boolean }) {
   const { mat } = overworldKit();
   const [x, y, z] = at;
@@ -132,11 +178,14 @@ export function Sign({ id, at, facing = 0, wall = false }: { readonly id: SignId
     [box, id]
   );
   useTarget(target);
+  const lore = useLore();
+  const text = useSignText(lore(SIGN_TEXT[id]));
 
   return (
     <group position={[x, y, z]} rotation={[0, facing, 0]}>
       {!wall && <mesh geometry={POST} material={mat.log} position={[0, -0.1, 0]} />}
       <mesh geometry={BOARD} material={mat.planks} position={[0, wall ? 0 : 0.45, wall ? -0.46 : 0]} />
+      <mesh geometry={TEXT} material={text} position={[0, wall ? 0 : 0.45, wall ? -0.415 : 0.045]} />
     </group>
   );
 }

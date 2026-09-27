@@ -7,6 +7,7 @@ import { countOf, ItemIcon, ITEMS, type ItemId } from '../items';
 import { useLore, type LoreKey } from '../lore';
 import { useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
 import { CraftResult, Crafting } from './Crafting';
+import { SIGN_TEXT } from '../signs';
 import { MapPanel } from './MapPanel';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
@@ -21,29 +22,6 @@ const BOOKS: Record<BookId, { readonly title: LoreKey; readonly by?: LoreKey; re
   stop: { title: 'bookStop', pages: ['stopBook'] },
 };
 
-const SIGNS: Record<SignId, LoreKey> = {
-  incidents: 'signIncidents',
-  restart: 'signRestart',
-  backups: 'signBackups',
-  border: 'signBorder',
-  toast: 'signToast',
-  cave: 'signCave',
-  quiet: 'signQuiet',
-  casi: 'signCasi',
-  bed: 'signBed',
-  diamond: 'signDiamond',
-  uptime: 'signUptime',
-  tomb: 'tomb',
-  bfuunyBed: 'signBfuunyBed',
-  bfuunyShip: 'signBfuunyShip',
-  bfuunyExit: 'signBfuunyExit',
-  blasterSlow: 'signBlasterSlow',
-  blasterRods: 'signBlasterRods',
-  bfuunyGrave: 'signBfuunyGrave',
-  server48: 'signServer48',
-  server48Day1: 'signServer48Day1',
-  server48Blaster: 'signServer48Blaster',
-};
 
 const TRADES: readonly { readonly item: ItemId; readonly cost: number; readonly flag: Flag }[] = [
   { item: 'map', cost: 3, flag: 'mapBought' },
@@ -151,7 +129,7 @@ function SignPanel({ id }: { readonly id: SignId }) {
   return (
     <PanelWindow title={lore('sign')}>
       <div className="mx-auto max-w-xs border-4 border-[#5d452b] bg-[#b8945f] px-4 py-6 text-center text-[#1b1208] shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
-        {lore(SIGNS[id])
+        {lore(SIGN_TEXT[id])
           .split('\n')
           .map((line, index) => (
             <p key={index} className="font-minecraft text-base leading-relaxed">

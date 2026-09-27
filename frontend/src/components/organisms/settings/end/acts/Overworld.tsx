@@ -15,7 +15,7 @@ import { Creeper, Pig, Rabbit, Sheep, Villager } from '../mobs/overworld';
 import { Skeleton } from '../mobs/skeleton';
 import { useSpawner } from '../mobs/spawner';
 import { createOverworldSkyMaterial } from '../shaders';
-import { lastSeenKey } from '../lore';
+import { lastSeenKey, useLore } from '../lore';
 import { BFUUNY, BLASTER, FIRST_GHOST, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
 import { CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
@@ -456,6 +456,7 @@ export function Overworld() {
   const { world } = scenery;
   const [thrown, setThrown] = useState<THREE.Vector3 | null>(null);
   const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false, obituary: false });
+  const lore = useLore();
   const names = useContributorNames();
   const skeletons = useSpawner('skeleton', { cap: 3, min: 20, max: 40, despawn: 64, every: 4, allowed: () => isNight(), spot: (x, z) => monsterSpot(world, x, z) });
 
@@ -576,6 +577,7 @@ export function Overworld() {
       <Sign id="backups" at={[CAMP.x - 3, 1, CAMP.z + 1]} facing={0.5} />
       <Sign id="border" at={[R - 1, groundHeight(R - 1, 0) + 1, 0]} facing={-Math.PI / 2} />
       <Sign id="toast" at={[VILLAGE.x + 9, 1, VILLAGE.z + 11]} />
+      <Sign id="village" at={[VILLAGE.x + 11, 1, VILLAGE.z + 5]} facing={0.9} />
       <Sign id="cave" at={[CAVE.x + 5, 1, CAVE.z - 7]} facing={-0.8} />
       <Sign id="casi" at={[RUINED.x + 4, 1, RUINED.z + 2]} facing={-0.4} />
       <Chest world={world} id="ruined" at={[RUINED.x - 2, 1, RUINED.z + 2]} facing={0.4} />
@@ -597,8 +599,8 @@ export function Overworld() {
       <Villager profession="nitwit" wander={HOMES.nitwit} name={names[2]} />
       <Villager profession="mason" wander={HOMES.mason} name={names[3]} />
       <Sheep wander={HOMES.sheep} />
-      <Rabbit name="Toast" wander={HOMES.rabbit} />
-      <Pig name="Producción" wander={HOMES.pig} />
+      <Rabbit name={lore('rabbitName')} wander={HOMES.rabbit} />
+      <Pig name={lore('pigName')} wander={HOMES.pig} />
       <Creeper name="Kevin" wander={HOMES.creeper} />
       {skeletons.spawns.map(({ id, wander }) => (
         <Skeleton key={id} wander={wander} burns onDeath={() => skeletons.died(id)} />
