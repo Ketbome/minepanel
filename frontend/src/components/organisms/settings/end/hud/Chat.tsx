@@ -9,8 +9,6 @@ const SHADOW = { textShadow: '2px 2px 0 rgba(0,0,0,0.8)' };
 const YELLOW = '#ffff55';
 // long enough to read a line you only glance at a moment later
 const LINE_MS = 20000;
-// the two End Poem voices keep the game's colors: dark aqua and dark green
-const VOICES = ['#00AAAA', '#00AA00'];
 
 function ChatLine({ line }: { readonly line: Line }) {
   const lore = useLore();
@@ -51,12 +49,6 @@ function ChatLine({ line }: { readonly line: Line }) {
     body = <span className="text-gray-300">{lore(line.key)}</span>;
   } else if (line.kind === 'named') {
     body = `${line.name} ${lore(line.key)}`;
-  } else if (line.kind === 'voice') {
-    body = (
-      <span className="italic" style={{ color: VOICES[line.voice] }}>
-        {lore(line.key)}
-      </span>
-    );
   } else {
     const key = line.kind === 'join' ? 'chatJoined' : 'chatLeft';
     // someone other than the ghost can drop in: the line takes their name instead

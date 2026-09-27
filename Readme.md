@@ -47,18 +47,23 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 
 ## Features
 
-- **Java & Bedrock** — Support for both Minecraft editions
-- **Multi-server** — Create and manage multiple servers from one panel
-- **Real-time monitoring** — CPU, RAM, players, logs, and TPS/MSPT for NeoForge modpacks (including ATM10) and compatible spark servers
-- **Player insights** — session history for Java and Bedrock, plus player profiles with stats, advancements and inventory, item search, and an opt-in activity log with chat search and inventory history (Java)
-- **All server types** — Vanilla, Paper, Forge, Fabric, Purpur, and more
-- **Modpacks** — CurseForge & Modrinth integration
-- **Automatic backups** — Scheduled backups with retention policies
-- **Proxy support** — mc-router for single-port multi-server (Java), started and configured by the panel, with optional auto-scaling (sleep when idle, wake on join) and a per-server opt-out
-- **Update notices** — release notes in the panel for every version between yours and the newest, and a one-click update for admins
-- **Discord webhooks** — Server events notifications and alerts (down, crash loop, high CPU/RAM)
-- **Admin + user access control** — First phase with invitations and per-user permissions
-- **Multi-language** — English, Spanish, Dutch, German, Polish
+- **Java & Bedrock** — Both Minecraft editions, as many servers as your hardware allows, each in its own container
+- **All server types** — Vanilla, Paper, Forge, NeoForge, Fabric, Purpur, GTNH and CurseForge, Modrinth or FTB modpacks, with templates and server cloning · [Server types](https://minepanel.ketbome.com/server-types)
+- **Mods & plugins** — Integrated Modrinth and CurseForge search, mod list editor, datapacks and Bedrock addons · [Mods & plugins](https://minepanel.ketbome.com/mods-plugins)
+- **Worlds** — Per-server world picker, a shared world library, imports from CurseForge or a URL and experimental feature packs for new Java worlds · [Worlds](https://minepanel.ketbome.com/worlds)
+- **Real-time monitoring** — CPU, RAM, players, live logs and history graphs, plus TPS/MSPT for NeoForge modpacks (including ATM10) and compatible spark servers · [Monitoring](https://minepanel.ketbome.com/features#real-time-monitoring)
+- **Player insights** — Playtime, last seen and join/leave sessions for Java and Bedrock; Java profiles add saved-world stats, advancements and inventory, and an opt-in activity log with chat search and inventory history · [Player profiles](https://minepanel.ketbome.com/features#player-profiles-and-session-history) · [Activity log](https://minepanel.ketbome.com/features#activity-log)
+- **Console & tasks** — RCON console, gamerule editor, quick actions, scheduled restarts and commands (interval or cron), rotating announcements and commands on start, join and leave · [Server control](https://minepanel.ketbome.com/features#server-control) · [Event commands](https://minepanel.ketbome.com/features#event-commands)
+- **Backups** — Scheduled backups with retention, locally or to S3-compatible storage · [Backups](https://minepanel.ketbome.com/features#backups)
+- **File manager** — Browse, edit, upload and download server files, with streamed uploads and ZIP downloads · [Files](https://minepanel.ketbome.com/features#file-management)
+- **Proxy** — mc-router for single-port multi-server (Java), managed by the panel, with auto-scaling (sleep when idle, wake on join) · [mc-router](https://minepanel.ketbome.com/networking#mc-proxy-router-java-only)
+- **Networking** — Port mappings, per-server network settings and admin-only custom compose snippets · [Networking](https://minepanel.ketbome.com/networking)
+- **Users & access** — Admin and user roles, per-server permissions, invitations and an audit log · [Access control](https://minepanel.ketbome.com/features#roles-and-access-control)
+- **Single Sign-On** — OIDC login (Authentik, Google, …), with an SSO-only mode · [SSO](https://minepanel.ketbome.com/sso)
+- **Alerts** — Discord webhooks for server events and alerts (down, crash loop, high CPU/RAM)
+- **Updates** — Release notes in the panel for every version between yours and the newest, and a one-click update for admins
+- **Multi-language** — English, Spanish, Dutch, German, French, Polish, Russian, Portuguese and Turkish
+- **Multi-arch** — x86_64 and ARM64 (Raspberry Pi, Apple Silicon)
 
 ---
 
@@ -66,12 +71,18 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 
 Full docs at **[minepanel.ketbome.com](https://minepanel.ketbome.com)**
 
+- [Getting Started](https://minepanel.ketbome.com/getting-started) — What Minepanel is and how it works
 - [Installation](https://minepanel.ketbome.com/installation) — Docker setup guide
 - [Configuration](https://minepanel.ketbome.com/configuration) — Environment variables & settings
-- [Networking](https://minepanel.ketbome.com/networking) — Ports, DNS, and proxy setup
+- [Networking](https://minepanel.ketbome.com/networking) — Ports, DNS, SSL and proxy setup
 - [Features](https://minepanel.ketbome.com/features) — Full feature documentation
+- [Administration](https://minepanel.ketbome.com/administration) — Passwords, roles, audit log and database
+- [Upgrading to 1.13](https://minepanel.ketbome.com/upgrading-to-1-13) — What changes when you update
+- [Troubleshooting](https://minepanel.ketbome.com/troubleshooting) — Common problems and fixes
 - [API](https://minepanel.ketbome.com/api) — Authentication model and backend endpoints
 - [FAQ](https://minepanel.ketbome.com/faq) — Common questions
+
+Docker guides: [Server with Docker Compose](https://minepanel.ketbome.com/guides/minecraft-server-docker-compose) · [Modded server](https://minepanel.ketbome.com/guides/modded-minecraft-server-docker) · [Bedrock server](https://minepanel.ketbome.com/guides/bedrock-server-docker) · [mc-router setup](https://minepanel.ketbome.com/guides/mc-router-setup) · [Backups with mc-backup](https://minepanel.ketbome.com/guides/minecraft-server-backup-docker)
 
 ### 🔍 AI-Powered Documentation
 
@@ -110,21 +121,34 @@ Part of the same self-hosted game-server ecosystem:
 
 ---
 
-<div align="center">
+## Support Minepanel
 
-**[⭐ Star this repo](https://github.com/Ketbome/minepanel)** if you find it useful!
+Minepanel is a side project I build in my free time, and it grows mostly by word of mouth. If it
+saves you some work, here are a few ways to help that cost nothing:
+
+- **Give it a star** on [GitHub](https://github.com/Ketbome/minepanel). It sounds small, but it is
+  how most people decide whether a project is worth trying.
+- **Tell someone about it.** A post on [Reddit](https://www.reddit.com/submit?url=https://github.com/Ketbome/minepanel&title=Minepanel%20-%20self-hosted%20panel%20for%20Minecraft%20Java%20%26%20Bedrock%20servers)
+  or [X](https://x.com/intent/post?url=https://github.com/Ketbome/minepanel&text=I%20run%20my%20Minecraft%20servers%20with%20Minepanel%2C%20a%20free%20self-hosted%20panel%20for%20Java%20%26%20Bedrock),
+  a message in your Discord, or a mention to a friend who runs a server goes a long way.
+- **Report what breaks** or suggest what is missing in the
+  [issues](https://github.com/Ketbome/minepanel/issues). Pull requests are welcome too; the
+  [development guide](https://minepanel.ketbome.com/development) shows how to get it running.
+
+And if you feel like buying me a coffee, I will gladly drink it while fixing the next bug.
+
+<div align="center">
+  <a href="https://buymeacoffee.com/pims2711y" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150" height="40">
+  </a>
+</div>
+
+Thanks for being here.
+
+---
+
+<div align="center">
 
 Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
 
 </div>
-<div align="center" style="margin-top: 8px;">
-  <a href="https://buymeacoffee.com/pims2711y" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150" height="40">
-  </a>
-  <br>
-  <span style="font-size: 0.95em; color: #888;">If Minepanel or my other projects (like Hytalepanel) help you, a coffee would mean a lot. Thank you for supporting independent devs!</span>
-</div>
-
-The **Players** tab shows recorded playtime, last seen and persistent join/leave sessions for
-Java and Bedrock. Java profiles also show available saved-world
-statistics. [Collection details and limitations](doc/features.md#player-profiles-and-session-history).

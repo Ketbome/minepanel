@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { useEndGame } from '../store';
 import { kit, UNIT_BOX } from '../voxels';
+import { spawnDrop } from './Drops';
 import { castBlocks, castTargets, solidCell } from './raycast';
 import { playerCenter, runtime, type Projectile } from './runtime';
 
@@ -103,16 +104,24 @@ export function Projectiles() {
         }
         if (hit) {
           if (shot.kind === 'arrow') cue('arrowHit');
-          hit.target.hit!(shot.damage, shot.kind === 'arrow' ? 'arrow' : 'fireball');
-          shot.onLand?.(shot.pos.clone().addScaledVector(dir, hit.distance), hit.target);
+          const at = shot.pos.clone().addScaledVector(dir, hit.distance);
+          const bounced = hit.target.hit!(shot.damage, shot.kind === 'arrow' ? 'arrow' : 'fireball') === false;
+          if (bounced && shot.kind === 'arrow') spawnDrop('arrow', 1, at, dir.clone().multiplyScalar(-3).setY(4));
+          shot.onLand?.(at, hit.target);
           shot.done = true;
           continue;
         }
       }
       const wall = world ? castBlocks(world, shot.pos, dir, length, solidCell(world)) : null;
       if (wall) {
-        shot.onLand?.(shot.pos.clone().addScaledVector(dir, Math.max(0, wall.distance - 0.3)), null);
+        const at = shot.pos.clone().addScaledVector(dir, Math.max(0, wall.distance - 0.3));
+        shot.onLand?.(at, null);
         shot.done = true;
+        // an arrow that hits a block makes a vibration, and yours can be picked up again
+        if (shot.kind === 'arrow') {
+          runtime.hooks.vibration?.(at, 15);
+          if (shot.fromPlayer) spawnDrop('arrow', 1, at, dir.clone().multiplyScalar(-0.5));
+        }
         continue;
       }
       shot.pos.addScaledVector(shot.vel, dt);

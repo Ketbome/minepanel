@@ -8,6 +8,18 @@ const netherrack: Painter = (dot, rand, size) => {
   for (let vein = 0; vein < 10; vein += 1) dot(Math.floor(rand() * size), Math.floor(rand() * size), '#9e4a4a');
 };
 
+// netherrack with gold nuggets pressed into it
+const netherGold: Painter = (dot, rand, size) => {
+  netherrack(dot, rand, size);
+  for (let nugget = 0; nugget < 7; nugget += 1) {
+    const x = Math.floor(rand() * (size - 2));
+    const y = Math.floor(rand() * (size - 2));
+    dot(x, y, '#ffe36b');
+    dot(x + 1, y, '#f2b32a');
+    dot(x, y + 1, '#c7861a');
+  }
+};
+
 const netherBricks: Painter = (dot, rand, size) => {
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
@@ -41,12 +53,14 @@ const magma: Painter = (dot, rand, size) => {
 function buildNetherKit() {
   const tex = {
     netherrack: paint(90, netherrack),
+    netherGold: paint(94, netherGold),
     netherBricks: paint(91, netherBricks),
     glowstone: paint(92, glowstone),
     magma: paint(93, magma),
   };
   const mat = {
     netherrack: new THREE.MeshLambertMaterial({ map: tex.netherrack }),
+    netherGold: new THREE.MeshLambertMaterial({ map: tex.netherGold }),
     netherBricks: new THREE.MeshLambertMaterial({ map: tex.netherBricks }),
     glowstone: new THREE.MeshBasicMaterial({ map: tex.glowstone }),
     magma: new THREE.MeshLambertMaterial({ map: tex.magma, emissive: '#3a1204' }),

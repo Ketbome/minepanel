@@ -5,11 +5,10 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { ITEMS, type ItemId } from '../items';
-import { overworldKit } from '../overworld-voxels';
 import { SPRITES, type Pixel } from '../PixelIcons';
 import { useEndGame, type Zone } from '../store';
-import { kit } from '../voxels';
 import { runtime } from './runtime';
+import { materialFor } from './WorldMesh';
 
 // The first-person hand, drawn over the world in its own pass (so it never clips into a wall)
 // with the game's own poses: the bare arm, a held item, the sword swing, the bow draw and eating.
@@ -69,7 +68,7 @@ function bowPixels(pull: number): Pixel[] {
   return [...pixels.values()];
 }
 
-interface Sprite {
+export interface Sprite {
   readonly geometry: THREE.BufferGeometry;
   readonly material: THREE.Material;
 }
@@ -168,7 +167,7 @@ function pixelCanvas(pixels: readonly Pixel[]) {
 const sprites = new Map<ItemId, Promise<Sprite>>();
 let bows: Sprite[] | null = null;
 
-function spriteOf(item: ItemId) {
+export function spriteOf(item: ItemId) {
   let sprite = sprites.get(item);
   if (!sprite) {
     const pixels = SPRITES[item as keyof typeof SPRITES];
@@ -185,7 +184,10 @@ function spriteOf(item: ItemId) {
 }
 
 // blocks are held as a small cube, the way the game shows them
-const BLOCKS: Partial<Record<ItemId, () => THREE.Material>> = { obsidian: () => kit().mat.obsidian, dirt: () => overworldKit().mat.dirt };
+export function blockMaterial(item: ItemId | undefined) {
+  const block = item && ITEMS[item].block;
+  return block ? materialFor(block) : null;
+}
 
 let arm: THREE.Material[] | null = null;
 
@@ -222,7 +224,7 @@ const op = new THREE.Matrix4();
 function useItemSprite(item: ItemId | undefined) {
   const [loaded, setLoaded] = useState<{ item: ItemId; sprite: Sprite } | null>(null);
   useEffect(() => {
-    if (!item || item === 'bow' || BLOCKS[item]) return;
+    if (!item || item === 'bow' || ITEMS[item].block) return;
     let live = true;
     void spriteOf(item).then((sprite) => {
       if (live) setLoaded({ item, sprite });
@@ -241,7 +243,7 @@ export function Hand() {
   const bowRefs = useRef<(THREE.Mesh | null)[]>([]);
   const sprite = useItemSprite(item);
   const bowSprites = useMemo(() => (bows ??= [0, 1, 2, 3].map((pull) => extrude(pixelCanvas(bowPixels(pull))))), []);
-  const block = item ? BLOCKS[item]?.() : undefined;
+  const block = blockMaterial(item);
   const motion = useRef({ item: undefined as ItemId | undefined, equip: 1, seen: -1, swingAt: -1, charge: 0, stride: 0, bob: 0, yaw: 0, pitch: 0 });
 
   useFrame((_, delta) => {

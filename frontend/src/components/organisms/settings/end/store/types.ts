@@ -1,16 +1,17 @@
 import type { StateCreator } from 'zustand';
+import type { BlockId } from '../engine/world';
 import type { ItemId, Slot } from '../items';
 import type { LoreKey } from '../lore/en';
 
-export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem';
+export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem' | 'server48';
 export type Veil = 'black' | 'portal' | 'white' | 'none';
 export type Stage = 'arrival' | 'crystals' | 'dragon' | 'victory' | 'exit';
-export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper';
-export type ChestId = 'camp' | 'backups' | 'ruined';
-export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'stop';
-export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit';
+export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus';
+export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4' | 'igloo' | 'wreck' | 'buried';
+export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'guide3' | 'stop';
+export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote';
 export type AdvancementKind = 'task' | 'goal';
-export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball';
+export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball' | 'dirt' | 'creeper' | 'totem' | 'barrier' | 'ruins';
 
 // one-shot story beats; a flag never goes back to false within a run
 export type Flag =
@@ -40,7 +41,25 @@ export type Flag =
   | 'keeperMet'
   | 'stayed'
   | 'bfuunyChest'
-  | 'bfuunyBed';
+  | 'bfuunyBed'
+  | 'bfuunyDirt'
+  | 'rakeMet'
+  | 'helmetHinted'
+  | 'piglinMet'
+  | 'darkness'
+  // what the secret achievements look back on
+  | 'endermanKilled'
+  | 'kevinHit'
+  | 'buttonTwice'
+  | 'rakeSurvived'
+  | 'glided'
+  // the biomes: Ketbome's ruins you have seen, the temple's trap, the buried chest
+  | 'ruinDesert'
+  | 'ruinTaiga'
+  | 'ruinSwamp'
+  | 'ruinCoast'
+  | 'templeBlown'
+  | 'treasureFound';
 
 export type Panel =
   | { readonly kind: 'chest'; readonly id: ChestId }
@@ -74,7 +93,6 @@ export type ChatLine =
   | { readonly id: number; readonly kind: 'say'; readonly key: LoreKey; readonly author?: string }
   | { readonly id: number; readonly kind: 'system'; readonly key: LoreKey }
   | { readonly id: number; readonly kind: 'join' | 'leave'; readonly name?: string }
-  | { readonly id: number; readonly kind: 'voice'; readonly key: LoreKey; readonly voice: 0 | 1 }
   | { readonly id: number; readonly kind: 'named'; readonly name: string; readonly key: LoreKey };
 
 export interface Notice {
@@ -101,7 +119,9 @@ export interface GameSlice {
   resume: boolean;
   flags: Partial<Record<Flag, true>>;
   killed: string[];
+  // the Overworld's edits, replayed when you come back to it
   mined: number[];
+  placed: (readonly [number, BlockId])[];
   // the ruined portal's gaps that already hold obsidian
   obsidian: number[];
   frames: boolean[];
@@ -124,6 +144,7 @@ export interface GameSlice {
   setFlag: (flag: Flag) => void;
   kill: (id: string) => void;
   mine: (cell: number) => void;
+  placeBlock: (cell: number, id: BlockId) => void;
   placeObsidian: (gap: number) => void;
   placeEye: (frame: number) => void;
   setNoise: (noise: number) => void;
@@ -151,12 +172,18 @@ export interface InventorySlice {
   grid: Slot[];
   // the stack held on the mouse cursor while a window is open
   cursor: Slot;
+  helmet: boolean;
   panel: Panel | null;
   clickSlot: (area: Area, index: number, button: Button, shift: boolean) => void;
   spread: (area: Area, indices: readonly number[], button: Button) => void;
   takeOutput: (shift: boolean) => void;
   give: (item: ItemId, count?: number) => void;
   spend: (item: ItemId, count?: number) => boolean;
+  // one of the stack in your hand is used up (a placed block, a worn helmet)
+  consumeHeld: () => void;
+  wearHelmet: () => void;
+  // the helmet slot of the inventory window: takes the helmet off onto the cursor, or puts it on
+  clickHelmet: () => void;
   select: (slot: number) => void;
   cycle: (by: number) => void;
   takeFromChest: (id: ChestId, index: number) => void;
@@ -189,13 +216,14 @@ export interface HudSlice {
   aim: LoreKey | null;
   swing: number;
   charge: number;
+  // bumped to show the screamer
+  scaredAt: number;
   caption: (key: LoreKey) => void;
   dropCaption: (id: number) => void;
   advance: (kind: AdvancementKind, title: LoreKey, icon: AdvancementIcon) => void;
   say: (key: LoreKey, author?: string) => void;
   announce: (key: LoreKey) => void;
   presence: (kind: 'join' | 'leave', name?: string) => void;
-  voices: (first: LoreKey, second: LoreKey) => void;
   obituary: (name: string, key: LoreKey) => void;
   dropToast: (id: number) => void;
   dropChat: (id: number) => void;
@@ -205,6 +233,7 @@ export interface HudSlice {
   setAim: (aim: LoreKey | null) => void;
   bump: () => void;
   setCharge: (charge: number) => void;
+  scare: () => void;
 }
 
 export type EndGameState = GameSlice & InventorySlice & HealthSlice & HudSlice;

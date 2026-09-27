@@ -2,15 +2,17 @@
 
 import { Sparkles } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import type { World } from '../engine/world';
 import { overworldKit } from '../overworld-voxels';
 import { createNetherPortalMaterial } from '../shaders';
+import { useLore } from '../lore';
 import type { LoreKey } from '../lore/en';
-import { useEndGame, type BookId, type ChestId, type SignId } from '../store';
+import { SIGN_TEXT } from '../signs';
+import { BFUUNY, season, useEndGame, type BookId, type ChestId, type SignId } from '../store';
 import { kit, UNIT_BOX } from '../voxels';
 
 // Things you can walk up to and use. Each one claims its cell in the world so you cannot walk
@@ -30,10 +32,7 @@ const CHEST_BODY = new THREE.BoxGeometry(14 / 16, 10 / 16, 14 / 16);
 const CHEST_LID = new THREE.BoxGeometry(14 / 16, 4 / 16, 14 / 16);
 const LATCH = new THREE.BoxGeometry(2 / 16, 4 / 16, 1 / 16);
 
-const BFUUNY = 'Bfuuny';
-
-// Bfuuny, the first admin, has not played since 2003, yet he drops in to laugh every time someone
-// falls for one of his pranks
+// Bfuuny drops in to laugh every time someone falls for one of his pranks
 export function bfuunyLaughs(key: LoreKey) {
   window.setTimeout(() => useEndGame.getState().presence('join', BFUUNY), 600);
   window.setTimeout(() => useEndGame.getState().say(key, BFUUNY), 1800);
@@ -42,17 +41,20 @@ export function bfuunyLaughs(key: LoreKey) {
 
 export function Chest({ world, id, at, facing = 0 }: { readonly world: World; readonly id: ChestId; readonly at: Cell; readonly facing?: number }) {
   const { mat } = overworldKit();
+  const [christmas] = useState(() => season() === 'christmas');
   const open = useEndGame((state) => state.panel?.kind === 'chest' && state.panel.id === id);
   const lid = useRef<THREE.Group>(null);
+  const [x, y, z] = at;
   const target = useMemo<Omit<Target, 'box'>>(
     () => ({
       label: () => (id === 'backups' ? 'chestBackups' : 'chest'),
       use: () => {
         cue('chest');
         useEndGame.getState().openPanel({ kind: 'chest', id });
+        runtime.hooks.vibration?.(new THREE.Vector3(x, y, z), 8);
       },
     }),
-    [id]
+    [id, x, y, z]
   );
   useCellTarget(world, at, target, 0.875);
   // closing the "treasure" (nine stacks of dirt) for the first time is what Bfuuny waited for
@@ -74,9 +76,9 @@ export function Chest({ world, id, at, facing = 0 }: { readonly world: World; re
 
   return (
     <group position={[at[0], at[1] - 0.5, at[2]]} rotation={[0, facing, 0]}>
-      <mesh geometry={CHEST_BODY} material={mat.chest} position={[0, 5 / 16, 0]} />
+      <mesh geometry={CHEST_BODY} material={christmas ? mat.giftChest : mat.chest} position={[0, 5 / 16, 0]} />
       <group ref={lid} position={[0, 10 / 16, -7 / 16]}>
-        <mesh geometry={CHEST_LID} material={mat.lid} position={[0, 2 / 16, 7 / 16]} />
+        <mesh geometry={CHEST_LID} material={christmas ? mat.giftLid : mat.lid} position={[0, 2 / 16, 7 / 16]} />
         <mesh geometry={LATCH} material={kit().mat.iron} position={[0, 0, 14.5 / 16]} />
       </group>
     </group>
@@ -116,6 +118,50 @@ const BOARD = new THREE.BoxGeometry(0.9, 0.55, 0.08);
 const POST = new THREE.BoxGeometry(0.08, 0.8, 0.08);
 
 // a standing sign on a post, or a wall sign flush against the block behind it
+// the words painted on the board like the game's, wrapped and shrunk to fit; the click still opens
+// the sign large
+function useSignText(text: string) {
+  const material = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 312;
+    const ctx = canvas.getContext('2d')!;
+    const lines = text.split('\n').flatMap((line) => {
+      const out = [''];
+      line.split(' ').forEach((word) => {
+        const last = out.length - 1;
+        if (out[last] && (out[last] + ' ' + word).length > 18) out.push(word);
+        else out[last] = out[last] ? `${out[last]} ${word}` : word;
+      });
+      return out;
+    });
+    let size = 60;
+    const fits = () => {
+      ctx.font = `600 ${size}px Archivo, system-ui, sans-serif`;
+      return lines.length * size * 1.15 <= 290 && lines.every((line) => ctx.measureText(line).width <= 480);
+    };
+    while (size > 16 && !fits()) size -= 2;
+    ctx.fillStyle = '#1e1307';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    lines.forEach((line, index) => ctx.fillText(line, 256, 156 + (index - (lines.length - 1) / 2) * size * 1.15));
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 4;
+    return new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+  }, [text]);
+  useEffect(
+    () => () => {
+      material.map?.dispose();
+      material.dispose();
+    },
+    [material]
+  );
+  return material;
+}
+
+const TEXT = new THREE.PlaneGeometry(0.86, 0.52);
+
 export function Sign({ id, at, facing = 0, wall = false }: { readonly id: SignId; readonly at: Cell; readonly facing?: number; readonly wall?: boolean }) {
   const { mat } = overworldKit();
   const [x, y, z] = at;
@@ -132,11 +178,14 @@ export function Sign({ id, at, facing = 0, wall = false }: { readonly id: SignId
     [box, id]
   );
   useTarget(target);
+  const lore = useLore();
+  const text = useSignText(lore(SIGN_TEXT[id]));
 
   return (
     <group position={[x, y, z]} rotation={[0, facing, 0]}>
       {!wall && <mesh geometry={POST} material={mat.log} position={[0, -0.1, 0]} />}
       <mesh geometry={BOARD} material={mat.planks} position={[0, wall ? 0 : 0.45, wall ? -0.46 : 0]} />
+      <mesh geometry={TEXT} material={text} position={[0, wall ? 0 : 0.45, wall ? -0.415 : 0.045]} />
     </group>
   );
 }
@@ -182,6 +231,40 @@ export function Lectern({ world, at, book, facing = 0, glow = false }: { readonl
 }
 
 // the purple sheet inside a lit Nether portal; walking into it is handled by the zone
+const BED_FOOT = new THREE.BoxGeometry(1, 9 / 16, 1);
+
+// A red bed two cells long: the pillow at `at`, the foot one cell toward +z.
+export function Bed({ world, at, use }: { readonly world: World; readonly at: Cell; readonly use: () => void }) {
+  const [x, y, z] = at;
+  const latest = useRef(use);
+  latest.current = use;
+  const target = useMemo<Target>(
+    () => ({
+      box: cellBox(x, y, z, 0.6).expandByVector(new THREE.Vector3(0, 0, 0.5)),
+      label: () => 'bed',
+      use: () => latest.current(),
+    }),
+    [x, y, z]
+  );
+  useTarget(target);
+  useEffect(() => {
+    world.set(x, y, z, 'prop');
+    world.set(x, y, z + 1, 'prop');
+  }, [world, x, y, z]);
+  const { mat } = kit();
+  return (
+    <group position={[x, y - 0.5, z + 0.5]}>
+      <mesh geometry={BED_FOOT} scale={[1, 1, 2]} position={[0, 9 / 32, 0]}>
+        <meshLambertMaterial color="#b02e26" />
+      </mesh>
+      <mesh geometry={UNIT_BOX} scale={[0.9, 0.12, 0.6]} position={[0, 0.6, -0.65]}>
+        <meshLambertMaterial color="#f0f0f0" />
+      </mesh>
+      <mesh geometry={UNIT_BOX} material={mat.torch} scale={[1, 0.2, 0.1]} position={[0, 0.1, -1]} />
+    </group>
+  );
+}
+
 export function NetherPortalSheet({ from, to, axis }: { readonly from: Cell; readonly to: Cell; readonly axis: 'x' | 'z' }) {
   const material = useMemo(() => createNetherPortalMaterial(), []);
   const width = (axis === 'x' ? to[0] - from[0] : to[2] - from[2]) + 1;

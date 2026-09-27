@@ -32,6 +32,7 @@ backend/src/
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
 |                           + public `GET /item-textures/:version/:item` (cached vanilla PNGs, see item-textures.service.ts)
 |- activity/                Opt-in activity log: tails logs/latest.log into events and inventory snapshots
+|- achievements/            Per-user End Portal easter egg advancements (fixed key list, idempotent unlock)
 |- scheduled-tasks/         Auto-restart and scheduled commands (fixed interval or cron expression via cron-parser)
 |- users/                   User and settings persistence
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB

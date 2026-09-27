@@ -1,10 +1,6 @@
-import type { Ghost } from './types';
-
 const EGG_KEY = 'minepanel:end-egg';
-const GHOST_KEY = 'minepanel:end-ghost';
+const DEATHS_KEY = 'minepanel:end-deaths';
 const DAY_MS = 86_400_000;
-
-export const FIRST_GHOST: Ghost = { name: 'Ketbome', at: Date.UTC(2019, 5, 14) };
 
 export function daysSince(at: number) {
   return Math.max(0, Math.floor((Date.now() - at) / DAY_MS));
@@ -26,20 +22,28 @@ export function saveDragonEgg() {
   }
 }
 
-// whoever last stayed behind in the outer End signs the next run's note and diary
-export function loadGhost(): Ghost {
+// every death in every run, for the guests page of Bfuuny's register
+export function storedDeaths() {
   try {
-    const saved = JSON.parse(localStorage.getItem(GHOST_KEY) ?? 'null') as Partial<Ghost> | null;
-    return typeof saved?.name === 'string' && saved.name && typeof saved.at === 'number' ? { name: saved.name, at: saved.at } : FIRST_GHOST;
+    return Number(localStorage.getItem(DEATHS_KEY)) || 0;
   } catch {
-    return FIRST_GHOST;
+    return 0;
   }
 }
 
-export function saveGhost(name: string) {
+export function countDeath() {
   try {
-    localStorage.setItem(GHOST_KEY, JSON.stringify({ name, at: Date.now() }));
+    localStorage.setItem(DEATHS_KEY, String(storedDeaths() + 1));
   } catch {
-    // private mode: the loop resets with the tab
+    // private mode: the count starts over
   }
+}
+
+// the game's dated touches: carved pumpkins on mobs around Halloween, gift chests at Christmas
+export function season(now = new Date()): 'halloween' | 'christmas' | null {
+  const month = now.getMonth();
+  const day = now.getDate();
+  if ((month === 9 && day >= 25) || (month === 10 && day === 1)) return 'halloween';
+  if (month === 11 && day >= 24 && day <= 26) return 'christmas';
+  return null;
 }

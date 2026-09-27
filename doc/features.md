@@ -390,14 +390,14 @@ Recommended approach:
 
 | Feature          | Description                               |
 | ---------------- | ----------------------------------------- |
-| Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT            |
+| Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay the Ender Dragon, fly an End City elytra and read the End Poem. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint |
+| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp in a 257×257 Overworld (snowy taiga, desert, swamp and coast around the story, each with one of Ketbome's unfinished servers, a desert temple with a TNT trap, an igloo, a swamp hut and a shipwreck whose note leads to buried treasure) while a ten-minute day turns to night (skeletons come out in the dark and burn at dawn; the camp bed skips the night), light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay an Ender Dragon that perches, takes off, dives at you and enrages at half health, fly an End City elytra and meet the admins on their islet, or read the End Poem, then visit Server #48 (day 1: one block). Six secret achievements reward the odd routes (keeping Bfuuny's dirt, sparing every enderman and Kevin, reaching the islet without elytra, outlasting The Rake). The village is named after Minepanel's contributors, and around Halloween and Christmas the run gets the game's carved pumpkins and gift chests. Place blocks, barter with piglins, and beware what the ancient city's button lets loose. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint. Earned advancements are saved to your account and show as a dragon egg trophy in the header, with the ones still missing hidden as `???` |
 
 ## Edition Comparison
 

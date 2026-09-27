@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { cue } from '../end-audio';
 import { ItemIcon, ITEMS } from '../items';
 import { useLore } from '../lore';
-import { canFill, fillFor, match, RECIPES } from '../recipes';
+import { canFill, fillFor, match, needs, RECIPES } from '../recipes';
 import { useEndGame } from '../store';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
@@ -51,7 +51,7 @@ function RecipeBook() {
             <ItemIcon item={recipe.output} className="h-6 w-6" />
             <span className="flex-1">{lore(ITEMS[recipe.output].name)}</span>
             <span className="flex gap-0.5">
-              {(recipe.rows?.flat() ?? recipe.ingredients ?? []).map((ingredient, part) => (
+              {needs(recipe).map((ingredient, part) => (
                 <ItemIcon key={part} item={ingredient} className="h-4 w-4" />
               ))}
             </span>

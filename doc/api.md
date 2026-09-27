@@ -236,6 +236,14 @@ Examples:
 - `DELETE /users/:id`
 - `POST /users/change-password`
 
+### Achievements
+
+The End Portal easter egg's advancements, per user. Only the caller's own rows.
+
+- `GET /achievements` — `[{ "key": "advStrike", "unlockedAt": "..." }]`
+- `POST /achievements` — body `{ "key": "advStrike" }`. Idempotent: earning a key again keeps
+  the first `unlockedAt`. Unknown keys return `400`
+
 ### Server monitoring
 
 Both endpoints require authentication and access to the requested server.

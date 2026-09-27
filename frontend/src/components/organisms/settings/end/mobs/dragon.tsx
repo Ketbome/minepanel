@@ -4,9 +4,9 @@ import { useFrame } from '@react-three/fiber';
 import { Fragment, useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
-import { useTarget, type Target } from '../engine/runtime';
+import { runtime, useTarget, type Target } from '../engine/runtime';
 import { PILLAR_TOP_Y } from '../acts/end-world';
-import { useEndGame } from '../store';
+import { DRAGON_MAX_HP, useEndGame } from '../store';
 import { createRays } from '../shaders';
 import { clamp01, easeInOut, kit, sizedBox } from '../voxels';
 
@@ -21,13 +21,20 @@ const ORBIT_HEIGHT = 19;
 const ORBIT_SPEED = 0.17;
 const FLYBY_AT = 2.4;
 const DIE_S = 6.2;
+// the fight loops like the game's: perch, take off, strafe, dive at you, land again. Below half
+// health it is enraged: it circles faster, dives twice and sits for less time
+const PERCH_S = 10;
+const RAGE_PERCH_S = 6;
+const TAKEOFF_S = 3;
+const CHARGE_S = 3.4;
+const RAGE_CHARGE_S = 2.8;
 // perched on the exit portal's bedrock pillar, low enough to be reached with a sword
 const TARGET_SIZE = new THREE.Vector3(5, 3, 5);
 const PERCH = new THREE.Vector3(0, PILLAR_TOP_Y + 3.2, 0);
 
 const MEMBRANE = new THREE.PlaneGeometry(56 * PX, 56 * PX).rotateX(-Math.PI / 2).translate(28 * PX, 0, -28 * PX);
 
-type Mode = 'circle' | 'flyby' | 'land' | 'perch' | 'die' | 'gone';
+export type DragonMode = 'circle' | 'flyby' | 'land' | 'perch' | 'takeoff' | 'charge' | 'die' | 'gone';
 type Vec3 = readonly [number, number, number];
 
 interface DragonMaterials {
@@ -91,11 +98,11 @@ const LEGS = [
 interface EnderDragonProps {
   readonly report: THREE.Vector3;
   readonly onHit: (damage: number) => void;
-  readonly onPerched: () => void;
+  readonly onMode: (mode: DragonMode) => void;
   readonly onVanish: () => void;
 }
 
-export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonProps) {
+export function EnderDragon({ report, onHit, onMode, onVanish }: EnderDragonProps) {
   const root = useRef<THREE.Group>(null);
   const neck = useRef<(THREE.Group | null)[]>([]);
   const tail = useRef<(THREE.Group | null)[]>([]);
@@ -120,7 +127,7 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
 
   const run = useRef({
     t: 0,
-    mode: 'circle' as Mode,
+    mode: 'circle' as DragonMode,
     modeT: 0,
     angle: Math.PI * 1.05,
     flown: false,
@@ -129,6 +136,10 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
     phase: 0,
     hurt: 0,
     growlAt: 6,
+    // dives left before it lands again; 0 with landAt passed means it heads for the portal
+    charges: 0,
+    chargeAt: 0,
+    landAt: 0,
     neckYaw: 0,
     riseFrom: new THREE.Vector3(),
     fade: 1,
@@ -154,8 +165,15 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
     r.t += dt;
     r.modeT += dt;
     const { ahead, local, inverse } = scratch;
-    const stage = useEndGame.getState().stage;
+    const game = useEndGame.getState();
+    const stage = game.stage;
+    const enraged = stage === 'dragon' && game.dragonHp <= DRAGON_MAX_HP / 2;
     const camera = state.camera;
+    const enter = (mode: DragonMode) => {
+      r.mode = mode;
+      r.modeT = 0;
+      onMode(mode);
+    };
     const loudness = Math.min(1, Math.max(0.3, 1.2 - camera.position.distanceTo(group.position) / 70));
 
     if (r.mode === 'circle' && !r.flown && r.t > FLYBY_AT) {
@@ -170,11 +188,38 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
         orbitPoint(r.angle, r.t + 5.5, new THREE.Vector3()),
       ]);
       r.curveS = 5.5;
-      r.mode = 'flyby';
-      r.modeT = 0;
+      enter('flyby');
       r.growlAt = r.t + 1.8;
     }
-    if (stage === 'dragon' && (r.mode === 'circle' || r.mode === 'flyby')) {
+    if (stage === 'dragon' && r.mode === 'perch' && r.modeT > (enraged ? RAGE_PERCH_S : PERCH_S)) {
+      const forward = ahead.set(0, 0, 1).applyQuaternion(group.quaternion).setY(0).normalize();
+      r.angle = Math.atan2(forward.z, forward.x);
+      r.curve = new THREE.CatmullRomCurve3([
+        group.position.clone(),
+        PERCH.clone().addScaledVector(forward, 4).setY(PERCH.y + 5),
+        PERCH.clone().addScaledVector(forward, 16).setY(ORBIT_HEIGHT - 2),
+        orbitPoint(r.angle, r.t + TAKEOFF_S, new THREE.Vector3()),
+      ]);
+      r.curveS = TAKEOFF_S;
+      r.charges = enraged ? 2 : 1;
+      enter('takeoff');
+      r.growlAt = r.t + 0.3;
+    }
+    // the dive aims where you are heading; sidestep once it commits
+    if (stage === 'dragon' && r.mode === 'circle' && r.charges > 0 && r.t > r.chargeAt && !game.dead) {
+      r.charges -= 1;
+      const from = group.position.clone();
+      const aim = runtime.player.pos.clone().addScaledVector(local.copy(runtime.player.vel).setY(0), 0.4);
+      aim.y += 1;
+      const heading = local.copy(aim).sub(from).setY(0).normalize();
+      const out = aim.clone().addScaledVector(heading, 16).setY(aim.y + 9);
+      r.angle = Math.atan2(out.z, out.x);
+      r.curveS = enraged ? RAGE_CHARGE_S : CHARGE_S;
+      r.curve = new THREE.CatmullRomCurve3([from, from.clone().lerp(aim, 0.6).setY(aim.y + 4), aim, out, orbitPoint(r.angle, r.t + r.curveS, new THREE.Vector3())]);
+      enter('charge');
+      cue('growl', 1);
+    }
+    if (stage === 'dragon' && (r.mode === 'circle' || r.mode === 'flyby') && r.charges === 0 && r.t >= r.landAt) {
       const from = group.position.clone();
       r.curve = new THREE.CatmullRomCurve3([
         from,
@@ -184,8 +229,7 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
         PERCH.clone(),
       ]);
       r.curveS = 4.8;
-      r.mode = 'land';
-      r.modeT = 0;
+      enter('land');
       // land side-on to whoever is watching, so the whole body reads; the neck then turns to face them
       const facing = new THREE.Object3D();
       facing.position.copy(PERCH);
@@ -194,8 +238,7 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
       r.perchTurn.copy(facing.quaternion);
     }
     if (stage === 'victory' && r.mode !== 'die' && r.mode !== 'gone') {
-      r.mode = 'die';
-      r.modeT = 0;
+      enter('die');
       r.riseFrom.copy(group.position);
       cue('dragonDeath');
       [materials.scales, materials.bone, materials.membrane].forEach((material) => {
@@ -212,11 +255,11 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
     let jawOpen = 0.08 + Math.max(0, Math.sin(r.t * 0.8)) * 0.22;
 
     if (r.mode === 'circle') {
-      r.angle += ORBIT_SPEED * dt;
+      r.angle += ORBIT_SPEED * (enraged ? 1.6 : 1) * dt;
       orbitPoint(r.angle, r.t, group.position);
       group.lookAt(orbitPoint(r.angle + 0.1, r.t + 0.6, ahead));
       group.rotateZ(0.32);
-    } else if ((r.mode === 'flyby' || r.mode === 'land') && r.curve) {
+    } else if ((r.mode === 'flyby' || r.mode === 'land' || r.mode === 'takeoff' || r.mode === 'charge') && r.curve) {
       const u = r.mode === 'land' ? easeInOut(clamp01(r.modeT / r.curveS)) : clamp01(r.modeT / r.curveS);
       group.position.copy(r.curve.getPointAt(u));
       if (u < 1) {
@@ -227,12 +270,15 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
         }
       }
       if (u >= 1) {
-        r.mode = r.mode === 'land' ? 'perch' : 'circle';
-        r.modeT = 0;
-        if (r.mode === 'perch') {
+        if (r.mode === 'land') {
           r.growlAt = r.t + 0.4;
-          onPerched();
+        } else if (r.mode === 'takeoff') {
+          r.chargeAt = r.t + (enraged ? 3 : 6);
+        } else if (r.mode === 'charge') {
+          if (r.charges > 0) r.chargeAt = r.t + 2.5;
+          else r.landAt = r.t + (enraged ? 3 : 5);
         }
+        enter(r.mode === 'land' ? 'perch' : 'circle');
       }
     } else if (r.mode === 'perch') {
       group.position.copy(PERCH);
@@ -244,7 +290,8 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
       legSwing = 0.2;
     } else if (r.mode === 'die') {
       const k = r.modeT / DIE_S;
-      group.position.copy(r.riseFrom);
+      // killed in the air, it drifts back over the portal before it rises
+      group.position.lerpVectors(r.riseFrom, PERCH, easeInOut(clamp01(r.modeT / 2.5)));
       group.position.x += (Math.random() - 0.5) * 0.12;
       group.position.y += r.modeT * 0.9;
       group.rotateY(dt * 0.3);
@@ -265,7 +312,7 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
     }
 
     const perching = r.mode === 'perch';
-    r.phase += dt * (perching ? 3.2 : 4.6);
+    r.phase += dt * (perching ? 3.2 : enraged ? 6.4 : 4.6);
     if (r.mode === 'die') {
       flap = 0.5 + Math.sin(r.t * 30) * 0.04;
       tipFlap = 0.2;
@@ -326,16 +373,21 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
 
   const onHitRef = useRef(onHit);
   onHitRef.current = onHit;
-  // one generous box around the body; perched, it reaches down to the ground so a sword can land
+  // one generous box around the body; perched, it reaches down to the ground so a sword can land,
+  // and arrows glance off it as they do in the game
   const target = useMemo<Target>(
     () => ({
       box: new THREE.Box3(),
       label: () => null,
       solid: true,
       reach: 6,
-      hit: (damage) => {
+      hit: (damage, source) => {
         const r = run.current;
         if (r.mode === 'die' || r.mode === 'gone' || useEndGame.getState().stage === 'arrival') return;
+        if (r.mode === 'perch' && source === 'arrow') {
+          useEndGame.getState().showActionBar('hintArrowsBounce');
+          return false;
+        }
         r.hurt = 0.3;
         onHitRef.current(damage);
       },

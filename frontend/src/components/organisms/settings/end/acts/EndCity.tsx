@@ -5,27 +5,35 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue, prefetch, startAmbience, stopAmbience } from '../end-audio';
-import { spawnEffect } from '../engine/Effects';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
-import { Enderman } from '../mobs/end';
+import { Admin, type AdminAct, type AdminId } from '../mobs/admins';
 import { Shulker } from '../mobs/shulker';
-import { overworldKit } from '../overworld-voxels';
-import { useEndGame } from '../store';
+import { countOf } from '../items';
+import type { LoreKey } from '../lore/en';
+import { BFUUNY, BLASTER, useEndGame, type AdvancementIcon, type EndGameState } from '../store';
 import { UNIT_BOX } from '../voxels';
 import { EndSky, floatingIsland, growChorus, type SceneFx } from './end-world';
 import { Sign, Torch } from './props';
 
 // Past the gateway: an End City tower, a ship with the elytra, and far below it the islet where
-// the one who stayed is waiting. You glide down to it; there the run ends without a poem.
+// the three admins wait by Ketbome's latest unfinished build. You glide down to it; there the run
+// ends without a poem.
 
 const TOWER = { x0: -2, x1: 2, z0: -16, z1: -12, top: 20 };
 const DECK = 21;
 const SHIP = { z0: -24, z1: -40 };
 const ISLET = new THREE.Vector3(0, -10, -84);
-const KEEPER_HOME = new THREE.Vector3(1, ISLET.y + 0.5, ISLET.z - 1.4);
-const GRASS_AT = new THREE.Vector3(1, ISLET.y + 1, ISLET.z);
+const HOMES: Record<AdminId, THREE.Vector3> = {
+  ketbome: new THREE.Vector3(ISLET.x - 1.5, ISLET.y + 0.5, ISLET.z - 1),
+  blaster: new THREE.Vector3(ISLET.x + 1.5, ISLET.y + 0.5, ISLET.z - 1.5),
+  bfuuny: new THREE.Vector3(ISLET.x - 0.5, ISLET.y + 0.5, ISLET.z - 3),
+};
+// where Bfuuny runs to show he can jump that
+const LEAP = new THREE.Vector3(-1, 0, 0.25).normalize();
+// server #48: a corner of wall, and scaffolding where the rest should be
+const CASTLE = { x: ISLET.x + 3, z: ISLET.z - 4 };
 const FRAME_AT = [0, DECK + 2, -30] as const;
 const COMMAND_AT = [1, DECK + 1, -15] as const;
 const SHULKERS = [
@@ -34,12 +42,53 @@ const SHULKERS = [
   [0, DECK + 1, -35],
 ] as const;
 
-// seconds after you look at the keeper
-const PLANT_AT = 1.4;
-const THANKS_AT = 2.6;
-const LEAVE_AT = 4.6;
-const TITLE_AT = 6.6;
-const DONE_AT = 13;
+type Acts = Record<AdminId, AdminAct>;
+
+// the ending, in seconds after you land on the islet
+const SCRIPT: readonly (readonly [number, (game: EndGameState, act: (who: AdminId, what: AdminAct) => void) => void])[] = [
+  [1, (game) => game.say('endKetbome1')],
+  [3.5, (game, act) => {
+    game.say('endKetbome2');
+    act('ketbome', 'point');
+  }],
+  [6, (game, act) => {
+    game.say('endBlaster', BLASTER);
+    act('ketbome', 'idle');
+    act('blaster', 'crouch');
+  }],
+  [8.5, (game, act) => {
+    game.say('endBfuuny', BFUUNY);
+    act('blaster', 'idle');
+  }],
+  [9.5, (_, act) => act('bfuuny', 'leap')],
+  [11.5, (game) => game.obituary(BFUUNY, 'bfuunyDiedVoid')],
+  [13, (game) => game.say('endBlaster2', BLASTER)],
+  [15.5, (game) => game.say('ghostThanks')],
+  [18.5, (game) => game.say('endStar')],
+  [21.5, (game, act) => {
+    game.presence('join', BFUUNY);
+    act('bfuuny', 'idle');
+  }],
+  [22.5, (game) => game.say('endBfuunyBack', BFUUNY)],
+  [24, (game) => game.showTitle('stayTitle', 'staySubtitle')],
+  [26, (game) => secrets(game)],
+  [30, (game) => game.setFlag('stayed')],
+];
+
+// the secret achievements a landing can reveal, once the admins are done talking
+function secrets(game: EndGameState) {
+  const earned: (readonly [LoreKey, AdvancementIcon, LoreKey, string])[] = [];
+  if (game.flags.bfuunyChest && !game.flags.bfuunyDirt && countOf(game.inventory, 'dirt') > 0) earned.push(['advTreasure', 'dirt', 'lineTreasure', BFUUNY]);
+  if (game.flags.camp && !game.flags.kevinHit) earned.push(['advKevin', 'creeper', 'lineKevin', 'Kevin']);
+  if (!game.flags.glided) earned.push(['advNoElytra', 'barrier', 'lineNoElytra', BLASTER]);
+  earned.forEach(([title, icon, line, author], index) =>
+    window.setTimeout(() => {
+      const state = useEndGame.getState();
+      state.advance('goal', title, icon);
+      state.say(line, author);
+    }, index * 1500)
+  );
+}
 
 function buildCity() {
   const world = new World();
@@ -80,8 +129,15 @@ function buildCity() {
   world.remove(1, DECK + 1, SHIP.z1);
   // the islet, far below
   const islet = floatingIsland(world, ISLET.x, ISLET.y, ISLET.z, 6, 42);
-  growChorus(islet, ISLET.x - 3, ISLET.y + 1, ISLET.z - 2, world);
+  growChorus(islet, ISLET.x - 3, ISLET.y + 1, ISLET.z + 2, world);
   growChorus(islet, ISLET.x + 4, ISLET.y + 1, ISLET.z + 3, world);
+  for (let x = CASTLE.x - 1; x <= CASTLE.x + 1; x += 1) {
+    for (let z = CASTLE.z - 1; z <= CASTLE.z + 1; z += 1) {
+      if (x !== CASTLE.x - 1 && z !== CASTLE.z - 1) continue;
+      const height = x === CASTLE.x - 1 && z === CASTLE.z - 1 ? 4 : 1 + ((x + z) & 1);
+      for (let y = 1; y <= height; y += 1) world.set(x, ISLET.y + y, z, y === height && height > 2 ? 'planks' : 'cobble');
+    }
+  }
   return world;
 }
 
@@ -171,14 +227,10 @@ function DragonHead() {
 export function EndCity() {
   const world = useMemo(() => buildCity(), []);
   const fx = useMemo<SceneFx>(() => ({ shake: 0, flash: 0, light: 0, lightAt: new THREE.Vector3() }), []);
-  const met = useEndGame((state) => Boolean(state.flags.keeperMet));
-  const [holding, setHolding] = useState(true);
-  const [leave, setLeave] = useState(false);
-  const planted = useRef<THREE.Mesh>(null);
-  const grass = overworldKit().mat.grass;
-  const run = useRef({ t: 0, welcomed: false, glided: false, landed: false, lookedAt: -1, planted: false, thanked: false, left: false, titled: false, done: false });
-  // back turned until you look at it, then it faces you
-  const facing = met ? 0 : Math.PI;
+  const [acts, setActs] = useState<Acts>({ ketbome: 'idle', blaster: 'idle', bfuuny: 'idle' });
+  // Bfuuny comes back after his fall as a fresh copy of himself
+  const [bfuunyLife, setBfuunyLife] = useState(0);
+  const run = useRef({ t: 0, welcomed: false, glided: false, landed: false, landedAt: -1, step: 0 });
 
   useEffect(() => {
     runtime.world = world;
@@ -197,13 +249,9 @@ export function EndCity() {
     };
   }, [world]);
 
-  // looking at the keeper from the islet starts the ending
-  const meet = () => {
-    const r = run.current;
-    const game = useEndGame.getState();
-    if (r.lookedAt >= 0 || runtime.player.pos.distanceTo(KEEPER_HOME) > 12) return;
-    r.lookedAt = r.t;
-    game.setFlag('keeperMet');
+  const act = (who: AdminId, what: AdminAct) => {
+    if (who === 'bfuuny' && what === 'idle') setBfuunyLife((life) => life + 1);
+    setActs((current) => ({ ...current, [who]: what }));
   };
 
   useFrame((_, delta) => {
@@ -218,43 +266,25 @@ export function EndCity() {
     }
     if (!r.glided && runtime.player.gliding) {
       r.glided = true;
+      game.setFlag('glided');
       game.advance('goal', 'advSky', 'elytra');
       cue('wind');
     }
     if (runtime.player.gliding && Math.floor(r.t / 2) !== Math.floor((r.t - dt) / 2)) cue('wind', 0.6);
     if (runtime.player.pos.distanceTo(ISLET) < 9 && runtime.player.onGround && !r.landed) {
       r.landed = true;
+      r.landedAt = r.t;
       game.setCheckpoint(ISLET.x + 0.5, ISLET.y + 0.5, ISLET.z + 3, 0);
-      game.showActionBar('hintMeet');
+      game.setFlag('keeperMet');
+    }
+    // from the ship you can see them waiting
+    if (!r.landed && game.flags.elytra && !game.actionBar && runtime.player.pos.z < SHIP.z1 + 4) game.showActionBar('hintMeet');
+
+    while (r.landed && r.step < SCRIPT.length && r.t - r.landedAt > SCRIPT[r.step][0]) {
+      SCRIPT[r.step][1](game, act);
+      r.step += 1;
     }
 
-    const since = r.lookedAt >= 0 ? r.t - r.lookedAt : -1;
-    if (!r.planted && since > PLANT_AT) {
-      r.planted = true;
-      setHolding(false);
-      cue('place');
-    }
-    if (!r.thanked && since > THANKS_AT) {
-      r.thanked = true;
-      game.say('ghostThanks');
-    }
-    if (!r.left && since > LEAVE_AT) {
-      r.left = true;
-      setLeave(true);
-      game.presence('leave');
-    }
-    if (!r.titled && since > TITLE_AT) {
-      r.titled = true;
-      game.showTitle('stayTitle', 'staySubtitle');
-    }
-    if (!r.done && since > DONE_AT) {
-      r.done = true;
-      game.setFlag('stayed');
-    }
-    if (planted.current) {
-      planted.current.visible = r.planted;
-      planted.current.scale.setScalar(r.planted ? Math.min(1, 0.6 + (since - PLANT_AT) * 1.6) : 0.6);
-    }
   });
 
   return (
@@ -263,7 +293,7 @@ export function EndCity() {
       <fog attach="fog" args={['#130e1b', 50, 190]} />
       <ambientLight intensity={1.8} color="#ddd3ea" />
       <directionalLight position={[20, 50, 12]} intensity={1.3} color="#fff4e0" />
-      <pointLight position={[1, ISLET.y + 3, ISLET.z + 1.5]} color="#9dff3f" intensity={holding ? 0 : 6} distance={7} decay={1.6} />
+      <pointLight position={[0, ISLET.y + 3, ISLET.z]} color="#9dff3f" intensity={5} distance={9} decay={1.6} />
       <EndSky fx={fx} />
       <WorldMesh world={world} />
       <Sign id="uptime" at={[-1, DECK + 1, -15]} facing={Math.PI} />
@@ -275,8 +305,10 @@ export function EndCity() {
       {SHULKERS.map((at) => (
         <Shulker key={at.join(':')} at={[at[0], at[1] - 0.5, at[2]]} />
       ))}
-      <Enderman seed={55} carrying={{ home: KEEPER_HOME, facing, holding, leave }} onTeleport={(at) => spawnEffect('burst', at)} onNotice={meet} />
-      <mesh ref={planted} geometry={UNIT_BOX} material={grass} position={GRASS_AT} visible={false} />
+      <Admin who="ketbome" home={HOMES.ketbome} act={acts.ketbome} />
+      <Admin who="blaster" home={HOMES.blaster} act={acts.blaster} />
+      <Admin key={bfuunyLife} who="bfuuny" home={HOMES.bfuuny} act={acts.bfuuny} leap={LEAP} />
+      <Sign id="server48" at={[CASTLE.x + 1, ISLET.y + 1, CASTLE.z + 2]} facing={-0.4} />
       <group position={[0, 3, 6]}>
         <mesh geometry={UNIT_BOX}>
           <meshBasicMaterial color="#2a0848" />

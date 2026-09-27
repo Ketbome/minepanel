@@ -5,38 +5,23 @@ import { Fragment, useState } from 'react';
 import { cue } from '../end-audio';
 import { countOf, ItemIcon, ITEMS, type ItemId } from '../items';
 import { useLore, type LoreKey } from '../lore';
-import { FIRST_GHOST, useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
+import { useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
 import { CraftResult, Crafting } from './Crafting';
+import { SIGN_TEXT } from '../signs';
 import { MapPanel } from './MapPanel';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
-const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest' };
+const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest', city1: 'chest', city2: 'chest', city3: 'chest', city4: 'chest', igloo: 'chest', wreck: 'chest', buried: 'chest' };
 
 const BOOKS: Record<BookId, { readonly title: LoreKey; readonly by?: LoreKey; readonly pages: readonly LoreKey[] }> = {
   note: { title: 'itemNote', pages: ['note'] },
   diary: { title: 'diaryTitle', by: 'diaryBy', pages: ['diary1', 'diary2', 'diary3', 'diary5', 'diary4'] },
-  register: { title: 'itemRegister', pages: ['register1', 'register2'] },
+  register: { title: 'itemRegister', pages: ['register1', 'register2', 'register3'] },
   admin2011: { title: 'bookAdmin2011', by: 'bookAdmin2011By', pages: ['admin2011a', 'admin2011b'] },
+  guide3: { title: 'bookAdmin2011', by: 'bookAdmin2011By', pages: ['guide3a', 'guide3b'] },
   stop: { title: 'bookStop', pages: ['stopBook'] },
 };
 
-const SIGNS: Record<SignId, LoreKey> = {
-  incidents: 'signIncidents',
-  restart: 'signRestart',
-  backups: 'signBackups',
-  border: 'signBorder',
-  toast: 'signToast',
-  cave: 'signCave',
-  quiet: 'signQuiet',
-  casi: 'signCasi',
-  bed: 'signBed',
-  diamond: 'signDiamond',
-  uptime: 'signUptime',
-  tomb: 'tomb',
-  bfuunyBed: 'signBfuunyBed',
-  bfuunyShip: 'signBfuunyShip',
-  bfuunyExit: 'signBfuunyExit',
-};
 
 const TRADES: readonly { readonly item: ItemId; readonly cost: number; readonly flag: Flag }[] = [
   { item: 'map', cost: 3, flag: 'mapBought' },
@@ -83,10 +68,8 @@ function ChestPanel({ id }: { readonly id: ChestId }) {
 // a written book: parchment pages, turned one at a time, signed by whoever wrote it
 function BookPanel({ id }: { readonly id: BookId }) {
   const lore = useLore();
-  const ghost = useEndGame((state) => state.ghost);
   const book = BOOKS[id];
-  // after the loop, the register gains one more struck-through name: the player's
-  const pages = id === 'register' && ghost.name !== FIRST_GHOST.name ? ['register1', 'registerLoop', 'register2'] : book.pages;
+  const pages = book.pages;
   const [page, setPage] = useState(0);
 
   const turn = (by: number) => {
@@ -146,7 +129,7 @@ function SignPanel({ id }: { readonly id: SignId }) {
   return (
     <PanelWindow title={lore('sign')}>
       <div className="mx-auto max-w-xs border-4 border-[#5d452b] bg-[#b8945f] px-4 py-6 text-center text-[#1b1208] shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
-        {lore(SIGNS[id])
+        {lore(SIGN_TEXT[id])
           .split('\n')
           .map((line, index) => (
             <p key={index} className="font-minecraft text-base leading-relaxed">
@@ -201,12 +184,18 @@ function TradePanel() {
   );
 }
 
-// E: the inventory, with the 2x2 crafting grid of the game (the top-left cells of the grid)
+// E: the inventory, with the helmet slot and the 2x2 crafting grid of the game (the top-left
+// cells of the grid)
 function InventoryPanel() {
   const lore = useLore();
+  const helmet = useEndGame((state) => state.helmet);
   return (
     <PanelWindow title={lore('inventory')} wide>
       <div className="flex items-center justify-end gap-2">
+        <div className="mr-auto flex items-center gap-2">
+          <ItemSlot slot={helmet ? { item: 'helmet', count: 1 } : null} onClick={() => useEndGame.getState().clickHelmet()} />
+          <span className="text-[11px] text-gray-400">{lore('armorSlot')}</span>
+        </div>
         <div className="grid grid-cols-2 gap-[3px]">
           {[0, 1, 3, 4].map((cell) => (
             <InvSlot key={cell} area="grid" index={cell} />

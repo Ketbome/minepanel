@@ -31,6 +31,7 @@ frontend/src/
 |  |- players/                  Player list and profile (stats, advancements, inventory)
 |  |- activity/                 Activity tracking settings, event timeline, inventory history
 |  |- scheduler/                Scheduled tasks CRUD endpoints
+|  |- achievements/             End Portal easter egg advancements (per user)
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
 |  |- store/                    Zustand stores
@@ -234,34 +235,77 @@ Tooling / build (Next.js 16):
   Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
   the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
   `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
-  folder may import from it.
-  - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn),
+  folder may import from it, except `AchievementsTrophy.tsx`: the dashboard header's trophy slot.
+  It carries only the key catalog (`achievements.ts`) and the egg icon; its list, badges and lore
+  load with `next/dynamic` when it opens. `advance()` reports each key through
+  `lib/store/achievements-store.ts` (`POST /achievements`, per user). A new advancement key goes
+  in `achievements.ts` and in `backend/src/achievements/dto/unlock-achievement.dto.ts`.
+  - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn;
+    `WorldMesh` draws it per 32x32-column chunk, so a mined block rebuilds only its chunk, three culls
+    chunks out of view and chunks past the fog are hidden; `floor` skips faces pointing down into
+    the ground), the day clock (`clock.ts`: a ten-minute day that pause, windows and death stop;
+    the Overworld's sky, fog and lights follow it, and its camp bed skips the night),
     AABB physics (`physics.ts`), voxel/target raycasts, input, `Player.tsx` (movement, pointer
     lock, crosshair, mining, bow, eating, damage), `Hand.tsx` (the first-person arm and held item,
     drawn in a drei `Hud` pass with the game's swing/bow/eat poses), projectiles and particle
     effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
-    events are not used.
+    events are not used. `BLOCKS` (`world.ts`) says how long a block takes by hand (`mine`) or with the
+    pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
+    (hold to repeat). `Drops.tsx` holds item entities (mob loot, barters, your shot arrows) that you
+    pick up by walking over them. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    and arrows reach the ancient city's noise and the Warden.
   - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
     walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
-    step-up, climbing out when buried) on the same physics as the player. Skins are painted in code
+    step-up, climbing out when buried, never into lava) on the same physics as the player. Mobs a
+    run depends on for supplies (endermen for pearls, piglins for barters) come back through
+    `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Natural spawns go through
+    `useSpawner` (`mobs/spawner.ts`: a cap, a distance band around the player, a condition such as
+    night, and unloading far away); the Overworld's skeletons spawn that way at night and burn by day.
+    Monsters mark their target `hostile`, which is what the bed checks.
+  - Secret achievements are ordinary keys at the end of `achievements.ts` (the trophy shows every
+    missing key as `???`); the flags they look back on (`endermanKilled`, `kevinHit`, `glided`...)
+    are set where it happens, and the islet ones are granted at the end of the islet script.
+    `store/persist.ts` keeps what outlives a run in `localStorage` (the egg, the death count behind
+    `{deaths}`) and `season()` (Halloween pumpkins, Christmas chests). `acts/Server48.tsx` is the
+    epilogue the thanks screen opens.
+  - The Overworld is 257×257: `acts/overworld-layout.ts` keeps the story core (plains, inside 50
+    blocks) and bends four biomes around it with `simplex-noise` (`biomeAt`, `groundHeight`,
+    `FLAT` spots for every structure); `acts/overworld-biomes.ts` builds their columns, trees and
+    structures, and `acts/Biomes.tsx` holds their props (ruin signs, chests, the TNT plate, cactus
+    damage). `engine/explode.ts` is the shared blast (Kevin, TNT). Blocks whose four sides share a
+    texture are drawn with a three-group box (`WorldMesh`), so they cost three draw calls per chunk.
+  - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
+    them large. The text of every sign lives in `signs.ts`.
+  - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.
+    Every joke must land in all 9 languages without knowing a meme, a game tribute or server jargon. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
-    shared red hurt flash and the topple-and-poof death.
+    shared red hurt flash and the topple-and-poof death. Boxes, pivots and rotations follow the
+    vanilla Java entity models converted to +y up, +z forward (x kept, y and z negated; rotation y/z
+    negated, order `ZYX`). Passive mobs share `useAnimal` (`overworld.tsx`); the next phase's
+    monsters (`monsters.tsx`, `nether-monsters.tsx`, `endermite.tsx`) share `useMonster` (hunt,
+    melee hit, death cause), `useHop` (slimes, magma cubes) and `Glow` (unlit eye layers).
   - `store/`: one zustand store from slices (game, inventory, health, hud). A zone change goes
     through `travel()` + `arrive()` so it swaps behind the veil. `flags` hold one-shot story beats.
     A zone's `useFrame` waits for `checkpoint` (its mount effect sets it): until the player is placed,
     `runtime.player.pos` is still the previous zone's. Read `entry` once at mount, never subscribe to it.
+    The Overworld replays `mined` and `placed` when you come back to it; other zones rebuild fresh.
     Windows follow the game's clicks: `clickSlot` (left/right/shift with a held `cursor` stack),
     `spread` (drag), `takeOutput` (result slot); `closePanel` returns grid and cursor to the
     inventory. Escape closes a window or the pause menu; the pointer is relocked only after the
     Escape key comes back up (Chrome otherwise treats that key as leaving the fresh lock). When the
     browser refuses to relock, `resume` shows a click-to-play prompt instead of the pause menu.
   - `lore/<lang>.ts`: every string of the run, typed `Record<LoreKey, string>`; add a key to all
-    9 files. Render it with `useLore()` (fills `{player}`, `{ghost}`, `{days}`), never with the
+    9 files. Render it with `useLore()` (fills `{player}`, `{ghost}` = Ketbome, `{days}`), never with the
     global `t()`. The global dictionaries keep only the page's `dangerEgg*` keys.
-  - The loop: crossing the End gateway saves the player as the next ghost
-    (`minepanel:end-ghost`), who then signs the note, the diary and the register.
+  - The story is the three admins (`store/admins.ts`): Ketbome builds servers he never finishes,
+    BlasterDaster is the pro who got everywhere first, Bfuuny is the good-natured troll who keeps
+    dying. They talk in the chat as themselves (`say(key, author)`) and wait on the End City islet,
+    where the run ends on their thanks (`Thanks.tsx`, also shown after the poem). The button in the
+    ancient city lets The Rake (`mobs/rake.tsx`) loose: from then on, in any zone, it can follow you
+    unseen (only its breathing shows in the subtitles); looking at it triggers the screamer
+    (`hud/Screamer.tsx`), a few seconds with its hands over its face, and then the chase.
   - Sounds: CC0 clips in `public/sounds` (credited in `CREDITS.md`), each cue with a synth fallback
     in `end-audio.ts`. Block textures are painted at runtime (`voxels.tsx` End,
     `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`).

@@ -1,35 +1,22 @@
 'use client';
 
-import Image from 'next/image';
 import { AnimatePresence, m } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { cue } from '../end-audio';
-import { ItemIcon } from '../items';
 import { useLore } from '../lore';
-import { DragonHeadIcon, DragonEggIcon, EyeOfEnderIcon } from '../PixelIcons';
-import { DRAGON_MAX_HP, useEndGame, type Advancement, type AdvancementIcon, type Caption } from '../store';
+import { DRAGON_MAX_HP, useEndGame, type Advancement, type Caption } from '../store';
+import { AdvancementBadge } from './AdvancementBadge';
 import { Chat } from './Chat';
 import { Hotbar } from './Hotbar';
 import { Objectives } from './Objectives';
 import { DeathScreen, PauseMenu, ResumePrompt } from './Screens';
+import { Screamer } from './Screamer';
 import { TouchControls } from './TouchControls';
 
 // Heads-up display in the game's own grammar: boss bar, hearts and hotbar, crosshair,
 // action bar, advancement toasts, chat and sound subtitles.
 
 export const SHADOW = { textShadow: '2px 2px 0 rgba(0,0,0,0.8)' };
-
-function AdvancementBadge({ icon }: { readonly icon: AdvancementIcon }) {
-  if (icon === 'eye') return <EyeOfEnderIcon className="h-7 w-7" />;
-  if (icon === 'egg') return <DragonEggIcon className="h-7 w-7" />;
-  if (icon === 'dragon') return <DragonHeadIcon className="h-7 w-7" />;
-  if (icon === 'sword') return <ItemIcon item="sword" className="h-7 w-7" />;
-  if (icon === 'rod') return <ItemIcon item="rod" className="h-7 w-7" />;
-  if (icon === 'elytra') return <ItemIcon item="elytra" className="h-7 w-7" />;
-  if (icon === 'button') return <ItemIcon item="obsidian" className="h-7 w-7" />;
-  if (icon === 'fireball') return <ItemIcon item="blaze" className="h-7 w-7" />;
-  return <Image src="/images/ender-pearl.webp" alt="" width={28} height={28} className="pixelated h-7 w-7 object-contain" />;
-}
 
 function BossBar() {
   const lore = useLore();
@@ -269,6 +256,7 @@ export function Hud({ onClose }: { readonly onClose: () => void }) {
   return (
     <>
       <DamageFlash />
+      <Screamer />
       <BossBar />
       <NoiseMeter />
       <Objectives />

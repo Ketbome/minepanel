@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { surface } from '../engine/physics';
+import { WALK } from '../engine/Player';
 import { playerCenter, runtime } from '../engine/runtime';
 import { useEndGame } from '../store';
 import { Part, PX, useDamage, useMobTarget } from './parts';
@@ -12,13 +13,18 @@ import { Box, sides, useSkin, type SkinArt } from './skins';
 
 const EMERGE_S = 3;
 const BURROW_S = 2;
-const SPEED = 2.6;
-const HP = 50;
-const STRIKE = 12;
-const STRIKE_COOLDOWN = 1.6;
-const BOOM = 8;
+const SPEED = 3;
+// angry, it is a hair slower than you walking, so it never quite catches you; its sonic boom does
+const ANGRY_SPEED = WALK * 0.96;
+const HP = 250;
+const STRIKE = 16;
+const STRIKE_COOLDOWN = 1.4;
+const BOOM = 10;
+const BOOM_RANGE = 20;
 const BOOM_CHARGE_S = 1.5;
-const BOOM_COOLDOWN_S = 5;
+const BOOM_COOLDOWN_S = 4;
+// it walks to a vibration for this long after hearing it
+const HEARD_S = 6;
 const BOOM_RINGS = 7;
 const toward = new THREE.Vector3();
 const chest = new THREE.Vector3();
@@ -108,6 +114,11 @@ const WARDEN: SkinArt = {
   },
 };
 
+export interface Heard {
+  readonly pos: THREE.Vector3;
+  at: number;
+}
+
 // a tendril: a horn-shaped fin of three glowing boxes that curls up and out from the head
 function Tendril({ side, glow, pivot }: { readonly side: 1 | -1; readonly glow: THREE.Material; readonly pivot: (group: THREE.Group | null) => void }) {
   return (
@@ -120,11 +131,12 @@ function Tendril({ side, glow, pivot }: { readonly side: 1 | -1; readonly glow: 
   );
 }
 
-// The watchdog. It rises out of the floor when the noise meter fills and follows the player's
-// noise. Go quiet and it burrows back; hit it and it hunts you anyway, and if you keep your
-// distance it charges a sonic boom that goes through walls. It takes a lot of hitting, and once it
-// has had you it goes back down, so a respawn never lands next to it.
-export function Warden({ from, onGone }: { readonly from: THREE.Vector3; readonly onGone: () => void }) {
+// The watchdog. It rises out of the floor when the noise meter fills and walks to the last
+// vibration it heard: your steps, or an arrow you shot somewhere else to lead it away. Go quiet
+// and it burrows back; hit it and it hunts you anyway. While it is angry or the city is still on
+// high alert, keeping your distance earns you a sonic boom that goes through walls. Two strikes kill you and it takes a great deal of hitting;
+// once it has had you it goes back down, so a respawn never lands next to it.
+export function Warden({ from, heard, onGone }: { readonly from: THREE.Vector3; readonly heard: Heard; readonly onGone: () => void }) {
   const root = useRef<THREE.Group>(null);
   const arms = useRef<(THREE.Group | null)[]>([]);
   const tendrils = useRef<(THREE.Group | null)[]>([]);
@@ -252,8 +264,9 @@ export function Warden({ from, onGone }: { readonly from: THREE.Vector3; readonl
     const dz = p.z - group.position.z;
     const distance = Math.hypot(dx, dz);
     const angry = runtime.time < s.angryUntil;
-    // it hears you while you are loud; once you go quiet it loses you
-    const tracking = game.noise > 20 || angry;
+    // it follows what it hears; once everything goes quiet it loses you
+    const listening = runtime.time - heard.at < HEARD_S;
+    const tracking = game.noise > 20 || angry || listening;
     if (tracking) s.lostAt = -1;
     else if (s.lostAt < 0) s.lostAt = runtime.time;
     if (s.lostAt >= 0 && runtime.time - s.lostAt > 8) {
@@ -261,8 +274,9 @@ export function Warden({ from, onGone }: { readonly from: THREE.Vector3; readonl
       return;
     }
 
-    // out of reach and angry: it stops, draws in a breath and fires a boom through anything
-    if (s.boomAt < 0 && angry && distance > 4 && distance < 16 && runtime.time > s.boomReadyAt) {
+    // out of reach and angry, or on high alert: it stops, draws in a breath and fires a boom
+    // through anything
+    if (s.boomAt < 0 && (angry || game.noise > 50) && distance > 4 && distance < BOOM_RANGE && runtime.time > s.boomReadyAt) {
       s.boomAt = runtime.time;
       cue('shriek', 0.9);
     }
@@ -277,18 +291,25 @@ export function Warden({ from, onGone }: { readonly from: THREE.Vector3; readonl
         s.from.copy(chest);
         s.to.copy(target);
         cue('boom', 0.7);
-        if (chest.distanceTo(target) < 20 && !game.dead) {
+        if (chest.distanceTo(target) < BOOM_RANGE + 4 && !game.dead) {
           game.hurt(BOOM, 'warden');
           toward.copy(target).sub(chest).setY(0).normalize();
           runtime.player.vel.addScaledVector(toward, 6).setY(4);
         }
       }
-    } else if (tracking && distance > 1.2) {
-      const step = Math.min(distance, SPEED * dt);
-      group.position.x += (dx / distance) * step;
-      group.position.z += (dz / distance) * step;
-      group.rotation.y = Math.atan2(dx, dz);
-      s.walk += dt * 5;
+    } else if (tracking) {
+      // angry, it goes for you; otherwise for the vibration, which is you whenever you are loud
+      const goal = angry || !listening ? p : heard.pos;
+      const gx = goal.x - group.position.x;
+      const gz = goal.z - group.position.z;
+      const away = Math.hypot(gx, gz);
+      if (away > 1.2) {
+        const step = Math.min(away, (angry ? ANGRY_SPEED : SPEED) * dt);
+        group.position.x += (gx / away) * step;
+        group.position.z += (gz / away) * step;
+        group.rotation.y = Math.atan2(gx, gz);
+        s.walk += dt * (angry ? 7 : 5);
+      }
     }
 
     // a strike throws both arms forward; a boom pulls them back and opens the chest

@@ -532,6 +532,8 @@ export const fr: Record<TranslationKey, string> = {
   terms: 'Conditions',
   documentation: 'Documentation',
   github: 'GitHub',
+  achievements: 'Succès',
+  achievementsLocked: 'Succès verrouillé',
   reportBug: 'Signaler un bug',
   links: 'Liens',
   sourceCode: 'Code source',

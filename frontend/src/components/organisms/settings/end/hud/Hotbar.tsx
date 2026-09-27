@@ -51,6 +51,24 @@ function Hearts() {
   );
 }
 
+// the game's chestplate icon; the golden helmet's two armor points fill one of them
+const ARMOR_ROWS = ['.XXX.XXX.', 'XWWXXXWWX', 'XWGGGGGWX', 'XXGGGGGXX', '.XGGGGGX.', '.XGGGGGX.', '.XGGGGGX.', '.XGGGGGX.', '.XXXXXXX.'];
+
+function Armor() {
+  const lore = useLore();
+  const helmet = useEndGame((state) => state.helmet);
+  if (!helmet) return null;
+  return (
+    <div className="flex" role="img" aria-label={lore('armor')}>
+      <svg viewBox="0 0 9 9" className="h-3.5 w-3.5 sm:h-4 sm:w-4" shapeRendering="crispEdges" aria-hidden>
+        {ARMOR_ROWS.flatMap((row, y) =>
+          [...row].map((cell, x) => (cell === '.' ? null : <rect key={`${x}:${y}`} x={x} y={y} width={1} height={1} fill={cell === 'X' ? '#1a1a1a' : cell === 'W' ? '#ffffff' : '#c6c6c6'} />))
+        )}
+      </svg>
+    </div>
+  );
+}
+
 // the name of the item you just switched to floats above the hotbar for a moment
 function HeldName() {
   const lore = useLore();
@@ -93,7 +111,8 @@ export function Hotbar() {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex flex-col items-center gap-1 md:bottom-5">
       <HeldName />
-      <div className="flex w-[min(92vw,396px)] items-end justify-between">
+      <div className="flex w-[min(92vw,396px)] flex-col items-start gap-0.5">
+        <Armor />
         <Hearts />
       </div>
       <div className="relative w-[min(92vw,396px)]">

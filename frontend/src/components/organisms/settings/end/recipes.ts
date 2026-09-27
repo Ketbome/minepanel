@@ -6,7 +6,8 @@ import { addItem, countOf, removeItem, type ItemId, type Slot } from './items';
 export interface Recipe {
   readonly output: ItemId;
   readonly count?: number;
-  readonly rows?: readonly (readonly ItemId[])[];
+  // null is a cell that must stay empty
+  readonly rows?: readonly (readonly (ItemId | null)[])[];
   readonly ingredients?: readonly ItemId[];
 }
 
@@ -14,11 +15,14 @@ export const RECIPES: readonly Recipe[] = [
   { output: 'sword', rows: [['diamond'], ['diamond'], ['stick']] },
   { output: 'blaze', count: 2, ingredients: ['rod'] },
   { output: 'eye', ingredients: ['pearl', 'blaze'] },
+  { output: 'pickaxe', rows: [['diamond', 'diamond', 'diamond'], [null, 'stick', null], [null, 'stick', null]] },
+  { output: 'planks', count: 4, ingredients: ['log'] },
+  { output: 'stick', count: 4, rows: [['planks'], ['planks']] },
 ];
 
 const SIZE = 3;
 
-function matchesShape(grid: readonly Slot[], rows: readonly (readonly ItemId[])[]) {
+function matchesShape(grid: readonly Slot[], rows: readonly (readonly (ItemId | null)[])[]) {
   const filled = grid.flatMap((cell, index) => (cell ? [index] : []));
   if (filled.length === 0) return false;
   const top = Math.min(...filled.map((index) => Math.floor(index / SIZE)));
@@ -26,7 +30,7 @@ function matchesShape(grid: readonly Slot[], rows: readonly (readonly ItemId[])[
   const bottom = Math.max(...filled.map((index) => Math.floor(index / SIZE)));
   const right = Math.max(...filled.map((index) => index % SIZE));
   if (bottom - top + 1 !== rows.length || right - left + 1 !== rows[0].length) return false;
-  return rows.every((row, r) => row.every((item, c) => grid[(top + r) * SIZE + left + c]?.item === item));
+  return rows.every((row, r) => row.every((item, c) => (grid[(top + r) * SIZE + left + c]?.item ?? null) === item));
 }
 
 function matchesShapeless(grid: readonly Slot[], ingredients: readonly ItemId[]) {
@@ -39,8 +43,8 @@ export function match(grid: readonly Slot[]) {
   return RECIPES.find((recipe) => (recipe.rows ? matchesShape(grid, recipe.rows) : matchesShapeless(grid, recipe.ingredients!))) ?? null;
 }
 
-function needs(recipe: Recipe) {
-  return recipe.rows ? recipe.rows.flat() : recipe.ingredients!;
+export function needs(recipe: Recipe): readonly ItemId[] {
+  return recipe.rows ? recipe.rows.flat().filter((item): item is ItemId => item !== null) : recipe.ingredients!;
 }
 
 export function canFill(recipe: Recipe, slots: readonly Slot[]) {
@@ -58,7 +62,9 @@ export function fillFor(recipe: Recipe, grid: readonly Slot[], inventory: readon
   const sets = max ? Math.min(64, ...wanted.map((item) => Math.floor(countOf(bag, item) / wanted.filter((other) => other === item).length))) : 1;
   const next: Slot[] = Array.from({ length: SIZE * SIZE }, () => null);
   if (recipe.rows) {
-    recipe.rows.forEach((row, r) => row.forEach((item, c) => (next[r * SIZE + 1 + c] = { item, count: sets })));
+    // a three-wide recipe fills the whole row, a narrower one sits in the middle column
+    const left = recipe.rows[0].length === SIZE ? 0 : 1;
+    recipe.rows.forEach((row, r) => row.forEach((item, c) => (next[r * SIZE + left + c] = item && { item, count: sets })));
   } else {
     recipe.ingredients!.forEach((item, index) => (next[SIZE + 1 + index] = { item, count: sets }));
   }

@@ -39,3 +39,6 @@ All sounds are CC0 (Creative Commons 0 / public domain) previews from freesound.
 | hiss.ogg | https://freesound.org/s/372186/ ("FUSE.wav") |
 | dirt.ogg | https://freesound.org/s/213005/ ("Shovel.wav") |
 | death.ogg | https://freesound.org/s/460042/ ("Piano Shock Impact") |
+| rake-scream.ogg | https://freesound.org/s/352508/ ("Creepy Ghost Scream") |
+| rake-shriek.ogg | https://freesound.org/s/320740/ ("Horror shrieks woman") |
+| rake-breath.ogg | https://freesound.org/s/369294/ ("Creepy_Breathing.wav") |
