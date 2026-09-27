@@ -154,8 +154,10 @@ export class PlayersService {
   }
 
   private async readGameVersion(worldDir: string): Promise<string | null> {
+    const file = path.join(worldDir, 'level.dat');
     try {
-      const level = simplify((await parse(await fs.readFile(path.join(worldDir, 'level.dat')))).parsed);
+      await this.assertInsideMcData(file);
+      const level = simplify((await parse(await fs.readFile(file))).parsed);
       return typeof level?.Data?.Version?.Name === 'string' ? level.Data.Version.Name : null;
     } catch {
       return null;

@@ -185,6 +185,18 @@ describe('PlayersService', () => {
       expect(textures.ensure).toHaveBeenCalledWith('1.21.1');
     });
 
+    it('ignores a level.dat that is a link leaving mc-data', async () => {
+      const other = path.join(serversDir, 'other', 'mc-data', 'world', 'level.dat');
+      await fs.outputFile(other, levelDat('1.20.4'));
+      await writeWorldFile('world', 'playerdata', `${STEVE}.dat`, legacyPlayerDat());
+      await fs.symlink(other, path.join(mcData, 'world', 'level.dat'));
+
+      const profile = await service.profile('srv', STEVE);
+
+      expect(profile.textureVersion).toBeNull();
+      expect(textures.ensure).not.toHaveBeenCalled();
+    });
+
     it('parses advancement dates', async () => {
       await writeWorldFile('world', 'advancements', `${STEVE}.json`, JSON.stringify({ 'minecraft:story/root': { done: true, criteria: { a: '2024-03-14 18:02:11 +0000' } } }));
 
