@@ -14,6 +14,25 @@ export function knownExperimentalPacks(value: string | undefined): string[] | nu
   return packs.every((pack) => (EXPERIMENTAL_PACKS as readonly string[]).includes(pack)) ? packs : null;
 }
 
+// Console commands itzg runs through RCON on server events (scripts/auto/rcon-cmds-daemon.sh).
+// They carry console power, so changing them needs the useConsole permission.
+export const EVENT_COMMAND_FIELDS = {
+  rconCmdsStartup: 'RCON_CMDS_STARTUP',
+  rconCmdsFirstConnect: 'RCON_CMDS_FIRST_CONNECT',
+  rconCmdsOnConnect: 'RCON_CMDS_ON_CONNECT',
+  rconCmdsOnDisconnect: 'RCON_CMDS_ON_DISCONNECT',
+  rconCmdsLastDisconnect: 'RCON_CMDS_LAST_DISCONNECT',
+} as const;
+export type EventCommandField = keyof typeof EVENT_COMMAND_FIELDS;
+/** One command per line, without blank lines or a leading slash; null when nothing is left. */
+export function normalizeEventCommands(text: string | undefined | null): string | null {
+  const commands = (text ?? '')
+    .split('\n')
+    .map((line) => line.trim().replace(/^\/+/, '').trim())
+    .filter(Boolean);
+  return commands.length > 0 ? commands.join('\n') : null;
+}
+
 export type ServerEdition = 'JAVA' | 'BEDROCK';
 
 // Seconds Docker must keep waiting after the stop announcement so Minecraft can flush its final save
@@ -388,6 +407,31 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   envVars?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16384)
+  rconCmdsStartup?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16384)
+  rconCmdsFirstConnect?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16384)
+  rconCmdsOnConnect?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16384)
+  rconCmdsOnDisconnect?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16384)
+  rconCmdsLastDisconnect?: string;
 
   @IsString()
   @IsOptional()

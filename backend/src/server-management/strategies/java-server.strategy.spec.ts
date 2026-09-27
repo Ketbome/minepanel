@@ -233,6 +233,15 @@ describe('JavaServerStrategy', () => {
       expect(strategy.buildEnvironment({ ...custom, experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBe('update_1_20,bundle');
     });
 
+    it('writes event commands one per line, and none while RCON is off', () => {
+      const config = { ...baseConfig(), rconCmdsStartup: '/team add New\n\n  gamerule keep_inventory true ', rconCmdsFirstConnect: '', rconCmdsLastDisconnect: 'save-all' };
+      const env = strategy.buildEnvironment(config as any);
+      expect(env).toMatchObject({ RCON_CMDS_STARTUP: 'team add New\ngamerule keep_inventory true', RCON_CMDS_LAST_DISCONNECT: 'save-all' });
+      expect(env.RCON_CMDS_FIRST_CONNECT).toBeUndefined();
+      expect(env.RCON_CMDS_ON_CONNECT).toBeUndefined();
+      expect(strategy.buildEnvironment({ ...config, enableRcon: false } as any).RCON_CMDS_STARTUP).toBeUndefined();
+    });
+
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), enableRcon: false, worldSource: 'w' } as any)).toMatchObject({ ENABLE_RCON: 'false', WORLD: '/data/.world-library/local/w' });
       expect(strategy.buildEnvironment({ ...baseConfig(), worldSource: '/abs/world' } as any).WORLD).toBe('/abs/world');
