@@ -10,6 +10,8 @@ interface Objective {
   readonly done: boolean;
   readonly count?: string;
   readonly optional?: boolean;
+  // a rule to keep, not a task: it is never ticked off
+  readonly rule?: boolean;
 }
 
 function objectives(game: EndGameState): Objective[] {
@@ -33,7 +35,7 @@ function objectives(game: EndGameState): Objective[] {
   }
   if (zone === 'ancient') {
     return [
-      { key: 'objQuiet', done: false },
+      { key: 'objQuiet', done: false, rule: true },
       { key: 'objButton', done: Boolean(flags.buttonPressed), optional: true },
     ];
   }
@@ -89,8 +91,17 @@ export function Objectives() {
       <p className="font-minecraft text-[11px] text-fuchsia-300">{lore('objectives')}</p>
       <ul className="mt-1.5 space-y-1.5">
         {rows.map((row) => (
-          <li key={row.key} className={`flex items-start gap-2 text-xs ${row.done ? 'text-gray-500 line-through' : row.optional ? 'italic text-gray-300' : 'text-gray-100'}`}>
-            <span className={`mt-[3px] h-2.5 w-2.5 shrink-0 border-2 ${row.done ? 'border-emerald-400 bg-emerald-400' : row.optional ? 'border-dashed border-gray-500' : 'border-gray-400'}`} />
+          <li
+            key={row.key}
+            className={`flex items-start gap-2 text-xs ${row.rule ? 'text-amber-200' : row.done ? 'text-gray-500 line-through' : row.optional ? 'italic text-gray-300' : 'text-gray-100'}`}
+          >
+            {row.rule ? (
+              <span aria-hidden className="mt-px w-2.5 shrink-0 text-center font-mono text-[11px] font-bold leading-none text-amber-400">
+                !
+              </span>
+            ) : (
+              <span className={`mt-[3px] h-2.5 w-2.5 shrink-0 border-2 ${row.done ? 'border-emerald-400 bg-emerald-400' : row.optional ? 'border-dashed border-gray-500' : 'border-gray-400'}`} />
+            )}
             <span className="flex-1">{lore(row.key)}</span>
             {row.count && <span className="font-mono text-[11px] tabular-nums text-fuchsia-300">{row.count}</span>}
           </li>
