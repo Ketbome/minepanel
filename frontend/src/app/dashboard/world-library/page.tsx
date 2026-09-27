@@ -1,13 +1,13 @@
 "use client";
 
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import Image from "next/image";
 import { FileBrowser } from "@/components/molecules/FileBrowser";
 import { useState } from "react";
 import { WorldDiscoverPanel } from "@/components/organisms/world-library/WorldDiscoverPanel";
 import { WorldLibraryGrid } from "@/components/organisms/world-library/WorldLibraryGrid";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { FolderOpen } from "lucide-react";
+import { PageTitle } from "@/components/molecules/PageTitle";
 
 export default function WorldLibraryPage() {
   const { t } = useLanguage();
@@ -16,15 +16,7 @@ export default function WorldLibraryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mc-panel animate-fade-in-up">
-        <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
-          <Image src="/images/grass.webp" alt="World Library" width={32} height={32} className="pixelated" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("worldLibrary")}</h1>
-            <p className="text-gray-300 text-xs">{t("worldLibraryDesc")}</p>
-          </div>
-        </div>
-      </div>
+      <PageTitle icon="/images/grass.webp" title={t("worldLibrary")} description={t("worldLibraryDesc")} />
 
       <WorldLibraryGrid refreshToken={refreshToken} />
 

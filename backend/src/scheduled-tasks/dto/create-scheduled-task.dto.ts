@@ -7,12 +7,13 @@ export class CreateScheduledTaskDto {
   @MaxLength(64, { message: 'name must be at most 64 characters' })
   name: string;
 
-  @IsIn(['restart', 'command'], { message: 'type must be "restart" or "command"' })
+  @IsIn(['restart', 'command', 'announce'], { message: 'type must be "restart", "command" or "announce"' })
   type: ScheduledTaskType;
 
   @IsOptional()
   @IsString()
-  @MaxLength(1024, { message: 'command must be at most 1024 characters' })
+  // Announcements hold up to 20 lines of 256 characters; command tasks keep their 1024 limit in the service.
+  @MaxLength(5200, { message: 'command must be at most 5200 characters' })
   command?: string;
 
   @IsOptional()

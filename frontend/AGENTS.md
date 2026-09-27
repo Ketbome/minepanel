@@ -230,14 +230,47 @@ Tooling / build (Next.js 16):
   These return `null` for unknown values on purpose: an unreachable game must render as `-`, never `0`.
 - `src/components/molecules/Tabs/ScheduledTasksTab.tsx` - scheduled tasks CRUD.
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
-- `src/components/organisms/settings/end/` - the Danger Zone easter egg. The R3F scene
-  (`JourneyScene`) is loaded with `next/dynamic` only on click, so `three` never reaches the
-  settings bundle; nothing outside this folder may import from it. Game state lives in
-  `end-game-store.ts`, sounds and their subtitles in `end-audio.ts` (CC0 clips + WebAudio synths),
-  block textures are painted at runtime in `voxels.tsx`. The overlay is exempt from the
-  no-perpetual-motion rule; it is not an operating screen.
+- `src/components/organisms/settings/end/` - the Danger Zone easter egg: a first-person
+  Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
+  the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
+  `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
+  folder may import from it.
+  - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn),
+    AABB physics (`physics.ts`), voxel/target raycasts, input, `Player.tsx` (movement, pointer
+    lock, crosshair, mining, bow, eating, damage), `Hand.tsx` (the first-person arm and held item,
+    drawn in a drei `Hud` pass with the game's swing/bow/eat poses), projectiles and particle
+    effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
+    events are not used.
+  - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
+    `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
+    walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
+    step-up, climbing out when buried) on the same physics as the player. Skins are painted in code
+    (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
+    like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
+    shared red hurt flash and the topple-and-poof death.
+  - `store/`: one zustand store from slices (game, inventory, health, hud). A zone change goes
+    through `travel()` + `arrive()` so it swaps behind the veil. `flags` hold one-shot story beats.
+    A zone's `useFrame` waits for `checkpoint` (its mount effect sets it): until the player is placed,
+    `runtime.player.pos` is still the previous zone's. Read `entry` once at mount, never subscribe to it.
+    Windows follow the game's clicks: `clickSlot` (left/right/shift with a held `cursor` stack),
+    `spread` (drag), `takeOutput` (result slot); `closePanel` returns grid and cursor to the
+    inventory. Escape closes a window or the pause menu; the pointer is relocked only after the
+    Escape key comes back up (Chrome otherwise treats that key as leaving the fresh lock). When the
+    browser refuses to relock, `resume` shows a click-to-play prompt instead of the pause menu.
+  - `lore/<lang>.ts`: every string of the run, typed `Record<LoreKey, string>`; add a key to all
+    9 files. Render it with `useLore()` (fills `{player}`, `{ghost}`, `{days}`), never with the
+    global `t()`. The global dictionaries keep only the page's `dangerEgg*` keys.
+  - The loop: crossing the End gateway saves the player as the next ghost
+    (`minepanel:end-ghost`), who then signs the note, the diary and the register.
+  - Sounds: CC0 clips in `public/sounds` (credited in `CREDITS.md`), each cue with a synth fallback
+    in `end-audio.ts`. Block textures are painted at runtime (`voxels.tsx` End,
+    `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`).
+  - The overlay is exempt from the no-perpetual-motion rule; it is not an operating screen. Reduced
+    motion still plays, with a steady camera (`runtime.reducedMotion`: no bobbing, no FOV kicks, no
+    hand sway) and the poem without scrolling; only a browser without WebGL2 falls back to the
+    poem, with a notice on enabling hardware acceleration.
 - `src/lib/store/servers-store.ts`
-- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`)
+- `src/lib/translations/index.ts` and language files (`en.ts`, `es.ts`, `nl.ts`, `de.ts`, `fr.ts`, `pl.ts`, `ru.ts`, `pt.ts`, `tr.ts`)
 - `eslint.config.mjs` - flat ESLint config (eslint-config-next 16).
 - `next.config.ts` - Turbopack config, standalone output, image/compiler options.
 - `package.json`
@@ -271,7 +304,7 @@ Routing and data flow:
 
 i18n:
 
-- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`); the build fails if a dictionary is missing a key.
+- Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`, `tr`); the build fails if a dictionary is missing a key.
 - Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 

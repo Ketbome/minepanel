@@ -78,6 +78,18 @@ describe('ActivityService', () => {
       expect(death).toMatchObject({ type: 'death', uuid: STEVE });
     });
 
+    it('picks up players whose session opened after tracking started reading (issue #280)', async () => {
+      // Tracking reads a first batch while nobody is online, then the player's join lands before
+      // the cursor (tracking switched on mid-session), so only player-activity knows they are online.
+      await service.ingest('srv', [line('12:00:00', 'Starting minecraft server version 26.3')], at);
+      await openSession('Steve', at('12:01:00'), { uuid: STEVE });
+
+      await service.ingest('srv', [line('12:05:00', 'Steve was slain by Zombie')], at);
+
+      const [death] = await dataSource.getRepository(ActivityEvent).find();
+      expect(death).toMatchObject({ type: 'death', name: 'Steve', uuid: STEVE });
+    });
+
     it('stops treating players as online once the server stops', async () => {
       await service.ingest('srv', [line('12:00:00', 'Steve joined the game'), line('12:30:00', 'Stopping server'), line('12:31:00', 'Steve fell from a high place')], at);
 

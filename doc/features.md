@@ -89,7 +89,17 @@ References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/la
 | Force stop     | Stops now instead of waiting for the shutdown announcement (`STOP_SERVER_ANNOUNCE_DELAY`, 60s by default). Sends `stop` over RCON so the world is still saved, and kills the container after 10s if it does not exit |
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
-| Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone) |
+| Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone). Rotating announcements: see below |
+
+### Scheduled announcements
+
+An **Announcements** task in the Tasks tab sends a list of chat messages to all players, one message per run, in order, and starts again after the last one.
+
+- Up to 20 messages, one per line, each up to 256 characters.
+- `&` color and format codes work (`&a` green, `&l` bold, `&r` reset).
+- Messages are sent with `tellraw`, so they show without a `[Server]` prefix.
+- If the server is stopped when a message is due, that message is sent on the next run instead of being skipped. Editing the list starts again from the first message.
+- Java servers only: it uses RCON like command tasks, and Bedrock servers skip the task.
 
 ## Roles and Access Control
 
@@ -144,6 +154,8 @@ while the server is stopped because it reads the world files directly.
 
 Minecraft writes player files on autosave and on logout, so data for online players can be a few
 minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
+Both world layouts are read: `players/data`, `players/stats` and `players/advancements` from
+Minecraft 26.1 on, and the top-level `playerdata`, `stats` and `advancements` folders before it.
 
 ### Activity log
 
@@ -169,6 +181,11 @@ every few seconds and keeps:
 - Per-session kills, distance and blocks mined come from the player's stats file, which Minecraft
   writes on logout; imported history only has what the log says (deaths, chat, advancements).
 - Chat reformatted by server plugins may not be recognised.
+- Commands: Paper and Spigot log every player command (`issued server command`). Vanilla only logs
+  the feedback that operators see (`[Steve: Set the time to 1000]`), so a vanilla timeline shows
+  that text for commands with feedback, and nothing when `log_admin_commands` is off.
+- Players who were already online when tracking was turned on are known from the session history,
+  so their deaths are recorded even though their join happened before recording started.
 - Minecraft does not write the inventory at the moment of death, so "before death" is the last
   save before it (join or autosave, up to 5 minutes earlier). Chests placed in the world are not tracked.
 
@@ -349,7 +366,7 @@ Recommended approach:
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Hidden 3D easter egg in Settings > Danger Zone: light a stronghold portal, break the End crystals, slay the dragon, catch its egg and read the End Poem. Works on desktop and touch; reduced-motion users get a static version |
+| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay the Ender Dragon, fly an End City elytra and read the End Poem. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint |
 
 ## Edition Comparison
 

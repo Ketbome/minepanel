@@ -321,18 +321,20 @@ export class ActivityService {
     }
   }
 
-  // After a panel restart, the players still online come from player-activity's open sessions
+  // Players online come from player-activity's open sessions as well as the joins read here.
+  // Refreshing them on every read covers players who were already online when tracking was
+  // switched on (their join is before the cursor); without it their deaths are never matched.
   private async getLiveState(serverId: string): Promise<IngestState> {
     let state = this.liveStates.get(serverId);
     if (!state) {
-      const open = await this.sessionRepo.find({ where: { serverId, leftAt: IsNull() } });
-      state = {
-        online: new Map(open.map((session) => [session.name.toLowerCase(), { name: session.name, uuid: session.uuid, joinedAt: session.joinedAt }])),
-        uuids: new Map(open.filter((session) => session.uuid).map((session) => [session.name.toLowerCase(), session.uuid])),
-        lastEventAt: null,
-        closed: null,
-      };
+      state = { online: new Map(), uuids: new Map(), lastEventAt: null, closed: null };
       this.liveStates.set(serverId, state);
+    }
+    const open = await this.sessionRepo.find({ where: { serverId, leftAt: IsNull() } });
+    for (const session of open) {
+      const key = session.name.toLowerCase();
+      if (!state.online.has(key)) state.online.set(key, { name: session.name, uuid: session.uuid, joinedAt: session.joinedAt });
+      if (session.uuid && !state.uuids.has(key)) state.uuids.set(key, session.uuid);
     }
     return state;
   }

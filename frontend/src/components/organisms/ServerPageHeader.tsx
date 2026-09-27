@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, PowerIcon, RefreshCw, Server, FolderOpen, Trash2, Zap } from "lucide-react";
+import { ArrowLeft, PowerIcon, RefreshCw, FolderOpen, Trash2, Zap } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
@@ -28,7 +28,6 @@ interface ServerPageHeaderProps {
 
 export function ServerPageHeader({ serverId, serverName, serverStatus, serverPort, serverEdition, isProcessing, onStartServer, onStopServer, onForceStopServer, onRestartServer, onClearData, onOpenFiles }: ServerPageHeaderProps) {
   const { t } = useLanguage();
-  const containerName = serverId;
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClearData = async () => {
@@ -55,16 +54,19 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
     }
   };
 
+  const isUp = serverStatus === "running" || serverStatus === "starting";
+
   return (
-    <div className="mc-panel p-6 space-y-4 text-gray-200">
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard/servers">
-          <Button variant="outline" size="icon" type="button" className="border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-emerald-600/20 hover:text-emerald-400 hover:border-emerald-600/50">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+    <div className="mc-panel px-4 py-3 space-y-2.5 text-gray-200">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Link href="/dashboard/servers" className="mc-iconbtn shrink-0" aria-label={t("dashboard")} title={t("dashboard")}>
+          <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white font-minecraft">{serverId}</h1>
-        <Badge variant="outline" className={`px-3 py-1 ${getStatusBadgeClass(serverStatus)}`}>
+        <div className="mc-slot size-9 shrink-0 flex items-center justify-center">
+          <Image src={getStatusIcon(serverStatus)} alt="" width={26} height={26} className="pixelated object-contain" />
+        </div>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white font-minecraft truncate">{serverId}</h1>
+        <Badge variant="outline" className={`px-2.5 py-0.5 ${getStatusBadgeClass(serverStatus)}`}>
           {serverStatus === "starting" ? (
             <span className="flex items-center gap-1">
               <RefreshCw className="h-3 w-3 animate-spin" />
@@ -72,37 +74,21 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
             </span>
           ) : (
             <span className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-current"></div>
+              <span className="w-2 h-2 rounded-full bg-current" />
               {getStatusText(serverStatus)}
             </span>
           )}
         </Badge>
-      </div>
+        {serverName && serverName !== serverId && <span className="text-sm text-gray-400 truncate min-w-0">{serverName}</span>}
 
-      {serverStatus === "running" && <ServerRuntimeChips serverId={serverId} serverStatus={serverStatus} />}
-
-      <div className="mc-slot flex flex-col md:flex-row items-start md:items-center gap-4 p-4">
-        <div className="flex items-center gap-3">
-          <div className="mc-slot shrink-0 w-12 h-12 relative flex items-center justify-center">
-            <Image src={getStatusIcon(serverStatus)} alt="Server Status" width={40} height={40} className="pixelated object-contain" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-100 font-minecraft">{serverName || "Minecraft Server"}</p>
-            <div className="flex items-center gap-1 mt-1">
-              <Server className="h-3 w-3 text-gray-400" />
-              <p className="text-xs text-gray-400">{containerName}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="ml-auto flex flex-wrap gap-2 mt-3 md:mt-0">
-          {serverStatus === "running" || serverStatus === "starting" ? (
-            <Button type="button" variant="destructive" onClick={onStopServer} className="gap-2 bg-red-600 hover:bg-red-700 font-minecraft text-white">
+        <div className="ml-auto flex flex-wrap gap-2">
+          {isUp ? (
+            <Button type="button" size="sm" variant="destructive" onClick={onStopServer} className="gap-2 bg-red-600 hover:bg-red-700 font-minecraft text-white">
               <PowerIcon className="h-4 w-4" />
               {t("stopServer")}
             </Button>
           ) : (
-            <Button type="button" variant="default" onClick={onStartServer} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
+            <Button type="button" size="sm" variant="default" onClick={onStartServer} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
               <PowerIcon className="h-4 w-4" />
               {t("startServer")}
             </Button>
@@ -111,9 +97,8 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
           {(serverStatus === "running" || serverStatus === "starting") && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="outline" disabled={isProcessing} className="gap-2 border-amber-700/50 bg-gray-800/40 text-amber-300 hover:bg-amber-600/20 hover:text-amber-200 hover:border-amber-600/50 font-minecraft">
+                <Button type="button" variant="outline" size="icon" disabled={isProcessing} title={t("forceStopServer")} aria-label={t("forceStopServer")} className="border-amber-700/50 bg-gray-800/40 text-amber-300 hover:bg-amber-600/20 hover:text-amber-200 hover:border-amber-600/50 font-minecraft">
                   <Zap className="h-4 w-4" />
-                  {t("forceStopServer")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-gray-900 border-gray-700">
@@ -131,21 +116,21 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
             </AlertDialog>
           )}
 
-          <Button type="button" variant="outline" onClick={onRestartServer} disabled={isProcessing || serverStatus !== "running"} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-orange-600/20 hover:text-orange-400 hover:border-orange-600/50">
+          <Button type="button" size="sm" variant="outline" onClick={onRestartServer} disabled={isProcessing || serverStatus !== "running"} title={t("restart2")} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-orange-600/20 hover:text-orange-400 hover:border-orange-600/50">
             <RefreshCw className={`h-4 w-4 ${isProcessing ? "animate-spin" : ""}`} />
-            {isProcessing ? t("restarting") : t("restart2")}
+            <span className="hidden md:inline">{isProcessing ? t("restarting") : t("restart2")}</span>
           </Button>
 
           {onOpenFiles && (
-            <Button type="button" variant="outline" onClick={onOpenFiles} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
+            <Button type="button" size="sm" variant="outline" onClick={onOpenFiles} title={t("files")} className="gap-2 border-gray-700/50 bg-gray-800/40 text-gray-200 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-600/50">
               <FolderOpen className="h-4 w-4" />
-              {t("files")}
+              <span className="hidden md:inline">{t("files")}</span>
             </Button>
           )}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" variant="outline" disabled={serverStatus === "running" || serverStatus === "starting"} className="gap-2 border-red-700/50 bg-red-900/20 text-red-400 hover:bg-red-600/30 hover:text-red-300 hover:border-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed">
+              <Button type="button" variant="outline" size="icon" disabled={serverStatus === "running" || serverStatus === "starting"} title={t("deleteConfirmTitle")} aria-label={t("deleteConfirmTitle")} className="border-red-700/50 bg-red-900/20 text-red-400 hover:bg-red-600/30 hover:text-red-300 hover:border-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -166,15 +151,11 @@ export function ServerPageHeader({ serverId, serverName, serverStatus, serverPor
       </div>
 
       {serverStatus === "running" && (
-        <div className="animate-fade-in-up">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <ServerRuntimeChips serverId={serverId} serverStatus={serverStatus} />
           <ServerConnectionInfo port={serverPort} serverId={serverId} edition={serverEdition} />
         </div>
       )}
-
-      <div className="text-xs text-gray-300 px-2">
-        <span className="font-medium">{t("tip")}</span> {t("configureServerTip")}
-        {serverStatus === "running" && ` ${t("changesRequireRestart")}`}
-      </div>
     </div>
   );
 }

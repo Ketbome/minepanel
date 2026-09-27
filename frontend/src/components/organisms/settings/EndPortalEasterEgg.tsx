@@ -1,15 +1,19 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, m, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getCurrentUser } from '@/services/users/users.service';
-import { cue, isMuted, preloadSounds, unlockAudio } from './end/end-audio';
-import { hasDragonEgg, useEndGame } from './end/end-game-store';
-import { EndJourney } from './end/EndJourney';
+import { cue, isMuted, unlockAudio } from './end/end-audio';
+import { loadLore, loreText } from './end/lore';
+import { daysSince, hasDragonEgg, loadGhost, useEndGame, type Ghost } from './end/store';
 import { DragonEggIcon } from './end/PixelIcons';
+
+// the whole run (HUD, windows, story) loads on the click, not with the settings page
+const EndJourney = dynamic(() => import('./end/EndJourney').then((mod) => mod.EndJourney), { ssr: false });
 
 interface Spot {
   readonly x: number;
@@ -61,17 +65,20 @@ function EggTrophy() {
 }
 
 export function EndPortalEasterEgg() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [loading, setLoading] = useState(false);
   const reducedMotion = useReducedMotion() ?? false;
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [egg, setEgg] = useState(false);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
     setMounted(true);
     setEgg(hasDragonEgg());
+    setGhost(loadGhost());
   }, []);
 
   useEffect(() => {
@@ -79,10 +86,18 @@ export function EndPortalEasterEgg() {
     wasOpen.current = open;
   }, [open]);
 
-  const start = () => {
+  const start = async () => {
     unlockAudio();
-    preloadSounds();
-    useEndGame.getState().reset(t('dangerEggPlayer'), isMuted());
+    setLoading(true);
+    try {
+      await loadLore(language);
+    } finally {
+      setLoading(false);
+    }
+    const game = useEndGame.getState();
+    game.reset(loreText('player'), isMuted());
+    // the run opens on the controls screen; Play takes the pointer
+    game.setPaused(true);
     getCurrentUser()
       .then((user) => useEndGame.getState().setPlayer(user.username))
       .catch(() => {});
@@ -92,14 +107,22 @@ export function EndPortalEasterEgg() {
   const close = useCallback(() => {
     setOpen(false);
     setEgg(hasDragonEgg());
+    setGhost(loadGhost());
   }, []);
 
   return (
     <>
       {egg && <EggTrophy />}
-      <Button ref={trigger} variant="minepanelDanger" size="sm" className="font-minecraft" disabled={open} onClick={start}>
+      <Button ref={trigger} variant="minepanelDanger" size="sm" className="font-minecraft" disabled={open || loading} onClick={() => void start()}>
         {t(egg ? 'dangerEggButtonAgain' : 'dangerEggButton')}
       </Button>
+      {ghost && (
+        <p className="mt-3 font-mono text-[11px] text-gray-500">
+          {t(daysSince(ghost.at) === 0 ? 'dangerEggLastSeenToday' : 'dangerEggLastSeen')
+            .replace('{ghost}', ghost.name)
+            .replace('{days}', String(daysSince(ghost.at)))}
+        </p>
+      )}
       {mounted &&
         createPortal(
           <AnimatePresence>{open && <EndJourney key="journey" onClose={close} still={reducedMotion} />}</AnimatePresence>,

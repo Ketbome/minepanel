@@ -1,7 +1,7 @@
-// 16x16 item sprites drawn as SVG pixels: the Eye of Ender and the Dragon Egg have no
-// art in public/images, and drawing them keeps them crisp at any HUD size.
+// 16x16 item sprites drawn as SVG pixels: these items have no art in public/images, and
+// drawing them keeps them crisp at any HUD size.
 
-type Pixel = readonly [number, number, string];
+export type Pixel = readonly [number, number, string];
 
 function eyePixels() {
   const pixels: Pixel[] = [];
@@ -73,9 +73,110 @@ function headPixels() {
   return pixels;
 }
 
+// sticks, rods and arrow shafts are two-pixel diagonals from bottom-left to top-right,
+// shaded on their lower edge
+function diagonal(light: string, body: string, edge: string, from = 0, to = 11) {
+  const pixels: Pixel[] = [];
+  for (let step = from; step < to; step += 1) {
+    const x = 3 + step;
+    const y = 13 - step;
+    pixels.push([x, y, step % 3 === 0 ? light : body], [x - 1, y, edge]);
+  }
+  return pixels;
+}
+
+function arrowPixels() {
+  const pixels = diagonal('#a8a8a8', '#8a6337', '#5f4122', 2, 10);
+  [
+    [12, 1],
+    [13, 1],
+    [14, 1],
+    [13, 2],
+    [14, 2],
+    [14, 3],
+    [12, 2],
+    [13, 3],
+  ].forEach(([x, y]) => pixels.push([x, y, x + y > 15 ? '#6f6f6f' : '#d8d8d8']));
+  [
+    [1, 12],
+    [2, 13],
+    [1, 14],
+    [3, 14],
+    [2, 12],
+    [3, 13],
+  ].forEach(([x, y]) => pixels.push([x, y, '#f0f0f0']));
+  return pixels;
+}
+
+// a steel C-ring over a dark flint chip
+function flintPixels() {
+  const pixels: Pixel[] = [];
+  for (let y = 2; y <= 9; y += 1) {
+    for (let x = 2; x <= 9; x += 1) {
+      const d = Math.hypot(x - 5.5, y - 5.5);
+      if (d > 2.2 && d < 4 && !(x > 6 && y > 3 && y < 8)) pixels.push([x, y, x + y < 11 ? '#e6e6e6' : '#8f8f8f']);
+    }
+  }
+  for (let y = 8; y <= 14; y += 1) {
+    for (let x = 8; x <= 14; x += 1) {
+      if (x + y < 18 || x + y > 26) continue;
+      pixels.push([x, y, (x * 3 + y) % 5 === 0 ? '#5a5a5a' : '#2f2f2f']);
+    }
+  }
+  return pixels;
+}
+
+function dirtPixels() {
+  const pixels: Pixel[] = [];
+  for (let y = 2; y <= 13; y += 1) {
+    for (let x = 2; x <= 13; x += 1) {
+      const edge = x === 2 || y === 2 || x === 13 || y === 13;
+      const speck = (x * 5 + y * 7) % 11;
+      pixels.push([x, y, edge ? '#4f3522' : speck === 0 ? '#5a3f2a' : speck === 4 ? '#a58466' : (x + y) % 2 ? '#866043' : '#79553a']);
+    }
+  }
+  return pixels;
+}
+
+function obsidianPixels() {
+  const pixels: Pixel[] = [];
+  for (let y = 2; y <= 13; y += 1) {
+    for (let x = 2; x <= 13; x += 1) {
+      const edge = x === 2 || y === 2 || x === 13 || y === 13;
+      const speck = (x * 7 + y * 11) % 13 === 0;
+      pixels.push([x, y, edge ? '#0b0812' : speck ? '#5a4485' : (x + y) % 3 ? '#191223' : '#140f1d']);
+    }
+  }
+  return pixels;
+}
+
+// a little heap of glowing dust: bright core, orange body, dark ember rim
+const BLAZE_ROWS = ['......y.........', '.....yoy...y....', '...yoOOoy.yoy...', '..yoOOYOoyoOoy..', '.yoOOYYOOoOOOoy.', '.rooOOOOOOOOoor.', '..rrroooooorrr..'];
+const BLAZE_COLORS: Record<string, string> = { y: '#ffe36b', Y: '#fff7c2', o: '#ff9a1f', O: '#ffc23d', r: '#b4480e' };
+
+function blazePixels() {
+  const pixels: Pixel[] = [];
+  BLAZE_ROWS.forEach((row, y) => {
+    [...row].forEach((cell, x) => {
+      if (cell !== '.') pixels.push([x, y + 7, BLAZE_COLORS[cell]]);
+    });
+  });
+  return pixels;
+}
+
 const EYE = eyePixels();
 const EGG = eggPixels();
 const HEAD = headPixels();
+const STICK = diagonal('#9b7240', '#896237', '#5f4122');
+const ROD = diagonal('#fff1a8', '#ffc233', '#c26a00');
+const ARROW = arrowPixels();
+const FLINT = flintPixels();
+const OBSIDIAN = obsidianPixels();
+const DIRT = dirtPixels();
+const BLAZE = blazePixels();
+
+// the same pixels, for the item pressed into a solid sprite in your hand
+export const SPRITES = { eye: EYE, egg: EGG, stick: STICK, blaze: BLAZE, rod: ROD, arrow: ARROW, flint: FLINT, obsidian: OBSIDIAN, dirt: DIRT };
 
 function PixelSprite({ pixels, className }: { readonly pixels: readonly Pixel[]; readonly className?: string }) {
   return (
@@ -97,4 +198,32 @@ export function DragonEggIcon({ className }: { readonly className?: string }) {
 
 export function DragonHeadIcon({ className }: { readonly className?: string }) {
   return <PixelSprite pixels={HEAD} className={className} />;
+}
+
+export function StickIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={STICK} className={className} />;
+}
+
+export function BlazePowderIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={BLAZE} className={className} />;
+}
+
+export function BlazeRodIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={ROD} className={className} />;
+}
+
+export function ArrowIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={ARROW} className={className} />;
+}
+
+export function FlintAndSteelIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={FLINT} className={className} />;
+}
+
+export function ObsidianIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={OBSIDIAN} className={className} />;
+}
+
+export function DirtIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={DIRT} className={className} />;
 }

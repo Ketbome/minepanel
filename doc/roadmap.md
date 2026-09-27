@@ -88,6 +88,7 @@ Already available in the current stable line.
 
 - Auto restarts at configurable intervals
 - Scheduled console commands (Java RCON)
+- Rotating chat announcements (Java)
 - Enable/disable, run-now, and per-server management (Tasks tab)
 
 ### ✅ Server creation & templates

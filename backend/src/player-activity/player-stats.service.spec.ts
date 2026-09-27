@@ -28,6 +28,10 @@ describe('Saved player statistics', () => {
     await write(`custom-world/stats/${uuid}.json`, { stats: { 'minecraft:custom': { 'minecraft:play_time': 2400, 'minecraft:deaths': 2, 'minecraft:mob_kills': 10, 'minecraft:player_kills': 0 }, 'minecraft:mined': { 'minecraft:stone': 50, 'minecraft:dirt': 20 } } });
     expect(await service.getStats('survival', 'alex')).toMatchObject({ uuid, world: 'custom-world', playSeconds: 120, deaths: 2, mobKills: 10, playerKills: 0, blocksMined: 70 });
   });
+  it('reads stats from players/stats on 26.1+ worlds (issue #280)', async () => {
+    await write(`custom-world/players/stats/${uuid}.json`, { stats: { 'minecraft:custom': { 'minecraft:play_time': 400, 'minecraft:deaths': 1 } } });
+    expect(await service.getStats('survival', 'Alex')).toMatchObject({ uuid, playSeconds: 20, deaths: 1 });
+  });
   it('supports legacy playtime and leaves absent/invalid counters null', async () => {
     await write(`custom-world/stats/${uuid}.json`, { stats: { 'minecraft:custom': { 'minecraft:play_one_minute': 200, 'minecraft:deaths': -1 }, 'minecraft:mined': { bad: 'no' } } });
     expect(await service.getStats('survival', 'Alex')).toMatchObject({ playSeconds: 10, deaths: null, mobKills: null, blocksMined: null });

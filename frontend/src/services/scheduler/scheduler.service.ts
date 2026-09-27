@@ -1,6 +1,6 @@
 import api from "../axios.service";
 
-export type ScheduledTaskType = "restart" | "command";
+export type ScheduledTaskType = "restart" | "command" | "announce";
 export type ScheduleKind = "interval" | "cron";
 
 export interface ScheduledTask {

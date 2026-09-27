@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { ScheduledTasksService } from './scheduled-tasks.service';
+import { announcementCommand, announcementLines, ScheduledTasksService } from './scheduled-tasks.service';
 import { ScheduledTask } from './entities/scheduled-task.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
@@ -303,6 +303,103 @@ describe('ScheduledTasksService', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('announcements', () => {
+    const owned = (overrides: Partial<ScheduledTask> = {}) =>
+      ({ id: 7, serverId: 'srv', type: 'announce', command: 'Join our Discord\n\n  &aVote daily  \nRead /rules', announcementIndex: 0, scheduleKind: 'interval', intervalMinutes: 10, ...overrides }) as ScheduledTask;
+
+    it('builds a tellraw command that keeps quotes and braces inside the JSON text', () => {
+      expect(announcementLines(' a \n\n b ')).toEqual(['a', 'b']);
+      expect(announcementLines(null)).toEqual([]);
+      expect(announcementCommand('&aHi "you" }{ &Lbold &zkeep')).toBe('tellraw @a {"text":"§aHi \\"you\\" }{ §Lbold &zkeep"}');
+    });
+
+    it('validates the message list on create and update', async () => {
+      await expect(service.create('srv', { name: 'a', type: 'announce', command: ' \n ', intervalMinutes: 5 } as any)).rejects.toThrow('At least one message');
+      await expect(service.create('srv', { name: 'a', type: 'announce', command: Array(21).fill('m').join('\n'), intervalMinutes: 5 } as any)).rejects.toThrow('At most 20');
+      await expect(service.create('srv', { name: 'a', type: 'announce', command: 'x'.repeat(257), intervalMinutes: 5 } as any)).rejects.toThrow('at most 256');
+      const task = await service.create('srv', { name: 'a', type: 'announce', command: 'hello', intervalMinutes: 5 } as any);
+      expect(task.command).toBe('hello');
+    });
+
+    it('sends the messages in order, wraps around, and does not skip one the server missed', async () => {
+      const task = owned();
+      taskRepo.findOne.mockResolvedValue(task);
+      dockerCompose.getServerConfig.mockResolvedValue({ rconPort: '25575', rconPassword: 'pw' });
+      serverManagement.executeCommand.mockResolvedValue({ success: true, output: '' });
+
+      await service.runNow('srv', 7);
+      expect(serverManagement.executeCommand).toHaveBeenLastCalledWith('srv', 'tellraw @a {"text":"Join our Discord"}', '25575', 'pw');
+      expect(task.lastResult).toBe('Announced 1/3: Join our Discord');
+      await service.runNow('srv', 7);
+      expect(serverManagement.executeCommand).toHaveBeenLastCalledWith('srv', 'tellraw @a {"text":"§aVote daily"}', '25575', 'pw');
+      await service.runNow('srv', 7);
+      await service.runNow('srv', 7);
+      expect(task.lastResult).toBe('Announced 1/3: Join our Discord');
+
+      serverManagement.executeCommand.mockResolvedValueOnce({ success: false, output: 'Container not found or not running' });
+      await service.runNow('srv', 7);
+      expect(task.lastResult).toBe('Command failed: Container not found or not running');
+      expect(task.announcementIndex).toBe(1);
+    });
+
+    it('keeps the 1024 limit for command tasks only', async () => {
+      await expect(service.create('srv', { name: 'c', type: 'command', command: 'say ' + 'x'.repeat(1021), intervalMinutes: 5 } as any)).rejects.toThrow('at most 1024');
+      const long = Array(20).fill('m'.repeat(200)).join('\n');
+      expect((await service.create('srv', { name: 'a', type: 'announce', command: long, intervalMinutes: 5 } as any)).command).toBe(long);
+    });
+
+    it('skips Bedrock servers without advancing the rotation', async () => {
+      const task = owned({ announcementIndex: 1 });
+      taskRepo.findOne.mockResolvedValue(task);
+      dockerCompose.getServerConfig.mockResolvedValue({ edition: 'BEDROCK', rconPort: '25575' });
+
+      await service.runNow('srv', 7);
+
+      expect(serverManagement.executeCommand).not.toHaveBeenCalled();
+      expect(task.lastResult).toBe('Announcement skipped: announcements are only supported on Java servers');
+      expect(task.announcementIndex).toBe(1);
+    });
+
+    it('never runs the same task twice at once', async () => {
+      const task = owned();
+      taskRepo.findOne.mockResolvedValue(task);
+      dockerCompose.getServerConfig.mockResolvedValue({ rconPort: '25575' });
+      let release!: () => void;
+      serverManagement.executeCommand.mockReturnValueOnce(new Promise((resolve) => (release = () => resolve({ success: true, output: '' }))));
+
+      const first = service.runNow('srv', 7);
+      await new Promise((resolve) => setImmediate(resolve));
+      await service.runNow('srv', 7);
+      release();
+      await first;
+
+      expect(serverManagement.executeCommand).toHaveBeenCalledTimes(1);
+      expect(task.announcementIndex).toBe(1);
+      // Once finished, the task can run again.
+      serverManagement.executeCommand.mockResolvedValueOnce({ success: true, output: '' });
+      await service.runNow('srv', 7);
+      expect(task.announcementIndex).toBe(2);
+    });
+
+    it('reports an empty list and resets the rotation when the messages change', async () => {
+      const empty = owned({ command: '' });
+      taskRepo.findOne.mockResolvedValueOnce(empty);
+      await service.runNow('srv', 7);
+      expect(empty.lastResult).toBe('No messages configured');
+
+      const task = owned({ announcementIndex: 2 });
+      taskRepo.findOne.mockResolvedValueOnce(task);
+      await service.update('srv', 7, { command: 'new one' } as any);
+      expect(task.announcementIndex).toBe(0);
+
+      // Switching type with the same text also starts over.
+      const retyped = owned({ type: 'command', command: 'say hi', announcementIndex: 3 });
+      taskRepo.findOne.mockResolvedValueOnce(retyped);
+      await service.update('srv', 7, { type: 'announce' } as any);
+      expect(retyped.announcementIndex).toBe(0);
     });
   });
 });

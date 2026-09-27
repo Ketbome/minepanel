@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-export type ScheduledTaskType = 'restart' | 'command';
+export type ScheduledTaskType = 'restart' | 'command' | 'announce';
 export type ScheduleKind = 'interval' | 'cron';
 
 @Entity('scheduled_tasks')
@@ -18,8 +18,13 @@ export class ScheduledTask {
   @Column({ type: 'varchar', length: 16 })
   type: ScheduledTaskType;
 
+  // For 'command' the console command; for 'announce' the messages, one per line.
   @Column({ type: 'text', nullable: true })
   command: string | null;
+
+  // Which 'announce' message goes out next; wraps around the list.
+  @Column({ type: 'integer', name: 'announcement_index', default: 0 })
+  announcementIndex: number;
 
   @Column({ type: 'varchar', length: 16, name: 'schedule_kind', default: 'interval' })
   scheduleKind: ScheduleKind;

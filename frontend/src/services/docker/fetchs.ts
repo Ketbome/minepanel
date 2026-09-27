@@ -332,3 +332,16 @@ export const getBannedPlayers = async (serverId: string): Promise<BannedPlayer[]
   const response = await api.get(`/servers/${serverId}/players/banned`);
   return response.data;
 };
+
+export interface GamerulesResponse {
+  success: boolean;
+  supported: boolean;
+  // false when the server could not list its rules and only vanilla ones were probed
+  complete: boolean;
+  rules: { name: string; value: string }[];
+}
+
+export const getGamerules = async (serverId: string): Promise<GamerulesResponse> => {
+  const response = await api.get(`/servers/${serverId}/gamerules`);
+  return response.data;
+};

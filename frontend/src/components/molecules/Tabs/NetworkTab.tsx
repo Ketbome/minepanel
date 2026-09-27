@@ -18,11 +18,28 @@ import Image from 'next/image';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getProxyStatus } from '@/services/network.service';
 import { LINK_CONNECTIVITY_SETTINGS } from '@/lib/providers/constants';
+import { isValidPortMapping } from '@/lib/server-config/port-mapping';
 
 interface NetworkTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
+
+// "3091" -> "3091:3091", "3091/udp" -> "3091:3091/udp"; anything with a colon is kept as typed.
+// Docker treats a missing protocol as tcp and the protocol case-insensitively, so
+// "25565:25565" and "25565:25565/TCP" are the same binding.
+const portMappingKey = (mapping: string) => {
+  const lower = mapping.toLowerCase();
+  return /\/(tcp|udp|sctp)$/.test(lower) ? lower : `${lower}/tcp`;
+};
+
+const normalizeExtraPort = (input: string) => {
+  const port = input.trim();
+  if (port.includes(':')) return port;
+  const slash = port.indexOf('/');
+  const base = slash === -1 ? port : port.slice(0, slash);
+  return `${base}:${base}${slash === -1 ? '' : port.slice(slash)}`;
+};
 
 export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
@@ -48,16 +65,13 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
   const serverUsesProxy = isJava && proxyEnabled && config.useProxy !== false;
   const defaultPort = isBedrock ? '19132' : '25565';
 
+  const normalizedNewPort = normalizeExtraPort(newPort);
+  const canAddPort = isValidPortMapping(normalizedNewPort) && !config.extraPorts?.some((port) => portMappingKey(port) === portMappingKey(normalizedNewPort));
+
   const addExtraPort = () => {
-    if (newPort.trim() && !config.extraPorts?.includes(newPort.trim())) {
-      const currentPorts = config.extraPorts || [];
-      let port = newPort.trim();
-      if (!newPort.includes(':')) {
-        port = `${newPort}:${newPort}`;
-      }
-      updateConfig('extraPorts', [...currentPorts, port]);
-      setNewPort('');
-    }
+    if (!canAddPort) return;
+    updateConfig('extraPorts', [...(config.extraPorts || []), normalizedNewPort]);
+    setNewPort('');
   };
 
   const removeExtraPort = (index: number) => {
@@ -311,6 +325,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
             <Button
               type="button"
               onClick={addExtraPort}
+              disabled={!canAddPort}
               className="bg-emerald-400 hover:bg-emerald-300 text-gray-950"
             >
               <Plus className="h-4 w-4" />
@@ -321,24 +336,37 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
             <Label className="text-gray-300 font-minecraft text-xs">{t('configuredPorts')}</Label>
             {config.extraPorts && config.extraPorts.length > 0 ? (
               <div className="space-y-2">
-                {config.extraPorts.map((port, index) => (
-                  <div key={`${port}-${index}`} className="flex gap-2">
-                    <Input
-                      value={port}
-                      onChange={(e) => updateExtraPort(index, e.target.value)}
-                      className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono text-sm"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeExtraPort(index)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                {config.extraPorts.map((port, index) => {
+                  const invalid = !isValidPortMapping(port);
+                  return (
+                    // Keyed by index: a value-based key remounts the input on every keystroke and drops focus.
+                    <div key={index} className="flex gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Input
+                          value={port}
+                          onChange={(e) => updateExtraPort(index, e.target.value)}
+                          aria-invalid={invalid}
+                          aria-describedby={invalid ? `extra-port-error-${index}` : undefined}
+                          className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono text-sm aria-invalid:border-red-500! aria-invalid:text-red-300"
+                        />
+                        {invalid && (
+                          <p id={`extra-port-error-${index}`} className="text-xs text-red-400">
+                            {t('portFormat')}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeExtraPort(index)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-500 text-sm">{t('noExtraPorts')}</p>

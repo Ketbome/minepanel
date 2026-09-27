@@ -2,14 +2,33 @@
 
 import { PerformanceMonitor } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useState } from 'react';
-import { EndAct } from './EndAct';
-import { useEndGame } from './end-game-store';
-import { StrongholdAct } from './StrongholdAct';
+import { useState, type ComponentType } from 'react';
+import { AncientCity } from './acts/AncientCity';
+import { End } from './acts/End';
+import { EndCity } from './acts/EndCity';
+import { Nether } from './acts/Nether';
+import { Overworld } from './acts/Overworld';
+import { Stronghold } from './acts/Stronghold';
+import { Effects } from './engine/Effects';
+import { Hand } from './engine/Hand';
+import { Player } from './engine/Player';
+import { Projectiles } from './engine/Projectiles';
+import { useEndGame, type Zone } from './store';
+
+// the poem is drawn over the page, so it has no scene
+const ZONES: Partial<Record<Zone, ComponentType>> = {
+  overworld: Overworld,
+  nether: Nether,
+  ancient: AncientCity,
+  stronghold: Stronghold,
+  end: End,
+  endcity: EndCity,
+};
 
 export default function JourneyScene() {
-  const act = useEndGame((state) => state.act);
-  const [dpr, setDpr] = useState(1.75);
+  const zone = useEndGame((state) => state.zone);
+  const [dpr, setDpr] = useState(1.5);
+  const Scene = ZONES[zone];
 
   return (
     <Canvas
@@ -18,11 +37,15 @@ export default function JourneyScene() {
       style={{ position: 'absolute', inset: 0, touchAction: 'none' }}
       dpr={[1, dpr]}
       flat
-      camera={{ fov: 50, near: 0.1, far: 520, position: [1.6, 3.4, 10.8] }}
+      camera={{ fov: 70, near: 0.05, far: 420, position: [0, 2, 4] }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
-      {act === 'stronghold' ? <StrongholdAct /> : <EndAct />}
+      {Scene && <Scene key={zone} />}
+      <Player />
+      <Projectiles />
+      <Effects />
+      <Hand />
     </Canvas>
   );
 }

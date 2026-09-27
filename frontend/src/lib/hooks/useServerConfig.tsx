@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { ServerConfig } from '../types/types';
 import {
   apiClearServerData,
@@ -225,7 +226,10 @@ export function useServerConfig(serverId: string) {
       return true;
     } catch (error) {
       console.error('Error saving config:', error);
-      mcToast.error(t('saveConfigurationError'));
+      // A rejected save names the field (e.g. a malformed extra port), which the user can't find otherwise.
+      const reason = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+      const detail = Array.isArray(reason) ? reason.join('\n') : reason;
+      mcToast.error(typeof detail === 'string' && detail.trim() ? `${t('saveConfigurationError')}: ${detail}` : t('saveConfigurationError'));
       return false;
     } finally {
       setIsSaving(false);
