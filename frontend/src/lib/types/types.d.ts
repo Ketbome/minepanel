@@ -89,6 +89,7 @@ export interface ServerConfig {
   rconCmdsOnConnect?: string;
   rconCmdsOnDisconnect?: string;
   rconCmdsLastDisconnect?: string;
+  vanillaTweaksCodes?: string[];
   allowNether: boolean;
   entityBroadcastRange: string;
 

@@ -178,6 +178,11 @@ export class JavaServerStrategy implements IServerStrategy {
       env['LEVEL'] = config.worldLevelName;
     }
 
+    // itzg installs these into the world's datapacks folder on every start.
+    if (config.vanillaTweaksCodes?.length) {
+      env['VANILLATWEAKS_SHARECODE'] = config.vanillaTweaksCodes.join(',');
+    }
+
     if (config.worldSource) {
       if (config.worldSource.startsWith('/')) {
         env['WORLD'] = config.worldSource;

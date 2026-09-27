@@ -408,6 +408,13 @@ export class ServerConfigDto {
   @IsOptional()
   envVars?: string;
 
+  // Vanilla Tweaks share codes (datapacks or crafting tweaks), passed as VANILLATWEAKS_SHARECODE
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @Matches(/^[A-Za-z0-9]{3,16}$/, { each: true, message: 'Each Vanilla Tweaks share code must be 3-16 letters or digits' })
+  vanillaTweaksCodes?: string[];
+
   @IsString()
   @IsOptional()
   @MaxLength(16384)

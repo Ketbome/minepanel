@@ -242,6 +242,11 @@ describe('JavaServerStrategy', () => {
       expect(strategy.buildEnvironment({ ...config, enableRcon: false } as any).RCON_CMDS_STARTUP).toBeUndefined();
     });
 
+    it('passes Vanilla Tweaks share codes only when some are set', () => {
+      expect(strategy.buildEnvironment({ ...baseConfig(), vanillaTweaksCodes: ['MGr52E', 'tF1zL2'] } as any).VANILLATWEAKS_SHARECODE).toBe('MGr52E,tF1zL2');
+      expect(strategy.buildEnvironment({ ...baseConfig(), vanillaTweaksCodes: [] } as any).VANILLATWEAKS_SHARECODE).toBeUndefined();
+    });
+
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), enableRcon: false, worldSource: 'w' } as any)).toMatchObject({ ENABLE_RCON: 'false', WORLD: '/data/.world-library/local/w' });
       expect(strategy.buildEnvironment({ ...baseConfig(), worldSource: '/abs/world' } as any).WORLD).toBe('/abs/world');

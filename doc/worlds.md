@@ -125,6 +125,21 @@ does not change an existing world; to try them, pick them before the first start
 create a new world. You can check what a running world uses with the console command
 `datapack list enabled`.
 
+### Vanilla Tweaks datapacks (Java)
+
+The world settings in the **Game** tab have a **Vanilla Tweaks** section. Pick datapacks or
+crafting tweaks on [vanillatweaks.net](https://vanillatweaks.net/picker/datapacks/), press
+**Share**, and paste the link or code. The panel shows what each code installs and warns when
+it was made for another Minecraft version (the packs still load, but may not work correctly).
+
+- The codes are passed as `VANILLATWEAKS_SHARECODE`. When the server starts it downloads the
+  packs from vanillatweaks.net and installs them into the world's `datapacks` folder, replacing
+  older versions of the same packs.
+- The panel checks a new code with Vanilla Tweaks before saving it: an unknown code would stop
+  the server from starting. If Vanilla Tweaks can't be reached, the code is saved unchecked.
+- Resource pack codes are refused. The server can't send them to players, so they would only
+  be downloaded into a folder nothing reads.
+
 ## Where the files are
 
 ```txt

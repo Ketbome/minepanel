@@ -18,6 +18,7 @@ import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { Users } from 'src/users/entities/users.entity';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { VanillaTweaksService } from 'src/vanilla-tweaks/vanilla-tweaks.service';
 import * as path from 'path';
 
 // Accepts an ISO 8601 timestamp, a Unix timestamp, or a Go-style duration (e.g. "10m", "1h30m").
@@ -211,6 +212,7 @@ export class ServerManagementController {
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
+    private readonly vanillaTweaks: VanillaTweaksService,
   ) {}
 
   private async recordServerAudit(user: Users | null, action: string, serverId: string, summary: string, outcome: 'success' | 'error' = 'success', metadata?: Record<string, unknown>) {
@@ -362,6 +364,20 @@ export class ServerManagementController {
     }
   }
 
+  // itzg stops the server from starting when a share code cannot be installed, so a code
+  // Vanilla Tweaks does not know is rejected here instead. Resource pack codes are refused
+  // too: itzg only downloads them into /data/resourcepacks, which the server never uses.
+  // When Vanilla Tweaks is unreachable the save goes through rather than blocking all edits.
+  private async assertUsableVanillaTweaks(codes: string[] | undefined, current: string[]): Promise<void> {
+    for (const code of (codes ?? []).filter((code) => !current.includes(code))) {
+      const share = await this.vanillaTweaks.lookup(code).catch(() => undefined);
+      if (share === null) throw new BadRequestException(`Vanilla Tweaks share code ${code} was not found`);
+      if (share?.type === 'resourcepacks') {
+        throw new BadRequestException(`Vanilla Tweaks share code ${code} is a resource pack; the server cannot send it to players, only datapack and crafting tweak codes work`);
+      }
+    }
+  }
+
   private assertSafeEnvVars(envVars: string | undefined): void {
     for (const entry of normalizeConfigValue(envVars).split('\n').filter(Boolean)) {
       const separator = entry.indexOf('=');
@@ -481,6 +497,7 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
+      await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, []);
       this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
@@ -676,6 +693,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
+    await this.assertUsableVanillaTweaks(config.vanillaTweaksCodes, currentConfig.vanillaTweaksCodes ?? []);
     this.assertValidComposeSnippets(config.composeSnippets);
     // The form sends '' for a hostname that was never set, which is not a change.
     const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();

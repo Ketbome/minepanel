@@ -17,6 +17,7 @@ import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { ModrinthModule } from './modrinth/modrinth.module';
+import { VanillaTweaksModule } from './vanilla-tweaks/vanilla-tweaks.module';
 import { WorldDiscoveryModule } from './world-discovery/world-discovery.module';
 import { BedrockAddonsModule } from './bedrock-addons/bedrock-addons.module';
 import { ModpacksModule } from './modpacks/modpacks.module';
@@ -43,6 +44,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     DiscordModule,
     CurseforgeModule,
     ModrinthModule,
+    VanillaTweaksModule,
     WorldDiscoveryModule,
     BedrockAddonsModule,
     ModpacksModule,
