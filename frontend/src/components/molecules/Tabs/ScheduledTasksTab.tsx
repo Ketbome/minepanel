@@ -2,6 +2,7 @@ import { FC, useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -82,13 +83,17 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
       mcToast.error(t("tasksCommandRequired"));
       return;
     }
+    if (form.type === "announce" && !form.command.trim()) {
+      mcToast.error(t("tasksMessagesRequired"));
+      return;
+    }
 
     setSaving(true);
     try {
       await createScheduledTask(serverId, {
         name: form.name.trim(),
         type: form.type,
-        command: form.type === "command" ? form.command.trim() : undefined,
+        command: form.type === "restart" ? undefined : form.command.trim(),
         scheduleKind: form.scheduleKind,
         intervalMinutes: form.scheduleKind === "interval" ? interval : undefined,
         cronExpression: form.scheduleKind === "cron" ? form.cronExpression.trim() : undefined,
@@ -167,6 +172,9 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                   <SelectItem value="command" className="text-white hover:bg-gray-700">
                     {t("tasksTypeCommand")}
                   </SelectItem>
+                  <SelectItem value="announce" className="text-white hover:bg-gray-700">
+                    {t("tasksTypeAnnounce")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -177,6 +185,16 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                   {t("tasksCommand")}
                 </Label>
                 <Input id="task-command" value={form.command} onChange={(event) => setForm({ ...form, command: event.target.value })} placeholder="say Restarting soon" className="bg-gray-800 border-gray-700 text-white" />
+              </div>
+            )}
+
+            {form.type === "announce" && (
+              <div className="space-y-1 md:col-span-2">
+                <Label htmlFor="task-messages" className="text-gray-300">
+                  {t("tasksMessages")}
+                </Label>
+                <Textarea id="task-messages" rows={4} value={form.command} onChange={(event) => setForm({ ...form, command: event.target.value })} placeholder={"&aJoin our Discord: discord.gg/example\n&eVote for the server with /vote"} className="bg-gray-800 border-gray-700 text-white font-mono text-sm placeholder:text-gray-500" />
+                <p className="text-xs text-gray-500">{t("tasksMessagesHint")}</p>
               </div>
             )}
 
@@ -256,7 +274,7 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                   <div className="flex items-center gap-2">
                     <span className="font-minecraft text-gray-100">{task.name}</span>
                     <Badge variant="outline" className="border-emerald-700 text-emerald-300">
-                      {task.type === "restart" ? t("tasksTypeRestart") : t("tasksTypeCommand")}
+                      {task.type === "restart" ? t("tasksTypeRestart") : task.type === "announce" ? t("tasksTypeAnnounce") : t("tasksTypeCommand")}
                     </Badge>
                     {!task.enabled && (
                       <Badge variant="outline" className="border-gray-600 text-gray-400">
@@ -265,6 +283,19 @@ export const ScheduledTasksTab: FC<ScheduledTasksTabProps> = ({ serverId }) => {
                     )}
                   </div>
                   {task.type === "command" && task.command && <p className="text-xs text-gray-400 font-mono">{task.command}</p>}
+                  {task.type === "announce" && task.command && (
+                    <ol className="text-xs text-gray-400 font-mono list-decimal list-inside">
+                      {task.command
+                        .split("\n")
+                        .map((line) => line.trim())
+                        .filter(Boolean)
+                        .map((line, index) => (
+                          <li key={index} className="truncate">
+                            {line}
+                          </li>
+                        ))}
+                    </ol>
+                  )}
                   <p className="text-xs text-gray-500">
                     {task.scheduleKind === "cron" && task.cronExpression ? (
                       <span className="font-mono">{task.cronExpression}</span>

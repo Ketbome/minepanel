@@ -89,7 +89,17 @@ References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/la
 | Force stop     | Stops now instead of waiting for the shutdown announcement (`STOP_SERVER_ANNOUNCE_DELAY`, 60s by default). Sends `stop` over RCON so the world is still saved, and kills the container after 10s if it does not exit |
 | Console        | RCON (Java) or send-command (Bedrock)                     |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
-| Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone) |
+| Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone). Rotating announcements: see below |
+
+### Scheduled announcements
+
+An **Announcements** task in the Tasks tab sends a list of chat messages to all players, one message per run, in order, and starts again after the last one.
+
+- Up to 20 messages, one per line, each up to 256 characters.
+- `&` color and format codes work (`&a` green, `&l` bold, `&r` reset).
+- Messages are sent with `tellraw`, so they show without a `[Server]` prefix.
+- If the server is stopped when a message is due, that message is sent on the next run instead of being skipped. Editing the list starts again from the first message.
+- Java servers only: it uses RCON like command tasks, and Bedrock servers skip the task.
 
 ## Roles and Access Control
 
