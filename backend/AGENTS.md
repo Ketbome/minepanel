@@ -117,7 +117,8 @@ Path and filesystem patterns (critical):
   mount so `resolveHostPath` can append it. Any new mount lookup must go through that helper.
 - `mc-data` is writable by the game container, which can plant symlinks. Any backend read or
   write under it goes through `assertContained` (`common/fs/contained-path.ts`), which resolves
-  links and rejects targets outside the given root.
+  links and rejects targets outside the given root. Pass `mc-data` itself as the root, never a
+  subfolder such as `worlds`: the container can turn that subfolder into a link as well.
 - Generated compose files are passed through `escapeComposeValues` before dumping, so no
   config value can interpolate the panel's environment; only admin compose snippets keep `${VAR}`.
 - The own container id comes from `common/docker/own-container.ts` (`ownContainerIds`):

@@ -99,6 +99,9 @@ const ADMIN_ONLY_ENV_KEYS = new Set([
   'CUSTOM_SERVER',
   'SERVER_JAR',
   'RCON_PASSWORD',
+  // itzg builds GENERIC_PACKS URLs from these, so a bare "pack" entry would pass the host check.
+  'GENERIC_PACKS_PREFIX',
+  'GENERIC_PACKS_SUFFIX',
 ]);
 
 const ADMIN_ONLY_ENV_KEY_SUFFIXES = ['_DOWNLOAD_URL', '_LAUNCHER_URL'];
@@ -158,12 +161,15 @@ const PANEL_MANAGED_FILES = new Set(['server.json', 'docker-compose.yml']);
 // Compose generation only rewrites `./` sources into the server's own directory.
 // Everything else (absolute paths, named volumes, `../` escapes) is a raw bind, and
 // the directory itself (`./`, `./.`) would expose the panel-managed files above.
+// Only mc-data is the container's to write: the panel reads the other folders
+// (modpacks, addons, the world library) without link checks, so they must be `:ro`.
 function isSelfContainedVolume(volume: string): boolean {
-  const source = volume.split(':')[0];
+  const [source, , mode] = volume.split(':');
   if (!source.startsWith('./') || source.includes('$') || source.split('/').includes('..')) return false;
 
   const [first] = path.posix.normalize(source.slice(2)).split('/');
-  return first !== '.' && first !== '' && !PANEL_MANAGED_FILES.has(first);
+  if (first === '.' || first === '' || PANEL_MANAGED_FILES.has(first)) return false;
+  return first === 'mc-data' || (mode ?? '').split(',').includes('ro');
 }
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
@@ -401,6 +407,7 @@ export class ServerManagementController {
     if (config.useProxy === false || config.edition === 'BEDROCK') return;
 
     const { baseDomain } = await this.proxyService.getProxySettings();
+    if (!baseDomain) return;
     const wanted = this.proxyService.generateHostname(id, baseDomain, config.proxyHostname?.trim()).toLowerCase();
     const index = await this.dockerComposeService.getServerIndex();
     const owner = index.find(
@@ -649,7 +656,8 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
     this.assertValidComposeSnippets(config.composeSnippets);
-    const hostnameChanged = config.proxyHostname !== undefined && config.proxyHostname !== currentConfig.proxyHostname;
+    // The form sends '' for a hostname that was never set, which is not a change.
+    const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();
     const proxyTurnedOn = currentConfig.useProxy === false && config.useProxy === true;
     if (hostnameChanged || proxyTurnedOn) {
       await this.assertProxyHostnameFree(id, {

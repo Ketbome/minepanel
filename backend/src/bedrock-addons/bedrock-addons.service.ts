@@ -574,8 +574,9 @@ export class BedrockAddonsService {
     const worldPath = path.join(mcDataPath, 'worlds', levelName);
     const behaviorFile = path.join(worldPath, 'world_behavior_packs.json');
     const resourceFile = path.join(worldPath, 'world_resource_packs.json');
-    await assertContained(path.join(mcDataPath, 'worlds'), behaviorFile);
-    await assertContained(path.join(mcDataPath, 'worlds'), resourceFile);
+    // Against mc-data, not `worlds`: the container can turn `worlds` itself into a link.
+    await assertContained(mcDataPath, behaviorFile);
+    await assertContained(mcDataPath, resourceFile);
     await fs.ensureDir(worldPath);
 
     const behaviorEntries = enabledAddons.flatMap((addon) => addon.packs.filter((pack) => pack.kind === 'behavior').map((pack) => this.createPackReference(pack)));

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
@@ -8,6 +8,15 @@ import { assertContained } from 'src/common/fs/contained-path';
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export const UPLOADS_DIR = '.uploads';
+
+// server.json and the generated compose file hold secrets (the CurseForge key, RCON and
+// restic passwords), so the global browser only shows them to admins.
+const ADMIN_ONLY_FILES = new Set(['server.json', 'docker-compose.yml']);
+
+function isAdminOnlyFile(serversDir: string, fullPath: string): boolean {
+  const [id, file, ...rest] = path.relative(serversDir, fullPath).split(path.sep);
+  return rest.length === 0 && SERVER_ID_PATTERN.test(id) && ADMIN_ONLY_FILES.has(file);
+}
 
 export interface FileItem {
   name: string;
@@ -61,19 +70,31 @@ export class FilesService {
     }
 
     await assertContained(write && !admin ? this.getWritableRoot(serverId, normalized) : basePath, followLast ? normalized : path.dirname(normalized));
+    if (!write && !admin && serverId === '_root') await this.assertNotAdminOnly(normalized);
     return normalized;
   }
 
+  // The resolved path counts too: the container can leave a link to ../server.json in mc-data.
+  private async assertNotAdminOnly(fullPath: string): Promise<void> {
+    const [root, real] = await Promise.all([fs.realpath(this.SERVERS_DIR), fs.realpath(fullPath).catch(() => fullPath)]);
+    if (isAdminOnlyFile(this.SERVERS_DIR, fullPath) || isAdminOnlyFile(root, real)) {
+      throw new ForbiddenException('Only admins can read this file');
+    }
+  }
+
   // "_root" can read the whole servers directory, but non-admin writes stay inside a
-  // server's mc-data or the world library: server.json, compose files and
-  // .env there are compiled into host mounts and the panel's own environment.
+  // server's mc-data and the world libraries (shared and per server): server.json,
+  // compose files and .env there are compiled into host mounts and the panel's own
+  // environment. The folders themselves cannot be deleted or renamed.
   private getWritableRoot(serverId: string, fullPath: string): string {
     if (serverId !== '_root') {
       return this.getBasePath(serverId);
     }
 
     const [first, second] = path.relative(this.SERVERS_DIR, fullPath).split(path.sep);
-    const root = first === '.world' ? path.join(this.SERVERS_DIR, '.world') : second === 'mc-data' && SERVER_ID_PATTERN.test(first) ? path.join(this.SERVERS_DIR, first, 'mc-data') : null;
+    const shared = first === '.world' && second === 'worlds';
+    const own = SERVER_ID_PATTERN.test(first) && (second === 'mc-data' || second === 'worlds');
+    const root = shared || own ? path.join(this.SERVERS_DIR, first, second) : null;
 
     if (!root || fullPath === root) {
       throw new BadRequestException('Only server data and the world library can be modified here');
@@ -82,8 +103,8 @@ export class FilesService {
     return root;
   }
 
-  async listFiles(serverId: string, dirPath: string = ''): Promise<FileItem[]> {
-    const fullPath = await this.validatePath(serverId, dirPath);
+  async listFiles(serverId: string, dirPath: string = '', admin = false): Promise<FileItem[]> {
+    const fullPath = await this.validatePath(serverId, dirPath, false, true, admin);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('Directory not found');
@@ -100,6 +121,7 @@ export class FilesService {
     for (const entry of entries) {
       const entryPath = path.join(fullPath, entry.name);
       const relativePath = path.join(dirPath, entry.name);
+      if (!admin && serverId === '_root' && isAdminOnlyFile(this.SERVERS_DIR, entryPath)) continue;
 
       try {
         const stat = await fs.stat(entryPath);
@@ -124,8 +146,8 @@ export class FilesService {
     });
   }
 
-  async readFile(serverId: string, filePath: string): Promise<{ content: string; encoding: string }> {
-    const fullPath = await this.validatePath(serverId, filePath);
+  async readFile(serverId: string, filePath: string, admin = false): Promise<{ content: string; encoding: string }> {
+    const fullPath = await this.validatePath(serverId, filePath, false, true, admin);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('File not found');
@@ -198,8 +220,8 @@ export class FilesService {
     await fs.rename(fullOldPath, newPath);
   }
 
-  async getFileInfo(serverId: string, filePath: string): Promise<FileItem> {
-    const fullPath = await this.validatePath(serverId, filePath);
+  async getFileInfo(serverId: string, filePath: string, admin = false): Promise<FileItem> {
+    const fullPath = await this.validatePath(serverId, filePath, false, true, admin);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('File not found');
@@ -218,12 +240,12 @@ export class FilesService {
     };
   }
 
-  getFullPath(serverId: string, filePath: string): Promise<string> {
-    return this.validatePath(serverId, filePath);
+  getFullPath(serverId: string, filePath: string, admin = false): Promise<string> {
+    return this.validatePath(serverId, filePath, false, true, admin);
   }
 
-  async createZipStream(serverId: string, dirPath: string): Promise<{ stream: Archiver; name: string }> {
-    const fullPath = await this.validatePath(serverId, dirPath);
+  async createZipStream(serverId: string, dirPath: string, admin = false): Promise<{ stream: Archiver; name: string }> {
+    const fullPath = await this.validatePath(serverId, dirPath, false, true, admin);
 
     if (!(await fs.pathExists(fullPath))) {
       throw new NotFoundException('Directory not found');
@@ -237,7 +259,8 @@ export class FilesService {
     const folderName = path.basename(fullPath);
     const archive = new ZipArchive({ zlib: { level: 6 } });
 
-    archive.directory(fullPath, folderName);
+    const hidden = !admin && serverId === '_root';
+    archive.directory(fullPath, folderName, (entry) => (hidden && isAdminOnlyFile(this.SERVERS_DIR, path.join(fullPath, entry.name)) ? false : entry));
     archive.finalize();
 
     return { stream: archive, name: `${folderName}.zip` };

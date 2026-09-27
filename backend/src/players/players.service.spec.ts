@@ -97,6 +97,15 @@ describe('PlayersService', () => {
       expect(await service.list('srv')).toEqual([]);
     });
 
+    it('ignores list entries whose uuid is not a uuid, so they cannot point at another server', async () => {
+      const other = path.join(serversDir, 'other', 'mc-data', 'world', 'stats');
+      await fs.outputJson(path.join(other, 'secret.json'), { stats: { 'minecraft:custom': { 'minecraft:deaths': 7 } } });
+      await fs.writeJson(path.join(mcData, 'whitelist.json'), [{ name: 'Alex', uuid: ALEX }, { name: 'Probe', uuid: '../../../other/mc-data/world/stats/secret' }]);
+      await fs.writeJson(path.join(mcData, 'ops.json'), [{ name: 'Probe', uuid: '../../../other/mc-data/world/stats/secret', level: 4 }, { name: 'Odd', uuid: 42 }]);
+
+      expect((await service.list('srv')).map((player) => player.uuid)).toEqual([ALEX]);
+    });
+
     it('returns an empty list for a server that never started', async () => {
       expect(await service.list('srv')).toEqual([]);
       expect(await service.list('missing')).toEqual([]);

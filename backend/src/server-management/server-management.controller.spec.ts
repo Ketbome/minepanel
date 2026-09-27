@@ -360,6 +360,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should refuse a proxy hostname that another server already routes', async () => {
+      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
       dockerComposeService.getServerIndex = jest.fn().mockResolvedValue([{ id: 'victim' }, { id: 'lobby', edition: 'JAVA' }, { id: 'old', useProxy: false, proxyHostname: 'free' }]) as any;
 
       await expect(controller.updateServer(mockReq, 'victim', { proxyHostname: 'lobby' } as any)).rejects.toThrow(ConflictException);
@@ -368,6 +369,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should check the default hostname when the proxy is turned back on', async () => {
+      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
       dockerComposeService.getServerConfig.mockResolvedValue({ ...persistedConfig, useProxy: false } as any);
       dockerComposeService.getServerIndex = jest.fn().mockResolvedValue([{ id: 'lobby', proxyHostname: 'victim' }]) as any;
 
@@ -375,6 +377,16 @@ describe('ServerManagementController', () => {
       await expect(controller.updateServer(mockReq, 'victim', { useProxy: true } as any)).rejects.toThrow(ConflictException);
       await controller.updateServer(mockReq, 'victim', { useProxy: true, proxyHostname: 'survival' } as any);
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not treat a blank hostname for an unset one as a change, nor check without a base domain', async () => {
+      dockerComposeService.getServerIndex = jest.fn().mockResolvedValue([{ id: 'lobby', proxyHostname: 'victim' }]) as any;
+
+      // Both would collide with lobby's `victim` hostname if they were checked.
+      await controller.updateServer(mockReq, 'victim', { proxyHostname: 'victim' } as any);
+      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      await controller.updateServer(mockReq, 'victim', { proxyHostname: '', serverName: 'renamed' } as any);
+      expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(2);
     });
 
     it('should reject Compose variables in volume sources', async () => {
@@ -560,7 +572,7 @@ describe('ServerManagementController', () => {
       expect(dockerComposeService.createServer).toHaveBeenCalled();
     });
 
-    it.each(['./:/data', './.:/data', './/:/data', './docker-compose.yml:/data/c.yml', './server.json:/data/s.json'])(
+    it.each(['./:/data', './.:/data', './/:/data', './docker-compose.yml:/data/c.yml', './server.json:/data/s.json', './modpacks:/modpacks', './addons:/x:rw', './worlds:/x:z'])(
       'should reject a non-admin mounting the server directory or its panel files (%s)',
       async (volume) => {
         await expect(controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', dockerVolumes: volume } as any)).rejects.toThrow(ForbiddenException);
@@ -573,9 +585,13 @@ describe('ServerManagementController', () => {
       await expect(
         controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', envVars: 'GENERIC_PACK=https://evil.example.com/pack.zip' } as any),
       ).rejects.toThrow(/GENERIC_PACK/);
+      await expect(
+        controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', envVars: 'GENERIC_PACKS=pack\nGENERIC_PACKS_PREFIX=https://evil.example.com/' } as any),
+      ).rejects.toThrow(/GENERIC_PACKS_PREFIX/);
     });
 
     it('should refuse a new server whose default hostname is already routed', async () => {
+      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
       dockerComposeService.getServerIndex.mockResolvedValue([{ id: 'lobby', proxyHostname: 'demo' }] as any);
 
       await expect(controller.createServer(mockReq, { id: 'demo', edition: 'JAVA' } as any)).rejects.toThrow(ConflictException);
@@ -588,7 +604,7 @@ describe('ServerManagementController', () => {
       await controller.createServer(mockReq, {
         id: 'demo',
         edition: 'JAVA',
-        dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro',
+        dockerVolumes: './mc-data:/data\n./modpacks:/modpacks:ro\n./mc-data/plugins:/plugins\n./worlds:/x:ro,z',
       } as any);
 
       expect(dockerComposeService.createServer).toHaveBeenCalled();

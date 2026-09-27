@@ -30,27 +30,27 @@ export class FilesController {
 
   @Get(':serverId/list')
   async listFiles(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string = ''): Promise<FileItem[]> {
-    await this.assertFilesAccess(req, serverId, false);
-    return this.filesService.listFiles(serverId, dirPath);
+    const admin = await this.assertFilesAccess(req, serverId, false);
+    return this.filesService.listFiles(serverId, dirPath, admin);
   }
 
   @Get(':serverId/read')
   async readFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<{ content: string; encoding: string }> {
-    await this.assertFilesAccess(req, serverId, false);
+    const admin = await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
-    return this.filesService.readFile(serverId, filePath);
+    return this.filesService.readFile(serverId, filePath, admin);
   }
 
   @Get(':serverId/download')
   async downloadFile(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string, @Res() res: Response): Promise<void> {
-    await this.assertFilesAccess(req, serverId, false);
+    const admin = await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
 
-    const fullPath = await this.filesService.getFullPath(serverId, filePath);
+    const fullPath = await this.filesService.getFullPath(serverId, filePath, admin);
 
     // Verificar que el archivo existe
     if (!await fs.pathExists(fullPath)) {
@@ -79,12 +79,12 @@ export class FilesController {
 
   @Get(':serverId/download-zip')
   async downloadZip(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string, @Res() res: Response): Promise<void> {
-    await this.assertFilesAccess(req, serverId, false);
+    const admin = await this.assertFilesAccess(req, serverId, false);
     if (!dirPath) {
       throw new BadRequestException('Path is required');
     }
 
-    const { stream, name } = await this.filesService.createZipStream(serverId, dirPath);
+    const { stream, name } = await this.filesService.createZipStream(serverId, dirPath, admin);
 
     res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
     res.setHeader('Content-Type', 'application/zip');
@@ -94,11 +94,11 @@ export class FilesController {
 
   @Get(':serverId/info')
   async getFileInfo(@Request() req, @Param('serverId') serverId: string, @Query('path') filePath: string): Promise<FileItem> {
-    await this.assertFilesAccess(req, serverId, false);
+    const admin = await this.assertFilesAccess(req, serverId, false);
     if (!filePath) {
       throw new BadRequestException('Path is required');
     }
-    return this.filesService.getFileInfo(serverId, filePath);
+    return this.filesService.getFileInfo(serverId, filePath, admin);
   }
 
   @Post(':serverId/write')

@@ -211,7 +211,7 @@ Operating an assigned server does not include changing how its container is buil
 - Extra published ports
 - A generic pack loaded from a URL outside the trusted hosts (a zip from the server's modpacks folder is fine)
 
-`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes for folders inside the server's own directory (`./mc-data:/data`), never host paths, Compose variables, the directory itself or its `server.json` and `docker-compose.yml`, and can only publish a port straight through (`19132:19132/udp`, as the Geyser template does).
+`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes for folders inside the server's own directory (`./mc-data:/data`), never host paths, Compose variables, the directory itself or its `server.json` and `docker-compose.yml`; any source other than `mc-data` has to be mounted read-only (`:ro`). Ports can only be published straight through (`19132:19132/udp`, as the Geyser template does).
 
 Every value the panel writes into a generated compose file has its `$` escaped, so a field such as the MOTD can never read the panel's environment through Compose interpolation. Custom compose snippets are the exception: they are admin-only and keep `${VAR}` interpolation.
 
@@ -229,10 +229,12 @@ The `changeServerVersion` permission covers both halves of that change:
 Any other Docker image value stays admin-only. Without the permission the backend answers
 `403` and the version controls are disabled in the **Server type** tab.
 
-Global file management does not reach around it. The global file browser can read the whole
-servers directory, but for non-admins it only writes inside a server's `mc-data` folder and the
-world library: `server.json`, the generated compose files and any `.env` next to them are
-read-only there. Admins keep write access to the whole servers directory.
+Global file management does not reach around it. For non-admins, the global file browser only
+writes inside a server's `mc-data` folder and the world libraries (`.world/worlds` and each
+server's `worlds`), never the folders themselves. `server.json` and the generated compose files
+are hidden: they hold the CurseForge key and the RCON and restic passwords, so non-admins can
+neither read nor download them, and they are left out of folder downloads. Admins keep full
+access to the whole servers directory.
 Global file management is still broad (it writes into every server's data), so it is also
 **granted by `ADMIN` only**, and it is required to import worlds into the global library.
 

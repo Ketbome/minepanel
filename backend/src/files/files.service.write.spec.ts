@@ -16,6 +16,7 @@ jest.mock('fs-extra', () => ({
   chown: jest.fn().mockResolvedValue(undefined),
   chmod: jest.fn().mockResolvedValue(undefined),
   lstat: jest.fn(),
+  realpath: jest.fn(async (target: string) => target),
 }));
 
 jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
@@ -108,8 +109,25 @@ describe('FilesService writes', () => {
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true });
     const result = await service.createZipStream('srv', 'world');
     expect(result).toEqual({ stream: mockArchive, name: 'world.zip' });
-    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world');
+    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world', expect.any(Function));
     expect(mockArchive.finalize).toHaveBeenCalled();
+  });
+
+  it('leaves server.json and the compose file out of global zips for non-admins', async () => {
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+    (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true });
+    const root = new FilesService({ get: () => '/app/servers' } as any);
+    const entry = (name: string) => ({ name });
+
+    await root.createZipStream('_root', 'srv');
+    const lastFilter = () => mockArchive.directory.mock.calls[mockArchive.directory.mock.calls.length - 1][2];
+    const filter = lastFilter();
+    expect(filter(entry('server.json'))).toBe(false);
+    expect(filter(entry('docker-compose.yml'))).toBe(false);
+    expect(filter(entry('mc-data/server.json'))).toEqual(entry('mc-data/server.json'));
+
+    await root.createZipStream('_root', 'srv', true);
+    expect(lastFilter()(entry('server.json'))).toEqual(entry('server.json'));
   });
 
   it('listFiles rejects non-directories and skips entries it cannot stat', async () => {
@@ -131,15 +149,18 @@ describe('FilesService writes', () => {
 describe('FilesService global writes', () => {
   const service = new FilesService({ get: () => '/app/servers' } as any);
 
-  it('only lets _root write inside a server mc-data or the world library', async () => {
+  it('only lets _root write inside a server mc-data or the world libraries', async () => {
     await service.writeFile('_root', 'srv/mc-data/server.properties', 'x');
     expect(fs.writeFile).toHaveBeenLastCalledWith('/app/servers/srv/mc-data/server.properties', 'x', 'utf-8');
     await service.createDirectory('_root', '.world/worlds/new');
+    await service.createDirectory('_root', 'srv/worlds/new');
 
-    for (const target of ['srv/server.json', 'srv/docker-compose.yml', '.env', 'servers.json', 'srv/mc-data', '../data/x', 'bad id/mc-data/a']) {
+    for (const target of ['srv/server.json', 'srv/docker-compose.yml', '.env', 'servers.json', 'srv/mc-data', 'srv/worlds', '.world/other', '../data/x', 'bad id/mc-data/a']) {
       await expect(service.writeFile('_root', target, 'x')).rejects.toThrow(BadRequestException);
     }
     await expect(service.deleteFile('_root', 'srv/server.json')).rejects.toThrow(BadRequestException);
+    await expect(service.deleteFile('_root', '.world/worlds')).rejects.toThrow(BadRequestException);
+    await expect(service.rename('_root', 'srv/worlds', 'gone')).rejects.toThrow(BadRequestException);
     await expect(service.rename('_root', 'srv/mc-data/a', '../server.json')).rejects.toThrow(BadRequestException);
   });
 

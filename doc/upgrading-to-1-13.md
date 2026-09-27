@@ -45,6 +45,10 @@ an admin to add a bind mount to the server instead.
   (`19132:19132/udp`, as the Geyser template does).
 - **Manage global files** can only be granted by an admin, and it is required to import
   worlds into the global library. Existing grants are kept.
+- In the global file browser, non-admins no longer see each server's `server.json` and
+  `docker-compose.yml` (they hold the CurseForge key and the RCON and restic passwords).
+- When a non-admin creates a server, any volume other than `./mc-data` must be read-only
+  (`./modpacks:/modpacks:ro`).
 - Scheduled tasks of type **command** require the console permission to create, edit
   or run. Restart and announcement tasks do not.
 - Changing your password signs out every other session.

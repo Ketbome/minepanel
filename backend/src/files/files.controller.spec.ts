@@ -44,7 +44,7 @@ describe('FilesController', () => {
     expect(accessControl.assertGlobalFiles).toHaveBeenLastCalledWith({ id: 1 }, false);
     await controller.writeFile(req, 'srv', { path: 'a', content: 'b' });
     expect(accessControl.assertServerFiles).toHaveBeenCalledWith({ id: 1 }, 'srv', true);
-    expect(filesService.listFiles).toHaveBeenCalledWith('.world', 'dir');
+    expect(filesService.listFiles).toHaveBeenCalledWith('.world', 'dir', false);
   });
 
   it('requires a path for read, info, write, mkdir and delete', async () => {

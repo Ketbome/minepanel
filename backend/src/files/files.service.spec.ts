@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FilesService } from './files.service';
 import * as fs from 'fs-extra';
 
@@ -11,6 +11,7 @@ jest.mock('fs-extra', () => ({
   stat: jest.fn(),
   readdir: jest.fn(),
   readFile: jest.fn(),
+  realpath: jest.fn(async (target: string) => target),
 }));
 
 jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
@@ -92,6 +93,31 @@ describe('FilesService', () => {
       const result = await service.listFiles('srv', '');
 
       expect(result.map((f) => f.name)).toEqual(['a-dir', 'a.txt', 'b.txt']);
+    });
+
+    it('hides server.json and the compose file from non-admins in the global browser', async () => {
+      (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+      (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true, size: 1, mtime: new Date() });
+      (fs.readdir as unknown as jest.Mock).mockResolvedValue([
+        { name: 'server.json', isDirectory: () => false },
+        { name: 'docker-compose.yml', isDirectory: () => false },
+        { name: 'mc-data', isDirectory: () => true },
+      ]);
+
+      expect((await service.listFiles('_root', 'srv')).map((f) => f.name)).toEqual(['mc-data']);
+      expect(await service.listFiles('_root', 'srv', true)).toHaveLength(3);
+    });
+  });
+
+  describe('admin-only files', () => {
+    it('lets only admins read server.json and the compose file through _root, links included', async () => {
+      await expect(service.getFullPath('_root', 'srv/server.json')).rejects.toThrow(ForbiddenException);
+      await expect(service.getFullPath('_root', 'srv/docker-compose.yml')).rejects.toThrow(ForbiddenException);
+      expect(await service.getFullPath('_root', 'srv/server.json', true)).toBe(`${SERVERS_DIR}/srv/server.json`);
+      expect(await service.getFullPath('_root', 'srv/mc-data/server.json')).toBe(`${SERVERS_DIR}/srv/mc-data/server.json`);
+
+      (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => (target.endsWith('/link') ? `${SERVERS_DIR}/srv/server.json` : target));
+      await expect(service.getFullPath('_root', 'srv/mc-data/link')).rejects.toThrow(ForbiddenException);
     });
   });
 

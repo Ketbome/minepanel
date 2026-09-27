@@ -223,18 +223,21 @@ export class PlayersService {
       ['usercache.json', 'whitelist.json', 'ops.json', 'banned-players.json'].map(async (file) => (await this.readJson<NamedEntry[]>(path.join(mcDataDir, file))) ?? []),
     );
 
+    // Player file paths are built from these uuids, and the game container writes these lists.
+    const valid = (entries: NamedEntry[]) => entries.filter((entry) => typeof entry?.uuid === 'string' && UUID_PATTERN.test(entry.uuid));
+
     const names = new Map<string, string>();
-    for (const entry of [...usercache, ...whitelist, ...ops, ...banned]) {
-      if (entry?.uuid && entry.name) names.set(entry.uuid.toLowerCase(), entry.name);
+    for (const entry of valid([...usercache, ...whitelist, ...ops, ...banned])) {
+      if (entry.name) names.set(entry.uuid.toLowerCase(), entry.name);
     }
 
-    const toUuids = (entries: NamedEntry[]) => entries.filter((entry) => entry?.uuid).map((entry) => entry.uuid.toLowerCase());
+    const toUuids = (entries: NamedEntry[]) => valid(entries).map((entry) => entry.uuid.toLowerCase());
     const files: ServerPlayerFiles = {
       worldDir,
       dirs: await playerDirs(worldDir),
       names,
       whitelist: new Set(toUuids(whitelist)),
-      ops: new Map(ops.filter((entry) => entry?.uuid).map((entry) => [entry.uuid.toLowerCase(), entry.level ?? 4])),
+      ops: new Map(valid(ops).map((entry) => [entry.uuid.toLowerCase(), entry.level ?? 4])),
       banned: new Set(toUuids(banned)),
       uuids: new Set<string>(),
     };

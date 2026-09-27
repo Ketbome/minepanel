@@ -209,6 +209,17 @@ describe('BedrockAddonsService import and sync', () => {
       expect(await fs.readdir(outside)).toEqual([]);
     });
 
+    it('refuses to write world pack files through a linked worlds folder', async () => {
+      const outside = path.join(serverDir(), 'outside');
+      await fs.ensureDir(outside);
+      await fs.remove(path.join(mcData(), 'worlds'));
+      await fs.symlink(outside, path.join(mcData(), 'worlds'));
+
+      const { addon } = await importPacks('worlds-link');
+      await expect(service.setAddonEnabled('bed', addon.id, true)).rejects.toThrow('Invalid path');
+      expect(await fs.readdir(outside)).toEqual([]);
+    });
+
     it('ignores a level-name that would leave the worlds folder', async () => {
       await fs.writeFile(path.join(mcData(), 'server.properties'), 'level-name=../../../outside\n');
       const { addon } = await importPacks('level');
