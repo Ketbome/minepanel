@@ -122,6 +122,13 @@ describe('PlayersService', () => {
 
       expect((await service.list('srv')).map((player) => player.uuid)).toEqual([ALEX]);
     });
+
+    it('keeps reading top-level folders when an old world has a leftover players/', async () => {
+      await writeWorldFile('world', 'players', 'Steve.dat', legacyPlayerDat());
+      await writeWorldFile('world', 'playerdata', `${STEVE}.dat`, legacyPlayerDat());
+
+      expect((await service.list('srv')).map((player) => player.uuid)).toEqual([STEVE]);
+    });
   });
 
   describe('profile', () => {

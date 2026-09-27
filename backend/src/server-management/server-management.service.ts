@@ -1732,6 +1732,7 @@ export class ServerManagementService {
   async readTickStats(serverId: string, source: 'neoforge' | 'spark'): Promise<CommandExecutionResponse> {
     if (!this.validateServerId(serverId)) return { success: false, output: '' };
     try {
+      if (!(await this.serverExists(serverId))) return { success: false, output: '' };
       const containerId = await this.findContainerId(serverId);
       if (!containerId) return { success: false, output: '' };
       // Fixed read-only command; credentials stay in the container environment.
@@ -1751,6 +1752,7 @@ export class ServerManagementService {
     const empty = { success: false, supported: true, complete: false, rules: [] };
     if (!this.validateServerId(serverId)) return empty;
     try {
+      if (!(await this.serverExists(serverId))) return empty;
       if ((await this.getServerEdition(serverId)) === 'BEDROCK') return { ...empty, supported: false };
       const containerId = await this.findContainerId(serverId);
       if (!containerId) return empty;
