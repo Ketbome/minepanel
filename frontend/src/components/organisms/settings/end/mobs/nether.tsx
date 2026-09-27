@@ -60,9 +60,9 @@ const BLAZE: SkinArt = {
 
 // three rings of four rods, each spinning its own way at its own height, like the game's
 const RINGS = [
-  { radius: 9, y: 20, spin: -Math.PI * 2, phase: 0, bob: 5 },
-  { radius: 7, y: 13, spin: Math.PI * 0.6, phase: Math.PI / 4, bob: 5 },
-  { radius: 5, y: 6, spin: -Math.PI, phase: 0.47, bob: 10 },
+  { radius: 9, y: 22, spin: -Math.PI * 2, phase: 0, bob: 5 },
+  { radius: 7, y: 18, spin: Math.PI * 0.6, phase: Math.PI / 4, bob: 5 },
+  { radius: 5, y: 9, spin: -Math.PI, phase: 0.47, bob: 10 },
 ] as const;
 const CHARGE_S = 1;
 
@@ -125,7 +125,7 @@ export function Blaze({ id, home, onDeath }: { readonly id: string; readonly hom
       if (!rod) return;
       const ring = RINGS[Math.floor(index / 4)];
       const angle = ring.phase + runtime.time * ring.spin + (index % 4) * (Math.PI / 2);
-      rod.position.set(Math.cos(angle) * ring.radius * PX, (ring.y + Math.cos(index * 2 * 0.25 + runtime.time * ring.bob) * 1.5) * PX, Math.sin(angle) * ring.radius * PX);
+      rod.position.set(Math.cos(angle) * ring.radius * PX, (ring.y + Math.cos(index * 2 * 0.25 + runtime.time * ring.bob)) * PX, Math.sin(angle) * ring.radius * PX);
     });
 
     if (seeing) {
@@ -172,7 +172,7 @@ export function Blaze({ id, home, onDeath }: { readonly id: string; readonly hom
 
   return (
     <group ref={root} position={home}>
-      <Box skin={skin} name="head" at={[0, 22, 0]} material={material} />
+      <Box skin={skin} name="head" at={[0, 24, 0]} material={material} />
       {Array.from({ length: 12 }, (_, index) => (
         <group
           key={index}

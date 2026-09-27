@@ -299,7 +299,7 @@ export function Enderman({ seed, onTeleport, onNotice, onDeath, carrying }: Ende
     arms.current.forEach((arm, index) => arm?.rotation.set((index ? swing : -swing) * 0.6 - (r.angry ? 0.15 : 0) - strike * 1.3, 0, 0));
     body.current?.position.set(r.angry ? (Math.random() - 0.5) * 0.06 : 0, 0, r.angry ? (Math.random() - 0.5) * 0.06 : 0);
     r.lift += ((r.angry ? 5 : 0) - r.lift) * Math.min(1, dt * 10);
-    if (head.current) head.current.position.y = (42 + r.lift) * PX;
+    if (head.current) head.current.position.y = (37 + r.lift) * PX;
   });
 
   return (
@@ -316,22 +316,22 @@ export function Enderman({ seed, onTeleport, onNotice, onDeath, carrying }: Ende
             <Box skin={skin} name="limb" at={[0, -15, 0]} material={material} />
           </group>
         ))}
-        <Box skin={skin} name="body" at={[0, 36, 0]} material={material} />
+        <Box skin={skin} name="body" at={[0, 32, 0]} material={material} />
         {[-5, 5].map((x, index) => (
           <group
             key={x}
             ref={(arm) => {
               arms.current[index] = arm;
             }}
-            position={[x * PX, 42 * PX, 0]}
+            position={[x * PX, 36 * PX, 0]}
             rotation={[carrying?.holding ? -1.15 : 0, 0, 0]}
           >
-            <Box skin={skin} name="limb" at={[0, -15, 0]} material={material} />
+            <Box skin={skin} name="limb" at={[0, -13, 0]} material={material} />
           </group>
         ))}
-        {carrying?.holding && <mesh geometry={UNIT_BOX} material={overworldKit().mat.grass} scale={0.55} position={[0, 31 * PX, 22 * PX]} />}
-        <Box skin={skin} name="jaw" at={[0, 44, 0]} material={material} />
-        <group ref={head} position={[0, 42 * PX, 0]}>
+        {carrying?.holding && <mesh geometry={UNIT_BOX} material={overworldKit().mat.grass} scale={0.55} position={[0, 25 * PX, 22 * PX]} />}
+        <Box skin={skin} name="jaw" at={[0, 39.5, 0]} material={material} />
+        <group ref={head} position={[0, 37 * PX, 0]}>
           <Box skin={skin} name="head" at={[0, 4, 0]} material={material} />
           <mesh geometry={skinOf(ENDERMAN_EYES).boxes.eyes} material={endermanEyes()} position={[0, 3.5 * PX, 4.12 * PX]} />
         </group>

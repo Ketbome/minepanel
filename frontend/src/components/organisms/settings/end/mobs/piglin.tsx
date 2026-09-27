@@ -75,7 +75,7 @@ const PIGLIN: SkinArt = {
   },
   boxes: {
     head: { size: [10, 8, 8], base: 'p', faces: { front: ['pppppppppp', 'pppppppppp', 'pkkkppkkkp', 'pwkppppkwp', 'pppppppppp', 'pppppppppp', 'pdppppppdp', 'pddddddddp'] } },
-    snout: { size: [4, 3, 1], base: 'n', faces: { front: ['nnnn', 'knnk', 'nnnn'] } },
+    snout: { size: [4, 4, 1], base: 'n', faces: { front: ['nnnn', 'knnk', 'nnnn', 'nnnn'] } },
     ear: { size: [1, 5, 4], base: 'p', faces: sides(['p', 'p', 'd', 'd', 'd']) },
     body: {
       size: [8, 12, 4],
@@ -226,13 +226,13 @@ export function Piglin({ wander, onDeath }: { readonly wander: Wander; readonly 
       ))}
       <group ref={head} position={[0, 24 * PX, 0]}>
         <Box skin={skin} name="head" at={[0, 4, 0]} material={material} />
-        <Box skin={skin} name="snout" at={[0, 2.5, 4.5]} material={material} />
-        <Part size={[1, 2, 1]} at={[-2.5, 2, 4.5]} material={tusk} />
-        <Part size={[1, 2, 1]} at={[2.5, 2, 4.5]} material={tusk} />
-        <group position={[-5 * PX, 6 * PX, 0]} rotation={[0, 0, 0.5]}>
+        <Box skin={skin} name="snout" at={[0, 2, 4.5]} material={material} />
+        <Part size={[1, 2, 1]} at={[-2.5, 1, 4.5]} material={tusk} />
+        <Part size={[1, 2, 1]} at={[2.5, 1, 4.5]} material={tusk} />
+        <group position={[-4.5 * PX, 6 * PX, 0]} rotation={[0, 0, -Math.PI / 6]}>
           <Box skin={skin} name="ear" at={[-0.5, -2.5, 0]} material={material} />
         </group>
-        <group position={[5 * PX, 6 * PX, 0]} rotation={[0, 0, -0.5]}>
+        <group position={[4.5 * PX, 6 * PX, 0]} rotation={[0, 0, Math.PI / 6]}>
           <Box skin={skin} name="ear" at={[0.5, -2.5, 0]} material={material} />
         </group>
       </group>

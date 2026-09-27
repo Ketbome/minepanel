@@ -147,7 +147,7 @@ export function Shulker({ at }: { readonly at: readonly [number, number, number]
   return (
     <group ref={root} position={position}>
       <Box skin={skin} name="base" at={[0, 4, 0]} material={material} />
-      <group ref={head} position={[0, 8 * PX, 0]}>
+      <group ref={head} position={[0, 6 * PX, 0]}>
         <Box skin={skin} name="head" at={[0, 3, 0]} material={material} />
       </group>
       <group ref={lid}>

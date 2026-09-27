@@ -30,13 +30,13 @@ const SILVERFISH: SkinArt = {
     s5: { size: [2, 1, 2], base: 's' },
     s6: { size: [1, 1, 2], base: 's' },
     fringe0: {
-      size: [10, 6, 3],
+      size: [10, 8, 3],
       base: 'x',
       faces: {
-        front: ['..f.ff.f..', '.ffffffff.', 'ffffffffff', 'ffffffffff', 'f.ffffff.f', 'f.f....f.f'],
-        back: ['..f.ff.f..', '.ffffffff.', 'ffffffffff', 'ffffffffff', 'f.ffffff.f', 'f.f....f.f'],
-        left: ['.f.', 'fff', 'fff', 'fff', 'fff', 'f.f'],
-        right: ['.f.', 'fff', 'fff', 'fff', 'fff', 'f.f'],
+        front: ['..f.ff.f..', '.ffffffff.', 'ffffffffff', 'ffffffffff', 'ffffffffff', 'f.ffffff.f', 'f.f....f.f', 'f.f....f.f'],
+        back: ['..f.ff.f..', '.ffffffff.', 'ffffffffff', 'ffffffffff', 'ffffffffff', 'f.ffffff.f', 'f.f....f.f', 'f.f....f.f'],
+        left: ['.f.', 'fff', 'fff', 'fff', 'fff', 'fff', 'f.f', 'f.f'],
+        right: ['.f.', 'fff', 'fff', 'fff', 'fff', 'fff', 'f.f', 'f.f'],
       },
     },
     fringe1: {
@@ -68,7 +68,7 @@ const HEIGHTS = [2, 3, 4, 3, 2, 1, 1];
 const PLACES = DEPTHS.map((_, index) => 8.5 - DEPTHS.slice(0, index).reduce((sum, depth) => sum + depth, 0) - DEPTHS[index] / 2);
 // the fringed plates ride on segments 2, 4 and 1, the way the game stacks them
 const FRINGES = [
-  { name: 'fringe0', on: 2, height: 6 },
+  { name: 'fringe0', on: 2, height: 8 },
   { name: 'fringe1', on: 4, height: 4 },
   { name: 'fringe2', on: 1, height: 5 },
 ];
