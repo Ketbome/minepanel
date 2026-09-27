@@ -333,6 +333,9 @@ const pt: Record<LoreKey, string> = {
   thanksStar: "Estrela no GitHub",
   thanksClose: "Voltar ao painel",
   subBreath: "Algo respira atrás de você",
+  hintSleepDay: "Você só pode dormir à noite ou durante tempestades",
+  hintSleepMonsters: "Você não pode descansar agora; há monstros por perto",
+  ghostSleep: "você dormiu mais do que eu no servidor #47 inteiro.",
 };
 
 export default pt;

@@ -25,6 +25,8 @@ export interface Target {
   readonly solid?: boolean;
   // an ender pearl landing here does this instead of teleporting you (the End gateway)
   readonly pearl?: () => void;
+  // a monster: you may not sleep with one close by
+  readonly hostile?: boolean;
 }
 
 export interface Projectile {
@@ -70,6 +72,8 @@ export const runtime = {
     lastLevitation: -1e9,
   },
   time: 0,
+  // seconds of in-game day; see clock.ts
+  clock: 0,
   // the system asks for less motion: no view bobbing, no field-of-view kicks, no hand sway
   reducedMotion: false,
   // zones hook into what the player does with a held item or a mined or placed block, and the

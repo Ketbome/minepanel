@@ -529,6 +529,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
   useMobTarget(root, [0.7, 1.7, 0.7], {
     label: () => null,
     solid: true,
+    hostile: true,
     hit: (amount) => {
       if (control.dead) return;
       health.current -= amount;

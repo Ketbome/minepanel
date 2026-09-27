@@ -15,7 +15,7 @@ import { useRespawns } from '../mobs/parts';
 import { calmPiglins, Piglin } from '../mobs/piglin';
 import { BFUUNY, BLAZES, useEndGame } from '../store';
 import { hash, kit, UNIT_BOX } from '../voxels';
-import { bfuunyLaughs, inside, NetherPortalSheet, Sign } from './props';
+import { Bed, bfuunyLaughs, inside, NetherPortalSheet, Sign } from './props';
 
 // The Nether: a portal island, a lava lake, a nether brick bridge and the fortress where the
 // blazes guard the rods. One unit is one block; walkable ground tops out at y = 0.5.
@@ -124,45 +124,17 @@ function buildNether() {
   return world;
 }
 
-const BED_FOOT = new THREE.BoxGeometry(1, 9 / 16, 1);
-
 // "Do not sleep here." It explodes, like every bed in the Nether.
-function Bed({ world }: { readonly world: World }) {
-  const target = useMemo<Target>(
-    () => ({
-      box: cellBox(BED[0], BED[1], BED[2], 0.6).expandByVector(new THREE.Vector3(0, 0, 0.5)),
-      label: () => 'bed',
-      use: () => {
-        const game = useEndGame.getState();
-        spawnEffect('explosion', new THREE.Vector3(BED[0], BED[1], BED[2]));
-        cue('boom');
-        game.say('ghostBed');
-        game.hurt(99, 'bed');
-        if (!game.flags.bfuunyBed) {
-          game.setFlag('bfuunyBed');
-          bfuunyLaughs('bfuunyBed');
-        }
-      },
-    }),
-    []
-  );
-  useTarget(target);
-  useEffect(() => {
-    world.set(BED[0], BED[1], BED[2], 'prop');
-    world.set(BED[0], BED[1], BED[2] + 1, 'prop');
-  }, [world]);
-  const { mat } = kit();
-  return (
-    <group position={[BED[0], BED[1] - 0.5, BED[2] + 0.5]}>
-      <mesh geometry={BED_FOOT} scale={[1, 1, 2]} position={[0, 9 / 32, 0]}>
-        <meshLambertMaterial color="#b02e26" />
-      </mesh>
-      <mesh geometry={UNIT_BOX} scale={[0.9, 0.12, 0.6]} position={[0, 0.6, -0.65]}>
-        <meshLambertMaterial color="#f0f0f0" />
-      </mesh>
-      <mesh geometry={UNIT_BOX} material={mat.torch} scale={[1, 0.2, 0.1]} position={[0, 0.1, -1]} />
-    </group>
-  );
+function sleep() {
+  const game = useEndGame.getState();
+  spawnEffect('explosion', new THREE.Vector3(BED[0], BED[1], BED[2]));
+  cue('boom');
+  game.say('ghostBed');
+  game.hurt(99, 'bed');
+  if (!game.flags.bfuunyBed) {
+    game.setFlag('bfuunyBed');
+    bfuunyLaughs('bfuunyBed');
+  }
 }
 
 function Spawner() {
@@ -256,7 +228,7 @@ export function Nether() {
       <pointLight position={[0, 4, -36]} color="#ff9a3c" intensity={20} distance={24} decay={1.4} />
       <WorldMesh world={world} />
       <NetherPortalSheet from={INNER_FROM} to={INNER_TO} axis="x" />
-      <Bed world={world} />
+      <Bed world={world} at={BED} use={sleep} />
       <Sign id="bed" at={[BED[0] + 1.3, 1, BED[2] - 0.2]} facing={-0.5} />
       <Sign id="bfuunyBed" at={[BED[0] - 1.3, 1, BED[2] - 0.2]} facing={0.5} />
       <Sign id="diamond" at={[FORTRESS.x0 + 0.52, 2, -32]} facing={Math.PI / 2} wall />

@@ -49,7 +49,8 @@ export const createGameSlice: Slice<Omit<GameSlice, 'reset'>> = (set) => ({
     set((state) => {
       if (!state.transition) return state;
       const { zone, entry } = state.transition;
-      return { zone, entry, transition: null, checkpoint: null, noise: 0 };
+      // the same zone (a night slept away) does not remount, so nothing would set a new checkpoint
+      return { zone, entry, transition: null, checkpoint: zone === state.zone ? state.checkpoint : null, noise: 0 };
     }),
   setFlag: (flag) => set((state) => (state.flags[flag] ? state : { flags: { ...state.flags, [flag]: true } })),
   kill: (id) => set((state) => (state.killed.includes(id) ? state : { killed: [...state.killed, id] })),

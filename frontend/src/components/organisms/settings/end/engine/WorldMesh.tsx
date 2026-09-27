@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useSyncExternalStore } from 'react';
-import type * as THREE from 'three';
+import { memo, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import { crossGeometry, overworldKit } from '../overworld-voxels';
 import { netherKit } from '../nether-voxels';
-import { kit, VoxelMesh } from '../voxels';
-import { BLOCKS, type BlockId, type World } from './world';
+import { type Block, kit, VoxelMesh } from '../voxels';
+import { type BlockId, CHUNK, chunkCenter, chunkKey, type World } from './world';
 
 type Material = THREE.Material | THREE.Material[];
 
@@ -56,31 +57,83 @@ export function materialFor(id: BlockId): Material | null {
 
 let cross: THREE.BufferGeometry | null = null;
 
-// One instanced mesh per block type. Mining or placing a block rebuilds only its type's mesh.
-export function WorldMesh({ world, grass = [] }: { readonly world: World; readonly grass?: Parameters<typeof VoxelMesh>[0]['blocks'] }) {
+type Blades = Parameters<typeof VoxelMesh>[0]['blocks'];
+
+// One instanced mesh per block type and chunk. Mining or placing a block rebuilds only its chunk.
+export function WorldMesh({ world, grass = [] }: { readonly world: World; readonly grass?: Blades }) {
   const revision = useSyncExternalStore(
     (listener) => world.subscribe(listener),
     () => world.revision,
     () => 0
   );
-  const ids = useMemo(() => {
+  const chunks = useMemo(() => {
     void revision;
-    return [...world.ids()].filter((id) => BLOCKS[id].visible !== false);
+    return world.chunkKeys();
   }, [world, revision]);
-  // tall grass goes with the block under it (mined, or blown up by a creeper)
-  const standing = useMemo(() => {
-    void revision;
-    return grass.filter((blade) => world.get(blade.x, blade.y - 1, blade.z));
-  }, [grass, world, revision]);
-  cross ??= crossGeometry();
+  const blades = useMemo(() => {
+    const byChunk = new Map<number, Block[]>();
+    grass.forEach((blade) => {
+      const key = chunkKey(blade.x, blade.z);
+      const list = byChunk.get(key);
+      if (list) list.push(blade);
+      else byChunk.set(key, [blade]);
+    });
+    return byChunk;
+  }, [grass]);
+  const groups = useRef(new Map<number, THREE.Group>());
+
+  // three already skips chunks outside the view; past the fog they would draw as flat fog colour
+  useFrame(({ camera, scene }) => {
+    const far = scene.fog instanceof THREE.Fog ? scene.fog.far + CHUNK : Infinity;
+    groups.current.forEach((group, key) => {
+      const [x, z] = chunkCenter(key);
+      group.visible = Math.hypot(camera.position.x - x, camera.position.z - z) < far;
+    });
+  });
 
   return (
     <>
-      {ids.map((id) => {
-        const material = materialFor(id);
-        return material ? <VoxelMesh key={id} blocks={world.blocks(id)} material={material} /> : null;
-      })}
-      {standing.length > 0 && <VoxelMesh blocks={standing} material={overworldKit().mat.tallGrass} geometry={cross} />}
+      {chunks.map((key) => (
+        <ChunkMesh
+          key={key}
+          world={world}
+          chunk={key}
+          revision={world.chunkRevision(key)}
+          grass={blades.get(key)}
+          group={(group) => {
+            if (group) groups.current.set(key, group);
+            else groups.current.delete(key);
+          }}
+        />
+      ))}
     </>
   );
 }
+
+interface ChunkMeshProps {
+  readonly world: World;
+  readonly chunk: number;
+  // only here so memo re-renders the chunk when its blocks change
+  readonly revision: number;
+  readonly grass?: Blades;
+  readonly group: (group: THREE.Group | null) => void;
+}
+
+const ChunkMesh = memo(
+  function ChunkMesh({ world, chunk, grass, group }: ChunkMeshProps) {
+    const lists = world.chunkBlocks(chunk);
+    // tall grass goes with the block under it (mined, or blown up by a creeper)
+    const standing = grass?.filter((blade) => world.get(blade.x, blade.y - 1, blade.z)) ?? [];
+    cross ??= crossGeometry();
+    return (
+      <group ref={group}>
+        {[...lists].map(([id, blocks]) => {
+          const material = materialFor(id);
+          return material ? <VoxelMesh key={id} blocks={blocks} material={material} /> : null;
+        })}
+        {standing.length > 0 && <VoxelMesh blocks={standing} material={overworldKit().mat.tallGrass} geometry={cross} />}
+      </group>
+    );
+  },
+  (previous, next) => previous.revision === next.revision && previous.world === next.world && previous.grass === next.grass
+);

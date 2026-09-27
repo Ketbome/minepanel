@@ -240,7 +240,11 @@ Tooling / build (Next.js 16):
   load with `next/dynamic` when it opens. `advance()` reports each key through
   `lib/store/achievements-store.ts` (`POST /achievements`, per user). A new advancement key goes
   in `achievements.ts` and in `backend/src/achievements/dto/unlock-achievement.dto.ts`.
-  - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn),
+  - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn;
+    `WorldMesh` draws it per 32x32-column chunk, so a mined block rebuilds only its chunk, three culls
+    chunks out of view and chunks past the fog are hidden; `floor` skips faces pointing down into
+    the ground), the day clock (`clock.ts`: a ten-minute day that pause, windows and death stop;
+    the Overworld's sky, fog and lights follow it, and its camp bed skips the night),
     AABB physics (`physics.ts`), voxel/target raycasts, input, `Player.tsx` (movement, pointer
     lock, crosshair, mining, bow, eating, damage), `Hand.tsx` (the first-person arm and held item,
     drawn in a drei `Hud` pass with the game's swing/bow/eat poses), projectiles and particle
@@ -254,8 +258,11 @@ Tooling / build (Next.js 16):
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
     walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
     step-up, climbing out when buried, never into lava) on the same physics as the player. Mobs a
-    run depends on for supplies (endermen for pearls, piglins for barters, skeletons for arrows)
-    come back through `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Skins are painted in code
+    run depends on for supplies (endermen for pearls, piglins for barters) come back through
+    `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Natural spawns go through
+    `useSpawner` (`mobs/spawner.ts`: a cap, a distance band around the player, a condition such as
+    night, and unloading far away); the Overworld's skeletons spawn that way at night and burn by day.
+    Monsters mark their target `hostile`, which is what the bed checks. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
     shared red hurt flash and the topple-and-poof death.

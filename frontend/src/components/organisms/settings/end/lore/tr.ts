@@ -333,6 +333,9 @@ const tr: Record<LoreKey, string> = {
   thanksStar: "GitHub'da yıldız ver",
   thanksClose: "Panele dön",
   subBreath: "Arkanda bir şey nefes alıyor",
+  hintSleepDay: "Sadece gece veya fırtına sırasında uyuyabilirsin",
+  hintSleepMonsters: "Şimdi dinlenemezsin; yakınlarda canavarlar var",
+  ghostSleep: "tüm #47 sunucusu boyunca benden fazla uyudun.",
 };
 
 export default tr;

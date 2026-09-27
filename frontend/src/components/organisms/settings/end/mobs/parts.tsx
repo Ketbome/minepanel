@@ -239,6 +239,7 @@ export function useMobTarget(root: React.RefObject<THREE.Group | null>, size: Ve
       watch: target.watch && ((dt) => latest.current.watch?.(dt)),
       reach: target.reach,
       solid: target.solid,
+      hostile: target.hostile,
     }),
     // the shape of a mob's target never changes, only what its callbacks do
     // eslint-disable-next-line react-hooks/exhaustive-deps

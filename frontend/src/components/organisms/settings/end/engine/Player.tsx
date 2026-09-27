@@ -202,6 +202,7 @@ export function Player() {
     runtime.time += dt;
     const world = runtime.world;
     const game = useEndGame.getState();
+    if (game.flags.started && !game.panel && !game.dead && !game.paused && !game.transition) runtime.clock += dt;
     const s = state.current;
     const p = runtime.player;
     if (!world || !game.checkpoint) return;

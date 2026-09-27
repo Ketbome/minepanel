@@ -181,6 +181,40 @@ export function Lectern({ world, at, book, facing = 0, glow = false }: { readonl
 }
 
 // the purple sheet inside a lit Nether portal; walking into it is handled by the zone
+const BED_FOOT = new THREE.BoxGeometry(1, 9 / 16, 1);
+
+// A red bed two cells long: the pillow at `at`, the foot one cell toward +z.
+export function Bed({ world, at, use }: { readonly world: World; readonly at: Cell; readonly use: () => void }) {
+  const [x, y, z] = at;
+  const latest = useRef(use);
+  latest.current = use;
+  const target = useMemo<Target>(
+    () => ({
+      box: cellBox(x, y, z, 0.6).expandByVector(new THREE.Vector3(0, 0, 0.5)),
+      label: () => 'bed',
+      use: () => latest.current(),
+    }),
+    [x, y, z]
+  );
+  useTarget(target);
+  useEffect(() => {
+    world.set(x, y, z, 'prop');
+    world.set(x, y, z + 1, 'prop');
+  }, [world, x, y, z]);
+  const { mat } = kit();
+  return (
+    <group position={[x, y - 0.5, z + 0.5]}>
+      <mesh geometry={BED_FOOT} scale={[1, 1, 2]} position={[0, 9 / 32, 0]}>
+        <meshLambertMaterial color="#b02e26" />
+      </mesh>
+      <mesh geometry={UNIT_BOX} scale={[0.9, 0.12, 0.6]} position={[0, 0.6, -0.65]}>
+        <meshLambertMaterial color="#f0f0f0" />
+      </mesh>
+      <mesh geometry={UNIT_BOX} material={mat.torch} scale={[1, 0.2, 0.1]} position={[0, 0.1, -1]} />
+    </group>
+  );
+}
+
 export function NetherPortalSheet({ from, to, axis }: { readonly from: Cell; readonly to: Cell; readonly axis: 'x' | 'z' }) {
   const material = useMemo(() => createNetherPortalMaterial(), []);
   const width = (axis === 'x' ? to[0] - from[0] : to[2] - from[2]) + 1;

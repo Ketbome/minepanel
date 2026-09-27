@@ -331,6 +331,9 @@ export const en = {
   thanksStar: "Star on GitHub",
   thanksClose: "Back to the panel",
   subBreath: "Something breathes behind you",
+  hintSleepDay: "You can sleep only at night or during thunderstorms",
+  hintSleepMonsters: "You may not rest now; there are monsters nearby",
+  ghostSleep: "you slept more than I did the whole of server #47.",
 };
 
 export type LoreKey = keyof typeof en;

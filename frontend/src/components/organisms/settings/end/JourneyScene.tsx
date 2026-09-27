@@ -2,13 +2,14 @@
 
 import { PerformanceMonitor } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useState, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { AncientCity } from './acts/AncientCity';
 import { End } from './acts/End';
 import { EndCity } from './acts/EndCity';
 import { Nether } from './acts/Nether';
 import { Overworld } from './acts/Overworld';
 import { Stronghold } from './acts/Stronghold';
+import { resetClock } from './engine/clock';
 import { Drops } from './engine/Drops';
 import { Effects } from './engine/Effects';
 import { Hand } from './engine/Hand';
@@ -31,6 +32,7 @@ export default function JourneyScene() {
   const zone = useEndGame((state) => state.zone);
   const [dpr, setDpr] = useState(1.5);
   const Scene = ZONES[zone];
+  useEffect(() => resetClock(), []);
 
   return (
     <Canvas

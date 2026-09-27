@@ -333,6 +333,9 @@ const nl: Record<LoreKey, string> = {
   thanksStar: "Ster op GitHub",
   thanksClose: "Terug naar het paneel",
   subBreath: "Iets ademt achter je",
+  hintSleepDay: "Je kunt alleen 's nachts of tijdens onweer slapen",
+  hintSleepMonsters: "Je kunt nu niet rusten; er zijn monsters in de buurt",
+  ghostSleep: "jij hebt meer geslapen dan ik op de hele server #47.",
 };
 
 export default nl;

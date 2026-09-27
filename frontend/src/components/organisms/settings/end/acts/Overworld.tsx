@@ -5,23 +5,23 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue, startAmbience, stopAmbience } from '../end-audio';
+import { isNight, light, skipNight, SUN_SIDE, sunDirection } from '../engine/clock';
 import { spawnEffect } from '../engine/Effects';
 import { countOf } from '../items';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import { cellKey, cellOf, World, type BlockId } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { Creeper, Pig, Rabbit, Sheep, Villager } from '../mobs/overworld';
-import { useRespawns } from '../mobs/parts';
 import { Skeleton } from '../mobs/skeleton';
-import { createSunsetMaterial } from '../shaders';
+import { useSpawner } from '../mobs/spawner';
+import { createOverworldSkyMaterial } from '../shaders';
 import { lastSeenKey } from '../lore';
 import { BFUUNY, BLASTER, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
 import { CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
-import { Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
+import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
 
 const R = OVERWORLD_RADIUS;
-const SUN = new THREE.Vector3(DIG.x, 6, DIG.z).normalize();
 const SKY = new THREE.SphereGeometry(300, 24, 16);
 const TREES = [
   [-8, -5],
@@ -73,12 +73,22 @@ const HOMES = {
   creeper: { home: new THREE.Vector3(18, 0.5, 16), radius: 5, speed: 0.9 },
 };
 
-// out on the edges of the map, away from the camp: where arrows come from once yours run out
-const SKELETONS = [
-  { id: 'skeleton-1', wander: { home: new THREE.Vector3(30, 0.5, 4), radius: 5, speed: 1 } },
-  { id: 'skeleton-2', wander: { home: new THREE.Vector3(-34, 0.5, 8), radius: 5, speed: 1 } },
-  { id: 'skeleton-3', wander: { home: new THREE.Vector3(6, 0.5, 34), radius: 5, speed: 1 } },
+// monsters spawn in the dark, so never by the camp's or the village's torches
+const LIT = [
+  { ...CAMP, radius: 10 },
+  { ...VILLAGE, radius: 15 },
 ];
+
+// where a monster can stand at this column: on natural ground, inside the border, away from light
+function monsterSpot(world: World, x: number, z: number) {
+  if (Math.abs(x) > R - 2 || Math.abs(z) > R - 2) return null;
+  if (LIT.some((lit) => Math.hypot(x - lit.x, z - lit.z) < lit.radius)) return null;
+  for (let y = 24; y >= -3; y -= 1) {
+    const id = world.get(x, y, z);
+    if (id) return id === 'grass' || id === 'dirt' || id === 'stone' ? new THREE.Vector3(x, y + 0.5, z) : null;
+  }
+  return null;
+}
 
 export const OVERWORLD_SPAWNS: Record<string, readonly [number, number, number, number]> = {
   camp: [CAMP.x + 0.5, 0.5, CAMP.z + 4.5, 0],
@@ -119,7 +129,7 @@ interface Scenery {
 }
 
 function buildOverworld(mined: readonly number[], placed: readonly (readonly [number, BlockId])[], obsidian: readonly number[], eyeLanded: boolean): Scenery {
-  const world = new World();
+  const world = new World({ floor: -3 });
   const tallGrass: Block[] = [];
   for (let x = -R; x <= R; x += 1) {
     for (let z = -R; z <= R; z += 1) {
@@ -229,14 +239,66 @@ function buildOverworld(mined: readonly number[], placed: readonly (readonly [nu
   return { world, tallGrass };
 }
 
-function SunsetSky() {
-  const material = useMemo(() => createSunsetMaterial(SUN), []);
+// what the Overworld looks like at noon, at midnight and at dusk; the cycle blends between them
+const LOOKS = {
+  day: { sky: new THREE.Color('#b8d4f2'), ambient: new THREE.Color('#ffffff'), ambientI: 0.8, hemi: new THREE.Color('#cfe3ff'), ground: new THREE.Color('#4a6a32'), hemiI: 0.7, sun: new THREE.Color('#fff1d6'), sunI: 1.6 },
+  night: { sky: new THREE.Color('#0d1428'), ambient: new THREE.Color('#8090c0'), ambientI: 0.3, hemi: new THREE.Color('#26345c'), ground: new THREE.Color('#10180e'), hemiI: 0.35, sun: new THREE.Color('#9fb4ff'), sunI: 0.35 },
+  dusk: { sky: new THREE.Color('#d98a72'), ambient: new THREE.Color('#ffd9b8'), ambientI: 0.75, hemi: new THREE.Color('#ffb27a'), ground: new THREE.Color('#3a5a2a'), hemiI: 0.7, sun: new THREE.Color('#ffb070'), sunI: 1.5 },
+};
+type Look = (typeof LOOKS)['day'];
+const sun = new THREE.Vector3();
+
+function blend(pick: (look: Look) => THREE.Color, day: number, dusk: number, out: THREE.Color) {
+  return out.copy(pick(LOOKS.night)).lerp(pick(LOOKS.day), day).lerp(pick(LOOKS.dusk), dusk);
+}
+
+function mix(pick: (look: Look) => number, day: number, dusk: number) {
+  const base = THREE.MathUtils.lerp(pick(LOOKS.night), pick(LOOKS.day), day);
+  return THREE.MathUtils.lerp(base, pick(LOOKS.dusk), dusk);
+}
+
+// sky, fog and lights follow the clock (clock.ts); the moon lights the night from the other side
+function DayCycle() {
+  const material = useMemo(() => createOverworldSkyMaterial(SUN_SIDE), []);
   const mesh = useRef<THREE.Mesh>(null);
+  const ambient = useRef<THREE.AmbientLight>(null);
+  const hemi = useRef<THREE.HemisphereLight>(null);
+  const directional = useRef<THREE.DirectionalLight>(null);
   useEffect(() => () => material.dispose(), [material]);
-  useFrame((state) => {
-    mesh.current?.position.copy(state.camera.position);
+  useFrame(({ camera, scene }) => {
+    mesh.current?.position.copy(camera.position);
+    const { day, dusk } = light();
+    sunDirection(sun);
+    material.uniforms.uSun.value.copy(sun);
+    material.uniforms.uDay.value = day;
+    material.uniforms.uDusk.value = dusk;
+    if (scene.fog instanceof THREE.Fog) blend((look) => look.sky, day, dusk, scene.fog.color);
+    if (scene.background instanceof THREE.Color) blend((look) => look.sky, day, dusk, scene.background);
+    if (ambient.current) {
+      blend((look) => look.ambient, day, dusk, ambient.current.color);
+      ambient.current.intensity = mix((look) => look.ambientI, day, dusk);
+    }
+    if (hemi.current) {
+      blend((look) => look.hemi, day, dusk, hemi.current.color);
+      blend((look) => look.ground, day, dusk, hemi.current.groundColor);
+      hemi.current.intensity = mix((look) => look.hemiI, day, dusk);
+    }
+    if (directional.current) {
+      directional.current.position.copy(sun).multiplyScalar(sun.y < 0 ? -40 : 40);
+      blend((look) => look.sun, day, dusk, directional.current.color);
+      directional.current.intensity = mix((look) => look.sunI, day, dusk);
+    }
   });
-  return <mesh ref={mesh} geometry={SKY} material={material} renderOrder={-1} frustumCulled={false} />;
+  return (
+    <>
+      <color attach="background" args={['#b8d4f2']} />
+      <fog attach="fog" args={['#b8d4f2', 22, 70]} />
+      <ambientLight ref={ambient} />
+      <hemisphereLight ref={hemi} />
+      <directionalLight ref={directional} />
+      <mesh ref={mesh} geometry={SKY} material={material} renderOrder={-1} frustumCulled={false} />
+    </>
+  );
 }
 
 // a gap in the portal frame: holding obsidian, you fill it
@@ -338,6 +400,32 @@ function ThrownEye({ from, onLand }: { readonly from: THREE.Vector3; readonly on
   );
 }
 
+const BED = [2, 1, 3] as const;
+const bedCenter = new THREE.Vector3(BED[0], BED[1], BED[2] + 0.5);
+
+// The camp bed: at night it fades out to the next sunrise and makes the camp your respawn, as
+// long as no monster is within eight blocks; by day it only tells you so.
+function CampBed({ world }: { readonly world: World }) {
+  const sleeping = useRef(false);
+  const sleep = () => {
+    const game = useEndGame.getState();
+    if (!isNight()) return game.showActionBar('hintSleepDay');
+    if ([...runtime.targets].some((target) => target.hostile && !target.box.isEmpty() && target.box.distanceToPoint(bedCenter) < 8)) return game.showActionBar('hintSleepMonsters');
+    game.setCheckpoint(BED[0] + 1, 0.5, BED[2] + 0.5, -Math.PI / 2);
+    sleeping.current = true;
+    game.travel('overworld', 'bed', 'black');
+  };
+  // the clock jumps once the veil is down, so the sky is already morning when it lifts
+  useFrame(() => {
+    const game = useEndGame.getState();
+    if (!sleeping.current || game.transition) return;
+    sleeping.current = false;
+    skipNight();
+    game.say('ghostSleep');
+  });
+  return <Bed world={world} at={BED} use={sleep} />;
+}
+
 export function Overworld() {
   // where you came in from, read once: `entry` already names the next zone while this one unmounts
   const [entry] = useState(() => useEndGame.getState().entry);
@@ -349,7 +437,7 @@ export function Overworld() {
   const { world } = scenery;
   const [thrown, setThrown] = useState<THREE.Vector3 | null>(null);
   const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false, obituary: false });
-  const skeletons = useRespawns(40);
+  const skeletons = useSpawner('skeleton', { cap: 3, min: 20, max: 40, despawn: 64, every: 4, allowed: () => isNight(), spot: (x, z) => monsterSpot(world, x, z) });
 
   useEffect(() => {
     runtime.world = world;
@@ -455,17 +543,13 @@ export function Overworld() {
 
   return (
     <>
-      <color attach="background" args={['#e89a74']} />
-      <fog attach="fog" args={['#d98a72', 22, 70]} />
-      <ambientLight intensity={0.75} color="#ffd9b8" />
-      <hemisphereLight args={['#ffb27a', '#3a5a2a', 0.7]} />
-      <directionalLight position={[SUN.x * 40, SUN.y * 40, SUN.z * 40]} intensity={1.5} color="#ffb070" />
-      <SunsetSky />
+      <DayCycle />
       <WorldMesh world={world} grass={scenery.tallGrass} />
 
       <Chest world={world} id="camp" at={[CAMP.x, 1, CAMP.z]} />
       <Chest world={world} id="backups" at={[CAMP.x - 2, 1, CAMP.z]} />
       <CraftingTable world={world} at={[CAMP.x + 2, 1, CAMP.z]} />
+      <CampBed world={world} />
       <Torch position={[CAMP.x - 1, 0.78, CAMP.z + 1.3]} />
       <Sign id="incidents" at={[CAMP.x + 1, 1, CAMP.z - 2]} />
       <Sign id="restart" at={[CAMP.x + 3, 1, CAMP.z + 1]} facing={-0.6} />
@@ -496,8 +580,8 @@ export function Overworld() {
       <Rabbit name="Toast" wander={HOMES.rabbit} />
       <Pig name="Producción" wander={HOMES.pig} />
       <Creeper name="Kevin" wander={HOMES.creeper} />
-      {SKELETONS.map(({ id, wander }) => (
-        <Skeleton key={`${id}:${skeletons.life(id)}`} wander={wander} onDeath={() => skeletons.died(id)} />
+      {skeletons.spawns.map(({ id, wander }) => (
+        <Skeleton key={id} wander={wander} burns onDeath={() => skeletons.died(id)} />
       ))}
 
       {eyeLanded && (

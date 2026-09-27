@@ -112,35 +112,52 @@ export function createSkyMaterial(noise: THREE.Texture) {
   });
 }
 
-// Overworld dusk: warm horizon under a violet zenith, the game's square sun sinking into it.
-const SUNSET_FRAGMENT = /* glsl */ `
+// Overworld sky through the day: blue by day, the old dusk palette while the sun sits low, dark
+// with stars by night, and the game's square sun and moon on opposite sides of the sky.
+const OVERWORLD_SKY_FRAGMENT = /* glsl */ `
   uniform vec3 uSun;
+  uniform vec3 uSide;
+  uniform float uDay;
+  uniform float uDusk;
   varying vec3 vDir;
+
+  float hash(vec3 p) {
+    return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+  }
+
+  // 1 inside the square of half width size centred on dir
+  float square(vec3 d, vec3 dir, float size, out float along) {
+    vec3 lift = cross(uSide, dir);
+    along = dot(d, lift);
+    return dot(d, dir) > 0.0 && max(abs(dot(d, uSide)), abs(along)) < size ? 1.0 : 0.0;
+  }
 
   void main() {
     vec3 d = normalize(vDir);
     float up = clamp(d.y, -0.2, 1.0);
-    vec3 horizon = vec3(1.0, 0.55, 0.32);
-    vec3 middle = vec3(0.72, 0.38, 0.52);
-    vec3 zenith = vec3(0.13, 0.12, 0.3);
-    vec3 color = mix(horizon, middle, smoothstep(0.0, 0.18, up));
-    color = mix(color, zenith, smoothstep(0.16, 0.7, up));
-    color = mix(color, vec3(0.42, 0.24, 0.2), smoothstep(0.0, -0.2, d.y));
+    vec3 horizon = mix(vec3(0.05, 0.07, 0.15), vec3(0.72, 0.84, 1.0), uDay);
+    vec3 zenith = mix(vec3(0.01, 0.015, 0.05), vec3(0.42, 0.62, 1.0), uDay);
+    vec3 color = mix(horizon, zenith, smoothstep(0.0, 0.6, up));
+    vec3 dusk = mix(vec3(1.0, 0.55, 0.32), vec3(0.72, 0.38, 0.52), smoothstep(0.0, 0.18, up));
+    dusk = mix(dusk, vec3(0.13, 0.12, 0.3), smoothstep(0.16, 0.7, up));
     float toward = max(dot(d, uSun), 0.0);
-    color += vec3(1.0, 0.5, 0.2) * pow(toward, 8.0) * 0.55;
-    vec3 side = normalize(cross(uSun, vec3(0.0, 1.0, 0.0)));
-    vec3 lift = cross(side, uSun);
-    vec2 onSun = vec2(dot(d, side), dot(d, lift));
-    if (dot(d, uSun) > 0.0 && max(abs(onSun.x), abs(onSun.y)) < 0.055) color = mix(vec3(1.0, 0.86, 0.5), vec3(1.0, 0.66, 0.3), smoothstep(-0.05, 0.05, onSun.y));
+    color = mix(color, dusk, uDusk * (0.55 + 0.45 * toward));
+    color = mix(color, color * 0.5, smoothstep(0.0, -0.2, d.y));
+    color += vec3(1.0, 0.5, 0.2) * pow(toward, 8.0) * 0.55 * uDusk;
+    float stars = step(0.9975, hash(floor(d * 180.0))) * (1.0 - uDay) * smoothstep(0.0, 0.15, d.y);
+    color += vec3(stars * 0.85);
+    float along;
+    if (square(d, uSun, 0.055, along) > 0.0) color = mix(vec3(1.0, 0.86, 0.5), vec3(1.0, 0.66, 0.3), smoothstep(-0.05, 0.05, along) * uDusk);
+    if (square(d, -uSun, 0.045, along) > 0.0) color = mix(color, vec3(0.86, 0.88, 0.95), 1.0 - uDay);
     gl_FragColor = vec4(color, 1.0);
   }
 `;
 
-export function createSunsetMaterial(sun: THREE.Vector3) {
+export function createOverworldSkyMaterial(side: THREE.Vector3) {
   return new THREE.ShaderMaterial({
-    uniforms: { uSun: { value: sun.clone().normalize() } },
+    uniforms: { uSun: { value: new THREE.Vector3(0, 1, 0) }, uSide: { value: side.clone().normalize() }, uDay: { value: 1 }, uDusk: { value: 0 } },
     vertexShader: SKY_VERTEX,
-    fragmentShader: SUNSET_FRAGMENT,
+    fragmentShader: OVERWORLD_SKY_FRAGMENT,
     side: THREE.BackSide,
     depthWrite: false,
   });

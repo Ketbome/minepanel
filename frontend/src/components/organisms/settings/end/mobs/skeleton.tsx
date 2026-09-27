@@ -4,7 +4,9 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
+import { isBright } from '../engine/clock';
 import { spawnDrop } from '../engine/Drops';
+import { spawnEffect } from '../engine/Effects';
 import { spawnProjectile } from '../engine/Projectiles';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
@@ -47,9 +49,20 @@ const SKELETON: SkinArt = {
   },
 };
 
+// nothing solid above it all the way up: the sun reaches it
+function underSky(at: THREE.Vector3) {
+  const world = runtime.world;
+  if (!world) return false;
+  const x = Math.round(at.x);
+  const z = Math.round(at.z);
+  for (let y = Math.round(at.y) + 2; y < at.y + 40; y += 1) if (world.solid(x, y, z)) return false;
+  return true;
+}
+
 // Keeps its distance, draws for a second and looses an arrow at you, like the game's. It drops
-// a few arrows when it dies, which is where yours come from once the camp's run out.
-export function Skeleton({ wander, onDeath }: { readonly wander: Wander; readonly onDeath: () => void }) {
+// a few arrows when it dies, which is where yours come from once the camp's run out. With `burns`
+// (the Overworld's) it catches fire under the open sky by day.
+export function Skeleton({ wander, onDeath, burns = false }: { readonly wander: Wander; readonly onDeath: () => void; readonly burns?: boolean }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const legs = useRef<(THREE.Group | null)[]>([]);
@@ -58,24 +71,29 @@ export function Skeleton({ wander, onDeath }: { readonly wander: Wander; readonl
   const materials = useMemo(() => [material], [material]);
   const control = useMob(root, wander, legs, { half: 0.3, height: 1.95 }, head);
   const damage = useDamage(root, materials, 1.95);
-  const state = useRef({ hp: 20, drawAt: -1, nextShot: 0, rattleAt: Math.random() * 6 });
+  const state = useRef({ hp: 20, drawAt: -1, nextShot: 0, rattleAt: Math.random() * 6, burnAt: 0 });
   const bow = flat('#6b4a2b');
+
+  const harm = (amount: number) => {
+    const s = state.current;
+    const group = root.current;
+    if (control.dead || !group) return false;
+    s.hp -= amount;
+    damage.hurt();
+    cue('bones');
+    if (s.hp > 0) return true;
+    control.dead = true;
+    spawnDrop('arrow', 2 + Math.floor(Math.random() * 3), group.position.clone().setY(group.position.y + 0.8));
+    damage.die(onDeath);
+    return true;
+  };
 
   useMobTarget(root, [0.6, 1.95, 0.6], {
     label: () => null,
     solid: true,
+    hostile: true,
     hit: (amount) => {
-      const s = state.current;
-      const group = root.current;
-      if (control.dead || !group) return;
-      s.hp -= amount;
-      damage.hurt();
-      control.knock(runtime.player.pos);
-      cue('bones');
-      if (s.hp > 0) return;
-      control.dead = true;
-      spawnDrop('arrow', 2 + Math.floor(Math.random() * 3), group.position.clone().setY(group.position.y + 0.8));
-      damage.die(onDeath);
+      if (harm(amount)) control.knock(runtime.player.pos);
     },
   });
 
@@ -83,6 +101,12 @@ export function Skeleton({ wander, onDeath }: { readonly wander: Wander; readonl
     const group = root.current;
     const s = state.current;
     if (!group || control.dead) return;
+    if (burns && runtime.time > s.burnAt && isBright() && underSky(group.position)) {
+      s.burnAt = runtime.time + 1;
+      spawnEffect('debris', group.position.clone().setY(group.position.y + 1.2), '#ff8a2a');
+      harm(1);
+      if (control.dead) return;
+    }
     const game = useEndGame.getState();
     const eye = group.position.clone().setY(group.position.y + 1.6);
     const distance = group.position.distanceTo(runtime.player.pos);
