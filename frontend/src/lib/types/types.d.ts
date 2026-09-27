@@ -83,6 +83,7 @@ export interface ServerConfig {
   spawnMonsters: boolean;
   spawnNpcs: boolean;
   generateStructures: boolean;
+  experimentalPacks?: string[];
   allowNether: boolean;
   entityBroadcastRange: string;
 

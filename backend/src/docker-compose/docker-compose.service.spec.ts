@@ -229,6 +229,20 @@ describe('DockerComposeService', () => {
       expect(result?.envVars ?? '').not.toContain('GENERIC_PACK');
     });
 
+    it('should read INITIAL_ENABLED_PACKS into experimentalPacks instead of the custom env textarea', async () => {
+      const result = await loadFromCompose('java-server', {
+        services: {
+          mc: {
+            image: 'itzg/minecraft-server:latest',
+            environment: { ID_MANAGER: 'java-server', TYPE: 'VANILLA', INITIAL_ENABLED_PACKS: 'minecart_improvements, trade_rebalance' },
+          },
+        },
+      });
+
+      expect(result?.experimentalPacks).toEqual(['minecart_improvements', 'trade_rebalance']);
+      expect(result?.envVars ?? '').not.toContain('INITIAL_ENABLED_PACKS');
+    });
+
     it('should read the Bedrock seed and game mode from the keys Bedrock writes', async () => {
       const result = await loadFromCompose('bedrock-server', {
         services: {

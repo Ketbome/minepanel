@@ -1,8 +1,12 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max, IsArray, ValidateNested, MaxLength, ValidateBy, buildMessage } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max, IsArray, ValidateNested, MaxLength, ValidateBy, buildMessage, IsIn, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { isValidPortMapping } from 'src/common/compose/port-mapping';
 import { PartialType } from '@nestjs/mapped-types';
 import { COMPOSE_SNIPPET_TARGETS, type ComposeSnippetTarget } from 'src/common/compose/compose-snippets';
+
+// Built-in feature packs (data/minecraft/datapacks in the server jar), identical from 1.21.11 to 26.3.
+// Minecraft only reads INITIAL_ENABLED_PACKS when it creates the world.
+export const EXPERIMENTAL_PACKS = ['minecart_improvements', 'redstone_experiments', 'trade_rebalance'] as const;
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
 
@@ -135,6 +139,12 @@ export class ServerConfigDto {
   @IsBoolean()
   @IsOptional()
   generateStructures?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(EXPERIMENTAL_PACKS.length)
+  @IsIn(EXPERIMENTAL_PACKS, { each: true })
+  experimentalPacks?: string[];
 
   @IsBoolean()
   @IsOptional()

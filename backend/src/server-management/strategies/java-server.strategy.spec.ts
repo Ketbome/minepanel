@@ -223,6 +223,12 @@ describe('JavaServerStrategy', () => {
       });
     });
 
+    it('passes experimental feature packs as INITIAL_ENABLED_PACKS only when some are chosen', () => {
+      expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: ['minecart_improvements', 'trade_rebalance'] } as any).INITIAL_ENABLED_PACKS).toBe('minecart_improvements,trade_rebalance');
+      expect(strategy.buildEnvironment({ ...baseConfig(), experimentalPacks: [] } as any).INITIAL_ENABLED_PACKS).toBeUndefined();
+      expect(strategy.buildEnvironment(baseConfig() as any).INITIAL_ENABLED_PACKS).toBeUndefined();
+    });
+
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), enableRcon: false, worldSource: 'w' } as any)).toMatchObject({ ENABLE_RCON: 'false', WORLD: '/data/.world-library/local/w' });
       expect(strategy.buildEnvironment({ ...baseConfig(), worldSource: '/abs/world' } as any).WORLD).toBe('/abs/world');

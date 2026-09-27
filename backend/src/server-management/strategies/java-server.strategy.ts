@@ -172,6 +172,10 @@ export class JavaServerStrategy implements IServerStrategy {
       env['LEVEL'] = config.worldLevelName;
     }
 
+    if (config.experimentalPacks?.length) {
+      env['INITIAL_ENABLED_PACKS'] = config.experimentalPacks.join(',');
+    }
+
     if (config.worldSource) {
       if (config.worldSource.startsWith('/')) {
         env['WORLD'] = config.worldSource;
