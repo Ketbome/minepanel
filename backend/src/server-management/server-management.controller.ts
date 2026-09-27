@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadR
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
-import { ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
+import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
@@ -105,6 +105,10 @@ const ADMIN_ONLY_ENV_KEYS = new Set([
 ]);
 
 const ADMIN_ONLY_ENV_KEY_SUFFIXES = ['_DOWNLOAD_URL', '_LAUNCHER_URL'];
+// RCON_CMDS_* run console commands; outside admin hands they go through the event command
+// fields, which require the console permission.
+const ADMIN_ONLY_ENV_KEY_PREFIXES = ['RCON_CMDS_'];
+const EVENT_COMMAND_KEYS = Object.keys(EVENT_COMMAND_FIELDS) as EventCommandField[];
 
 const ARTIFACT_ENV_KEYS = new Set(['PLUGINS', 'MODS', 'MODPACK', 'DATAPACKS', 'GENERIC_PACK', 'GENERIC_PACKS']);
 
@@ -255,6 +259,11 @@ export class ServerManagementController {
 
     const canChangeVersion = Boolean(user) && this.accessControlService.canUsePermission(user as Users, 'changeServerVersion');
 
+    const eventCommandsChanged = EVENT_COMMAND_KEYS.some(
+      (field) => incoming[field] !== undefined && normalizeEventCommands(incoming[field]) !== normalizeEventCommands(current[field]),
+    );
+    if (eventCommandsChanged) this.assertCanSetEventCommands(user);
+
     // Bedrock stores its version in the same field, so this covers both editions.
     const versionChanged =
       incoming.minecraftVersion !== undefined && normalizeConfigValue(incoming.minecraftVersion) !== normalizeConfigValue(current.minecraftVersion);
@@ -306,6 +315,8 @@ export class ServerManagementController {
       return;
     }
 
+    if (EVENT_COMMAND_KEYS.some((field) => normalizeEventCommands(config[field]))) this.assertCanSetEventCommands(user);
+
     const unsafe = normalizeConfigValue(config.dockerVolumes)
       .split('\n')
       .filter((volume) => volume && !isSelfContainedVolume(volume));
@@ -344,6 +355,13 @@ export class ServerManagementController {
     this.assertSafeEnvVars(config.envVars);
   }
 
+  // Event commands run as the server console, so they need what the console needs.
+  private assertCanSetEventCommands(user: Users | null): void {
+    if (!user || !this.accessControlService.canUsePermission(user, 'useConsole')) {
+      throw new ForbiddenException('You need the console permission to change event commands');
+    }
+  }
+
   private assertSafeEnvVars(envVars: string | undefined): void {
     for (const entry of normalizeConfigValue(envVars).split('\n').filter(Boolean)) {
       const separator = entry.indexOf('=');
@@ -352,7 +370,7 @@ export class ServerManagementController {
       const key = entry.slice(0, separator).trim().toUpperCase();
       const value = entry.slice(separator + 1).trim();
 
-      if (ADMIN_ONLY_ENV_KEYS.has(key) || ADMIN_ONLY_ENV_KEY_SUFFIXES.some((suffix) => key.endsWith(suffix))) {
+      if (ADMIN_ONLY_ENV_KEYS.has(key) || ADMIN_ONLY_ENV_KEY_SUFFIXES.some((suffix) => key.endsWith(suffix)) || ADMIN_ONLY_ENV_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
         throw new ForbiddenException(`Only admins can set the ${key} environment variable`);
       }
 
@@ -540,6 +558,9 @@ export class ServerManagementController {
       clonePayload.worldSource = '';
       clonePayload.forceWorldCopy = false;
     }
+    // The clone runs the source's event commands as its console, so copying them needs what
+    // setting them needs.
+    if (EVENT_COMMAND_KEYS.some((field) => normalizeEventCommands(clonePayload[field]))) this.assertCanSetEventCommands(currentUser);
     await this.assertProxyHostnameFree(body.newId, clonePayload);
 
     try {

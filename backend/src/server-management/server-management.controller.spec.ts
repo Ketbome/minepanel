@@ -755,6 +755,17 @@ describe('ServerManagementController', () => {
         }
       });
 
+      it('requires the console permission for event commands, and keeps RCON_CMDS_* out of envVars', async () => {
+        await expect(controller.createServer(req, { id: 'ok', rconCmdsStartup: 'op Griefer' } as any)).rejects.toThrow(/console permission/);
+        await expect(controller.createServer(req, { id: 'ok', envVars: 'RCON_CMDS_STARTUP=op Griefer' } as any)).rejects.toThrow(/RCON_CMDS_STARTUP/);
+        await expect(controller.createServer(req, { id: 'ok', envVars: 'rcon_cmds_on_connect=op @a' } as any)).rejects.toThrow(/RCON_CMDS_ON_CONNECT/);
+
+        dockerComposeService.createServer.mockResolvedValue({ id: 'ok' } as any);
+        expect((await controller.createServer(req, { id: 'ok', rconCmdsStartup: '  \n / ' } as any)).success).toBe(true);
+        accessControlService.canUsePermission.mockReturnValue(true);
+        expect((await controller.createServer(req, { id: 'ok', rconCmdsOnConnect: 'give @a bread' } as any)).success).toBe(true);
+      });
+
       it('accepts same-port game mappings from templates', async () => {
         dockerComposeService.createServer.mockResolvedValue({ id: 'ok' } as any);
         expect((await controller.createServer(req, { id: 'ok', extraPorts: ['19132:19132/udp', '24454:24454'], execDirectly: true } as any)).success).toBe(true);
@@ -780,6 +791,18 @@ describe('ServerManagementController', () => {
     });
 
     describe('cloneServer', () => {
+      it('needs the console permission to clone a server that has event commands', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Alpha', rconCmdsStartup: 'op Griefer' } as any);
+        dockerComposeService.createServer.mockResolvedValue({ id: 'b' } as any);
+        proxy.getProxySettings.mockResolvedValue({ enabled: false });
+
+        await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(/console permission/);
+        expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+
+        accessControlService.canUsePermission.mockReturnValue(true);
+        expect((await controller.cloneServer(req, 'a', { newId: 'b' } as any)).success).toBe(true);
+      });
+
       it('validates the source and clones with remapped volumes', async () => {
         dockerComposeService.getServerConfig.mockResolvedValueOnce({ id: 'a', serverExists: false } as any);
         await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(NotFoundException);
@@ -860,6 +883,20 @@ describe('ServerManagementController', () => {
         proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
         await controller.updateServer(req, 'a', { useProxy: true } as any);
         expect(proxy.generateRoutesFile).toHaveBeenCalled();
+      });
+
+      it('gates event command changes behind the console permission', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, rconCmdsStartup: 'say hi' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+
+        // The same commands after normalisation, and the untouched fields, are not a change.
+        await controller.updateServer(req, 'a', { rconCmdsStartup: '/say hi\n\n', rconCmdsOnConnect: '' } as any);
+        await expect(controller.updateServer(req, 'a', { rconCmdsStartup: 'op Griefer' } as any)).rejects.toThrow(/console permission/);
+        await expect(controller.updateServer(req, 'a', { rconCmdsLastDisconnect: 'stop' } as any)).rejects.toThrow(/console permission/);
+
+        accessControlService.canUsePermission.mockReturnValue(true);
+        await controller.updateServer(req, 'a', { rconCmdsStartup: 'op Griefer' } as any);
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(2);
       });
 
       it('gates version changes behind changeServerVersion', async () => {

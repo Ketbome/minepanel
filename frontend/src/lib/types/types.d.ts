@@ -84,6 +84,11 @@ export interface ServerConfig {
   spawnNpcs: boolean;
   generateStructures: boolean;
   experimentalPacks?: string[];
+  rconCmdsStartup?: string;
+  rconCmdsFirstConnect?: string;
+  rconCmdsOnConnect?: string;
+  rconCmdsOnDisconnect?: string;
+  rconCmdsLastDisconnect?: string;
   allowNether: boolean;
   entityBroadcastRange: string;
 

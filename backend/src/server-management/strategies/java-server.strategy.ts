@@ -1,4 +1,4 @@
-import { ServerConfig } from '../dto/server-config.model';
+import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig } from '../dto/server-config.model';
 import { IServerStrategy, ServerEdition } from './server-strategy.interface';
 
 export class JavaServerStrategy implements IServerStrategy {
@@ -107,6 +107,7 @@ export class JavaServerStrategy implements IServerStrategy {
     this.addRconConfig(env, config);
     this.addConnectivityOptions(env, config);
     this.addServerTypeConfig(env, config);
+    this.addEventCommands(env, config);
     this.addCustomEnvVars(env, config);
     // Chosen in the panel, the packs win over a custom value; with none chosen, a custom
     // INITIAL_ENABLED_PACKS (e.g. an older pack name imported from compose) is kept.
@@ -376,6 +377,15 @@ export class JavaServerStrategy implements IServerStrategy {
 
     const specificConfig = specificConfigs[config.serverType];
     if (specificConfig) specificConfig();
+  }
+
+  // itzg runs these with rcon-cli, so they do nothing (silently) while RCON is off.
+  private addEventCommands(env: Record<string, string>, config: ServerConfig): void {
+    if (config.enableRcon === false) return;
+    for (const [field, key] of Object.entries(EVENT_COMMAND_FIELDS) as [EventCommandField, string][]) {
+      const commands = normalizeEventCommands(config[field]);
+      if (commands) env[key] = commands;
+    }
   }
 
   private addCustomEnvVars(env: Record<string, string>, config: ServerConfig): void {
