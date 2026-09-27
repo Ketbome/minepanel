@@ -81,4 +81,42 @@ describe('classifyLine', () => {
     expect(classify('[18:20:00] [Server thread/INFO]: [DayTimer: Set the time to 1000]')).toBeNull();
     expect(classify('[18:20:00] [Server thread/INFO]: [Bob: Killed Zombie]')).toBeNull();
   });
+
+  // Verbatim from the latest.log attached to issue #280 (vanilla 26.3)
+  it('reads a Minecraft 26.3 log, where server messages start with "System chat: "', () => {
+    const log = [
+      '[09:06:23] [User Authenticator #1/INFO]: UUID of player Mokkq is c8d2b083-98ff-4c25-8dad-a6ef3955d87a',
+      '[09:06:29] [Server thread/INFO]: Mokkq[/172.18.0.2:40156] logged in with entity id 11 at (-295.5, 79.0, -547.5)',
+      '[09:06:29] [Server thread/INFO]: System chat: Mokkq joined the game',
+      '[09:06:39] [Server thread/INFO]: System chat: [Rcon: Made Mokkq a server operator]',
+      '[09:06:47] [Server thread/INFO]: System chat: [Mokkq: Teleported Mokkq to 0.500000, 0.000000, 0.500000]',
+      "[09:06:51] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 3741ms or 74 ticks behind",
+      '[09:07:10] [Server thread/WARN]: Mokkq moved too quickly! -10.806951037077074,-5.530149145186627,8.940597312479653',
+      '[09:07:21] [Server thread/INFO]: <Mokkq> Hi Ketbome',
+      '[09:07:38] [Server thread/INFO]: System chat: Mokkq fell from a high place',
+      '[09:07:40] [Server thread/INFO]: System chat: Mokkq has made the advancement [Stone Age]',
+      '[09:07:57] [Server thread/INFO]: Mokkq lost connection: Disconnected',
+      '[09:07:57] [Server thread/INFO]: System chat: Mokkq left the game',
+    ];
+    const seen = new Set<string>();
+    const signals = log.map((raw) => {
+      const signal = classifyLine(parseLogLine(raw) as LogLine, seen);
+      if (signal?.kind === 'event' && signal.type === 'join') seen.add(signal.name.toLowerCase());
+      return signal && (signal.kind === 'event' ? `${signal.type}:${signal.message}` : signal.kind);
+    });
+    expect(signals).toEqual([
+      'uuid',
+      null,
+      'join:Mokkq joined the game',
+      null,
+      'command:Teleported Mokkq to 0.500000, 0.000000, 0.500000',
+      null,
+      null,
+      'chat:Hi Ketbome',
+      'death:Mokkq fell from a high place',
+      'advancement:Stone Age',
+      null,
+      'leave:Mokkq left the game',
+    ]);
+  });
 });

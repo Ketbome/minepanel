@@ -15,6 +15,9 @@ export type LogSignal =
 // Forge/NeoForge: "[25Sep2026 12:34:56.789] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: msg"
 const PREFIX = /^((?:\[[^\]]*\]\s*)+):\s(.*)$/;
 const TIME = /(\d{2}:\d{2}:\d{2})/;
+// Minecraft 26.3 logs every server-generated message (joins, leaves, deaths, advancements,
+// command feedback) as "System chat: <text>"; player chat has no such prefix.
+const SYSTEM_CHAT = /^System chat: /;
 const LEVEL = /[/\s](INFO|WARN|ERROR|DEBUG|FATAL)\]/;
 
 const UUID_LINE = /^UUID of player (\S+) is ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
@@ -40,7 +43,7 @@ export function parseLogLine(raw: string): LogLine | null {
   if (!time) {
     return null;
   }
-  return { time, level: LEVEL.exec(match[1])?.[1] ?? 'INFO', message: match[2] };
+  return { time, level: LEVEL.exec(match[1])?.[1] ?? 'INFO', message: match[2].replace(SYSTEM_CHAT, '') };
 }
 
 // Death messages are too varied to enumerate, so a death is any INFO line that starts with the
