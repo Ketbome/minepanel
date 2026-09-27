@@ -361,7 +361,7 @@ Recommended approach:
 
 | Feature          | Description                               |
 | ---------------- | ----------------------------------------- |
-| Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT            |
+| Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
 | Discord webhooks | Server event notifications                |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
