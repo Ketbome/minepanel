@@ -63,7 +63,8 @@ describe('classifyLine', () => {
   });
 
   it('records vanilla command feedback as a command, but not the console or RCON (issue #280)', () => {
-    expect(classify('[18:20:00] [Server thread/INFO]: [Mokkq: Teleported Mokkq to 0.500000, 0.000000, 0.500000]')).toEqual({
+    const line = parseLogLine('[18:20:00] [Server thread/INFO]: [Mokkq: Teleported Mokkq to 0.500000, 0.000000, 0.500000]') as LogLine;
+    expect(classifyLine(line, new Set(['mokkq']))).toEqual({
       kind: 'event',
       type: 'command',
       name: 'Mokkq',
@@ -74,5 +75,10 @@ describe('classifyLine', () => {
     expect(classify('[18:20:00] [Server thread/INFO]: [Rcon: Saved the game]')).toBeNull();
     // /say output is an announcement, not command feedback
     expect(classify('[18:20:00] [Server thread/INFO]: [Steve] hello')).toBeNull();
+  });
+
+  it('ignores the same feedback from named command blocks and entities', () => {
+    expect(classify('[18:20:00] [Server thread/INFO]: [DayTimer: Set the time to 1000]')).toBeNull();
+    expect(classify('[18:20:00] [Server thread/INFO]: [Bob: Killed Zombie]')).toBeNull();
   });
 });
