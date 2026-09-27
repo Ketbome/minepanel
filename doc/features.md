@@ -183,7 +183,9 @@ every few seconds and keeps:
 - Chat reformatted by server plugins may not be recognised.
 - Commands: Paper and Spigot log every player command (`issued server command`). Vanilla only logs
   the feedback that operators see (`[Steve: Set the time to 1000]`), so a vanilla timeline shows
-  that text for commands with feedback, and nothing when `log_admin_commands` is off.
+  that text for commands with feedback, and nothing when `log_admin_commands` is off. Named
+  command blocks and entities (`/execute as`) print the same line, so it only counts when the name
+  belongs to a player who is online.
 - Players who were already online when tracking was turned on are known from the session history,
   so their deaths are recorded even though their join happened before recording started.
 - Minecraft does not write the inventory at the moment of death, so "before death" is the last

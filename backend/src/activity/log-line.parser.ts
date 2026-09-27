@@ -24,7 +24,8 @@ const CHAT = /^(?:\[Not Secure\] )?<(\S+)> (.*)$/;
 const ADVANCEMENT = /^(\S+) has (?:made the advancement|completed the challenge|reached the goal) \[(.+)\]$/;
 const COMMAND = /^(\S+) issued server command: (.*)$/;
 // Vanilla does not log the command itself, only its feedback to other ops ("[Steve: Set the time
-// to 1000]", chat.type.admin). The console and RCON show up as "Server" and "Rcon".
+// to 1000]", chat.type.admin). The console and RCON show up as "Server" and "Rcon"; named command
+// blocks and entities (`/execute as`) use the same format, so only online players count.
 const ADMIN_FEEDBACK = /^\[([a-zA-Z0-9_]{1,16}): (.+)\]$/;
 const NON_PLAYER_SOURCES = new Set(['Server', 'Rcon']);
 // Lines that start with a player name but are not deaths
@@ -55,7 +56,7 @@ export function classifyLine(line: LogLine, online: ReadonlySet<string>): LogSig
   if ((match = CHAT.exec(message))) return { kind: 'event', type: 'chat', name: match[1], message: match[2] };
   if ((match = ADVANCEMENT.exec(message))) return { kind: 'event', type: 'advancement', name: match[1], message: match[2] };
   if ((match = COMMAND.exec(message))) return { kind: 'event', type: 'command', name: match[1], message: match[2] };
-  if ((match = ADMIN_FEEDBACK.exec(message)) && !NON_PLAYER_SOURCES.has(match[1])) {
+  if ((match = ADMIN_FEEDBACK.exec(message)) && !NON_PLAYER_SOURCES.has(match[1]) && online.has(match[1].toLowerCase())) {
     return { kind: 'event', type: 'command', name: match[1], message: match[2] };
   }
 

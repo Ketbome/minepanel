@@ -473,6 +473,13 @@ describe('ServerManagementService', () => {
       (service as any).findContainerId.mockResolvedValueOnce(null);
       expect(await service.getGamerules('survival')).toEqual(empty);
     });
+
+    it('does not look for a container of a server that does not exist', async () => {
+      (fs.pathExists as jest.Mock).mockResolvedValue(false);
+
+      expect((await service.getGamerules('backend')).success).toBe(false);
+      expect((service as any).findContainerId).not.toHaveBeenCalled();
+    });
   });
 
   describe('readTickStats', () => {
@@ -495,6 +502,11 @@ describe('ServerManagementService', () => {
       expect((await service.readTickStats('../data', 'spark')).success).toBe(false);
       expect(find).not.toHaveBeenCalled();
       expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect(find).toHaveBeenCalledTimes(1);
+
+      (fs.pathExists as jest.Mock).mockResolvedValue(false);
+      expect((await service.readTickStats('backend', 'spark')).success).toBe(false);
+      expect(find).toHaveBeenCalledTimes(1);
     });
 
     it('treats timeouts and failed commands as missing measurements', async () => {

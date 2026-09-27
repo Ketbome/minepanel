@@ -72,9 +72,12 @@ type PlayerFileKind = 'playerdata' | 'stats' | 'advancements';
 // Minecraft 26.1 moved player files under `players/` (see LevelResource in the server jar).
 const MODERN_PLAYER_DIRS: Record<PlayerFileKind, string> = { playerdata: 'players/data', stats: 'players/stats', advancements: 'players/advancements' };
 
-/** Where a world keeps its player files: `players/...` since 26.1, top-level folders before. */
+/**
+ * Where a world keeps its player files: `players/...` since 26.1, top-level folders before.
+ * Detected by `players/data`, since worlds from before 1.7.6 can still carry a leftover `players/`.
+ */
 export async function playerDirs(worldDir: string): Promise<Record<PlayerFileKind, string>> {
-  const modern = await fs.pathExists(path.join(worldDir, 'players'));
+  const modern = await fs.pathExists(path.join(worldDir, 'players', 'data'));
   const dir = (kind: PlayerFileKind) => path.join(worldDir, modern ? MODERN_PLAYER_DIRS[kind] : kind);
   return { playerdata: dir('playerdata'), stats: dir('stats'), advancements: dir('advancements') };
 }

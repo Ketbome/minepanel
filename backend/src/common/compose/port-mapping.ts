@@ -8,6 +8,7 @@
 
 const PORT_NUMBER = /^\d{1,5}$/;
 const IPV4 = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+const IPV6_CHARS = /^[0-9a-fA-F:.]+$/;
 
 const parsePortRange = (raw: string): [number, number] | null => {
   const dash = raw.indexOf('-');
@@ -19,7 +20,8 @@ const parsePortRange = (raw: string): [number, number] | null => {
 
 const isValidIp = (ip: string) => {
   if (IPV4.test(ip)) return true;
-  if (!ip.includes(':')) return false;
+  // The URL parser accepts anything after the closing bracket ("::1]/#"), so only address characters get that far.
+  if (!ip.includes(':') || !IPV6_CHARS.test(ip)) return false;
   // WHATWG URL parsing validates IPv6 (incl. embedded IPv4) and, like Go's net.ParseIP, rejects zone ids.
   try {
     new URL(`http://[${ip}]/`);
