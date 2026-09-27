@@ -183,19 +183,32 @@ export function Villager({ wander, profession }: { readonly wander: Wander; read
 }
 
 // animals share everything but their shape: wandering, panic when hit, and a death in the chat
-// when they carry a name, the way the game reports named mobs
-function useAnimal(root: React.RefObject<THREE.Group | null>, wander: Wander, legs: React.RefObject<(THREE.Group | null)[]>, materials: readonly THREE.MeshLambertMaterial[], hp: number, sound: CueName, name?: string, head?: React.RefObject<THREE.Group | null>) {
-  const control = useMob(root, wander, legs, { half: 0.35, height: 1.2 }, head);
-  const damage = useDamage(root, materials, 1.2);
+// when they carry a name, the way the game reports named mobs; `size` is the hit box's width and
+// height in blocks
+export function useAnimal(
+  root: React.RefObject<THREE.Group | null>,
+  wander: Wander,
+  legs: React.RefObject<(THREE.Group | null)[]>,
+  materials: readonly THREE.MeshLambertMaterial[],
+  hp: number,
+  sound: CueName | null,
+  name?: string,
+  head?: React.RefObject<THREE.Group | null>,
+  [width, height]: readonly [number, number] = [0.9, 1.2]
+) {
+  const control = useMob(root, wander, legs, { half: width / 2 - 0.1, height }, head);
+  const damage = useDamage(root, materials, height);
   const health = useRef(hp);
-  useMobTarget(root, [0.9, 1.2, 0.9], {
+  useMobTarget(root, [width, height, width], {
     label: () => null,
     solid: true,
-    use: () => cue(sound),
+    use: () => {
+      if (sound) cue(sound);
+    },
     hit: (amount) => {
       if (control.dead) return;
       health.current -= amount;
-      cue(sound);
+      if (sound) cue(sound);
       damage.hurt();
       control.knock(runtime.player.pos);
       control.panicUntil = runtime.time + 4;
@@ -213,9 +226,9 @@ function useAnimal(root: React.RefObject<THREE.Group | null>, wander: Wander, le
 const SHEEP_WOOL: SkinArt = {
   palette: { w: ['#ffffff', '#f4f4f4', '#ececec', '#fafafa', '#e2e2e2'], c: ['#d6d6d6', '#dcdcdc'] },
   boxes: {
-    body: { size: [12, 10, 18], base: 'w', faces: { top: Array.from({ length: 18 }, (_, row) => (row % 3 === 1 ? 'wcwwcwwcwwcw' : '............')) } },
-    cap: { size: [8, 8, 6], base: 'w' },
-    fleece: { size: [5, 6, 5], base: 'w' },
+    body: { size: [11.5, 9.5, 19.5], base: 'w', faces: { top: Array.from({ length: 20 }, (_, row) => (row % 3 === 1 ? 'wcwwcwwcwwcw' : '............')) } },
+    cap: { size: [7.2, 7.2, 7.2], base: 'w' },
+    fleece: { size: [5, 7, 5], base: 'w' },
   },
 };
 
@@ -267,10 +280,10 @@ export function Sheep({ wander }: { readonly wander: Wander }) {
   return (
     <group ref={root} position={wander.home}>
       {[
-        [-3, -5],
-        [3, -5],
-        [-3, 5],
+        [-3, -7],
+        [3, -7],
         [3, 5],
+        [-3, 5],
       ].map(([x, z], index) => (
         <group
           key={index}
@@ -283,10 +296,10 @@ export function Sheep({ wander }: { readonly wander: Wander }) {
           <Box skin={fleece.skin} name="fleece" at={[0, -3, 0]} material={wool} />
         </group>
       ))}
-      <Box skin={fleece.skin} name="body" at={[0, 17, 0]} material={wool} />
+      <Box skin={fleece.skin} name="body" at={[0, 15, 0]} material={wool} />
       <group ref={head} position={[0, 18 * PX, 8 * PX]}>
-        <Box skin={body.skin} name="face" at={[0, 2, 2]} material={body.material} />
-        <Box skin={fleece.skin} name="cap" at={[0, 3, 0]} material={wool} />
+        <Box skin={body.skin} name="face" at={[0, 1, 2]} material={body.material} />
+        <Box skin={fleece.skin} name="cap" at={[0, 1, 1]} material={wool} />
       </group>
       <NameTag text="jeb_" y={1.75} />
     </group>
@@ -322,10 +335,10 @@ export function Pig({ wander, name }: { readonly wander: Wander; readonly name: 
   return (
     <group ref={root} position={wander.home}>
       {[
-        [-3, -5],
-        [3, -5],
-        [-3, 5],
+        [-3, -7],
+        [3, -7],
         [3, 5],
+        [-3, 5],
       ].map(([x, z], index) => (
         <group
           key={index}
@@ -348,31 +361,33 @@ export function Pig({ wander, name }: { readonly wander: Wander; readonly name: 
 }
 
 // Toast, the game's own easter-egg rabbit: black fur with white patches, a white blaze down the
-// face, amber eyes, one black ear and one white
+// face, amber eyes, one black ear and one white. The game draws rabbits at three fifths of their
+// model, hunched: the body tips up toward the head, the big hind feet flat on the ground.
 const TOAST: SkinArt = {
   palette: { k: ['#1b1b1b', '#222222', '#161616', '#2a2a2a'], w: ['#f2f2f2', '#e9e9e9', '#fbfbfb'], n: '#e39aa8', x: '#c7922f', p: '#d99aa5' },
   boxes: {
     head: {
       size: [5, 4, 5],
       base: 'k',
-      faces: { front: ['kkwkk', 'xkwkx', 'kwnwk', 'wwwww'], top: ['kkkkk', 'kkkkk', 'kkwkk', 'kkwkk', 'kkwkk'], bottom: ['wwwww', 'wwwww', 'kwwwk', 'kkkkk', 'kkkkk'] },
+      faces: { front: ['kkwkk', 'xkwkx', 'kwwwk', 'wwwww'], top: ['kkkkk', 'kkkkk', 'kkwkk', 'kkwkk', 'kkwkk'], bottom: ['wwwww', 'wwwww', 'kwwwk', 'kkkkk', 'kkkkk'] },
     },
+    nose: { size: [1, 1, 1], base: 'n' },
     earBlack: { size: [2, 5, 1], base: 'k', faces: { front: ['kk', 'kp', 'kp', 'kp', 'kk'] } },
     earWhite: { size: [2, 5, 1], base: 'w', faces: { front: ['ww', 'wp', 'wp', 'wp', 'ww'] } },
     body: {
-      size: [6, 5, 9],
+      size: [6, 5, 10],
       base: 'k',
       faces: {
         front: ['kwwwwk', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww'],
-        left: ['kkkkkkkkk', 'kkwwwkkkk', 'kwwwwwkkk', 'kkwwwkkkk', 'wwwwwwwww'],
-        right: ['kkkkkkkkk', 'kkkkkwwkk', 'kkkkwwwwk', 'kkkkkwwkk', 'wwwwwwwww'],
-        top: ['kkkkkk', 'kkkkkk', 'kwkkkk', 'kkkkkk', 'kkkkkk', 'kkkwwk', 'kkwwwk', 'kkkwkk', 'kkkkkk'],
-        bottom: ['wwwwww', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww', 'wwwwww'],
+        left: ['kkkkkkkkkk', 'kkwwwkkkkk', 'kwwwwwkkkk', 'kkwwwkkkkk', 'wwwwwwwwww'],
+        right: ['kkkkkkkkkk', 'kkkkkwwkkk', 'kkkkwwwwkk', 'kkkkkwwkkk', 'wwwwwwwwww'],
+        top: ['kkkkkk', 'kkkkkk', 'kwkkkk', 'kkkkkk', 'kkkkkk', 'kkkwwk', 'kkwwwk', 'kkkwkk', 'kkkkkk', 'kkkkkk'],
+        bottom: Array.from({ length: 10 }, () => 'wwwwww'),
       },
     },
     haunch: { size: [2, 4, 5], base: 'k', faces: { bottom: ['ww', 'ww', 'ww', 'ww', 'ww'] } },
-    foot: { size: [2, 1, 6], base: 'w' },
-    leg: { size: [2, 4, 2], base: 'w', faces: sides(['kk', 'ww', 'ww', 'ww']) },
+    foot: { size: [2, 1, 7], base: 'w' },
+    leg: { size: [2, 7, 2], base: 'w', faces: sides(['kk', 'kk', 'ww', 'ww', 'ww', 'ww', 'ww']) },
     tail: { size: [3, 3, 2], base: 'w' },
   },
 };
@@ -409,31 +424,44 @@ export function Rabbit({ wander, name }: { readonly wander: Wander; readonly nam
   return (
     <group ref={root} position={wander.home}>
       <group ref={body}>
-        <Box skin={skin} name="body" at={[0, 4.5, -0.5]} material={material} />
-        {[-2.5, 2.5].map((x) => (
-          <group key={x}>
-            <Box skin={skin} name="haunch" at={[x, 3, -2.5]} material={material} />
-            <Box skin={skin} name="foot" at={[x, 0.5, -1]} material={material} />
-            <Box skin={skin} name="leg" at={[x * 0.8, 2, 3.5]} material={material} />
+        <group scale={0.6}>
+          <group position={[0, 5 * PX, -8 * PX]} rotation={[-0.349, 0, 0]}>
+            <Box skin={skin} name="body" at={[0, -0.5, 5]} material={material} />
           </group>
-        ))}
-        <Box skin={skin} name="tail" at={[0, 5, -6]} material={material} />
-        <group ref={head} position={[0, 6 * PX, 2 * PX]}>
-          <Box skin={skin} name="head" at={[0, 1.5, 2.5]} material={material} />
-          {(['earBlack', 'earWhite'] as const).map((ear, index) => (
-            <group
-              key={ear}
-              ref={(group) => {
-                ears.current[index] = group;
-              }}
-              position={[(index ? 1.2 : -1.2) * PX, 3.5 * PX, 1.5 * PX]}
-            >
-              <Box skin={skin} name={ear} at={[0, 2.5, 0]} material={material} />
+          {[-3, 3].map((x) => (
+            <group key={x} position={[x * PX, 6.5 * PX, -3.7 * PX]}>
+              <group rotation={[-0.349, 0, 0]}>
+                <Box skin={skin} name="haunch" at={[0, -2, -2.5]} material={material} />
+              </group>
+              <Box skin={skin} name="foot" at={[0, -6, 0.2]} material={material} />
             </group>
           ))}
+          {[-3, 3].map((x) => (
+            <group key={x} position={[x * PX, 7 * PX, 1 * PX]} rotation={[-0.1745, 0, 0]}>
+              <Box skin={skin} name="leg" at={[0, -3.5, 0]} material={material} />
+            </group>
+          ))}
+          <group position={[0, 4 * PX, -7 * PX]} rotation={[-0.349, 0, 0]}>
+            <Box skin={skin} name="tail" at={[0, 0, -1]} material={material} />
+          </group>
+          <group ref={head} position={[0, 8 * PX, 1 * PX]}>
+            <Box skin={skin} name="head" at={[0, 2, 2.5]} material={material} />
+            <Box skin={skin} name="nose" at={[0, 2, 5]} material={material} />
+            {(['earBlack', 'earWhite'] as const).map((ear, index) => (
+              <group key={ear} rotation={[0, index ? -0.2618 : 0.2618, 0]}>
+                <group
+                  ref={(group) => {
+                    ears.current[index] = group;
+                  }}
+                >
+                  <Box skin={skin} name={ear} at={[index ? 1.5 : -1.5, 6.5, 0.5]} material={material} />
+                </group>
+              </group>
+            ))}
+          </group>
         </group>
       </group>
-      <NameTag text={name} y={1} />
+      <NameTag text={name} y={0.9} />
     </group>
   );
 }
@@ -548,10 +576,10 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
   return (
     <group ref={root} position={wander.home}>
       {[
-        [-2, -3],
-        [2, -3],
-        [-2, 3],
-        [2, 3],
+        [-2, -4],
+        [2, -4],
+        [2, 4],
+        [-2, 4],
       ].map(([x, z], index) => (
         <group
           key={index}

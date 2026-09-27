@@ -265,7 +265,11 @@ Tooling / build (Next.js 16):
     Monsters mark their target `hostile`, which is what the bed checks. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
-    shared red hurt flash and the topple-and-poof death.
+    shared red hurt flash and the topple-and-poof death. Boxes, pivots and rotations follow the
+    vanilla Java entity models converted to +y up, +z forward (x kept, y and z negated; rotation y/z
+    negated, order `ZYX`). Passive mobs share `useAnimal` (`overworld.tsx`); the next phase's
+    monsters (`monsters.tsx`, `nether-monsters.tsx`, `endermite.tsx`) share `useMonster` (hunt,
+    melee hit, death cause), `useHop` (slimes, magma cubes) and `Glow` (unlit eye layers).
   - `store/`: one zustand store from slices (game, inventory, health, hud). A zone change goes
     through `travel()` + `arrive()` so it swaps behind the veil. `flags` hold one-shot story beats.
     A zone's `useFrame` waits for `checkpoint` (its mount effect sets it): until the player is placed,

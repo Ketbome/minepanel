@@ -28,6 +28,18 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   skeleton: 'deathSkeleton',
   piglin: 'deathPiglin',
   rake: 'deathRake',
+  zombie: 'deathZombie',
+  zombieVillager: 'deathZombieVillager',
+  drowned: 'deathDrowned',
+  spider: 'deathSpider',
+  witch: 'deathWitch',
+  slime: 'deathSlime',
+  phantom: 'deathPhantom',
+  zombifiedPiglin: 'deathZombifiedPiglin',
+  hoglin: 'deathHoglin',
+  magmaCube: 'deathMagmaCube',
+  witherSkeleton: 'deathWitherSkeleton',
+  endermite: 'deathEndermite',
 };
 
 const CONTROLS: readonly LoreKey[] = ['ctrlMove', 'ctrlJump', 'ctrlSneak', 'ctrlSprint', 'ctrlAttack', 'ctrlUse', 'ctrlHotbar', 'ctrlInventory', 'ctrlPause'];

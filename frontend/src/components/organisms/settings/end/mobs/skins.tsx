@@ -132,6 +132,18 @@ export function sides(rows: readonly string[]): Partial<Record<FaceName, readonl
   return { front: rows, back: rows, left: rows, right: rows };
 }
 
+// a face of `w` by `h` in `base` with rectangles [x, y, width, height, key] painted over it, for
+// patches too big to spell out row by row
+export function paint(w: number, h: number, base: string, spots: readonly (readonly [number, number, number, number, string])[] = []) {
+  const rows = Array.from({ length: h }, () => Array.from({ length: w }, () => base));
+  spots.forEach(([x, y, sw, sh, key]) => {
+    for (let row = Math.max(0, y); row < Math.min(h, y + sh); row += 1) {
+      for (let col = Math.max(0, x); col < Math.min(w, x + sw); col += 1) rows[row][col] = key;
+    }
+  });
+  return rows.map((row) => row.join(''));
+}
+
 // one material per mob, so its red flash is its own; the painted skin is shared by every mob of
 // its kind
 export function useSkin(art: SkinArt, options: THREE.MeshLambertMaterialParameters = {}) {

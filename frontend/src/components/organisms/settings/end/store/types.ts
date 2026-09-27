@@ -6,7 +6,7 @@ import type { LoreKey } from '../lore/en';
 export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem';
 export type Veil = 'black' | 'portal' | 'white' | 'none';
 export type Stage = 'arrival' | 'crystals' | 'dragon' | 'victory' | 'exit';
-export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake';
+export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite';
 export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4';
 export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'stop';
 export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48';
