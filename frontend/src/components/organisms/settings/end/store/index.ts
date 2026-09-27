@@ -4,7 +4,6 @@ import { createGameSlice, initialGame } from './game';
 import { createHealthSlice, initialHealth } from './health';
 import { createHudSlice, initialHud } from './hud';
 import { createInventorySlice, initialChests } from './inventory';
-import { loadGhost } from './persist';
 import type { EndGameState } from './types';
 
 export const useEndGame = create<EndGameState>()((...args) => {
@@ -22,17 +21,18 @@ export const useEndGame = create<EndGameState>()((...args) => {
         ...initialHud,
         player,
         muted,
-        ghost: loadGhost(),
         inventory: emptySlots(INVENTORY_SIZE),
         selected: 0,
         chests: initialChests(),
         grid: emptySlots(9),
         cursor: null,
+        helmet: false,
         panel: null,
       }),
   };
 });
 
+export * from './admins';
 export * from './game';
 export * from './persist';
 export type * from './types';

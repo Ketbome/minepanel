@@ -529,6 +529,8 @@ export const en = {
   terms: 'Terms',
   documentation: 'Documentation',
   github: 'GitHub',
+  achievements: 'Achievements',
+  achievementsLocked: 'Locked achievement',
   reportBug: 'Report Bug',
   links: 'Links',
   sourceCode: 'Source Code',

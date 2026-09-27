@@ -39,8 +39,10 @@ function objectives(game: EndGameState): Objective[] {
   }
   if (zone === 'nether') {
     const rods = game.killed.filter((id) => BLAZES.includes(id)).length;
+    const pearls = Math.min(10, countOf(inventory, 'pearl') + countOf(inventory, 'eye'));
     return [
       { key: 'objRods', done: rods >= BLAZES.length, count: `${rods}/${BLAZES.length}` },
+      { key: 'objPearls', done: pearls >= 10, count: `${pearls}/10` },
       { key: 'objReturn', done: false },
       { key: 'objGhast', done: Boolean(flags.ghastReturned), optional: true },
     ];

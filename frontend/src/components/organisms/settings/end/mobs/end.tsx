@@ -17,7 +17,8 @@ import { Box, skinOf, useSkin, type SkinArt } from './skins';
 // the outer glass cubes stand on a corner and spin about the vertical, like the game's crystal
 const CORNER_UP = new THREE.Euler(Math.atan(1 / Math.SQRT2), 0, Math.PI / 4);
 
-// Crystals sit out of sword reach on their pillars: an arrow is how you break them.
+// Crystals sit out of sword reach on their pillars: an arrow breaks them, or a sword swung from
+// the top of a tower of blocks.
 export function EndCrystal({ index, onBreak }: { readonly index: number; readonly onBreak: (index: number) => void }) {
   const { mat } = kit();
   const alive = useEndGame((state) => state.crystals[index]);
@@ -123,6 +124,7 @@ interface EndermanProps {
   readonly seed: number;
   readonly onTeleport: (at: THREE.Vector3) => void;
   readonly onNotice: () => void;
+  readonly onDeath?: () => void;
   // the one still carrying a grass block from home: it never runs from your gaze
   readonly carrying?: { readonly home: THREE.Vector3; readonly facing: number; readonly holding: boolean; readonly leave: boolean };
 }
@@ -171,7 +173,7 @@ function spotNear(around: THREE.Vector3, min: number, max: number) {
 // Stare at one and it stares back, then comes for you, jaw open, and blinks next to you. Arrows
 // never land: it teleports away from them. Hit it and now and then it blinks off and comes back.
 // It drops an ender pearl when it dies, like the game's.
-export function Enderman({ seed, onTeleport, onNotice, carrying }: EndermanProps) {
+export function Enderman({ seed, onTeleport, onNotice, onDeath, carrying }: EndermanProps) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
@@ -230,7 +232,7 @@ export function Enderman({ seed, onTeleport, onNotice, carrying }: EndermanProps
       cue('hit');
       if (r.hp <= 0) {
         r.gone = true;
-        damage.die();
+        damage.die(onDeath);
         useEndGame.getState().give('pearl');
         cue('enderman');
         return;

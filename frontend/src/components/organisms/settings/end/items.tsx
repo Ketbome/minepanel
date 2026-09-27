@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import type { ComponentType } from 'react';
+import type { BlockId } from './engine/world';
 import type { LoreKey } from './lore/en';
-import { ArrowIcon, BlazePowderIcon, BlazeRodIcon, DirtIcon, DragonEggIcon, EyeOfEnderIcon, FlintAndSteelIcon, ObsidianIcon, StickIcon } from './PixelIcons';
+import { ArrowIcon, BlazePowderIcon, BlazeRodIcon, DirtIcon, DragonEggIcon, EyeOfEnderIcon, FlintAndSteelIcon, ObsidianIcon, PixelSprite, SPRITES, StickIcon, type Pixel } from './PixelIcons';
 
 export type ItemId =
   | 'note'
@@ -23,7 +24,14 @@ export type ItemId =
   | 'obsidian'
   | 'elytra'
   | 'gold'
-  | 'dirt';
+  | 'dirt'
+  | 'log'
+  | 'planks'
+  | 'cobble'
+  | 'netherrack'
+  | 'endStone'
+  | 'pickaxe'
+  | 'helmet';
 
 export interface Stack {
   readonly item: ItemId;
@@ -37,6 +45,9 @@ interface ItemDef {
   readonly max: number;
   readonly image?: string;
   readonly icon?: ComponentType<{ className?: string }>;
+  readonly pixels?: readonly Pixel[];
+  // right click places it as this block
+  readonly block?: BlockId;
 }
 
 export const ITEMS: Record<ItemId, ItemDef> = {
@@ -56,10 +67,17 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   map: { name: 'itemMap', max: 1, image: '/images/map.webp' },
   register: { name: 'itemRegister', max: 1, image: '/images/book.webp' },
   flint: { name: 'itemFlint', max: 1, icon: FlintAndSteelIcon },
-  obsidian: { name: 'itemObsidian', max: 64, icon: ObsidianIcon },
+  obsidian: { name: 'itemObsidian', max: 64, icon: ObsidianIcon, block: 'obsidian' },
   elytra: { name: 'itemElytra', max: 1, image: '/images/elytra.webp' },
   gold: { name: 'itemGold', max: 64, image: '/images/gold.webp' },
-  dirt: { name: 'itemDirt', max: 64, icon: DirtIcon },
+  dirt: { name: 'itemDirt', max: 64, icon: DirtIcon, block: 'dirt' },
+  log: { name: 'itemLog', max: 64, pixels: SPRITES.log, block: 'log' },
+  planks: { name: 'itemPlanks', max: 64, pixels: SPRITES.planks, block: 'planks' },
+  cobble: { name: 'itemCobble', max: 64, pixels: SPRITES.cobble, block: 'cobble' },
+  netherrack: { name: 'itemNetherrack', max: 64, pixels: SPRITES.netherrack, block: 'netherrack' },
+  endStone: { name: 'itemEndStone', max: 64, pixels: SPRITES.endStone, block: 'endStone' },
+  pickaxe: { name: 'itemPickaxe', max: 1, image: '/images/diamond-pickaxe.webp' },
+  helmet: { name: 'itemHelmet', max: 1, pixels: SPRITES.helmet },
 };
 
 export const HOTBAR_SIZE = 9;
@@ -68,8 +86,9 @@ export const INVENTORY_SIZE = 36;
 export const emptySlots = (size: number): Slot[] => Array.from({ length: size }, () => null);
 
 export function ItemIcon({ item, className = '' }: { readonly item: ItemId; readonly className?: string }) {
-  const { icon: Icon, image } = ITEMS[item];
+  const { icon: Icon, image, pixels } = ITEMS[item];
   if (Icon) return <Icon className={className} />;
+  if (pixels) return <PixelSprite pixels={pixels} className={className} />;
   return <Image src={image!} alt="" width={32} height={32} loading="eager" className={`pixelated object-contain ${className}`} />;
 }
 

@@ -5,12 +5,12 @@ import { Fragment, useState } from 'react';
 import { cue } from '../end-audio';
 import { countOf, ItemIcon, ITEMS, type ItemId } from '../items';
 import { useLore, type LoreKey } from '../lore';
-import { FIRST_GHOST, useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
+import { useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
 import { CraftResult, Crafting } from './Crafting';
 import { MapPanel } from './MapPanel';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
-const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest' };
+const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest', city1: 'chest', city2: 'chest', city3: 'chest', city4: 'chest' };
 
 const BOOKS: Record<BookId, { readonly title: LoreKey; readonly by?: LoreKey; readonly pages: readonly LoreKey[] }> = {
   note: { title: 'itemNote', pages: ['note'] },
@@ -36,6 +36,10 @@ const SIGNS: Record<SignId, LoreKey> = {
   bfuunyBed: 'signBfuunyBed',
   bfuunyShip: 'signBfuunyShip',
   bfuunyExit: 'signBfuunyExit',
+  blasterSlow: 'signBlasterSlow',
+  blasterRods: 'signBlasterRods',
+  bfuunyGrave: 'signBfuunyGrave',
+  server48: 'signServer48',
 };
 
 const TRADES: readonly { readonly item: ItemId; readonly cost: number; readonly flag: Flag }[] = [
@@ -83,10 +87,8 @@ function ChestPanel({ id }: { readonly id: ChestId }) {
 // a written book: parchment pages, turned one at a time, signed by whoever wrote it
 function BookPanel({ id }: { readonly id: BookId }) {
   const lore = useLore();
-  const ghost = useEndGame((state) => state.ghost);
   const book = BOOKS[id];
-  // after the loop, the register gains one more struck-through name: the player's
-  const pages = id === 'register' && ghost.name !== FIRST_GHOST.name ? ['register1', 'registerLoop', 'register2'] : book.pages;
+  const pages = book.pages;
   const [page, setPage] = useState(0);
 
   const turn = (by: number) => {
@@ -201,12 +203,18 @@ function TradePanel() {
   );
 }
 
-// E: the inventory, with the 2x2 crafting grid of the game (the top-left cells of the grid)
+// E: the inventory, with the helmet slot and the 2x2 crafting grid of the game (the top-left
+// cells of the grid)
 function InventoryPanel() {
   const lore = useLore();
+  const helmet = useEndGame((state) => state.helmet);
   return (
     <PanelWindow title={lore('inventory')} wide>
       <div className="flex items-center justify-end gap-2">
+        <div className="mr-auto flex items-center gap-2">
+          <ItemSlot slot={helmet ? { item: 'helmet', count: 1 } : null} onClick={() => useEndGame.getState().clickHelmet()} />
+          <span className="text-[11px] text-gray-400">{lore('armorSlot')}</span>
+        </div>
         <div className="grid grid-cols-2 gap-[3px]">
           {[0, 1, 3, 4].map((cell) => (
             <InvSlot key={cell} area="grid" index={cell} />

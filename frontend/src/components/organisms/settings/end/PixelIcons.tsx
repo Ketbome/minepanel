@@ -164,6 +164,38 @@ function blazePixels() {
   return pixels;
 }
 
+// a block item: a textured square with a dark rim, the way the flat icons of the pack read
+function blockPixels(texel: (x: number, y: number) => string, rim: string) {
+  const pixels: Pixel[] = [];
+  for (let y = 2; y <= 13; y += 1) {
+    for (let x = 2; x <= 13; x += 1) pixels.push([x, y, x === 2 || y === 2 || x === 13 || y === 13 ? rim : texel(x, y)]);
+  }
+  return pixels;
+}
+
+const LOG = blockPixels((x, y) => ((x * 3 + (y >> 2)) % 5 === 0 ? '#3b2a17' : x % 3 === 0 ? '#5a4125' : (x + y) % 4 ? '#6b4f2e' : '#735633'), '#2e2112');
+const PLANKS = blockPixels((x, y) => (y % 4 === 1 ? '#6e5530' : (y % 8 < 4 ? x === 9 : x === 5) ? '#7a5e34' : (x * 7 + y) % 9 === 0 ? '#9a7a45' : '#b08f55'), '#5a4424');
+const COBBLE = blockPixels((x, y) => {
+  const blob = (Math.floor(x / 3) * 7 + Math.floor(y / 3) * 11) % 5;
+  return (x % 3 === 0 && y % 2 === 0) || (y % 3 === 0 && x % 2 === 1) ? '#4f4f4f' : blob === 0 ? '#9a9a9a' : blob === 2 ? '#6f6f6f' : '#838383';
+}, '#3a3a3a');
+const NETHERRACK = blockPixels((x, y) => ((x * 5 + y * 3) % 7 === 0 ? '#9e4a4a' : (x + y) % 3 ? '#6f2a2a' : '#5a2020'), '#3a1414');
+const END_STONE = blockPixels((x, y) => ((x * 7 + y * 5) % 9 === 0 ? '#c9c28a' : (x + y * 2) % 5 === 0 ? '#e9e6b0' : '#dcd79e'), '#a39d68');
+
+// the golden helmet: a dome of gold with a darker brim and an open face
+const HELMET_ROWS = ['................', '................', '................', '.....dddddd.....', '....dyYYYYyd....', '...dyYYyyyyyd...', '...dyyyyyyyyd...', '...dyyyyyyyyd...', '...dyyd..dyyd...', '...dyyd..dyyd...', '...doo....ood...', '...dd......dd...'];
+const HELMET_COLORS: Record<string, string> = { d: '#6e4e0a', y: '#f2c230', Y: '#fff08a', o: '#c78a14' };
+
+function helmetPixels() {
+  const pixels: Pixel[] = [];
+  HELMET_ROWS.forEach((row, y) =>
+    [...row].forEach((cell, x) => {
+      if (cell !== '.') pixels.push([x, y + 2, HELMET_COLORS[cell]]);
+    })
+  );
+  return pixels;
+}
+
 const EYE = eyePixels();
 const EGG = eggPixels();
 const HEAD = headPixels();
@@ -174,11 +206,28 @@ const FLINT = flintPixels();
 const OBSIDIAN = obsidianPixels();
 const DIRT = dirtPixels();
 const BLAZE = blazePixels();
+const HELMET = helmetPixels();
 
 // the same pixels, for the item pressed into a solid sprite in your hand
-export const SPRITES = { eye: EYE, egg: EGG, stick: STICK, blaze: BLAZE, rod: ROD, arrow: ARROW, flint: FLINT, obsidian: OBSIDIAN, dirt: DIRT };
+export const SPRITES = {
+  eye: EYE,
+  egg: EGG,
+  stick: STICK,
+  blaze: BLAZE,
+  rod: ROD,
+  arrow: ARROW,
+  flint: FLINT,
+  obsidian: OBSIDIAN,
+  dirt: DIRT,
+  log: LOG,
+  planks: PLANKS,
+  cobble: COBBLE,
+  netherrack: NETHERRACK,
+  endStone: END_STONE,
+  helmet: HELMET,
+};
 
-function PixelSprite({ pixels, className }: { readonly pixels: readonly Pixel[]; readonly className?: string }) {
+export function PixelSprite({ pixels, className }: { readonly pixels: readonly Pixel[]; readonly className?: string }) {
   return (
     <svg viewBox="0 0 16 16" className={className} shapeRendering="crispEdges" aria-hidden>
       {pixels.map(([x, y, color]) => (

@@ -9,7 +9,7 @@ import { BLOCKS, type BlockId, type World } from './world';
 
 type Material = THREE.Material | THREE.Material[];
 
-function materialFor(id: BlockId): Material | null {
+export function materialFor(id: BlockId): Material | null {
   const end = kit().mat;
   const over = overworldKit().mat;
   const nether = netherKit().mat;
@@ -29,6 +29,7 @@ function materialFor(id: BlockId): Material | null {
     crying: over.crying,
     goldBlock: over.goldBlock,
     netherrack: nether.netherrack,
+    netherGold: nether.netherGold,
     netherBricks: nether.netherBricks,
     glowstone: nether.glowstone,
     magma: nether.magma,

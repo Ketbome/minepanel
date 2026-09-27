@@ -31,6 +31,7 @@ frontend/src/
 |  |- players/                  Player list and profile (stats, advancements, inventory)
 |  |- activity/                 Activity tracking settings, event timeline, inventory history
 |  |- scheduler/                Scheduled tasks CRUD endpoints
+|  |- achievements/             End Portal easter egg advancements (per user)
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
 |  |- store/                    Zustand stores
@@ -234,17 +235,27 @@ Tooling / build (Next.js 16):
   Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
   the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
   `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
-  folder may import from it.
+  folder may import from it, except `AchievementsTrophy.tsx`: the dashboard header's trophy slot.
+  It carries only the key catalog (`achievements.ts`) and the egg icon; its list, badges and lore
+  load with `next/dynamic` when it opens. `advance()` reports each key through
+  `lib/store/achievements-store.ts` (`POST /achievements`, per user). A new advancement key goes
+  in `achievements.ts` and in `backend/src/achievements/dto/unlock-achievement.dto.ts`.
   - `engine/`: the block grid (`world.ts`, one `World` per zone, buried blocks are not drawn),
     AABB physics (`physics.ts`), voxel/target raycasts, input, `Player.tsx` (movement, pointer
     lock, crosshair, mining, bow, eating, damage), `Hand.tsx` (the first-person arm and held item,
     drawn in a drei `Hud` pass with the game's swing/bow/eat poses), projectiles and particle
     effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
-    events are not used.
+    events are not used. `BLOCKS` (`world.ts`) says how long a block takes by hand (`mine`) or with the
+    pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
+    (hold to repeat). `Drops.tsx` holds item entities (mob loot, barters, your shot arrows) that you
+    pick up by walking over them. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    and arrows reach the ancient city's noise and the Warden.
   - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
     walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
-    step-up, climbing out when buried) on the same physics as the player. Skins are painted in code
+    step-up, climbing out when buried, never into lava) on the same physics as the player. Mobs a
+    run depends on for supplies (endermen for pearls, piglins for barters, skeletons for arrows)
+    come back through `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Skins are painted in code
     (`mobs/skins.tsx`: a `SkinArt` of palettes and face rows per box, unfolded into one atlas per mob
     like the game's model textures; `useSkin` gives each mob its own material). `useDamage` is the
     shared red hurt flash and the topple-and-poof death.
@@ -252,16 +263,22 @@ Tooling / build (Next.js 16):
     through `travel()` + `arrive()` so it swaps behind the veil. `flags` hold one-shot story beats.
     A zone's `useFrame` waits for `checkpoint` (its mount effect sets it): until the player is placed,
     `runtime.player.pos` is still the previous zone's. Read `entry` once at mount, never subscribe to it.
+    The Overworld replays `mined` and `placed` when you come back to it; other zones rebuild fresh.
     Windows follow the game's clicks: `clickSlot` (left/right/shift with a held `cursor` stack),
     `spread` (drag), `takeOutput` (result slot); `closePanel` returns grid and cursor to the
     inventory. Escape closes a window or the pause menu; the pointer is relocked only after the
     Escape key comes back up (Chrome otherwise treats that key as leaving the fresh lock). When the
     browser refuses to relock, `resume` shows a click-to-play prompt instead of the pause menu.
   - `lore/<lang>.ts`: every string of the run, typed `Record<LoreKey, string>`; add a key to all
-    9 files. Render it with `useLore()` (fills `{player}`, `{ghost}`, `{days}`), never with the
+    9 files. Render it with `useLore()` (fills `{player}`, `{ghost}` = Ketbome, `{days}`), never with the
     global `t()`. The global dictionaries keep only the page's `dangerEgg*` keys.
-  - The loop: crossing the End gateway saves the player as the next ghost
-    (`minepanel:end-ghost`), who then signs the note, the diary and the register.
+  - The story is the three admins (`store/admins.ts`): Ketbome builds servers he never finishes,
+    BlasterDaster is the pro who got everywhere first, Bfuuny is the good-natured troll who keeps
+    dying. They talk in the chat as themselves (`say(key, author)`) and wait on the End City islet,
+    where the run ends on their thanks (`Thanks.tsx`, also shown after the poem). The button in the
+    ancient city lets The Rake (`mobs/rake.tsx`) loose: from then on, in any zone, it can follow you
+    unseen (only its breathing shows in the subtitles); looking at it triggers the screamer
+    (`hud/Screamer.tsx`), a few seconds with its hands over its face, and then the chase.
   - Sounds: CC0 clips in `public/sounds` (credited in `CREDITS.md`), each cue with a synth fallback
     in `end-audio.ts`. Block textures are painted at runtime (`voxels.tsx` End,
     `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`).

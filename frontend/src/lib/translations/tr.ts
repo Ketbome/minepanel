@@ -542,6 +542,8 @@ export const tr: Record<TranslationKey, string> = {
   terms: 'Koşullar',
   documentation: 'Belgeler',
   github: 'GitHub',
+  achievements: 'Başarımlar',
+  achievementsLocked: 'Kilitli başarım',
   reportBug: 'Hata bildir',
   links: 'Bağlantılar',
   sourceCode: 'Kaynak kodu',

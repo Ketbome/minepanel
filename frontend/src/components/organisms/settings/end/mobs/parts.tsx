@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { spawnEffect } from '../engine/Effects';
 import { canStepUp, dropAhead, move, overlaps } from '../engine/physics';
@@ -291,5 +291,25 @@ export function useDamage(root: React.RefObject<THREE.Group | null>, materials: 
       dying: () => state.current.diedAt >= 0,
     }),
     []
+  );
+}
+
+// Mobs that die come back after a while, the way the game keeps spawning them: the zone keys each
+// one by its life, so a new life mounts a fresh mob.
+export function useRespawns(seconds: number) {
+  const [lives, setLives] = useState<Readonly<Record<string, number>>>({});
+  const timers = useRef<number[]>([]);
+  useEffect(() => {
+    const pending = timers.current;
+    return () => pending.forEach((timer) => window.clearTimeout(timer));
+  }, []);
+  return useMemo(
+    () => ({
+      life: (id: string) => lives[id] ?? 0,
+      died: (id: string) => {
+        timers.current.push(window.setTimeout(() => setLives((current) => ({ ...current, [id]: (current[id] ?? 0) + 1 })), seconds * 1000));
+      },
+    }),
+    [lives, seconds]
   );
 }

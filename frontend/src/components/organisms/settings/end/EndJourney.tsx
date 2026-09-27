@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { AnimatePresence, m } from 'framer-motion';
 import { Volume2, VolumeX, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { setMuted, stopAmbience } from './end-audio';
 import { releaseAll } from './engine/input';
 import { runtime } from './engine/runtime';
@@ -11,6 +11,7 @@ import { EndPoem } from './EndPoem';
 import { Hud } from './hud/Hud';
 import { useLore } from './lore';
 import { useEndGame, type Veil } from './store';
+import { Thanks } from './Thanks';
 
 const JourneyScene = dynamic(() => import('./JourneyScene'), { ssr: false });
 const Panels = dynamic(() => import('./panels/Panels'), { ssr: false });
@@ -148,12 +149,14 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
     };
   }, [onClose]);
 
-  // staying behind ends the run without a poem
+  // both endings close on the thanks; the islet one gets there without a poem
+  const [thanks, setThanks] = useState(false);
+  const finish = useCallback(() => setThanks(true), []);
   useEffect(() => {
     if (!stayed) return;
-    const timer = window.setTimeout(onClose, 1200);
+    const timer = window.setTimeout(finish, 1200);
     return () => window.clearTimeout(timer);
-  }, [stayed, onClose]);
+  }, [stayed, finish]);
 
   return (
     <m.div
@@ -166,17 +169,18 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
       exit={{ opacity: 0, transition: { duration: 0.8 } }}
     >
       {calm ? (
-        <EndPoem still notice={lore('noWebgl')} onDone={onClose} />
+        <EndPoem still notice={lore('noWebgl')} onDone={finish} />
       ) : (
         <>
           {zone !== 'poem' && <JourneyScene />}
           {zone !== 'poem' && <Hud onClose={onClose} />}
           {panel && zone !== 'poem' && <Panels />}
-          {zone === 'poem' && <EndPoem still={still} onDone={onClose} />}
+          {zone === 'poem' && <EndPoem still={still} onDone={finish} />}
           <TransitionVeil />
           <Intro />
         </>
       )}
+      {thanks && <Thanks onClose={onClose} />}
       <div className="absolute right-2 top-2 z-[47] flex gap-1.5 md:right-4 md:top-4">
         {!calm && (
           <HudButton label={lore(muted ? 'unmute' : 'mute')} onClick={() => setMuted(!muted)}>

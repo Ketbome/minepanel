@@ -3,6 +3,7 @@
 import { AnimatePresence, m } from 'framer-motion';
 import { setMuted } from '../end-audio';
 import { input } from '../engine/input';
+import { countOf } from '../items';
 import { lockPointer } from '../engine/runtime';
 import { useLore, type LoreKey } from '../lore';
 import { BLAZES, useEndGame, type DeathCause } from '../store';
@@ -24,6 +25,9 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   silverfish: 'deathSilverfish',
   ghast: 'deathGhast',
   creeper: 'deathCreeper',
+  skeleton: 'deathSkeleton',
+  piglin: 'deathPiglin',
+  rake: 'deathRake',
 };
 
 const CONTROLS: readonly LoreKey[] = ['ctrlMove', 'ctrlJump', 'ctrlSneak', 'ctrlSprint', 'ctrlAttack', 'ctrlUse', 'ctrlHotbar', 'ctrlInventory', 'ctrlPause'];
@@ -38,6 +42,8 @@ export function skipZone(onClose: () => void) {
   } else if (game.zone === 'nether') {
     const missing = BLAZES.length - game.killed.filter((id) => BLAZES.includes(id)).length;
     if (missing > 0) game.give('rod', missing);
+    const pearls = 10 - countOf(game.inventory, 'pearl') - countOf(game.inventory, 'eye');
+    if (pearls > 0) game.give('pearl', pearls);
     BLAZES.forEach((id) => game.kill(id));
     game.setFlag('rodsDone');
     game.travel('overworld', 'portal', 'portal');

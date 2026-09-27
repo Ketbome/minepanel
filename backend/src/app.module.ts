@@ -25,6 +25,7 @@ import { ScheduledTasksModule } from './scheduled-tasks/scheduled-tasks.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { PlayersModule } from './players/players.module';
 import { ActivityModule } from './activity/activity.module';
+import { AchievementsModule } from './achievements/achievements.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -52,6 +53,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     AlertsModule,
     PlayersModule,
     ActivityModule,
+    AchievementsModule,
     FilesModule,
     ProxyModule,
   ],

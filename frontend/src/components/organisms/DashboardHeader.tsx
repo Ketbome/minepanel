@@ -12,6 +12,7 @@ import { useServerNavStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { getSessionUser, type SessionUser } from '@/services/auth/auth.service';
 import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
+import { AchievementsTrophy } from './settings/end/AchievementsTrophy';
 
 type Crumb = { label: string; href?: string };
 
@@ -109,6 +110,7 @@ export function DashboardHeader() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <AchievementsTrophy label={t('achievements')} lockedLabel={t('achievementsLocked')} />
           <GitHubStarButton label={t('github')} />
 
           <div

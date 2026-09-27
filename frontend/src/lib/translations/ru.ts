@@ -531,6 +531,8 @@ export const ru: Record<TranslationKey, string> = {
   terms: 'Условия',
   documentation: 'Документация',
   github: 'GitHub',
+  achievements: 'Достижения',
+  achievementsLocked: 'Закрытое достижение',
   reportBug: 'Сообщить об ошибке',
   links: 'Ссылки',
   sourceCode: 'Исходный код',

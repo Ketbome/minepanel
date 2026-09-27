@@ -240,6 +240,37 @@ const hum: Synth = (ctx, out) => {
   toneSweep(ctx, out, 'sawtooth', { from: 160, to: 140, peak: 0.12, attack: 0.05, release: 0.35 });
 };
 
+const pop: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sine', { from: 500, to: 1200, peak: 0.25, attack: 0.005, release: 0.09 });
+};
+
+const snort: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'lowpass', { from: 900, to: 280, peak: 0.55, attack: 0.02, release: 0.22 });
+  toneSweep(ctx, out, 'sawtooth', { from: 150, to: 95, peak: 0.12, attack: 0.02, release: 0.22 });
+  noiseSweep(ctx, out, 'lowpass', { from: 800, to: 260, peak: 0.4, attack: 0.02, release: 0.18, delay: 0.26 });
+};
+
+const rattle: Synth = (ctx, out) => {
+  for (let tap = 0; tap < 4; tap += 1) noiseSweep(ctx, out, 'bandpass', { from: 2800, to: 1900, peak: 0.3, attack: 0.002, release: 0.04, delay: tap * 0.06 });
+};
+
+const clink: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'triangle', { from: 1500, to: 1300, peak: 0.2, attack: 0.002, release: 0.25 });
+  toneSweep(ctx, out, 'triangle', { from: 2250, to: 2000, peak: 0.1, attack: 0.002, release: 0.2, delay: 0.05 });
+};
+
+const screech: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sawtooth', { from: 1900, to: 650, peak: 0.16, attack: 0.02, release: 0.9 });
+  toneSweep(ctx, out, 'square', { from: 1960, to: 700, peak: 0.07, attack: 0.02, release: 0.9 });
+  noiseSweep(ctx, out, 'bandpass', { from: 3200, to: 1100, peak: 0.3, attack: 0.02, release: 0.8 });
+};
+
+// slow, wet breaths, close behind you
+const breath: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'lowpass', { from: 500, to: 900, peak: 0.35, attack: 0.5, release: 0.5 });
+  noiseSweep(ctx, out, 'lowpass', { from: 900, to: 380, peak: 0.28, attack: 0.25, release: 0.7, delay: 1.1 });
+};
+
 // Recorded clips play when their file is present; each falls back to its synth otherwise.
 const CUES = {
   eye: { file: 'eye-place.ogg', volume: 0.45, rate: [0.9, 1.15], caption: 'subEye' },
@@ -297,6 +328,13 @@ const CUES = {
   zap: { file: 'magic-zap.ogg', synth: zap, volume: 0.4, caption: 'subZap' },
   levitate: { file: 'levitate.ogg', synth: zap, volume: 0.45, caption: 'subLevitate' },
   wind: { file: 'wind.ogg', synth: whoosh, volume: 0.5 },
+  pop: { synth: pop, volume: 0.35 },
+  equip: { synth: clink, volume: 0.5, caption: 'subEquip' },
+  piglin: { synth: snort, volume: 0.6, caption: 'subPiglin' },
+  bones: { synth: rattle, volume: 0.5, caption: 'subSkeleton' },
+  rake: { file: 'rake-shriek.ogg', synth: screech, volume: 0.7, rate: [0.9, 1.08], caption: 'subRake' },
+  scream: { file: 'rake-scream.ogg', synth: screech, volume: 0.9, caption: 'subRake' },
+  breath: { file: 'rake-breath.ogg', synth: breath, volume: 0.55, rate: [0.92, 1.05], caption: 'subBreath' },
 } satisfies Record<string, CueDef>;
 
 export type CueName = keyof typeof CUES;

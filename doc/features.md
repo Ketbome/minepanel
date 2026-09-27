@@ -364,7 +364,7 @@ Recommended approach:
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay the Ender Dragon, fly an End City elytra and read the End Poem. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint |
+| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay an Ender Dragon that perches, takes off, dives at you and enrages at half health, fly an End City elytra and meet the admins on their islet, or read the End Poem. Place blocks, barter with piglins, and beware what the ancient city's button lets loose. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint. Earned advancements are saved to your account and show as a dragon egg trophy in the header, with the ones still missing hidden as `???` |
 
 ## Edition Comparison
 

@@ -9,10 +9,12 @@ import { EndCity } from './acts/EndCity';
 import { Nether } from './acts/Nether';
 import { Overworld } from './acts/Overworld';
 import { Stronghold } from './acts/Stronghold';
+import { Drops } from './engine/Drops';
 import { Effects } from './engine/Effects';
 import { Hand } from './engine/Hand';
 import { Player } from './engine/Player';
 import { Projectiles } from './engine/Projectiles';
+import { Rake } from './mobs/rake';
 import { useEndGame, type Zone } from './store';
 
 // the poem is drawn over the page, so it has no scene
@@ -44,6 +46,8 @@ export default function JourneyScene() {
       {Scene && <Scene key={zone} />}
       <Player />
       <Projectiles />
+      <Drops />
+      <Rake key={`rake:${zone}`} />
       <Effects />
       <Hand />
     </Canvas>

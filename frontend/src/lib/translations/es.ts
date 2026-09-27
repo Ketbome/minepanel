@@ -530,6 +530,8 @@ export const es: Record<TranslationKey, string> = {
   help: 'Ayuda',
   documentation: 'Documentación',
   github: 'GitHub',
+  achievements: 'Logros',
+  achievementsLocked: 'Logro bloqueado',
   reportBug: 'Reportar Bug',
   links: 'Enlaces',
   sourceCode: 'Código Fuente',

@@ -4,7 +4,7 @@ import type { ItemId } from '../items';
 import type { LoreKey } from '../lore/en';
 import type { DeathCause } from '../store';
 import { input } from './input';
-import type { World } from './world';
+import type { BlockId, World } from './world';
 
 // Per-frame state shared by the player, the mobs and the zones. It changes every frame, so it
 // lives outside React and zustand; the store only holds what the HUD has to render.
@@ -16,7 +16,8 @@ export interface Target {
   // what the crosshair label says; null hides it
   readonly label?: () => LoreKey | null;
   readonly use?: () => void;
-  readonly hit?: (damage: number, source: HitSource) => void;
+  // returning false deflects it: an arrow bounces off and drops (the perched dragon)
+  readonly hit?: (damage: number, source: HitSource) => boolean | void;
   // called every frame the crosshair rests on it, from any distance (endermen)
   readonly watch?: (dt: number) => void;
   readonly reach?: number;
@@ -71,10 +72,13 @@ export const runtime = {
   time: 0,
   // the system asks for less motion: no view bobbing, no field-of-view kicks, no hand sway
   reducedMotion: false,
-  // zones hook into what the player does with a held item or a mined block
+  // zones hook into what the player does with a held item or a mined or placed block, and the
+  // ancient city listens for vibrations (steps, landings, blocks, arrows)
   hooks: {
     useItem: null as ((item: ItemId) => boolean) | null,
     mined: null as ((x: number, y: number, z: number) => void) | null,
+    placed: null as ((x: number, y: number, z: number, id: BlockId) => void) | null,
+    vibration: null as ((at: THREE.Vector3, loudness: number) => void) | null,
   },
   canvas: null as HTMLCanvasElement | null,
 };

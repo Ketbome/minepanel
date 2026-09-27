@@ -388,6 +388,7 @@ export function Stronghold() {
       <mesh ref={portalMesh} geometry={PORTAL_GEOMETRY} material={portal} position={[0, PORTAL_Y, 0]} visible={false} />
       <Lectern world={world} at={[-8, 0, 14]} book="diary" facing={Math.PI / 2} glow />
       <Sign id="bfuunyExit" at={[0, 1, 22]} facing={Math.PI} wall />
+      <Sign id="blasterSlow" at={[4, 0, -4]} facing={-Math.PI / 4} />
       <Spawner
         onNear={() => {
           setSilverfish([new THREE.Vector3(3, -0.5, 4), new THREE.Vector3(4.5, -0.5, 4.5), new THREE.Vector3(3.5, -0.5, 6)]);

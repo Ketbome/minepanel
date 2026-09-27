@@ -9,7 +9,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getCurrentUser } from '@/services/users/users.service';
 import { cue, isMuted, unlockAudio } from './end/end-audio';
 import { loadLore, loreText } from './end/lore';
-import { daysSince, hasDragonEgg, loadGhost, useEndGame, type Ghost } from './end/store';
+import { daysSince, FIRST_GHOST, hasDragonEgg, useEndGame } from './end/store';
 import { DragonEggIcon } from './end/PixelIcons';
 
 // the whole run (HUD, windows, story) loads on the click, not with the settings page
@@ -71,14 +71,12 @@ export function EndPortalEasterEgg() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [egg, setEgg] = useState(false);
-  const [ghost, setGhost] = useState<Ghost | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
     setMounted(true);
     setEgg(hasDragonEgg());
-    setGhost(loadGhost());
   }, []);
 
   useEffect(() => {
@@ -107,7 +105,6 @@ export function EndPortalEasterEgg() {
   const close = useCallback(() => {
     setOpen(false);
     setEgg(hasDragonEgg());
-    setGhost(loadGhost());
   }, []);
 
   return (
@@ -116,11 +113,11 @@ export function EndPortalEasterEgg() {
       <Button ref={trigger} variant="minepanelDanger" size="sm" className="font-minecraft" disabled={open || loading} onClick={() => void start()}>
         {t(egg ? 'dangerEggButtonAgain' : 'dangerEggButton')}
       </Button>
-      {ghost && (
+      {mounted && (
         <p className="mt-3 font-mono text-[11px] text-gray-500">
-          {t(daysSince(ghost.at) === 0 ? 'dangerEggLastSeenToday' : 'dangerEggLastSeen')
-            .replace('{ghost}', ghost.name)
-            .replace('{days}', String(daysSince(ghost.at)))}
+          {t(daysSince(FIRST_GHOST.at) === 0 ? 'dangerEggLastSeenToday' : 'dangerEggLastSeen')
+            .replace('{ghost}', FIRST_GHOST.name)
+            .replace('{days}', String(daysSince(FIRST_GHOST.at)))}
         </p>
       )}
       {mounted &&

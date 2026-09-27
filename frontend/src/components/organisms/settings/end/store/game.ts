@@ -1,4 +1,4 @@
-import { FIRST_GHOST } from './persist';
+import { FIRST_GHOST } from './admins';
 import type { GameSlice, Slice } from './types';
 
 export const EYE_COUNT = 12;
@@ -19,6 +19,7 @@ export const initialGame = {
   flags: {},
   killed: [],
   mined: [],
+  placed: [],
   obsidian: [],
   frames: Array.from({ length: EYE_COUNT }, (_, index) => PRESET_FRAMES.includes(index)),
   noise: 0,
@@ -52,7 +53,8 @@ export const createGameSlice: Slice<Omit<GameSlice, 'reset'>> = (set) => ({
     }),
   setFlag: (flag) => set((state) => (state.flags[flag] ? state : { flags: { ...state.flags, [flag]: true } })),
   kill: (id) => set((state) => (state.killed.includes(id) ? state : { killed: [...state.killed, id] })),
-  mine: (cell) => set((state) => ({ mined: [...state.mined, cell] })),
+  mine: (cell) => set((state) => ({ mined: [...state.mined, cell], placed: state.placed.filter(([key]) => key !== cell) })),
+  placeBlock: (cell, id) => set((state) => ({ placed: [...state.placed.filter(([key]) => key !== cell), [cell, id]], mined: state.mined.filter((key) => key !== cell) })),
   placeObsidian: (gap) => set((state) => (state.obsidian.includes(gap) ? state : { obsidian: [...state.obsidian, gap] })),
   placeEye: (frame) => set((state) => ({ frames: state.frames.map((filled, index) => filled || index === frame) })),
   setNoise: (noise) => set({ noise }),

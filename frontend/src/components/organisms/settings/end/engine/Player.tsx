@@ -3,12 +3,13 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { bfuunyLaughs } from '../acts/props';
 import { cue } from '../end-audio';
-import { countOf, type ItemId } from '../items';
+import { countOf, ITEMS, type ItemId } from '../items';
 import { CRACK_STAGES, overworldKit } from '../overworld-voxels';
 import { MAX_HP, useEndGame } from '../store';
 import { consumeEdges, held, input, pressLeft, pressRight, releaseAll } from './input';
-import { canStepUp, cellsInBody, GRAVITY, HEIGHT, JUMP_SPEED, move } from './physics';
+import { canStepUp, cellsInBody, GRAVITY, HALF_WIDTH, HEIGHT, JUMP_SPEED, move } from './physics';
 import { aimable, castBlocks, castTargets } from './raycast';
 import { cellKey, BLOCKS } from './world';
 import { EYE_HEIGHT, runtime, SNEAK_EYE, type Target } from './runtime';
@@ -16,15 +17,18 @@ import { EYE_HEIGHT, runtime, SNEAK_EYE, type Target } from './runtime';
 const SENSITIVITY = 0.0023;
 const MELEE_REACH = 3.6;
 const USE_REACH = 5;
-const WALK = 4.3;
+export const WALK = 4.3;
 const SPRINT = 5.6;
 const SNEAK = 1.3;
 const OUTLINE = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));
 const CRACK = new THREE.BoxGeometry(1.006, 1.006, 1.006);
 const SIZE = new THREE.Vector3();
 const CENTER = new THREE.Vector3();
+const SPOT = new THREE.Vector3();
+// holding right click keeps placing, a little slower than the game's four ticks
+const PLACE_REPEAT_S = 0.25;
 
-const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7 };
+const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7, pickaxe: 5 };
 
 // the hand's action for a held item when the crosshair is on nothing usable
 function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vector3) {
@@ -34,6 +38,10 @@ function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vec
   if (item === 'map') game.openPanel({ kind: 'map' });
   else if (item === 'note') game.openPanel({ kind: 'book', id: 'note' });
   else if (item === 'register') game.openPanel({ kind: 'book', id: 'register' });
+  else if (item === 'helmet' && !game.helmet) {
+    game.wearHelmet();
+    cue('equip');
+  }
   else if (item === 'pearl' && game.spend('pearl')) {
     cue('throw');
     runtime.projectiles.push({
@@ -63,7 +71,7 @@ export function Player() {
   const outline = useRef<THREE.LineSegments>(null);
   const crack = useRef<THREE.Mesh>(null);
   const cracks = overworldKit().mat.cracks;
-  const state = useRef({ spawned: -1, zone: '', breathAt: 0, mining: -1, progress: 0, cooldown: 0, charge: 0, eating: 0, stride: 0, regenAt: 0, hp: MAX_HP, fov: 70 });
+  const state = useRef({ spawned: -1, zone: '', breathAt: 0, mining: -1, progress: 0, cooldown: 0, charge: 0, eating: 0, stride: 0, regenAt: 0, hp: MAX_HP, fov: 70, placeAt: 0 });
   const scratch = useMemo(() => ({ wish: new THREE.Vector3(), delta: new THREE.Vector3(), forward: new THREE.Vector3(), right: new THREE.Vector3() }), []);
 
   useEffect(() => {
@@ -135,6 +143,8 @@ export function Player() {
     const lockError = () => {
       if (!input.touch && playing()) useEndGame.getState().setResume(true);
     };
+    // right click is the game's "use": no browser menu anywhere over the game, not only on the
+    // canvas (HUD layers sit on top of it, and some browsers deliver the click there)
     const menu = (event: Event) => event.preventDefault();
     window.addEventListener('keydown', keydown);
     window.addEventListener('keyup', keyup);
@@ -146,7 +156,7 @@ export function Player() {
     document.addEventListener('pointerlockchange', lockChange);
     document.addEventListener('pointerlockerror', lockError);
     canvas.addEventListener('click', click);
-    canvas.addEventListener('contextmenu', menu);
+    document.addEventListener('contextmenu', menu, true);
     // the panel, death screen and pause menu all need the cursor back
     const unsubscribe = useEndGame.subscribe((game, previous) => {
       const blocked = Boolean(game.panel || game.dead || game.paused);
@@ -178,7 +188,7 @@ export function Player() {
       document.removeEventListener('pointerlockchange', lockChange);
       document.removeEventListener('pointerlockerror', lockError);
       canvas.removeEventListener('click', click);
-      canvas.removeEventListener('contextmenu', menu);
+      document.removeEventListener('contextmenu', menu, true);
       unsubscribe();
       window.clearTimeout(relock);
       if (locked()) document.exitPointerLock();
@@ -255,7 +265,10 @@ export function Player() {
         p.lastLevitation = now;
       } else {
         p.vel.y = Math.max(-48, p.vel.y - GRAVITY * dt);
-        if (active && p.onGround && (edges.jump || jumpHeld)) p.vel.y = JUMP_SPEED;
+        if (active && p.onGround && (edges.jump || jumpHeld)) {
+          p.vel.y = JUMP_SPEED;
+          runtime.hooks.vibration?.(p.pos, 6);
+        }
       }
     }
 
@@ -270,7 +283,10 @@ export function Player() {
     if (moved.onGround && p.vel.y <= 0) {
       const fall = p.peak - p.pos.y;
       if (!wasOnGround && fall > 3.4 && !p.gliding) game.hurt(Math.round(fall - 3), now - p.lastLevitation < 6000 ? 'shulker' : 'fall');
-      if (!wasOnGround && fall > 1) cue('land', Math.min(1, fall / 6));
+      if (!wasOnGround && fall > 1) {
+        cue('land', Math.min(1, fall / 6));
+        runtime.hooks.vibration?.(p.pos, Math.min(24, fall * 4));
+      }
       p.vel.y = 0;
       p.peak = p.pos.y;
       p.gliding = false;
@@ -354,11 +370,13 @@ export function Player() {
           s.cooldown = 0.5;
           game.bump();
           cue('swing');
+          runtime.hooks.vibration?.(p.pos, 5);
         }
       } else if (onBlock) {
         const [x, y, z] = onBlock.cell;
         const id = world.get(x, y, z);
-        const seconds = id ? BLOCKS[id].mine : undefined;
+        const def = id ? BLOCKS[id] : undefined;
+        const seconds = def && (item === 'pickaxe' ? (def.pick ?? def.mine) : def.mine);
         if (seconds) {
           mining = true;
           const key = cellKey(x, y, z);
@@ -374,7 +392,9 @@ export function Player() {
           if (s.progress >= 1) {
             world.remove(x, y, z);
             cue('dirt');
+            if (def?.drop) game.give(def.drop, def.drops ?? 1);
             runtime.hooks.mined?.(x, y, z);
+            runtime.hooks.vibration?.(SPOT.set(x, y, z), 12);
             s.mining = -1;
             mining = false;
           }
@@ -394,14 +414,35 @@ export function Player() {
       }
     }
 
-    if (active && edges.right) {
-      if (target?.use) {
-        target.use();
+    const placeable = item && ITEMS[item].block;
+    if (active && edges.right && target?.use) {
+      target.use();
+      game.bump();
+    } else if (active && placeable && onBlock && (edges.right || (input.right && runtime.time > s.placeAt))) {
+      // a block goes against the face you aim at, never into yourself
+      s.placeAt = runtime.time + PLACE_REPEAT_S;
+      const cx = onBlock.cell[0] + onBlock.normal[0];
+      const cy = onBlock.cell[1] + onBlock.normal[1];
+      const cz = onBlock.cell[2] + onBlock.normal[2];
+      const there = world.get(cx, cy, cz);
+      const reach = 0.5 + HALF_WIDTH - 0.001;
+      const inside = Math.abs(cx - p.pos.x) < reach && Math.abs(cz - p.pos.z) < reach && cy + 0.5 > p.pos.y + 0.001 && cy - 0.5 < p.pos.y + height;
+      if (onBlock.normal.some(Boolean) && (!there || there === 'water') && !inside) {
+        world.place(cx, cy, cz, placeable);
+        game.consumeHeld();
         game.bump();
-      } else if (item !== 'bow' && item !== 'apple') {
-        applyHeld(item, p.look, p.eye);
-        game.bump();
+        cue('place');
+        runtime.hooks.placed?.(cx, cy, cz, placeable);
+        runtime.hooks.vibration?.(SPOT.set(cx, cy, cz), 10);
+        // Bfuuny's "treasure" turns out to be useful after all
+        if (placeable === 'dirt' && !game.flags.bfuunyDirt) {
+          game.setFlag('bfuunyDirt');
+          bfuunyLaughs('bfuunyDirt');
+        }
       }
+    } else if (active && edges.right && item !== 'bow' && item !== 'apple') {
+      applyHeld(item, p.look, p.eye);
+      game.bump();
     }
     // the bow draws while held and fires on release; the apple is eaten while held
     if (item === 'bow' && active && input.right && countOf(game.inventory, 'arrow') > 0) {
@@ -412,6 +453,7 @@ export function Player() {
       if (s.charge > 0.2 && game.spend('arrow')) {
         cue('bowShoot');
         game.bump();
+        runtime.hooks.vibration?.(p.pos, 4);
         runtime.projectiles.push({
           kind: 'arrow',
           pos: p.eye.clone().addScaledVector(p.look, 0.5),

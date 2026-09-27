@@ -8,12 +8,14 @@ import { cue, startAmbience, stopAmbience } from '../end-audio';
 import { spawnEffect } from '../engine/Effects';
 import { countOf } from '../items';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
-import { cellKey, cellOf, World } from '../engine/world';
+import { cellKey, cellOf, World, type BlockId } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { Creeper, Pig, Rabbit, Sheep, Villager } from '../mobs/overworld';
+import { useRespawns } from '../mobs/parts';
+import { Skeleton } from '../mobs/skeleton';
 import { createSunsetMaterial } from '../shaders';
 import { lastSeenKey } from '../lore';
-import { useEndGame } from '../store';
+import { BFUUNY, BLASTER, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
 import { CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
 import { Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
@@ -71,6 +73,13 @@ const HOMES = {
   creeper: { home: new THREE.Vector3(18, 0.5, 16), radius: 5, speed: 0.9 },
 };
 
+// out on the edges of the map, away from the camp: where arrows come from once yours run out
+const SKELETONS = [
+  { id: 'skeleton-1', wander: { home: new THREE.Vector3(30, 0.5, 4), radius: 5, speed: 1 } },
+  { id: 'skeleton-2', wander: { home: new THREE.Vector3(-34, 0.5, 8), radius: 5, speed: 1 } },
+  { id: 'skeleton-3', wander: { home: new THREE.Vector3(6, 0.5, 34), radius: 5, speed: 1 } },
+];
+
 export const OVERWORLD_SPAWNS: Record<string, readonly [number, number, number, number]> = {
   camp: [CAMP.x + 0.5, 0.5, CAMP.z + 4.5, 0],
   portal: [RUINED.x + 1, 0.5, RUINED.z + 3, 0],
@@ -109,7 +118,7 @@ interface Scenery {
   readonly tallGrass: Block[];
 }
 
-function buildOverworld(mined: readonly number[], obsidian: readonly number[], eyeLanded: boolean): Scenery {
+function buildOverworld(mined: readonly number[], placed: readonly (readonly [number, BlockId])[], obsidian: readonly number[], eyeLanded: boolean): Scenery {
   const world = new World();
   const tallGrass: Block[] = [];
   for (let x = -R; x <= R; x += 1) {
@@ -216,6 +225,7 @@ function buildOverworld(mined: readonly number[], obsidian: readonly number[], e
     const [x, y, z] = cellOf(key);
     world.remove(x, y, z);
   });
+  placed.forEach(([key, id]) => world.set(...cellOf(key), id));
   return { world, tallGrass };
 }
 
@@ -334,11 +344,12 @@ export function Overworld() {
   const eyeLanded = useEndGame((state) => Boolean(state.flags.eyeLanded));
   const scenery = useMemo(() => {
     const game = useEndGame.getState();
-    return buildOverworld(game.mined, game.obsidian, Boolean(game.flags.eyeLanded));
+    return buildOverworld(game.mined, game.placed, game.obsidian, Boolean(game.flags.eyeLanded));
   }, []);
   const { world } = scenery;
   const [thrown, setThrown] = useState<THREE.Vector3 | null>(null);
-  const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false });
+  const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false, obituary: false });
+  const skeletons = useRespawns(40);
 
   useEffect(() => {
     runtime.world = world;
@@ -351,6 +362,7 @@ export function Overworld() {
       useEndGame.getState().mine(cellKey(mx, my, mz));
       spawnEffect('debris', new THREE.Vector3(mx, my, mz), my >= 0 ? '#5f9f35' : '#79553a');
     };
+    runtime.hooks.placed = (px, py, pz, id) => useEndGame.getState().placeBlock(cellKey(px, py, pz), id);
     runtime.hooks.useItem = (item) => {
       if (item !== 'eye') return false;
       const state = useEndGame.getState();
@@ -367,6 +379,7 @@ export function Overworld() {
       stopAmbience();
       runtime.world = null;
       runtime.hooks.mined = null;
+      runtime.hooks.placed = null;
       runtime.hooks.useItem = null;
     };
   }, [world, entry]);
@@ -390,7 +403,8 @@ export function Overworld() {
     if (!game.flags.camp && entry === 'camp') {
       if (!b.voices && b.t > 1) {
         b.voices = true;
-        game.voices('voiceWill', 'voiceAlways');
+        game.say('introBlaster', BLASTER);
+        window.setTimeout(() => useEndGame.getState().say('introBfuuny', BFUUNY), 1600);
       }
       if (!b.seen && b.t > 3) {
         b.seen = true;
@@ -405,6 +419,10 @@ export function Overworld() {
       game.setFlag('camp');
       game.showActionBar('hintSword');
     }
+    if (!b.obituary && b.t > 75) {
+      b.obituary = true;
+      game.obituary(BFUUNY, 'bfuunyDiedKevin');
+    }
     if (!b.portalSeen && Math.hypot(p.x - RUINED.x, p.z - RUINED.z) < 9 && !game.flags.portalLit) {
       b.portalSeen = true;
       game.say('ghostPortal');
@@ -413,6 +431,10 @@ export function Overworld() {
       b.back = true;
       game.showActionBar('hintEyes');
       game.say('ghostBack');
+    }
+    if (!game.flags.helmetHinted && countOf(game.inventory, 'helmet')) {
+      game.setFlag('helmetHinted');
+      game.showActionBar('hintHelmet');
     }
     if (game.flags.eyesCrafted && !b.eyesHint && !game.flags.eyeThrown) {
       b.eyesHint = true;
@@ -424,7 +446,8 @@ export function Overworld() {
       cue('travel');
     }
     if (p.x > TUNNEL.x0 - 0.5 && p.x < TUNNEL.x1 + 0.5 && p.z > TUNNEL.z1 - 1.2 && p.y < 3) game.travel('ancient', 'arrive', 'black');
-    if (Math.hypot(p.x - DIG.x, p.z - DIG.z) < 1 && p.y < -5) {
+    // a shaft dug early, before the eye showed the way, leads only to the void
+    if (game.flags.eyeLanded && Math.hypot(p.x - DIG.x, p.z - DIG.z) < 1 && p.y < -5) {
       game.setFlag('stronghold');
       game.travel('stronghold', 'arrive', 'black');
     }
@@ -473,6 +496,9 @@ export function Overworld() {
       <Rabbit name="Toast" wander={HOMES.rabbit} />
       <Pig name="Producción" wander={HOMES.pig} />
       <Creeper name="Kevin" wander={HOMES.creeper} />
+      {SKELETONS.map(({ id, wander }) => (
+        <Skeleton key={`${id}:${skeletons.life(id)}`} wander={wander} onDeath={() => skeletons.died(id)} />
+      ))}
 
       {eyeLanded && (
         <group position={[DIG.x, groundHeight(DIG.x, DIG.z) + 1.5, DIG.z]}>

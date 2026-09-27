@@ -4,25 +4,32 @@ import type { Area, ChestId, EndGameState, InventorySlice, Slice, Zone } from '.
 
 const chest = (size: number, items: Record<number, Stack>): Slot[] => Object.assign(emptySlots(size), items);
 
-// the admin left exactly enough: 4 powder + 3 blaze rods = 10 eyes, and one pearl to spare
+// the admin left the powder for ten eyes (4 powder + 3 blaze rods) but no pearls: those come from
+// the piglins now, for gold. Diamonds for a sword and a pickaxe.
 export const initialChests = (): Record<ChestId, Slot[]> => ({
   camp: chest(27, {
     3: { item: 'note', count: 1 },
     5: { item: 'emerald', count: 4 },
-    10: { item: 'diamond', count: 2 },
-    11: { item: 'stick', count: 1 },
-    12: { item: 'pearl', count: 11 },
+    10: { item: 'diamond', count: 5 },
+    11: { item: 'stick', count: 3 },
     13: { item: 'blaze', count: 4 },
     14: { item: 'bow', count: 1 },
     15: { item: 'arrow', count: 32 },
     16: { item: 'apple', count: 8 },
   }),
   backups: chest(27, Object.fromEntries(Array.from({ length: 9 }, (_, index) => [index + 9, { item: 'dirt', count: 64 }]))),
+  // like the game's ruined portal chests: obsidian, flint and steel, gold and a golden helmet
   ruined: chest(27, {
+    10: { item: 'helmet', count: 1 },
     11: { item: 'obsidian', count: 2 },
     13: { item: 'flint', count: 1 },
-    15: { item: 'gold', count: 3 },
+    15: { item: 'gold', count: 6 },
   }),
+  // the ancient city's loot, spread over its ruins
+  city1: chest(27, { 4: { item: 'apple', count: 4 }, 12: { item: 'arrow', count: 16 }, 20: { item: 'pearl', count: 2 } }),
+  city2: chest(27, { 2: { item: 'gold', count: 8 }, 13: { item: 'diamond', count: 3 }, 15: { item: 'stick', count: 2 } }),
+  city3: chest(27, { 6: { item: 'arrow', count: 24 }, 11: { item: 'apple', count: 3 }, 22: { item: 'obsidian', count: 3 } }),
+  city4: chest(27, { 9: { item: 'pearl', count: 4 }, 13: { item: 'apple', count: 6 }, 17: { item: 'gold', count: 6 } }),
 });
 
 // what skipping into a zone hands you, so every zone can be played on its own
@@ -32,8 +39,9 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
-    { item: 'pearl', count: 11 },
     { item: 'blaze', count: 4 },
+    { item: 'gold', count: 16 },
+    { item: 'helmet', count: 1 },
   ],
   stronghold: [
     { item: 'sword', count: 1 },
@@ -49,6 +57,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
     { item: 'pearl', count: 1 },
+    { item: 'dirt', count: 64 },
   ],
   endcity: [
     { item: 'sword', count: 1 },
@@ -113,6 +122,7 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
   chests: initialChests(),
   grid: emptySlots(9),
   cursor: null,
+  helmet: false,
   panel: null,
 
   // the game's clicks: left picks up, drops, merges or swaps a whole stack; right takes half
@@ -195,6 +205,24 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
     set((state) => ({ inventory: removeItem(state.inventory, item, count) }));
     return true;
   },
+  consumeHeld: () =>
+    set((state) => {
+      const stack = state.inventory[state.selected];
+      if (!stack) return state;
+      return { inventory: state.inventory.map((slot, index) => (index === state.selected ? less(stack, 1) : slot)) };
+    }),
+  wearHelmet: () => {
+    const state = get();
+    if (state.helmet || state.inventory[state.selected]?.item !== 'helmet') return;
+    state.consumeHeld();
+    set({ helmet: true });
+  },
+  clickHelmet: () =>
+    set((state) => {
+      if (state.helmet && !state.cursor) return { helmet: false, cursor: { item: 'helmet', count: 1 } };
+      if (!state.helmet && state.cursor?.item === 'helmet') return { helmet: true, cursor: null };
+      return state;
+    }),
   select: (slot) => set({ selected: ((slot % 9) + 9) % 9 }),
   cycle: (by) => set((state) => ({ selected: (((state.selected + by) % 9) + 9) % 9 })),
   takeFromChest: (id, index) =>
@@ -230,6 +258,8 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
   grantKit: (zone) => {
     const kit = KITS[zone];
     if (!kit) return;
-    set((state) => ({ inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) ? bar : addItem(bar, stack.item, stack.count)), state.inventory) }));
+    set((state) => ({
+      inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) || (stack.item === 'helmet' && state.helmet) ? bar : addItem(bar, stack.item, stack.count)), state.inventory),
+    }));
   },
 });

@@ -1,3 +1,4 @@
+import type { ItemId } from '../items';
 import type { Block } from '../voxels';
 
 // One unit is one block and cell (x, y, z) spans [x - 0.5, x + 0.5] on every axis. Each zone
@@ -21,6 +22,7 @@ export type BlockId =
   | 'crying'
   | 'goldBlock'
   | 'netherrack'
+  | 'netherGold'
   | 'netherBricks'
   | 'glowstone'
   | 'magma'
@@ -44,31 +46,37 @@ export type BlockId =
 
 interface BlockDef {
   readonly solid: boolean;
-  // seconds to break by hand; blocks without it cannot be mined
+  // seconds to break by hand, and with the pickaxe; a block with neither cannot be mined, one
+  // with only `pick` needs the pickaxe
   readonly mine?: number;
+  readonly pick?: number;
+  // what breaking it puts in your inventory
+  readonly drop?: ItemId;
+  readonly drops?: number;
   readonly visible?: boolean;
   // see-through blocks never hide the faces of their neighbours
   readonly clear?: boolean;
 }
 
 export const BLOCKS: Record<BlockId, BlockDef> = {
-  grass: { solid: true, mine: 0.9 },
-  dirt: { solid: true, mine: 0.75 },
-  stone: { solid: true },
-  cobble: { solid: true },
-  path: { solid: true },
-  log: { solid: true },
-  leaves: { solid: true, clear: true },
-  planks: { solid: true },
-  glass: { solid: true, clear: true },
+  grass: { solid: true, mine: 0.9, pick: 0.45, drop: 'dirt' },
+  dirt: { solid: true, mine: 0.75, pick: 0.4, drop: 'dirt' },
+  stone: { solid: true, pick: 0.6, drop: 'cobble' },
+  cobble: { solid: true, pick: 0.7, drop: 'cobble' },
+  path: { solid: true, mine: 0.9, pick: 0.45, drop: 'dirt' },
+  log: { solid: true, mine: 2.4, pick: 1.4, drop: 'log' },
+  leaves: { solid: true, clear: true, mine: 0.3 },
+  planks: { solid: true, mine: 2.4, pick: 1.4, drop: 'planks' },
+  glass: { solid: true, clear: true, mine: 0.4 },
   hay: { solid: true },
   water: { solid: false, clear: true },
   barrier: { solid: true, visible: false },
   prop: { solid: true, visible: false },
-  obsidian: { solid: true },
+  obsidian: { solid: true, pick: 4, drop: 'obsidian' },
   crying: { solid: true },
-  goldBlock: { solid: true },
-  netherrack: { solid: true },
+  goldBlock: { solid: true, pick: 1.2, drop: 'gold', drops: 9 },
+  netherrack: { solid: true, mine: 2, pick: 0.3, drop: 'netherrack' },
+  netherGold: { solid: true, mine: 2.5, pick: 0.5, drop: 'gold', drops: 2 },
   netherBricks: { solid: true },
   glowstone: { solid: true },
   magma: { solid: true },
@@ -76,12 +84,12 @@ export const BLOCKS: Record<BlockId, BlockDef> = {
   deepslate: { solid: true },
   deepBricks: { solid: true },
   reinforced: { solid: true },
-  sculk: { solid: true },
+  sculk: { solid: true, mine: 0.5, pick: 0.3 },
   bricks: { solid: true },
   mossy: { solid: true },
   cracked: { solid: true },
   bookshelf: { solid: true },
-  endStone: { solid: true },
+  endStone: { solid: true, pick: 0.9, drop: 'endStone' },
   endBricks: { solid: true },
   bedrock: { solid: true },
   purpur: { solid: true },

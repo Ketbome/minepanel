@@ -10,7 +10,7 @@ import type { World } from '../engine/world';
 import { overworldKit } from '../overworld-voxels';
 import { createNetherPortalMaterial } from '../shaders';
 import type { LoreKey } from '../lore/en';
-import { useEndGame, type BookId, type ChestId, type SignId } from '../store';
+import { BFUUNY, useEndGame, type BookId, type ChestId, type SignId } from '../store';
 import { kit, UNIT_BOX } from '../voxels';
 
 // Things you can walk up to and use. Each one claims its cell in the world so you cannot walk
@@ -30,10 +30,7 @@ const CHEST_BODY = new THREE.BoxGeometry(14 / 16, 10 / 16, 14 / 16);
 const CHEST_LID = new THREE.BoxGeometry(14 / 16, 4 / 16, 14 / 16);
 const LATCH = new THREE.BoxGeometry(2 / 16, 4 / 16, 1 / 16);
 
-const BFUUNY = 'Bfuuny';
-
-// Bfuuny, the first admin, has not played since 2003, yet he drops in to laugh every time someone
-// falls for one of his pranks
+// Bfuuny drops in to laugh every time someone falls for one of his pranks
 export function bfuunyLaughs(key: LoreKey) {
   window.setTimeout(() => useEndGame.getState().presence('join', BFUUNY), 600);
   window.setTimeout(() => useEndGame.getState().say(key, BFUUNY), 1800);
@@ -44,15 +41,17 @@ export function Chest({ world, id, at, facing = 0 }: { readonly world: World; re
   const { mat } = overworldKit();
   const open = useEndGame((state) => state.panel?.kind === 'chest' && state.panel.id === id);
   const lid = useRef<THREE.Group>(null);
+  const [x, y, z] = at;
   const target = useMemo<Omit<Target, 'box'>>(
     () => ({
       label: () => (id === 'backups' ? 'chestBackups' : 'chest'),
       use: () => {
         cue('chest');
         useEndGame.getState().openPanel({ kind: 'chest', id });
+        runtime.hooks.vibration?.(new THREE.Vector3(x, y, z), 8);
       },
     }),
-    [id]
+    [id, x, y, z]
   );
   useCellTarget(world, at, target, 0.875);
   // closing the "treasure" (nine stacks of dirt) for the first time is what Bfuuny waited for
