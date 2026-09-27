@@ -99,6 +99,11 @@ Notes:
 
 - If Java proxy is enabled globally, port mapping may be controlled by proxy mode.
 - Bedrock uses UDP and does not use Java proxy routing.
+- `extraPorts` entries use Docker Compose short syntax: `[ip:]host:container[/tcp|udp|sctp]`,
+  ranges allowed (`7000-7010:7000-7010/udp`). The protocol defaults to TCP; to expose one port
+  on both protocols, add two entries (`3091:3091/tcp` and `3091:3091/udp`). Typing just `3091` or
+  `3091/udp` in the panel expands to `3091:3091` / `3091:3091/udp`. Malformed entries are rejected
+  on save instead of breaking `docker compose up`.
 
 ## Ports
 
