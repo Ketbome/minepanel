@@ -364,7 +364,7 @@ Recommended approach:
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Hidden 3D easter egg in Settings > Danger Zone: light a stronghold portal, break the End crystals, slay the dragon, catch its egg and read the End Poem. Works on desktop and touch; reduced-motion users get a static version |
+| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft a sword at the camp, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay the Ender Dragon, fly an End City elytra and read the End Poem. Loads only when you press the button. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint |
 
 ## Edition Comparison
 
