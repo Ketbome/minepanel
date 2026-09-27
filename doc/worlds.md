@@ -114,6 +114,17 @@ World *generation* is a separate thing from world *selection*: the level type
 (flat, amplified, a modpack's custom generator) lives in the **Game** tab. See
 [Server Types](/server-types#world-type-level-type).
 
+### Experimental features (Java)
+
+The **Game** tab's world settings have an **Experimental features** section with the
+built-in feature packs Minecraft ships: minecart improvements, redstone experiments and
+the villager trade rebalance. They are passed as `INITIAL_ENABLED_PACKS`.
+
+Minecraft only reads this when it **creates** the world. Turning a pack on or off later
+does not change an existing world; to try them, pick them before the first start or
+create a new world. You can check what a running world uses with the console command
+`datapack list enabled`.
+
 ## Where the files are
 
 ```txt

@@ -11,6 +11,13 @@ import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { LINK_WORLD_SETTINGS } from "@/lib/providers/constants";
 
+// Built-in feature packs; the backend accepts exactly these (EXPERIMENTAL_PACKS in server-config.model.ts).
+const EXPERIMENTAL_PACKS = [
+  { id: "minecart_improvements", icon: "/images/repeater.webp", label: "experimentalMinecarts", description: "experimentalMinecartsDescription" },
+  { id: "redstone_experiments", icon: "/images/redstone.webp", label: "experimentalRedstone", description: "experimentalRedstoneDescription" },
+  { id: "trade_rebalance", icon: "/images/villager.png", label: "experimentalTrades", description: "experimentalTradesDescription" },
+] as const;
+
 interface WorldSettingsTabProps {
   config: ServerConfig;
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
@@ -247,6 +254,42 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      )}
+
+      {isJava && (
+        <Accordion type="single" collapsible className="w-full bg-gray-800/50 border border-gray-700/50 rounded-md">
+          <AccordionItem value="experimental" className="border-b-0">
+            <AccordionTrigger className="px-4 py-3 text-gray-200 font-minecraft text-sm hover:bg-gray-700/30 rounded-t-md flex items-center gap-2">
+              <Image src="/images/enchanted-book.webp" alt="" width={16} height={16} />
+              <span>{t("experimentalFeatures")}</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4 px-4 pb-4">
+              <p className="text-xs text-amber-300/90">{t("experimentalFeaturesNewWorldOnly")}</p>
+              {EXPERIMENTAL_PACKS.map(({ id, icon, label, description }) => {
+                const enabled = config.experimentalPacks?.includes(id) ?? false;
+                return (
+                  <div key={id} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`experimental-${id}`} className="text-gray-200 flex items-center gap-2">
+                        <Image src={icon} alt="" width={16} height={16} />
+                        {t(label)}
+                      </Label>
+                      <Switch
+                        id={`experimental-${id}`}
+                        checked={enabled}
+                        onCheckedChange={(checked) => {
+                          const current = config.experimentalPacks ?? [];
+                          updateConfig("experimentalPacks", checked ? [...current, id] : current.filter((pack) => pack !== id));
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400">{t(description)}</p>
+                  </div>
+                );
+              })}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       )}
     </div>
   );

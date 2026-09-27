@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
-import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
+import { knownExperimentalPacks, ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
@@ -214,6 +214,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
         spawnMonsters: env.SPAWN_MONSTERS !== 'false',
         spawnNpcs: env.SPAWN_NPCS !== 'false',
         generateStructures: env.GENERATE_STRUCTURES !== 'false',
+        // A value naming packs the panel does not offer (older ones such as "bundle") stays in envVars.
+        experimentalPacks: knownExperimentalPacks(env.INITIAL_ENABLED_PACKS) ?? [],
         allowNether: env.ALLOW_NETHER !== 'false',
         entityBroadcastRange: env.ENTITY_BROADCAST_RANGE_PERCENTAGE ?? '100',
 
@@ -378,6 +380,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const knownFtbVars = new Set(['FTB_MODPACK_ID', 'FTB_MODPACK_VERSION_ID']);
     const customVars: string[] = [];
     for (const [key, value] of Object.entries(env)) {
+      if (key === 'INITIAL_ENABLED_PACKS' && knownExperimentalPacks(String(value)) !== null) continue;
       if (!knownEnvVars.has(key) && !knownWorldVars.has(key) && !knownGtnhVars.has(key) && !knownFtbVars.has(key) && value !== undefined && value !== null) {
         customVars.push(`${key}=${value}`);
       }

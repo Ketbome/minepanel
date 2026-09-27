@@ -108,6 +108,11 @@ export class JavaServerStrategy implements IServerStrategy {
     this.addConnectivityOptions(env, config);
     this.addServerTypeConfig(env, config);
     this.addCustomEnvVars(env, config);
+    // Chosen in the panel, the packs win over a custom value; with none chosen, a custom
+    // INITIAL_ENABLED_PACKS (e.g. an older pack name imported from compose) is kept.
+    if (config.experimentalPacks?.length) {
+      env['INITIAL_ENABLED_PACKS'] = config.experimentalPacks.join(',');
+    }
 
     return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined && value !== ''));
   }
