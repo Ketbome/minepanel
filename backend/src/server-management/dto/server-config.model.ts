@@ -24,15 +24,13 @@ export const EVENT_COMMAND_FIELDS = {
   rconCmdsLastDisconnect: 'RCON_CMDS_LAST_DISCONNECT',
 } as const;
 export type EventCommandField = keyof typeof EVENT_COMMAND_FIELDS;
-export const MAX_EVENT_COMMANDS = 20;
-
 /** One command per line, without blank lines or a leading slash; null when nothing is left. */
 export function normalizeEventCommands(text: string | undefined | null): string | null {
   const commands = (text ?? '')
     .split('\n')
     .map((line) => line.trim().replace(/^\/+/, '').trim())
     .filter(Boolean);
-  return commands.length > 0 ? commands.slice(0, MAX_EVENT_COMMANDS).join('\n') : null;
+  return commands.length > 0 ? commands.join('\n') : null;
 }
 
 export type ServerEdition = 'JAVA' | 'BEDROCK';
@@ -412,27 +410,27 @@ export class ServerConfigDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(4096)
+  @MaxLength(16384)
   rconCmdsStartup?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(4096)
+  @MaxLength(16384)
   rconCmdsFirstConnect?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(4096)
+  @MaxLength(16384)
   rconCmdsOnConnect?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(4096)
+  @MaxLength(16384)
   rconCmdsOnDisconnect?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(4096)
+  @MaxLength(16384)
   rconCmdsLastDisconnect?: string;
 
   @IsString()

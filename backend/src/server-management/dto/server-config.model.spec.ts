@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { MAX_EVENT_COMMANDS, normalizeEventCommands, UpdateServerConfigDto } from './server-config.model';
+import { normalizeEventCommands, UpdateServerConfigDto } from './server-config.model';
 
 const extraPortsErrors = async (extraPorts: unknown) => {
   const errors = await validate(plainToInstance(UpdateServerConfigDto, { extraPorts }));
@@ -48,8 +48,8 @@ describe('normalizeEventCommands', () => {
     expect(normalizeEventCommands(undefined)).toBeNull();
   });
 
-  it('caps the list', () => {
-    const many = Array.from({ length: MAX_EVENT_COMMANDS + 5 }, (_, i) => `say ${i}`).join('\n');
-    expect(normalizeEventCommands(many)?.split('\n')).toHaveLength(MAX_EVENT_COMMANDS);
+  it('keeps every command, so long lists imported from older compose files survive', () => {
+    const many = Array.from({ length: 50 }, (_, i) => `say ${i}`).join('\n');
+    expect(normalizeEventCommands(many)?.split('\n')).toHaveLength(50);
   });
 });

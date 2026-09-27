@@ -791,6 +791,18 @@ describe('ServerManagementController', () => {
     });
 
     describe('cloneServer', () => {
+      it('needs the console permission to clone a server that has event commands', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Alpha', rconCmdsStartup: 'op Griefer' } as any);
+        dockerComposeService.createServer.mockResolvedValue({ id: 'b' } as any);
+        proxy.getProxySettings.mockResolvedValue({ enabled: false });
+
+        await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(/console permission/);
+        expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+
+        accessControlService.canUsePermission.mockReturnValue(true);
+        expect((await controller.cloneServer(req, 'a', { newId: 'b' } as any)).success).toBe(true);
+      });
+
       it('validates the source and clones with remapped volumes', async () => {
         dockerComposeService.getServerConfig.mockResolvedValueOnce({ id: 'a', serverExists: false } as any);
         await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(NotFoundException);

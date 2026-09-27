@@ -111,7 +111,8 @@ themselves, one per line, at five moments:
   join commands once.
 - They run through RCON: with RCON turned off (Access tab) nothing is sent. Changes apply after a
   restart.
-- They run as the server console, so changing them needs the **console** permission. The
+- They run as the server console, so changing them, or cloning a server that has them, needs the
+  **console** permission. The
   `RCON_CMDS_*` variables they map to are admin-only in the custom environment variables.
 
 ### Scheduled announcements

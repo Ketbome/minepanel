@@ -558,6 +558,9 @@ export class ServerManagementController {
       clonePayload.worldSource = '';
       clonePayload.forceWorldCopy = false;
     }
+    // The clone runs the source's event commands as its console, so copying them needs what
+    // setting them needs.
+    if (EVENT_COMMAND_KEYS.some((field) => normalizeEventCommands(clonePayload[field]))) this.assertCanSetEventCommands(currentUser);
     await this.assertProxyHostnameFree(body.newId, clonePayload);
 
     try {
