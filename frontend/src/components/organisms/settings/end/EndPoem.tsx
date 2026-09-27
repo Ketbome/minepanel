@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { m } from 'framer-motion';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useEndGame } from './end-game-store';
+import { useLore, useLoreDictionary } from './lore';
+import { useEndGame } from './store';
 
 // The two voices of the End Poem keep the game's colors: dark aqua and dark green.
 const VOICES = ['#00AAAA', '#00AA00'];
@@ -85,13 +85,16 @@ interface EndPoemProps {
   readonly onDone: () => void;
   // reduced motion or no WebGL: the whole poem at once, nothing scrolls
   readonly still?: boolean;
+  // why the run fell back to the poem, shown above it
+  readonly notice?: string;
 }
 
-export function EndPoem({ onDone, still = false }: EndPoemProps) {
-  const { t } = useLanguage();
+export function EndPoem({ onDone, still = false, notice }: EndPoemProps) {
+  const lore = useLore();
   const stored = useEndGame((state) => state.player);
-  const player = stored || t('dangerEggPlayer');
-  const lines = t('dangerEggPoem').split('\n');
+  const player = stored || lore('player');
+  // raw text: the poem styles {player} itself instead of letting useLore fill it in
+  const lines = (useLoreDictionary((state) => state.dict)?.poem ?? '').split('\n');
   const column = useRef<HTMLDivElement>(null);
   const fast = useRef(false);
   const [ending, setEnding] = useState(false);
@@ -143,12 +146,17 @@ export function EndPoem({ onDone, still = false }: EndPoemProps) {
       <div className="absolute inset-0 overflow-y-auto">
         <PoemSky still />
         <div className="relative mx-auto flex max-w-xl flex-col items-center gap-5 px-6 py-16 text-center">
-          <h2 className="font-minecraft text-4xl text-purple-100">{t('dangerEggEndTitle')}</h2>
-          <p className="text-sm text-gray-400">{t('dangerEggEndSubtitle')}</p>
+          {notice && (
+            <p role="status" className="border border-amber-400/40 bg-black/60 px-4 py-3 text-sm text-amber-200">
+              {notice}
+            </p>
+          )}
+          <h2 className="font-minecraft text-4xl text-purple-100">{lore('endTitle')}</h2>
+          <p className="text-sm text-gray-400">{lore('endSubtitle')}</p>
           <PoemLines lines={lines} player={player} />
-          <p className="mt-6 text-[11px] text-gray-500">{t('dangerEggPoemCredit')}</p>
+          <p className="mt-6 text-[11px] text-gray-500">{lore('poemCredit')}</p>
           <Button variant="minepanel" className="mt-4" onClick={onDone}>
-            {t('dangerEggReturn')}
+            {lore('return')}
           </Button>
         </div>
       </div>
@@ -177,7 +185,7 @@ export function EndPoem({ onDone, still = false }: EndPoemProps) {
       >
         <Image src="/images/minepanel-logo.svg" alt="Minepanel" width={76} height={76} className="mb-10" />
         <PoemLines lines={lines} player={player} />
-        <p className="mt-16 text-[11px] text-gray-500">{t('dangerEggPoemCredit')}</p>
+        <p className="mt-16 text-[11px] text-gray-500">{lore('poemCredit')}</p>
       </div>
       <m.p
         className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-[11px] text-gray-500"
@@ -185,7 +193,7 @@ export function EndPoem({ onDone, still = false }: EndPoemProps) {
         animate={{ opacity: [0, 1, 1, 0] }}
         transition={{ duration: 7, times: [0, 0.1, 0.85, 1], delay: 2 }}
       >
-        {t('dangerEggPoemHint')}
+        {lore('poemHint')}
       </m.p>
       {ending && <m.div className="absolute inset-0 bg-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }} />}
     </m.div>

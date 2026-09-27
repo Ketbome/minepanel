@@ -1,5 +1,5 @@
-import type { TranslationKey } from '@/lib/translations';
-import { useEndGame } from './end-game-store';
+import type { LoreKey } from './lore/en';
+import { useEndGame } from './store';
 
 // Recorded CC0 clips (public/sounds/CREDITS.md) cover the big moments; everything else
 // is synthesized here so the easter egg ships no extra audio assets.
@@ -13,7 +13,7 @@ interface CueDef {
   readonly file?: string;
   readonly rate?: readonly [number, number];
   readonly synth?: Synth;
-  readonly caption?: TranslationKey;
+  readonly caption?: LoreKey;
 }
 
 let audio: AudioContext | null = null;
@@ -138,23 +138,165 @@ const rumble: Synth = (ctx, out) => {
   noiseSweep(ctx, out, 'lowpass', { from: 280, to: 80, peak: 0.45, attack: 0.7, release: 2.4 });
 };
 
+const chest: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sawtooth', { from: 140, to: 95, peak: 0.12, attack: 0.02, release: 0.32 });
+  noiseSweep(ctx, out, 'bandpass', { from: 700, to: 380, peak: 0.25, attack: 0.02, release: 0.3 });
+  hit(ctx, out);
+};
+
+const page: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'highpass', { from: 1800, to: 5200, peak: 0.3, attack: 0.03, release: 0.16 });
+};
+
+const craft: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'bandpass', { from: 1200, to: 500, peak: 0.35, attack: 0.003, release: 0.08 });
+  toneSweep(ctx, out, 'triangle', { from: 260, to: 150, peak: 0.3, attack: 0.003, release: 0.1 });
+};
+
+const pick: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'lowpass', { from: 900, to: 260, peak: 0.4, attack: 0.002, release: 0.06 });
+};
+
+const dirt: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'lowpass', { from: 1400, to: 160, peak: 0.6, attack: 0.004, release: 0.28 });
+  toneSweep(ctx, out, 'sine', { from: 140, to: 55, peak: 0.35, attack: 0.004, release: 0.2 });
+};
+
+const whoosh: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'bandpass', { from: 300, to: 2400, peak: 0.4, attack: 0.25, release: 0.5 });
+};
+
+const shatter: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'highpass', { from: 3000, to: 6000, peak: 0.35, attack: 0.002, release: 0.35 });
+  [2900, 3700, 4400].forEach((pitch, index) => {
+    toneSweep(ctx, out, 'sine', { from: pitch, to: pitch * 0.97, peak: 0.12, attack: 0.002, release: 0.3, delay: index * 0.04 });
+  });
+};
+
+// breath through a narrow band, fluttering like speech just below the threshold of words
+const whisper: Synth = (ctx, out) => {
+  const start = ctx.currentTime;
+  const source = ctx.createBufferSource();
+  source.buffer = noiseBuffer(ctx);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 1900;
+  band.Q.value = 6;
+  const flutter = ctx.createGain();
+  flutter.gain.value = 0.5;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 7;
+  const depth = ctx.createGain();
+  depth.gain.value = 0.5;
+  lfo.connect(depth).connect(flutter.gain);
+  source.connect(band).connect(flutter).connect(envelope(ctx, 0.6, 0.35, 1.4)).connect(out);
+  source.start(start, Math.random() * 0.5);
+  lfo.start(start);
+  source.stop(start + 1.9);
+  lfo.stop(start + 1.9);
+};
+
+const bird: Synth = (ctx, out) => {
+  const pitch = 2600 + Math.random() * 1400;
+  const notes = 2 + Math.floor(Math.random() * 3);
+  for (let note = 0; note < notes; note += 1) {
+    toneSweep(ctx, out, 'sine', { from: pitch, to: pitch * (1.25 + Math.random() * 0.2), peak: 0.1, attack: 0.01, release: 0.09, delay: note * 0.13 });
+  }
+};
+
+const thump: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sine', { from: 70, to: 38, peak: 0.9, attack: 0.01, release: 0.25 });
+  toneSweep(ctx, out, 'sine', { from: 64, to: 36, peak: 0.6, attack: 0.01, release: 0.25, delay: 0.22 });
+};
+
+const roar: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'lowpass', { from: 500, to: 120, peak: 0.8, attack: 0.15, release: 1.4 });
+  toneSweep(ctx, out, 'sawtooth', { from: 90, to: 45, peak: 0.25, attack: 0.1, release: 1.3 });
+};
+
+const shriek: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sawtooth', { from: 900, to: 1400, peak: 0.12, attack: 0.3, release: 1.4 });
+  noiseSweep(ctx, out, 'bandpass', { from: 2000, to: 3500, peak: 0.25, attack: 0.3, release: 1.2 });
+};
+
+const click: Synth = (ctx, out) => {
+  noiseSweep(ctx, out, 'bandpass', { from: 2400, to: 1600, peak: 0.35, attack: 0.002, release: 0.05 });
+};
+
+const twang: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'triangle', { from: 330, to: 180, peak: 0.35, attack: 0.002, release: 0.25 });
+  whoosh(ctx, out);
+};
+
+const squeak: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'square', { from: 2400, to: 3200, peak: 0.06, attack: 0.005, release: 0.08 });
+};
+
+const zap: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'square', { from: 1800, to: 500, peak: 0.08, attack: 0.005, release: 0.2 });
+};
+
+const hum: Synth = (ctx, out) => {
+  toneSweep(ctx, out, 'sawtooth', { from: 160, to: 140, peak: 0.12, attack: 0.05, release: 0.35 });
+};
+
+// Recorded clips play when their file is present; each falls back to its synth otherwise.
 const CUES = {
-  eye: { file: 'eye-place.ogg', volume: 0.45, rate: [0.9, 1.15], caption: 'dangerEggSubEye' },
-  portal: { file: 'portal-activate.ogg', volume: 0.7, caption: 'dangerEggSubPortal' },
-  travel: { file: 'portal-travel.ogg', volume: 0.55, caption: 'dangerEggSubTravel' },
-  lava: { synth: lava, volume: 0.35, caption: 'dangerEggSubLava' },
-  growl: { file: 'dragon-growl.ogg', volume: 0.5, rate: [0.95, 1.05], caption: 'dangerEggSubGrowl' },
-  hurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], caption: 'dangerEggSubHurt' },
+  eye: { file: 'eye-place.ogg', volume: 0.45, rate: [0.9, 1.15], caption: 'subEye' },
+  portal: { file: 'portal-activate.ogg', volume: 0.7, caption: 'subPortal' },
+  netherPortal: { file: 'portal-activate.ogg', volume: 0.6, rate: [1.2, 1.3], caption: 'subNetherPortal' },
+  travel: { file: 'portal-travel.ogg', volume: 0.55, caption: 'subTravel' },
+  lava: { synth: lava, volume: 0.35, caption: 'subLava' },
+  growl: { file: 'dragon-growl.ogg', volume: 0.5, rate: [0.95, 1.05], caption: 'subGrowl' },
+  dragonHurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], caption: 'subHurt' },
   hit: { synth: hit, volume: 0.6 },
-  death: { file: 'dragon-growl.ogg', volume: 0.7, rate: [0.55, 0.6], synth: deathRise, caption: 'dangerEggSubDeath' },
-  explode: { synth: explosion, volume: 0.8, caption: 'dangerEggSubCrystal' },
+  dragonDeath: { file: 'dragon-growl.ogg', volume: 0.7, rate: [0.55, 0.6], synth: deathRise, caption: 'subDeath' },
+  explode: { file: 'explosion.ogg', synth: explosion, volume: 0.8, caption: 'subCrystal' },
+  boom: { file: 'explosion.ogg', synth: explosion, volume: 0.8, caption: 'subExplosion' },
   vanish: { synth: explosion, volume: 0.9 },
-  enderman: { file: 'teleport.ogg', volume: 0.45, rate: [0.85, 1.1], caption: 'dangerEggSubEnderman' },
-  egg: { file: 'teleport.ogg', volume: 0.5, rate: [1.1, 1.25], caption: 'dangerEggSubEgg' },
-  xp: { synth: xp, volume: 0.5, caption: 'dangerEggSubXp' },
-  gateway: { synth: gateway, volume: 0.6, caption: 'dangerEggSubGateway' },
+  enderman: { file: 'teleport.ogg', volume: 0.45, rate: [0.85, 1.1], caption: 'subEnderman' },
+  egg: { file: 'teleport.ogg', volume: 0.5, rate: [1.1, 1.25], caption: 'subEgg' },
+  xp: { synth: xp, volume: 0.5, caption: 'subXp' },
+  gateway: { synth: gateway, volume: 0.6, caption: 'subGateway' },
   flash: { synth: rumble, volume: 0.5 },
   toast: { file: 'levelup.ogg', volume: 0.4 },
+  chest: { file: 'chest-open.ogg', synth: chest, volume: 0.6, caption: 'subChest' },
+  page: { file: 'page.ogg', synth: page, volume: 0.5, caption: 'subPage' },
+  craft: { synth: craft, volume: 0.6 },
+  pick: { synth: pick, volume: 0.5 },
+  dirt: { file: 'dirt.ogg', synth: dirt, volume: 0.6, caption: 'subBreak' },
+  place: { file: 'dirt.ogg', synth: dirt, volume: 0.45, rate: [0.8, 0.9] },
+  throw: { synth: whoosh, volume: 0.5, caption: 'subThrow' },
+  shatter: { synth: shatter, volume: 0.55, caption: 'subShatter' },
+  whisper: { synth: whisper, volume: 0.5, caption: 'subWhisper' },
+  bird: { synth: bird, volume: 0.4 },
+  land: { synth: hit, volume: 0.5 },
+  swing: { synth: whoosh, volume: 0.25 },
+  stepGrass: { file: 'step-grass.ogg', synth: pick, volume: 0.35, rate: [0.9, 1.1] },
+  stepStone: { file: 'step-stone.ogg', synth: pick, volume: 0.35, rate: [0.9, 1.1] },
+  bowDraw: { file: 'bow-draw.ogg', synth: craft, volume: 0.4 },
+  bowShoot: { file: 'bow-shoot.ogg', synth: twang, volume: 0.5, caption: 'subBow' },
+  arrowHit: { file: 'arrow-hit.ogg', synth: hit, volume: 0.5, caption: 'subArrow' },
+  eat: { file: 'eat.ogg', synth: pick, volume: 0.5, rate: [0.9, 1.1], caption: 'subEat' },
+  hurt: { file: 'hurt.ogg', synth: hit, volume: 0.6, rate: [0.9, 1.1], caption: 'subHurtPlayer' },
+  death: { file: 'death.ogg', synth: roar, volume: 0.6 },
+  villager: { file: 'villager-hmm.ogg', synth: hum, volume: 0.6, rate: [0.9, 1.1], caption: 'subVillager' },
+  villagerNo: { file: 'villager-hmm.ogg', synth: hum, volume: 0.6, rate: [1.25, 1.35], caption: 'subVillager' },
+  baa: { file: 'baa.ogg', synth: hum, volume: 0.5, rate: [0.9, 1.15], caption: 'subSheep' },
+  oink: { file: 'oink.ogg', synth: hum, volume: 0.5, rate: [0.9, 1.15], caption: 'subPig' },
+  hiss: { file: 'hiss.ogg', synth: whisper, volume: 0.6, caption: 'subHiss' },
+  flint: { file: 'flint.ogg', synth: click, volume: 0.6, caption: 'subFlint' },
+  fireball: { file: 'fireball.ogg', synth: whoosh, volume: 0.6, caption: 'subFireball' },
+  blaze: { file: 'blaze-breath.ogg', synth: whisper, volume: 0.4, caption: 'subBlaze' },
+  ghast: { file: 'ghast.ogg', synth: shriek, volume: 0.5, caption: 'subGhast' },
+  heartbeat: { file: 'warden-heartbeat.ogg', synth: thump, volume: 0.7, caption: 'subHeartbeat' },
+  roar: { file: 'warden-roar.ogg', synth: roar, volume: 0.8, caption: 'subRoar' },
+  shriek: { file: 'shriek.ogg', synth: shriek, volume: 0.6, caption: 'subShriek' },
+  sculk: { file: 'sculk-click.ogg', synth: click, volume: 0.45, rate: [0.9, 1.2], caption: 'subSculk' },
+  squeak: { file: 'squeak.ogg', synth: squeak, volume: 0.45, rate: [0.9, 1.3], caption: 'subSqueak' },
+  zap: { file: 'magic-zap.ogg', synth: zap, volume: 0.4, caption: 'subZap' },
+  levitate: { file: 'levitate.ogg', synth: zap, volume: 0.45, caption: 'subLevitate' },
+  wind: { file: 'wind.ogg', synth: whoosh, volume: 0.5 },
 } satisfies Record<string, CueDef>;
 
 export type CueName = keyof typeof CUES;
@@ -163,7 +305,7 @@ function load(file: string) {
   let buffer = buffers.get(file);
   if (!buffer) {
     buffer = fetch(`/sounds/${file}`)
-      .then((response) => response.arrayBuffer())
+      .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(file))))
       .then((data) => context().audio.decodeAudioData(data))
       .catch(() => null);
     buffers.set(file, buffer);
@@ -176,8 +318,10 @@ export function unlockAudio() {
   context();
 }
 
-export function preloadSounds() {
-  Object.values(CUES).forEach((def: CueDef) => {
+// zones warm up the clips they are about to use, so the first one plays on time
+export function prefetch(names: readonly CueName[]) {
+  names.forEach((name) => {
+    const def: CueDef = CUES[name];
     if (def.file) void load(def.file);
   });
 }
@@ -189,22 +333,40 @@ export function cue(name: CueName, gain = 1) {
   const out = ctx.createGain();
   out.gain.value = def.volume * gain;
   out.connect(bus);
-  if (def.file) {
-    void load(def.file).then((buffer) => {
-      if (!buffer) return;
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      if (def.rate) source.playbackRate.value = def.rate[0] + Math.random() * (def.rate[1] - def.rate[0]);
-      source.connect(out);
-      source.start();
-    });
+  if (!def.file) {
+    def.synth?.(ctx, out);
+    return;
   }
-  def.synth?.(ctx, out);
+  void load(def.file).then((buffer) => {
+    if (!buffer) {
+      def.synth?.(ctx, out);
+      return;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    if (def.rate) source.playbackRate.value = def.rate[0] + Math.random() * (def.rate[1] - def.rate[0]);
+    source.connect(out);
+    source.start();
+    // the dragon's death keeps its synthesized rise under the recorded growl
+    if (name === 'dragonDeath') def.synth?.(ctx, out);
+  });
 }
 
-export function startAmbience(kind: 'stronghold' | 'end') {
+type Ambience = 'overworld' | 'stronghold' | 'end' | 'nether' | 'ancient';
+
+// filtered noise for air, a few sine drones for dread; the Nether adds its recorded rumble
+const BEDS: Record<Ambience, { readonly cutoff: number; readonly level: number; readonly breathe: boolean; readonly drones: readonly number[]; readonly loop?: string }> = {
+  overworld: { cutoff: 650, level: 0.05, breathe: true, drones: [] },
+  stronghold: { cutoff: 150, level: 0.2, breathe: false, drones: [49, 49.35] },
+  end: { cutoff: 420, level: 0.07, breathe: true, drones: [55, 55.3, 82.5] },
+  nether: { cutoff: 220, level: 0.16, breathe: true, drones: [36, 36.4, 54], loop: 'nether-ambience.ogg' },
+  ancient: { cutoff: 120, level: 0.12, breathe: false, drones: [41, 41.25] },
+};
+
+export function startAmbience(kind: Ambience) {
   stopAmbience();
   const { audio: ctx, master: bus } = context();
+  const bedDef = BEDS[kind];
   const gain = ctx.createGain();
   gain.gain.value = 0;
   gain.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
@@ -215,23 +377,23 @@ export function startAmbience(kind: 'stronghold' | 'end') {
   bed.loop = true;
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.value = kind === 'stronghold' ? 150 : 420;
+  filter.frequency.value = bedDef.cutoff;
   const bedGain = ctx.createGain();
-  bedGain.gain.value = kind === 'stronghold' ? 0.2 : 0.07;
+  bedGain.gain.value = bedDef.level;
   bed.connect(filter).connect(bedGain).connect(gain);
   const sources: AudioScheduledSourceNode[] = [bed];
 
-  if (kind === 'end') {
+  if (bedDef.breathe) {
     // slow wind: the filter cutoff breathes instead of the volume
     const lfo = ctx.createOscillator();
     lfo.frequency.value = 0.07;
     const depth = ctx.createGain();
-    depth.gain.value = 200;
+    depth.gain.value = Math.min(200, bedDef.cutoff * 0.6);
     lfo.connect(depth).connect(filter.frequency);
     sources.push(lfo);
   }
 
-  (kind === 'stronghold' ? [49, 49.35] : [55, 55.3, 82.5]).forEach((frequency) => {
+  bedDef.drones.forEach((frequency) => {
     const osc = ctx.createOscillator();
     osc.frequency.value = frequency;
     const level = ctx.createGain();
@@ -241,7 +403,21 @@ export function startAmbience(kind: 'stronghold' | 'end') {
   });
 
   sources.forEach((source) => source.start());
-  ambience = { gain, sources };
+  const current = { gain, sources };
+  ambience = current;
+  if (bedDef.loop) {
+    void load(bedDef.loop).then((buffer) => {
+      if (!buffer || ambience !== current) return;
+      const loop = ctx.createBufferSource();
+      loop.buffer = buffer;
+      loop.loop = true;
+      const level = ctx.createGain();
+      level.gain.value = 0.5;
+      loop.connect(level).connect(gain);
+      loop.start();
+      current.sources.push(loop);
+    });
+  }
 }
 
 export function stopAmbience() {

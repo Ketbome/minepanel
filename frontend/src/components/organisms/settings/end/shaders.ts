@@ -112,6 +112,77 @@ export function createSkyMaterial(noise: THREE.Texture) {
   });
 }
 
+// Overworld dusk: warm horizon under a violet zenith, the game's square sun sinking into it.
+const SUNSET_FRAGMENT = /* glsl */ `
+  uniform vec3 uSun;
+  varying vec3 vDir;
+
+  void main() {
+    vec3 d = normalize(vDir);
+    float up = clamp(d.y, -0.2, 1.0);
+    vec3 horizon = vec3(1.0, 0.55, 0.32);
+    vec3 middle = vec3(0.72, 0.38, 0.52);
+    vec3 zenith = vec3(0.13, 0.12, 0.3);
+    vec3 color = mix(horizon, middle, smoothstep(0.0, 0.18, up));
+    color = mix(color, zenith, smoothstep(0.16, 0.7, up));
+    color = mix(color, vec3(0.42, 0.24, 0.2), smoothstep(0.0, -0.2, d.y));
+    float toward = max(dot(d, uSun), 0.0);
+    color += vec3(1.0, 0.5, 0.2) * pow(toward, 8.0) * 0.55;
+    vec3 side = normalize(cross(uSun, vec3(0.0, 1.0, 0.0)));
+    vec3 lift = cross(side, uSun);
+    vec2 onSun = vec2(dot(d, side), dot(d, lift));
+    if (dot(d, uSun) > 0.0 && max(abs(onSun.x), abs(onSun.y)) < 0.055) color = mix(vec3(1.0, 0.86, 0.5), vec3(1.0, 0.66, 0.3), smoothstep(-0.05, 0.05, onSun.y));
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+export function createSunsetMaterial(sun: THREE.Vector3) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uSun: { value: sun.clone().normalize() } },
+    vertexShader: SKY_VERTEX,
+    fragmentShader: SUNSET_FRAGMENT,
+    side: THREE.BackSide,
+    depthWrite: false,
+  });
+}
+
+const UV_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// The Nether portal's swirling purple sheet: two layers of warped stripes drifting apart.
+const NETHER_PORTAL_FRAGMENT = /* glsl */ `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec2 vUv;
+
+  float wave(vec2 p, float t) {
+    return sin(p.x * 9.0 + sin(p.y * 7.0 + t) * 2.0) * 0.5 + sin(p.y * 13.0 - t * 1.3 + sin(p.x * 5.0)) * 0.5;
+  }
+
+  void main() {
+    vec2 p = floor(vUv * 16.0) / 16.0;
+    float n = wave(p, uTime * 1.6) + wave(p * 1.7 + 3.1, -uTime);
+    vec3 color = mix(vec3(0.33, 0.05, 0.62), vec3(0.73, 0.35, 1.0), smoothstep(-0.6, 1.2, n));
+    gl_FragColor = vec4(color, uOpacity * (0.72 + 0.2 * n));
+  }
+`;
+
+export function createNetherPortalMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 0.85 } },
+    vertexShader: UV_VERTEX,
+    fragmentShader: NETHER_PORTAL_FRAGMENT,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+}
+
 const RAYS_VERTEX = /* glsl */ `
   attribute float aTip;
   attribute float aSeed;

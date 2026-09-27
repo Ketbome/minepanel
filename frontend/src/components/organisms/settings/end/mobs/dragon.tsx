@@ -1,13 +1,14 @@
 'use client';
 
-import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Fragment, useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import * as THREE from 'three';
-import { cue } from './end-audio';
-import { useEndGame } from './end-game-store';
-import { PILLAR_TOP_Y, pointerCursor } from './EndWorld';
-import { createRays } from './shaders';
-import { clamp01, easeInOut, kit, sizedBox } from './voxels';
+import { cue } from '../end-audio';
+import { useTarget, type Target } from '../engine/runtime';
+import { PILLAR_TOP_Y } from '../acts/end-world';
+import { useEndGame } from '../store';
+import { createRays } from '../shaders';
+import { clamp01, easeInOut, kit, sizedBox } from '../voxels';
 
 // Built from the game's own model proportions, in model pixels (16 per block):
 // a 24x24x64 body, five neck and twelve tail segments with spikes, a jawed head and
@@ -20,11 +21,11 @@ const ORBIT_HEIGHT = 19;
 const ORBIT_SPEED = 0.17;
 const FLYBY_AT = 2.4;
 const DIE_S = 6.2;
-const PERCH = new THREE.Vector3(0, PILLAR_TOP_Y + 5.4, 0);
+// perched on the exit portal's bedrock pillar, low enough to be reached with a sword
+const TARGET_SIZE = new THREE.Vector3(5, 3, 5);
+const PERCH = new THREE.Vector3(0, PILLAR_TOP_Y + 3.2, 0);
 
 const MEMBRANE = new THREE.PlaneGeometry(56 * PX, 56 * PX).rotateX(-Math.PI / 2).translate(28 * PX, 0, -28 * PX);
-const HIT_BODY = new THREE.SphereGeometry(58 * PX, 10, 8);
-const HIT_HEAD = new THREE.SphereGeometry(22 * PX, 8, 6);
 
 type Mode = 'circle' | 'flyby' | 'land' | 'perch' | 'die' | 'gone';
 type Vec3 = readonly [number, number, number];
@@ -89,7 +90,7 @@ const LEGS = [
 
 interface EnderDragonProps {
   readonly report: THREE.Vector3;
-  readonly onHit: () => void;
+  readonly onHit: (damage: number) => void;
   readonly onPerched: () => void;
   readonly onVanish: () => void;
 }
@@ -196,7 +197,7 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
       r.mode = 'die';
       r.modeT = 0;
       r.riseFrom.copy(group.position);
-      cue('death');
+      cue('dragonDeath');
       [materials.scales, materials.bone, materials.membrane].forEach((material) => {
         material.transparent = true;
         material.needsUpdate = true;
@@ -318,16 +319,30 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
     }
 
     report.copy(group.position);
+    const gone = r.mode === 'die' || r.mode === 'gone';
+    if (gone) target.box.makeEmpty();
+    else target.box.setFromCenterAndSize(group.position, TARGET_SIZE).expandByPoint(r.mode === 'perch' ? group.position.clone().setY(1) : group.position);
   });
 
-  const hit = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
-    const r = run.current;
-    if (event.delta > 8 || r.mode === 'die' || r.mode === 'gone') return;
-    if (useEndGame.getState().stage === 'arrival') return;
-    r.hurt = 0.3;
-    onHit();
-  };
+  const onHitRef = useRef(onHit);
+  onHitRef.current = onHit;
+  // one generous box around the body; perched, it reaches down to the ground so a sword can land
+  const target = useMemo<Target>(
+    () => ({
+      box: new THREE.Box3(),
+      label: () => null,
+      solid: true,
+      reach: 6,
+      hit: (damage) => {
+        const r = run.current;
+        if (r.mode === 'die' || r.mode === 'gone' || useEndGame.getState().stage === 'arrival') return;
+        r.hurt = 0.3;
+        onHitRef.current(damage);
+      },
+    }),
+    []
+  );
+  useTarget(target);
 
   return (
     <>
@@ -337,7 +352,6 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
           {[-20, 0, 20].map((z) => (
             <Part key={z} size={[2, 6, 12]} at={[0, 15, z]} material={materials.bone} />
           ))}
-          <mesh geometry={HIT_BODY} material={kit().mat.hitbox} onClick={hit} {...pointerCursor} />
 
           <group position={[0, 4 * PX, 32 * PX]}>
             <Spine count={5} direction={1} links={neck} materials={materials}>
@@ -359,7 +373,6 @@ export function EnderDragon({ report, onHit, onPerched, onVanish }: EnderDragonP
                     <sprite material={materials.glow} scale={1.6} position={[side * 8.6 * PX, 3 * PX, 12 * PX]} />
                   </Fragment>
                 ))}
-                <mesh geometry={HIT_HEAD} material={kit().mat.hitbox} position={[0, 0, 14 * PX]} onClick={hit} {...pointerCursor} />
               </group>
             </Spine>
           </group>

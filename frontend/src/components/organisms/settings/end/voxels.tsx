@@ -24,13 +24,13 @@ export function hash(x: number, y: number, z = 0) {
   return value - Math.floor(value);
 }
 
-function pick(colors: readonly string[], value: number) {
+export function pick(colors: readonly string[], value: number) {
   return colors[Math.min(colors.length - 1, Math.floor(value * colors.length))];
 }
 
-const CLEAR = 'clear';
+export const CLEAR = 'clear';
 
-type Painter = (dot: (x: number, y: number, color: string) => void, rand: () => number, size: number) => void;
+export type Painter = (dot: (x: number, y: number, color: string) => void, rand: () => number, size: number) => void;
 
 interface TextureOptions {
   readonly size?: number;
@@ -38,7 +38,7 @@ interface TextureOptions {
   readonly smooth?: boolean;
 }
 
-function paint(seed: number, painter: Painter, { size = 16, data = false, smooth = false }: TextureOptions = {}) {
+export function paint(seed: number, painter: Painter, { size = 16, data = false, smooth = false }: TextureOptions = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -65,11 +65,11 @@ function paint(seed: number, painter: Painter, { size = 16, data = false, smooth
   return texture;
 }
 
-function fill(dot: Parameters<Painter>[0], rand: () => number, size: number, colors: readonly string[]) {
+export function fill(dot: Parameters<Painter>[0], rand: () => number, size: number, colors: readonly string[]) {
   for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) dot(x, y, pick(colors, rand()));
 }
 
-function line(dot: Parameters<Painter>[0], x0: number, y0: number, x1: number, y1: number, color: string) {
+export function line(dot: Parameters<Painter>[0], x0: number, y0: number, x1: number, y1: number, color: string) {
   const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
   for (let i = 0; i <= steps; i += 1) {
     dot(Math.round(x0 + ((x1 - x0) * i) / steps), Math.round(y0 + ((y1 - y0) * i) / steps), color);
@@ -247,8 +247,6 @@ const membrane: Painter = (dot, rand, size) => {
   }
 };
 
-const enderman: Painter = (dot, rand, size) => fill(dot, rand, size, ['#050505', '#0b0b0b', '#111111', '#0b0b0b', '#1a1a1a']);
-
 const egg: Painter = (dot, rand, size) => {
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
@@ -264,6 +262,29 @@ const purpur: Painter = (dot, rand, size) => {
       let color = pick(['#a97ea9', '#b085b0', '#a37aa3'], rand());
       if (x % 8 === 0 || y % 8 === 0) color = '#8c618c';
       else if (x % 8 === 7 || y % 8 === 7) color = '#bb97bb';
+      dot(x, y, color);
+    }
+  }
+};
+
+const endBricks: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const seam = (y < 8 ? x + 4 : x) % 8 === 0;
+      let color = pick(['#e2dea8', '#dcd9a3', '#e6e2b0'], rand());
+      if (y % 8 === 7 || seam) color = '#b9b57c';
+      else if (y % 8 === 0) color = '#f0edc6';
+      dot(x, y, color);
+    }
+  }
+};
+
+const purpurPillar: Painter = (dot, rand, size) => {
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      let color = pick(['#a97ea9', '#b085b0', '#a37aa3'], rand());
+      if (x === 0 || x === 15) color = '#8c618c';
+      else if (x % 5 === 2) color = '#bb97bb';
       dot(x, y, color);
     }
   }
@@ -342,7 +363,6 @@ function buildKit() {
     scales: paint(14, scales),
     bone: paint(15, bone),
     membrane: paint(16, membrane, { size: 32 }),
-    enderman: paint(17, enderman),
     egg: paint(18, egg),
     purpur: paint(19, purpur),
     chorus: paint(20, chorus),
@@ -350,6 +370,8 @@ function buildKit() {
     specks: paint(22, specks, { size: 64, data: true }),
     skyNoise: paint(23, skyNoise, { size: 32, data: true }),
     orb: paint(24, orb),
+    endBricks: paint(25, endBricks),
+    purpurPillar: paint(26, purpurPillar),
     glow: glowTexture(),
   };
   const lambert = (map: THREE.Texture) => new THREE.MeshLambertMaterial({ map });
@@ -364,6 +386,8 @@ function buildKit() {
     cracked: lambert(tex.cracked),
     purpur: lambert(tex.purpur),
     chorus: lambert(tex.chorus),
+    endBricks: lambert(tex.endBricks),
+    purpurPillar: lambert(tex.purpurPillar),
     chorusFlower: lambert(tex.chorusFlower),
     lava: new THREE.MeshBasicMaterial({ map: tex.lava }),
     spawner: new THREE.MeshLambertMaterial({ map: tex.spawner, alphaTest: 0.5, side: THREE.DoubleSide }),
@@ -377,8 +401,6 @@ function buildKit() {
     crystalCore: new THREE.MeshBasicMaterial({ map: tex.crystalCore }),
     crystalGlow: new THREE.SpriteMaterial({ map: tex.glow, color: '#e879f9', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
     egg: new THREE.MeshLambertMaterial({ map: tex.egg, emissive: '#0d0616' }),
-    enderman: new THREE.MeshLambertMaterial({ map: tex.enderman }),
-    endermanEye: new THREE.MeshBasicMaterial({ color: '#e079fa' }),
     // raycast target that draws nothing: bigger than the model so moving things stay clickable
     hitbox: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
     frame: [frameSideMat, frameSideMat, lambert(tex.frameTop), lambert(tex.endStone), frameSideMat, frameSideMat],
@@ -428,7 +450,13 @@ export interface Block {
   readonly scale?: readonly [number, number, number];
 }
 
-export function VoxelMesh({ blocks, material }: { readonly blocks: readonly Block[]; readonly material: THREE.Material }) {
+interface VoxelMeshProps {
+  readonly blocks: readonly Block[];
+  readonly material: THREE.Material | THREE.Material[];
+  readonly geometry?: THREE.BufferGeometry;
+}
+
+export function VoxelMesh({ blocks, material, geometry = UNIT_BOX }: VoxelMeshProps) {
   const ref = useRef<THREE.InstancedMesh>(null);
 
   useLayoutEffect(() => {
@@ -451,7 +479,7 @@ export function VoxelMesh({ blocks, material }: { readonly blocks: readonly Bloc
     mesh.computeBoundingSphere();
   }, [blocks]);
 
-  return <instancedMesh ref={ref} args={[UNIT_BOX, material, blocks.length]} />;
+  return <instancedMesh ref={ref} args={[geometry, material, blocks.length]} />;
 }
 
 export const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
