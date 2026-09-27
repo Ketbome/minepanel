@@ -1,17 +1,19 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Users } from '../entities/users.entity';
 import { ChangePasswordDto, CreateUserInvitationDto, CreateUsersDto, UpdateProfileDto, UpdateUserAccessDto, UpdateUsersDto } from '../dtos/users.dto';
 import * as bcrypt from 'bcrypt';
+import { instanceToPlain } from 'class-transformer';
 import { Settings } from '../entities/settings.entity';
 import { UserInvitation } from '../entities/user-invitation.entity';
 import { createHash, randomBytes } from 'node:crypto';
-import { applyAdminGrantedPermissions, DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState, UserRole } from '../access-control.types';
+import { ADMIN_GRANTED_PERMISSIONS, applyAdminGrantedPermissions, DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS, normalizePermissions, normalizeServerAccess, UserAccessState, UserRole } from '../access-control.types';
 import { ConfigService } from '@nestjs/config';
 import { PendingEmailChange } from '../entities/pending-email-change.entity';
 import { AuthMailService } from 'src/auth/auth-mail.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 
 @Injectable()
 export class UsersService {
@@ -172,11 +174,12 @@ export class UsersService {
     return candidate;
   }
 
-  async updateUserByUsername(username: string, dto: UpdateUsersDto): Promise<Users> {
+  async updateUserByUsername(username: string, dto: UpdateUsersDto, actorIsAdmin: boolean = false): Promise<Users> {
     const user = await this.usersRepo.findOne({ where: { username } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    this.assertCanEditUser(user, actorIsAdmin);
     await this.ensureUniqueEmail(dto.email, user.id);
     delete dto.password;
     Object.assign(user, {
@@ -186,11 +189,12 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  async updateUser(id: number, dto: UpdateUsersDto): Promise<Users> {
+  async updateUser(id: number, dto: UpdateUsersDto, actorIsAdmin: boolean = false): Promise<Users> {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    this.assertCanEditUser(user, actorIsAdmin);
     await this.ensureUniqueEmail(dto.email, user.id);
     delete dto.password;
     Object.assign(user, {
@@ -198,6 +202,14 @@ export class UsersService {
       email: dto.email === undefined ? user.email : this.normalizeEmail(dto.email),
     });
     return this.usersRepo.save(user);
+  }
+
+  // A delegate that could rewrite an admin's email would take the account over
+  // through the password reset flow.
+  private assertCanEditUser(user: Users, actorIsAdmin: boolean): void {
+    if (user.role === 'ADMIN' && !actorIsAdmin) {
+      throw new ForbiddenException('Only admins can edit admin accounts');
+    }
   }
 
   async updateUserRole(id: number, role: UserRole): Promise<Users> {
@@ -301,6 +313,11 @@ export class UsersService {
     }
 
     if (!(await this.authMailService.isConfigured())) {
+      // An unconfirmed address would be linked to whoever signs in through SSO with it
+      // first, so without mail to confirm it only an admin can set an email.
+      if (user.role !== 'ADMIN') {
+        throw new BadRequestException('Email changes need SMTP to confirm the new address; ask an admin to change it');
+      }
       user.email = nextEmail;
       return {
         requiresConfirmation: false,
@@ -461,11 +478,15 @@ export class UsersService {
     return savedUser;
   }
 
-  async getInvitationLink(id: number): Promise<string> {
+  async getInvitationLink(id: number, actorIsAdmin: boolean = false): Promise<string> {
     const invitation = await this.invitationsRepo.findOne({ where: { id, usedAt: IsNull() } });
 
     if (!invitation || invitation.expiresAt < new Date()) {
       throw new NotFoundException('Invitation not found');
+    }
+
+    if (!actorIsAdmin && ADMIN_GRANTED_PERMISSIONS.some((permission) => invitation.permissions?.[permission])) {
+      throw new ForbiddenException('Only admins can share invitations that grant admin-only permissions');
     }
 
     if (invitation.email) {
@@ -502,12 +523,12 @@ export class UsersService {
 
   serializeUser(user: Users) {
     return {
-      ...user,
+      ...instanceToPlain(user),
       access: this.buildUserAccessState(user),
     };
   }
 
-  async changePassword(userId: number, dto: ChangePasswordDto): Promise<{ message: string }> {
+  async changePassword(userId: number, dto: ChangePasswordDto, currentRefreshToken?: string): Promise<{ message: string }> {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -524,6 +545,9 @@ export class UsersService {
 
     user.password = await bcrypt.hash(dto.newPassword, 12);
     await this.usersRepo.save(user);
+    // A new password has to end every other session a leaked refresh token could keep alive.
+    const keep = currentRefreshToken ? { token: Not(this.hashToken(currentRefreshToken)) } : {};
+    await this.usersRepo.manager.update(RefreshToken, { userId, revoked: false, ...keep }, { revoked: true });
 
     return { message: 'Password changed successfully' };
   }

@@ -43,9 +43,14 @@ export class ProxyController {
     };
   }
 
+  // Only the caller's own servers: the full table would list every server id and hostname.
   @Get('mappings')
-  async getMappings() {
-    return this.proxyService.getAllMappings();
+  async getMappings(@Request() req) {
+    const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
+    const mappings = await this.proxyService.getAllMappings();
+    const serverId = (mapping: { backend: string }) => mapping.backend.split(':')[0];
+    const visible = new Set(this.accessControlService.getVisibleServerIds(user, mappings.map(serverId)));
+    return mappings.filter((mapping) => visible.has(serverId(mapping)));
   }
 
   @Get('server/:id/hostname')
@@ -56,9 +61,11 @@ export class ProxyController {
   }
 
   @Post('server/:id')
-  async addServer(@Request() req, @Param('id') serverId: string, @Body() body: { hostname?: string; baseDomain: string }) {
+  async addServer(@Request() req, @Param('id') serverId: string, @Body() body: { hostname?: string }) {
     await this.assertServerAccess(req, serverId);
-    await this.proxyService.addServerToProxy(serverId, body.baseDomain, body.hostname);
+    // The base domain is instance-wide; taking it from the body let a caller route any name.
+    const { baseDomain } = await this.proxyService.getProxySettings();
+    await this.proxyService.addServerToProxy(serverId, baseDomain, body.hostname);
     return { success: true };
   }
 

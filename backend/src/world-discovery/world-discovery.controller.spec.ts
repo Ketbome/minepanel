@@ -1,9 +1,11 @@
+import { ForbiddenException } from '@nestjs/common';
 import { WorldDiscoveryController } from './world-discovery.controller';
 
 describe('WorldDiscoveryController', () => {
   const req = { user: { userId: 7 } };
   let service: Record<string, jest.Mock>;
   let controller: WorldDiscoveryController;
+  let accessControl: { assertGlobalFiles: jest.Mock };
 
   beforeEach(() => {
     service = {
@@ -13,7 +15,8 @@ describe('WorldDiscoveryController', () => {
       importFromUrl: jest.fn().mockResolvedValue('imported-url'),
       getCurseForgeWorldDetails: jest.fn().mockResolvedValue('details'),
     };
-    controller = new WorldDiscoveryController(service as any);
+    accessControl = { assertGlobalFiles: jest.fn() };
+    controller = new WorldDiscoveryController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 7 }) } as any, accessControl as any);
   });
 
   it('lists the library and searches CurseForge only', async () => {
@@ -30,5 +33,14 @@ describe('WorldDiscoveryController', () => {
     expect(service.importFromUrl).toHaveBeenCalledWith({ downloadUrl: 'https://x/w.zip', fileName: 'w.zip', targetFolder: undefined });
     expect(await controller.getCurseForgeWorldDetails(req, '9')).toBe('details');
     expect(service.getCurseForgeWorldDetails).toHaveBeenCalledWith(7, '9');
+    expect(accessControl.assertGlobalFiles).toHaveBeenCalledWith({ id: 7 }, true);
+  });
+
+  it('refuses imports without permission to manage global files', async () => {
+    accessControl.assertGlobalFiles.mockImplementation(() => {
+      throw new ForbiddenException();
+    });
+    await expect(controller.importWorld(req, { provider: 'url', downloadUrl: 'https://x/w.zip' } as any)).rejects.toThrow(ForbiddenException);
+    expect(service.importFromUrl).not.toHaveBeenCalled();
   });
 });

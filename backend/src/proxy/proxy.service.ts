@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
@@ -94,6 +94,11 @@ export class ProxyService {
       if (backend === `${serverId}:25565` && host !== hostname) {
         delete config.mappings[host];
       }
+    }
+
+    const owner = config.mappings[hostname];
+    if (owner && owner !== `${serverId}:25565`) {
+      throw new ConflictException(`The hostname ${hostname} is already used by another server`);
     }
 
     config.mappings[hostname] = `${serverId}:25565`;

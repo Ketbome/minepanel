@@ -45,7 +45,7 @@ export class BedrockAddonsController {
   }
 
   @Post(':serverId/upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_BEDROCK_ADDON_SIZE } }))
   async uploadAddon(
     @Request() req,
     @Param('serverId') serverId: string,

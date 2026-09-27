@@ -282,7 +282,7 @@ export class JavaServerStrategy implements IServerStrategy {
     if (!compatibleTypes.includes(config.serverType)) return;
 
     const apiKey = config.cfApiKey;
-    if (apiKey) env['CF_API_KEY'] = apiKey.split('$').join('$$');
+    if (apiKey) env['CF_API_KEY'] = apiKey;
     if (config.cfFiles) env['CURSEFORGE_FILES'] = config.cfFiles;
   }
 

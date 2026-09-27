@@ -316,8 +316,8 @@ export class AuthService {
     }));
   }
 
-  async getInvitationLink(id: number, actor: PayloadToken) {
-    const inviteUrl = await this.usersService.getInvitationLink(id);
+  async getInvitationLink(id: number, actor: PayloadToken, actorIsAdmin: boolean) {
+    const inviteUrl = await this.usersService.getInvitationLink(id, actorIsAdmin);
 
     await this.auditLogService.record({
       actorUserId: actor.userId,

@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { IsNull } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(async (value: string) => `hashed:${value}`),
@@ -10,10 +10,12 @@ jest.mock('bcrypt', () => ({
 import { UsersService } from './users.service';
 import { DEFAULT_USER_PERMISSIONS, FULL_ACCESS_PERMISSIONS } from '../access-control.types';
 import { Users } from '../entities/users.entity';
+import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
 const makeRepo = () => ({
+  manager: { update: jest.fn().mockResolvedValue(undefined) },
   find: jest.fn().mockResolvedValue([]),
   findOne: jest.fn().mockResolvedValue(null),
   count: jest.fn().mockResolvedValue(0),
@@ -203,6 +205,17 @@ describe('UsersService', () => {
       await expect(service.updateUser(1, {})).rejects.toThrow(NotFoundException);
     });
 
+    it('only admins can edit admin accounts', async () => {
+      usersRepo.findOne.mockResolvedValue(user({ role: 'ADMIN' }));
+      await expect(service.updateUser(1, { email: 'evil@example.com' })).rejects.toThrow(ForbiddenException);
+      await expect(service.updateUserByUsername('alice', { email: 'evil@example.com' })).rejects.toThrow(ForbiddenException);
+      expect(usersRepo.save).not.toHaveBeenCalled();
+
+      usersRepo.findOne.mockResolvedValueOnce(user({ role: 'ADMIN' })).mockResolvedValueOnce(null);
+      await service.updateUser(1, { email: 'new@example.com' }, true);
+      expect(usersRepo.save).toHaveBeenCalledWith(expect.objectContaining({ email: 'new@example.com' }));
+    });
+
     it('updateProfile normalizes the email', async () => {
       usersRepo.findOne.mockResolvedValueOnce(user()).mockResolvedValueOnce(null);
       await service.updateProfile(1, { email: 'Z@Example.com' });
@@ -302,9 +315,13 @@ describe('UsersService', () => {
       expect(await service.requestEmailChange(1, { email: 'Alice@Example.com' })).toEqual({ requiresConfirmation: false, user: u });
     });
 
-    it('applies the change directly when mail is not configured', async () => {
-      usersRepo.findOne.mockResolvedValueOnce(user()).mockResolvedValueOnce(null);
+    it('without mail, only lets an admin set an unconfirmed email', async () => {
       authMail.isConfigured.mockResolvedValue(false);
+      usersRepo.findOne.mockResolvedValueOnce(user()).mockResolvedValueOnce(null);
+      await expect(service.requestEmailChange(1, { email: 'victim@example.com' })).rejects.toThrow(/SMTP/);
+      expect(usersRepo.save).not.toHaveBeenCalled();
+
+      usersRepo.findOne.mockResolvedValueOnce(user({ role: 'ADMIN' })).mockResolvedValueOnce(null);
       const result = await service.requestEmailChange(1, { email: 'new@example.com' });
       expect(result.requiresConfirmation).toBe(false);
       expect(usersRepo.save).toHaveBeenCalledWith(expect.objectContaining({ email: 'new@example.com' }));
@@ -378,6 +395,13 @@ describe('UsersService', () => {
 
     it('serializeUser attaches the access state', () => {
       expect(service.serializeUser(user()).access).toEqual({ permissions: DEFAULT_USER_PERMISSIONS, serverAccess: [] });
+    });
+
+    it('serializeUser never exposes the password hash or the OIDC subject', () => {
+      const serialized = service.serializeUser(Object.assign(new Users(), user({ oidcSubject: 'sub-1' })));
+      expect(serialized).not.toHaveProperty('password');
+      expect(serialized).not.toHaveProperty('oidcSubject');
+      expect(serialized).toMatchObject({ username: 'alice' });
     });
   });
 
@@ -479,6 +503,15 @@ describe('UsersService', () => {
       expect(invitationsRepo.save).toHaveBeenCalledWith(invitation);
     });
 
+    it('getInvitationLink refuses to reissue admin-only grants to a delegate', async () => {
+      const invitation = { id: 4, email: null, usedAt: null, expiresAt: new Date(Date.now() + 1000), tokenHash: 'old', permissions: { ...DEFAULT_USER_PERMISSIONS, changeServerVersion: true } };
+      invitationsRepo.findOne.mockResolvedValue(invitation);
+
+      await expect(service.getInvitationLink(4)).rejects.toThrow(ForbiddenException);
+      expect(invitation.tokenHash).toBe('old');
+      await expect(service.getInvitationLink(4, true)).resolves.toMatch(/inviteToken=/);
+    });
+
     it('getInvitationLink rejects missing or expired invitations', async () => {
       await expect(service.getInvitationLink(4)).rejects.toThrow(NotFoundException);
       invitationsRepo.findOne.mockResolvedValue({ expiresAt: new Date(Date.now() - 1000), usedAt: null });
@@ -512,6 +545,13 @@ describe('UsersService', () => {
       const result = await service.changePassword(1, { currentPassword: 'secret', newPassword: 'newpass1' });
       expect(result.message).toMatch(/changed/);
       expect(usersRepo.save).toHaveBeenCalledWith(expect.objectContaining({ password: 'hashed:newpass1' }));
+      expect(usersRepo.manager.update).toHaveBeenCalledWith(RefreshToken, { userId: 1, revoked: false }, { revoked: true });
+    });
+
+    it('keeps the session that changed the password', async () => {
+      usersRepo.findOne.mockResolvedValue(user());
+      await service.changePassword(1, { currentPassword: 'secret', newPassword: 'newpass1' }, 'current-token');
+      expect(usersRepo.manager.update).toHaveBeenCalledWith(RefreshToken, { userId: 1, revoked: false, token: Not(sha256('current-token')) }, { revoked: true });
     });
   });
 });

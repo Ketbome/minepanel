@@ -43,7 +43,7 @@ export const FULL_ACCESS_PERMISSIONS: UserPermissions = {
 
 // Permissions that `manageUsers` is not enough to hand out. Without this, any
 // delegated operator could grant them to another account or to themselves.
-export const ADMIN_GRANTED_PERMISSIONS: Array<keyof UserPermissions> = ['changeServerVersion'];
+export const ADMIN_GRANTED_PERMISSIONS: Array<keyof UserPermissions> = ['changeServerVersion', 'useGlobalFiles'];
 
 export const normalizePermissions = (permissions?: Partial<UserPermissions> | null): UserPermissions => ({
   ...DEFAULT_USER_PERMISSIONS,

@@ -10,7 +10,10 @@ jest.mock('fs-extra', () => ({
   ensureDir: jest.fn(),
   ensureDirSync: jest.fn(),
   move: jest.fn(),
+  lstat: jest.fn(async () => ({ isDirectory: () => true, isSymbolicLink: () => false })),
 }));
+
+jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
 jest.mock('node:child_process', () => ({
   exec: jest.fn(),
@@ -23,6 +26,7 @@ jest.mock('node:util', () => {
 });
 
 import * as fs from 'fs-extra';
+import { assertContained } from 'src/common/fs/contained-path';
 import { spawn } from 'node:child_process';
 import { ServerManagementService } from './server-management.service';
 
@@ -142,6 +146,22 @@ describe('ServerManagementService lifecycle', () => {
   describe('worlds', () => {
     it('returns nothing for an invalid id', async () => {
       expect(await service.listAvailableWorlds('bad id')).toEqual([]);
+    });
+
+    it('skips a legacy worlds folder or entry that is a link', async () => {
+      existing.push('/app/servers/srv/mc-data/worlds');
+      (fs.readdir as unknown as jest.Mock).mockImplementation(async (p: string, opts?: unknown) => (p === '/app/servers/srv/mc-data/worlds' ? ['planted', 'real'] : opts ? [] : []));
+      (fs.lstat as unknown as jest.Mock).mockImplementation(async (p: string) => ({ isDirectory: () => true, isSymbolicLink: () => p.endsWith('planted') }));
+
+      await service.listAvailableWorlds('srv');
+      expect(fs.move).toHaveBeenCalledTimes(1);
+      expect(fs.move).toHaveBeenCalledWith('/app/servers/srv/mc-data/worlds/real', '/app/servers/srv/worlds/real');
+
+      (fs.move as unknown as jest.Mock).mockClear();
+      (fs.lstat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => false, isSymbolicLink: () => true });
+      await service.listAvailableWorlds('srv');
+      expect(fs.move).not.toHaveBeenCalled();
+      (fs.lstat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true, isSymbolicLink: () => false });
     });
 
     it('migrates legacy worlds and lists local and global sources with selection state', async () => {
@@ -538,6 +558,14 @@ describe('ServerManagementService lifecycle', () => {
       expect(await service.getOps('srv')).toEqual([{ name: 'op' }]);
       expect(await service.getBannedPlayers('srv')).toEqual([]);
       expect(await service.getOps('other')).toEqual([]);
+    });
+
+    it('does not read player lists through links that leave mc-data', async () => {
+      existing.push('/app/servers/srv/mc-data/ops.json');
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue('[{"name":"secret"}]');
+      (assertContained as jest.Mock).mockRejectedValueOnce(new Error('Invalid path'));
+
+      expect(await service.getOps('srv')).toEqual([]);
     });
   });
 

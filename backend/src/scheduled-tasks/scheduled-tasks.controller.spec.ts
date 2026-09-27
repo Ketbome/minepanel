@@ -3,7 +3,7 @@ import { ScheduledTasksController } from './scheduled-tasks.controller';
 describe('ScheduledTasksController', () => {
   const req = { user: { userId: 1 } };
   let service: Record<string, jest.Mock>;
-  let accessControl: { assertServerAccess: jest.Mock };
+  let accessControl: { assertServerAccess: jest.Mock; canUsePermission: jest.Mock };
   let controller: ScheduledTasksController;
 
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe('ScheduledTasksController', () => {
       remove: jest.fn().mockResolvedValue(undefined),
       runNow: jest.fn().mockResolvedValue({ id: 1, lastResult: 'ok' }),
     };
-    accessControl = { assertServerAccess: jest.fn() };
+    accessControl = { assertServerAccess: jest.fn(), canUsePermission: jest.fn().mockReturnValue(false) };
     controller = new ScheduledTasksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
   });
 
@@ -25,6 +25,8 @@ describe('ScheduledTasksController', () => {
     expect(await controller.remove(req, 'srv', 1)).toEqual({ success: true });
     expect(await controller.runNow(req, 'srv', 1)).toEqual({ id: 1, lastResult: 'ok' });
     expect(accessControl.assertServerAccess).toHaveBeenCalledTimes(5);
-    expect(service.update).toHaveBeenCalledWith('srv', 1, { name: 'n' });
+    expect(service.update).toHaveBeenCalledWith('srv', 1, { name: 'n' }, false);
+    expect(service.runNow).toHaveBeenCalledWith('srv', 1, false);
+    expect(accessControl.canUsePermission).toHaveBeenCalledWith({ id: 1 }, 'useConsole');
   });
 });

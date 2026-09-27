@@ -383,6 +383,7 @@ export const en = {
   updateEmail: 'Update Email',
   emailUpdatedSuccessfully: 'Email updated successfully',
   emailUpdateFailed: 'Failed to update email',
+  emailChangeNeedsSmtp: 'Email changes need mail (SMTP) to confirm the address. Ask an admin to change it.',
   emailRequired: 'Email is required',
   emailChangeCodeSent: 'Confirmation code sent to the new email',
   emailChangeCodeSentDesc: 'Check the new email address and enter the code to complete the change.',

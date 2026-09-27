@@ -230,7 +230,7 @@ describe('JavaServerStrategy', () => {
 
     it('builds fabric, modrinth, gtnh and ftba specific variables', () => {
       const fabric = strategy.buildEnvironment({ ...baseConfig(), serverType: 'FABRIC', fabricLoaderVersion: '0.15', fabricLauncherVersion: '1.0', fabricLauncher: 'l.jar', fabricLauncherUrl: 'https://x', fabricForceReinstall: true, modrinthProjects: 'sodium', modrinthDownloadDependencies: 'required', modrinthDefaultVersionType: 'beta', modrinthLoader: 'fabric', versionFromModrinthProjects: true, cfApiKey: 'k$1', cfFiles: 'a,b' } as any);
-      expect(fabric).toMatchObject({ TYPE: 'FABRIC', FABRIC_LOADER_VERSION: '0.15', FABRIC_LAUNCHER_VERSION: '1.0', FABRIC_LAUNCHER: 'l.jar', FABRIC_LAUNCHER_URL: 'https://x', FABRIC_FORCE_REINSTALL: 'true', MODRINTH_PROJECTS: 'sodium', MODRINTH_DOWNLOAD_DEPENDENCIES: 'required', MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: 'beta', MODRINTH_LOADER: 'fabric', VERSION_FROM_MODRINTH_PROJECTS: 'true', CF_API_KEY: 'k$$1', CURSEFORGE_FILES: 'a,b' });
+      expect(fabric).toMatchObject({ TYPE: 'FABRIC', FABRIC_LOADER_VERSION: '0.15', FABRIC_LAUNCHER_VERSION: '1.0', FABRIC_LAUNCHER: 'l.jar', FABRIC_LAUNCHER_URL: 'https://x', FABRIC_FORCE_REINSTALL: 'true', MODRINTH_PROJECTS: 'sodium', MODRINTH_DOWNLOAD_DEPENDENCIES: 'required', MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: 'beta', MODRINTH_LOADER: 'fabric', VERSION_FROM_MODRINTH_PROJECTS: 'true', CF_API_KEY: 'k$1', CURSEFORGE_FILES: 'a,b' });
       expect(fabric.MODRINTH_MODPACK).toBeUndefined();
 
       const modrinth = strategy.buildEnvironment({ ...baseConfig(), serverType: 'MODRINTH', modrinthModpack: 'atm' } as any);
