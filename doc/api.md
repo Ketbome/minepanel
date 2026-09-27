@@ -48,6 +48,7 @@ These routes do not require an authenticated session:
 | `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
 | `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
 | `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless auto-scaling is enabled in Settings |
+| `GET` | `/item-textures/:version/:item` | Cached vanilla item PNG, so `<img>` tags load without credentials; never starts a download |
 
 All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
 
