@@ -16,6 +16,7 @@ import { Clock, HelpCircle } from 'lucide-react';
 import { ServerConfig } from '@/lib/types/types';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import Image from 'next/image';
+import { EventCommandsCard } from './EventCommandsCard';
 
 interface LifecycleTabProps {
   config: ServerConfig;
@@ -42,6 +43,7 @@ export const LifecycleTab: FC<LifecycleTabProps> = ({ config, updateConfig }) =>
   };
 
   return (
+    <div className="space-y-6">
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl text-emerald-400 font-minecraft flex items-center gap-2">
@@ -397,5 +399,7 @@ export const LifecycleTab: FC<LifecycleTabProps> = ({ config, updateConfig }) =>
         </div>
       </CardContent>
     </Card>
+    {isJava && <EventCommandsCard config={config} updateConfig={updateConfig} />}
+    </div>
   );
 };

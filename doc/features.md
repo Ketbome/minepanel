@@ -91,6 +91,29 @@ References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/la
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
 | Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone). Rotating announcements: see below |
 
+### Event commands
+
+The **Lifecycle** tab has an **Event commands** card (Java): console commands that run by
+themselves, one per line, at five moments:
+
+| When | Runs |
+| ---- | ---- |
+| The server starts | once, after startup finishes |
+| The first player joins | when someone joins an empty server |
+| A player joins | every time the player count goes up |
+| A player leaves | every time the player count goes down |
+| The last player leaves | when the server becomes empty |
+
+- The commands do not know who joined or left, so target players with selectors. **Add a starter
+  kit for new players** fills in the usual recipe: players without a team join `New`, get the kit,
+  then move to `Old` so they never get it twice.
+- The player count is checked every 10 seconds, so two joins within the same 10 seconds run the
+  join commands once.
+- They run through RCON: with RCON turned off (Access tab) nothing is sent. Changes apply after a
+  restart.
+- They run as the server console, so changing them needs the **console** permission. The
+  `RCON_CMDS_*` variables they map to are admin-only in the custom environment variables.
+
 ### Scheduled announcements
 
 An **Announcements** task in the Tasks tab sends a list of chat messages to all players, one message per run, in order, and starts again after the last one.
