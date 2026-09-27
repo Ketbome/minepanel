@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import type { LucideIcon } from 'lucide-react';
 import { Copy, Check, Globe, Wifi, Loader2, Network } from 'lucide-react';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import Image from 'next/image';
 import { getAllIPs, getProxyStatus, getServerProxyHostname } from '@/services/network.service';
 import { LINK_LEARN_HOW_LAN } from '@/lib/providers/constants';
 import { ServerEdition } from '@/lib/types/types';
@@ -19,9 +17,7 @@ interface ServerConnectionInfoProps {
 
 export function ServerConnectionInfo({ port, serverId, edition }: ServerConnectionInfoProps) {
   const { t } = useLanguage();
-  const [copiedGlobal, setCopiedGlobal] = useState(false);
-  const [copiedLAN, setCopiedLAN] = useState(false);
-  const [copiedProxy, setCopiedProxy] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const [publicIP, setPublicIP] = useState<string | null>(null);
   const [localIPs, setLocalIPs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,19 +52,11 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
     fetchData();
   }, [serverId, t, supportsProxy]);
 
-  const copyToClipboard = async (text: string, type: 'global' | 'lan' | 'proxy') => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === 'global') {
-        setCopiedGlobal(true);
-        setTimeout(() => setCopiedGlobal(false), 2000);
-      } else if (type === 'lan') {
-        setCopiedLAN(true);
-        setTimeout(() => setCopiedLAN(false), 2000);
-      } else {
-        setCopiedProxy(true);
-        setTimeout(() => setCopiedProxy(false), 2000);
-      }
+      setCopied(text);
+      setTimeout(() => setCopied((current) => (current === text ? null : current)), 2000);
       mcToast.success(t('copiedToClipboard'));
     } catch (err) {
       console.error('Error copying to clipboard:', err);
@@ -80,199 +68,37 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
   const globalAddress = `${displayPublicIP}:${port}`;
   const lanAddress = localIPs.length > 0 ? `${localIPs[0]}:${port}` : null;
 
-  const renderConnectionContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-6 w-6 text-emerald-400 animate-spin" />
-        </div>
-      );
-    }
+  // One copyable address; the label lives in the icon's tooltip to keep the header one line.
+  const address = (Icon: LucideIcon, label: string, value: string, color: string) => (
+    <span key={value} className="inline-flex items-center gap-1.5 min-w-0" title={label}>
+      <Icon className="h-3.5 w-3.5 shrink-0" style={{ color }} aria-label={label} />
+      <span className="font-mono text-sm text-gray-100 select-all truncate">{value}</span>
+      <button type="button" onClick={() => copyToClipboard(value)} className="mc-iconbtn size-6 shrink-0" aria-label={`${t('quickCopy')}: ${label}`}>
+        {copied === value ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </span>
+  );
 
-    if (proxyEnabled && proxyHostname) {
-      return (
-        <>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Network className="h-4 w-4 text-cyan-400" />
-              <span className="text-xs text-gray-400 font-medium">
-                {t('proxyHostname') || 'Proxy Hostname'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-cyan-600/50 transition-colors">
-                <span className="select-all">{proxyHostname}</span>
-                <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(proxyHostname, 'proxy')}
-                    className="h-7 w-7 p-0 hover:bg-cyan-600/20 hover:text-cyan-400"
-                  >
-                    <AnimatePresence mode="wait">
-                      {copiedProxy ? (
-                        <m.div
-                          key="check"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                        >
-                          <Check className="h-4 w-4 text-cyan-400" />
-                        </m.div>
-                      ) : (
-                        <m.div
-                          key="copy"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </m.div>
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </m.div>
-              </div>
-            </div>
-          </div>
-          <div className="pt-2 border-t border-cyan-600/20">
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <span className="text-cyan-400">🌐</span>
-              {t('proxyConnectionTip') || 'Players can connect using this hostname on port 25565'}
-            </p>
-          </div>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs text-gray-400 font-medium">{t('globalIP')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-emerald-600/50 transition-colors">
-              <span className="select-all">{globalAddress}</span>
-              <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(globalAddress, 'global')}
-                  className="h-7 w-7 p-0 hover:bg-emerald-600/20 hover:text-emerald-400"
-                >
-                  <AnimatePresence mode="wait">
-                    {copiedGlobal ? (
-                      <m.div
-                        key="check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        <Check className="h-4 w-4 text-emerald-400" />
-                      </m.div>
-                    ) : (
-                      <m.div
-                        key="copy"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </m.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </m.div>
-            </div>
-          </div>
-        </div>
-
-        {lanAddress && lanAddress !== globalAddress && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Wifi className="h-4 w-4 text-blue-400" />
-              <span className="text-xs text-gray-400 font-medium">{t('lanIP')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-900/80 rounded-md px-3 py-2 border border-gray-700/50 font-mono text-sm text-white flex items-center justify-between group hover:border-blue-600/50 transition-colors">
-                <span className="select-all">{lanAddress}</span>
-                <m.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(lanAddress, 'lan')}
-                    className="h-7 w-7 p-0 hover:bg-blue-600/20 hover:text-blue-400"
-                  >
-                    <AnimatePresence mode="wait">
-                      {copiedLAN ? (
-                        <m.div
-                          key="check"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                        >
-                          <Check className="h-4 w-4 text-blue-400" />
-                        </m.div>
-                      ) : (
-                        <m.div
-                          key="copy"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </m.div>
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </m.div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="pt-2 border-t border-emerald-600/20 space-y-2">
-          <p className="text-xs text-gray-400 flex items-center gap-1">
-            <span className="text-emerald-400">💡</span>
-            {t('connectionTip')}
-          </p>
-          {!lanAddress && (
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <span className="text-blue-400">🏠</span>
-              {t('playingLAN')}{' '}
-              <a
-                href={LINK_LEARN_HOW_LAN}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-400 hover:text-emerald-300 underline transition-colors"
-              >
-                {t('learnHow')}
-              </a>
-            </p>
-          )}
-        </div>
-      </>
-    );
-  };
+  if (isLoading) {
+    return <Loader2 className="h-4 w-4 text-emerald-400 animate-spin" aria-label={t('serverConnection')} />;
+  }
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-linear-to-br from-emerald-900/20 to-green-900/20 backdrop-blur-sm rounded-lg border-2 border-emerald-600/30 p-4 space-y-3"
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Image src="/images/compass.webp" alt="Connection" width={24} height={24} />
-        <h3 className="text-sm font-minecraft text-emerald-400 uppercase tracking-wide">
-          {t('serverConnection')}
-        </h3>
-        {isLoading && <Loader2 className="h-4 w-4 text-emerald-400 animate-spin ml-auto" />}
-      </div>
-
-      {renderConnectionContent()}
-    </m.div>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+      {proxyEnabled && proxyHostname ? (
+        address(Network, t('proxyHostname') || 'Proxy Hostname', proxyHostname, '#22d3ee')
+      ) : (
+        <>
+          {address(Globe, t('globalIP'), globalAddress, 'var(--mc-emerald)')}
+          {lanAddress && lanAddress !== globalAddress
+            ? address(Wifi, t('lanIP'), lanAddress, '#60a5fa')
+            : (
+                <a href={LINK_LEARN_HOW_LAN} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-emerald-300 underline">
+                  {t('playingLAN')} {t('learnHow')}
+                </a>
+              )}
+        </>
+      )}
+    </div>
   );
 }

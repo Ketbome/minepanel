@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurseForgeModpack, searchModpacks, findModpackByQuery, getFeaturedModpacks, getPopularModpacks, isCurseForgeApiKeyError } from "@/services/curseforge/curseforge.service";
 import { ModpackNotFoundHelp } from "@/components/molecules/modpacks/ModpackNotFoundHelp";
 import { mcToast } from "@/lib/utils/minecraft-toast";
+import { PageTitle } from "@/components/molecules/PageTitle";
 
 export default function TemplatesPage() {
   const { t } = useLanguage();
@@ -165,15 +166,7 @@ export default function TemplatesPage() {
   return (
     <div className="space-y-6">
       {/* Recipe book header */}
-      <div className="mc-panel animate-fade-in-up">
-        <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
-          <Image src="/images/bookshelf.webp" alt="Templates" width={32} height={32} className="pixelated" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("modpackTemplates")}</h1>
-            <p className="text-gray-300 text-xs">{t("modpackTemplatesDescription")}</p>
-          </div>
-        </div>
-      </div>
+      <PageTitle icon="/images/bookshelf.webp" title={t("modpackTemplates")} description={t("modpackTemplatesDescription")} />
 
       {needsApiKey && (
         <div className="animate-fade-in">

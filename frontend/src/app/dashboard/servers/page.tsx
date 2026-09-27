@@ -64,6 +64,7 @@ import { ServerEdition } from '@/lib/types/types';
 import { TranslationKey } from '@/lib/translations';
 import { getCurrentUser } from '@/services/users/users.service';
 import { getProxyMappings, getProxyStatus } from '@/services/network.service';
+import { PageTitle } from '@/components/molecules/PageTitle';
 
 type ServerInfo = {
   id: string;
@@ -310,22 +311,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="mc-panel animate-fade-in-up">
-        <div className="mc-titlebar flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/command-block.webp"
-              alt="Dashboard"
-              width={32}
-              height={32}
-              className="pixelated"
-            />
-            <div>
-              <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">
-                {t('dashboardTitle')}
-              </h1>
-              <p className="text-gray-300 text-xs">{t('dashboardDescription')}</p>
-            </div>
-          </div>
+        <div className="mc-titlebar flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-2">
+          <PageTitle icon="/images/command-block.webp" title={t('dashboardTitle')} description={t('dashboardDescription')} />
 
           <Dialog
             open={isDialogOpen}

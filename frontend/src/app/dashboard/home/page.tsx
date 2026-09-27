@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
 import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
 import { getSessionUser } from "@/services/auth/auth.service";
+import { PageTitle } from "@/components/molecules/PageTitle";
 
 type ServerInfo = {
   id: string;
@@ -164,14 +165,16 @@ export default function HomePage() {
     <div className="space-y-6">
       {/* Inventory window header */}
       <div className="mc-panel animate-fade-in-up">
-        <div className="mc-titlebar flex items-center gap-3 px-4 py-3">
-          <Image src="/images/grass.webp" alt="Home" width={32} height={32} className="pixelated" />
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-minecraft text-white drop-shadow-glow leading-tight">{t("homeTitle")}</h1>
-            <p className="text-gray-300 text-xs">
-              {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
-            </p>
-          </div>
+        <div className="mc-titlebar px-4 py-2">
+          <PageTitle
+            icon="/images/grass.webp"
+            title={t("homeTitle")}
+            description={
+              <>
+                {t("welcomeBack")}, <span className="text-emerald-400 font-semibold">{username || t("admin")}</span>
+              </>
+            }
+          />
         </div>
 
         {/* Stat hotbar */}
