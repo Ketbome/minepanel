@@ -359,6 +359,19 @@ Global world library search/import and CurseForge metadata lookup:
 worlds are walked into, so imports grouped under `curseforge/` or `url/` show up.
 `sizeBytes` is `0` for folders: measuring one means walking every region file.
 
+### Vanilla Tweaks
+
+- `GET /vanilla-tweaks/:code` — what a [Vanilla Tweaks](https://vanillatweaks.net) share code
+  installs: `{ code, type, version, packs }`, where `type` is `datapacks`, `craftingtweaks` or
+  `resourcepacks` and `packs` maps each category to pack names. `400` for a malformed code (3–16
+  letters or digits), `404` when Vanilla Tweaks does not know it, `503` when it cannot be
+  reached. Answers are cached for 10 minutes
+
+A server stores its codes as `vanillaTweaksCodes` in `server.json` (sent to itzg as
+`VANILLATWEAKS_SHARECODE`). `POST /servers` and `PUT /servers/:id` look up codes that are new to
+the server and answer `400` for an unknown code or a resource pack code; when Vanilla Tweaks
+cannot be reached, the save goes through unchecked.
+
 ### Bedrock Addons
 
 Bedrock addon management:
