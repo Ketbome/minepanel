@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { executeServerCommand } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import Image from "next/image";
+import { GamerulesEditor } from "./GamerulesEditor";
 
 interface CommandsTabProps {
   serverId: string;
@@ -434,6 +435,8 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
                 </Button>
               </div>
             </div>
+
+            <GamerulesEditor serverId={serverId} rconPort={rconPort} rconPassword={rconPassword} />
 
             {/* Entity Management */}
             <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">

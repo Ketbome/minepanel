@@ -803,6 +803,13 @@ export class ServerManagementController {
     return result;
   }
 
+  @Get(':id/gamerules')
+  async getGamerules(@Request() req, @Param('id') id: string) {
+    const user = await this.getCurrentUser(req);
+    this.accessControlService.assertUseConsole(user, id);
+    return this.managementService.getGamerules(id);
+  }
+
   @Post(':id/start')
   async startServer(@Request() req, @Param('id') id: string) {
     const currentUser = await this.requireServerAccess(req, id);

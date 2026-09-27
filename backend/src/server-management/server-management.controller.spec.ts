@@ -33,6 +33,7 @@ describe('ServerManagementController', () => {
       deleteServer: jest.fn(),
       getServerLogs: jest.fn(),
       executeCommand: jest.fn(),
+      getGamerules: jest.fn(),
       getServerResources: jest.fn(),
       getAllServersResources: jest.fn(),
       getOnlinePlayers: jest.fn(),
@@ -851,6 +852,9 @@ describe('ServerManagementController', () => {
       serverService.executeCommand.mockResolvedValue({ success: true, output: 'ok' });
       expect(await controller.executeCommand(req, 'a', { command: 'say hi', rconPort: '25575' } as any)).toEqual({ success: true, output: 'ok' });
       expect(accessControlService.assertUseConsole).toHaveBeenCalled();
+
+      serverService.getGamerules.mockResolvedValue({ success: true, supported: true, complete: true, rules: [] });
+      expect((await controller.getGamerules(req, 'a')).success).toBe(true);
 
       expect(await controller.forceStopServer(req, 'a')).toEqual({ success: true, message: 'Server force stopped successfully' });
       mgmt.forceStopServer.mockResolvedValueOnce(false);

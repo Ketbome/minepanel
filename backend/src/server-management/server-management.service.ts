@@ -118,6 +118,21 @@ export interface AvailableWorld {
   copied: boolean;
 }
 
+// Java 1.21.11+ game rule registry (minecraft.wiki/w/Game_rule). Only used when the server's
+// `help gamerule` does not list rules; rules a version lacks just fail to answer and are skipped.
+const REGISTRY_GAMERULES = [
+  'advance_time', 'advance_weather', 'allow_entering_nether_using_portals', 'block_drops', 'block_explosion_drop_decay', 'command_block_output',
+  'command_blocks_work', 'drowning_damage', 'elytra_movement_check', 'ender_pearls_vanish_on_death', 'entity_drops', 'fall_damage', 'fire_damage',
+  'fire_spread_radius_around_player', 'forgive_dead_players', 'freeze_damage', 'global_sound_events', 'immediate_respawn', 'keep_inventory',
+  'lava_source_conversion', 'limited_crafting', 'locator_bar', 'log_admin_commands', 'max_block_modifications', 'max_command_forks',
+  'max_command_sequence_length', 'max_entity_cramming', 'max_minecart_speed', 'max_snow_accumulation_height', 'mob_drops', 'mob_explosion_drop_decay',
+  'mob_griefing', 'natural_health_regeneration', 'player_movement_check', 'players_nether_portal_creative_delay', 'players_nether_portal_default_delay',
+  'players_sleeping_percentage', 'projectiles_can_break_blocks', 'pvp', 'raids', 'random_tick_speed', 'reduced_debug_info', 'respawn_radius',
+  'send_command_feedback', 'show_advancement_messages', 'show_death_messages', 'spawn_mobs', 'spawn_monsters', 'spawn_patrols', 'spawn_phantoms',
+  'spawn_wandering_traders', 'spawn_wardens', 'spawner_blocks_work', 'spectators_generate_chunks', 'spread_vines', 'tnt_explodes',
+  'tnt_explosion_drop_decay', 'universal_anger', 'water_source_conversion',
+];
+
 @Injectable()
 export class ServerManagementService {
   private readonly logger = new Logger(ServerManagementService.name);
@@ -1726,6 +1741,57 @@ export class ServerManagementService {
     } catch {
       return { success: false, output: '' };
     }
+  }
+
+  // Rule names come from the server's own `help gamerule`, so version renames and modded rules
+  // need no hardcoded list. Since 1.21.11 game rules are a registry and help only prints
+  // `/gamerule <rule> [<value>]`; those servers fall back to the vanilla list, and
+  // `complete: false` tells the UI that modded rules may be missing.
+  async getGamerules(serverId: string): Promise<{ success: boolean; supported: boolean; complete: boolean; rules: { name: string; value: string }[] }> {
+    const empty = { success: false, supported: true, complete: false, rules: [] };
+    if (!this.validateServerId(serverId)) return empty;
+    try {
+      if ((await this.getServerEdition(serverId)) === 'BEDROCK') return { ...empty, supported: false };
+      const containerId = await this.findContainerId(serverId);
+      if (!containerId) return empty;
+
+      const help = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', 'help', 'gamerule'], { timeout: 10_000 });
+      if (help.exitCode !== 0) return empty;
+      const listed = this.parseGameruleNames(this.sanitizeCommandOutput(help.stdout));
+      const names = listed.length > 0 ? listed : REGISTRY_GAMERULES;
+
+      // One exec for all rules; names are argv, never interpolated into the script.
+      const script = 'for r do echo "@@$r@@"; rcon-cli gamerule "$r"; done';
+      const { stdout } = await this.executeProcess('docker', ['exec', containerId, 'sh', '-c', script, 'sh', ...names], { timeout: 30_000 });
+      const rules = this.parseGameruleValues(this.sanitizeCommandOutput(stdout), names);
+      return rules.length > 0 ? { success: true, supported: true, complete: listed.length > 0, rules } : empty;
+    } catch (error) {
+      this.logger.warn(`Failed to read gamerules for ${serverId}: ${(error as Error).message}`);
+      return empty;
+    }
+  }
+
+  private parseGameruleNames(helpOutput: string): string[] {
+    const names = new Set<string>();
+    // Usage is either one line per rule or `/gamerule (a|b|c)`; RCON may also glue lines together.
+    for (const [, usage] of helpOutput.matchAll(/gamerule\s+(\([^)]*\)|[^\s[/]+)/g)) {
+      for (const name of usage.split(/[()|]/)) {
+        if (/^[A-Za-z][\w.:-]{0,63}$/.test(name)) names.add(name);
+      }
+    }
+    return [...names].slice(0, 300);
+  }
+
+  private parseGameruleValues(output: string, names: string[]): { name: string; value: string }[] {
+    const known = new Set(names);
+    // Output is `@@name@@<reply>` per rule; sanitizing may drop the newlines between them.
+    const parts = output.split('@@');
+    const rules: { name: string; value: string }[] = [];
+    for (let i = 1; i + 1 < parts.length; i += 2) {
+      const value = /set to:?\s*([^\s@]+)/i.exec(parts[i + 1])?.[1];
+      if (known.has(parts[i]) && value) rules.push({ name: parts[i], value });
+    }
+    return rules;
   }
 
   async executeCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
