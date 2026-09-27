@@ -155,6 +155,13 @@ export class FilesService {
   async saveUpload(serverId: string, filePath: string, stagedPath: string, admin = false): Promise<void> {
     const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
     await fs.ensureDir(path.dirname(fullPath));
+    // The move replaces the inode, so a replaced file would end up owned by the panel
+    // and the server could no longer rewrite it.
+    const existing = await fs.stat(fullPath).catch(() => null);
+    if (existing) {
+      await fs.chown(stagedPath, existing.uid, existing.gid);
+      await fs.chmod(stagedPath, existing.mode);
+    }
     await fs.move(stagedPath, fullPath, { overwrite: true });
   }
 

@@ -211,11 +211,11 @@ Operating an assigned server does not include changing how its container is buil
 - Extra published ports
 - A generic pack loaded from a URL outside the trusted hosts (a zip from the server's modpacks folder is fine)
 
-`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes relative to the server's own directory (`./mc-data:/data`), never host paths or Compose variables, and can only publish a port straight through (`19132:19132/udp`, as the Geyser template does).
+`USER` accounts can still save the rest of the server form normally; the request is only rejected when one of these fields actually changes. When creating a server, non-admins can only declare volumes for folders inside the server's own directory (`./mc-data:/data`), never host paths, Compose variables, the directory itself or its `server.json` and `docker-compose.yml`, and can only publish a port straight through (`19132:19132/udp`, as the Geyser template does).
 
 Every value the panel writes into a generated compose file has its `$` escaped, so a field such as the MOTD can never read the panel's environment through Compose interpolation. Custom compose snippets are the exception: they are admin-only and keep `${VAR}` interpolation.
 
-Proxy hostnames are unique: saving a hostname that another server already routes is rejected with `409`.
+Proxy hostnames are unique: creating, cloning or saving a server whose hostname another server already routes is rejected with `409`. This covers the default `<id>.<base domain>` when the hostname is blank, and turning the proxy back on for a server.
 
 ### Changing the server version
 

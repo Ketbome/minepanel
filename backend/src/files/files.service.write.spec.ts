@@ -13,6 +13,8 @@ jest.mock('fs-extra', () => ({
   remove: jest.fn().mockResolvedValue(undefined),
   rename: jest.fn().mockResolvedValue(undefined),
   move: jest.fn().mockResolvedValue(undefined),
+  chown: jest.fn().mockResolvedValue(undefined),
+  chmod: jest.fn().mockResolvedValue(undefined),
   lstat: jest.fn(),
 }));
 
@@ -35,11 +37,22 @@ describe('FilesService writes', () => {
     expect(fs.ensureDir).toHaveBeenCalledWith(`${BASE}/config`);
     expect(fs.writeFile).toHaveBeenCalledWith(`${BASE}/config/a.txt`, 'hello', 'utf-8');
 
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
     await service.saveUpload('srv', 'b.bin', '/app/servers/.uploads/abc');
     expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/b.bin`, { overwrite: true });
+    expect(fs.chown).not.toHaveBeenCalled();
     expect(fs.emptyDirSync).toHaveBeenCalledWith('/app/servers/.uploads');
 
     await expect(service.writeFile('srv', '../../etc/passwd', 'x')).rejects.toThrow(BadRequestException);
+  });
+
+  it('keeps the owner and mode of a file an upload replaces', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664 });
+    await service.saveUpload('srv', 'server.properties', '/app/servers/.uploads/abc');
+
+    expect(fs.chown).toHaveBeenCalledWith('/app/servers/.uploads/abc', 1000, 1000);
+    expect(fs.chmod).toHaveBeenCalledWith('/app/servers/.uploads/abc', 0o100664);
+    expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/server.properties`, { overwrite: true });
   });
 
   it('deletes existing paths only', async () => {

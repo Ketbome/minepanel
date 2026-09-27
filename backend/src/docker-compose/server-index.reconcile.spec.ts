@@ -181,7 +181,8 @@ describe('server index reconciliation', () => {
         'a java server',
         {
           serverName: 'Round Trip',
-          motd: 'A server',
+          // Written as `$$` in the compose file; the import must read it back as one dollar.
+          motd: 'VIP for $5 ${HOME}',
           maxPlayers: '42',
           difficulty: 'hard',
           spawnProtection: '16',

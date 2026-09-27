@@ -9,7 +9,7 @@ import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfi
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
-import { escapeComposeValues } from 'src/common/compose/compose-escape';
+import { escapeComposeValues, unescapeComposeValues } from 'src/common/compose/compose-escape';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
 
 const GENERATED_FILE_HEADER = [
@@ -153,7 +153,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
 
     try {
       const composeFileContent = await fs.readFile(dockerComposePath, 'utf8');
-      const composeConfig = yaml.load(composeFileContent) as DockerComposeConfig;
+      const composeConfig = unescapeComposeValues(yaml.load(composeFileContent)) as DockerComposeConfig;
 
       if (!composeConfig.services?.mc) {
         this.logger.error(`No "mc" service in the compose file for server ${serverId}`);
@@ -534,8 +534,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     if (!compatibleTypes.includes(serverConfig.serverType)) return;
 
     serverConfig.cfFiles = env.CURSEFORGE_FILES ?? '';
-    const apiKey = env.CF_API_KEY;
-    serverConfig.cfApiKey = apiKey ? apiKey.split('$$').join('$') : '';
+    serverConfig.cfApiKey = env.CF_API_KEY ?? '';
   }
 
   private parseModrinthConfig(serverConfig: ServerConfig, env: any): void {

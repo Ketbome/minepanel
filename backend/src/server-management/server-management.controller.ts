@@ -18,6 +18,7 @@ import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { Users } from 'src/users/entities/users.entity';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import * as path from 'path';
 
 // Accepts an ISO 8601 timestamp, a Unix timestamp, or a Go-style duration (e.g. "10m", "1h30m").
 // Anything else is rejected so the value can never break out of the `docker logs --since` argument.
@@ -102,7 +103,7 @@ const ADMIN_ONLY_ENV_KEYS = new Set([
 
 const ADMIN_ONLY_ENV_KEY_SUFFIXES = ['_DOWNLOAD_URL', '_LAUNCHER_URL'];
 
-const ARTIFACT_ENV_KEYS = new Set(['PLUGINS', 'MODS', 'MODPACK', 'DATAPACKS', 'GENERIC_PACKS']);
+const ARTIFACT_ENV_KEYS = new Set(['PLUGINS', 'MODS', 'MODPACK', 'DATAPACKS', 'GENERIC_PACK', 'GENERIC_PACKS']);
 
 const TRUSTED_ARTIFACT_HOSTS = new Set([
   'download.geysermc.org',
@@ -125,6 +126,15 @@ function isTrustedArtifactRef(value: string): boolean {
   }
 }
 
+// itzg splits these lists on commas, so one trusted entry cannot vouch for the rest.
+function untrustedArtifactRefs(value: string): string[] {
+  return value
+    .split(/[,\n]/)
+    .map((ref) => ref.trim())
+    .filter(Boolean)
+    .filter((ref) => !isTrustedArtifactRef(ref));
+}
+
 // The CurseForge key is copied from the creator's settings into server.json for the
 // compose file. Anyone else with access to the server must not read it back.
 function withoutSecrets<T extends { cfApiKey?: string } | null | undefined>(config: T): T {
@@ -142,11 +152,18 @@ function normalizeConfigValue(value: unknown): string {
     .join('\n');
 }
 
+// Files the panel compiles into host mounts; the container must not be able to rewrite them.
+const PANEL_MANAGED_FILES = new Set(['server.json', 'docker-compose.yml']);
+
 // Compose generation only rewrites `./` sources into the server's own directory.
-// Everything else (absolute paths, named volumes, `../` escapes) is a raw bind.
+// Everything else (absolute paths, named volumes, `../` escapes) is a raw bind, and
+// the directory itself (`./`, `./.`) would expose the panel-managed files above.
 function isSelfContainedVolume(volume: string): boolean {
   const source = volume.split(':')[0];
-  return source.startsWith('./') && !source.includes('$') && !source.split('/').includes('..');
+  if (!source.startsWith('./') || source.includes('$') || source.split('/').includes('..')) return false;
+
+  const [first] = path.posix.normalize(source.slice(2)).split('/');
+  return first !== '.' && first !== '' && !PANEL_MANAGED_FILES.has(first);
 }
 
 const JAVA_SERVER_DEFAULT_KEYS = new Set([
@@ -264,9 +281,9 @@ export class ServerManagementController {
   // A local zip from the modpacks folder is fine; a URL is only fetched from the
   // same hosts as PLUGINS/MODS.
   private assertTrustedGenericPack(genericPack: string | undefined): void {
-    const value = normalizeConfigValue(genericPack);
-    if (value && !isTrustedArtifactRef(value)) {
-      throw new ForbiddenException(`Only admins can load GENERIC_PACK from an untrusted source: ${value}`);
+    const untrusted = untrustedArtifactRefs(normalizeConfigValue(genericPack));
+    if (untrusted.length > 0) {
+      throw new ForbiddenException(`Only admins can load GENERIC_PACK from an untrusted source: ${untrusted.join(', ')}`);
     }
   }
 
@@ -335,12 +352,7 @@ export class ServerManagementController {
 
       if (!ARTIFACT_ENV_KEYS.has(key)) continue;
 
-      const untrusted = value
-        .split(',')
-        .map((ref) => ref.trim())
-        .filter(Boolean)
-        .filter((ref) => !isTrustedArtifactRef(ref));
-
+      const untrusted = untrustedArtifactRefs(value);
       if (untrusted.length > 0) {
         throw new ForbiddenException(`Only admins can load ${key} from an untrusted source: ${untrusted.join(', ')}`);
       }
@@ -384,12 +396,12 @@ export class ServerManagementController {
   }
 
   // mc-router maps each hostname to one backend, so taking another server's name
-  // would silently steal its players.
-  private async assertProxyHostnameFree(id: string, hostname: string | undefined): Promise<void> {
-    if (!hostname?.trim()) return;
+  // would silently steal its players. A blank hostname routes as `<id>.<baseDomain>`.
+  private async assertProxyHostnameFree(id: string, config: Pick<ServerConfig, 'proxyHostname' | 'useProxy' | 'edition'>): Promise<void> {
+    if (config.useProxy === false || config.edition === 'BEDROCK') return;
 
     const { baseDomain } = await this.proxyService.getProxySettings();
-    const wanted = this.proxyService.generateHostname(id, baseDomain, hostname.trim()).toLowerCase();
+    const wanted = this.proxyService.generateHostname(id, baseDomain, config.proxyHostname?.trim()).toLowerCase();
     const index = await this.dockerComposeService.getServerIndex();
     const owner = index.find(
       (server) =>
@@ -450,7 +462,7 @@ export class ServerManagementController {
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
-      await this.assertProxyHostnameFree(id, data.proxyHostname);
+      await this.assertProxyHostnameFree(id, data);
 
       const user = req.user as PayloadToken;
 
@@ -483,7 +495,7 @@ export class ServerManagementController {
       return {
         success: true,
         message: `Server "${id}" created successfully`,
-        server: serverConfig,
+        server: withoutSecrets(serverConfig),
       };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof ConflictException) throw error;
@@ -521,6 +533,7 @@ export class ServerManagementController {
       clonePayload.worldSource = '';
       clonePayload.forceWorldCopy = false;
     }
+    await this.assertProxyHostnameFree(body.newId, clonePayload);
 
     try {
       const serverConfig = await this.dockerComposeService.createServer(body.newId, clonePayload, proxyEnabled);
@@ -534,7 +547,7 @@ export class ServerManagementController {
       return {
         success: true,
         message: `Server "${id}" cloned to "${body.newId}"`,
-        server: serverConfig,
+        server: withoutSecrets(serverConfig),
       };
     } catch (error) {
       throw new BadRequestException(error.message || 'Failed to clone server');
@@ -636,13 +649,26 @@ export class ServerManagementController {
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
     this.assertValidComposeSnippets(config.composeSnippets);
-    if (config.proxyHostname !== undefined && config.proxyHostname !== currentConfig.proxyHostname) {
-      await this.assertProxyHostnameFree(id, config.proxyHostname);
+    const hostnameChanged = config.proxyHostname !== undefined && config.proxyHostname !== currentConfig.proxyHostname;
+    const proxyTurnedOn = currentConfig.useProxy === false && config.useProxy === true;
+    if (hostnameChanged || proxyTurnedOn) {
+      await this.assertProxyHostnameFree(id, {
+        proxyHostname: config.proxyHostname ?? currentConfig.proxyHostname,
+        useProxy: config.useProxy ?? currentConfig.useProxy,
+        edition: currentConfig.edition,
+      });
     }
 
     // Mod Watch and activity tracking save through their own endpoints; dropping them here stops
-    // a stale whole-form save from clobbering what's on disk.
-    const { modNotes: _modNotes, modWatchTargetVersion: _modWatchTargetVersion, activityTracking: _activityTracking, ...configWithoutModWatch } = config;
+    // a stale whole-form save from clobbering what's on disk. GET never returns cfApiKey, so the
+    // form would send it back blank; the key is only set from the creator's settings.
+    const {
+      modNotes: _modNotes,
+      modWatchTargetVersion: _modWatchTargetVersion,
+      activityTracking: _activityTracking,
+      cfApiKey: _cfApiKey,
+      ...configWithoutModWatch
+    } = config;
 
     const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
 
