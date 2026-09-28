@@ -366,6 +366,9 @@ i18n:
 
 - Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`, `tr`); the build fails if a dictionary is missing a key.
 - Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
+- Only `en` is bundled (it is the prerendered first render); every other dictionary is its own chunk,
+  loaded by `loadDictionary` when picked, and `useLanguage` switches only once it has arrived. Never
+  import a dictionary file from UI code: it would ship in every page's initial JS again.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 
 UI base components:
