@@ -421,7 +421,8 @@ function useContributorNames() {
   const [names, setNames] = useState<readonly string[]>([]);
   useEffect(() => {
     const controller = new AbortController();
-    const admins = [FIRST_GHOST.name, BLASTER, BFUUNY].map((name) => name.toLowerCase());
+    // BlasterD2 is BlasterDaster's GitHub account
+    const admins = [FIRST_GHOST.name, BLASTER, BFUUNY, 'BlasterD2'].map((name) => name.toLowerCase());
     fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/api/github-contributors`, { signal: controller.signal })
       .then((response) => (response.ok ? (response.json() as Promise<{ contributors: { login: string }[] | null }>) : null))
       .then((body) => {
