@@ -287,6 +287,9 @@ Tooling / build (Next.js 16):
     `runtime.playTime` and sends timed runs through `services/end-runs/` (`POST /end-runs`); the
     records window is `panels/LeaderboardPanel.tsx`. `run.ts` holds BlasterDaster's time and the
     formatter so the thanks screen does not pull in the 3D engine. `engine/Screenshot.tsx` is F2.
+  - The start screen and the pause menu are `PauseMenu` (`hud/Screens.tsx`): a title (the start
+    one with the game's yellow splash), the main button, pairs of smaller ones, and the controls
+    on their own page (Escape goes back to the menu there, not into the game).
   - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
     them large. The text of every sign lives in `signs.ts`.
   - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.
