@@ -26,3 +26,19 @@ export const formatDuration = (ms: number): string => {
   const hours = Math.floor(minutes / 60);
   return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
 };
+
+// Used when a server has no saved default yet, matching the coordinates this quick action
+// always used before it became settable.
+export const DEFAULT_SPAWN_POINT = { x: 0, y: 100, z: 0 } as const;
+
+export interface SpawnPoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export const resolveSpawnPoint = (config: { spawnX?: number; spawnY?: number; spawnZ?: number }): SpawnPoint => ({
+  x: config.spawnX ?? DEFAULT_SPAWN_POINT.x,
+  y: config.spawnY ?? DEFAULT_SPAWN_POINT.y,
+  z: config.spawnZ ?? DEFAULT_SPAWN_POINT.z,
+});

@@ -174,6 +174,7 @@ while the server is stopped because it reads the world files directly.
 | Find item      | "Who has my diamonds?": search every player's saved inventory, ender chest and carried containers by item or custom name |
 | Advancements   | Completed ones with their date, and the ones still pending |
 | Player actions | Gamemode, teleport, heal, give, kick, ban/unban, op/deop, whitelist add/remove (server running, needs console permission) |
+| TP Spawn       | Teleports to a per-server default point (`0, 100, 0` until set), shown on the action and in the confirmation toast; settable from the Commands tab's world coordinates alongside "teleport all" |
 | Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
 
 Minecraft writes player files on autosave and on logout, so data for online players can be a few

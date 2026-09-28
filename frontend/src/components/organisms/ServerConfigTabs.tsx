@@ -10,6 +10,7 @@ import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-st
 import { useConfigMode } from "@/lib/hooks/useConfigMode";
 import { advancedTabIsInUse } from "@/lib/server-config/advanced-tabs";
 import { ConfigModeToggle } from "../molecules/ConfigModeToggle";
+import { resolveSpawnPoint } from "../molecules/players/player-format";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
 const CommandsTab = dynamic(() => import("../molecules/Tabs/CommandsTab").then(mod => mod.CommandsTab));
@@ -358,14 +359,14 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               {showCommandsTab && (
                 <TabsContent value="commands" className="space-y-4 mt-0">
-                  <CommandsTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
+                  <CommandsTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} config={config} updateConfig={updateConfig} />
                 </TabsContent>
               )}
 
               {/* Java reads world player files; Bedrock keeps them in LevelDB, so it gets session history only */}
               <TabsContent value="players" className="space-y-4 mt-0">
                 {isJava ? (
-                  <PlayersTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} />
+                  <PlayersTab serverId={serverId} serverStatus={serverStatus} rconPort={config.rconPort} rconPassword={config.rconPassword} spawnPoint={resolveSpawnPoint(config)} />
                 ) : (
                   <PlayerActivityTab key={serverId} serverId={serverId} />
                 )}

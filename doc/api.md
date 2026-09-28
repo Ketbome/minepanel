@@ -348,6 +348,18 @@ exist on both platforms.
 is how a note for a removed mod stops being stored. Blank notes are dropped, and `targetVersion: null`
 clears the watch. Omitting either field leaves it untouched.
 
+### Default spawn point
+
+The Players tab's **TP Spawn** quick action and the Commands tab's "teleport all" coordinates
+share one per-server default, stored as `spawnX`/`spawnY`/`spawnZ` on `server.json` (falls back to
+`0, 100, 0` when unset):
+
+- `PUT /servers/:id/spawn-point` — body `{ "x"?: number | null, "y"?: number | null, "z"?: number | null }`
+
+Like `mod-watch`, this writes `server.json` directly without regenerating the compose file, so it
+stays usable while the server is running. Omitting an axis leaves it untouched; `null` clears it
+back to the default.
+
 This is the **only** way to write either field. `PUT /servers/:id` drops them: the panel submits the
 whole config it loaded, so a page opened before a note was written would otherwise put its stale copy
 back.

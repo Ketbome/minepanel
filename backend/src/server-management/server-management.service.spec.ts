@@ -283,6 +283,43 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('updateSpawnPoint', () => {
+    it('writes the coordinates without regenerating the compose file', async () => {
+      const config = await service.updateSpawnPoint('myserver', { x: 100, y: 64, z: -200 });
+
+      expect(config.spawnX).toBe(100);
+      expect(config.spawnY).toBe(64);
+      expect(config.spawnZ).toBe(-200);
+      expect(mockDockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(mockDockerComposeService.refreshComposeFile).not.toHaveBeenCalled();
+    });
+
+    it('clears an axis set to null and leaves an omitted axis alone', async () => {
+      mockStore.updateConfig.mockImplementation(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver', spawnX: 100, spawnY: 64, spawnZ: -200 } as any;
+        mutate(config);
+        return config;
+      });
+
+      const config = await service.updateSpawnPoint('myserver', { x: null, z: 50 });
+
+      expect(config.spawnX).toBeUndefined();
+      expect(config.spawnY).toBe(64);
+      expect(config.spawnZ).toBe(50);
+    });
+
+    it('throws when the server has no server.json', async () => {
+      mockStore.updateConfig.mockResolvedValue(null);
+
+      await expect(service.updateSpawnPoint('ghost', { x: 0 })).rejects.toThrow('not found');
+    });
+
+    it('rejects an invalid server ID without touching the store', async () => {
+      await expect(service.updateSpawnPoint('../hack', { x: 0 })).rejects.toThrow('Invalid server ID');
+      expect(mockStore.updateConfig).not.toHaveBeenCalled();
+    });
+  });
+
   describe('startServer', () => {
     it('should fail for invalid server ID', async () => {
       const result = await service.startServer('invalid;id');

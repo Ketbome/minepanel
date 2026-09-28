@@ -199,6 +199,12 @@ export interface ServerConfig {
   modNotes?: Record<string, string>;
   modWatchTargetVersion?: string;
 
+  // Default "TP Spawn" coordinates for the Players tab quick action. Neither reaches the
+  // compose file; saved through PUT /servers/:id/spawn-point, not the whole-form save.
+  spawnX?: number;
+  spawnY?: number;
+  spawnZ?: number;
+
   // GTNH specific
   gtnhPackVersion?: string;
   gtnhDeleteBackups?: boolean;

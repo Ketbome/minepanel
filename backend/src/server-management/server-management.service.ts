@@ -199,6 +199,25 @@ export class ServerManagementService {
     return config;
   }
 
+  // Writes server.json directly, like updateModWatch: the Players/Commands tabs stay open
+  // while the server runs, so this write must not regenerate the compose file.
+  async updateSpawnPoint(serverId: string, update: { x?: number | null; y?: number | null; z?: number | null }): Promise<ServerConfig> {
+    if (!this.validateServerId(serverId)) {
+      throw new BadRequestException(`Invalid server ID: ${serverId}`);
+    }
+
+    const config = await this.store.updateConfig(serverId, (current) => {
+      if (update.x !== undefined) current.spawnX = update.x ?? undefined;
+      if (update.y !== undefined) current.spawnY = update.y ?? undefined;
+      if (update.z !== undefined) current.spawnZ = update.z ?? undefined;
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Server with ID "${serverId}" not found`);
+    }
+    return config;
+  }
+
   private validateServerId(serverId: string): boolean {
     return /^[a-zA-Z0-9_-]+$/.test(serverId);
   }

@@ -32,6 +32,17 @@ export const updateModWatch = async (
   return response.data;
 };
 
+// Default TP-to-spawn coordinates only. Separate from updateServerConfig for the same reason
+// as updateModWatch: it writes server.json without regenerating the compose file, so it stays
+// safe to use from the Players/Commands tabs while the server is running.
+export const updateSpawnPoint = async (
+  serverId: string,
+  update: { x?: number | null; y?: number | null; z?: number | null },
+): Promise<ServerConfig> => {
+  const response = await api.put(`/servers/${serverId}/spawn-point`, update);
+  return response.data;
+};
+
 export const getServerWorlds = async (serverId: string): Promise<AvailableWorld[]> => {
   const response = await api.get(`/servers/${serverId}/worlds`);
   return response.data;

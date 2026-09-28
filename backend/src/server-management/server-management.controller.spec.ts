@@ -43,6 +43,7 @@ describe('ServerManagementController', () => {
       clearServerData: jest.fn(),
       listAvailableWorlds: jest.fn(),
       updateModWatch: jest.fn(),
+      updateSpawnPoint: jest.fn(),
     };
 
     const mockDockerComposeService = {
@@ -516,10 +517,56 @@ describe('ServerManagementController', () => {
         modWatchTargetVersion: '1.16.5',
         activityTracking: false,
         cfApiKey: '',
+        spawnX: 100,
+        spawnY: 64,
+        spawnZ: -200,
       } as any);
 
       const [, forwarded] = dockerComposeService.updateServerConfig.mock.calls[0];
       expect(forwarded).toEqual({ maxPlayers: '40' });
+    });
+  });
+
+  describe('updateSpawnPoint', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({
+        id: 1,
+        username: 'someone',
+        role: 'USER',
+        permissions: { accessAllServers: false },
+        serverAccess: ['survival'],
+      });
+      serverService.updateSpawnPoint.mockResolvedValue({ id: 'survival', spawnX: 100, spawnY: 64, spawnZ: -200 } as any);
+    });
+
+    it('checks server access before writing', async () => {
+      await controller.updateSpawnPoint(mockReq, 'survival', { x: 100, y: 64, z: -200 });
+
+      expect(accessControlService.assertServerAccess).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), 'survival');
+      expect(serverService.updateSpawnPoint).toHaveBeenCalledWith('survival', { x: 100, y: 64, z: -200 });
+    });
+
+    it('records an audit entry', async () => {
+      await controller.updateSpawnPoint(mockReq, 'survival', { x: 100, y: 64, z: -200 });
+
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'servers',
+          action: 'update_spawn_point',
+          serverId: 'survival',
+          summary: 'Updated default spawn point for survival',
+        }),
+      );
+    });
+
+    // Same reasoning as Mod Watch: this write must not regenerate the compose file, since
+    // the Players/Commands tabs stay usable while the server is running.
+    it('never regenerates the compose file', async () => {
+      await controller.updateSpawnPoint(mockReq, 'survival', { x: 100, y: 64, z: -200 });
+
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
     });
   });
 
