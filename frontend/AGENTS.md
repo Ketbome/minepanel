@@ -254,8 +254,9 @@ Tooling / build (Next.js 16):
     effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
     events are not used. `BLOCKS` (`world.ts`) says how long a block takes by hand (`mine`) or with the
     pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
-    (hold to repeat). `Drops.tsx` holds item entities (mob loot, barters, your shot arrows) that you
-    pick up by walking over them. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    (hold to repeat), one with `food` is eaten by holding it. `Drops.tsx` holds item entities (mob
+    loot, barters, your shot arrows) that you pick up by walking over them; a monster's loot table is
+    the `loot` option of `useMonster`, rolled by `dropLoot` when it dies. `runtime.hooks.vibration` is how steps, landings, blocks, chests
     and arrows reach the ancient city's noise and the Warden.
   - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;

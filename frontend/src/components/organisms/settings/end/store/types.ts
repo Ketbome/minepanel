@@ -15,7 +15,7 @@ export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3
 export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'guide3' | 'stop';
 export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote';
 export type AdvancementKind = 'task' | 'goal';
-export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball' | 'dirt' | 'creeper' | 'totem' | 'barrier' | 'ruins';
+export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball' | 'dirt' | 'creeper' | 'totem' | 'barrier' | 'ruins' | 'skull';
 
 // one-shot story beats; a flag never goes back to false within a run
 export type Flag =
@@ -68,7 +68,8 @@ export type Flag =
   | 'golemAngry'
   | 'wolfTamed'
   | 'wolfLost'
-  | 'pelusaBlew';
+  | 'pelusaBlew'
+  | 'skullFound';
 
 export type Panel =
   | { readonly kind: 'chest'; readonly id: ChestId }

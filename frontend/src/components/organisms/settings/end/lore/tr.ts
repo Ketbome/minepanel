@@ -426,6 +426,11 @@ const tr: Record<LoreKey, string> = {
   wolfDied: "ben değildim. bu sefer.",
   hintBone: "Bir kemik tut ve evcilleştirmek için bir kurda kullan.",
   pigName: "Pastırma",
+  itemRottenFlesh: "Çürük Et",
+  itemPorkchop: "Çiğ Domuz Pirzolası",
+  itemNugget: "Altın Parçası",
+  itemSkull: "Wither İskeleti Kafatası",
+  advSkull: "Nadir Ganimet",
 };
 
 export default tr;

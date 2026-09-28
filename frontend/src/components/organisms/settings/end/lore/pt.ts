@@ -426,6 +426,11 @@ const pt: Record<LoreKey, string> = {
   wolfDied: "não fui eu. dessa vez.",
   hintBone: "Segure um osso e use num lobo para domesticá-lo.",
   pigName: "Bacon",
+  itemRottenFlesh: "Carne Podre",
+  itemPorkchop: "Costeleta de Porco Crua",
+  itemNugget: "Pepita de Ouro",
+  itemSkull: "Crânio de Esqueleto Wither",
+  advSkull: "Troféu raro",
 };
 
 export default pt;

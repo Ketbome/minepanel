@@ -310,7 +310,7 @@ export function Hand() {
       // and nearly face-on while drawing, the arrow aimed at the crosshair
       let yaw = 100;
       let roll = 0;
-      if (held === 'apple' && m.charge > 0) {
+      if (held && ITEMS[held].food && m.charge > 0) {
         // up to the mouth, bobbing while you chew
         const lift = Math.min(1, m.charge * 6);
         const chew = m.charge > 0.2 ? Math.abs(Math.cos(m.charge * 7 * Math.PI)) * 0.04 : 0;

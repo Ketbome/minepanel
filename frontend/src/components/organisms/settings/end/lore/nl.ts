@@ -426,6 +426,11 @@ const nl: Record<LoreKey, string> = {
   wolfDied: "ik was het niet. deze keer.",
   hintBone: "Houd een bot vast en gebruik het op een wolf om hem te temmen.",
   pigName: "Spekje",
+  itemRottenFlesh: "Rot vlees",
+  itemPorkchop: "Rauwe karbonade",
+  itemNugget: "Goudklompje",
+  itemSkull: "Witherskeletschedel",
+  advSkull: "Zeldzame trofee",
 };
 
 export default nl;

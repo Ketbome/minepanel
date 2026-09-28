@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { isBright } from '../engine/clock';
+import { dropLoot, type Loot } from '../engine/Drops';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
 import { useEndGame, type DeathCause } from '../store';
@@ -39,6 +40,7 @@ export interface MonsterOptions {
   readonly size: readonly [number, number];
   readonly speed?: number;
   readonly onDeath?: () => void;
+  readonly loot?: readonly Loot[];
   // the undead catch fire by day under the open sky
   readonly burns?: boolean;
   // while calm (a spider by day) it leaves you alone until you hit it
@@ -49,7 +51,7 @@ export interface MonsterOptions {
 
 // what every monster shares: the hit box, the hurt flash and death, and a plain hunt (spot you,
 // walk up, hit, wait a second)
-export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wander, legs: React.RefObject<(THREE.Group | null)[]>, materials: readonly THREE.MeshLambertMaterial[], { hp, strike, cause, size: [width, height], speed = 3, onDeath, burns = false, calm, onHurt }: MonsterOptions, head?: React.RefObject<THREE.Group | null>) {
+export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wander, legs: React.RefObject<(THREE.Group | null)[]>, materials: readonly THREE.MeshLambertMaterial[], { hp, strike, cause, size: [width, height], speed = 3, onDeath, loot, burns = false, calm, onHurt }: MonsterOptions, head?: React.RefObject<THREE.Group | null>) {
   const control = useMob(root, wander, legs, { half: Math.max(0.15, width / 2 - 0.05), height }, head);
   const damage = useDamage(root, materials, height);
   const state = useRef({ hp, strikeAt: 0, swingAt: -9, hunting: false, provoked: false });
@@ -62,6 +64,8 @@ export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wa
     cue('hit');
     if (s.hp > 0) return;
     control.dead = true;
+    const at = root.current?.position;
+    if (loot && at) dropLoot(loot, at.clone().setY(at.y + 0.6));
     damage.die(onDeath);
   };
 
@@ -244,6 +248,8 @@ const DROWNED_EYES: SkinArt = {
   boxes: { eyes: { size: [8, 1, 0.2], base: 'x', faces: { front: ['.ee..ee.'] } } },
 };
 
+const FLESH: readonly Loot[] = [{ item: 'rottenFlesh', min: 0, max: 2 }];
+
 function useZombie(art: SkinArt, wander: Wander, options: MonsterOptions) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
@@ -257,12 +263,12 @@ function useZombie(art: SkinArt, wander: Wander, options: MonsterOptions) {
 }
 
 export function Zombie({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const parts = useZombie(ZOMBIE, wander, { hp: 20, strike: 3, cause: 'zombie', size: [0.6, 1.95], speed: 2.4, onDeath, burns: true });
+  const parts = useZombie(ZOMBIE, wander, { hp: 20, strike: 3, cause: 'zombie', size: [0.6, 1.95], speed: 2.4, onDeath, loot: FLESH, burns: true });
   return <Biped art={ZOMBIE} wander={wander} {...parts} />;
 }
 
 export function Drowned({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const parts = useZombie(DROWNED, wander, { hp: 20, strike: 3, cause: 'drowned', size: [0.6, 1.95], speed: 2.4, onDeath });
+  const parts = useZombie(DROWNED, wander, { hp: 20, strike: 3, cause: 'drowned', size: [0.6, 1.95], speed: 2.4, onDeath, loot: FLESH });
   return (
     <Biped art={DROWNED} wander={wander} {...parts}>
       <Glow art={DROWNED_EYES} at={[0, 3.5, 4.12]} />
@@ -294,7 +300,7 @@ const ZOMBIE_VILLAGER: SkinArt = {
 };
 
 export function ZombieVillager({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const { root, head, legs, arms, material } = useZombie(ZOMBIE_VILLAGER, wander, { hp: 20, strike: 3, cause: 'zombieVillager', size: [0.6, 1.95], speed: 2.4, onDeath, burns: true });
+  const { root, head, legs, arms, material } = useZombie(ZOMBIE_VILLAGER, wander, { hp: 20, strike: 3, cause: 'zombieVillager', size: [0.6, 1.95], speed: 2.4, onDeath, loot: FLESH, burns: true });
   const skin = skinOf(ZOMBIE_VILLAGER);
   return (
     <group ref={root} position={wander.home}>

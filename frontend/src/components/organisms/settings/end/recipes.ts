@@ -18,6 +18,7 @@ export const RECIPES: readonly Recipe[] = [
   { output: 'pickaxe', rows: [['diamond', 'diamond', 'diamond'], [null, 'stick', null], [null, 'stick', null]] },
   { output: 'planks', count: 4, ingredients: ['log'] },
   { output: 'stick', count: 4, rows: [['planks'], ['planks']] },
+  { output: 'gold', rows: [['nugget', 'nugget', 'nugget'], ['nugget', 'nugget', 'nugget'], ['nugget', 'nugget', 'nugget']] },
 ];
 
 const SIZE = 3;

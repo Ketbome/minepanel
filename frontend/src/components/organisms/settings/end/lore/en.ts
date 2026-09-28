@@ -424,6 +424,11 @@ export const en = {
   wolfDied: "it wasn't me. this time.",
   hintBone: "Hold a bone and use it on a wolf to tame it.",
   pigName: "Bacon",
+  itemRottenFlesh: "Rotten Flesh",
+  itemPorkchop: "Raw Porkchop",
+  itemNugget: "Gold Nugget",
+  itemSkull: "Wither Skeleton Skull",
+  advSkull: "Rare Trophy",
 };
 
 export type LoreKey = keyof typeof en;

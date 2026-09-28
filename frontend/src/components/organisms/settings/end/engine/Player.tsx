@@ -447,11 +447,11 @@ export function Player() {
           bfuunyLaughs('bfuunyDirt');
         }
       }
-    } else if (active && edges.right && item !== 'bow' && item !== 'apple') {
+    } else if (active && edges.right && item !== 'bow' && !(item && ITEMS[item].food)) {
       applyHeld(item, p.look, p.eye);
       game.bump();
     }
-    // the bow draws while held and fires on release; the apple is eaten while held
+    // the bow draws while held and fires on release; food is eaten while held
     if (item === 'bow' && active && input.right && countOf(game.inventory, 'arrow') > 0) {
       if (s.charge === 0) cue('bowDraw');
       s.charge = Math.min(1, s.charge + dt);
@@ -476,12 +476,13 @@ export function Player() {
       s.charge = 0;
       game.setCharge(0);
     }
-    if (item === 'apple' && active && input.right && game.hp < MAX_HP) {
+    const food = item && ITEMS[item].food;
+    if (item && food && active && input.right && game.hp < MAX_HP) {
       if (Math.floor(s.eating * 4) !== Math.floor((s.eating + dt) * 4)) cue('eat');
       s.eating += dt;
       game.setCharge(Math.min(1, s.eating / 1.4));
-      if (s.eating >= 1.4 && game.spend('apple')) {
-        game.heal(8);
+      if (s.eating >= 1.4 && game.spend(item)) {
+        game.heal(food);
         s.eating = 0;
         game.setCharge(0);
       }

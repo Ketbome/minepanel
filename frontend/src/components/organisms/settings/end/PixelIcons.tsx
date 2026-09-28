@@ -210,6 +210,27 @@ function helmetPixels() {
   return pixels;
 }
 
+// the mob drops, drawn from rows of color letters like the helmet
+function rowPixels(rows: readonly string[], colors: Record<string, string>, top: number) {
+  const pixels: Pixel[] = [];
+  rows.forEach((row, y) =>
+    [...row].forEach((cell, x) => {
+      if (cell !== '.') pixels.push([x, y + top, colors[cell]]);
+    })
+  );
+  return pixels;
+}
+
+// a lumpy brown scrap with green rot and a dark rim
+const FLESH_ROWS = ['......oooo......', '....oogggGoo....', '...ogGgbggggo...', '..ogggggbgGgo...', '..obggGggggbo...', '...oggggbgggo...', '....ogbgggGo....', '...ogggggbgo....', '..ogGgbggggo....', '..obggggggo.....', '...oooggoo......', '......oo........'];
+const FLESH_COLORS: Record<string, string> = { o: '#3d2415', g: '#8a4f35', G: '#b06a45', b: '#6b7d3a' };
+// a raw chop: pink meat, a darker vein, a pale rind of fat
+const PORK_ROWS = ['.......oooo.....', '.....ooffffo....', '....offpPppfo...', '...ofpPpppppfo..', '...ofppppprppfo.', '..ofpppprrpppfo.', '..ofppprrpppfo..', '.ofpppppppffo...', '.ofppppppfoo....', '.ofpppppfo......', '..offfffo.......', '...ooooo........'];
+const PORK_COLORS: Record<string, string> = { o: '#6e2a2a', f: '#f6dcd2', p: '#e8878a', P: '#f7b3ad', r: '#bf5157' };
+// a small gold nugget
+const NUGGET_ROWS = ['.......dd.......', '......dyYd......', '....ddyYYyd.....', '...dyyYyyyod....', '...dyyyyyood....', '....doyyoodd....', '.....ddoodd.....', '.......dd.......'];
+const NUGGET_COLORS: Record<string, string> = { d: '#7a520a', y: '#f2c230', Y: '#fff08a', o: '#c78a14' };
+
 const EYE = eyePixels();
 const EGG = eggPixels();
 const HEAD = headPixels();
@@ -241,6 +262,9 @@ export const SPRITES = {
   netherrack: NETHERRACK,
   endStone: END_STONE,
   helmet: HELMET,
+  rottenFlesh: rowPixels(FLESH_ROWS, FLESH_COLORS, 2),
+  porkchop: rowPixels(PORK_ROWS, PORK_COLORS, 2),
+  nugget: rowPixels(NUGGET_ROWS, NUGGET_COLORS, 4),
 };
 
 export function PixelSprite({ pixels, className }: { readonly pixels: readonly Pixel[]; readonly className?: string }) {

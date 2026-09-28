@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue, type CueName } from '../end-audio';
+import { dropLoot } from '../engine/Drops';
 import { explode } from '../engine/explode';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
@@ -335,7 +336,12 @@ export function Pig({ wander, name }: { readonly wander: Wander; readonly name: 
   const legs = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(PIG);
   const materials = useMemo(() => [material], [material]);
-  useAnimal(root, wander, legs, materials, 10, 'oink', name, head);
+  useAnimal(root, wander, legs, materials, 10, 'oink', name, head, undefined, {
+    died: () => {
+      const at = root.current?.position;
+      if (at) dropLoot([{ item: 'porkchop', min: 1, max: 3 }], at.clone().setY(at.y + 0.6));
+    },
+  });
 
   return (
     <group ref={root} position={wander.home}>

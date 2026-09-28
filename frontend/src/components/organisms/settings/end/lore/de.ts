@@ -426,6 +426,11 @@ const de: Record<LoreKey, string> = {
   wolfDied: "ich war's nicht. diesmal.",
   hintBone: "Halte einen Knochen und benutze ihn an einem Wolf, um ihn zu zähmen.",
   pigName: "Speck",
+  itemRottenFlesh: "Verrottetes Fleisch",
+  itemPorkchop: "Rohes Schweinefleisch",
+  itemNugget: "Goldklumpen",
+  itemSkull: "Witherskelettschädel",
+  advSkull: "Seltene Trophäe",
 };
 
 export default de;

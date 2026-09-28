@@ -426,6 +426,11 @@ const ru: Record<LoreKey, string> = {
   wolfDied: "это не я. в этот раз.",
   hintBone: "Держи кость и используй её на волке, чтобы приручить.",
   pigName: "Бекон",
+  itemRottenFlesh: "Гнилая плоть",
+  itemPorkchop: "Сырая свинина",
+  itemNugget: "Золотой самородок",
+  itemSkull: "Череп скелета-иссушителя",
+  advSkull: "Редкий трофей",
 };
 
 export default ru;

@@ -32,7 +32,11 @@ export type ItemId =
   | 'endStone'
   | 'pickaxe'
   | 'helmet'
-  | 'bone';
+  | 'bone'
+  | 'rottenFlesh'
+  | 'porkchop'
+  | 'nugget'
+  | 'skull';
 
 export interface Stack {
   readonly item: ItemId;
@@ -49,6 +53,8 @@ interface ItemDef {
   readonly pixels?: readonly Pixel[];
   // right click places it as this block
   readonly block?: BlockId;
+  // held right click eats it, healing this much
+  readonly food?: number;
 }
 
 export const ITEMS: Record<ItemId, ItemDef> = {
@@ -61,7 +67,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   rod: { name: 'itemRod', max: 64, icon: BlazeRodIcon },
   bow: { name: 'itemBow', max: 1, image: '/images/bow.webp' },
   arrow: { name: 'itemArrow', max: 64, icon: ArrowIcon },
-  apple: { name: 'itemApple', max: 64, image: '/images/golden-apple.webp' },
+  apple: { name: 'itemApple', max: 64, image: '/images/golden-apple.webp', food: 8 },
   sword: { name: 'itemSword', max: 1, image: '/images/diamond-sword.webp' },
   eye: { name: 'itemEye', max: 64, icon: EyeOfEnderIcon },
   egg: { name: 'itemEgg', max: 64, icon: DragonEggIcon },
@@ -80,6 +86,10 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   endStone: { name: 'itemEndStone', max: 64, pixels: SPRITES.endStone, block: 'endStone' },
   pickaxe: { name: 'itemPickaxe', max: 1, image: '/images/diamond-pickaxe.webp' },
   helmet: { name: 'itemHelmet', max: 1, pixels: SPRITES.helmet },
+  rottenFlesh: { name: 'itemRottenFlesh', max: 64, pixels: SPRITES.rottenFlesh, food: 2 },
+  porkchop: { name: 'itemPorkchop', max: 64, pixels: SPRITES.porkchop, food: 3 },
+  nugget: { name: 'itemNugget', max: 64, pixels: SPRITES.nugget },
+  skull: { name: 'itemSkull', max: 64, image: '/images/wither-skeleton-skull.webp' },
 };
 
 export const HOTBAR_SIZE = 9;

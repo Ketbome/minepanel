@@ -426,6 +426,11 @@ const fr: Record<LoreKey, string> = {
   wolfDied: "c'est pas moi. cette fois.",
   hintBone: "Tiens un os et utilise-le sur un loup pour l'apprivoiser.",
   pigName: "Lardon",
+  itemRottenFlesh: "Chair putréfiée",
+  itemPorkchop: "Côtelette de porc crue",
+  itemNugget: "Pépite d'or",
+  itemSkull: "Crâne de squelette wither",
+  advSkull: "Trophée rare",
 };
 
 export default fr;
