@@ -1,5 +1,10 @@
 import { GITHUB_REPOSITORY } from "@/lib/providers/constants";
 
+// AI coding agents show up as regular users when they author commits; the list is for people
+const AI_AGENTS = ["copilot", "copilot-swe-agent", "claude", "claude-code", "codex", "openai-codex", "chatgpt-codex-connector", "devin-ai-integration", "cursoragent", "cursor-agent", "google-labs-jules", "jules", "sweep-ai", "coderabbitai", "gemini-code-assist", "amazon-q-developer", "aider"];
+
+const isPerson = ({ login, type }: GitHubContributor) => type === "User" && !login.endsWith("[bot]") && !AI_AGENTS.includes(login.toLowerCase());
+
 interface GitHubContributor {
   login: string;
   avatar_url: string;
@@ -25,7 +30,7 @@ export async function GET() {
 
   return Response.json({
     contributors: contributors
-      .filter((contributor) => contributor.type === "User")
+      .filter(isPerson)
       .map(({ login, avatar_url, html_url, contributions }) => ({ login, avatar: avatar_url, url: html_url, contributions })),
   });
 }

@@ -150,7 +150,7 @@ export function Villager({ wander, profession, name }: { readonly wander: Wander
 
   return (
     <group ref={root} position={wander.home}>
-      {name && <NameTag text={name} y={2.2} />}
+      {name && <NameTag text={name} y={2.55} />}
       {[-2, 2].map((x, index) => (
         <group
           key={x}
