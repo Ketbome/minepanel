@@ -1745,15 +1745,20 @@ export class ServerManagementService {
     }
   }
 
-  async readTickStats(serverId: string, source: 'neoforge' | 'spark'): Promise<CommandExecutionResponse> {
+  async readTickStats(serverId: string, source: 'neoforge' | 'spark', rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
     if (!this.validateServerId(serverId)) return { success: false, output: '' };
     try {
       if (!(await this.serverExists(serverId))) return { success: false, output: '' };
       const containerId = await this.findContainerId(serverId);
       if (!containerId) return { success: false, output: '' };
-      // Fixed read-only command; credentials stay in the container environment.
+      // Fixed read-only command; pass credentials explicitly (as executeCommand does) instead of
+      // trusting the container's own env, which goes stale if RCON settings change without a
+      // container recreate.
       const command = source === 'neoforge' ? 'neoforge tps' : 'spark tps';
-      const { stdout, exitCode } = await this.executeProcess('docker', ['exec', containerId, 'rcon-cli', command], { timeout: 5_000 });
+      const args = ['exec', containerId, 'rcon-cli', '--port', rconPort];
+      if (rconPassword) args.push('--password', rconPassword);
+      args.push(command);
+      const { stdout, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
       return { success: exitCode === 0, output: this.sanitizeCommandOutput(stdout) };
     } catch {
       return { success: false, output: '' };
