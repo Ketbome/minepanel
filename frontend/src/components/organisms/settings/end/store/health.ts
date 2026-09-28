@@ -1,4 +1,5 @@
 import { BFUUNY, BLASTER } from './admins';
+import { DRAGON_MAX_HP } from './game';
 import { countDeath } from './persist';
 import type { HealthSlice, Slice } from './types';
 
@@ -28,6 +29,8 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
     state.closePanel();
     countDeath();
     set({ hp: 0, hurtAt: now, dead: cause, deaths: state.deaths + 1, levitateUntil: 0 });
+    // dying in the fight gives the dragon its health back; destroyed crystals stay destroyed
+    if (state.zone === 'end' && state.stage === 'dragon') set({ dragonHp: DRAGON_MAX_HP });
     // Bfuuny mode: your deaths go on his count, and the others laugh
     if (state.mode === 'bfuuny') {
       window.setTimeout(() => get().say('bfuunyModeDeath', BFUUNY), 900);

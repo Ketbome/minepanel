@@ -90,6 +90,8 @@ export function Player() {
       if (event.key === 'Escape') escapeDown = true;
       if (!playing()) return;
       input.keys.add(event.code);
+      // Ctrl is sprint: without this Ctrl+S or Ctrl+D open the browser's save or bookmark dialog mid-run
+      if (event.ctrlKey && /^Key[WASD]$/.test(event.code)) event.preventDefault();
       if (event.code === 'Space') {
         input.jumpPressed = true;
         event.preventDefault();
@@ -419,6 +421,8 @@ export function Player() {
 
     const placeable = item && ITEMS[item].block;
     if (active && edges.right && target?.use) {
+      // the same click must not also place a block against what it just used (a portal gap's obsidian)
+      s.placeAt = runtime.time + PLACE_REPEAT_S;
       target.use();
       game.bump();
     } else if (active && placeable && onBlock && (edges.right || (input.right && runtime.time > s.placeAt))) {
