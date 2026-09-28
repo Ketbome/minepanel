@@ -1212,7 +1212,6 @@ export const nl: Record<TranslationKey, string> = {
   open: 'Openen',
   downloadAsZip: 'Downloaden als ZIP',
   creatingZip: 'ZIP-bestand maken...',
-  zipDownloaded: 'ZIP succesvol gedownload',
   errorDownloadingZip: 'Fout bij downloaden ZIP',
   enterNewName: 'Voer nieuwe naam in',
   searchFiles: 'Zoeken in deze map...',

@@ -1183,7 +1183,6 @@ export const pl: Record<TranslationKey, string> = {
   open: 'Otwórz',
   downloadAsZip: 'Pobierz jako ZIP',
   creatingZip: 'Tworzenie pliku ZIP...',
-  zipDownloaded: 'Pobrano plik ZIP pomyślnie',
   errorDownloadingZip: 'Błąd pobierania pliku ZIP',
   enterNewName: 'Wprowadź nową nazwę',
   searchFiles: 'Szukaj w tym folderze...',

@@ -1187,7 +1187,6 @@ export const ru: Record<TranslationKey, string> = {
   open: 'Открыть',
   downloadAsZip: 'Скачать как ZIP',
   creatingZip: 'Создание ZIP-файла...',
-  zipDownloaded: 'ZIP успешно скачан',
   errorDownloadingZip: 'Ошибка скачивания ZIP',
   enterNewName: 'Введите новое название',
   searchFiles: 'Поиск в этой папке...',

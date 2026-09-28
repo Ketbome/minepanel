@@ -442,22 +442,37 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
     [t]
   );
 
-  const handleDownload = useCallback(
-    async (file: FileItem) => {
-      await runDownload(file.name, file.size, (options) => filesService.downloadFile(serverId, file.path, options));
+  const downloadNative = useCallback(
+    async (file: FileItem, zip: boolean) => {
+      try {
+        await filesService.downloadNative(serverId, file.path, zip);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        mcToast.error(t("errorLoadingFiles"));
+      }
     },
-    [serverId, runDownload]
+    [serverId, t]
   );
 
+  const handleDownload = useCallback(
+    async (file: FileItem) => {
+      if (file.size > filesService.NATIVE_DOWNLOAD_BYTES) {
+        await downloadNative(file, false);
+        return;
+      }
+      await runDownload(file.name, file.size, (options) => filesService.downloadFile(serverId, file.path, options));
+    },
+    [serverId, runDownload, downloadNative]
+  );
+
+  // The archive is compressed on the fly, so its size is only known at the end: a
+  // world can be many gigabytes, which a blob would hold in memory whole.
   const handleDownloadZip = useCallback(
     async (file: FileItem) => {
       if (!file.isDirectory) return;
-
-      // The archive is compressed on the fly, so its size is only known at the end.
-      const done = await runDownload(`${file.name}.zip`, 0, (options) => filesService.downloadZip(serverId, file.path, options));
-      if (done) mcToast.success(t("zipDownloaded"));
+      await downloadNative(file, true);
     },
-    [serverId, runDownload, t]
+    [downloadNative]
   );
 
   const handleCancelDownload = useCallback(() => {

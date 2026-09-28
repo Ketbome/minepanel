@@ -1185,7 +1185,6 @@ export const en = {
   open: 'Open',
   downloadAsZip: 'Download as ZIP',
   creatingZip: 'Creating ZIP file...',
-  zipDownloaded: 'ZIP downloaded successfully',
   errorDownloadingZip: 'Error downloading ZIP',
   enterNewName: 'Enter new name',
   searchFiles: 'Search in this folder...',

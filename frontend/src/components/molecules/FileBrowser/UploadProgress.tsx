@@ -9,8 +9,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 export interface UploadItem {
   id: string;
   name: string;
-  // 0 while the size is unknown, which is the case for a folder being zipped
-  // on the fly.
+  // 0 while the size is unknown.
   size: number;
   loaded: number;
   status: "pending" | "uploading" | "downloading" | "completed" | "error";

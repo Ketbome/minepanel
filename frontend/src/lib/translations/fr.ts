@@ -1187,7 +1187,6 @@ export const fr: Record<TranslationKey, string> = {
   open: 'Ouvrir',
   downloadAsZip: 'Télécharger en ZIP',
   creatingZip: 'Création du fichier ZIP...',
-  zipDownloaded: 'ZIP téléchargé avec succès',
   errorDownloadingZip: 'Erreur lors du téléchargement du ZIP',
   enterNewName: 'Entrez le nouveau nom',
   searchFiles: 'Rechercher dans ce dossier...',

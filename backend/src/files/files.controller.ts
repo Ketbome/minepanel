@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
@@ -9,8 +9,18 @@ import * as path from 'path';
 import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 
+// Always carries the RFC 5987 filename*: express's attachment() leaves it out for names
+// Latin-1 can spell ("dünya.zip"), and browsers then mangle the raw bytes of filename=.
+export function attachmentHeader(name: string): string {
+  const ascii = name.replace(/[^\x20-\x7e]|["\\]/g, '_');
+  const encoded = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
 @Controller('files')
 export class FilesController {
+  private readonly logger = new Logger(FilesController.name);
+
   constructor(
     private readonly filesService: FilesService,
     private readonly uploadSessions: UploadSessionsService,
@@ -65,8 +75,7 @@ export class FilesController {
       throw new BadRequestException('Cannot download a directory');
     }
 
-    // attachment() adds the RFC 5987 filename*, so non-ASCII names survive the download.
-    res.attachment(path.basename(filePath));
+    res.setHeader('Content-Disposition', attachmentHeader(path.basename(filePath)));
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Length', stat.size);
 
@@ -76,6 +85,8 @@ export class FilesController {
         res.status(500).send('Error reading file');
       }
     });
+    // pipe() leaves the source open when the client goes away, holding the descriptor.
+    res.on('close', () => stream.destroy());
     stream.pipe(res);
   }
 
@@ -88,9 +99,25 @@ export class FilesController {
 
     const { stream, name } = await this.filesService.createZipStream(serverId, dirPath, admin);
 
-    res.attachment(name);
+    res.setHeader('Content-Disposition', attachmentHeader(name));
     res.setHeader('Content-Type', 'application/zip');
 
+    // A cancelled download must stop the archive too. abort() only drops the queued
+    // files: the one being compressed stays paused on backpressure, holding its file
+    // open for good, so the output is drained until that file is done.
+    res.on('close', () => {
+      if (res.writableFinished) return;
+      stream.abort();
+      // Unpiped first: pipe()'s own close handler runs after this one and would pause it again.
+      stream.unpipe(res);
+      stream.resume();
+    });
+    stream.on('warning', (error) => this.logger.warn(`Zip of ${dirPath}: ${error.message}`));
+    // Headers are already out, so the only way to tell the client is to cut the transfer.
+    stream.on('error', (error) => {
+      this.logger.error(`Zip of ${dirPath} failed: ${error.message}`);
+      res.destroy(error);
+    });
     stream.pipe(res);
   }
 

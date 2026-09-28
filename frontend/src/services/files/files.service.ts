@@ -1,5 +1,6 @@
 import axios from "axios";
 import api from "../axios.service";
+import { getPublicEnv } from "@/lib/public-env";
 
 // Files above this go up in chunks, so no request has to carry the whole file past a
 // proxy body limit (Cloudflare: 100 MB) or Node's 5-minute request timeout.
@@ -36,8 +37,7 @@ export interface UploadOptions {
   signal?: AbortSignal;
 }
 
-// A zipped folder is streamed while it is being compressed, so its total size is
-// unknown until the last byte arrives.
+// total is missing when the response carries no Content-Length.
 export interface DownloadProgress {
   loaded: number;
   total?: number;
@@ -166,20 +166,28 @@ export const filesService = {
     return data;
   },
 
-  async downloadFile(serverId: string, path: string, options?: DownloadOptions): Promise<Blob> {
-    const { data } = await api.get(`/files/${serverId}/download`, {
-      params: { path },
-      responseType: "blob",
-      signal: options?.signal,
-      onDownloadProgress: (progressEvent) => {
-        options?.onProgress?.({ loaded: progressEvent.loaded, total: progressEvent.total });
-      },
-    });
-    return data;
+  // Up to this size a download goes through a blob, which feeds the in-panel progress
+  // but holds the whole file in the tab's memory. Past it the browser saves to disk.
+  // ponytail: a folder ZIP has no size up front, so it always goes to the browser.
+  NATIVE_DOWNLOAD_BYTES: 256 * 1024 * 1024,
+
+  // Hands the transfer to the browser, which writes to disk as bytes arrive and shows
+  // its own progress and cancel. A navigation cannot refresh an expired session, so the
+  // info request goes first: the axios interceptor refreshes the cookie if needed, and a
+  // missing path fails here as an error instead of a JSON page.
+  async downloadNative(serverId: string, path: string, zip = false): Promise<void> {
+    await api.get(`/files/${serverId}/info`, { params: { path } });
+
+    const link = document.createElement("a");
+    link.href = `${getPublicEnv("NEXT_PUBLIC_BACKEND_URL")}/files/${serverId}/${zip ? "download-zip" : "download"}?${new URLSearchParams({ path })}`;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   },
 
-  async downloadZip(serverId: string, path: string, options?: DownloadOptions): Promise<Blob> {
-    const { data } = await api.get(`/files/${serverId}/download-zip`, {
+  async downloadFile(serverId: string, path: string, options?: DownloadOptions): Promise<Blob> {
+    const { data } = await api.get(`/files/${serverId}/download`, {
       params: { path },
       responseType: "blob",
       signal: options?.signal,

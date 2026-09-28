@@ -236,9 +236,11 @@ every few seconds and keeps:
 
 Built-in browser for each server under `servers/<id>/mc-data`:
 
-- Upload/download files, with a live transfer panel (speed, ETA, cancel); folders are
-  downloaded as a ZIP that streams while it is compressed, so only the transferred
-  bytes are shown until it finishes. Uploads stream to disk (`servers/.uploads/`) rather than
+- Upload/download files, with a live transfer panel (speed, ETA, cancel). Files over
+  256 MB and folders (as a ZIP that streams while it is compressed) are handed to the
+  browser's own download instead, which writes to disk as bytes arrive rather than holding
+  the whole file in the tab's memory; cancelling a ZIP there stops the compression on the
+  server as well. Uploads stream to disk (`servers/.uploads/`) rather than
   memory, so large files do not depend on the backend's RAM; an upload only lands in its folder
   once it is complete, and a cancelled or interrupted one is discarded
 - Files over 8 MB upload in chunks, so no single request carries the whole file: a reverse

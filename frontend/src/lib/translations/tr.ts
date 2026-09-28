@@ -1213,7 +1213,6 @@ export const tr: Record<TranslationKey, string> = {
   open: 'Aç',
   downloadAsZip: 'ZIP olarak indir',
   creatingZip: 'ZIP dosyası oluşturuluyor...',
-  zipDownloaded: 'ZIP başarıyla indirildi',
   errorDownloadingZip: 'ZIP indirilirken hata oluştu',
   enterNewName: 'Yeni adı girin',
   searchFiles: 'Bu klasörde ara...',

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { EventEmitter } from 'node:events';
 import * as fs from 'fs-extra';
-import { FilesController } from './files.controller';
+import { FilesController, attachmentHeader } from './files.controller';
 
 jest.mock('fs-extra', () => ({
   pathExists: jest.fn(),
@@ -42,7 +42,7 @@ describe('FilesController', () => {
       abort: jest.fn().mockResolvedValue(undefined),
     };
     controller = new FilesController(filesService as any, uploadSessions as any, usersService as any, accessControl as any);
-    res = { attachment: jest.fn(), setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
+    res = Object.assign(new EventEmitter(), { destroy: jest.fn(), writableFinished: false, setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false });
   });
 
   it('routes access checks to global or per-server permissions', async () => {
@@ -82,12 +82,12 @@ describe('FilesController', () => {
   it('downloads a file as an attachment', async () => {
     (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
     (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => false, size: 12 });
-    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn() });
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), destroy: jest.fn() });
     (fs.createReadStream as jest.Mock).mockReturnValue(stream);
 
     await controller.downloadFile(req, 'srv', 'dir/a b.txt', res);
 
-    expect(res.attachment).toHaveBeenCalledWith('a b.txt');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="a b.txt"; filename*=UTF-8''a%20b.txt`);
     expect(res.setHeader).toHaveBeenCalledWith('Content-Length', 12);
     expect(stream.pipe).toHaveBeenCalledWith(res);
 
@@ -97,6 +97,15 @@ describe('FilesController', () => {
     res.status.mockClear();
     stream.emit('error', new Error('io'));
     expect(res.status).not.toHaveBeenCalled();
+
+    res.emit('close');
+    expect(stream.destroy).toHaveBeenCalled();
+  });
+
+  it('names downloads in UTF-8, Latin-1 names included', () => {
+    expect(attachmentHeader('büyük dünya.zip')).toBe(`attachment; filename="b_y_k d_nya.zip"; filename*=UTF-8''b%C3%BCy%C3%BCk%20d%C3%BCnya.zip`);
+    expect(attachmentHeader('şş.txt')).toBe(`attachment; filename="__.txt"; filename*=UTF-8''%C5%9F%C5%9F.txt`);
+    expect(attachmentHeader(`a"b\\c'(1)*.txt`)).toBe(`attachment; filename="a_b_c'(1)*.txt"; filename*=UTF-8''a%22b%5Cc%27%281%29%2A.txt`);
   });
 
   it('rejects downloads of missing files and directories', async () => {
@@ -108,11 +117,32 @@ describe('FilesController', () => {
   });
 
   it('streams a zip of a directory', async () => {
-    const stream = { pipe: jest.fn() };
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), abort: jest.fn() });
     filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
     await controller.downloadZip(req, 'srv', 'dir', res);
-    expect(res.attachment).toHaveBeenCalledWith('dir.zip');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="dir.zip"; filename*=UTF-8''dir.zip`);
     expect(stream.pipe).toHaveBeenCalledWith(res);
+
+    stream.emit('warning', new Error('ENOENT'));
+    const failure = new Error('EACCES');
+    stream.emit('error', failure);
+    expect(res.destroy).toHaveBeenCalledWith(failure);
+  });
+
+  it('stops zipping when the client leaves before the end, not after it', async () => {
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), abort: jest.fn(), unpipe: jest.fn(), resume: jest.fn() });
+    filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
+
+    await controller.downloadZip(req, 'srv', 'dir', res);
+    res.writableFinished = true;
+    res.emit('close');
+    expect(stream.abort).not.toHaveBeenCalled();
+
+    res.writableFinished = false;
+    res.emit('close');
+    expect(stream.abort).toHaveBeenCalled();
+    expect(stream.unpipe).toHaveBeenCalledWith(res);
+    expect(stream.resume).toHaveBeenCalled();
   });
 
   it('uploads a single file preserving the relative path', async () => {
