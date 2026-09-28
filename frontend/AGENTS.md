@@ -236,8 +236,11 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
 - `src/components/organisms/settings/end/` - the Danger Zone easter egg: a first-person
   Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
-  the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
-  `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
+  the store, audio and story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`,
+  `panels/`) on click, so `three`, the store and the story never reach the page. At page load it
+  reads only `store/persist.ts` and `store/admins.ts`: import those files directly, never the
+  `store` index. The start screen's Play unlocks the audio, since the button's click came before
+  the audio module loaded. Nothing outside this
   folder may import from it, except `AchievementsTrophy.tsx`: the dashboard header's trophy slot.
   It carries only the key catalog (`achievements.ts`) and the egg icon; its list, badges and lore
   load with `next/dynamic` when it opens. `advance()` reports each key through
