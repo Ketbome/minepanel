@@ -38,14 +38,14 @@ describe('UploadSessionsService', () => {
   it('appends chunks in order and moves the finished file into place', async () => {
     const { id, offset } = await service.create(1, 'srv', 'world/big.zip', 11, false);
     expect(offset).toBe(0);
-    expect(filesService.assertUploadTarget).toHaveBeenCalledWith('srv', 'world/big.zip', false);
+    expect(filesService.assertUploadTarget).toHaveBeenCalledWith('srv', 'world/big.zip', false, true);
 
     expect(await service.append(1, 'srv', id, 0, chunk('hello '))).toEqual({ offset: 6 });
     expect(await service.getOffset(1, 'srv', id)).toEqual({ offset: 6 });
     expect(await service.append(1, 'srv', id, 6, chunk('world'))).toEqual({ offset: 11 });
 
     expect(await service.complete(1, 'srv', id, true)).toEqual({ path: 'world/big.zip' });
-    expect(filesService.saveUpload).toHaveBeenCalledWith('srv', 'world/big.zip', path.join(dir, `${id}.part`), true);
+    expect(filesService.saveUpload).toHaveBeenCalledWith('srv', 'world/big.zip', path.join(dir, `${id}.part`), true, true);
     expect(saved?.toString()).toBe('hello world');
     expect(await fs.readdir(dir)).toEqual([]);
   });
@@ -118,6 +118,13 @@ describe('UploadSessionsService', () => {
 
     await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(ConflictException);
     expect(filesService.saveUpload).not.toHaveBeenCalled();
+  });
+
+  it('keeps the overwrite choice until the file is moved into place', async () => {
+    const { id } = await service.create(1, 'srv', 'a.txt', 0, false, false);
+    expect(filesService.assertUploadTarget).toHaveBeenCalledWith('srv', 'a.txt', false, false);
+    await service.complete(1, 'srv', id, false);
+    expect(filesService.saveUpload).toHaveBeenCalledWith('srv', 'a.txt', expect.any(String), false, false);
   });
 
   it('completes an empty file without any chunk', async () => {

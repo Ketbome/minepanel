@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateUploadDto {
   // Folder the file goes into, as for the multipart upload.
@@ -15,4 +15,9 @@ export class CreateUploadDto {
   @Min(0)
   @Max(Number.MAX_SAFE_INTEGER)
   size: number;
+
+  // false refuses to replace an existing file (409), before any byte is sent.
+  @IsOptional()
+  @IsBoolean()
+  overwrite?: boolean;
 }

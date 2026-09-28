@@ -1,9 +1,10 @@
 "use client";
 
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FileItem } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Download, Pencil, Trash2, FolderOpen, Copy, FileText, Archive } from "lucide-react";
+import { isEditableFile } from "./file-types";
 
 interface FileContextMenuProps {
   file: FileItem;
@@ -17,12 +18,6 @@ interface FileContextMenuProps {
   onOpen: (file: FileItem) => void;
   onCopyPath: (file: FileItem) => void;
 }
-
-const isEditableFile = (file: FileItem): boolean => {
-  if (file.isDirectory) return false;
-  const textExtensions = ["txt", "json", "yml", "yaml", "properties", "cfg", "conf", "xml", "md", "log", "sh", "bat", "toml", "ini", "mcmeta", "lang"];
-  return file.extension ? textExtensions.includes(file.extension.toLowerCase()) : false;
-};
 
 export const FileContextMenu: FC<FileContextMenuProps> = ({
   file,
@@ -58,17 +53,17 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
     };
   }, [onClose]);
 
-  // Adjust position to keep menu in viewport
-  const adjustedPosition = { ...position };
-  if (menuRef.current) {
-    const rect = menuRef.current.getBoundingClientRect();
-    if (position.x + rect.width > window.innerWidth) {
-      adjustedPosition.x = window.innerWidth - rect.width - 10;
-    }
-    if (position.y + rect.height > window.innerHeight) {
-      adjustedPosition.y = window.innerHeight - rect.height - 10;
-    }
-  }
+  // Measured after mount: during the first render the ref is still empty, so a menu
+  // opened near the bottom or right edge used to spill out of the viewport.
+  const [adjustedPosition, setAdjustedPosition] = useState(position);
+  useLayoutEffect(() => {
+    const rect = menuRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setAdjustedPosition({
+      x: Math.max(8, Math.min(position.x, window.innerWidth - rect.width - 8)),
+      y: Math.max(8, Math.min(position.y, window.innerHeight - rect.height - 8)),
+    });
+  }, [position]);
 
   const menuItems = [
     ...(file.isDirectory
@@ -92,6 +87,7 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
+      role="menu"
       className="fixed z-50 min-w-[180px] bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 animate-in fade-in-0 zoom-in-95 select-none"
       style={{ left: adjustedPosition.x, top: adjustedPosition.y }}
     >
@@ -101,6 +97,7 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
         ) : (
           <button
             key={index}
+            role="menuitem"
             onClick={() => {
               item.action?.();
               onClose();

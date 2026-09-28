@@ -194,15 +194,19 @@ Examples:
 - `GET /files/:serverId/list?path=`
 - `GET /files/:serverId/read?path=`
 - `GET /files/:serverId/download?path=`
+- `GET /files/:serverId/download-zip?path=` — one folder, or `path` repeated for a selection
+  of files and folders, zipped under the name of their folder
 - `POST /files/:serverId/write`
-- `POST /files/:serverId/upload`
-- `POST /files/:serverId/upload-multiple`
+- `POST /files/:serverId/upload` — `?overwrite=false` refuses to replace an existing file (`409`)
+- `POST /files/:serverId/upload-multiple` — with `?overwrite=false`, existing files are kept
+  and listed by name in `skipped`; files that could not be saved are listed in `failed`
 - `PUT /files/:serverId/rename`
 - `DELETE /files/:serverId/delete?path=`
 
 Chunked uploads (the dashboard uses them for files over 8 MB):
 
-- `POST /files/:serverId/uploads` — body `{ path?, name, size }`; returns `{ id, offset: 0 }`.
+- `POST /files/:serverId/uploads` — body `{ path?, name, size, overwrite? }`; returns `{ id, offset: 0 }`.
+  `overwrite: false` gets `409` when the file exists, before any byte is sent.
   Refused with `400` when the target is not writable or is a folder, `507` when the disk
   cannot hold `size`
 - `PUT /files/:serverId/uploads/:id?offset=` — raw `application/octet-stream` body, at most

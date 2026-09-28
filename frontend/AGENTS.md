@@ -184,6 +184,11 @@ Tooling / build (Next.js 16):
   Owns the current folder's listing plus the search query and sort state; `FileList` renders
   what it is given. Filtering and sorting are client-side over the loaded folder - there is no
   recursive search endpoint, so do not fake one by walking the tree from the browser.
+  Also owns the selection (`selectedPaths`, the keyboard cursor `activePath` and the Shift
+  anchor `anchorPath`) and the delete / rename / upload-conflict dialogs; actions only apply to
+  selected rows that are visible under the current filter.
+- `src/components/molecules/FileBrowser/file-types.ts` - the single list of extensions that open
+  in the text editor. Keep binary formats (`.nbt`) out: saving them back as text corrupts them.
 - `src/components/molecules/FileBrowser/FileStatusBar.tsx` - footer counts (folders, files,
   total size) and the "showing X of Y" line while a filter is active.
 - `src/app/dashboard/files/page.tsx` - global file browser entry (`_root`).

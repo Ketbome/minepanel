@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { EventEmitter } from 'node:events';
 import * as fs from 'fs-extra';
 import { FilesController, attachmentHeader } from './files.controller';
@@ -120,7 +120,11 @@ describe('FilesController', () => {
     const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), abort: jest.fn() });
     filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
     await controller.downloadZip(req, 'srv', 'dir', res);
+    expect(filesService.createZipStream).toHaveBeenCalledWith('srv', ['dir'], false);
     expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="dir.zip"; filename*=UTF-8''dir.zip`);
+
+    await controller.downloadZip(req, 'srv', ['dir/a', 'dir/b'], res);
+    expect(filesService.createZipStream).toHaveBeenLastCalledWith('srv', ['dir/a', 'dir/b'], false);
     expect(stream.pipe).toHaveBeenCalledWith(res);
 
     stream.emit('warning', new Error('ENOENT'));
@@ -151,7 +155,9 @@ describe('FilesController', () => {
     const file = { originalname: 'orig.txt', path: '/app/servers/.uploads/abc' } as Express.Multer.File;
     expect(await controller.uploadFile(req, 'srv', 'mods', 'sub/a.txt', file)).toEqual({ success: true, path: 'mods/sub/a.txt' });
     expect(await controller.uploadFile(req, 'srv', '', '', file)).toEqual({ success: true, path: 'orig.txt' });
-    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false);
+    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false, true);
+    await controller.uploadFile(req, 'srv', '', '', file, 'false');
+    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false, false);
     expect(fs.remove).toHaveBeenLastCalledWith(file.path);
   });
 
@@ -167,25 +173,25 @@ describe('FilesController', () => {
     expect(fs.remove).toHaveBeenCalledTimes(2);
   });
 
-  it('uploads multiple files and counts failures', async () => {
+  it('uploads multiple files and reports skipped and failed ones by name', async () => {
     await expect(controller.uploadMultipleFiles(req, 'srv', '', [], {})).rejects.toThrow('At least one file');
 
-    const files = [{ originalname: 'a.txt', path: '/tmp/a' }, { originalname: 'b.txt', path: '/tmp/b' }] as Express.Multer.File[];
-    filesService.saveUpload.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk'));
+    const files = [{ originalname: 'a.txt', path: '/tmp/a' }, { originalname: 'b.txt', path: '/tmp/b' }, { originalname: 'c.txt', path: '/tmp/c' }] as Express.Multer.File[];
+    filesService.saveUpload.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk')).mockRejectedValueOnce(new ConflictException('exists'));
 
-    const result = await controller.uploadMultipleFiles(req, 'srv', 'dir', files, { relativePaths: JSON.stringify(['x/a.txt']) });
+    const result = await controller.uploadMultipleFiles(req, 'srv', 'dir', files, { relativePaths: JSON.stringify(['x/a.txt']) }, 'false');
 
-    expect(result).toEqual({ success: true, uploaded: 1, errors: 1 });
-    expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false);
-    expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false);
+    expect(result).toEqual({ success: true, uploaded: 1, errors: 1, skipped: ['c.txt'], failed: ['b.txt'] });
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false, false);
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false, false);
     expect(fs.remove).toHaveBeenCalledWith('/tmp/b');
   });
 
   it('checks write access on every chunked upload step and forwards to the sessions', async () => {
     expect(await controller.createUpload(req, 'srv', { path: 'dir', name: 'big.zip', size: 10 })).toEqual({ id: 'u1', offset: 0 });
-    expect(uploadSessions.create).toHaveBeenCalledWith(1, 'srv', 'dir/big.zip', 10, false);
-    await controller.createUpload(req, 'srv', { name: 'top.zip', size: 1 });
-    expect(uploadSessions.create).toHaveBeenLastCalledWith(1, 'srv', 'top.zip', 1, false);
+    expect(uploadSessions.create).toHaveBeenCalledWith(1, 'srv', 'dir/big.zip', 10, false, true);
+    await controller.createUpload(req, 'srv', { name: 'top.zip', size: 1, overwrite: false });
+    expect(uploadSessions.create).toHaveBeenLastCalledWith(1, 'srv', 'top.zip', 1, false, false);
 
     expect(await controller.getUpload(req, 'srv', 'u1')).toEqual({ offset: 5 });
     expect(await controller.appendUpload(req, 'srv', 'u1', 5)).toEqual({ offset: 10 });

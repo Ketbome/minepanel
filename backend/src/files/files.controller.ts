@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger, ConflictException } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
@@ -91,13 +91,15 @@ export class FilesController {
   }
 
   @Get(':serverId/download-zip')
-  async downloadZip(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string, @Res() res: Response): Promise<void> {
+  // `path` repeats for a selection (?path=a&path=b), which express parses into an array.
+  async downloadZip(@Request() req, @Param('serverId') serverId: string, @Query('path') dirPath: string | string[], @Res() res: Response): Promise<void> {
     const admin = await this.assertFilesAccess(req, serverId, false);
-    if (!dirPath) {
+    const paths = [dirPath ?? []].flat().filter(Boolean);
+    if (paths.length === 0) {
       throw new BadRequestException('Path is required');
     }
 
-    const { stream, name } = await this.filesService.createZipStream(serverId, dirPath, admin);
+    const { stream, name } = await this.filesService.createZipStream(serverId, paths, admin);
 
     res.setHeader('Content-Disposition', attachmentHeader(name));
     res.setHeader('Content-Type', 'application/zip');
@@ -158,6 +160,7 @@ export class FilesController {
     @Query('path') dirPath: string = '',
     @Query('relativePath') relativePath: string = '',
     @UploadedFile() file: Express.Multer.File,
+    @Query('overwrite') overwrite: string = 'true',
   ): Promise<{ success: boolean; path: string }> {
     // Whatever happens below, the staged upload must not stay behind.
     try {
@@ -169,7 +172,7 @@ export class FilesController {
       // Si viene relativePath, usarlo para preservar estructura de carpetas
       const fileName = relativePath || file.originalname;
       const filePath = path.join(dirPath, fileName);
-      await this.filesService.saveUpload(serverId, filePath, file.path, admin);
+      await this.filesService.saveUpload(serverId, filePath, file.path, admin, overwrite !== 'false');
 
       return { success: true, path: filePath };
     } finally {
@@ -185,7 +188,8 @@ export class FilesController {
     @Query('path') dirPath: string = '',
     @UploadedFiles() files: Express.Multer.File[],
     @Body() body: { relativePaths?: string },
-  ): Promise<{ success: boolean; uploaded: number; errors: number }> {
+    @Query('overwrite') overwrite: string = 'true',
+  ): Promise<{ success: boolean; uploaded: number; errors: number; skipped: string[]; failed: string[] }> {
     try {
       const admin = await this.assertFilesAccess(req, serverId, true);
       if (!files || files.length === 0) {
@@ -196,21 +200,21 @@ export class FilesController {
       const relativePaths: string[] = body.relativePaths ? JSON.parse(body.relativePaths) : [];
 
       let uploaded = 0;
-      let errors = 0;
+      // Names as sent, so the client can mark exactly which files did not land.
+      const skipped: string[] = [];
+      const failed: string[] = [];
 
       for (let i = 0; i < files.length; i++) {
+        const fileName = relativePaths[i] || files[i].originalname;
         try {
-          const file = files[i];
-          const fileName = relativePaths[i] || file.originalname;
-          const filePath = path.join(dirPath, fileName);
-          await this.filesService.saveUpload(serverId, filePath, file.path, admin);
+          await this.filesService.saveUpload(serverId, path.join(dirPath, fileName), files[i].path, admin, overwrite !== 'false');
           uploaded++;
-        } catch {
-          errors++;
+        } catch (error) {
+          (error instanceof ConflictException ? skipped : failed).push(fileName);
         }
       }
 
-      return { success: true, uploaded, errors };
+      return { success: true, uploaded, errors: failed.length, skipped, failed };
     } finally {
       await Promise.all((files ?? []).map((file) => fs.remove(file.path)));
     }
@@ -220,7 +224,7 @@ export class FilesController {
   @Post(':serverId/uploads')
   async createUpload(@Request() req, @Param('serverId') serverId: string, @Body() body: CreateUploadDto): Promise<{ id: string; offset: number }> {
     const admin = await this.assertFilesAccess(req, serverId, true);
-    return this.uploadSessions.create(req.user.userId, serverId, path.join(body.path ?? '', body.name), body.size, admin);
+    return this.uploadSessions.create(req.user.userId, serverId, path.join(body.path ?? '', body.name), body.size, admin, body.overwrite ?? true);
   }
 
   @Get(':serverId/uploads/:uploadId')

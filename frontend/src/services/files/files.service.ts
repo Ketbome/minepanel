@@ -35,6 +35,15 @@ export interface UploadProgress {
 export interface UploadOptions {
   onProgress?: (progress: UploadProgress) => void;
   signal?: AbortSignal;
+  // false keeps files that already exist; the server skips them instead of replacing.
+  overwrite?: boolean;
+}
+
+// Names as sent (relative path or file name).
+export interface BatchUploadResult {
+  uploaded: number;
+  skipped: string[];
+  failed: string[];
 }
 
 // total is missing when the response carries no Content-Length.
@@ -81,29 +90,10 @@ export const filesService = {
     await api.put(`/files/${serverId}/rename`, { path, newName });
   },
 
-  async uploadFile(serverId: string, path: string, file: File, relativePath?: string, options?: UploadOptions): Promise<void> {
-    const formData = new FormData();
-    formData.append("file", file);
-    await api.post(`/files/${serverId}/upload`, formData, {
-      params: { path, relativePath },
-      headers: { "Content-Type": "multipart/form-data" },
-      signal: options?.signal,
-      onUploadProgress: (progressEvent) => {
-        if (options?.onProgress && progressEvent.total) {
-          options.onProgress({
-            loaded: progressEvent.loaded,
-            total: progressEvent.total,
-            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
-          });
-        }
-      },
-    });
-  },
-
   // A dropped chunk is retried from the offset the server reports, so a flaky link
   // costs at most one chunk instead of the whole file.
   async uploadFileChunked(serverId: string, path: string, file: File, relativePath?: string, options?: UploadOptions): Promise<void> {
-    const { data } = await api.post(`/files/${serverId}/uploads`, { path, name: relativePath || file.name, size: file.size }, { signal: options?.signal });
+    const { data } = await api.post(`/files/${serverId}/uploads`, { path, name: relativePath || file.name, size: file.size, overwrite: options?.overwrite ?? true }, { signal: options?.signal });
     const url = `/files/${serverId}/uploads/${data.id}`;
 
     try {
@@ -143,14 +133,14 @@ export const filesService = {
     }
   },
 
-  async uploadMultipleFiles(serverId: string, path: string, files: File[], relativePaths?: string[], options?: UploadOptions): Promise<{ uploaded: number; errors: number }> {
+  async uploadMultipleFiles(serverId: string, path: string, files: File[], relativePaths?: string[], options?: UploadOptions): Promise<BatchUploadResult> {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     if (relativePaths) {
       formData.append("relativePaths", JSON.stringify(relativePaths));
     }
     const { data } = await api.post(`/files/${serverId}/upload-multiple`, formData, {
-      params: { path },
+      params: { path, overwrite: options?.overwrite ?? true },
       headers: { "Content-Type": "multipart/form-data" },
       signal: options?.signal,
       onUploadProgress: (progressEvent) => {
@@ -175,11 +165,14 @@ export const filesService = {
   // its own progress and cancel. A navigation cannot refresh an expired session, so the
   // info request goes first: the axios interceptor refreshes the cookie if needed, and a
   // missing path fails here as an error instead of a JSON page.
-  async downloadNative(serverId: string, path: string, zip = false): Promise<void> {
-    await api.get(`/files/${serverId}/info`, { params: { path } });
+  // Several paths make one ZIP of the selection.
+  async downloadNative(serverId: string, paths: string | string[], zip = false): Promise<void> {
+    const list = [paths].flat();
+    await api.get(`/files/${serverId}/info`, { params: { path: list[0] } });
 
+    const query = new URLSearchParams(list.map((path) => ["path", path]));
     const link = document.createElement("a");
-    link.href = `${getPublicEnv("NEXT_PUBLIC_BACKEND_URL")}/files/${serverId}/${zip ? "download-zip" : "download"}?${new URLSearchParams({ path })}`;
+    link.href = `${getPublicEnv("NEXT_PUBLIC_BACKEND_URL")}/files/${serverId}/${zip ? "download-zip" : "download"}?${query}`;
     link.rel = "noopener";
     document.body.appendChild(link);
     link.click();

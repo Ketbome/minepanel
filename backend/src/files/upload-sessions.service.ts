@@ -26,6 +26,7 @@ interface UploadSession {
   serverId: string;
   path: string;
   size: number;
+  overwrite: boolean;
   updatedAt: number;
 }
 
@@ -54,9 +55,9 @@ export class UploadSessionsService implements OnModuleDestroy {
     clearInterval(this.sweepTimer);
   }
 
-  async create(userId: number, serverId: string, filePath: string, size: number, admin: boolean): Promise<{ id: string; offset: number }> {
+  async create(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite = true): Promise<{ id: string; offset: number }> {
     // Fail before the first byte, not after gigabytes: the target must be writable...
-    await this.filesService.assertUploadTarget(serverId, filePath, admin);
+    await this.filesService.assertUploadTarget(serverId, filePath, admin, overwrite);
 
     // ...and the disk must hold the file. ponytail: other sessions in progress are not reserved.
     const { bavail, bsize } = await fsp.statfs(this.dir);
@@ -64,7 +65,7 @@ export class UploadSessionsService implements OnModuleDestroy {
       throw new HttpException('Not enough free disk space for this upload', HttpStatus.INSUFFICIENT_STORAGE);
     }
 
-    const session: UploadSession = { id: randomUUID(), userId, serverId, path: filePath, size, updatedAt: Date.now() };
+    const session: UploadSession = { id: randomUUID(), userId, serverId, path: filePath, size, overwrite, updatedAt: Date.now() };
     // Metadata first: the sweeper discards a part file that has none.
     await fs.writeJson(this.metaPath(session.id), session);
     await fs.writeFile(this.partPath(session.id), '');
@@ -136,7 +137,8 @@ export class UploadSessionsService implements OnModuleDestroy {
       throw new ConflictException({ message: 'Upload is incomplete', offset });
     }
 
-    await this.filesService.saveUpload(serverId, session.path, this.partPath(id), admin);
+    // Checked again: the file may have appeared while the chunks were on their way.
+    await this.filesService.saveUpload(serverId, session.path, this.partPath(id), admin, session.overwrite);
     await fs.remove(this.metaPath(id));
     return { path: session.path };
   }

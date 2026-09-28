@@ -12,7 +12,8 @@ export interface UploadItem {
   // 0 while the size is unknown.
   size: number;
   loaded: number;
-  status: "pending" | "uploading" | "downloading" | "completed" | "error";
+  // skipped: the file already existed and the user chose to keep it.
+  status: "pending" | "uploading" | "downloading" | "completed" | "skipped" | "error";
   error?: string;
 }
 
@@ -62,7 +63,8 @@ export const UploadProgress: FC<UploadProgressProps> = ({
 
   const completedCount = uploads.filter((u) => u.status === "completed").length;
   const errorCount = uploads.filter((u) => u.status === "error").length;
-  const isFinished = completedCount + errorCount === uploads.length;
+  const skippedCount = uploads.filter((u) => u.status === "skipped").length;
+  const isFinished = completedCount + errorCount + skippedCount === uploads.length;
   const hasErrors = errorCount > 0;
 
   useEffect(() => {
@@ -205,6 +207,9 @@ export const UploadProgress: FC<UploadProgressProps> = ({
                     <CheckCircle className="h-3 w-3" />
                     {formatBytes(upload.size)}
                   </span>
+                )}
+                {upload.status === "skipped" && (
+                  <span className="text-[10px] text-gray-500">{t("fmSkipped")}</span>
                 )}
                 {upload.status === "error" && (
                   <span className="text-[10px] text-red-400 flex items-center gap-1">

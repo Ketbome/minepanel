@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import { FilesService } from './files.service';
 
@@ -21,7 +21,7 @@ jest.mock('fs-extra', () => ({
 
 jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
-const mockArchive = { directory: jest.fn(), finalize: jest.fn() };
+const mockArchive = { directory: jest.fn(), file: jest.fn(), finalize: jest.fn() };
 jest.mock('archiver', () => ({ ZipArchive: jest.fn(() => mockArchive) }));
 
 describe('FilesService writes', () => {
@@ -112,18 +112,39 @@ describe('FilesService writes', () => {
   });
 
   it('zips directories', async () => {
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(false);
-    await expect(service.createZipStream('srv', 'dir')).rejects.toThrow(NotFoundException);
+    await expect(service.createZipStream('srv', [])).rejects.toThrow(BadRequestException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.createZipStream('srv', ['dir'])).rejects.toThrow(NotFoundException);
 
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
-    await expect(service.createZipStream('srv', 'file')).rejects.toThrow(BadRequestException);
+    await expect(service.createZipStream('srv', ['file'])).rejects.toThrow(BadRequestException);
 
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true });
-    const result = await service.createZipStream('srv', 'world');
+    const result = await service.createZipStream('srv', ['world']);
     expect(result).toEqual({ stream: mockArchive, name: 'world.zip' });
     expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world', expect.any(Function));
     expect(mockArchive.finalize).toHaveBeenCalled();
+  });
+
+  it('zips a selection of files and folders under the name of their folder', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true }).mockResolvedValueOnce({ isDirectory: () => false });
+
+    const result = await service.createZipStream('srv', ['plugins/Essentials', 'plugins/a.jar']);
+    expect(result.name).toBe('plugins.zip');
+    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/plugins/Essentials`, 'Essentials', expect.any(Function));
+    expect(mockArchive.file).toHaveBeenCalledWith(`${BASE}/plugins/a.jar`, { name: 'a.jar' });
+    await expect(service.createZipStream('srv', ['../../x', 'a'])).rejects.toThrow(BadRequestException);
+  });
+
+  it('refuses to replace an existing file unless told to overwrite', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
+    await expect(service.saveUpload('srv', 'a.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow(ConflictException);
+    expect(fs.move).not.toHaveBeenCalled();
+
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
+    await expect(service.assertUploadTarget('srv', 'a.txt', false, false)).rejects.toThrow(ConflictException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.saveUpload('srv', 'new.txt', '/app/servers/.uploads/abc', false, false)).resolves.toBeUndefined();
   });
 
   it('leaves server.json and the compose file out of global zips for non-admins', async () => {
@@ -132,14 +153,14 @@ describe('FilesService writes', () => {
     const root = new FilesService({ get: () => '/app/servers' } as any);
     const entry = (name: string) => ({ name });
 
-    await root.createZipStream('_root', 'srv');
+    await root.createZipStream('_root', ['srv']);
     const lastFilter = () => mockArchive.directory.mock.calls[mockArchive.directory.mock.calls.length - 1][2];
     const filter = lastFilter();
     expect(filter(entry('server.json'))).toBe(false);
     expect(filter(entry('docker-compose.yml'))).toBe(false);
     expect(filter(entry('mc-data/server.json'))).toEqual(entry('mc-data/server.json'));
 
-    await root.createZipStream('_root', 'srv', true);
+    await root.createZipStream('_root', ['srv'], true);
     expect(lastFilter()(entry('server.json'))).toEqual(entry('server.json'));
   });
 

@@ -248,8 +248,18 @@ Built-in browser for each server under `servers/<id>/mc-data`:
   and modpacks short. A dropped chunk is retried from where the server stands instead of
   restarting the file, the free disk space is checked before the first byte, and an upload
   never replaces a folder of the same name
-- Edit configs (syntax highlighting)
-- Create/delete/rename; every delete (toolbar or right-click) asks for confirmation first
+- Uploading something that already exists in the folder asks first: overwrite it, or skip
+  what is there (for a folder upload, every file inside that already exists is kept)
+- Select several entries with the checkboxes, Ctrl/Cmd-click or Shift-click, then download
+  them as one ZIP or delete them together
+- Keyboard: arrows (Shift to extend), Enter to open, Backspace to go up, F2 to rename,
+  Delete, Ctrl/Cmd+A, Escape to clear the selection, Ctrl/Cmd+F to search
+- Edit configs (syntax highlighting). Ctrl/Cmd+S saves and keeps the file open; leaving with
+  unsaved changes asks first. Binary formats such as `.nbt` never open in the editor, since
+  saving them back as text would corrupt them
+- Create/delete/rename; every delete asks for confirmation first, and warns when folders
+  (deleted with their contents) are included. Each row has a menu button with the same
+  actions as right-click
 - Drag & drop support
 - Filter the current folder as you type (Ctrl/Cmd+F focuses the box, Esc clears it); the
   footer counts folders, files and total size, and says how many of them the filter is showing
