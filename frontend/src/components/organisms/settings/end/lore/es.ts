@@ -383,6 +383,13 @@ const es: Record<LoreKey, string> = {
   ghostRuins: "las viste todas. ahora sabes por qué nunca termino nada.",
   deathTnt: "pisó el centro. Bfuuny avisó.",
   deathCactus: "se apoyó en un cactus. Demasiado tiempo.",
+  deathGolem: "le pegó al golem de la aldea. El golem devolvió el golpe.",
+  ghostPhantoms: "dos noches sin dormir. las cosas del cielo lo notan.",
+  itemBone: "Hueso",
+  golemAngry: "le pegaste al golem. yo miro desde acá.",
+  wolfTamed: "tienes perro. yo tuve uno. se fue con BlasterDaster.",
+  wolfDied: "no fui yo. esta vez.",
+  hintBone: "Sostén un hueso y úsalo en un lobo para domesticarlo.",
   pigName: "Tocino",
 };
 

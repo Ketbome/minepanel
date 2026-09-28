@@ -123,10 +123,12 @@ export function useMob(
   );
   const state = useRef({ goal: null as THREE.Vector3 | null, idleUntil: Math.random() * 3, onGround: false, blocked: false, walk: 0, check: 0, from: new THREE.Vector3(), glance: 0, headYaw: 0 });
 
-  useFrame((_, frame) => {
+  useFrame(({ camera, scene }, frame) => {
     const group = root.current;
     const world = runtime.world;
     if (!group || !world || control.dead) return;
+    // past the fog there is nothing to see; it keeps walking, undrawn, like a chunk out there
+    if (scene.fog instanceof THREE.Fog) group.visible = camera.position.distanceTo(group.position) < scene.fog.far + 2;
     const dt = Math.min(frame, 0.05);
     const s = state.current;
     const pos = group.position;

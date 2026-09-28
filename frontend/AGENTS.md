@@ -262,7 +262,11 @@ Tooling / build (Next.js 16):
     `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Natural spawns go through
     `useSpawner` (`mobs/spawner.ts`: a cap, a distance band around the player, a condition such as
     night, and unloading far away); the Overworld's skeletons spawn that way at night and burn by day.
-    Monsters mark their target `hostile`, which is what the bed checks.
+    Monsters mark their target `hostile`, which is what the bed checks. `acts/NightMobs.tsx` holds
+    every Overworld night spawner by biome; `useMonster` (`mobs/monsters.tsx`) takes `burns`
+    (`mobs/sunburn.ts`), `calm` (spiders by day) and `onHurt` (zombified piglins call each other).
+    `useMob` hides a mob past the fog. A wide mob's home must clear walls and props by its half
+    width, or it climbs out on top of them (the golem did).
   - Secret achievements are ordinary keys at the end of `achievements.ts` (the trophy shows every
     missing key as `???`); the flags they look back on (`endermanKilled`, `kevinHit`, `glided`...)
     are set where it happens, and the islet ones are granted at the end of the islet script.

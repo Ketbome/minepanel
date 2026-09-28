@@ -2,7 +2,7 @@ import Image from 'next/image';
 import type { ComponentType } from 'react';
 import type { BlockId } from './engine/world';
 import type { LoreKey } from './lore/en';
-import { ArrowIcon, BlazePowderIcon, BlazeRodIcon, DirtIcon, DragonEggIcon, EyeOfEnderIcon, FlintAndSteelIcon, ObsidianIcon, PixelSprite, SPRITES, StickIcon, type Pixel } from './PixelIcons';
+import { ArrowIcon, BlazePowderIcon, BlazeRodIcon, BoneIcon, DirtIcon, DragonEggIcon, EyeOfEnderIcon, FlintAndSteelIcon, ObsidianIcon, PixelSprite, SPRITES, StickIcon, type Pixel } from './PixelIcons';
 
 export type ItemId =
   | 'note'
@@ -31,7 +31,8 @@ export type ItemId =
   | 'netherrack'
   | 'endStone'
   | 'pickaxe'
-  | 'helmet';
+  | 'helmet'
+  | 'bone';
 
 export interface Stack {
   readonly item: ItemId;
@@ -54,6 +55,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   note: { name: 'itemNote', max: 1, image: '/images/paper.webp' },
   diamond: { name: 'itemDiamond', max: 64, image: '/images/diamond.webp' },
   stick: { name: 'itemStick', max: 64, icon: StickIcon },
+  bone: { name: 'itemBone', max: 64, icon: BoneIcon },
   pearl: { name: 'itemPearl', max: 16, image: '/images/ender-pearl.webp' },
   blaze: { name: 'itemBlaze', max: 64, icon: BlazePowderIcon },
   rod: { name: 'itemRod', max: 64, icon: BlazeRodIcon },

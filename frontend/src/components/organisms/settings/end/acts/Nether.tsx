@@ -11,6 +11,7 @@ import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { countOf } from '../items';
 import { Blaze, Ghast } from '../mobs/nether';
+import { Hoglin, MagmaCube, Strider, WitherSkeleton, ZombifiedPiglin } from '../mobs/nether-monsters';
 import { useRespawns } from '../mobs/parts';
 import { calmPiglins, Piglin } from '../mobs/piglin';
 import { BFUUNY, BLAZES, useEndGame } from '../store';
@@ -39,6 +40,20 @@ const PIGLINS = [
   { id: 'piglin-4', home: new THREE.Vector3(-15, 0.5, -5) },
 ].map((piglin) => ({ ...piglin, wander: { home: piglin.home, radius: 3, speed: 1 } }));
 const PEARLS_NEEDED = 10;
+// the rest of the Nether's mobs: zombified piglins idling on the portal island (neutral until you
+// hit one), hoglins and magma cubes on islands out in the lava, wither skeletons in the fortress,
+// striders on the shore
+const HOGLIN_ISLAND = { x: 22, z: -12, radius: 5 };
+const MAGMA_ISLAND = { x: -22, z: -24, radius: 4 };
+const around = (x: number, z: number, radius = 3, speed = 1) => ({ home: new THREE.Vector3(x, 0.5, z), radius, speed });
+const ZOMBIFIED = [around(4, 1), around(5, 0), around(3, -1), around(6, 2)];
+const HOGLINS = [around(HOGLIN_ISLAND.x - 1, HOGLIN_ISLAND.z), around(HOGLIN_ISLAND.x + 2, HOGLIN_ISLAND.z + 1)];
+const MAGMA_CUBES = [around(MAGMA_ISLAND.x, MAGMA_ISLAND.z - 1, 2), around(MAGMA_ISLAND.x + 1, MAGMA_ISLAND.z + 1, 2)];
+const WITHER_SKELETONS = [
+  { id: 'wither-1', wander: around(-5, -30) },
+  { id: 'wither-2', wander: around(5, -42) },
+];
+const STRIDERS = [around(7.5, 9, 2, 0.6), around(-6, 5, 2, 0.6)];
 
 function buildNether() {
   const world = new World();
@@ -114,6 +129,15 @@ function buildNether() {
     }
   }
   world.fill(-2, 1, -38, 2, 1, -34, 'netherBricks');
+  // two islands out in the lava: the hoglins' and a crust of magma for the magma cubes
+  [HOGLIN_ISLAND, MAGMA_ISLAND].forEach(({ x: cx, z: cz, radius }, index) => {
+    for (let x = cx - radius - 1; x <= cx + radius + 1; x += 1) {
+      for (let z = cz - radius - 1; z <= cz + radius + 1; z += 1) {
+        if (Math.hypot(x - cx, z - cz) > radius + hash(x, z, 13)) continue;
+        for (let y = -2; y <= 0; y += 1) world.set(x, y, z, index === 1 && y === 0 && hash(x, z, 14) > 0.6 ? 'magma' : 'netherrack');
+      }
+    }
+  });
   // the arrival portal
   for (let x = PORTAL.x0; x <= PORTAL.x1; x += 1) {
     for (let y = PORTAL.y0; y <= PORTAL.y1; y += 1) {
@@ -153,6 +177,7 @@ export function Nether() {
   const ghastDown = useEndGame((state) => Boolean(state.flags.ghastReturned) || state.killed.includes('ghast'));
   const beats = useRef({ t: 0, fortress: false, left: false, hinted: false, obituary: false });
   const piglins = useRespawns(30);
+  const withers = useRespawns(60);
 
   useEffect(() => {
     runtime.world = world;
@@ -237,6 +262,21 @@ export function Nether() {
       <Spawner />
       {PIGLINS.map(({ id, wander }) => (
         <Piglin key={`${id}:${piglins.life(id)}`} wander={wander} onDeath={() => piglins.died(id)} />
+      ))}
+      {ZOMBIFIED.map((wander, index) => (
+        <ZombifiedPiglin key={index} wander={wander} />
+      ))}
+      {HOGLINS.map((wander, index) => (
+        <Hoglin key={index} wander={wander} />
+      ))}
+      {MAGMA_CUBES.map((wander, index) => (
+        <MagmaCube key={index} wander={wander} size={index === 0 ? 4 : 2} />
+      ))}
+      {WITHER_SKELETONS.map(({ id, wander }) => (
+        <WitherSkeleton key={`${id}:${withers.life(id)}`} wander={wander} onDeath={() => withers.died(id)} />
+      ))}
+      {STRIDERS.map((wander, index) => (
+        <Strider key={index} wander={wander} />
       ))}
       {BLAZES.map((id, index) => (killed.includes(id) ? null : <Blaze key={id} id={id} home={BLAZE_HOMES[index]} onDeath={rodFrom(id)} />))}
       {!ghastDown && (

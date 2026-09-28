@@ -7,6 +7,8 @@ import type { Wander } from './parts';
 export interface Spawn {
   readonly id: string;
   readonly wander: Wander;
+  // what kind of this mob, when it comes in sizes (slimes)
+  readonly size?: number;
 }
 
 interface SpawnerOptions {
@@ -23,12 +25,14 @@ interface SpawnerOptions {
   readonly spot: (x: number, z: number) => THREE.Vector3 | null;
   readonly radius?: number;
   readonly speed?: number;
+  // picks the size of each new one (slimes)
+  readonly sized?: () => number;
 }
 
 // Natural spawning the game's way: now and then, while the conditions hold and there is room under
 // the cap, a mob appears on a random column at some distance from the player; the ones left far
 // behind unload. The zone renders what it returns and calls `died` when one is gone.
-export function useSpawner(kind: string, { cap, min, max, despawn, every, allowed, spot, radius = 5, speed = 1 }: SpawnerOptions) {
+export function useSpawner(kind: string, { cap, min, max, despawn, every, allowed, spot, radius = 5, speed = 1, sized }: SpawnerOptions) {
   const [spawns, setSpawns] = useState<readonly Spawn[]>([]);
   const state = useRef({ next: 0, count: 0, spawns: [] as readonly Spawn[] });
   const update = useCallback((next: readonly Spawn[]) => {
@@ -49,7 +53,7 @@ export function useSpawner(kind: string, { cap, min, max, despawn, every, allowe
       const home = spot(Math.round(player.x + Math.cos(angle) * distance), Math.round(player.z + Math.sin(angle) * distance));
       if (home) {
         s.count += 1;
-        added = { id: `${kind}-${s.count}`, wander: { home, radius, speed } };
+        added = { id: `${kind}-${s.count}`, wander: { home, radius, speed }, size: sized?.() };
       }
     }
     if (added) update([...kept, added]);
@@ -57,5 +61,13 @@ export function useSpawner(kind: string, { cap, min, max, despawn, every, allowe
   });
 
   const died = useCallback((id: string) => update(state.current.spawns.filter((spawn) => spawn.id !== id)), [update]);
-  return { spawns, died };
+  // one spawned by the game rather than the timer (a slime splitting), over the cap like the game's
+  const add = useCallback(
+    (home: THREE.Vector3, size?: number) => {
+      state.current.count += 1;
+      update([...state.current.spawns, { id: `${kind}-${state.current.count}`, wander: { home, radius, speed }, size }]);
+    },
+    [kind, radius, speed, update]
+  );
+  return { spawns, died, add };
 }

@@ -4,11 +4,13 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
+import { isBright } from '../engine/clock';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
 import { useEndGame, type DeathCause } from '../store';
 import { PX, useDamage, useMob, useMobTarget, type MobControl, type Wander } from './parts';
 import { Box, paint, sides, skinOf, useSkin, type SkinArt } from './skins';
+import { useSunBurn } from './sunburn';
 
 // The Overworld's monsters, boxed like the game's models. For now they only walk, spot you
 // within sixteen blocks, come for you and hit when close; slimes hop instead of walking.
@@ -37,31 +39,45 @@ export interface MonsterOptions {
   readonly size: readonly [number, number];
   readonly speed?: number;
   readonly onDeath?: () => void;
+  // the undead catch fire by day under the open sky
+  readonly burns?: boolean;
+  // while calm (a spider by day) it leaves you alone until you hit it
+  readonly calm?: () => boolean;
+  // told when you hit it (zombified piglins call the others)
+  readonly onHurt?: () => void;
 }
 
 // what every monster shares: the hit box, the hurt flash and death, and a plain hunt (spot you,
 // walk up, hit, wait a second)
-export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wander, legs: React.RefObject<(THREE.Group | null)[]>, materials: readonly THREE.MeshLambertMaterial[], { hp, strike, cause, size: [width, height], speed = 3, onDeath }: MonsterOptions, head?: React.RefObject<THREE.Group | null>) {
+export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wander, legs: React.RefObject<(THREE.Group | null)[]>, materials: readonly THREE.MeshLambertMaterial[], { hp, strike, cause, size: [width, height], speed = 3, onDeath, burns = false, calm, onHurt }: MonsterOptions, head?: React.RefObject<THREE.Group | null>) {
   const control = useMob(root, wander, legs, { half: Math.max(0.15, width / 2 - 0.05), height }, head);
   const damage = useDamage(root, materials, height);
-  const state = useRef({ hp, strikeAt: 0, swingAt: -9, hunting: false });
+  const state = useRef({ hp, strikeAt: 0, swingAt: -9, hunting: false, provoked: false });
+
+  const harm = (amount: number) => {
+    const s = state.current;
+    if (control.dead) return;
+    s.hp -= amount;
+    damage.hurt();
+    cue('hit');
+    if (s.hp > 0) return;
+    control.dead = true;
+    damage.die(onDeath);
+  };
 
   useMobTarget(root, [width, height, width], {
     label: () => null,
     solid: true,
     hostile: true,
     hit: (amount) => {
-      const s = state.current;
       if (control.dead) return;
-      s.hp -= amount;
-      damage.hurt();
+      state.current.provoked = true;
+      onHurt?.();
       control.knock(runtime.player.pos);
-      cue('hit');
-      if (s.hp > 0) return;
-      control.dead = true;
-      damage.die(onDeath);
+      harm(amount);
     },
   });
+  useSunBurn(root, () => control.dead, harm, burns);
 
   useFrame(() => {
     const group = root.current;
@@ -70,7 +86,7 @@ export function useMonster(root: React.RefObject<THREE.Group | null>, wander: Wa
     const game = useEndGame.getState();
     eye.copy(group.position).setY(group.position.y + height * 0.85);
     const distance = group.position.distanceTo(runtime.player.pos);
-    s.hunting = !game.dead && sees(eye, RANGE);
+    s.hunting = !game.dead && (s.provoked || !calm?.()) && sees(eye, RANGE);
     control.chase = s.hunting ? runtime.player.pos : null;
     control.chaseSpeed = speed;
     control.lookAt = s.hunting ? runtime.player.eye : null;
@@ -241,7 +257,7 @@ function useZombie(art: SkinArt, wander: Wander, options: MonsterOptions) {
 }
 
 export function Zombie({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const parts = useZombie(ZOMBIE, wander, { hp: 20, strike: 3, cause: 'zombie', size: [0.6, 1.95], speed: 2.4, onDeath });
+  const parts = useZombie(ZOMBIE, wander, { hp: 20, strike: 3, cause: 'zombie', size: [0.6, 1.95], speed: 2.4, onDeath, burns: true });
   return <Biped art={ZOMBIE} wander={wander} {...parts} />;
 }
 
@@ -278,7 +294,7 @@ const ZOMBIE_VILLAGER: SkinArt = {
 };
 
 export function ZombieVillager({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const { root, head, legs, arms, material } = useZombie(ZOMBIE_VILLAGER, wander, { hp: 20, strike: 3, cause: 'zombieVillager', size: [0.6, 1.95], speed: 2.4, onDeath });
+  const { root, head, legs, arms, material } = useZombie(ZOMBIE_VILLAGER, wander, { hp: 20, strike: 3, cause: 'zombieVillager', size: [0.6, 1.95], speed: 2.4, onDeath, burns: true });
   const skin = skinOf(ZOMBIE_VILLAGER);
   return (
     <group ref={root} position={wander.home}>
@@ -360,7 +376,7 @@ export function Spider({ wander, onDeath }: { readonly wander: Wander; readonly 
   const walk = useRef(0);
   const { skin, material } = useSkin(SPIDER);
   const materials = useMemo(() => [material], [material]);
-  const { control } = useMonster(root, wander, none, materials, { hp: 16, strike: 2, cause: 'spider', size: [1.4, 0.9], speed: 3.6, onDeath }, head);
+  const { control } = useMonster(root, wander, none, materials, { hp: 16, strike: 2, cause: 'spider', size: [1.4, 0.9], speed: 3.6, onDeath, calm: isBright }, head);
 
   // the game's scuttle: legs sweep back and forth in four pairs and lift off the ground in turn
   useFrame((_, delta) => {
@@ -520,7 +536,7 @@ const SLIME: SkinArt = {
 
 export type SlimeSize = 1 | 2 | 4;
 
-export function Slime({ wander, size = 2, onDeath }: { readonly wander: Wander; readonly size?: SlimeSize; readonly onDeath?: () => void }) {
+export function Slime({ wander, size = 2, onDeath }: { readonly wander: Wander; readonly size?: SlimeSize; readonly onDeath?: (at: THREE.Vector3) => void }) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const none = useRef<(THREE.Group | null)[]>([]);
@@ -528,7 +544,8 @@ export function Slime({ wander, size = 2, onDeath }: { readonly wander: Wander; 
   const shell = useSkin(SLIME_SHELL, { transparent: true, opacity: 0.6, depthWrite: false });
   const materials = useMemo(() => [material, shell.material], [material, shell.material]);
   const width = 0.52 * size;
-  const { control } = useMonster(root, wander, none, materials, { hp: size * size, strike: size === 1 ? 0 : size, cause: 'slime', size: [width, width], speed: 2, onDeath });
+  const died = () => onDeath?.(root.current?.position.clone() ?? wander.home.clone());
+  const { control } = useMonster(root, wander, none, materials, { hp: size * size, strike: size === 1 ? 0 : size, cause: 'slime', size: [width, width], speed: 2, onDeath: died });
   const hop = useHop(root, control, wander, { jump: 5 + size, reach: 2 + size * 0.6, rest: 1.2 });
 
   // stretched tall in the air, squashed flat on the ground, like the game's
@@ -589,22 +606,27 @@ export function Phantom({ wander, onDeath }: { readonly wander: Wander; readonly
   const seed = useMemo(() => Math.random() * 100, []);
   const state = useRef({ hp: 20, dead: false, angle: seed, mode: 'circle' as 'circle' | 'swoop' | 'rise', swoopAt: 6 + Math.random() * 6, since: 0, vel: new THREE.Vector3() });
 
+  const harm = (amount: number) => {
+    const s = state.current;
+    if (s.dead) return;
+    s.hp -= amount;
+    damage.hurt();
+    cue('hit');
+    if (s.hp > 0) return;
+    s.dead = true;
+    damage.die(onDeath);
+  };
+
   useMobTarget(root, [0.9, 0.5, 0.9], {
     label: () => null,
     solid: true,
     hostile: true,
     hit: (amount) => {
-      const s = state.current;
-      if (s.dead) return;
-      s.hp -= amount;
-      s.mode = 'rise';
-      damage.hurt();
-      cue('hit');
-      if (s.hp > 0) return;
-      s.dead = true;
-      damage.die(onDeath);
+      if (!state.current.dead) state.current.mode = 'rise';
+      harm(amount);
     },
   });
+  useSunBurn(root, () => state.current.dead, harm);
 
   useFrame((_, delta) => {
     const group = root.current;

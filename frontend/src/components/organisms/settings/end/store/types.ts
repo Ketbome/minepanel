@@ -6,7 +6,7 @@ import type { LoreKey } from '../lore/en';
 export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem' | 'server48';
 export type Veil = 'black' | 'portal' | 'white' | 'none';
 export type Stage = 'arrival' | 'crystals' | 'dragon' | 'victory' | 'exit';
-export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus';
+export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus' | 'golem';
 export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4' | 'igloo' | 'wreck' | 'buried';
 export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'guide3' | 'stop';
 export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote';
@@ -59,7 +59,11 @@ export type Flag =
   | 'ruinSwamp'
   | 'ruinCoast'
   | 'templeBlown'
-  | 'treasureFound';
+  | 'treasureFound'
+  | 'phantomsWarned'
+  | 'golemAngry'
+  | 'wolfTamed'
+  | 'wolfLost';
 
 export type Panel =
   | { readonly kind: 'chest'; readonly id: ChestId }

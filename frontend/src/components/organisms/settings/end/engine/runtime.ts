@@ -74,6 +74,8 @@ export const runtime = {
   time: 0,
   // seconds of in-game day; see clock.ts
   clock: 0,
+  // nights fallen since you last slept (phantoms come after two)
+  nightsAwake: 0,
   // the system asks for less motion: no view bobbing, no field-of-view kicks, no hand sway
   reducedMotion: false,
   // zones hook into what the player does with a held item or a mined or placed block, and the
@@ -83,6 +85,8 @@ export const runtime = {
     mined: null as ((x: number, y: number, z: number) => void) | null,
     placed: null as ((x: number, y: number, z: number, id: BlockId) => void) | null,
     vibration: null as ((at: THREE.Vector3, loudness: number) => void) | null,
+    // a thrown pearl landed; now and then an endermite comes out of it
+    pearl: null as ((at: THREE.Vector3) => void) | null,
   },
   canvas: null as HTMLCanvasElement | null,
 };

@@ -383,6 +383,13 @@ const de: Record<LoreKey, string> = {
   ghostRuins: "du hast alle gesehen. jetzt weißt du, warum ich nie etwas fertig mache.",
   deathTnt: "ist in die Mitte getreten. Bfuuny hat gewarnt.",
   deathCactus: "hat sich an einen Kaktus gelehnt. Zu lange.",
+  deathGolem: "hat den Eisengolem des Dorfes geschlagen. Er hat zurückgeschlagen.",
+  ghostPhantoms: "zwei nächte ohne schlaf. die dinger am himmel merken das.",
+  itemBone: "Knochen",
+  golemAngry: "du hast den golem geschlagen. ich schau von hier aus zu.",
+  wolfTamed: "du hast einen hund. ich hatte auch einen. er ist mit BlasterDaster gegangen.",
+  wolfDied: "ich war's nicht. diesmal.",
+  hintBone: "Halte einen Knochen und benutze ihn an einem Wolf, um ihn zu zähmen.",
   pigName: "Speck",
 };
 

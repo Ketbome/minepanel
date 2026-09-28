@@ -16,6 +16,7 @@ import { Effects } from './engine/Effects';
 import { Hand } from './engine/Hand';
 import { Player } from './engine/Player';
 import { Projectiles } from './engine/Projectiles';
+import { Endermites } from './mobs/endermite';
 import { Rake } from './mobs/rake';
 import { useEndGame, type Zone } from './store';
 
@@ -52,6 +53,7 @@ export default function JourneyScene() {
       <Projectiles />
       <Drops />
       <Rake key={`rake:${zone}`} />
+      <Endermites key={`endermites:${zone}`} />
       <Effects />
       <Hand />
     </Canvas>

@@ -8,6 +8,7 @@ import { cue } from '../end-audio';
 import { countOf, ITEMS, type ItemId } from '../items';
 import { CRACK_STAGES, overworldKit } from '../overworld-voxels';
 import { MAX_HP, useEndGame } from '../store';
+import { tickClock } from './clock';
 import { consumeEdges, held, input, pressLeft, pressRight, releaseAll } from './input';
 import { canStepUp, cellsInBody, GRAVITY, HALF_WIDTH, HEIGHT, JUMP_SPEED, move } from './physics';
 import { aimable, castBlocks, castTargets } from './raycast';
@@ -61,6 +62,7 @@ function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vec
         runtime.player.peak = runtime.player.pos.y;
         cue('enderman');
         useEndGame.getState().hurt(2, 'fall');
+        if (Math.random() < 1 / 20) runtime.hooks.pearl?.(at.clone());
       },
     });
   }
@@ -202,7 +204,7 @@ export function Player() {
     runtime.time += dt;
     const world = runtime.world;
     const game = useEndGame.getState();
-    if (game.flags.started && !game.panel && !game.dead && !game.paused && !game.transition) runtime.clock += dt;
+    if (game.flags.started && !game.panel && !game.dead && !game.paused && !game.transition) tickClock(dt);
     const s = state.current;
     const p = runtime.player;
     if (!world || !game.checkpoint) return;

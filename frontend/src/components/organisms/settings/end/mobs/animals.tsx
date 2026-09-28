@@ -1,7 +1,12 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { useMemo, useRef, useState } from 'react';
 import type * as THREE from 'three';
+import { cue } from '../end-audio';
+import { spawnEffect } from '../engine/Effects';
+import { runtime } from '../engine/runtime';
+import { BFUUNY, BLASTER, useEndGame } from '../store';
 import { useAnimal } from './overworld';
 import { NameTag, PX, type Wander } from './parts';
 import { Box, paint, sides, useSkin, type Skin, type SkinArt } from './skins';
@@ -201,13 +206,59 @@ function wolfArt(collar: boolean): SkinArt {
 const WOLF = wolfArt(false);
 const WOLF_TAME = wolfArt(true);
 
+// Hold a bone and use it on a wild wolf: one time in three it is yours (hearts, a red collar) and
+// follows you around, catching up with a jump when you get too far, like the game's.
 export function Wolf({ wander, tamed = false, name }: { readonly wander: Wander; readonly tamed?: boolean; readonly name?: string }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const legs = useRef<(THREE.Group | null)[]>([]);
-  const { skin, material } = useSkin(tamed ? WOLF_TAME : WOLF);
+  const [tame, setTame] = useState(tamed);
+  const { skin, material } = useSkin(tame ? WOLF_TAME : WOLF);
   const materials = useMemo(() => [material], [material]);
-  useAnimal(root, wander, legs, materials, 8, null, name, head, [0.6, 0.85]);
+  const control = useAnimal(root, wander, legs, materials, 8, null, name, head, [0.6, 0.85], {
+    use: () => {
+      const game = useEndGame.getState();
+      const group = root.current;
+      if (tame || !group) return false;
+      if (game.inventory[game.selected]?.item !== 'bone') {
+        game.showActionBar('hintBone');
+        return true;
+      }
+      game.consumeHeld();
+      const at = group.position.clone().setY(group.position.y + 1);
+      if (Math.random() >= 1 / 3) {
+        spawnEffect('poof', at);
+        return true;
+      }
+      spawnEffect('burst', at, '#ff5a7a');
+      setTame(true);
+      if (!game.flags.wolfTamed) {
+        game.setFlag('wolfTamed');
+        window.setTimeout(() => useEndGame.getState().say('wolfTamed'), 900);
+      }
+      return true;
+    },
+    died: () => {
+      if (!tame) return;
+      useEndGame.getState().setFlag('wolfLost');
+      window.setTimeout(() => useEndGame.getState().say('wolfDied', BFUUNY), 1200);
+    },
+  });
+
+  useFrame(() => {
+    const group = root.current;
+    if (!group || !tame || control.dead) return;
+    const p = runtime.player.pos;
+    const distance = group.position.distanceTo(p);
+    if (distance > 24) {
+      // just behind you
+      group.position.set(p.x + Math.sin(runtime.player.yaw) * 1.5, p.y + 0.5, p.z + Math.cos(runtime.player.yaw) * 1.5);
+      control.vel.set(0, 0, 0);
+    }
+    control.chase = distance > 3 ? p : null;
+    control.chaseSpeed = 4.2;
+    control.lookAt = runtime.player.eye;
+  });
 
   return (
     <group ref={root} position={wander.home}>
@@ -460,7 +511,39 @@ export function IronGolem({ wander, name }: { readonly wander: Wander; readonly 
   const limbs = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(GOLEM);
   const materials = useMemo(() => [material], [material]);
-  useAnimal(root, wander, limbs, materials, 100, null, name, head, [1.4, 2.7]);
+  const angry = useRef({ on: false, strikeAt: 0 });
+  const control = useAnimal(root, wander, limbs, materials, 100, null, name, head, [1.4, 2.7], {
+    hit: () => {
+      angry.current.on = true;
+      const game = useEndGame.getState();
+      if (!game.flags.golemAngry) {
+        game.setFlag('golemAngry');
+        window.setTimeout(() => useEndGame.getState().say('golemAngry', BLASTER), 800);
+      }
+      return true;
+    },
+  });
+
+  // hit it once and it comes for you, and throws you up into the air, like the game's
+  useFrame(() => {
+    const group = root.current;
+    const a = angry.current;
+    if (!group || !a.on || control.dead) return;
+    const game = useEndGame.getState();
+    if (game.dead) {
+      a.on = false;
+      control.chase = null;
+      return;
+    }
+    control.chase = runtime.player.pos;
+    control.chaseSpeed = 2.2;
+    control.lookAt = runtime.player.eye;
+    if (group.position.distanceTo(runtime.player.pos) > 2 || runtime.time < a.strikeAt) return;
+    a.strikeAt = runtime.time + 1.2;
+    game.hurt(7, 'golem');
+    runtime.player.vel.y = 11;
+    cue('hit');
+  });
 
   return (
     <group ref={root} position={wander.home}>

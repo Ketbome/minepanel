@@ -381,6 +381,13 @@ export const en = {
   ghostRuins: "you saw them all. now you know why I never finish anything.",
   deathTnt: "stepped in the middle. Bfuuny warned you.",
   deathCactus: "leaned on a cactus. For too long.",
+  deathGolem: "hit the village's iron golem. It hit back.",
+  ghostPhantoms: "two nights without sleep. the things in the sky notice.",
+  itemBone: "Bone",
+  golemAngry: "you hit the golem. I'll watch from here.",
+  wolfTamed: "you have a dog. I had one too. it left with BlasterDaster.",
+  wolfDied: "it wasn't me. this time.",
+  hintBone: "Hold a bone and use it on a wolf to tame it.",
   pigName: "Bacon",
 };
 

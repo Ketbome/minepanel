@@ -383,6 +383,13 @@ const pl: Record<LoreKey, string> = {
   ghostRuins: "widziałeś wszystkie. teraz wiesz, czemu nigdy nic nie kończę.",
   deathTnt: "stanął na środku. Bfuuny ostrzegał.",
   deathCactus: "oparł się o kaktusa. Za długo.",
+  deathGolem: "uderzył żelaznego golema z wioski. Oddał.",
+  ghostPhantoms: "dwie noce bez snu. te rzeczy na niebie to zauważają.",
+  itemBone: "Kość",
+  golemAngry: "uderzyłeś golema. popatrzę stąd.",
+  wolfTamed: "masz psa. ja też miałem. poszedł z BlasterDasterem.",
+  wolfDied: "to nie ja. tym razem.",
+  hintBone: "Trzymaj kość i użyj jej na wilku, żeby go oswoić.",
   pigName: "Boczek",
 };
 

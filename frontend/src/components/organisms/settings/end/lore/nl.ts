@@ -383,6 +383,13 @@ const nl: Record<LoreKey, string> = {
   ghostRuins: "je hebt ze allemaal gezien. nu weet je waarom ik nooit iets afmaak.",
   deathTnt: "stapte in het midden. Bfuuny had gewaarschuwd.",
   deathCactus: "leunde tegen een cactus. Te lang.",
+  deathGolem: "sloeg de ijzergolem van het dorp. Hij sloeg terug.",
+  ghostPhantoms: "twee nachten niet geslapen. de dingen in de lucht merken het.",
+  itemBone: "Bot",
+  golemAngry: "je sloeg de golem. ik kijk van hieruit.",
+  wolfTamed: "je hebt een hond. ik had er ook een. hij ging mee met BlasterDaster.",
+  wolfDied: "ik was het niet. deze keer.",
+  hintBone: "Houd een bot vast en gebruik het op een wolf om hem te temmen.",
   pigName: "Spekje",
 };
 

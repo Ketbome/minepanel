@@ -194,7 +194,9 @@ export function useAnimal(
   sound: CueName | null,
   name?: string,
   head?: React.RefObject<THREE.Group | null>,
-  [width, height]: readonly [number, number] = [0.9, 1.2]
+  [width, height]: readonly [number, number] = [0.9, 1.2],
+  // a golem fights back instead of fleeing, a wolf takes a bone: returning true skips the default
+  hooks: { readonly hit?: () => boolean; readonly use?: () => boolean; readonly died?: () => void } = {}
 ) {
   const control = useMob(root, wander, legs, { half: width / 2 - 0.1, height }, head);
   const damage = useDamage(root, materials, height);
@@ -203,6 +205,7 @@ export function useAnimal(
     label: () => null,
     solid: true,
     use: () => {
+      if (hooks.use?.()) return;
       if (sound) cue(sound);
     },
     hit: (amount) => {
@@ -211,10 +214,11 @@ export function useAnimal(
       if (sound) cue(sound);
       damage.hurt();
       control.knock(runtime.player.pos);
-      control.panicUntil = runtime.time + 4;
+      if (!hooks.hit?.()) control.panicUntil = runtime.time + 4;
       if (health.current > 0) return;
       control.dead = true;
       damage.die();
+      hooks.died?.();
       // a named pig always saw it coming
       if (name) useEndGame.getState().obituary(name, sound === 'oink' ? 'pigDown' : 'mobSlain');
     },

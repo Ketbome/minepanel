@@ -383,6 +383,13 @@ const tr: Record<LoreKey, string> = {
   ghostRuins: "hepsini gördün. artık neden hiçbir şeyi bitirmediğimi biliyorsun.",
   deathTnt: "ortaya bastı. Bfuuny uyarmıştı.",
   deathCactus: "bir kaktüse yaslandı. Fazla uzun süre.",
+  deathGolem: "köyün demir golem'ine vurdu. Golem karşılık verdi.",
+  ghostPhantoms: "iki gecedir uyumadın. gökyüzündekiler bunu fark ediyor.",
+  itemBone: "Kemik",
+  golemAngry: "golem'e vurdun. ben buradan izliyorum.",
+  wolfTamed: "bir köpeğin var. benim de vardı. BlasterDaster'la gitti.",
+  wolfDied: "ben değildim. bu sefer.",
+  hintBone: "Bir kemik tut ve evcilleştirmek için bir kurda kullan.",
   pigName: "Pastırma",
 };
 
