@@ -37,11 +37,13 @@ describe('MonitoringService', () => {
     expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'spark', '25575', undefined);
   });
 
-  it('does not try more commands after a native RCON connection failure', async () => {
-    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'NEOFORGE', enableRcon: true });
+  it('falls back to spark after a failed native NeoForge probe', async () => {
+    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'NEOFORGE', enableRcon: true, rconPort: '25575', rconPassword: 'secret' });
     management.readTickStats.mockResolvedValue({ success: false, output: '' });
     expect(await service.getSnapshot('atm10')).toMatchObject({ tickStatus: 'unavailable', tickSource: null });
-    expect(management.readTickStats).toHaveBeenCalledTimes(1);
+    expect(management.readTickStats).toHaveBeenCalledTimes(2);
+    expect(management.readTickStats).toHaveBeenNthCalledWith(1, 'atm10', 'neoforge', '25575', 'secret');
+    expect(management.readTickStats).toHaveBeenNthCalledWith(2, 'atm10', 'spark', '25575', 'secret');
   });
 
   it('deduplicates concurrent live/history requests and caches the result', async () => {

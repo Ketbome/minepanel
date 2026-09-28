@@ -77,9 +77,13 @@ export class MonitoringService {
       // NeoForge responds synchronously; spark's async commands can return empty over RCON.
       if (['NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE'].includes(config.serverType)) {
         const native = await this.management.readTickStats(serverId, 'neoforge', rconPort, config.rconPassword);
-        if (!native.success) return result;
-        const stats = parseNeoForgeStats(native.output);
-        if (stats) return { ...result, ...stats, tickStatus: 'available', tickSource: 'neoforge', timestamp: new Date().toISOString() };
+        // A failed/unrecognized neoforge probe (transient RCON hiccup, or the pack is actually
+        // Forge) does not rule out spark; fall through and try it instead of reporting a false
+        // "no connection".
+        if (native.success) {
+          const stats = parseNeoForgeStats(native.output);
+          if (stats) return { ...result, ...stats, tickStatus: 'available', tickSource: 'neoforge', timestamp: new Date().toISOString() };
+        }
       }
       const response = await this.management.readTickStats(serverId, 'spark', rconPort, config.rconPassword);
       if (!response.success) return result;
