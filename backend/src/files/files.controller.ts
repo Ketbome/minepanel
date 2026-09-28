@@ -62,9 +62,8 @@ export class FilesController {
       throw new BadRequestException('Cannot download a directory');
     }
 
-    const fileName = path.basename(filePath);
-
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    // attachment() adds the RFC 5987 filename*, so non-ASCII names survive the download.
+    res.attachment(path.basename(filePath));
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Length', stat.size);
 
@@ -86,7 +85,7 @@ export class FilesController {
 
     const { stream, name } = await this.filesService.createZipStream(serverId, dirPath, admin);
 
-    res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
+    res.attachment(name);
     res.setHeader('Content-Type', 'application/zip');
 
     stream.pipe(res);

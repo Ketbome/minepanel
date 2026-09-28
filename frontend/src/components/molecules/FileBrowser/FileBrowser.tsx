@@ -12,6 +12,8 @@ import { DropZone } from "./DropZone";
 import { UploadProgress, UploadItem } from "./UploadProgress";
 import { FileStatusBar } from "./FileStatusBar";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface FileBrowserProps {
   serverId: string;
@@ -80,6 +82,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  // Every delete goes through this confirmation: a folder is removed recursively.
+  const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "name", direction: "asc" });
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
@@ -242,6 +246,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
   const handleUploadFiles = useCallback(
     async (filesToUpload: File[], relativePaths?: string[]) => {
+      // A second run would replace the abort controller, leaving the first one uncancellable.
+      if (abortControllerRef.current) return;
       setIsUploading(true);
       abortControllerRef.current = new AbortController();
 
@@ -434,9 +440,9 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   }
 
   return (
-    <DropZone onFilesDropped={handleUploadFiles} className="h-[600px]">
+    <DropZone onFilesDropped={handleUploadFiles} disabled={isUploading} className="h-[600px]">
       <div className="relative flex flex-col h-full bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden">
-        <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={handleDelete} onRename={handleRename} onDownload={handleDownload} search={search} onSearchChange={setSearch} isUploading={isUploading} />
+        <FileToolbar onCreateFolder={handleCreateFolder} onUploadFiles={handleUploadFiles} onRefresh={() => loadFiles(currentPath)} selectedFile={selectedFile} onDelete={setDeleteTarget} onRename={handleRename} onDownload={handleDownload} search={search} onSearchChange={setSearch} isUploading={isUploading} />
 
         <Breadcrumbs path={currentPath} onNavigate={navigateToFolder} onNavigateUp={navigateUp} />
 
@@ -457,7 +463,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
             onEdit={handleEdit}
             onDownload={handleDownload}
             onDownloadZip={handleDownloadZip}
-            onDelete={handleDelete}
+            onDelete={setDeleteTarget}
             onRename={(file) => {
               const newName = prompt(t("enterNewName"), file.name);
               if (newName && newName !== file.name) {
@@ -474,6 +480,31 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
           <UploadProgress uploads={downloads} mode="download" className="relative" onCancel={handleCancelDownload} onClose={handleCloseDownloadProgress} />
         </div>
       </div>
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-gray-200">{t("confirmDelete")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-400">
+            {t("deleteConfirmMessage")} <span className="text-gray-200 font-medium">{deleteTarget?.name}</span>?
+          </p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteTarget) handleDelete(deleteTarget);
+                setDeleteTarget(null);
+              }}
+            >
+              {t("delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DropZone>
   );
 };

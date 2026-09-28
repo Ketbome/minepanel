@@ -34,7 +34,7 @@ describe('FilesController', () => {
     accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
     const usersService = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
     controller = new FilesController(filesService as any, usersService as any, accessControl as any);
-    res = { setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
+    res = { attachment: jest.fn(), setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
   });
 
   it('routes access checks to global or per-server permissions', async () => {
@@ -79,7 +79,7 @@ describe('FilesController', () => {
 
     await controller.downloadFile(req, 'srv', 'dir/a b.txt', res);
 
-    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="a%20b.txt"');
+    expect(res.attachment).toHaveBeenCalledWith('a b.txt');
     expect(res.setHeader).toHaveBeenCalledWith('Content-Length', 12);
     expect(stream.pipe).toHaveBeenCalledWith(res);
 
@@ -103,7 +103,7 @@ describe('FilesController', () => {
     const stream = { pipe: jest.fn() };
     filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
     await controller.downloadZip(req, 'srv', 'dir', res);
-    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="dir.zip"');
+    expect(res.attachment).toHaveBeenCalledWith('dir.zip');
     expect(stream.pipe).toHaveBeenCalledWith(res);
   });
 

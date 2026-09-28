@@ -45,7 +45,6 @@ export const FileToolbar: FC<FileToolbarProps> = ({
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [renameName, setRenameName] = useState("");
 
@@ -77,13 +76,6 @@ export const FileToolbar: FC<FileToolbarProps> = ({
       onRename(selectedFile, renameName.trim());
       setRenameName("");
       setShowRenameDialog(false);
-    }
-  };
-
-  const handleDelete = () => {
-    if (selectedFile) {
-      onDelete(selectedFile);
-      setShowDeleteDialog(false);
     }
   };
 
@@ -216,7 +208,7 @@ export const FileToolbar: FC<FileToolbarProps> = ({
               variant="ghost"
               size="sm"
               className="gap-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-              onClick={() => setShowDeleteDialog(true)}
+              onClick={() => onDelete(selectedFile)}
             >
               <Trash2 className="h-4 w-4" />
               {t("delete")}
@@ -279,26 +271,6 @@ export const FileToolbar: FC<FileToolbarProps> = ({
             </Button>
             <Button onClick={handleRename} className="bg-emerald-600 hover:bg-emerald-700">
               {t("rename")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="bg-gray-900 border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-gray-200">{t("confirmDelete")}</DialogTitle>
-          </DialogHeader>
-          <p className="text-gray-400">
-            {t("deleteConfirmMessage")} <span className="text-gray-200 font-medium">{selectedFile?.name}</span>?
-          </p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowDeleteDialog(false)}>
-              {t("cancel")}
-            </Button>
-            <Button onClick={handleDelete} variant="destructive">
-              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
