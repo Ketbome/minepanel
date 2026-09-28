@@ -27,9 +27,6 @@ interface PlayerRow {
   online: boolean;
   // Absent for players online for the first time, whose files are not written yet
   summary?: PlayerSummary;
-  // uuid when known (mc-heads prefers it for speed and it's the only form Floodgate resolves);
-  // falls back to name for a first-time online player with no summary yet
-  avatarId: string;
 }
 
 const COMMAND_SETTLE_MS = 500;
@@ -95,12 +92,9 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
       name: summary.name ?? summary.uuid,
       online: summary.name ? online.has(summary.name.toLowerCase()) : false,
       summary,
-      avatarId: summary.uuid,
     }));
     const knownNames = new Set(known.map((row) => row.name.toLowerCase()));
-    const newcomers = onlineNames
-      .filter((name) => !knownNames.has(name.toLowerCase()))
-      .map((name) => ({ key: `online:${name}`, name, online: true, avatarId: name }));
+    const newcomers = onlineNames.filter((name) => !knownNames.has(name.toLowerCase())).map((name) => ({ key: `online:${name}`, name, online: true }));
     return [...newcomers, ...known].sort((a, b) => Number(b.online) - Number(a.online));
   }, [players, onlineNames]);
 
@@ -190,7 +184,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                   {itemMatches.map((match, index) => (
                     <li key={`${match.uuid}-${match.where}-${match.slot}-${index}`}>
                       <button type="button" onClick={() => setSelected(match.uuid)} className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-gray-800/60">
-                        <PlayerAvatar player={match.uuid} size={20} />
+                        <PlayerAvatar uuid={match.uuid} name={match.name ?? match.uuid} size={20} />
                         <span className="text-gray-100">{match.name ?? match.uuid}</span>
                         <span className="text-gray-300">
                           {match.count}× {match.itemName ? `${match.itemName} (${humanizeId(match.id)})` : humanizeId(match.id)}
@@ -244,7 +238,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                     onClick={() => setSelected(row.key)}
                     className={`flex-1 min-w-0 flex items-center gap-2 p-2 text-left border ${selected === row.key ? "border-emerald-500 bg-emerald-600/10" : "border-transparent hover:bg-gray-800/60"}`}
                   >
-                    <PlayerAvatar player={row.avatarId} />
+                    <PlayerAvatar uuid={row.summary?.uuid} name={row.name} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         {row.online && <span className="h-2 w-2 bg-emerald-400 shrink-0" />}
