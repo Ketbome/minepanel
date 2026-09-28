@@ -1197,7 +1197,7 @@ export const ru: Record<TranslationKey, string> = {
   fmDeleteItemsMessage: "Удалить элементы ({count})?",
   fmDeleteFolderWarning: "Папки удаляются вместе со всем содержимым.",
   fmUploadConflictTitle: "Уже есть в этой папке",
-  fmUploadConflictMessage: "{count} из загружаемых элементов уже есть здесь:",
+  fmUploadConflictMessage: "Загрузка заменит эти элементы ({count}):",
   fmOverwrite: "Перезаписать",
   fmSkipExisting: "Пропустить существующие",
   fmSkipped: "Пропущено",

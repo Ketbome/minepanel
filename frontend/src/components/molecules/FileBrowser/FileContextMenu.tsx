@@ -34,6 +34,46 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
   const { t } = useLanguage();
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Keyboard users land in the menu and go back to whatever opened it (the row's
+  // menu button, or the list for a right click) when it closes.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const focusAt = (index: number) => items[(index + items.length) % items.length]?.focus();
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        focusAt(current + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        focusAt(current - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        focusAt(0);
+        break;
+      case "End":
+        e.preventDefault();
+        focusAt(items.length - 1);
+        break;
+      // A menu is not part of the tab order: Tab leaves it, like a native one.
+      case "Tab":
+        e.preventDefault();
+        onClose();
+        break;
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -88,6 +128,8 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
     <div
       ref={menuRef}
       role="menu"
+      aria-label={file.name}
+      onKeyDown={handleMenuKeyDown}
       className="fixed z-50 min-w-[180px] bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 animate-in fade-in-0 zoom-in-95 select-none"
       style={{ left: adjustedPosition.x, top: adjustedPosition.y }}
     >
@@ -98,14 +140,15 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
           <button
             key={index}
             role="menuitem"
+            tabIndex={-1}
             onClick={() => {
               item.action?.();
               onClose();
             }}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors outline-none ${
               item.danger
-                ? "text-red-400 hover:bg-red-900/30"
-                : "text-gray-200 hover:bg-gray-800"
+                ? "text-red-400 hover:bg-red-900/30 focus-visible:bg-red-900/30"
+                : "text-gray-200 hover:bg-gray-800 focus-visible:bg-gray-800"
             }`}
           >
             {item.icon && <item.icon className="h-4 w-4" />}

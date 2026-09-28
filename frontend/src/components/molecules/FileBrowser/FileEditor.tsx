@@ -57,6 +57,9 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  // While the dialog's save is in flight nothing else may decide: a Cancel followed by
+  // a late success would otherwise close the editor over edits made in the meantime.
+  const [closingSave, setClosingSave] = useState(false);
   const hasChanges = editedContent !== content;
 
   // Leaving the page (reload, closing the tab) would drop the edits just as silently.
@@ -177,25 +180,32 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
         <span>Ctrl+S {t("toSave")}</span>
       </div>
 
-      <Dialog open={confirmClose} onOpenChange={setConfirmClose}>
+      <Dialog open={confirmClose} onOpenChange={(open) => !closingSave && setConfirmClose(open)}>
         <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-gray-200">{t("unsavedChanges")}</DialogTitle>
           </DialogHeader>
           <p className="text-gray-400">{t("fmUnsavedMessage").replace("{name}", fileName)}</p>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmClose(false)}>
+            <Button variant="ghost" onClick={() => setConfirmClose(false)} disabled={closingSave}>
               {t("cancel")}
             </Button>
-            <Button variant="destructive" onClick={onClose}>
+            <Button variant="destructive" onClick={onClose} disabled={closingSave}>
               {t("discardChanges")}
             </Button>
             <Button
               variant="minepanel"
+              disabled={closingSave}
+              className="gap-2"
               onClick={async () => {
-                if (await onSave(editedContent)) onClose();
+                setClosingSave(true);
+                const saved = await onSave(editedContent);
+                setClosingSave(false);
+                if (saved) onClose();
+                else setConfirmClose(false);
               }}
             >
+              {closingSave && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("save")}
             </Button>
           </DialogFooter>

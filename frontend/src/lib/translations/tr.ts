@@ -1223,7 +1223,7 @@ export const tr: Record<TranslationKey, string> = {
   fmDeleteItemsMessage: "{count} öğe silinsin mi?",
   fmDeleteFolderWarning: "Klasörler içindeki her şeyle birlikte silinir.",
   fmUploadConflictTitle: "Bu klasörde zaten var",
-  fmUploadConflictMessage: "Yüklediğiniz öğelerden {count} tanesi burada zaten var:",
+  fmUploadConflictMessage: "Yükleme şu öğelerin yerine geçecek ({count}):",
   fmOverwrite: "Üzerine yaz",
   fmSkipExisting: "Var olanları atla",
   fmSkipped: "Atlandı",

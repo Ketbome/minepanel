@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger, ConflictException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger, ConflictException, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
@@ -16,6 +16,11 @@ export function attachmentHeader(name: string): string {
   const encoded = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
+
+// The global pipe only validates (with implicit conversion) and passes the raw body on,
+// so "10" arrived as a string and "false" validated as true. Here the body is strict
+// JSON types and reaches the handler as the DTO.
+export const uploadBodyPipe = new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true });
 
 @Controller('files')
 export class FilesController {
@@ -222,7 +227,7 @@ export class FilesController {
 
   // Chunked uploads: large files are sent as raw appends so no single request carries them whole.
   @Post(':serverId/uploads')
-  async createUpload(@Request() req, @Param('serverId') serverId: string, @Body() body: CreateUploadDto): Promise<{ id: string; offset: number }> {
+  async createUpload(@Request() req, @Param('serverId') serverId: string, @Body(uploadBodyPipe) body: CreateUploadDto): Promise<{ id: string; offset: number }> {
     const admin = await this.assertFilesAccess(req, serverId, true);
     return this.uploadSessions.create(req.user.userId, serverId, path.join(body.path ?? '', body.name), body.size, admin, body.overwrite ?? true);
   }
