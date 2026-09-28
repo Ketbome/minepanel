@@ -2,7 +2,9 @@ import { FC } from "react";
 import Image from "next/image";
 
 interface PlayerAvatarProps {
-  // Name when known: mc-heads resolves it to the skin, which also works for offline-mode UUIDs
+  // UUID when known: mc-heads recommends UUID lookups for speed, and it's the only form that
+  // resolves Bedrock/Floodgate players, whose usernames aren't valid Mojang profiles. Fall back
+  // to name only when no UUID is known yet (a player online for the first time).
   player: string;
   size?: number;
 }

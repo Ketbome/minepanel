@@ -62,7 +62,7 @@ export const PlayerProfilePanel: FC<PlayerProfilePanelProps> = ({ serverId, prof
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <PlayerAvatar player={name} size={48} />
+        <PlayerAvatar player={profile.uuid} size={48} />
         <div className="min-w-0 flex-1">
           <p className="font-minecraft text-lg text-gray-100 truncate">{name}</p>
           <p className="text-xs text-gray-500 font-mono truncate">{profile.uuid}</p>
