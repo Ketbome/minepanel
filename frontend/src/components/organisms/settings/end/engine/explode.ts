@@ -11,15 +11,15 @@ const BRITTLE = new Set<BlockId>(['grass', 'dirt', 'leaves', 'planks', 'glass', 
 const center = new THREE.Vector3();
 
 // A creeper's or a TNT's blast: blocks within `radius` go (the Overworld remembers them as mined),
-// and you are hurt and thrown back by how close you stood.
-export function explode(at: THREE.Vector3, radius: number, cause: DeathCause) {
+// and you are hurt and thrown back by how close you stood. Pelusa's spares the village.
+export function explode(at: THREE.Vector3, radius: number, cause: DeathCause, breaks = true) {
   const world = runtime.world;
   if (!world) return;
   spawnEffect('explosion', at);
   cue('boom');
   const game = useEndGame.getState();
   const mined: number[] = [];
-  for (let x = Math.floor(at.x - radius); x <= at.x + radius; x += 1) {
+  for (let x = Math.floor(at.x - radius); breaks && x <= at.x + radius; x += 1) {
     for (let y = Math.floor(at.y - radius); y <= at.y + radius; y += 1) {
       for (let z = Math.floor(at.z - radius); z <= at.z + radius; z += 1) {
         const id = world.get(x, y, z);

@@ -16,6 +16,16 @@ export const SUN_SIDE = new THREE.Vector3().crossVectors(WEST, new THREE.Vector3
 
 export function resetClock() {
   runtime.clock = START;
+  runtime.nightsAwake = 0;
+  runtime.playTime = 0;
+}
+
+// the clock moves only while you play; each night that falls without a sleep counts for phantoms
+export function tickClock(dt: number) {
+  const before = isNight();
+  runtime.clock += dt;
+  runtime.playTime += dt;
+  if (!before && isNight()) runtime.nightsAwake += 1;
 }
 
 export function dayTime() {
@@ -42,6 +52,7 @@ export function isBright(t = dayTime()) {
 
 export function skipNight() {
   runtime.clock += (DAY - dayTime()) % DAY;
+  runtime.nightsAwake = 0;
 }
 
 // 1 at day, 0 at night; `dusk` peaks while the sun sits low on the horizon

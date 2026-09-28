@@ -4,7 +4,7 @@ import { FC } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useServerNavStore, type ServerNavGroup, type ServerNavItem } from '@/lib/store/server-nav-store';
-import { TabSearch } from './TabSearch';
+import { TabSearch, type TabSearchItem } from './TabSearch';
 import type { TranslationKey } from '@/lib/translations';
 
 const groupOrder: ServerNavGroup[] = ['config', 'operation', 'monitoring'];
@@ -29,6 +29,12 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
   const items = useServerNavStore((state) => state.items);
   const active = useServerNavStore((state) => state.active);
   const paletteItems = useServerNavStore((state) => state.paletteItems);
+  const setField = useServerNavStore((state) => state.setField);
+
+  const selectItem = (item: TabSearchItem) => {
+    goToTab(item.target);
+    setField(item.field ?? null);
+  };
 
   const renderButton = (item: ServerNavItem) => {
     const Icon = item.icon;
@@ -59,7 +65,7 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
   if (collapsed) {
     return (
       <nav className="flex flex-col gap-0.5 px-2">
-        <TabSearch items={paletteItems} onSelect={goToTab} collapsed />
+        <TabSearch items={paletteItems} onSelect={selectItem} collapsed />
         {items.map((item) => renderButton(item))}
       </nav>
     );
@@ -68,7 +74,7 @@ export const SidebarServerNav: FC<SidebarServerNavProps> = ({ collapsed }) => {
   return (
     <div className="px-2">
       <div className="mb-3">
-        <TabSearch items={paletteItems} onSelect={goToTab} />
+        <TabSearch items={paletteItems} onSelect={selectItem} />
       </div>
 
       <nav className="space-y-4">

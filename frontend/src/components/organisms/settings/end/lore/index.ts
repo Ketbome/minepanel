@@ -29,8 +29,9 @@ export async function loadLore(language: Language) {
 }
 
 export function fillLore(text: string, player: string, ghost: Ghost) {
-  const values: Record<string, string> = { player, ghost: ghost.name, days: String(daysSince(ghost.at)), deaths: String(storedDeaths()) };
-  return text.replace(/\{(player|ghost|days|deaths)\}/g, (_, name: string) => values[name]);
+  // {bfuuny}: Bfuuny's death count, which in Bfuuny mode goes on from the tomb's #312
+  const values: Record<string, string> = { player, ghost: ghost.name, days: String(daysSince(ghost.at)), deaths: String(storedDeaths()), bfuuny: String(312 + useEndGame.getState().deaths) };
+  return text.replace(/\{(player|ghost|days|deaths|bfuuny)\}/g, (_, name: string) => values[name]);
 }
 
 // the same lookup outside React, for canvases and sprites painted once

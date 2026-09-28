@@ -26,6 +26,7 @@ import { AlertsModule } from './alerts/alerts.module';
 import { PlayersModule } from './players/players.module';
 import { ActivityModule } from './activity/activity.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { EndRunsModule } from './end-runs/end-runs.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -54,6 +55,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     PlayersModule,
     ActivityModule,
     AchievementsModule,
+    EndRunsModule,
     FilesModule,
     ProxyModule,
   ],

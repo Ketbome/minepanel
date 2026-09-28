@@ -8,6 +8,7 @@ import { useLore, type LoreKey } from '../lore';
 import { useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
 import { CraftResult, Crafting } from './Crafting';
 import { SIGN_TEXT } from '../signs';
+import { LeaderboardPanel } from './LeaderboardPanel';
 import { MapPanel } from './MapPanel';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
@@ -219,5 +220,6 @@ export default function Panels() {
   if (panel.kind === 'sign') return <SignPanel key={panel.id} id={panel.id} />;
   if (panel.kind === 'trade') return <TradePanel />;
   if (panel.kind === 'map') return <MapPanel />;
+  if (panel.kind === 'leaderboard') return <LeaderboardPanel />;
   return <InventoryPanel />;
 }

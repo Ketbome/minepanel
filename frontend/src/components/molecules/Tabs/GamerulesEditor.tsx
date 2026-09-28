@@ -85,7 +85,7 @@ export const GamerulesEditor: FC<GamerulesEditorProps> = ({ serverId, rconPort, 
   const visible = rules.filter((rule) => rule.name.toLowerCase().includes(filter.toLowerCase()));
 
   return (
-    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+    <div id="gamerules" className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="h-4 w-4 text-purple-400" />
         <span className="font-minecraft text-sm text-gray-200">{t("allGamerules")}</span>

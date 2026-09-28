@@ -5,8 +5,12 @@ import type { LoreKey } from '../lore/en';
 
 export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem' | 'server48';
 export type Veil = 'black' | 'portal' | 'white' | 'none';
+// how this run is played, chosen before it starts: speedrun and hardcore are timed
+export type RunMode = 'normal' | 'speedrun' | 'hardcore' | 'bfuuny';
+// the zones whose first arrival is a split (the backend knows the same list)
+export type SplitZone = 'nether' | 'stronghold' | 'end' | 'endcity';
 export type Stage = 'arrival' | 'crystals' | 'dragon' | 'victory' | 'exit';
-export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus';
+export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus' | 'golem' | 'rabbit';
 export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4' | 'igloo' | 'wreck' | 'buried';
 export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'guide3' | 'stop';
 export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote';
@@ -59,7 +63,12 @@ export type Flag =
   | 'ruinSwamp'
   | 'ruinCoast'
   | 'templeBlown'
-  | 'treasureFound';
+  | 'treasureFound'
+  | 'phantomsWarned'
+  | 'golemAngry'
+  | 'wolfTamed'
+  | 'wolfLost'
+  | 'pelusaBlew';
 
 export type Panel =
   | { readonly kind: 'chest'; readonly id: ChestId }
@@ -68,7 +77,8 @@ export type Panel =
   | { readonly kind: 'sign'; readonly id: SignId }
   | { readonly kind: 'trade' }
   | { readonly kind: 'inventory' }
-  | { readonly kind: 'map' };
+  | { readonly kind: 'map' }
+  | { readonly kind: 'leaderboard' };
 
 export interface Ghost {
   readonly name: string;
@@ -137,7 +147,14 @@ export interface GameSlice {
   portalOpen: boolean;
   exitTo: 'portal' | 'gateway' | null;
   xp: number;
+  mode: RunMode;
+  // play time, in ms, at the first arrival in each split zone, and at the finish
+  splits: Partial<Record<SplitZone, number>>;
+  finishedAt: number | null;
   reset: (player: string, muted: boolean) => void;
+  setMode: (mode: RunMode) => void;
+  split: (zone: SplitZone, at: number) => void;
+  finish: (at: number) => void;
   setPlayer: (player: string) => void;
   travel: (zone: Zone, entry?: string, veil?: Veil) => void;
   arrive: () => void;

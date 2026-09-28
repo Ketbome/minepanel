@@ -31,7 +31,7 @@ export const ComposeSnippetsField: FC<ComposeSnippetsFieldProps> = ({ snippets, 
     onChange(snippets.map((snippet, i) => (i === index ? { ...snippet, ...patch } : snippet)));
 
   return (
-    <div className="space-y-3 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+    <div id="composeSnippets" className="space-y-3 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
       <div>
         <Label className="text-gray-200 font-minecraft text-sm">{t('composeSnippets')}</Label>
         <p className="text-xs text-gray-400 mt-1">{t('composeSnippetsDesc')}</p>

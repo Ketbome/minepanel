@@ -12,13 +12,21 @@ export interface TabSearchItem {
   target: string;
   group?: string;
   keywords?: string;
+  // Element id of the field to scroll to once the target tab is open.
+  field?: string;
+  // The field sits in a section simple mode hides, so jumping to it switches modes.
+  advanced?: boolean;
+  disabled?: boolean;
 }
 
 interface TabSearchProps {
   items: TabSearchItem[];
-  onSelect: (target: string) => void;
+  onSelect: (item: TabSearchItem) => void;
   collapsed?: boolean;
 }
+
+// Accent-insensitive, so "configuracion" still finds "Configuración".
+const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = false }) => {
   const { t } = useLanguage();
@@ -52,13 +60,17 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
   }, [open]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => item.label.toLowerCase().includes(q) || (item.group ?? "").toLowerCase().includes(q) || (item.keywords ?? "").toLowerCase().includes(q));
+    const terms = normalize(query).split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return items;
+    return items.filter((item) => {
+      const text = normalize(`${item.label} ${item.group ?? ""} ${item.keywords ?? ""}`);
+      return terms.every((term) => text.includes(term));
+    });
   }, [items, query]);
 
-  const select = (target: string) => {
-    onSelect(target);
+  const select = (item: TabSearchItem) => {
+    if (item.disabled) return;
+    onSelect(item);
     setOpen(false);
   };
 
@@ -71,7 +83,7 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
       setActiveIndex((prev) => Math.max(prev - 1, 0));
     } else if (event.key === "Enter" && filtered[activeIndex]) {
       event.preventDefault();
-      select(filtered[activeIndex].target);
+      select(filtered[activeIndex]);
     }
   };
 
@@ -122,9 +134,14 @@ export const TabSearch: FC<TabSearchProps> = ({ items, onSelect, collapsed = fal
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => select(item.target)}
+                  disabled={item.disabled}
+                  onClick={() => select(item)}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex w-full items-center gap-3 border-2 px-3 py-2 text-left text-sm transition-colors ${index === activeIndex ? "border-[var(--mc-frame)] bg-emerald-600/25 text-emerald-300" : "border-transparent text-gray-300 hover:bg-black/40"}`}
+                  className={cn(
+                    "flex w-full items-center gap-3 border-2 px-3 py-2 text-left text-sm transition-colors",
+                    index === activeIndex ? "border-[var(--mc-frame)] bg-emerald-600/25 text-emerald-300" : "border-transparent text-gray-300 hover:bg-black/40",
+                    item.disabled && "cursor-not-allowed opacity-50",
+                  )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="flex-1 font-minecraft">{item.label}</span>

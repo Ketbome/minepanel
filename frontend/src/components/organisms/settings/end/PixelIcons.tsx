@@ -85,6 +85,20 @@ function diagonal(light: string, body: string, edge: string, from = 0, to = 11) 
   return pixels;
 }
 
+// a bone: a pale diagonal with a knuckle at each end
+function bonePixels() {
+  const pixels = diagonal('#fbf8ee', '#e8e3d0', '#b9b39c', 2, 10);
+  [
+    [3, 12],
+    [4, 13],
+    [3, 11],
+    [12, 3],
+    [13, 4],
+    [13, 3],
+  ].forEach(([x, y]) => pixels.push([x, y, '#e8e3d0']));
+  return pixels;
+}
+
 function arrowPixels() {
   const pixels = diagonal('#a8a8a8', '#8a6337', '#5f4122', 2, 10);
   [
@@ -202,6 +216,7 @@ const HEAD = headPixels();
 const STICK = diagonal('#9b7240', '#896237', '#5f4122');
 const ROD = diagonal('#fff1a8', '#ffc233', '#c26a00');
 const ARROW = arrowPixels();
+const BONE = bonePixels();
 const FLINT = flintPixels();
 const OBSIDIAN = obsidianPixels();
 const DIRT = dirtPixels();
@@ -216,6 +231,7 @@ export const SPRITES = {
   blaze: BLAZE,
   rod: ROD,
   arrow: ARROW,
+  bone: BONE,
   flint: FLINT,
   obsidian: OBSIDIAN,
   dirt: DIRT,
@@ -247,6 +263,10 @@ export function DragonEggIcon({ className }: { readonly className?: string }) {
 
 export function DragonHeadIcon({ className }: { readonly className?: string }) {
   return <PixelSprite pixels={HEAD} className={className} />;
+}
+
+export function BoneIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={BONE} className={className} />;
 }
 
 export function StickIcon({ className }: { readonly className?: string }) {

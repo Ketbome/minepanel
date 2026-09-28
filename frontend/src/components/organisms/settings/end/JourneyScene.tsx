@@ -11,11 +11,14 @@ import { Overworld } from './acts/Overworld';
 import { Server48 } from './acts/Server48';
 import { Stronghold } from './acts/Stronghold';
 import { resetClock } from './engine/clock';
+import { RunClock } from './engine/RunClock';
+import { Screenshot } from './engine/Screenshot';
 import { Drops } from './engine/Drops';
 import { Effects } from './engine/Effects';
 import { Hand } from './engine/Hand';
 import { Player } from './engine/Player';
 import { Projectiles } from './engine/Projectiles';
+import { Endermites } from './mobs/endermite';
 import { Rake } from './mobs/rake';
 import { useEndGame, type Zone } from './store';
 
@@ -52,6 +55,9 @@ export default function JourneyScene() {
       <Projectiles />
       <Drops />
       <Rake key={`rake:${zone}`} />
+      <Endermites key={`endermites:${zone}`} />
+      <RunClock />
+      <Screenshot />
       <Effects />
       <Hand />
     </Canvas>

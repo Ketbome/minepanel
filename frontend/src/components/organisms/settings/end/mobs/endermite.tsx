@@ -1,8 +1,9 @@
 'use client';
 
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type * as THREE from 'three';
+import { runtime } from '../engine/runtime';
 import { useMonster } from './monsters';
 import { PX, type Wander } from './parts';
 import { Box, useSkin, type SkinArt } from './skins';
@@ -63,4 +64,21 @@ export function Endermite({ wander, onDeath }: { readonly wander: Wander; readon
       ))}
     </group>
   );
+}
+
+// Endermites crawl out of one landed pearl in twenty, in whatever zone you threw it (JourneyScene
+// keys this by zone, so they stay behind when you leave).
+export function Endermites() {
+  const [mites, setMites] = useState<readonly { readonly id: number; readonly wander: Wander }[]>([]);
+  useEffect(() => {
+    let count = 0;
+    runtime.hooks.pearl = (at) => {
+      count += 1;
+      setMites((current) => [...current, { id: count, wander: { home: at.setY(Math.round(at.y) + 0.5), radius: 3, speed: 1.4 } }]);
+    };
+    return () => {
+      runtime.hooks.pearl = null;
+    };
+  }, []);
+  return mites.map(({ id, wander }) => <Endermite key={id} wander={wander} onDeath={() => setMites((current) => current.filter((mite) => mite.id !== id))} />);
 }

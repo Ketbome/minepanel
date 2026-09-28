@@ -195,6 +195,9 @@ Tooling / build (Next.js 16):
 - `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
 - `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
+  Setting entries in `paletteItems` carry `field` (an element id in the tab); `ServerConfigTabs`
+  scrolls to it via `server-nav-store.field`. Renaming a field `id` means updating its entry,
+  and a field inside a section simple mode hides needs `advanced` set.
 - `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the
   AUTO_CURSEFORGE "File" method, the deprecated CURSEFORGE `cfServerMod` field and the Modrinth
   modpack field. It inspects only the selected file and reports the result through `onInspection`.
@@ -262,7 +265,11 @@ Tooling / build (Next.js 16):
     `useRespawns` (`mobs/parts.tsx`), keyed by life, so no run can run dry. Natural spawns go through
     `useSpawner` (`mobs/spawner.ts`: a cap, a distance band around the player, a condition such as
     night, and unloading far away); the Overworld's skeletons spawn that way at night and burn by day.
-    Monsters mark their target `hostile`, which is what the bed checks.
+    Monsters mark their target `hostile`, which is what the bed checks. `acts/NightMobs.tsx` holds
+    every Overworld night spawner by biome; `useMonster` (`mobs/monsters.tsx`) takes `burns`
+    (`mobs/sunburn.ts`), `calm` (spiders by day) and `onHurt` (zombified piglins call each other).
+    `useMob` hides a mob past the fog. A wide mob's home must clear walls and props by its half
+    width, or it climbs out on top of them (the golem did).
   - Secret achievements are ordinary keys at the end of `achievements.ts` (the trophy shows every
     missing key as `???`); the flags they look back on (`endermanKilled`, `kevinHit`, `glided`...)
     are set where it happens, and the islet ones are granted at the end of the islet script.
@@ -275,6 +282,14 @@ Tooling / build (Next.js 16):
     structures, and `acts/Biomes.tsx` holds their props (ruin signs, chests, the TNT plate, cactus
     damage). `engine/explode.ts` is the shared blast (Kevin, TNT). Blocks whose four sides share a
     texture are drawn with a three-group box (`WorldMesh`), so they cost three draw calls per chunk.
+  - Replay modes (`store` `mode`: normal, speedrun, hardcore, bfuuny) are picked on the start screen
+    once `advFreeEnd` is earned. `engine/RunClock.tsx` records splits and the finish from
+    `runtime.playTime` and sends timed runs through `services/end-runs/` (`POST /end-runs`); the
+    records window is `panels/LeaderboardPanel.tsx`. `run.ts` holds BlasterDaster's time and the
+    formatter so the thanks screen does not pull in the 3D engine. `engine/Screenshot.tsx` is F2.
+  - The start screen and the pause menu are `PauseMenu` (`hud/Screens.tsx`): a title (the start
+    one with the game's yellow splash), the main button, pairs of smaller ones, and the controls
+    on their own page (Escape goes back to the menu there, not into the game).
   - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
     them large. The text of every sign lives in `signs.ts`.
   - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.

@@ -11,14 +11,14 @@ import { countOf } from '../items';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import { cellKey, cellOf, World, type BlockId } from '../engine/world';
 import { WorldMesh, type Plant } from '../engine/WorldMesh';
+import { Cat, Chicken, Cow, Horse, IronGolem, Wolf } from '../mobs/animals';
 import { Creeper, Pig, Rabbit, Sheep, Villager } from '../mobs/overworld';
-import { Skeleton } from '../mobs/skeleton';
-import { useSpawner } from '../mobs/spawner';
 import { createOverworldSkyMaterial } from '../shaders';
 import { lastSeenKey, useLore } from '../lore';
 import { BFUUNY, BLASTER, FIRST_GHOST, useEndGame } from '../store';
 import { easeInOut, hash, kit, UNIT_BOX, type Block } from '../voxels';
 import { Biomes } from './Biomes';
+import { NightMobs } from './NightMobs';
 import { buildBiomeColumn, buildStructures, oak } from './overworld-biomes';
 import { biomeAt, CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
 import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
@@ -75,24 +75,17 @@ const HOMES = {
   creeper: { home: new THREE.Vector3(18, 0.5, 16), radius: 5, speed: 0.9 },
 };
 
-// monsters spawn in the dark, so never by the camp's or the village's torches
-const LIT = [
-  { ...CAMP, radius: 10 },
-  { ...VILLAGE, radius: 15 },
-];
-
-const NATURAL = new Set<BlockId>(['grass', 'dirt', 'stone', 'sand', 'snowyGrass']);
-
-// where a monster can stand at this column: on natural ground, inside the border, away from light
-function monsterSpot(world: World, x: number, z: number) {
-  if (Math.abs(x) > R - 2 || Math.abs(z) > R - 2) return null;
-  if (LIT.some((lit) => Math.hypot(x - lit.x, z - lit.z) < lit.radius)) return null;
-  for (let y = 24; y >= -3; y -= 1) {
-    const id = world.get(x, y, z);
-    if (id) return NATURAL.has(id) ? new THREE.Vector3(x, y + 0.5, z) : null;
-  }
-  return null;
-}
+// the animals that live here for good, the game's way: a village with its cat, golem and hens,
+// cows and horses on the plains, a wolf pack in the taiga
+const onGround = (x: number, z: number) => new THREE.Vector3(x, groundHeight(x, z) + 0.5, z);
+const ANIMALS = {
+  cat: { home: new THREE.Vector3(VILLAGE.x + 2, 0.5, VILLAGE.z + 6), radius: 3, speed: 1 },
+  golem: { home: new THREE.Vector3(VILLAGE.x - 2.5, 0.5, VILLAGE.z - 3.5), radius: 2, speed: 0.7 },
+  hens: [0, 1, 2].map((i) => ({ home: new THREE.Vector3(VILLAGE.x + 5 + i, 0.5, VILLAGE.z + 12), radius: 3, speed: 0.9 })),
+  cows: [0, 1, 2].map((i) => ({ home: onGround(-8 + i * 3, 32), radius: 5, speed: 0.8 })),
+  horses: [0, 1].map((i) => ({ home: onGround(6 + i * 4, -38), radius: 6, speed: 1.2 })),
+  wolves: [0, 1, 2].map((i) => ({ home: onGround(-32 + i * 2, -84 + i), radius: 5, speed: 1.1 })),
+};
 
 export const OVERWORLD_SPAWNS: Record<string, readonly [number, number, number, number]> = {
   camp: [CAMP.x + 0.5, 0.5, CAMP.z + 4.5, 0],
@@ -428,7 +421,8 @@ function useContributorNames() {
   const [names, setNames] = useState<readonly string[]>([]);
   useEffect(() => {
     const controller = new AbortController();
-    const admins = [FIRST_GHOST.name, BLASTER, BFUUNY].map((name) => name.toLowerCase());
+    // BlasterD2 is BlasterDaster's GitHub account
+    const admins = [FIRST_GHOST.name, BLASTER, BFUUNY, 'BlasterD2'].map((name) => name.toLowerCase());
     fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/api/github-contributors`, { signal: controller.signal })
       .then((response) => (response.ok ? (response.json() as Promise<{ contributors: { login: string }[] | null }>) : null))
       .then((body) => {
@@ -454,7 +448,10 @@ export function Overworld() {
   const beats = useRef({ t: 0, voices: false, seen: false, hinted: false, portalSeen: false, back: false, eyesHint: false, obituary: false });
   const lore = useLore();
   const names = useContributorNames();
-  const skeletons = useSpawner('skeleton', { cap: 3, min: 20, max: 40, despawn: 64, every: 4, allowed: () => isNight(), spot: (x, z) => monsterSpot(world, x, z) });
+  const [tamedWolf] = useState(() => {
+    const { flags } = useEndGame.getState();
+    return Boolean(flags.wolfTamed && !flags.wolfLost);
+  });
 
   useEffect(() => {
     runtime.world = world;
@@ -550,7 +547,7 @@ export function Overworld() {
       game.travel('nether', 'arrive', 'portal');
       cue('travel');
     }
-    if (p.x > TUNNEL.x0 - 0.5 && p.x < TUNNEL.x1 + 0.5 && p.z > TUNNEL.z1 - 1.2 && p.y < 3) game.travel('ancient', 'arrive', 'black');
+    if (p.x > TUNNEL.x0 - 0.5 && p.x < TUNNEL.x1 + 0.5 && p.z > TUNNEL.z1 - 1.2 && p.z < TUNNEL.z1 + 0.5 && p.y < 3) game.travel('ancient', 'arrive', 'black');
     // a shaft dug early, before the eye showed the way, leads only to the void
     if (game.flags.eyeLanded && Math.hypot(p.x - DIG.x, p.z - DIG.z) < 1 && p.y < -5) {
       game.setFlag('stronghold');
@@ -599,9 +596,22 @@ export function Overworld() {
       <Rabbit name={lore('rabbitName')} wander={HOMES.rabbit} />
       <Pig name={lore('pigName')} wander={HOMES.pig} />
       <Creeper name="Kevin" wander={HOMES.creeper} />
-      {skeletons.spawns.map(({ id, wander }) => (
-        <Skeleton key={id} wander={wander} burns onDeath={() => skeletons.died(id)} />
+      <Cat wander={ANIMALS.cat} />
+      <IronGolem wander={ANIMALS.golem} />
+      {ANIMALS.hens.map((wander, index) => (
+        <Chicken key={index} wander={wander} />
       ))}
+      {ANIMALS.cows.map((wander, index) => (
+        <Cow key={index} wander={wander} />
+      ))}
+      {ANIMALS.horses.map((wander, index) => (
+        <Horse key={index} wander={wander} />
+      ))}
+      {ANIMALS.wolves.map((wander, index) => (
+        // the one you tamed waits for you when you come back (it catches up on its own)
+        <Wolf key={index} wander={wander} tamed={index === 0 && tamedWolf} />
+      ))}
+      <NightMobs world={world} />
 
       {eyeLanded && (
         <group position={[DIG.x, groundHeight(DIG.x, DIG.z) + 1.5, DIG.z]}>

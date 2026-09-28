@@ -3,6 +3,8 @@
 import { AnimatePresence, m } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { cue } from '../end-audio';
+import { formatRun } from '../run';
+import { runtime } from '../engine/runtime';
 import { useLore } from '../lore';
 import { DRAGON_MAX_HP, useEndGame, type Advancement, type Caption } from '../store';
 import { AdvancementBadge } from './AdvancementBadge';
@@ -252,12 +254,36 @@ function ActionBar() {
   );
 }
 
+// the speedrun and hardcore clock, drawn straight from the game loop's play time
+function RunTimer() {
+  const timed = useEndGame((state) => state.mode === 'speedrun' || state.mode === 'hardcore');
+  const finishedAt = useEndGame((state) => state.finishedAt);
+  const text = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!timed) return;
+    let frame = 0;
+    const tick = () => {
+      if (text.current) text.current.textContent = formatRun(finishedAt ?? runtime.playTime * 1000);
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [timed, finishedAt]);
+  if (!timed) return null;
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-12 z-[41] -translate-x-1/2 font-mono text-lg tabular-nums text-white" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.8)' }}>
+      <span ref={text} className={finishedAt === null ? undefined : 'text-emerald-300'} />
+    </div>
+  );
+}
+
 export function Hud({ onClose }: { readonly onClose: () => void }) {
   return (
     <>
       <DamageFlash />
       <Screamer />
       <BossBar />
+      <RunTimer />
       <NoiseMeter />
       <Objectives />
       <TitleCard />

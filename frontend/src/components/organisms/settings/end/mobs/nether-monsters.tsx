@@ -56,6 +56,10 @@ const ZOMBIFIED_PIGLIN: SkinArt = {
   },
 };
 
+// hit one and every zombified piglin within twelve blocks comes for you, like the game's
+const anger = { at: -9, x: 0, z: 0 };
+const ANGER_RANGE = 12;
+
 export function ZombifiedPiglin({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
@@ -63,7 +67,30 @@ export function ZombifiedPiglin({ wander, onDeath }: { readonly wander: Wander; 
   const arms = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(ZOMBIFIED_PIGLIN);
   const materials = useMemo(() => [material], [material]);
-  const { state } = useMonster(root, wander, legs, materials, { hp: 20, strike: 5, cause: 'zombifiedPiglin', size: [0.6, 1.95], speed: 3, onDeath }, head);
+  const { state } = useMonster(
+    root,
+    wander,
+    legs,
+    materials,
+    {
+      hp: 20,
+      strike: 5,
+      cause: 'zombifiedPiglin',
+      size: [0.6, 1.95],
+      speed: 3,
+      onDeath,
+      calm: () => true,
+      onHurt: () => {
+        const at = root.current?.position;
+        if (at) Object.assign(anger, { at: runtime.time, x: at.x, z: at.z });
+      },
+    },
+    head
+  );
+  useFrame(() => {
+    const at = root.current?.position;
+    if (at && runtime.time - anger.at < 0.5 && Math.hypot(at.x - anger.x, at.z - anger.z) < ANGER_RANGE) state.current.provoked = true;
+  });
   const gold = flat('#f2c230');
   const guard = flat('#b8860b');
   const handle = flat('#5c3f24');

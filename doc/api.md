@@ -244,6 +244,16 @@ The End Portal easter egg's advancements, per user. Only the caller's own rows.
 - `POST /achievements` — body `{ "key": "advStrike" }`. Idempotent: earning a key again keeps
   the first `unlockedAt`. Unknown keys return `400`
 
+### End runs
+
+Timed finishes of the End Portal easter egg (Speedrun and Hardcore modes), shared by the panel's users.
+
+- `POST /end-runs` — body `{ "mode": "speedrun" | "hardcore", "timeMs": 690000, "splits": { "nether": 120000, ... } }`.
+  `timeMs` must be between one minute and one day; splits must be known zones (`nether`,
+  `stronghold`, `end`, `endcity`), in order and before the finish. Otherwise `400`
+- `GET /end-runs/leaderboard?mode=speedrun` — `{ "top": [{ "username", "timeMs", "finishedAt" }], "mine": { "timeMs", "rank" } | null }`:
+  each user's best run, fastest first, top ten, and the caller's own place. Visible to every user
+
 ### Server monitoring
 
 Both endpoints require authentication and access to the requested server.

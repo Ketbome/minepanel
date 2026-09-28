@@ -10,7 +10,8 @@ import { runtime } from '../engine/runtime';
 import type { World } from '../engine/world';
 import { useEndGame, type Flag, type SignId } from '../store';
 import { overworldKit } from '../overworld-voxels';
-import { DOME, HARBOR, IGLOO, PEN, PYRAMID, TEMPLE, TREASURE, WRECK } from './overworld-layout';
+import { Witch } from '../mobs/monsters';
+import { DOME, HARBOR, HUT, IGLOO, PEN, PYRAMID, TEMPLE, TREASURE, WRECK } from './overworld-layout';
 import { Chest, Sign } from './props';
 
 // The biomes' props and rules: Ketbome's ruin signs (seeing all four earns an achievement), the
@@ -26,6 +27,9 @@ const RUINS: readonly { readonly id: SignId; readonly flag: Flag; readonly at: r
   { id: 'ruinCoast', flag: 'ruinCoast', at: [HARBOR.x, 2, HARBOR.z] },
 ];
 const SEEN = 6;
+
+// the witch who lives in the swamp hut, on its floor
+const HUT_WITCH = { home: new THREE.Vector3(HUT.x, 4.5, HUT.z), radius: 1, speed: 0.6 };
 
 const PLATE = new THREE.Vector3(TEMPLE.x, 1.5, TEMPLE.z);
 const PLATE_GEOMETRY = new THREE.BoxGeometry(14 / 16, 1 / 16, 14 / 16);
@@ -92,6 +96,7 @@ export function Biomes({ world }: { readonly world: World }) {
       ))}
       <Sign id="templeBfuuny" at={[TEMPLE.x - 6, 2, TEMPLE.z + 2]} facing={-Math.PI / 2} />
       <Sign id="wreckNote" at={[WRECK.x - 2, 1, WRECK.z]} facing={toCamp(WRECK.x, WRECK.z)} />
+      <Witch wander={HUT_WITCH} />
       <Chest world={world} id="igloo" at={[IGLOO.x, 4, IGLOO.z - 1]} />
       <Chest world={world} id="wreck" at={[WRECK.x + 2, 1, WRECK.z]} facing={-Math.PI / 2} />
       <Chest world={world} id="buried" at={[TREASURE.x, 0, TREASURE.z]} />
