@@ -190,12 +190,14 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
             <Button variant="ghost" onClick={() => setConfirmClose(false)} disabled={closingSave}>
               {t("cancel")}
             </Button>
-            <Button variant="destructive" onClick={onClose} disabled={closingSave}>
+            {/* A header save may still be running too: discarding or saving again from here
+                would race it. */}
+            <Button variant="destructive" onClick={onClose} disabled={closingSave || isSaving}>
               {t("discardChanges")}
             </Button>
             <Button
               variant="minepanel"
-              disabled={closingSave}
+              disabled={closingSave || isSaving}
               className="gap-2"
               onClick={async () => {
                 setClosingSave(true);
@@ -205,7 +207,7 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
                 else setConfirmClose(false);
               }}
             >
-              {closingSave && <Loader2 className="h-4 w-4 animate-spin" />}
+              {(closingSave || isSaving) && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("save")}
             </Button>
           </DialogFooter>

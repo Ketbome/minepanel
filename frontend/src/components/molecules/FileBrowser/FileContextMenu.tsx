@@ -33,6 +33,9 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
 }) => {
   const { t } = useLanguage();
   const menuRef = useRef<HTMLDivElement>(null);
+  // A click elsewhere closes the menu and focuses what was clicked; taking focus back
+  // to the opener then would steal it.
+  const closedByPointerRef = useRef(false);
 
   // Keyboard users land in the menu and go back to whatever opened it (the row's
   // menu button, or the list for a right click) when it closes.
@@ -40,7 +43,7 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
     const opener = document.activeElement as HTMLElement | null;
     menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     return () => {
-      if (opener?.isConnected) opener.focus();
+      if (!closedByPointerRef.current && opener?.isConnected) opener.focus();
     };
   }, []);
 
@@ -77,6 +80,7 @@ export const FileContextMenu: FC<FileContextMenuProps> = ({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        closedByPointerRef.current = true;
         onClose();
       }
     };

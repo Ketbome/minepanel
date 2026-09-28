@@ -231,8 +231,10 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       try {
         await filesService.writeFile(serverId, editingFile.path, content);
         mcToast.success(t("fileSaved"));
-        // Saving is not leaving: the editor stays open on the new baseline.
-        setEditingFile({ path: editingFile.path, content });
+        // Saving is not leaving: the editor stays open on the new baseline. Only if it is
+        // still open on this file, though: a save that lands after the user left must
+        // not bring the editor back.
+        setEditingFile((current) => (current?.path === editingFile.path ? { path: current.path, content } : current));
         loadFiles(currentPath);
         return true;
       } catch (error) {
