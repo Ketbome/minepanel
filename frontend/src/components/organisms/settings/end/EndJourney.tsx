@@ -6,7 +6,7 @@ import { Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { setMuted, stopAmbience } from './end-audio';
 import { releaseAll } from './engine/input';
-import { runtime } from './engine/runtime';
+import { exitFullscreen, runtime } from './engine/runtime';
 import { EndPoem } from './EndPoem';
 import { Hud } from './hud/Hud';
 import { useLore } from './lore';
@@ -146,6 +146,7 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
       window.removeEventListener('keydown', onKey);
       stopAmbience();
       releaseAll();
+      exitFullscreen();
     };
   }, [onClose]);
 

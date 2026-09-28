@@ -6,6 +6,7 @@ import { isNight } from '../engine/clock';
 import { runtime } from '../engine/runtime';
 import type { BlockId, World } from '../engine/world';
 import { Drowned, Phantom, Slime, Spider, Witch, Zombie, ZombieVillager, type SlimeSize } from '../mobs/monsters';
+import { Creeper } from '../mobs/overworld';
 import { Skeleton } from '../mobs/skeleton';
 import { useSpawner } from '../mobs/spawner';
 import { useEndGame } from '../store';
@@ -56,6 +57,7 @@ export function NightMobs({ world }: { readonly world: World }) {
     spot: (x, z) => (Math.hypot(x - VILLAGE.x, z - VILLAGE.z) < 40 ? landSpot(world, x, z) : null),
   });
   const spiders = useSpawner('spider', { ...BAND, cap: 2, allowed: night, spot: (x, z) => landSpot(world, x, z) });
+  const creepers = useSpawner('creeper', { ...BAND, cap: 2, allowed: night, spot: (x, z) => landSpot(world, x, z) });
   const witches = useSpawner('witch', { ...BAND, cap: 1, allowed: night, spot: (x, z) => landSpot(world, x, z, 'swamp') });
   const slimes = useSpawner('slime', { ...BAND, cap: 2, allowed: night, spot: (x, z) => landSpot(world, x, z, 'swamp'), sized: () => (Math.random() < 0.5 ? 4 : 2) });
   const drowned = useSpawner('drowned', { ...BAND, cap: 2, allowed: () => true, spot: (x, z) => seaSpot(world, x, z) });
@@ -99,6 +101,9 @@ export function NightMobs({ world }: { readonly world: World }) {
       ))}
       {spiders.spawns.map(({ id, wander }) => (
         <Spider key={id} wander={wander} onDeath={() => spiders.died(id)} />
+      ))}
+      {creepers.spawns.map(({ id, wander }) => (
+        <Creeper key={id} wander={wander} onDeath={() => creepers.died(id)} />
       ))}
       {witches.spawns.map(({ id, wander }) => (
         <Witch key={id} wander={wander} onDeath={() => witches.died(id)} />

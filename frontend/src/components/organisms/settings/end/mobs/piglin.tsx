@@ -7,7 +7,7 @@ import { cue } from '../end-audio';
 import { spawnDrop } from '../engine/Drops';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
-import type { ItemId } from '../items';
+import { armorPoints, type ItemId } from '../items';
 import { useEndGame } from '../store';
 import { flat, Part, PX, useDamage, useMob, useMobTarget, type Wander } from './parts';
 import { Box, sides, useSkin, type SkinArt } from './skins';
@@ -48,6 +48,8 @@ const BARTER: readonly { readonly item: ItemId; readonly min: number; readonly m
   { item: 'netherrack', min: 2, max: 6, weight: 16 },
   { item: 'obsidian', min: 1, max: 1, weight: 10 },
   { item: 'apple', min: 1, max: 1, weight: 4 },
+  // the rarest trade: one life back
+  { item: 'totem', min: 1, max: 1, weight: 2 },
 ];
 const TOTAL = BARTER.reduce((sum, entry) => sum + entry.weight, 0);
 let dry = 0;
@@ -87,8 +89,8 @@ const PIGLIN: SkinArt = {
   },
 };
 
-// Piglins attack anyone who comes without gold on their head. Wear the golden helmet and they
-// let you be; hold a gold ingot, right click one, and it takes the ingot, admires it for a few
+// Piglins attack anyone who comes wearing no gold. Wear any golden armor (the helmet is in the
+// ruined portal's chest) and they let you be; hold a gold ingot, right click one, and it takes the ingot, admires it for a few
 // seconds and tosses you something back. Hit one and the whole group turns on you.
 export function Piglin({ wander, onDeath }: { readonly wander: Wander; readonly onDeath: () => void }) {
   const root = useRef<THREE.Group>(null);
@@ -149,7 +151,7 @@ export function Piglin({ wander, onDeath }: { readonly wander: Wander; readonly 
     if (distance < REACH) alarm.nearAt = runtime.time;
     else if (runtime.time - alarm.nearAt > CALM_S) alarm.until = 0;
     const provoked = runtime.time < alarm.until;
-    s.hostile = !game.dead && ((provoked && distance < REACH) || (!game.helmet && sees(eye, SIGHT)));
+    s.hostile = !game.dead && ((provoked && distance < REACH) || (!armorPoints(game.armor) && sees(eye, SIGHT)));
     if (s.hostile) s.admireUntil = -1;
 
     // the trade: done admiring, it tosses the loot toward you

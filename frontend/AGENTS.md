@@ -256,7 +256,13 @@ Tooling / build (Next.js 16):
     pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
     (hold to repeat), one with `food` is eaten by holding it. `Drops.tsx` holds item entities (mob
     loot, barters, your shot arrows) that you pick up by walking over them; a monster's loot table is
-    the `loot` option of `useMonster`, rolled by `dropLoot` when it dies. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    the `loot` option of `useMonster`, rolled by `dropLoot` when it dies. Armor is four gold pieces
+    (`ARMOR` in `items.tsx`, the store's `armor`), 4% less damage per point; any piece calms piglins.
+    Holding right click with the shield sets the store's `blocking`, which `hurt()` honours for
+    every cause outside `UNBLOCKABLE` (`store/health.ts`); a totem anywhere in the inventory takes a
+    death. The store never imports `end-audio` (it would be a cycle): `Player.tsx` plays the block
+    and totem sounds when `blockedAt`/`savedAt` change. `lockPointer()` also takes the screen full
+    screen and locks `KeyW`, so every caller must be a click. `runtime.hooks.vibration` is how steps, landings, blocks, chests
     and arrows reach the ancient city's noise and the Warden.
   - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;

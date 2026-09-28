@@ -36,7 +36,26 @@ export type ItemId =
   | 'rottenFlesh'
   | 'porkchop'
   | 'nugget'
-  | 'skull';
+  | 'skull'
+  | 'string'
+  | 'gunpowder'
+  | 'sand'
+  | 'tnt'
+  | 'cookedPorkchop'
+  | 'chestplate'
+  | 'leggings'
+  | 'boots'
+  | 'trident'
+  | 'totem'
+  | 'iron'
+  | 'shield';
+
+// the gold armor's pieces, and the armor points each is worth in the game
+export type ArmorId = 'helmet' | 'chestplate' | 'leggings' | 'boots';
+export const ARMOR: Record<ArmorId, number> = { helmet: 2, chestplate: 5, leggings: 3, boots: 1 };
+export const ARMOR_IDS = Object.keys(ARMOR) as ArmorId[];
+export const isArmor = (item: ItemId | undefined): item is ArmorId => Boolean(item && item in ARMOR);
+export const armorPoints = (armor: Partial<Record<ArmorId, true>>) => ARMOR_IDS.reduce((sum, piece) => sum + (armor[piece] ? ARMOR[piece] : 0), 0);
 
 export interface Stack {
   readonly item: ItemId;
@@ -90,6 +109,18 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   porkchop: { name: 'itemPorkchop', max: 64, pixels: SPRITES.porkchop, food: 3 },
   nugget: { name: 'itemNugget', max: 64, pixels: SPRITES.nugget },
   skull: { name: 'itemSkull', max: 64, image: '/images/wither-skeleton-skull.webp' },
+  string: { name: 'itemString', max: 64, pixels: SPRITES.string },
+  gunpowder: { name: 'itemGunpowder', max: 64, pixels: SPRITES.gunpowder },
+  sand: { name: 'itemSand', max: 64, pixels: SPRITES.sand, block: 'sand' },
+  tnt: { name: 'itemTnt', max: 64, image: '/images/tnt.webp', block: 'tnt' },
+  cookedPorkchop: { name: 'itemCookedPorkchop', max: 64, pixels: SPRITES.cookedPorkchop, food: 8 },
+  chestplate: { name: 'itemChestplate', max: 1, pixels: SPRITES.chestplate },
+  leggings: { name: 'itemLeggings', max: 1, pixels: SPRITES.leggings },
+  boots: { name: 'itemBoots', max: 1, pixels: SPRITES.boots },
+  trident: { name: 'itemTrident', max: 1, image: '/images/trident.webp' },
+  totem: { name: 'itemTotem', max: 1, image: '/images/totem-of-undying.webp' },
+  iron: { name: 'itemIron', max: 64, pixels: SPRITES.iron },
+  shield: { name: 'itemShield', max: 1, pixels: SPRITES.shield },
 };
 
 export const HOTBAR_SIZE = 9;

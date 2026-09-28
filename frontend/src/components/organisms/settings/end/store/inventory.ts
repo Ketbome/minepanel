@@ -1,4 +1,4 @@
-import { addItem, countOf, emptySlots, INVENTORY_SIZE, ITEMS, removeItem, type ItemId, type Slot, type Stack } from '../items';
+import { addItem, countOf, emptySlots, INVENTORY_SIZE, isArmor, ITEMS, removeItem, type ItemId, type Slot, type Stack } from '../items';
 import { craftAll, craftOnce } from '../recipes';
 import type { Area, ChestId, EndGameState, InventorySlice, Slice, Zone } from './types';
 
@@ -11,9 +11,11 @@ export const initialChests = (): Record<ChestId, Slot[]> => ({
     3: { item: 'note', count: 1 },
     5: { item: 'emerald', count: 4 },
     10: { item: 'diamond', count: 5 },
-    11: { item: 'stick', count: 3 },
+    // sticks for the sword, the pickaxe and the bow
+    11: { item: 'stick', count: 6 },
     13: { item: 'blaze', count: 4 },
-    14: { item: 'bow', count: 1 },
+    // the bow is yours to make
+    14: { item: 'string', count: 3 },
     15: { item: 'arrow', count: 32 },
     16: { item: 'apple', count: 8 },
   }),
@@ -126,7 +128,7 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
   chests: initialChests(),
   grid: emptySlots(9),
   cursor: null,
-  helmet: false,
+  armor: {},
   panel: null,
 
   // the game's clicks: left picks up, drops, merges or swaps a whole stack; right takes half
@@ -215,16 +217,17 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
       if (!stack) return state;
       return { inventory: state.inventory.map((slot, index) => (index === state.selected ? less(stack, 1) : slot)) };
     }),
-  wearHelmet: () => {
+  wear: () => {
     const state = get();
-    if (state.helmet || state.inventory[state.selected]?.item !== 'helmet') return;
+    const piece = state.inventory[state.selected]?.item;
+    if (!isArmor(piece) || state.armor[piece]) return;
     state.consumeHeld();
-    set({ helmet: true });
+    set({ armor: { ...state.armor, [piece]: true } });
   },
-  clickHelmet: () =>
+  clickArmor: (piece) =>
     set((state) => {
-      if (state.helmet && !state.cursor) return { helmet: false, cursor: { item: 'helmet', count: 1 } };
-      if (!state.helmet && state.cursor?.item === 'helmet') return { helmet: true, cursor: null };
+      if (state.armor[piece] && !state.cursor) return { armor: { ...state.armor, [piece]: undefined }, cursor: { item: piece, count: 1 } };
+      if (!state.armor[piece] && state.cursor?.item === piece) return { armor: { ...state.armor, [piece]: true }, cursor: null };
       return state;
     }),
   select: (slot) => set({ selected: ((slot % 9) + 9) % 9 }),
@@ -263,7 +266,7 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
     const kit = KITS[zone];
     if (!kit) return;
     set((state) => ({
-      inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) || (stack.item === 'helmet' && state.helmet) ? bar : addItem(bar, stack.item, stack.count)), state.inventory),
+      inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) || (isArmor(stack.item) && state.armor[stack.item]) ? bar : addItem(bar, stack.item, stack.count)), state.inventory),
     }));
   },
 });

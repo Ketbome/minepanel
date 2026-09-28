@@ -249,6 +249,9 @@ const DROWNED_EYES: SkinArt = {
 };
 
 const FLESH: readonly Loot[] = [{ item: 'rottenFlesh', min: 0, max: 2 }];
+// a drowned sometimes carries a trident, and drops it
+const DROWNED_LOOT: readonly Loot[] = [...FLESH, { item: 'trident', min: 1, max: 1, chance: 0.1 }];
+const STRING: readonly Loot[] = [{ item: 'string', min: 0, max: 2 }];
 
 function useZombie(art: SkinArt, wander: Wander, options: MonsterOptions) {
   const root = useRef<THREE.Group>(null);
@@ -268,7 +271,7 @@ export function Zombie({ wander, onDeath }: { readonly wander: Wander; readonly 
 }
 
 export function Drowned({ wander, onDeath }: { readonly wander: Wander; readonly onDeath?: () => void }) {
-  const parts = useZombie(DROWNED, wander, { hp: 20, strike: 3, cause: 'drowned', size: [0.6, 1.95], speed: 2.4, onDeath, loot: FLESH });
+  const parts = useZombie(DROWNED, wander, { hp: 20, strike: 3, cause: 'drowned', size: [0.6, 1.95], speed: 2.4, onDeath, loot: DROWNED_LOOT });
   return (
     <Biped art={DROWNED} wander={wander} {...parts}>
       <Glow art={DROWNED_EYES} at={[0, 3.5, 4.12]} />
@@ -382,7 +385,7 @@ export function Spider({ wander, onDeath }: { readonly wander: Wander; readonly 
   const walk = useRef(0);
   const { skin, material } = useSkin(SPIDER);
   const materials = useMemo(() => [material], [material]);
-  const { control } = useMonster(root, wander, none, materials, { hp: 16, strike: 2, cause: 'spider', size: [1.4, 0.9], speed: 3.6, onDeath, calm: isBright }, head);
+  const { control } = useMonster(root, wander, none, materials, { hp: 16, strike: 2, cause: 'spider', size: [1.4, 0.9], speed: 3.6, onDeath, loot: STRING, calm: isBright }, head);
 
   // the game's scuttle: legs sweep back and forth in four pairs and lift off the ground in turn
   useFrame((_, delta) => {

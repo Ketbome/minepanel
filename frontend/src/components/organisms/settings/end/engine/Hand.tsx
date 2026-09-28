@@ -316,6 +316,10 @@ export function Hand() {
         const chew = m.charge > 0.2 ? Math.abs(Math.cos(m.charge * 7 * Math.PI)) * 0.04 : 0;
         translate(0.61 - lift * 0.53, -0.27 - lift * 0.04 + chew - m.equip * 0.6, -1.02 + lift * 0.22);
         yaw -= lift * 80;
+      } else if (held === 'shield' && game.blocking) {
+        // raised in front of you, face on
+        translate(0.3, -0.36 - m.equip * 0.6, -0.78);
+        yaw = 10;
       } else if (drawing) {
         // pulled toward the eye, trembling once the string is taut
         const pull = Math.min(1, (m.charge * m.charge + m.charge * 2) / 3);
@@ -325,7 +329,9 @@ export function Hand() {
         roll = 10;
         frame = pull < 0.65 ? 1 : pull < 0.9 ? 2 : 3;
       } else {
-        translate(-0.4 * Math.sin(early * Math.PI), 0.2 * Math.sin(early * Math.PI * 2), -0.2 * Math.sin(swing * Math.PI));
+        // a trident about to be thrown is drawn back and up
+        const pull = held === 'trident' ? Math.min(1, m.charge * 2) : 0;
+        translate(-0.4 * Math.sin(early * Math.PI), 0.2 * Math.sin(early * Math.PI * 2) + pull * 0.1, -0.2 * Math.sin(swing * Math.PI) + pull * 0.15);
         translate(0.56, -0.52 - m.equip * 0.6, -0.72);
         rotate('y', 45 + Math.sin(swing * swing * Math.PI) * -20);
         rotate('z', Math.sin(early * Math.PI) * -20);

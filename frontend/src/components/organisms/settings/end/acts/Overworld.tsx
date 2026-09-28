@@ -21,7 +21,7 @@ import { Biomes } from './Biomes';
 import { NightMobs } from './NightMobs';
 import { buildBiomeColumn, buildStructures, oak } from './overworld-biomes';
 import { biomeAt, CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
-import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
+import { Bed, Campfire, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
 
 const R = OVERWORLD_RADIUS;
 const SKY = new THREE.SphereGeometry(300, 24, 16);
@@ -564,6 +564,7 @@ export function Overworld() {
       <Chest world={world} id="backups" at={[CAMP.x - 2, 1, CAMP.z]} />
       <CraftingTable world={world} at={[CAMP.x + 2, 1, CAMP.z]} />
       <CampBed world={world} />
+      <Campfire world={world} at={[CAMP.x - 1, 1, CAMP.z - 2]} />
       <Biomes world={world} />
       <Torch position={[CAMP.x - 1, 0.78, CAMP.z + 1.3]} />
       <Sign id="incidents" at={[CAMP.x + 1, 1, CAMP.z - 2]} />

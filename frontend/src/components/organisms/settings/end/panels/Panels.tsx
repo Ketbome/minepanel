@@ -3,7 +3,7 @@
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { cue } from '../end-audio';
-import { countOf, ItemIcon, ITEMS, type ItemId } from '../items';
+import { ARMOR_IDS, countOf, ItemIcon, ITEMS, type ItemId } from '../items';
 import { useLore, type LoreKey } from '../lore';
 import { useEndGame, type BookId, type ChestId, type Flag, type SignId } from '../store';
 import { CraftResult, Crafting } from './Crafting';
@@ -185,16 +185,20 @@ function TradePanel() {
   );
 }
 
-// E: the inventory, with the helmet slot and the 2x2 crafting grid of the game (the top-left
+// E: the inventory, with the four armor slots and the 2x2 crafting grid of the game (the top-left
 // cells of the grid)
 function InventoryPanel() {
   const lore = useLore();
-  const helmet = useEndGame((state) => state.helmet);
+  const armor = useEndGame((state) => state.armor);
   return (
     <PanelWindow title={lore('inventory')} wide>
       <div className="flex items-center justify-end gap-2">
         <div className="mr-auto flex items-center gap-2">
-          <ItemSlot slot={helmet ? { item: 'helmet', count: 1 } : null} onClick={() => useEndGame.getState().clickHelmet()} />
+          <div className="grid gap-[3px]">
+            {ARMOR_IDS.map((piece) => (
+              <ItemSlot key={piece} slot={armor[piece] ? { item: piece, count: 1 } : null} onClick={() => useEndGame.getState().clickArmor(piece)} />
+            ))}
+          </div>
           <span className="text-[11px] text-gray-400">{lore('armorSlot')}</span>
         </div>
         <div className="grid grid-cols-2 gap-[3px]">
