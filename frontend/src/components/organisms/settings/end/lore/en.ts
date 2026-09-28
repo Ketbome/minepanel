@@ -382,6 +382,8 @@ export const en = {
   deathTnt: "stepped in the middle. Bfuuny warned you.",
   deathCactus: "leaned on a cactus. For too long.",
   deathGolem: "hit the village's iron golem. It hit back.",
+  deathRabbit: "hit Fluffy three times. Fluffy does not forgive.",
+  pelusaBfuuny: "not even I mess with Fluffy.",
   ghostPhantoms: "two nights without sleep. the things in the sky notice.",
   itemBone: "Bone",
   golemAngry: "you hit the golem. I'll watch from here.",

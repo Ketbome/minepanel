@@ -384,6 +384,8 @@ const es: Record<LoreKey, string> = {
   deathTnt: "pisó el centro. Bfuuny avisó.",
   deathCactus: "se apoyó en un cactus. Demasiado tiempo.",
   deathGolem: "le pegó al golem de la aldea. El golem devolvió el golpe.",
+  deathRabbit: "le pegó a Pelusa tres veces. Pelusa no perdona.",
+  pelusaBfuuny: "ni yo me meto con Pelusa.",
   ghostPhantoms: "dos noches sin dormir. las cosas del cielo lo notan.",
   itemBone: "Hueso",
   golemAngry: "le pegaste al golem. yo miro desde acá.",

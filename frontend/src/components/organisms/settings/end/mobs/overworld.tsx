@@ -7,7 +7,7 @@ import { cue, type CueName } from '../end-audio';
 import { explode } from '../engine/explode';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
-import { useEndGame } from '../store';
+import { BFUUNY, useEndGame } from '../store';
 import { NameTag, PX, useDamage, useMob, useMobTarget, type Wander } from './parts';
 import { Box, sides, useSkin, type BoxArt, type Palette, type SkinArt } from './skins';
 
@@ -406,7 +406,25 @@ export function Rabbit({ wander, name }: { readonly wander: Wander; readonly nam
   const hop = useRef({ phase: 0, twitchAt: 2, twitch: 0, ear: 0 });
   const { skin, material } = useSkin(TOAST);
   const materials = useMemo(() => [material], [material]);
-  const control = useAnimal(root, wander, legs, materials, 6, 'squeak', name, head);
+  const hits = useRef(0);
+  const control = useAnimal(root, wander, legs, materials, Infinity, 'squeak', name, head, undefined, {
+    // the village's rabbit cannot be killed: hit it three times and it explodes, and you with it
+    hit: () => {
+      hits.current += 1;
+      const at = root.current?.position;
+      if (hits.current < 3 || !at) return false;
+      hits.current = 0;
+      explode(at.clone().setY(at.y + 0.4), 5, 'rabbit', false);
+      const game = useEndGame.getState();
+      // however far it hopped after the first two, the third one is the end of you
+      if (at.distanceTo(runtime.player.pos) < 6) game.hurt(99, 'rabbit');
+      if (!game.flags.pelusaBlew) {
+        game.setFlag('pelusaBlew');
+        window.setTimeout(() => useEndGame.getState().say('pelusaBfuuny', BFUUNY), 1500);
+      }
+      return false;
+    },
+  });
   // rabbits move in hops, nose up on the way up; now and then an ear flicks back
   useFrame((_, delta) => {
     const h = hop.current;

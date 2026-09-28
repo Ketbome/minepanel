@@ -546,7 +546,7 @@ export function Overworld() {
       game.travel('nether', 'arrive', 'portal');
       cue('travel');
     }
-    if (p.x > TUNNEL.x0 - 0.5 && p.x < TUNNEL.x1 + 0.5 && p.z > TUNNEL.z1 - 1.2 && p.y < 3) game.travel('ancient', 'arrive', 'black');
+    if (p.x > TUNNEL.x0 - 0.5 && p.x < TUNNEL.x1 + 0.5 && p.z > TUNNEL.z1 - 1.2 && p.z < TUNNEL.z1 + 0.5 && p.y < 3) game.travel('ancient', 'arrive', 'black');
     // a shaft dug early, before the eye showed the way, leads only to the void
     if (game.flags.eyeLanded && Math.hypot(p.x - DIG.x, p.z - DIG.z) < 1 && p.y < -5) {
       game.setFlag('stronghold');

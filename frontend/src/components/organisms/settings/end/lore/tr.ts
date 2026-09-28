@@ -384,6 +384,8 @@ const tr: Record<LoreKey, string> = {
   deathTnt: "ortaya bastı. Bfuuny uyarmıştı.",
   deathCactus: "bir kaktüse yaslandı. Fazla uzun süre.",
   deathGolem: "köyün demir golem'ine vurdu. Golem karşılık verdi.",
+  deathRabbit: "Pamuk'a üç kez vurdu. Pamuk affetmez.",
+  pelusaBfuuny: "ben bile Pamuk'a bulaşmam.",
   ghostPhantoms: "iki gecedir uyumadın. gökyüzündekiler bunu fark ediyor.",
   itemBone: "Kemik",
   golemAngry: "golem'e vurdun. ben buradan izliyorum.",

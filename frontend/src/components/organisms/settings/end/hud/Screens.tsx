@@ -43,6 +43,7 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   tnt: 'deathTnt',
   cactus: 'deathCactus',
   golem: 'deathGolem',
+  rabbit: 'deathRabbit',
 };
 
 const CONTROLS: readonly LoreKey[] = ['ctrlMove', 'ctrlJump', 'ctrlSneak', 'ctrlSprint', 'ctrlAttack', 'ctrlUse', 'ctrlHotbar', 'ctrlInventory', 'ctrlPause'];

@@ -384,6 +384,8 @@ const de: Record<LoreKey, string> = {
   deathTnt: "ist in die Mitte getreten. Bfuuny hat gewarnt.",
   deathCactus: "hat sich an einen Kaktus gelehnt. Zu lange.",
   deathGolem: "hat den Eisengolem des Dorfes geschlagen. Er hat zurückgeschlagen.",
+  deathRabbit: "hat Flocke dreimal geschlagen. Flocke vergibt nicht.",
+  pelusaBfuuny: "nicht mal ich leg mich mit Flocke an.",
   ghostPhantoms: "zwei nächte ohne schlaf. die dinger am himmel merken das.",
   itemBone: "Knochen",
   golemAngry: "du hast den golem geschlagen. ich schau von hier aus zu.",

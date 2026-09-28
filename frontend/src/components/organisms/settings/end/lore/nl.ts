@@ -384,6 +384,8 @@ const nl: Record<LoreKey, string> = {
   deathTnt: "stapte in het midden. Bfuuny had gewaarschuwd.",
   deathCactus: "leunde tegen een cactus. Te lang.",
   deathGolem: "sloeg de ijzergolem van het dorp. Hij sloeg terug.",
+  deathRabbit: "sloeg Pluisje drie keer. Pluisje vergeeft niet.",
+  pelusaBfuuny: "zelfs ik begin niet met Pluisje.",
   ghostPhantoms: "twee nachten niet geslapen. de dingen in de lucht merken het.",
   itemBone: "Bot",
   golemAngry: "je sloeg de golem. ik kijk van hieruit.",
