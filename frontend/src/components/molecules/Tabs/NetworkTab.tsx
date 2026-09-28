@@ -284,7 +284,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
           </Accordion>
         )}
 
-        <div className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
+        <div id="extraPorts" className="space-y-4 p-5 rounded-md bg-gray-800/70 border border-gray-700/50">
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-emerald-400" />
             <h3 className="text-emerald-400 font-minecraft text-md">{t('extraPorts')}</h3>

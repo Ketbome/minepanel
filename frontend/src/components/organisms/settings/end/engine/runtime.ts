@@ -76,6 +76,8 @@ export const runtime = {
   clock: 0,
   // nights fallen since you last slept (phantoms come after two)
   nightsAwake: 0,
+  // seconds actually played this run: the speedrun clock
+  playTime: 0,
   // the system asks for less motion: no view bobbing, no field-of-view kicks, no hand sway
   reducedMotion: false,
   // zones hook into what the player does with a held item or a mined or placed block, and the
@@ -87,6 +89,8 @@ export const runtime = {
     vibration: null as ((at: THREE.Vector3, loudness: number) => void) | null,
     // a thrown pearl landed; now and then an endermite comes out of it
     pearl: null as ((at: THREE.Vector3) => void) | null,
+    // F2 or the pause menu: save a picture of the world
+    screenshot: null as (() => void) | null,
   },
   canvas: null as HTMLCanvasElement | null,
 };

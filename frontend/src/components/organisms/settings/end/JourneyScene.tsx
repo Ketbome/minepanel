@@ -11,6 +11,8 @@ import { Overworld } from './acts/Overworld';
 import { Server48 } from './acts/Server48';
 import { Stronghold } from './acts/Stronghold';
 import { resetClock } from './engine/clock';
+import { RunClock } from './engine/RunClock';
+import { Screenshot } from './engine/Screenshot';
 import { Drops } from './engine/Drops';
 import { Effects } from './engine/Effects';
 import { Hand } from './engine/Hand';
@@ -54,6 +56,8 @@ export default function JourneyScene() {
       <Drops />
       <Rake key={`rake:${zone}`} />
       <Endermites key={`endermites:${zone}`} />
+      <RunClock />
+      <Screenshot />
       <Effects />
       <Hand />
     </Canvas>

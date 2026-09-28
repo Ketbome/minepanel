@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
 import { useConfigMode } from "@/lib/hooks/useConfigMode";
-import { advancedTabIsInUse } from "@/lib/server-config/advanced-tabs";
+import { advancedTabIsInUse, jvmOptionsInUse } from "@/lib/server-config/advanced-tabs";
 import { ConfigModeToggle } from "../molecules/ConfigModeToggle";
 
 const LogsTab = dynamic(() => import("../molecules/Tabs/LogsTab").then(mod => mod.LogsTab));
@@ -62,6 +62,8 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const setNav = useServerNavStore((state) => state.setNav);
   const setActiveNav = useServerNavStore((state) => state.setActive);
   const clearNav = useServerNavStore((state) => state.clear);
+  const requestedField = useServerNavStore((state) => state.field);
+  const setRequestedField = useServerNavStore((state) => state.setField);
 
   const serverName = config.serverName || serverId;
   const isJava = config.edition !== "BEDROCK";
@@ -82,7 +84,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   // validation and the command-palette index, so there is no duplicated list.
   // `advanced` tabs are the ones a server can run its whole life without. Simple
   // mode hides them unless this server already has something set in there.
-  const tabsMeta: (ServerNavItem & { show: boolean; advanced?: boolean })[] = [
+  const tabsMeta: (ServerNavItem & { show: boolean; advanced?: boolean; keywords?: string })[] = [
     { value: "type", label: t("serverType"), icon: Server, group: "config", show: true, disabled: isServerRunning },
     { value: "game", label: t("game"), icon: Gamepad2, group: "config", show: true, disabled: isServerRunning },
     { value: "worlds", label: t("worlds"), icon: Globe, group: "config", show: showWorldsTab, disabled: isServerRunning },
@@ -90,19 +92,19 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "network", label: t("network"), icon: Network, group: "config", show: true, disabled: isServerRunning, advanced: true },
     { value: "resources", label: t("resources"), icon: Cpu, group: "config", show: showResourcesTab, disabled: isServerRunning },
     { value: "lifecycle", label: t("lifecycle"), icon: Power, group: "config", show: true, disabled: isServerRunning, advanced: true },
-    { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning },
-    { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning },
-    { value: "modwatch", label: t("modWatch"), icon: Eye, group: "monitoring", show: showModsTab, disabled: false },
-    { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning },
+    { value: "addons", label: t("addons"), icon: Package, group: "config", show: isBedrock, disabled: isServerRunning, keywords: "addons behavior resource packs paquetes mcpack mcaddon" },
+    { value: "mods", label: t("mods"), icon: Package, group: "config", show: showModsTab, disabled: isServerRunning, keywords: "mods modpack curseforge modrinth ftb gtnh forge fabric neoforge api key" },
+    { value: "modwatch", label: t("modWatch"), icon: Eye, group: "monitoring", show: showModsTab, disabled: false, keywords: "mod watch actualizaciones updates changelog versiones versions notas notes" },
+    { value: "plugins", label: t("plugins"), icon: Layers, group: "config", show: showPluginsTab, disabled: isServerRunning, keywords: "plugins spiget modrinth paper purpur spigot bukkit folia" },
     { value: "backups", label: t("backups"), icon: Archive, group: "config", show: showBackupsTab, disabled: isServerRunning },
     { value: "advanced", label: t("advanced"), icon: Code, group: "config", show: true, disabled: isServerRunning, advanced: true },
-    { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false },
-    { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning },
-    { value: "players", label: t("players"), icon: Users, group: "operation", show: true, disabled: false },
-    { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning },
-    { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false },
-    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false },
-    { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false },
+    { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false, keywords: "logs registros consola console errores errors crash" },
+    { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning, keywords: "comandos commands consola console rcon terminal tiempo time clima weather" },
+    { value: "players", label: t("players"), icon: Users, group: "operation", show: true, disabled: false, keywords: "jugadores players stats estadisticas inventario inventory logros advancements sesiones sessions online kick ban" },
+    { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning, keywords: "archivos files carpetas folders editar edit subir upload descargar download properties" },
+    { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false, keywords: "metricas metrics tps mspt cpu ram memoria memory spark rendimiento performance lag" },
+    { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false, keywords: "actividad activity eventos events muertes deaths chat historial history" },
+    { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false, keywords: "tareas tasks programadas scheduled cron reinicio restart automatico automatic" },
   ];
 
   // Two different reasons a tab can be missing: it does not apply to this server
@@ -117,42 +119,90 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   const navSignature = navItems.map((item) => `${item.value}:${item.disabled ? 1 : 0}:${item.label}`).join(",");
   // Built from every applicable tab, not just the visible ones: a tab simple mode
   // is hiding must still be reachable by name, and jumping to it reveals it.
-  const tabItems: TabSearchItem[] = applicableTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, target: tab.value }));
+  const tabItems: TabSearchItem[] = applicableTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.icon, target: tab.value, keywords: tab.keywords }));
 
-  // Curated index of individual settings -> the tab that holds them, so the
-  // palette can answer searches like "ram", "cheats" or "puerto". Keywords are
-  // bilingual (ES/EN) to match regardless of the active UI language.
+  // Curated index of individual settings -> the tab and field that hold them, so
+  // the palette can answer searches like "ram", "cheats" or "puerto" and land on
+  // the field itself. Keywords are bilingual (ES/EN) to match regardless of the
+  // active UI language. A field id that is not rendered just leaves you on the tab.
   const settingItems: TabSearchItem[] = [
-    ...(showResourcesTab
+    { value: "set-type", label: t("serverType"), icon: Server, target: "type", group: t("serverType"), keywords: "tipo type paper forge fabric purpur vanilla neoforge" },
+    { value: "set-version", label: t("minecraftVersion"), icon: Server, target: "type", group: t("serverType"), field: "minecraftVersion", keywords: "version minecraft latest snapshot actualizar update" },
+    { value: "set-docker-image", label: t("dockerImage"), icon: Server, target: "type", group: t("serverType"), field: "dockerImage", keywords: "imagen image docker java 8 17 21 tag itzg" },
+    { value: "set-basic", label: t("basicSettings"), icon: Gamepad2, target: "game", group: t("game"), field: "serverName", keywords: "nombre name servidor server" },
+    ...(isJava ? [{ value: "set-motd", label: t("motd"), icon: Gamepad2, target: "game", group: t("game"), field: "motd", keywords: "motd mensaje message descripcion description lista list" }] : []),
+    { value: "set-max-players", label: t("maxPlayers"), icon: Gamepad2, target: "game", group: t("game"), field: "maxPlayers", keywords: "jugadores players slots maximo max" },
+    { value: "set-world", label: t("worldSettings"), icon: Gamepad2, target: "game", group: t("game"), field: "seed", keywords: "mundo world seed semilla nivel level tipo type flat plano amplified" },
+    { value: "set-difficulty", label: t("difficulty"), icon: Gamepad2, target: "game", group: t("game"), field: "difficulty", keywords: "dificultad difficulty peaceful pacifico easy facil normal hard dificil" },
+    { value: "set-gamemode", label: t("gameMode"), icon: Gamepad2, target: "game", group: t("game"), field: "gameMode", keywords: "modo de juego gamemode survival supervivencia creative creativo adventure aventura spectator espectador" },
+    ...(isJava ? [{ value: "set-hardcore", label: t("hardcore"), icon: Gamepad2, target: "game", group: t("game"), field: "hardcore", keywords: "hardcore muerte death" }] : []),
+    { value: "set-spawn", label: t("spawnProtection"), icon: Gamepad2, target: "game", group: t("game"), field: "spawnProtection", keywords: "spawn proteccion protection mobs animales animals monstruos monsters npc aldeanos villagers pvp" },
+    { value: "set-performance", label: t("performanceSettings"), icon: Gamepad2, target: "game", group: t("game"), field: "view-distance", keywords: "view distance distancia vision render simulation simulacion chunks" },
+    ...(isBedrock
       ? [
-          { value: "set-memory", label: t("memoryCpu"), icon: Cpu, target: "resources", group: t("resources"), keywords: "ram memoria memory cpu nucleos cores xms xmx" },
-          { value: "set-jvm", label: t("jvmOptions"), icon: Cpu, target: "resources", group: t("resources"), keywords: "jvm aikar flags java args argumentos garbage gc" },
+          { value: "set-bedrock-perf", label: t("performance"), icon: Gamepad2, target: "game", group: t("game"), field: "maxThreads", keywords: "rendimiento performance threads hilos maxthreads tick distance distancia" },
+          { value: "set-texturepack", label: t("texturepackRequired"), icon: Gamepad2, target: "game", group: t("game"), field: "texturepackRequired", keywords: "texture pack textura resource pack paquete recursos" },
         ]
       : []),
-    { value: "set-basic", label: t("basicSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "motd nombre name dificultad difficulty gamemode modo de juego jugadores players" },
-    { value: "set-world", label: t("worldSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "mundo world seed semilla pvp nivel level hardcore spawn mobs" },
     ...(showWorldsTab
       ? [{ value: "set-worlds", label: t("worlds"), icon: Globe, target: "worlds", group: t("worlds"), keywords: "mundo world biblioteca library importar import cambiar switch level name" }]
       : []),
-    { value: "set-performance", label: t("performanceSettings"), icon: Gamepad2, target: "game", group: t("game"), keywords: "view distance distancia render simulation simulacion chunks" },
-    { value: "set-access", label: t("accessControl"), icon: Shield, target: "access", group: t("access"), keywords: "online mode ops operadores rcon permisos permissions whitelist lista blanca flight vuelo command block" },
-    { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), keywords: "red network puerto port proxy hostname ip conexion connection autoscale ipv6" },
-    { value: "set-lifecycle", label: t("lifecycle"), icon: Power, target: "lifecycle", group: t("lifecycle"), keywords: "autostop autopause auto stop pause pausa apagar reinicio restart timezone zona horaria" },
-    ...(showBackupsTab
-      ? [{ value: "set-backups", label: t("backups"), icon: Archive, target: "backups", group: t("backups"), keywords: "backup copia respaldo restic rclone rsync tar snapshot" }]
+    { value: "set-access", label: t("accessControl"), icon: Shield, target: "access", group: t("access"), field: "onlineMode", keywords: "online mode premium no premium cracked pirata" },
+    { value: "set-whitelist", label: t("whiteList"), icon: Shield, target: "access", group: t("access"), field: "whiteList", keywords: "whitelist lista blanca permitidos allowed jugadores players" },
+    { value: "set-ops", label: t("serverOperators"), icon: Shield, target: "access", group: t("access"), field: "ops", keywords: "op ops operadores operators admin administrador permisos permissions" },
+    { value: "set-idle", label: t("playerIdleTimeout"), icon: Shield, target: "access", group: t("access"), field: "playerIdleTimeout", keywords: "afk idle inactividad inactivity kick expulsar timeout" },
+    ...(isJava
+      ? [
+          { value: "set-permissions", label: t("additionalPermissions"), icon: Shield, target: "access", group: t("access"), field: "commandBlock", keywords: "command block bloque de comandos flight vuelo volar fly" },
+          { value: "set-rcon", label: t("enableRcon"), icon: Shield, target: "access", group: t("access"), field: "enableRcon", keywords: "rcon puerto port password contrasena consola console remoto remote" },
+        ]
       : []),
     ...(isBedrock
       ? [
-          { value: "set-bedrock-perf", label: t("performance"), icon: Gamepad2, target: "game", group: t("game"), keywords: "rendimiento performance threads hilos maxthreads tick distance distancia" },
-          { value: "set-cheats", label: t("allowCheats"), icon: Shield, target: "access", group: t("access"), keywords: "cheats trucos commands comandos" },
-          { value: "set-permission", label: t("defaultPermissionLevel"), icon: Shield, target: "access", group: t("access"), keywords: "permisos permission op operador" },
+          { value: "set-cheats", label: t("allowCheats"), icon: Shield, target: "access", group: t("access"), field: "allowCheats", keywords: "cheats trucos commands comandos" },
+          { value: "set-permission", label: t("defaultPermissionLevel"), icon: Shield, target: "access", group: t("access"), field: "defaultPlayerPermissionLevel", keywords: "permisos permission op operador" },
         ]
       : []),
-    { value: "set-advanced", label: t("advanced"), icon: Code, target: "advanced", group: t("advanced"), keywords: "env vars variables entorno labels volumes volumenes docker logs" },
-    { value: "set-type", label: t("serverType"), icon: Server, target: "type", group: t("serverType"), keywords: "tipo type paper forge fabric purpur vanilla neoforge version" },
+    { value: "set-network", label: t("connectivitySettings"), icon: Network, target: "network", group: t("network"), field: "serverPort", keywords: "red network puerto port ip conexion connection autoscale ipv6" },
+    ...(isJava ? [{ value: "set-proxy", label: t("useProxy"), icon: Network, target: "network", group: t("network"), field: "useProxy", keywords: "proxy mc-router hostname dominio domain subdominio subdomain" }] : []),
+    { value: "set-extra-ports", label: t("extraPorts"), icon: Network, target: "network", group: t("network"), field: "extraPorts", keywords: "puertos extra ports voice chat voz dynmap bluemap mapa map udp tcp" },
+    ...(showResourcesTab
+      ? [
+          { value: "set-memory", label: t("memoryCpu"), icon: Cpu, target: "resources", group: t("resources"), field: "maxMemory", keywords: "ram memoria memory xms xmx" },
+          { value: "set-cpu", label: t("cpuLimit"), icon: Cpu, target: "resources", group: t("resources"), field: "cpuLimit", keywords: "cpu limite limit reserva reservation nucleos cores" },
+          { value: "set-uid", label: t("linuxUserUid"), icon: Cpu, target: "resources", group: t("resources"), field: "uid", keywords: "uid gid usuario user grupo group permisos permissions linux" },
+          { value: "set-jvm", label: t("jvmOptions"), icon: Cpu, target: "resources", group: t("resources"), field: "useAikarFlags", advanced: !jvmOptionsInUse(config), keywords: "jvm aikar flags java args argumentos garbage gc jmx" },
+        ]
+      : []),
+    ...(isJava
+      ? [
+          { value: "set-autostop", label: t("enableAutoStop"), icon: Power, target: "lifecycle", group: t("lifecycle"), field: "enableAutoStop", keywords: "autostop auto stop apagar shutdown inactivo idle vacio empty" },
+          { value: "set-autopause", label: t("enableAutoPause"), icon: Power, target: "lifecycle", group: t("lifecycle"), field: "enableAutoPause", keywords: "autopause auto pause pausa pausar suspend" },
+          { value: "set-event-cmds", label: t("eventCmdsTitle"), icon: Power, target: "lifecycle", group: t("lifecycle"), field: "rconCmdsStartup", keywords: "comandos commands eventos events conectar connect join entrar bienvenida welcome kit inicio starter disconnect salir startup arranque" },
+        ]
+      : []),
+    { value: "set-restart", label: t("restartPolicy"), icon: Power, target: "lifecycle", group: t("lifecycle"), field: "restartPolicy", keywords: "reinicio restart crash caida politica policy stop delay" },
+    { value: "set-timezone", label: t("timezone"), icon: Power, target: "lifecycle", group: t("lifecycle"), field: "tz", keywords: "timezone zona horaria hora time tz utc" },
+    ...(showBackupsTab
+      ? [
+          { value: "set-backups", label: t("backups"), icon: Archive, target: "backups", group: t("backups"), field: "enableBackup", keywords: "backup copia respaldo snapshot" },
+          { value: "set-backup-interval", label: t("backupInterval"), icon: Archive, target: "backups", group: t("backups"), field: "backupInterval", keywords: "intervalo interval frecuencia frequency horario schedule retencion retention prune dias days" },
+          { value: "set-backup-method", label: t("backupMethod"), icon: Archive, target: "backups", group: t("backups"), field: "backupMethod", keywords: "metodo method restic rclone rsync tar s3 repositorio repository" },
+        ]
+      : []),
+    { value: "set-advanced", label: t("environmentVars"), icon: Code, target: "advanced", group: t("advanced"), field: "envVars", keywords: "env vars variables entorno environment" },
+    { value: "set-docker-labels", label: t("dockerLabels"), icon: Code, target: "advanced", group: t("advanced"), field: "dockerLabels", keywords: "labels etiquetas traefik docker" },
+    { value: "set-volumes", label: t("dockerVolumes"), icon: Code, target: "advanced", group: t("advanced"), field: "dockerVolumes", keywords: "volumes volumenes mounts montajes bind carpetas folders" },
+    { value: "set-compose", label: t("composeSnippets"), icon: Code, target: "advanced", group: t("advanced"), field: "composeSnippets", keywords: "compose snippets fragmentos yaml docker override" },
+    { value: "set-logs", label: t("enableRollingLogs"), icon: Code, target: "advanced", group: t("advanced"), field: "enableRollingLogs", keywords: "logs rotativos rolling rotacion rotation timestamp" },
+    ...(showCommandsTab
+      ? [{ value: "set-gamerules", label: t("allGamerules"), icon: Terminal, target: "commands", group: t("commands"), field: "gamerules", keywords: "gamerule gamerules reglas rules keep inventory daylight ciclo cycle" }]
+      : []),
   ];
 
-  const paletteItems: TabSearchItem[] = [...tabItems, ...settingItems];
+  // A setting is as reachable as the tab it lives in.
+  const tabDisabled = new Map(tabsMeta.map((tab) => [tab.value, tab.disabled]));
+  const paletteItems: TabSearchItem[] = [...tabItems, ...settingItems].map((item) => ({ ...item, disabled: tabDisabled.get(item.target) }));
 
   // The tab from the URL hash is applied after mount, not during render: the
   // server always renders "type", so reading window here would hydrate a
@@ -219,6 +269,26 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
   }, [activeTab, setActiveNav]);
 
   useEffect(() => () => clearNav(), [clearNav]);
+
+  // The palette asked for one field. Tabs are lazy chunks, so it can take a moment
+  // to exist; one in a section simple mode hides needs advanced mode first.
+  useEffect(() => {
+    if (!requestedField) return;
+    if (paletteItems.some((item) => item.field === requestedField && item.advanced)) {
+      setConfigMode("advanced");
+    }
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const element = document.getElementById(requestedField);
+      if (!element && ++tries < 30) return;
+      window.clearInterval(timer);
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.focus({ preventScroll: true });
+      setRequestedField(null);
+    }, 100);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedField]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

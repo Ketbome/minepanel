@@ -195,6 +195,9 @@ Tooling / build (Next.js 16):
 - `src/components/organisms/SidebarServerNav.tsx` - server tab nav rendered inside the sidebar drill-in (grouped config/operation/monitoring, filter input + `TabSearch` palette); selecting a tab sets the URL hash.
 - `src/lib/store/server-nav-store.ts` - shares the active server's tab list and active tab between the server page and the global sidebar.
 - `src/components/organisms/TabSearch.tsx` - command palette (Ctrl/Cmd+K) to jump to tabs and settings.
+  Setting entries in `paletteItems` carry `field` (an element id in the tab); `ServerConfigTabs`
+  scrolls to it via `server-nav-store.field`. Renaming a field `id` means updating its entry,
+  and a field inside a section simple mode hides needs `advanced` set.
 - `src/components/molecules/ModpackFilePicker.tsx` - upload/select a modpack file; used by the
   AUTO_CURSEFORGE "File" method, the deprecated CURSEFORGE `cfServerMod` field and the Modrinth
   modpack field. It inspects only the selected file and reports the result through `onInspection`.
@@ -279,6 +282,11 @@ Tooling / build (Next.js 16):
     structures, and `acts/Biomes.tsx` holds their props (ruin signs, chests, the TNT plate, cactus
     damage). `engine/explode.ts` is the shared blast (Kevin, TNT). Blocks whose four sides share a
     texture are drawn with a three-group box (`WorldMesh`), so they cost three draw calls per chunk.
+  - Replay modes (`store` `mode`: normal, speedrun, hardcore, bfuuny) are picked on the start screen
+    once `advFreeEnd` is earned. `engine/RunClock.tsx` records splits and the finish from
+    `runtime.playTime` and sends timed runs through `services/end-runs/` (`POST /end-runs`); the
+    records window is `panels/LeaderboardPanel.tsx`. `run.ts` holds BlasterDaster's time and the
+    formatter so the thanks screen does not pull in the 3D engine. `engine/Screenshot.tsx` is F2.
   - Signs paint their text on the board (`acts/props.tsx`), like the game's; the click still opens
     them large. The text of every sign lives in `signs.ts`.
   - Story text is for players, not sysadmins: Minepanel is for people who want an easy server.

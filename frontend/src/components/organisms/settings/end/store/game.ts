@@ -34,6 +34,9 @@ export const initialGame = {
   portalOpen: false,
   exitTo: null,
   xp: 0,
+  mode: 'normal' as const,
+  splits: {},
+  finishedAt: null,
 };
 
 export const createGameSlice: Slice<Omit<GameSlice, 'reset'>> = (set) => ({
@@ -43,6 +46,9 @@ export const createGameSlice: Slice<Omit<GameSlice, 'reset'>> = (set) => ({
   muted: false,
 
   setPlayer: (player) => set({ player }),
+  setMode: (mode) => set({ mode }),
+  split: (zone, at) => set((state) => (state.splits[zone] === undefined ? { splits: { ...state.splits, [zone]: at } } : state)),
+  finish: (at) => set((state) => (state.finishedAt === null ? { finishedAt: at } : state)),
   // the zone only changes once the veil has covered the screen; see arrive()
   travel: (zone, entry = 'arrive', veil = 'black') => set((state) => (state.transition ? state : { transition: { zone, entry, veil }, panel: null })),
   arrive: () =>

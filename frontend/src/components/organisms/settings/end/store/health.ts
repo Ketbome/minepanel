@@ -16,7 +16,9 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
     const state = get();
     const now = performance.now();
     if (state.dead || state.transition || now - state.hurtAt < INVULNERABLE_MS) return;
-    const taken = state.helmet ? Math.max(1, Math.round(amount * HELMET_ARMOR)) : amount;
+    // Bfuuny mode: everything hurts twice as much, as it always has for him
+    const raw = state.mode === 'bfuuny' ? amount * 2 : amount;
+    const taken = state.helmet ? Math.max(1, Math.round(raw * HELMET_ARMOR)) : raw;
     const hp = Math.max(0, state.hp - taken);
     if (hp > 0) {
       set({ hp, hurtAt: now });
@@ -26,6 +28,12 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
     state.closePanel();
     countDeath();
     set({ hp: 0, hurtAt: now, dead: cause, deaths: state.deaths + 1, levitateUntil: 0 });
+    // Bfuuny mode: your deaths go on his count, and the others laugh
+    if (state.mode === 'bfuuny') {
+      window.setTimeout(() => get().say('bfuunyModeDeath', BFUUNY), 900);
+      window.setTimeout(() => get().say(state.deaths % 2 ? 'bfuunyModeLaughK' : 'bfuunyModeLaughB', state.deaths % 2 ? undefined : BLASTER), 2200);
+    }
+    if (state.mode === 'hardcore') window.setTimeout(() => get().say('hardcoreBlaster', BLASTER), 900);
   },
   heal: (amount) => set((state) => (state.dead ? state : { hp: Math.min(20, state.hp + amount) })),
   levitate: (seconds) => set({ levitateUntil: performance.now() + seconds * 1000 }),

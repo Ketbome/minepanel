@@ -18,8 +18,11 @@ interface ServerNavState {
   items: ServerNavItem[];
   paletteItems: TabSearchItem[];
   active: string;
+  // Field the command palette asked for; the server view scrolls to it and clears it.
+  field: string | null;
   setNav: (nav: { serverId: string; serverName: string; items: ServerNavItem[]; paletteItems: TabSearchItem[] }) => void;
   setActive: (active: string) => void;
+  setField: (field: string | null) => void;
   clear: () => void;
 }
 
@@ -29,10 +32,13 @@ export const useServerNavStore = create<ServerNavState>((set) => ({
   items: [],
   paletteItems: [],
   active: "",
+  field: null,
 
   setNav: ({ serverId, serverName, items, paletteItems }) => set({ serverId, serverName, items, paletteItems }),
 
   setActive: (active) => set({ active }),
 
-  clear: () => set({ serverId: null, serverName: "", items: [], paletteItems: [], active: "" }),
+  setField: (field) => set({ field }),
+
+  clear: () => set({ serverId: null, serverName: "", items: [], paletteItems: [], active: "", field: null }),
 }));

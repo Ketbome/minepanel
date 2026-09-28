@@ -1,12 +1,14 @@
 'use client';
 
 import { AnimatePresence, m } from 'framer-motion';
+import { useEffect } from 'react';
+import { useAchievementsStore } from '@/lib/store/achievements-store';
 import { setMuted } from '../end-audio';
 import { input } from '../engine/input';
 import { countOf } from '../items';
-import { lockPointer } from '../engine/runtime';
+import { lockPointer, runtime } from '../engine/runtime';
 import { useLore, type LoreKey } from '../lore';
-import { BLAZES, useEndGame, type DeathCause } from '../store';
+import { BLAZES, hasDragonEgg, useEndGame, type DeathCause, type RunMode } from '../store';
 
 const SHADOW = { textShadow: '2px 2px 0 rgba(0,0,0,0.8)' };
 
@@ -45,6 +47,13 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   golem: 'deathGolem',
   rabbit: 'deathRabbit',
 };
+
+const MODES: readonly { readonly id: RunMode; readonly label: LoreKey }[] = [
+  { id: 'normal', label: 'modeNormal' },
+  { id: 'speedrun', label: 'modeSpeedrun' },
+  { id: 'hardcore', label: 'modeHardcore' },
+  { id: 'bfuuny', label: 'modeBfuuny' },
+];
 
 const CONTROLS: readonly LoreKey[] = ['ctrlMove', 'ctrlJump', 'ctrlSneak', 'ctrlSprint', 'ctrlAttack', 'ctrlUse', 'ctrlHotbar', 'ctrlInventory', 'ctrlPause'];
 
@@ -86,6 +95,8 @@ export function DeathScreen({ onClose }: { readonly onClose: () => void }) {
   const dead = useEndGame((state) => state.dead);
   const player = useEndGame((state) => state.player);
   const xp = useEndGame((state) => state.xp);
+  // hardcore has one life, like the game's: the run is over
+  const hardcore = useEndGame((state) => state.mode === 'hardcore');
 
   return (
     <AnimatePresence>
@@ -99,7 +110,7 @@ export function DeathScreen({ onClose }: { readonly onClose: () => void }) {
           exit={{ opacity: 0 }}
         >
           <h2 className="font-minecraft text-4xl text-white md:text-6xl" style={{ textShadow: '4px 4px 0 rgba(0,0,0,0.5)' }}>
-            {lore('deathTitle')}
+            {lore(hardcore ? 'hardcoreOver' : 'deathTitle')}
           </h2>
           <p className="max-w-md text-sm text-white md:text-base" style={SHADOW}>
             {player} {lore(DEATHS[dead])}
@@ -107,18 +118,25 @@ export function DeathScreen({ onClose }: { readonly onClose: () => void }) {
           <p className="font-minecraft text-xs text-gray-200" style={SHADOW}>
             {lore('deathScore')} <span className="text-[#ffff55]">{Math.floor(xp * 68)}</span>
           </p>
+          {hardcore && (
+            <p className="text-xs text-gray-200" style={SHADOW}>
+              {lore('hardcoreOverBody')}
+            </p>
+          )}
           <div className="mt-4 flex w-[min(80vw,300px)] flex-col gap-2">
-            <button
-              type="button"
-              autoFocus
-              className="mc-btn py-2 text-sm"
-              onClick={() => {
-                useEndGame.getState().respawn();
-                lockPointer();
-              }}
-            >
-              {lore('respawn')}
-            </button>
+            {!hardcore && (
+              <button
+                type="button"
+                autoFocus
+                className="mc-btn py-2 text-sm"
+                onClick={() => {
+                  useEndGame.getState().respawn();
+                  lockPointer();
+                }}
+              >
+                {lore('respawn')}
+              </button>
+            )}
             <button type="button" className="mc-btn py-2 text-sm" onClick={onClose}>
               {lore('leave')}
             </button>
@@ -131,9 +149,17 @@ export function DeathScreen({ onClose }: { readonly onClose: () => void }) {
 
 export function PauseMenu({ onClose }: { readonly onClose: () => void }) {
   const lore = useLore();
-  const paused = useEndGame((state) => state.paused && !state.dead && !state.transition);
+  // a window opened from here (the records) takes the screen until it closes
+  const paused = useEndGame((state) => state.paused && !state.dead && !state.transition && !state.panel);
   const started = useEndGame((state) => Boolean(state.flags.started));
   const muted = useEndGame((state) => state.muted);
+  const mode = useEndGame((state) => state.mode);
+  const timed = mode === 'speedrun' || mode === 'hardcore';
+  // the other modes open once you have freed the End, on this account or in this browser
+  const unlocked = useAchievementsStore((state) => Boolean(state.earned?.some((item) => item.key === 'advFreeEnd'))) || hasDragonEgg();
+  useEffect(() => {
+    void useAchievementsStore.getState().load();
+  }, []);
 
   const play = () => {
     const game = useEndGame.getState();
@@ -169,6 +195,30 @@ export function PauseMenu({ onClose }: { readonly onClose: () => void }) {
                 ))
               )}
             </ul>
+            {!started && (
+              <fieldset className="mt-4">
+                <legend className="mb-1 text-left text-[11px] text-gray-400">{lore('modeTitle')}</legend>
+                <div className="grid grid-cols-2 gap-1">
+                  {MODES.map(({ id, label }) => {
+                    const locked = id !== 'normal' && !unlocked;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        disabled={locked}
+                        aria-pressed={mode === id}
+                        title={locked ? lore('modeLocked') : undefined}
+                        className={`mc-btn py-1.5 text-xs ${mode === id ? 'mc-btn-emerald' : ''} disabled:opacity-40`}
+                        onClick={() => useEndGame.getState().setMode(id)}
+                      >
+                        {lore(label)}
+                      </button>
+                    );
+                  })}
+                </div>
+                {!unlocked && <p className="mt-1 text-left text-[11px] text-gray-500">{lore('modeLocked')}</p>}
+              </fieldset>
+            )}
             <div className="mt-4 flex flex-col gap-2">
               <button type="button" autoFocus className="mc-btn mc-btn-emerald py-2 text-sm" onClick={play}>
                 {lore(started ? 'resume' : 'play')}
@@ -176,9 +226,19 @@ export function PauseMenu({ onClose }: { readonly onClose: () => void }) {
               <button type="button" className="mc-btn py-2 text-sm" onClick={() => setMuted(!muted)}>
                 {lore(muted ? 'unmute' : 'mute')}
               </button>
-              {started && (
+              {started && !timed && (
                 <button type="button" className="mc-btn py-2 text-sm" onClick={() => skipZone(onClose)}>
                   {lore('skip')}
+                </button>
+              )}
+              {!started && (
+                <button type="button" className="mc-btn py-2 text-sm" onClick={() => useEndGame.getState().openPanel({ kind: 'leaderboard' })}>
+                  {lore('records')}
+                </button>
+              )}
+              {started && (
+                <button type="button" className="mc-btn py-2 text-sm" onClick={() => runtime.hooks.screenshot?.()}>
+                  {lore('screenshot')}
                 </button>
               )}
               <button type="button" className="mc-btn py-2 text-sm" onClick={onClose}>

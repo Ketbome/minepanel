@@ -12,16 +12,18 @@ const MAX_LEVEL = 68;
 
 // a 9x9 pixel heart; `fill` is 0 (empty), 0.5 or 1
 const HEART_ROWS = ['.XX...XX.', 'XRRX.XRRX', 'XRWRXRRRX', 'XRRRRRRRX', 'XRRRRRRRX', '.XRRRRRX.', '..XRRRX..', '...XRX...', '....X....'];
+// hardcore hearts, like the game's: the same heart with a pair of dark eyes
+const HARDCORE_ROWS = ['.XX...XX.', 'XRRX.XRRX', 'XRWRXRRRX', 'XRERRRERX', 'XRRRRRRRX', '.XRRRRRX.', '..XRRRX..', '...XRX...', '....X....'];
 
-function Heart({ fill, flash }: { readonly fill: number; readonly flash: boolean }) {
+function Heart({ fill, flash, hardcore }: { readonly fill: number; readonly flash: boolean; readonly hardcore: boolean }) {
   return (
     <svg viewBox="0 0 9 9" className="h-3.5 w-3.5 sm:h-4 sm:w-4" shapeRendering="crispEdges" aria-hidden>
-      {HEART_ROWS.flatMap((row, y) =>
+      {(hardcore ? HARDCORE_ROWS : HEART_ROWS).flatMap((row, y) =>
         [...row].map((cell, x) => {
           if (cell === '.') return null;
           const inside = cell !== 'X';
           const lit = inside && (fill >= 1 || (fill >= 0.5 && x < 5));
-          const color = cell === 'X' ? (flash ? '#ffffff' : '#1a0000') : lit ? (cell === 'W' ? '#ffb3b3' : '#e01818') : '#3a0d0d';
+          const color = cell === 'X' ? (flash ? '#ffffff' : '#1a0000') : lit ? (cell === 'W' ? '#ffb3b3' : cell === 'E' ? '#4a0000' : '#e01818') : '#3a0d0d';
           return <rect key={`${x}:${y}`} x={x} y={y} width={1} height={1} fill={color} />;
         })
       )}
@@ -32,6 +34,7 @@ function Heart({ fill, flash }: { readonly fill: number; readonly flash: boolean
 function Hearts() {
   const hp = useEndGame((state) => state.hp);
   const hurtAt = useEndGame((state) => state.hurtAt);
+  const hardcore = useEndGame((state) => state.mode === 'hardcore');
   const [flash, setFlash] = useState(false);
 
   useEffect(() => {
@@ -44,7 +47,7 @@ function Hearts() {
     <div className="flex gap-[1px]" role="meter" aria-valuemin={0} aria-valuemax={MAX_HP} aria-valuenow={hp}>
       {Array.from({ length: MAX_HP / 2 }, (_, index) => (
         <m.div key={index} animate={hp <= 4 ? { y: [0, -1.5, 0] } : { y: 0 }} transition={{ repeat: hp <= 4 ? Infinity : 0, duration: 0.3, delay: index * 0.03 }}>
-          <Heart fill={Math.max(0, Math.min(1, (hp - index * 2) / 2))} flash={flash} />
+          <Heart fill={Math.max(0, Math.min(1, (hp - index * 2) / 2))} flash={flash} hardcore={hardcore} />
         </m.div>
       ))}
     </div>
