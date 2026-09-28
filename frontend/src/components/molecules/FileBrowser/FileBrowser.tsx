@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { filesService, FileItem, DownloadProgress } from "@/services/files/files.service";
+import { filesService, FileItem, DownloadProgress, CHUNK_SIZE } from "@/services/files/files.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { FileList, SortKey, SortState } from "./FileList";
@@ -260,7 +260,13 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
       }));
       setUploads(uploadItems);
 
-      const avgFileSize = filesToUpload.reduce((acc, f) => acc + f.size, 0) / filesToUpload.length;
+      // Large files go up alone in chunks; the rest keep sharing multipart batches,
+      // where one request per file would cost more than the files themselves.
+      const indices = filesToUpload.map((_, index) => index);
+      const small = indices.filter((index) => filesToUpload[index].size <= CHUNK_SIZE);
+      const large = indices.filter((index) => filesToUpload[index].size > CHUNK_SIZE);
+
+      const avgFileSize = small.reduce((acc, index) => acc + filesToUpload[index].size, 0) / (small.length || 1);
       const BATCH_SIZE = avgFileSize < 1024 * 1024 ? 20 : avgFileSize < 10 * 1024 * 1024 ? 10 : 5;
       const MAX_RETRIES = 2;
 
@@ -315,18 +321,45 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
         }
       };
 
+      // Retries happen per chunk inside the service, so a failure here is final.
+      const uploadLarge = async (index: number) => {
+        const id = uploadItems[index].id;
+        setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, status: "uploading" as const, loaded: 0 } : u)));
+
+        try {
+          await filesService.uploadFileChunked(serverId, currentPath, filesToUpload[index], relativePaths?.[index], {
+            signal: abortControllerRef.current!.signal,
+            onProgress: (progress) => {
+              setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, loaded: progress.loaded } : u)));
+            },
+          });
+          setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, loaded: u.size, status: "completed" as const } : u)));
+        } catch (err) {
+          if ((err as Error).name === "CanceledError" || (err as Error).name === "AbortError") throw err;
+          console.error("Error uploading file:", err);
+          setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, status: "error" as const } : u)));
+          errorCount++;
+        }
+      };
+
       try {
-        for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
+        for (let i = 0; i < small.length; i += BATCH_SIZE) {
           if (abortControllerRef.current?.signal.aborted) break;
 
-          const batchFiles = filesToUpload.slice(i, i + BATCH_SIZE);
-          const batchPaths = relativePaths?.slice(i, i + BATCH_SIZE);
-          const batchIds = uploadItems.slice(i, i + BATCH_SIZE).map((u) => u.id);
+          const batch = small.slice(i, i + BATCH_SIZE);
+          const batchFiles = batch.map((index) => filesToUpload[index]);
+          const batchPaths = relativePaths && batch.map((index) => relativePaths[index]);
+          const batchIds = batch.map((index) => uploadItems[index].id);
 
           const success = await uploadBatch(batchFiles, batchPaths, batchIds);
           if (!success) {
             errorCount += batchFiles.length;
           }
+        }
+
+        for (const index of large) {
+          if (abortControllerRef.current?.signal.aborted) break;
+          await uploadLarge(index);
         }
 
         if (errorCount > 0) {

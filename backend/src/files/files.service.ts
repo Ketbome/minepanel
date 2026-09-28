@@ -173,6 +173,14 @@ export class FilesService {
     await fs.writeFile(fullPath, content, 'utf-8');
   }
 
+  // Checked before a chunked upload starts, so a refused target costs no transfer.
+  async assertUploadTarget(serverId: string, filePath: string, admin = false): Promise<void> {
+    const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
+    if ((await fs.stat(fullPath).catch(() => null))?.isDirectory()) {
+      throw new BadRequestException('A folder with that name already exists');
+    }
+  }
+
   // Multer stages complete uploads under UPLOADS_DIR; only then are they moved into place.
   async saveUpload(serverId: string, filePath: string, stagedPath: string, admin = false): Promise<void> {
     const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
@@ -180,6 +188,10 @@ export class FilesService {
     // The move replaces the inode, so a replaced file would end up owned by the panel
     // and the server could no longer rewrite it.
     const existing = await fs.stat(fullPath).catch(() => null);
+    // An overwriting move removes whatever is there first, a whole folder included.
+    if (existing?.isDirectory()) {
+      throw new BadRequestException('A folder with that name already exists');
+    }
     if (existing) {
       await fs.chown(stagedPath, existing.uid, existing.gid);
       await fs.chmod(stagedPath, existing.mode);

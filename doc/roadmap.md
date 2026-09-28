@@ -12,7 +12,7 @@ head:
 
 # Roadmap
 
-What's shipped and what's planned for Minepanel. Current stable line: `v1.10.8`.
+What's shipped and what's planned for Minepanel. Current stable line: `v1.13`.
 
 ```mermaid
 flowchart LR
@@ -129,7 +129,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 ### File manager
 
-- Large file uploads (chunked)
+- ~~Large file uploads (chunked)~~ ✅ Shipped (files over 8 MB upload in resumable chunks)
 
 ### Log viewer
 

@@ -200,6 +200,21 @@ Examples:
 - `PUT /files/:serverId/rename`
 - `DELETE /files/:serverId/delete?path=`
 
+Chunked uploads (the dashboard uses them for files over 8 MB):
+
+- `POST /files/:serverId/uploads` — body `{ path?, name, size }`; returns `{ id, offset: 0 }`.
+  Refused with `400` when the target is not writable or is a folder, `507` when the disk
+  cannot hold `size`
+- `PUT /files/:serverId/uploads/:id?offset=` — raw `application/octet-stream` body, at most
+  16 MB, appended at `offset`. Returns the new `{ offset }`. An `offset` that is not the current
+  end of the staged file gets `409` with the real `offset`, so a retried chunk is never written twice
+- `GET /files/:serverId/uploads/:id` — current `{ offset }`, to resume after a dropped chunk
+- `POST /files/:serverId/uploads/:id/complete` — moves the file into place once `offset === size`
+- `DELETE /files/:serverId/uploads/:id` — abort
+
+Sessions belong to the user and server that opened them. They are staged in
+`servers/.upload-sessions/`, survive a backend restart, and are removed after 24 hours idle.
+
 Important path semantics:
 
 - `serverId="_root"` targets the global servers root used by the file manager

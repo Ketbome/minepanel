@@ -21,7 +21,8 @@ backend/src/
 |- server-management/       Runtime control, status, logs, commands
 |  |- strategies/           Java/Bedrock strategy pattern
 |- docker-compose/          Compose generation and server config persistence
-|- files/                   File browser API over server directories
+|- files/                   File browser API over server directories; chunked uploads staged in
+|                           servers/.upload-sessions (upload-sessions.service.ts)
 |- world-discovery/         World import/discovery into global world library
 |- proxy/                   mc-router routes.json generation
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks

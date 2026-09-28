@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FilesService, FileItem } from './files.service';
+import { UploadSessionsService } from './upload-sessions.service';
+import { CreateUploadDto } from './dto/create-upload.dto';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { UsersService } from 'src/users/services/users.service';
@@ -11,6 +13,7 @@ import { AccessControlService } from 'src/users/services/access-control.service'
 export class FilesController {
   constructor(
     private readonly filesService: FilesService,
+    private readonly uploadSessions: UploadSessionsService,
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
   ) {}
@@ -184,6 +187,42 @@ export class FilesController {
     } finally {
       await Promise.all((files ?? []).map((file) => fs.remove(file.path)));
     }
+  }
+
+  // Chunked uploads: large files are sent as raw appends so no single request carries them whole.
+  @Post(':serverId/uploads')
+  async createUpload(@Request() req, @Param('serverId') serverId: string, @Body() body: CreateUploadDto): Promise<{ id: string; offset: number }> {
+    const admin = await this.assertFilesAccess(req, serverId, true);
+    return this.uploadSessions.create(req.user.userId, serverId, path.join(body.path ?? '', body.name), body.size, admin);
+  }
+
+  @Get(':serverId/uploads/:uploadId')
+  async getUpload(@Request() req, @Param('serverId') serverId: string, @Param('uploadId') uploadId: string): Promise<{ offset: number }> {
+    await this.assertFilesAccess(req, serverId, true);
+    return this.uploadSessions.getOffset(req.user.userId, serverId, uploadId);
+  }
+
+  // The body is read as a stream: Nest only parses JSON and form bodies, so an
+  // application/octet-stream chunk reaches here untouched.
+  @Put(':serverId/uploads/:uploadId')
+  async appendUpload(@Request() req, @Param('serverId') serverId: string, @Param('uploadId') uploadId: string, @Query('offset', ParseIntPipe) offset: number): Promise<{ offset: number }> {
+    await this.assertFilesAccess(req, serverId, true);
+    const length = req.headers['content-length'];
+    return this.uploadSessions.append(req.user.userId, serverId, uploadId, offset, req, length === undefined ? undefined : Number(length));
+  }
+
+  @Post(':serverId/uploads/:uploadId/complete')
+  @HttpCode(200)
+  async completeUpload(@Request() req, @Param('serverId') serverId: string, @Param('uploadId') uploadId: string): Promise<{ success: boolean; path: string }> {
+    const admin = await this.assertFilesAccess(req, serverId, true);
+    return { success: true, ...(await this.uploadSessions.complete(req.user.userId, serverId, uploadId, admin)) };
+  }
+
+  @Delete(':serverId/uploads/:uploadId')
+  async abortUpload(@Request() req, @Param('serverId') serverId: string, @Param('uploadId') uploadId: string): Promise<{ success: boolean }> {
+    await this.assertFilesAccess(req, serverId, true);
+    await this.uploadSessions.abort(req.user.userId, serverId, uploadId);
+    return { success: true };
   }
 
   @Put(':serverId/rename')

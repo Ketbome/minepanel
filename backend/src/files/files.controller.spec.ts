@@ -11,9 +11,10 @@ jest.mock('fs-extra', () => ({
 }));
 
 describe('FilesController', () => {
-  const req = { user: { userId: 1 } };
+  const req = { user: { userId: 1 }, headers: {} as Record<string, string> };
   let filesService: Record<string, jest.Mock>;
   let accessControl: Record<string, jest.Mock>;
+  let uploadSessions: Record<string, jest.Mock>;
   let controller: FilesController;
   let res: any;
 
@@ -33,7 +34,14 @@ describe('FilesController', () => {
     };
     accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
     const usersService = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
-    controller = new FilesController(filesService as any, usersService as any, accessControl as any);
+    uploadSessions = {
+      create: jest.fn().mockResolvedValue({ id: 'u1', offset: 0 }),
+      getOffset: jest.fn().mockResolvedValue({ offset: 5 }),
+      append: jest.fn().mockResolvedValue({ offset: 10 }),
+      complete: jest.fn().mockResolvedValue({ path: 'dir/big.zip' }),
+      abort: jest.fn().mockResolvedValue(undefined),
+    };
+    controller = new FilesController(filesService as any, uploadSessions as any, usersService as any, accessControl as any);
     res = { attachment: jest.fn(), setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
   });
 
@@ -141,5 +149,25 @@ describe('FilesController', () => {
     expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false);
     expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false);
     expect(fs.remove).toHaveBeenCalledWith('/tmp/b');
+  });
+
+  it('checks write access on every chunked upload step and forwards to the sessions', async () => {
+    expect(await controller.createUpload(req, 'srv', { path: 'dir', name: 'big.zip', size: 10 })).toEqual({ id: 'u1', offset: 0 });
+    expect(uploadSessions.create).toHaveBeenCalledWith(1, 'srv', 'dir/big.zip', 10, false);
+    await controller.createUpload(req, 'srv', { name: 'top.zip', size: 1 });
+    expect(uploadSessions.create).toHaveBeenLastCalledWith(1, 'srv', 'top.zip', 1, false);
+
+    expect(await controller.getUpload(req, 'srv', 'u1')).toEqual({ offset: 5 });
+    expect(await controller.appendUpload(req, 'srv', 'u1', 5)).toEqual({ offset: 10 });
+    expect(uploadSessions.append).toHaveBeenCalledWith(1, 'srv', 'u1', 5, req, undefined);
+    const sized = { ...req, headers: { 'content-length': '7' } };
+    await controller.appendUpload(sized, 'srv', 'u1', 5);
+    expect(uploadSessions.append).toHaveBeenLastCalledWith(1, 'srv', 'u1', 5, sized, 7);
+    expect(await controller.completeUpload(req, 'srv', 'u1')).toEqual({ success: true, path: 'dir/big.zip' });
+    expect(await controller.abortUpload(req, 'srv', 'u1')).toEqual({ success: true });
+    expect(uploadSessions.abort).toHaveBeenCalledWith(1, 'srv', 'u1');
+
+    expect(accessControl.assertServerFiles).toHaveBeenCalledTimes(7);
+    for (const call of accessControl.assertServerFiles.mock.calls) expect(call).toEqual([{ id: 1 }, 'srv', true]);
   });
 });

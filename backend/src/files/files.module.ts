@@ -4,6 +4,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import * as path from 'path';
 import { FilesController } from './files.controller';
 import { FilesService, UPLOADS_DIR } from './files.service';
+import { UploadSessionsService } from './upload-sessions.service';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
@@ -18,7 +19,7 @@ import { UsersModule } from 'src/users/users.module';
     }),
   ],
   controllers: [FilesController],
-  providers: [FilesService],
+  providers: [FilesService, UploadSessionsService],
   exports: [FilesService],
 })
 export class FilesModule {}

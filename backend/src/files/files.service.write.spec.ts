@@ -48,12 +48,25 @@ describe('FilesService writes', () => {
   });
 
   it('keeps the owner and mode of a file an upload replaces', async () => {
-    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664 });
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664, isDirectory: () => false });
     await service.saveUpload('srv', 'server.properties', '/app/servers/.uploads/abc');
 
     expect(fs.chown).toHaveBeenCalledWith('/app/servers/.uploads/abc', 1000, 1000);
     expect(fs.chmod).toHaveBeenCalledWith('/app/servers/.uploads/abc', 0o100664);
     expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/server.properties`, { overwrite: true });
+  });
+
+  it('never lets an upload replace a folder', async () => {
+    const folder = { isDirectory: () => true };
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce(folder);
+    await expect(service.saveUpload('srv', 'world', '/app/servers/.uploads/abc')).rejects.toThrow(BadRequestException);
+    expect(fs.move).not.toHaveBeenCalled();
+
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce(folder);
+    await expect(service.assertUploadTarget('srv', 'world')).rejects.toThrow(BadRequestException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.assertUploadTarget('srv', 'world.zip')).resolves.toBeUndefined();
+    await expect(service.assertUploadTarget('srv', '../../x')).rejects.toThrow(BadRequestException);
   });
 
   it('deletes existing paths only', async () => {

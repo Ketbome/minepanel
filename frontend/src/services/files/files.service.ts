@@ -1,4 +1,20 @@
+import axios from "axios";
 import api from "../axios.service";
+
+// Files above this go up in chunks, so no request has to carry the whole file past a
+// proxy body limit (Cloudflare: 100 MB) or Node's 5-minute request timeout.
+// Must stay at or below the backend's MAX_CHUNK_BYTES.
+export const CHUNK_SIZE = 8 * 1024 * 1024;
+const CHUNK_RETRIES = 5;
+
+const wait = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    }, { once: true });
+  });
 
 export interface FileItem {
   name: string;
@@ -82,6 +98,49 @@ export const filesService = {
         }
       },
     });
+  },
+
+  // A dropped chunk is retried from the offset the server reports, so a flaky link
+  // costs at most one chunk instead of the whole file.
+  async uploadFileChunked(serverId: string, path: string, file: File, relativePath?: string, options?: UploadOptions): Promise<void> {
+    const { data } = await api.post(`/files/${serverId}/uploads`, { path, name: relativePath || file.name, size: file.size }, { signal: options?.signal });
+    const url = `/files/${serverId}/uploads/${data.id}`;
+
+    try {
+      let offset = 0;
+      let failures = 0;
+
+      while (offset < file.size) {
+        const start = offset;
+        try {
+          const { data: next } = await api.put(url, file.slice(start, start + CHUNK_SIZE), {
+            params: { offset: start },
+            headers: { "Content-Type": "application/octet-stream" },
+            signal: options?.signal,
+            onUploadProgress: (event) => {
+              const loaded = start + event.loaded;
+              options?.onProgress?.({ loaded, total: file.size, percentage: Math.round((loaded * 100) / file.size) });
+            },
+          });
+          offset = next.offset;
+          failures = 0;
+        } catch (error) {
+          if (axios.isCancel(error) || ++failures > CHUNK_RETRIES) throw error;
+          // 400/403/404/413/507 will not get better by retrying.
+          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+          if (status && status !== 409 && status < 500) throw error;
+
+          await wait(Math.min(1000 * 2 ** (failures - 1), 15000), options?.signal);
+          offset = await api.get(url, { signal: options?.signal }).then((res) => res.data.offset, () => offset);
+        }
+      }
+
+      await api.post(`${url}/complete`, {}, { signal: options?.signal });
+    } catch (error) {
+      // Best effort: the server sweeps sessions left idle anyway.
+      api.delete(url).catch(() => undefined);
+      throw error;
+    }
   },
 
   async uploadMultipleFiles(serverId: string, path: string, files: File[], relativePaths?: string[], options?: UploadOptions): Promise<{ uploaded: number; errors: number }> {

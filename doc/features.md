@@ -241,8 +241,13 @@ Built-in browser for each server under `servers/<id>/mc-data`:
   bytes are shown until it finishes. Uploads stream to disk (`servers/.uploads/`) rather than
   memory, so large files do not depend on the backend's RAM; an upload only lands in its folder
   once it is complete, and a cancelled or interrupted one is discarded
+- Files over 8 MB upload in chunks, so no single request carries the whole file: a reverse
+  proxy's body limit (Cloudflare allows 100 MB) or a slow link no longer cuts large worlds
+  and modpacks short. A dropped chunk is retried from where the server stands instead of
+  restarting the file, the free disk space is checked before the first byte, and an upload
+  never replaces a folder of the same name
 - Edit configs (syntax highlighting)
-- Create/delete/rename
+- Create/delete/rename; every delete (toolbar or right-click) asks for confirmation first
 - Drag & drop support
 - Filter the current folder as you type (Ctrl/Cmd+F focuses the box, Esc clears it); the
   footer counts folders, files and total size, and says how many of them the filter is showing
