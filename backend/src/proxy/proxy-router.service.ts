@@ -100,7 +100,8 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     // In the split stack the panel is "backend"; in the all-in-one image it is
     // "minepanel". Reading it off our own container avoids guessing.
     const panelHost = host.service || 'backend';
-    const basePath = this.configService.get<string>('basePath') || '';
+    const basePath = this.configService.get<string>('basePath') ?? '';
+    const backendPort = this.configService.get<string>('backendPort') ?? '8091';
 
     const environment: Record<string, string> = {
       ROUTES_CONFIG: '/data/routes.json',
@@ -112,7 +113,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
         AUTO_SCALE_UP: 'true',
         AUTO_SCALE_DOWN: 'true',
         AUTO_SCALE_DOWN_AFTER: row.autoScaleDownAfter,
-        AUTO_SCALE_WEBHOOK_URL: `http://${panelHost}:8091${basePath}/servers/autoscale`,
+        AUTO_SCALE_WEBHOOK_URL: `http://${panelHost}:${backendPort}${basePath}/servers/autoscale`,
         AUTO_SCALE_WEBHOOK_HEADERS: `Authorization=Bearer ${row.autoScaleToken}`,
         AUTO_SCALE_WEBHOOK_WAKE_TIMEOUT: row.autoScaleWakeTimeout,
         AUTO_SCALE_ASLEEP_MOTD: row.autoScaleAsleepMotd,

@@ -195,6 +195,10 @@ export default () => ({
   jwtAudience: process.env.JWT_AUDIENCE || 'minepanel-users',
   frontendUrl: process.env.FRONTEND_URL,
   composeProject: process.env.COMPOSE_PROJECT,
+  // Mirrors the resolution in main.ts: the same string has to reach setGlobalPrefix and
+  // every URL the panel hands out, or a prefixed deployment generates links with no prefix.
+  basePath: (process.env.BASE_PATH || '').split('#')[0].trim(),
+  backendPort: process.env.PORT ?? '8091',
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
   passwordResetTokenExpiresInMinutes: Number(process.env.PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES || 60),
   oidc: {
