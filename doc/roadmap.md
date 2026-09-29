@@ -12,7 +12,7 @@ head:
 
 # Roadmap
 
-What's shipped and what's planned for Minepanel. Current stable line: `v1.13`.
+What's shipped and what's planned for Minepanel. Current stable line: `v1.10.8`.
 
 ```mermaid
 flowchart LR

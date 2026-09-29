@@ -311,6 +311,13 @@ Files module behavior:
 - `serverId="_root"` maps to `/app/servers` in files API.
 - `serverId=".world"` maps to `/app/servers/.world/worlds` in files API.
 - Other server IDs map to `/app/servers/<serverId>/mc-data`.
+- `.uploads` (multipart staging) and `.upload-sessions` (chunked staging) sit inside the tree
+  `_root` exposes and hold other users' half-received files. `isAdminOnlyFile` treats them as
+  admin-only next to `server.json`, so non-admins get neither a listing nor a read, links included.
+  A new staging folder under `servers/` must be added to `STAGING_DIRS`.
+- Chunked uploads (`upload-sessions.service.ts`): creates are queued, capped per user
+  (`MAX_SESSIONS_PER_USER`, an idle one is replaced) and checked against the free space minus what
+  the other sessions still have to write. `complete` and a chunk share one `busy` lock.
 - Preserve traversal protection (`normalize` + `startsWith(basePath + path.sep)`, or equal to it).
   A bare `startsWith(basePath)` lets `_root` reach siblings such as `/app/servers-old`.
 - `serverId` is a percent-decoded route param (`..%2F` arrives as `../`), so any other id must

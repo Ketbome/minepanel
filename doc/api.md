@@ -219,11 +219,16 @@ Chunked uploads (the dashboard uses them for files over 8 MB):
 Sessions belong to the user and server that opened them. They are staged in
 `servers/.upload-sessions/`, survive a backend restart, and are removed after 24 hours idle.
 
+The disk is protected on creation: a user can have 5 uploads in progress (`429` beyond that; one
+that has been idle for 15 minutes is treated as abandoned and replaced), and the free-space check
+also counts what the other uploads in progress still have to write (`507`).
+
 Important path semantics:
 
 - `serverId="_root"` targets the global servers root used by the file manager
 - `serverId=".world"` targets the global world library
 - Any normal `serverId` targets that server's `mc-data`
+- Under `_root`, `.uploads` and `.upload-sessions` (uploads in progress) are visible to admins only
 
 ### Settings
 

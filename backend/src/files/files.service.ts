@@ -8,6 +8,11 @@ import { assertContained } from 'src/common/fs/contained-path';
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export const UPLOADS_DIR = '.uploads';
+export const UPLOAD_SESSIONS_DIR = '.upload-sessions';
+
+// Half-received uploads sit inside the tree "_root" shows, and they belong to whoever is
+// sending them, so the global browser keeps them from everyone but admins.
+const STAGING_DIRS = new Set([UPLOADS_DIR, UPLOAD_SESSIONS_DIR]);
 
 // server.json and the generated compose file hold secrets (the CurseForge key, RCON and
 // restic passwords), so the global browser only shows them to admins.
@@ -15,6 +20,7 @@ const ADMIN_ONLY_FILES = new Set(['server.json', 'docker-compose.yml']);
 
 function isAdminOnlyFile(serversDir: string, fullPath: string): boolean {
   const [id, file, ...rest] = path.relative(serversDir, fullPath).split(path.sep);
+  if (STAGING_DIRS.has(id)) return true;
   return rest.length === 0 && SERVER_ID_PATTERN.test(id) && ADMIN_ONLY_FILES.has(file);
 }
 
@@ -202,7 +208,16 @@ export class FilesService {
       await fs.chown(stagedPath, existing.uid, existing.gid);
       await fs.chmod(stagedPath, existing.mode);
     }
-    await fs.move(stagedPath, fullPath, { overwrite: true });
+    try {
+      // The flag goes to the move itself: the stat above is stale by now (chown, chmod and
+      // ensureDir are awaits), and a file that appeared meanwhile must not be replaced.
+      await fs.move(stagedPath, fullPath, { overwrite });
+    } catch (error) {
+      if (!overwrite && /dest already exists/.test((error as Error).message)) {
+        throw new ConflictException('A file with that name already exists');
+      }
+      throw error;
+    }
   }
 
   async deleteFile(serverId: string, filePath: string, admin = false): Promise<void> {

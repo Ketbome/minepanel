@@ -136,6 +136,21 @@ describe('FilesService writes', () => {
     await expect(service.createZipStream('srv', ['../../x', 'a'])).rejects.toThrow(BadRequestException);
   });
 
+  it('does not replace a file that appears after the check when told not to overwrite', async () => {
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
+    await expect(service.saveUpload('srv', 'raced.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow(ConflictException);
+    expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/raced.txt`, { overwrite: false });
+
+    // Any other failure is not a conflict, and an overwriting upload never maps to one.
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('EIO'));
+    await expect(service.saveUpload('srv', 'io.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow('EIO');
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
+    await expect(service.saveUpload('srv', 'a.txt', '/app/servers/.uploads/abc', false, true)).rejects.toThrow('dest already exists.');
+  });
+
   it('refuses to replace an existing file unless told to overwrite', async () => {
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
     await expect(service.saveUpload('srv', 'a.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow(ConflictException);

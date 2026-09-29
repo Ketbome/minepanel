@@ -4,7 +4,8 @@ import os from 'node:os';
 import { PassThrough, Readable } from 'node:stream';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { MAX_CHUNK_BYTES, UPLOAD_SESSIONS_DIR, UploadSessionsService } from './upload-sessions.service';
+import { UPLOAD_SESSIONS_DIR } from './files.service';
+import { MAX_CHUNK_BYTES, MAX_SESSIONS_PER_USER, UploadSessionsService } from './upload-sessions.service';
 
 describe('UploadSessionsService', () => {
   let root: string;
@@ -162,6 +163,115 @@ describe('UploadSessionsService', () => {
   it('does not open a session for a target it may not write', async () => {
     filesService.assertUploadTarget.mockRejectedValue(new BadRequestException('Invalid path'));
     await expect(service.create(1, 'srv', '../x', 1, false)).rejects.toThrow(BadRequestException);
+    expect(await fs.readdir(dir)).toEqual([]);
+  });
+
+  describe('disk limits', () => {
+    const open = async (userId: number, count: number) => {
+      const ids: string[] = [];
+      for (let i = 0; i < count; i++) ids.push((await service.create(userId, 'srv', `f${i}.bin`, 5, false)).id);
+      return ids;
+    };
+    const age = async (id: string) => {
+      const meta = path.join(dir, `${id}.json`);
+      await fs.writeJson(meta, { ...(await fs.readJson(meta)), updatedAt: Date.now() - 20 * 60 * 1000 });
+    };
+
+    it('caps the uploads in progress per user', async () => {
+      const ids = await open(1, MAX_SESSIONS_PER_USER);
+
+      const error = await service.create(1, 'srv', 'more.bin', 5, false).catch((e) => e);
+      expect(error).toBeInstanceOf(HttpException);
+      expect(error.getStatus()).toBe(429);
+
+      // The limit is per user, and cancelling one gives the slot back.
+      await service.create(2, 'srv', 'other.bin', 5, false);
+      await service.abort(1, 'srv', ids[0]);
+      await service.create(1, 'srv', 'more.bin', 5, false);
+    });
+
+    it('holds the limit when creates arrive together', async () => {
+      const results = await Promise.allSettled(Array.from({ length: MAX_SESSIONS_PER_USER + 3 }, (_, i) => service.create(1, 'srv', `f${i}.bin`, 5, false)));
+
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(MAX_SESSIONS_PER_USER);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(3);
+    });
+
+    it('replaces an abandoned session instead of leaving its owner stuck at the limit', async () => {
+      const ids = await open(1, MAX_SESSIONS_PER_USER);
+      await age(ids[0]);
+
+      const fresh = await service.create(1, 'srv', 'more.bin', 5, false);
+      const left = (await fs.readdir(dir)).filter((name) => name.endsWith('.json')).map((name) => name.replace('.json', ''));
+      expect(left.sort()).toEqual([...ids.slice(1), fresh.id].sort());
+      await expect(service.getOffset(1, 'srv', ids[0])).rejects.toThrow(NotFoundException);
+    });
+
+    it('never replaces a session that has a chunk in flight, however idle it looks', async () => {
+      const ids = await open(1, MAX_SESSIONS_PER_USER);
+      const body = new PassThrough();
+      const chunkInFlight = service.append(1, 'srv', ids[0], 0, body);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      await Promise.all(ids.map(age));
+
+      await service.create(1, 'srv', 'more.bin', 5, false);
+      expect(await fs.pathExists(path.join(dir, `${ids[0]}.json`))).toBe(true);
+
+      body.end('abc');
+      await chunkInFlight;
+    });
+
+    it('counts what other sessions still have to write against the free space', async () => {
+      jest.spyOn(fsp, 'statfs').mockResolvedValue({ bavail: 100, bsize: 1 } as any);
+
+      const first = await service.create(1, 'srv', 'a.bin', 60, false);
+      const refused = await service.create(2, 'srv', 'b.bin', 60, false).catch((e) => e);
+      expect(refused.getStatus()).toBe(507);
+
+      // Bytes already written are gone from the free space; only the rest is promised.
+      await service.append(1, 'srv', first.id, 0, chunk('x'.repeat(50)));
+      await service.create(2, 'srv', 'b.bin', 60, false);
+    });
+
+    it('ignores a session record it cannot read', async () => {
+      await fs.writeFile(path.join(dir, 'broken.json'), '{oops');
+      await service.create(1, 'srv', 'a.bin', 5, false);
+    });
+  });
+
+  it('lets one complete through and turns the other away', async () => {
+    const { id } = await service.create(1, 'srv', 'a.bin', 3, false);
+    await service.append(1, 'srv', id, 0, chunk('abc'));
+
+    let release = () => {};
+    filesService.saveUpload.mockImplementationOnce(async (_serverId: string, _path: string, staged: string) => {
+      await new Promise<void>((resolve) => (release = resolve));
+      saved = await fs.readFile(staged);
+      await fs.remove(staged);
+    });
+
+    const first = service.complete(1, 'srv', id, false);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(ConflictException);
+
+    release();
+    await first;
+    expect(filesService.saveUpload).toHaveBeenCalledTimes(1);
+    expect(saved?.toString()).toBe('abc');
+    await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(NotFoundException);
+  });
+
+  it('does not bring an aborted session back when its last chunk finishes', async () => {
+    const { id } = await service.create(1, 'srv', 'a.bin', 10, false);
+    const body = new PassThrough();
+    const chunkInFlight = service.append(1, 'srv', id, 0, body);
+    body.write('abc');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    await service.abort(1, 'srv', id);
+    body.end('def');
+
+    await expect(chunkInFlight).rejects.toThrow(NotFoundException);
     expect(await fs.readdir(dir)).toEqual([]);
   });
 

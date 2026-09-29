@@ -6,9 +6,7 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { FilesService } from './files.service';
-
-export const UPLOAD_SESSIONS_DIR = '.upload-sessions';
+import { FilesService, UPLOAD_SESSIONS_DIR } from './files.service';
 
 // The client sends 8 MB; the cap leaves room without letting one request run past
 // proxy body limits or Node's 5-minute request timeout on a slow link.
@@ -17,6 +15,13 @@ export const MAX_CHUNK_BYTES = 16 * 1024 * 1024;
 // ponytail: an idle session is only swept after a day, so abandoned uploads hold disk until then.
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+
+// A full disk takes the worlds down with it, so what one user can hold is capped. The UI
+// sends one large file at a time; the rest of the headroom is for a second tab or two.
+export const MAX_SESSIONS_PER_USER = 5;
+// A session untouched this long is treated as abandoned (a closed tab sends no abort) and
+// is replaced instead of blocking its owner at the limit.
+const STALE_MS = 15 * 60 * 1000;
 
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -39,6 +44,9 @@ export class UploadSessionsService implements OnModuleDestroy {
   private readonly dir: string;
   private readonly busy = new Set<string>();
   private readonly sweepTimer: NodeJS.Timeout;
+  // Creates run one at a time: the limit and the free-space check read every session, so
+  // two at once would both pass on the same numbers.
+  private createQueue: Promise<unknown> = Promise.resolve();
 
   constructor(
     configService: ConfigService,
@@ -55,13 +63,33 @@ export class UploadSessionsService implements OnModuleDestroy {
     clearInterval(this.sweepTimer);
   }
 
-  async create(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite = true): Promise<{ id: string; offset: number }> {
+  create(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite = true): Promise<{ id: string; offset: number }> {
+    const run = this.createQueue.then(() => this.createSession(userId, serverId, filePath, size, admin, overwrite));
+    this.createQueue = run.catch(() => undefined);
+    return run;
+  }
+
+  private async createSession(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite: boolean): Promise<{ id: string; offset: number }> {
     // Fail before the first byte, not after gigabytes: the target must be writable...
     await this.filesService.assertUploadTarget(serverId, filePath, admin, overwrite);
 
-    // ...and the disk must hold the file. ponytail: other sessions in progress are not reserved.
+    let live = await this.readSessions();
+    if (live.filter(({ session }) => session.userId === userId).length >= MAX_SESSIONS_PER_USER) {
+      const now = Date.now();
+      const stale = live.filter(({ session }) => session.userId === userId && now - session.updatedAt > STALE_MS && !this.busy.has(session.id));
+      await Promise.all(stale.map(({ session }) => this.discard(session.id)));
+      live = live.filter((entry) => !stale.includes(entry));
+
+      if (live.filter(({ session }) => session.userId === userId).length >= MAX_SESSIONS_PER_USER) {
+        throw new HttpException(`Too many uploads in progress (${MAX_SESSIONS_PER_USER}): finish or cancel one first`, HttpStatus.TOO_MANY_REQUESTS);
+      }
+    }
+
+    // ...and the disk must hold the file on top of what the other sessions still have to
+    // write: what they already wrote is gone from the free space, the rest is promised.
     const { bavail, bsize } = await fsp.statfs(this.dir);
-    if (bavail * bsize < size) {
+    const reserved = live.reduce((total, { session, offset }) => total + Math.max(0, session.size - offset), 0);
+    if (bavail * bsize - reserved < size) {
       throw new HttpException('Not enough free disk space for this upload', HttpStatus.INSUFFICIENT_STORAGE);
     }
 
@@ -119,7 +147,11 @@ export class UploadSessionsService implements OnModuleDestroy {
         throw error;
       }
 
-      await fs.writeJson(this.metaPath(id), { ...session, updatedAt: Date.now() });
+      // An abort that landed while this chunk was in flight already removed the session:
+      // writing it again would bring back a record with no file behind it.
+      if (await fs.pathExists(this.metaPath(id))) {
+        await fs.writeJson(this.metaPath(id), { ...session, updatedAt: Date.now() });
+      }
       return { offset: await this.currentOffset(id) };
     } finally {
       this.busy.delete(id);
@@ -128,19 +160,26 @@ export class UploadSessionsService implements OnModuleDestroy {
 
   async complete(userId: number, serverId: string, id: string, admin: boolean): Promise<{ path: string }> {
     const session = await this.load(userId, serverId, id);
+    // The same lock as a chunk: a second complete, or a chunk landing right before the
+    // move, would otherwise end in a missing file halfway through.
     if (this.busy.has(id)) {
-      throw new ConflictException('A chunk for this upload is still being written');
+      throw new ConflictException('This upload is still being written or completed');
     }
+    this.busy.add(id);
 
-    const offset = await this.currentOffset(id);
-    if (offset !== session.size) {
-      throw new ConflictException({ message: 'Upload is incomplete', offset });
+    try {
+      const offset = await this.currentOffset(id);
+      if (offset !== session.size) {
+        throw new ConflictException({ message: 'Upload is incomplete', offset });
+      }
+
+      // Checked again: the file may have appeared while the chunks were on their way.
+      await this.filesService.saveUpload(serverId, session.path, this.partPath(id), admin, session.overwrite);
+      await fs.remove(this.metaPath(id));
+      return { path: session.path };
+    } finally {
+      this.busy.delete(id);
     }
-
-    // Checked again: the file may have appeared while the chunks were on their way.
-    await this.filesService.saveUpload(serverId, session.path, this.partPath(id), admin, session.overwrite);
-    await fs.remove(this.metaPath(id));
-    return { path: session.path };
   }
 
   async abort(userId: number, serverId: string, id: string): Promise<void> {
@@ -161,8 +200,28 @@ export class UploadSessionsService implements OnModuleDestroy {
     return session;
   }
 
+  // A missing file means the session was aborted or swept since it was loaded.
   private async currentOffset(id: string): Promise<number> {
-    return (await fs.stat(this.partPath(id))).size;
+    try {
+      return (await fs.stat(this.partPath(id))).size;
+    } catch {
+      throw new NotFoundException('Upload not found');
+    }
+  }
+
+  private async readSessions(): Promise<Array<{ session: UploadSession; offset: number }>> {
+    const names = await fs.readdir(this.dir);
+    const sessions = await Promise.all(
+      names
+        .filter((name) => name.endsWith('.json'))
+        .map(async (name) => {
+          const id = name.slice(0, -'.json'.length);
+          const session: UploadSession | null = await fs.readJson(this.metaPath(id)).catch(() => null);
+          if (!session) return null;
+          return { session, offset: await fs.stat(this.partPath(id)).then((stat) => stat.size, () => 0) };
+        }),
+    );
+    return sessions.filter((entry): entry is { session: UploadSession; offset: number } => entry !== null);
   }
 
   private async discard(id: string): Promise<void> {
