@@ -4,7 +4,7 @@ import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { UsersService } from 'src/users/services/users.service';
 import { TickCommandDto } from 'src/server-management/dto/tick-command.dto';
-import { compileTickPattern } from './tick-stats';
+import { compileTickPattern, isTickPatternSlow } from './tick-stats';
 import { MetricsService } from './metrics.service';
 import { MonitoringService } from './monitoring.service';
 
@@ -56,6 +56,7 @@ export class MetricsController {
     if (!body.tickCommand?.trim()) throw new BadRequestException('tickCommand is required');
     for (const pattern of [body.tickTpsPattern, body.tickMsptPattern]) {
       if (pattern && !compileTickPattern(pattern)) throw new BadRequestException('Patterns must be valid regular expressions with a capture group for the number');
+      if (pattern && isTickPatternSlow(pattern)) throw new BadRequestException('Pattern is too slow: it backtracks catastrophically on simple input');
     }
     return this.monitoring.testTickCommand(id, body.tickCommand.trim(), { tps: body.tickTpsPattern, mspt: body.tickMsptPattern });
   }

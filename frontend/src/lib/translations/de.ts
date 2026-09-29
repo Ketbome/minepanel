@@ -2113,6 +2113,7 @@ export const de: Record<TranslationKey, string> = {
   monitoringMsptPattern: "MSPT-Muster (Regex, optional)",
   monitoringRunTest: "Ausführen und testen",
   monitoringTestFailed: "Der Befehl konnte nicht ausgeführt werden. Prüfe, ob der Server läuft und RCON aktiviert ist.",
+  monitoringCustomPaused: "Der eigene Befehl hat mehrmals hintereinander keine verwertbaren Daten geliefert und ist deshalb 15 Minuten pausiert. Bearbeite ihn oder führe einen erfolgreichen Test aus, um fortzufahren.",
   monitoringTestEmpty: "Der Server hat eine leere Antwort geliefert. Dieser Befehl antwortet nicht über RCON.",
   monitoringTestNoMatch: "Die Antwort wurde nicht erkannt. Lege ein TPS-Muster fest, das darauf passt.",
   monitoringTestParsed: "Gelesen als",

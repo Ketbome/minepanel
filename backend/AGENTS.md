@@ -361,7 +361,13 @@ Monitoring (`src/metrics/`):
   `PUT /servers/:id/tick-command` (stripped from the whole-form `PUT :id`, no compose regen)
   and run over `readTickCommand`; `POST /metrics/:id/tick-test` runs a candidate once.
   Parsing lives in `tick-stats.ts` (`parseTickOutput`): patterns need a capture group, input is
-  capped at 4 KB, and unreadable output is null, never a guess or a fallback probe. TabTPS
+  capped at 4 KB, and unreadable output is null, never a guess or a fallback probe.
+  Patterns are operator-written and run on the shared event loop, so every match goes through
+  `matchWithTimeout` (a `node:vm` context, 50 ms): never call `regex.exec` on one directly, and do
+  not swap this for a shape heuristic like safe-regex. Save/test also reject a slow pattern
+  (`isTickPatternSlow`). `MonitoringService` pauses a custom command for 15 minutes after 5
+  consecutive unusable replies (empty, unrecognised, pattern timeout; RCON connection failures do
+  not count) and retries once; the breaker is keyed by command+patterns, so editing resets it. TabTPS
   `/tickinfo` (1m TPS, 60s average MSPT) is auto-detected. Spark replies do not come back over
   RCON (lucko/spark#119), so do not build features that depend on them.
 - Failed, stopped, unsupported and RCON-disabled probes have null tick values.

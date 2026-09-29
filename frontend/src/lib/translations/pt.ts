@@ -2107,6 +2107,7 @@ export const pt: Record<TranslationKey, string> = {
   monitoringMsptPattern: "Padrão de MSPT (regex, opcional)",
   monitoringRunTest: "Executar e testar",
   monitoringTestFailed: "Não foi possível executar o comando. Verifique se o servidor está a correr e se o RCON está ativado.",
+  monitoringCustomPaused: "O comando personalizado não devolveu dados utilizáveis várias vezes seguidas, por isso está em pausa durante 15 minutos. Edite-o ou execute um teste bem-sucedido para retomar.",
   monitoringTestEmpty: "O servidor devolveu uma resposta vazia. Este comando não responde por RCON.",
   monitoringTestNoMatch: "A resposta não foi reconhecida. Defina um padrão de TPS que lhe corresponda.",
   monitoringTestParsed: "Interpretado como",

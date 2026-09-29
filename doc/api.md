@@ -418,14 +418,15 @@ The endpoints require authentication and access to the requested server.
 - `GET /metrics/:id/live` — resource usage, players, uptime, timestamp and tick
   measurements, cached for 10 seconds with concurrent request deduplication.
   `tickStatus` is `available`, `offline`, `unsupported`, `rcon_disabled`,
-  `spark_missing`, or `unavailable`. `tickSource` is `neoforge`, `spark`, `tabtps`, `custom`, or null.
+  `spark_missing`, `custom_paused`, or `unavailable`. `tickSource` is `neoforge`, `spark`, `tabtps`, `custom`, or null.
   NeoForge returns estimated `tps` and `msptMean`; spark returns 1-minute `tps`,
   `msptMedian` and `msptP95` over 10 seconds; TabTPS and custom patterns return
   `tps` and `msptMean`. Unavailable values are null.
 - `POST /metrics/:id/tick-test` — admin only. Body `{ "tickCommand": string, "tickTpsPattern"?: string, "tickMsptPattern"?: string }`.
   Runs the command once over RCON without saving and returns
   `{ success, output, parsed: { source, tps, msptMean, msptMedian, msptP95 } | null }`.
-  Patterns must compile and contain a capture group (400 otherwise).
+  Patterns must compile, contain a capture group, and match within 50 ms (400 otherwise, also
+  for a pattern that backtracks catastrophically).
 - `GET /metrics/:id/history?hours=24` — `{ serverId, hours, points }`, with the
   window clamped to 1–168 hours. Points contain `timestamp`, `cpuPercent`,
   `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,

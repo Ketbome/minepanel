@@ -2082,6 +2082,7 @@ export const en = {
   monitoringMsptPattern: "MSPT pattern (regex, optional)",
   monitoringRunTest: "Run & test",
   monitoringTestFailed: "The command could not be run. Check that the server is running and RCON is enabled.",
+  monitoringCustomPaused: "The custom command returned no usable data several times in a row, so it is paused for 15 minutes. Edit it or run a passing test to resume.",
   monitoringTestEmpty: "The server returned an empty reply. This command does not answer over RCON.",
   monitoringTestNoMatch: "The reply was not recognized. Set a TPS pattern that matches it.",
   monitoringTestParsed: "Read as",

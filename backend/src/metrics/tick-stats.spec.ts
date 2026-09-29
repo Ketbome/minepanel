@@ -1,4 +1,4 @@
-import { compileTickPattern, parseNeoForgeStats, parseSparkStats, parseTabTpsStats, parseTickOutput } from './tick-stats';
+import { compileTickPattern, isTickPatternSlow, TickPatternTimeoutError, parseNeoForgeStats, parseSparkStats, parseTabTpsStats, parseTickOutput } from './tick-stats';
 
 // Console text layout emitted by spark HealthModule (used on NeoForge/ATM10).
 export const SPARK_OUTPUT = `> TPS from last 5s, 10s, 1m, 5m, 15m:
@@ -78,5 +78,28 @@ describe('parseTickOutput', () => {
   });
   it('only reads the first 4 KB of output', () => {
     expect(parseTickOutput(`${' '.repeat(5000)}${TABTPS_OUTPUT}`)).toBeNull();
+  });
+});
+
+describe('pattern time limit', () => {
+  const evil = '(a+)+$';
+  const nearMatch = `${'a'.repeat(40)}!`;
+
+  it('cuts off a catastrophically backtracking pattern instead of blocking the event loop', () => {
+    const started = Date.now();
+    expect(() => parseTickOutput(nearMatch, { tps: evil })).toThrow(TickPatternTimeoutError);
+    expect(() => parseTickOutput(`TPS: 20 ${nearMatch}`, { tps: 'TPS: ([\\d.]+)', mspt: evil })).toThrow(TickPatternTimeoutError);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
+  it('flags slow patterns on save/test and leaves ordinary and invalid ones alone', () => {
+    expect(isTickPatternSlow(evil)).toBe(true);
+    expect(isTickPatternSlow('(a|aa)+$')).toBe(true);
+    expect(isTickPatternSlow('TPS: ([\\d.]+)')).toBe(false);
+    expect(isTickPatternSlow('(')).toBe(false);
+  });
+
+  it('keeps matching normally afterwards', () => {
+    expect(parseTickOutput('TPS: 19.5', { tps: 'TPS: ([\\d.]+)' })?.tps).toBe(19.5);
   });
 });

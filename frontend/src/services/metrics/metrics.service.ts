@@ -15,7 +15,7 @@ export interface MetricPoint {
   timestamp: string;
 }
 
-export type TickStatus = "available" | "offline" | "unsupported" | "rcon_disabled" | "spark_missing" | "unavailable";
+export type TickStatus = "available" | "offline" | "unsupported" | "rcon_disabled" | "spark_missing" | "custom_paused" | "unavailable";
 
 export interface MonitoringSnapshot {
   timestamp: string;

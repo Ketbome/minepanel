@@ -2117,6 +2117,7 @@ export const nl: Record<TranslationKey, string> = {
   monitoringMsptPattern: "MSPT-patroon (regex, optioneel)",
   monitoringRunTest: "Uitvoeren en testen",
   monitoringTestFailed: "Het commando kon niet worden uitgevoerd. Controleer of de server draait en RCON is ingeschakeld.",
+  monitoringCustomPaused: "Het aangepaste commando gaf meerdere keren achter elkaar geen bruikbare gegevens en is daarom 15 minuten gepauzeerd. Pas het aan of voer een geslaagde test uit om te hervatten.",
   monitoringTestEmpty: "De server gaf een leeg antwoord. Dit commando antwoordt niet via RCON.",
   monitoringTestNoMatch: "Het antwoord werd niet herkend. Stel een TPS-patroon in dat erbij past.",
   monitoringTestParsed: "Gelezen als",

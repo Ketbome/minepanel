@@ -6,7 +6,7 @@ import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, Server
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { UpdateSpawnPointDto } from './dto/spawn-point.dto';
 import { TickCommandDto } from './dto/tick-command.dto';
-import { compileTickPattern } from 'src/metrics/tick-stats';
+import { compileTickPattern, isTickPatternSlow } from 'src/metrics/tick-stats';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -798,6 +798,7 @@ export class ServerManagementController {
       if (pattern && !compileTickPattern(pattern)) {
         throw new BadRequestException('Patterns must be valid regular expressions with a capture group for the number');
       }
+      if (pattern && isTickPatternSlow(pattern)) throw new BadRequestException('Pattern is too slow: it backtracks catastrophically on simple input');
     }
 
     const updatedConfig = await this.managementService.updateTickCommand(id, body);

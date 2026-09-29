@@ -606,6 +606,15 @@ describe('ServerManagementController', () => {
     });
   });
 
+  describe('updateTickCommand pattern time limit', () => {
+    it('rejects a pattern that backtracks catastrophically', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 1, username: 'root', role: 'ADMIN' });
+      accessControlService.isAdmin.mockReturnValue(true);
+      await expect(controller.updateTickCommand({ user: { userId: 1 } }, 'survival', { tickCommand: 'x', tickTpsPattern: '(a+)+$' })).rejects.toThrow('too slow');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createServer host mounts', () => {
     const mockReq = { user: { userId: 1 } };
 

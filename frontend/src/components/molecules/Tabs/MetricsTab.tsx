@@ -22,6 +22,7 @@ const STATUS_KEYS: Record<TickStatus, TranslationKey> = {
   unsupported: "monitoringUnsupported",
   rcon_disabled: "monitoringRconDisabled",
   spark_missing: "monitoringSparkMissing",
+  custom_paused: "monitoringCustomPaused",
   unavailable: "monitoringUnavailable",
 };
 

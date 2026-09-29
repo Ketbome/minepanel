@@ -2157,6 +2157,7 @@ export const tr: Record<TranslationKey, string> = {
   monitoringMsptPattern: "MSPT deseni (regex, isteğe bağlı)",
   monitoringRunTest: "Çalıştır ve test et",
   monitoringTestFailed: "Komut çalıştırılamadı. Sunucunun çalıştığından ve RCON'un etkin olduğundan emin olun.",
+  monitoringCustomPaused: "Özel komut art arda birkaç kez kullanılabilir veri döndürmedi, bu yüzden 15 dakika duraklatıldı. Düzenleyin veya devam etmek için başarılı bir test çalıştırın.",
   monitoringTestEmpty: "Sunucu boş bir yanıt döndürdü. Bu komut RCON üzerinden yanıt vermiyor.",
   monitoringTestNoMatch: "Yanıt tanınmadı. Ona uyan bir TPS deseni girin.",
   monitoringTestParsed: "Şu olarak okundu",

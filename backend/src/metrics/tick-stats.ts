@@ -1,3 +1,5 @@
+import * as vm from 'node:vm';
+
 export type TickSource = 'neoforge' | 'spark' | 'tabtps' | 'custom';
 
 export interface SparkStats {
@@ -65,6 +67,46 @@ export function compileTickPattern(pattern: string): RegExp | null {
   }
 }
 
+// Patterns are operator-written and run on the panel's single event loop every poll, so a
+// backtracking one (`(a+)+$`) would freeze the whole API. Every match runs in a vm context with a
+// hard timeout instead: unlike a shape heuristic it holds for any pattern.
+export const TICK_PATTERN_TIMEOUT_MS = 50;
+
+export class TickPatternTimeoutError extends Error {
+  constructor() {
+    super('Pattern took too long to match');
+  }
+}
+
+const matchContext = vm.createContext({});
+
+function matchWithTimeout(regex: RegExp, text: string): RegExpExecArray | null {
+  matchContext.regex = regex;
+  matchContext.text = text;
+  try {
+    return vm.runInContext('regex.exec(text)', matchContext, { timeout: TICK_PATTERN_TIMEOUT_MS }) as RegExpExecArray | null;
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ERR_SCRIPT_EXECUTION_TIMEOUT') throw new TickPatternTimeoutError();
+    throw error;
+  }
+}
+
+// Inputs that make classic catastrophic patterns blow up, tried when a pattern is saved or tested.
+// Best effort: the match timeout above is the actual guarantee.
+const PROBE_INPUTS = ['a'.repeat(64) + '!', '0'.repeat(64) + 'x', ' '.repeat(64) + '!'];
+
+export function isTickPatternSlow(pattern: string): boolean {
+  const regex = compileTickPattern(pattern);
+  if (!regex) return false;
+  try {
+    for (const input of PROBE_INPUTS) matchWithTimeout(regex, input);
+    return false;
+  } catch (error) {
+    if (error instanceof TickPatternTimeoutError) return true;
+    throw error;
+  }
+}
+
 export interface CustomTickPatterns {
   tps?: string;
   mspt?: string;
@@ -79,15 +121,16 @@ export interface ParsedTick {
 }
 
 // Reads the output of an operator-chosen command. Explicit patterns win; otherwise the built-in
-// parsers are tried in turn. Unrecognised output is null, never a guess.
+// parsers are tried in turn. Unrecognised output is null, never a guess. A pattern that exceeds
+// the match timeout throws TickPatternTimeoutError.
 export function parseTickOutput(output: string, patterns: CustomTickPatterns = {}): ParsedTick | null {
   const text = stripFormatting(output).slice(0, MAX_TICK_OUTPUT_LENGTH);
   if (patterns.tps) {
     const tpsRegex = compileTickPattern(patterns.tps);
-    const tps = tpsRegex ? toNumber(text.match(tpsRegex)?.[1]) : null;
+    const tps = tpsRegex ? toNumber(matchWithTimeout(tpsRegex, text)?.[1]) : null;
     if (tps === null) return null;
     const msptRegex = patterns.mspt ? compileTickPattern(patterns.mspt) : null;
-    const msptMean = msptRegex ? toNumber(text.match(msptRegex)?.[1]) : null;
+    const msptMean = msptRegex ? toNumber(matchWithTimeout(msptRegex, text)?.[1]) : null;
     return { source: 'custom', tps, msptMean, msptMedian: null, msptP95: null };
   }
   const tabtps = parseTabTpsStats(text);

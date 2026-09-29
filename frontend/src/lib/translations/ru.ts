@@ -2083,6 +2083,7 @@ export const ru: Record<TranslationKey, string> = {
   monitoringMsptPattern: "Шаблон MSPT (regex, необязательно)",
   monitoringRunTest: "Выполнить и проверить",
   monitoringTestFailed: "Не удалось выполнить команду. Убедитесь, что сервер запущен и RCON включён.",
+  monitoringCustomPaused: "Своя команда несколько раз подряд не вернула пригодных данных, поэтому она приостановлена на 15 минут. Измените её или запустите успешную проверку, чтобы возобновить.",
   monitoringTestEmpty: "Сервер вернул пустой ответ. Эта команда не отвечает через RCON.",
   monitoringTestNoMatch: "Ответ не распознан. Задайте шаблон TPS, который ему соответствует.",
   monitoringTestParsed: "Распознано как",

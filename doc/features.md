@@ -110,6 +110,14 @@ that cannot be read stay blank; the panel never falls back to another probe.
 Saving with an empty command restores the defaults. The command runs on every
 metrics poll, so only administrators can set it.
 
+Every pattern match is limited to 50 ms, so a badly written pattern (for example
+`(a+)+$`) cannot stall the panel; one that is too slow is rejected when you save or
+test it. A command that keeps returning nothing usable (an empty reply, output nothing
+recognizes, or a pattern that times out) five polls in a row is **paused for 15
+minutes** instead of being polled forever, then retried once. Failing to reach RCON,
+for example while the server starts, does not count. Editing the command or a pattern,
+or a passing **Run & test**, resumes it immediately.
+
 Missing readings stay blank, and charts leave gaps for missing samples or server
 downtime. Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB; use the time-range
 selector to change the history window. Older history contains resource data only. CPU uses Docker's scale:

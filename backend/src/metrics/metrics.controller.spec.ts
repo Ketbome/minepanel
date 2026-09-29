@@ -46,6 +46,12 @@ describe('MetricsController', () => {
       expect(testTick).toHaveBeenCalledWith('srv', 'tickinfo', { tps: 'TPS: ([\\d.]+)', mspt: undefined });
     });
 
+    it('rejects a slow pattern before running anything', async () => {
+      testTick.mockClear();
+      await expect(build(true).testTickCommand(req, 'srv', { tickCommand: 'x', tickTpsPattern: '(a+)+$' })).rejects.toThrow('too slow');
+      expect(testTick).not.toHaveBeenCalled();
+    });
+
     it('requires a command and valid patterns', async () => {
       await expect(build(true).testTickCommand(req, 'srv', { tickCommand: '  ' })).rejects.toThrow('tickCommand is required');
       await expect(build(true).testTickCommand(req, 'srv', { tickCommand: 'x', tickMsptPattern: 'no group' })).rejects.toThrow('regular expressions');
