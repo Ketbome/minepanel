@@ -356,6 +356,14 @@ Monitoring (`src/metrics/`):
   `msptMean` separate from spark `msptMedian`/`msptP95`; never silently mix statistics.
 - Read only the overall NeoForge row, not a dimension. Fixed commands execute via
   container-local `rcon-cli` with a timeout; credentials never reach the browser.
+- A per-server `tickCommand` (+ optional `tickTpsPattern`/`tickMsptPattern`) in `server.json`
+  replaces the built-in probes when set. It is admin-only, saved through
+  `PUT /servers/:id/tick-command` (stripped from the whole-form `PUT :id`, no compose regen)
+  and run over `readTickCommand`; `POST /metrics/:id/tick-test` runs a candidate once.
+  Parsing lives in `tick-stats.ts` (`parseTickOutput`): patterns need a capture group, input is
+  capped at 4 KB, and unreadable output is null, never a guess or a fallback probe. TabTPS
+  `/tickinfo` (1m TPS, 60s average MSPT) is auto-detected. Spark replies do not come back over
+  RCON (lucko/spark#119), so do not build features that depend on them.
 - Failed, stopped, unsupported and RCON-disabled probes have null tick values.
   Bedrock keeps CPU/RAM/player monitoring. Historical columns are nullable for old rows.
 

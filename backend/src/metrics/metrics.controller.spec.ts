@@ -31,4 +31,24 @@ describe('MetricsController', () => {
     expect((await controller.getHistory(req, 'srv', 'abc')).hours).toBe(24);
     expect(metrics.getHistory).toHaveBeenLastCalledWith('srv', 24);
   });
+
+  describe('testTickCommand', () => {
+    const testTick = jest.fn().mockResolvedValue({ success: true, output: 'x', parsed: null });
+    const build = (admin: boolean) => new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { isAdmin: jest.fn(() => admin) } as any, { testTickCommand: testTick } as any);
+
+    it('is admin only', async () => {
+      await expect(build(false).testTickCommand(req, 'srv', { tickCommand: 'tickinfo' })).rejects.toThrow('Only admin');
+      expect(testTick).not.toHaveBeenCalled();
+    });
+
+    it('runs the trimmed command with its candidate patterns', async () => {
+      await build(true).testTickCommand(req, 'srv', { tickCommand: ' tickinfo ', tickTpsPattern: 'TPS: ([\\d.]+)' });
+      expect(testTick).toHaveBeenCalledWith('srv', 'tickinfo', { tps: 'TPS: ([\\d.]+)', mspt: undefined });
+    });
+
+    it('requires a command and valid patterns', async () => {
+      await expect(build(true).testTickCommand(req, 'srv', { tickCommand: '  ' })).rejects.toThrow('tickCommand is required');
+      await expect(build(true).testTickCommand(req, 'srv', { tickCommand: 'x', tickMsptPattern: 'no group' })).rejects.toThrow('regular expressions');
+    });
+  });
 });

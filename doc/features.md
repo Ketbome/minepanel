@@ -87,9 +87,28 @@ lines do not imply that a deliberately changed tick rate is unhealthy.
 
 On servers with a usable `spark tps` RCON response, Minepanel displays 1-minute
 TPS and 10-second median/P95 tick duration. P95 is the duration below which 95%
-of ticks fall; it is not the mean. Some spark versions return an empty RCON
-response because commands are asynchronous. Installing spark alone does not
-guarantee RCON monitoring works; NeoForge's native command avoids this.
+of ticks fall; it is not the mean. Spark often returns an empty RCON reply (see
+[lucko/spark#119](https://github.com/lucko/spark/issues/119)), so installing spark
+alone does not guarantee RCON monitoring works; NeoForge's native command and a
+custom command (below) avoid this.
+
+### Custom tick command
+
+Administrators can replace the built-in probes with their own RCON command from
+the **Custom tick command** card at the bottom of the Metrics tab, for example
+`tickinfo` from [TabTPS](https://github.com/jpenilla/TabTPS). The reply must come
+back over RCON. **Run & test** runs the command once, shows the raw reply and what
+was read from it, without saving, so a command that answers with nothing is visible
+right away.
+
+TabTPS, NeoForge and spark output is recognized automatically (TabTPS reports the
+1-minute TPS and the 60-second average MSPT). For any other command, give a TPS
+pattern and optionally an MSPT pattern: regular expressions (case-insensitive) with
+one capture group around the number, matched against the first 4 KB of the reply.
+Patterns win over automatic detection and the source is shown as `custom`. Values
+that cannot be read stay blank; the panel never falls back to another probe.
+Saving with an empty command restores the defaults. The command runs on every
+metrics poll, so only administrators can set it.
 
 Missing readings stay blank, and charts leave gaps for missing samples or server
 downtime. Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB; use the time-range

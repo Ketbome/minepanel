@@ -47,6 +47,7 @@ describe('ServerManagementController', () => {
       listAvailableWorlds: jest.fn(),
       updateModWatch: jest.fn(),
       updateSpawnPoint: jest.fn(),
+      updateTickCommand: jest.fn(),
     };
 
     const mockDockerComposeService = {
@@ -572,6 +573,36 @@ describe('ServerManagementController', () => {
       await controller.updateSpawnPoint(mockReq, 'survival', { x: 100, y: 64, z: -200 });
 
       expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTickCommand', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 1, username: 'root', role: 'ADMIN' });
+      serverService.updateTickCommand.mockResolvedValue({ id: 'survival', tickCommand: 'tickinfo' } as any);
+    });
+
+    it('is admin only', async () => {
+      accessControlService.isAdmin.mockReturnValueOnce(false);
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'tickinfo' })).rejects.toThrow('Only admin');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
+    });
+
+    it('saves without regenerating compose and records an audit entry', async () => {
+      accessControlService.isAdmin.mockReturnValueOnce(true);
+      await controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'tickinfo', tickTpsPattern: 'TPS: ([\\d.]+)' });
+      expect(serverService.updateTickCommand).toHaveBeenCalledWith('survival', { tickCommand: 'tickinfo', tickTpsPattern: 'TPS: ([\\d.]+)' });
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(auditLogService.record).toHaveBeenCalledWith(expect.objectContaining({ action: 'update_tick_command', serverId: 'survival' }));
+    });
+
+    it('rejects a pattern that does not compile or has no capture group', async () => {
+      accessControlService.isAdmin.mockReturnValue(true);
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'x', tickTpsPattern: '(' })).rejects.toThrow('regular expressions');
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'x', tickTpsPattern: 'a', tickMsptPattern: 'b' })).rejects.toThrow('regular expressions');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
     });
   });
 

@@ -13,6 +13,8 @@ import { LINK_TPS } from "@/lib/providers/constants";
 
 // The states a change on the server can fix, as opposed to offline or Bedrock.
 const SETUP_STATUSES: TickStatus[] = ["rcon_disabled", "spark_missing", "unavailable"];
+import { TickCommandCard } from "../monitoring/tick-command-card";
+import { ServerConfig } from "@/lib/types/types";
 
 const STATUS_KEYS: Record<TickStatus, TranslationKey> = {
   available: "monitoringConnected",
@@ -26,11 +28,17 @@ const STATUS_KEYS: Record<TickStatus, TranslationKey> = {
 const number = (value: number | null | undefined, digits = 1) => value == null ? "—" : value.toFixed(digits);
 
 // Reset view state when switching servers, including pending requests.
-export function MetricsTab({ serverId }: { serverId: string }) {
-  return <MonitoringView key={serverId} serverId={serverId} />;
+export interface MetricsTabProps {
+  serverId: string;
+  config: ServerConfig;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-function MonitoringView({ serverId }: { serverId: string }) {
+export function MetricsTab({ serverId, config, updateConfig }: MetricsTabProps) {
+  return <MonitoringView key={serverId} serverId={serverId} config={config} updateConfig={updateConfig} />;
+}
+
+function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const { t, language } = useLanguage();
   const [hours, setHours] = useState(24);
   const [refresh, setRefresh] = useState(0);
@@ -76,11 +84,14 @@ function MonitoringView({ serverId }: { serverId: string }) {
     return () => { active = false; clearTimeout(timer); };
   }, [serverId, hours, refresh]);
 
+  // Every source except spark reports a mean MSPT; only NeoForge's TPS is an estimate from it.
+  const meanBased = live?.tickSource != null && live.tickSource !== "spark";
   const native = live?.tickSource === "neoforge";
+  const meanHistory = meanBased || points.some((point) => point.tickSource != null && point.tickSource !== "spark");
   const nativeHistory = native || points.some((point) => point.tickSource === "neoforge");
   const cards = [
     { icon: Gauge, label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: t(native ? "monitoringNativeHelp" : "monitoringTpsWindow") },
-    { icon: Timer, label: "MSPT", value: `${number(native ? live?.msptMean : live?.msptMedian)} ms`, help: native ? t("monitoringMeanHelp") : `${t("monitoringMsptWindow")} · P95 ${number(live?.msptP95)} ms` },
+    { icon: Timer, label: "MSPT", value: `${number(meanBased ? live?.msptMean : live?.msptMedian)} ms`, help: meanBased ? t("monitoringMeanHelp") : `${t("monitoringMsptWindow")} · P95 ${number(live?.msptP95)} ms` },
     { icon: Cpu, label: t("metricsCpu"), value: `${number(live?.cpuPercent)}%`, help: t("monitoringCpuHelp") },
     { icon: MemoryStick, label: t("metricsMemory"), value: `${number(live?.memoryMb == null ? null : live.memoryMb / 1024, 2)} GiB`, help: t("monitoringMemoryHelp") },
     { icon: Users, label: t("players"), value: `${number(live?.playersOnline, 0)} / ${number(live?.playersMax, 0)}`, help: `${t("uptime")}: ${live?.uptimeSeconds == null ? "—" : `${Math.floor(live.uptimeSeconds / 3600)}h ${Math.floor((live.uptimeSeconds % 3600) / 60)}m`}` },
@@ -128,12 +139,13 @@ function MonitoringView({ serverId }: { serverId: string }) {
       {loading ? <p role="status" className="py-8 text-center text-gray-400">{t("loading")}</p> : (
         <div key={hours} className="grid gap-4 lg:grid-cols-2">
           <MonitoringChart title={nativeHistory ? t("monitoringEstimatedTps") : "TPS"} description={t(nativeHistory ? "monitoringNativeHelp" : "monitoringTpsWindow")} points={points} metric="tps" reference={20} />
-          <MonitoringChart title={nativeHistory ? "MSPT" : "MSPT · P95"} description={t(nativeHistory ? "monitoringMeanHelp" : "monitoringP95Help")} points={points} metric={nativeHistory ? "msptMean" : "msptP95"} unit=" ms" reference={50} />
+          <MonitoringChart title={meanHistory ? "MSPT" : "MSPT · P95"} description={t(meanHistory ? "monitoringMeanHelp" : "monitoringP95Help")} points={points} metric={meanHistory ? "msptMean" : "msptP95"} unit=" ms" reference={50} />
           <MonitoringChart title={t("metricsCpu")} description={t("monitoringCpuHelp")} points={points} metric="cpuPercent" unit="%" />
           <MonitoringChart title={t("metricsMemory")} description={t("monitoringMemoryHelp")} points={points} metric="memoryMb" unit=" MiB" />
           <MonitoringChart title={t("players")} description={t("monitoringPlayersHelp")} points={points} metric="playersOnline" />
         </div>
       )}
+      <TickCommandCard serverId={serverId} config={config} updateConfig={updateConfig} />
       <MonitoringAlerts serverId={serverId} />
     </div>
   );

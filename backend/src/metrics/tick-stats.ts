@@ -1,3 +1,5 @@
+export type TickSource = 'neoforge' | 'spark' | 'tabtps' | 'custom';
+
 export interface SparkStats {
   tps: number;
   msptMedian: number | null;
@@ -34,4 +36,76 @@ export function parseSparkStats(output: string): SparkStats | null {
     msptMedian: median !== null && Number.isFinite(median) ? median : null,
     msptP95: p95 !== null && Number.isFinite(p95) ? p95 : null,
   };
+}
+
+// TabTPS /tickinfo: "TPS: 20.00 (5s), 20.00 (1m), ..." and "MSPT - Average, Minimum, Maximum"
+// rows per window ("60s - 0.20, 0.04, 38.49"). RCON can flatten the reply onto one line, so match
+// on the labels, never on line breaks. Only the average MSPT is kept: it has no median or p95.
+export function parseTabTpsStats(output: string): { tps: number; msptMean: number | null } | null {
+  const text = stripFormatting(output);
+  const tpsMatch = text.match(/TPS:\s*[\d.,]+\s*\(5s\),\s*([\d.,]+)\s*\(1m\)/i);
+  if (!tpsMatch) return null;
+  const tps = toNumber(tpsMatch[1]);
+  if (tps === null) return null;
+  const mspt = text.match(/\b60s\s*-\s*([\d.,]+)\s*,/i) ?? text.match(/\b10s\s*-\s*([\d.,]+)\s*,/i);
+  return { tps, msptMean: mspt ? toNumber(mspt[1]) : null };
+}
+
+export const MAX_TICK_PATTERN_LENGTH = 200;
+const MAX_TICK_OUTPUT_LENGTH = 4096;
+
+// A pattern is only usable if it compiles and has a capture group to read the number from.
+export function compileTickPattern(pattern: string): RegExp | null {
+  if (!pattern || pattern.length > MAX_TICK_PATTERN_LENGTH) return null;
+  try {
+    const regex = new RegExp(pattern, 'i');
+    return new RegExp(`${regex.source}|`).exec('')!.length > 1 ? regex : null;
+  } catch {
+    return null;
+  }
+}
+
+export interface CustomTickPatterns {
+  tps?: string;
+  mspt?: string;
+}
+
+export interface ParsedTick {
+  source: TickSource;
+  tps: number;
+  msptMean: number | null;
+  msptMedian: number | null;
+  msptP95: number | null;
+}
+
+// Reads the output of an operator-chosen command. Explicit patterns win; otherwise the built-in
+// parsers are tried in turn. Unrecognised output is null, never a guess.
+export function parseTickOutput(output: string, patterns: CustomTickPatterns = {}): ParsedTick | null {
+  const text = stripFormatting(output).slice(0, MAX_TICK_OUTPUT_LENGTH);
+  if (patterns.tps) {
+    const tpsRegex = compileTickPattern(patterns.tps);
+    const tps = tpsRegex ? toNumber(text.match(tpsRegex)?.[1]) : null;
+    if (tps === null) return null;
+    const msptRegex = patterns.mspt ? compileTickPattern(patterns.mspt) : null;
+    const msptMean = msptRegex ? toNumber(text.match(msptRegex)?.[1]) : null;
+    return { source: 'custom', tps, msptMean, msptMedian: null, msptP95: null };
+  }
+  const tabtps = parseTabTpsStats(text);
+  if (tabtps) return { source: 'tabtps', tps: tabtps.tps, msptMean: tabtps.msptMean, msptMedian: null, msptP95: null };
+  const neoforge = parseNeoForgeStats(text);
+  if (neoforge) return { source: 'neoforge', ...neoforge, msptMedian: null, msptP95: null };
+  const spark = parseSparkStats(text);
+  if (spark) return { source: 'spark', tps: spark.tps, msptMean: null, msptMedian: spark.msptMedian, msptP95: spark.msptP95 };
+  return null;
+}
+
+function stripFormatting(output: string): string {
+  // eslint-disable-next-line no-control-regex
+  return output.replace(/§[0-9a-fk-orx]/gi, '').replace(/\u001b\[[0-9;]*m/g, '');
+}
+
+function toNumber(value: string | undefined): number | null {
+  if (value === undefined) return null;
+  const parsed = Number(value.replace(',', '.'));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }

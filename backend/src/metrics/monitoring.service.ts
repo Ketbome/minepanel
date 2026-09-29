@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { ServerManagementService, ServerRuntimeStats } from 'src/server-management/server-management.service';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
-import { parseNeoForgeStats, parseSparkStats } from './tick-stats';
+import { CustomTickPatterns, parseNeoForgeStats, parseSparkStats, parseTickOutput, TickSource } from './tick-stats';
 
 export type TickStatus = 'available' | 'offline' | 'unsupported' | 'rcon_disabled' | 'spark_missing' | 'unavailable';
+
+export interface TickTestResult {
+  success: boolean;
+  output: string;
+  parsed: { source: TickSource; tps: number; msptMean: number | null; msptMedian: number | null; msptP95: number | null } | null;
+}
 
 export interface MonitoringSnapshot {
   timestamp: string;
@@ -16,7 +22,7 @@ export interface MonitoringSnapshot {
   playersMax: number | null;
   uptimeSeconds: number | null;
   tickStatus: TickStatus;
-  tickSource: 'neoforge' | 'spark' | null;
+  tickSource: TickSource | null;
   tps: number | null;
   msptMean: number | null;
   msptMedian: number | null;
@@ -74,6 +80,14 @@ export class MonitoringService {
       if (config.edition === 'BEDROCK') return { ...result, tickStatus: 'unsupported' };
       if (!config.enableRcon) return { ...result, tickStatus: 'rcon_disabled' };
       const rconPort = config.rconPort || '25575';
+      if (config.tickCommand) {
+        // An operator-chosen command replaces the built-in probes; no fallback to guesses.
+        const custom = await this.management.readTickCommand(serverId, config.tickCommand, rconPort, config.rconPassword);
+        const parsed = custom.success ? parseTickOutput(custom.output, { tps: config.tickTpsPattern, mspt: config.tickMsptPattern }) : null;
+        if (!parsed) return result;
+        const { source, ...stats } = parsed;
+        return { ...result, ...stats, tickStatus: 'available', tickSource: source, timestamp: new Date().toISOString() };
+      }
       // NeoForge responds synchronously; spark's async commands can return empty over RCON.
       if (['NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE'].includes(config.serverType)) {
         const native = await this.management.readTickStats(serverId, 'neoforge', rconPort, config.rconPassword);
@@ -96,5 +110,15 @@ export class MonitoringService {
       // A failed game probe must not discard independently collected container data.
     }
     return result;
+  }
+
+  // Runs a candidate command once for the Metrics tab's "Run & test", without saving anything.
+  async testTickCommand(serverId: string, command: string, patterns: CustomTickPatterns = {}): Promise<TickTestResult> {
+    if (!/^[a-zA-Z0-9_-]+$/.test(serverId)) throw new BadRequestException('Invalid server ID');
+    const config = await this.store.readConfig(serverId);
+    if (!config) throw new NotFoundException(`Server with ID "${serverId}" not found`);
+    if (config.edition === 'BEDROCK' || !config.enableRcon) throw new BadRequestException('RCON is required and only available on Java servers');
+    const response = await this.management.readTickCommand(serverId, command, config.rconPort || '25575', config.rconPassword);
+    return { ...response, parsed: response.success ? parseTickOutput(response.output, patterns) : null };
   }
 }

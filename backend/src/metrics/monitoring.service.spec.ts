@@ -1,15 +1,16 @@
 import { MonitoringService } from './monitoring.service';
 
 const output = '> TPS from last 5s, 10s, 1m, 5m, 15m:\n20, 20, 19.5, 20, 20\n> Tick durations (min/med/95%ile/max ms) from last 10s, 1m:\n1/25/65/120; 1/20/50/100';
+const tabTps = 'TPS: 20.00 (5s), 19.50 (1m), 20.00 (5m)MSPT - Average, Minimum, Maximum └─ 60s - 0.20, 0.04, 38.49';
 const runtime = { status: 'running', cpuUsage: '150%', memoryUsage: '2GiB', memoryLimit: '8GiB', playersOnline: 3, playersMax: 20, uptimeSeconds: 100 } as any;
 
 describe('MonitoringService', () => {
-  let management: { getServerRuntimeStats: jest.Mock; readTickStats: jest.Mock };
+  let management: { getServerRuntimeStats: jest.Mock; readTickStats: jest.Mock; readTickCommand: jest.Mock };
   let store: { readConfig: jest.Mock };
   let service: MonitoringService;
 
   beforeEach(() => {
-    management = { getServerRuntimeStats: jest.fn().mockResolvedValue(runtime), readTickStats: jest.fn().mockResolvedValue({ success: true, output }) };
+    management = { getServerRuntimeStats: jest.fn().mockResolvedValue(runtime), readTickStats: jest.fn().mockResolvedValue({ success: true, output }), readTickCommand: jest.fn().mockResolvedValue({ success: true, output: tabTps }) };
     store = { readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', serverType: 'FABRIC', enableRcon: true, rconPort: '25575', rconPassword: 'secret' }) };
     service = new MonitoringService(management as any, store as any);
   });
@@ -105,5 +106,60 @@ describe('MonitoringService', () => {
   it.each(['../data', '.world', 'a/b', ''])('rejects invalid server ids before IO', async (id) => {
     await expect(service.getSnapshot(id)).rejects.toThrow('Invalid server ID');
     expect(management.getServerRuntimeStats).not.toHaveBeenCalled();
+  });
+
+  describe('custom tick command', () => {
+    const customConfig = { edition: 'JAVA', serverType: 'PAPER', enableRcon: true, rconPort: '25580', rconPassword: 'secret', tickCommand: 'tickinfo' };
+
+    it('replaces the built-in probes and auto-detects the reply format', async () => {
+      store.readConfig.mockResolvedValue(customConfig);
+      expect(await service.getSnapshot('atm10')).toMatchObject({ tickStatus: 'available', tickSource: 'tabtps', tps: 19.5, msptMean: 0.2, msptMedian: null });
+      expect(management.readTickCommand).toHaveBeenCalledWith('atm10', 'tickinfo', '25580', 'secret');
+      expect(management.readTickStats).not.toHaveBeenCalled();
+    });
+
+    it('uses explicit patterns and reports the source as custom', async () => {
+      store.readConfig.mockResolvedValue({ ...customConfig, tickTpsPattern: '1m\\)?: ?([\\d.]+)' });
+      management.readTickCommand.mockResolvedValue({ success: true, output: 'tps 1m: 18.5' });
+      expect(await service.getSnapshot('atm10')).toMatchObject({ tickSource: 'custom', tps: 18.5, msptMean: null });
+    });
+
+    it.each([{ success: false, output: '' }, { success: true, output: '' }, { success: true, output: 'Unknown command' }])('reports unavailable, never guesses: %j', async (reply) => {
+      store.readConfig.mockResolvedValue(customConfig);
+      management.readTickCommand.mockResolvedValue(reply);
+      expect(await service.getSnapshot('atm10')).toMatchObject({ tickStatus: 'unavailable', tickSource: null, tps: null });
+      expect(management.readTickStats).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('testTickCommand', () => {
+    beforeEach(() => store.readConfig.mockResolvedValue({ edition: 'JAVA', enableRcon: true, rconPassword: 'secret' }));
+
+    it('returns the raw reply and what was parsed, using the default port', async () => {
+      expect(await service.testTickCommand('atm10', 'tickinfo')).toMatchObject({ success: true, output: tabTps, parsed: { source: 'tabtps', tps: 19.5 } });
+      expect(management.readTickCommand).toHaveBeenCalledWith('atm10', 'tickinfo', '25575', 'secret');
+    });
+
+    it('shows an empty reply as unparsed (the spark-over-RCON case) and a failure without parsing', async () => {
+      management.readTickCommand.mockResolvedValueOnce({ success: true, output: '' });
+      expect((await service.testTickCommand('atm10', 'spark tps')).parsed).toBeNull();
+      management.readTickCommand.mockResolvedValueOnce({ success: false, output: '' });
+      expect(await service.testTickCommand('atm10', 'x')).toEqual({ success: false, output: '', parsed: null });
+    });
+
+    it('applies candidate patterns', async () => {
+      management.readTickCommand.mockResolvedValueOnce({ success: true, output: 'tps=17' });
+      expect((await service.testTickCommand('atm10', 'x', { tps: 'tps=(\\d+)' })).parsed).toMatchObject({ source: 'custom', tps: 17 });
+    });
+
+    it('rejects bad ids, missing servers, Bedrock and disabled RCON', async () => {
+      await expect(service.testTickCommand('../x', 'x')).rejects.toThrow('Invalid server ID');
+      store.readConfig.mockResolvedValueOnce(null);
+      await expect(service.testTickCommand('atm10', 'x')).rejects.toThrow('not found');
+      store.readConfig.mockResolvedValueOnce({ edition: 'BEDROCK', enableRcon: true });
+      await expect(service.testTickCommand('atm10', 'x')).rejects.toThrow('RCON is required');
+      store.readConfig.mockResolvedValueOnce({ edition: 'JAVA', enableRcon: false });
+      await expect(service.testTickCommand('atm10', 'x')).rejects.toThrow('RCON is required');
+    });
   });
 });

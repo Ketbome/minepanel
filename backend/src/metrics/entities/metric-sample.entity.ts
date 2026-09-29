@@ -1,3 +1,4 @@
+import type { TickSource } from '../tick-stats';
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('metric_samples')
@@ -22,7 +23,7 @@ export class MetricSample {
   tps: number | null;
 
   @Column({ type: 'text', name: 'tick_source', nullable: true })
-  tickSource: 'neoforge' | 'spark' | null;
+  tickSource: TickSource | null;
 
   @Column({ type: 'float', name: 'mspt_mean', nullable: true })
   msptMean: number | null;

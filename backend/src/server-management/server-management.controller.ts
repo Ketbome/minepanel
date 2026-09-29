@@ -5,6 +5,8 @@ import { ServerManagementService } from './server-management.service';
 import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, ServerEdition, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { UpdateSpawnPointDto } from './dto/spawn-point.dto';
+import { TickCommandDto } from './dto/tick-command.dto';
+import { compileTickPattern } from 'src/metrics/tick-stats';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -725,6 +727,9 @@ export class ServerManagementController {
       spawnX: _spawnX,
       spawnY: _spawnY,
       spawnZ: _spawnZ,
+      tickCommand: _tickCommand,
+      tickTpsPattern: _tickTpsPattern,
+      tickMsptPattern: _tickMsptPattern,
       ...configWithoutModWatch
     } = config;
 
@@ -776,6 +781,28 @@ export class ServerManagementController {
     const updatedConfig = await this.managementService.updateSpawnPoint(id, body);
 
     await this.recordServerAudit(currentUser, 'update_spawn_point', id, `Updated default spawn point for ${id}`);
+
+    return withoutSecrets(updatedConfig);
+  }
+
+  // Separate from PUT :id, like spawn-point. Admin only: the panel runs this RCON command on every
+  // metrics poll, unattended.
+  @Put(':id/tick-command')
+  async updateTickCommand(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: TickCommandDto,
+  ) {
+    const currentUser = await this.requireAdmin(req);
+    for (const pattern of [body.tickTpsPattern, body.tickMsptPattern]) {
+      if (pattern && !compileTickPattern(pattern)) {
+        throw new BadRequestException('Patterns must be valid regular expressions with a capture group for the number');
+      }
+    }
+
+    const updatedConfig = await this.managementService.updateTickCommand(id, body);
+
+    await this.recordServerAudit(currentUser, 'update_tick_command', id, `Updated metrics tick command for ${id}`);
 
     return withoutSecrets(updatedConfig);
   }

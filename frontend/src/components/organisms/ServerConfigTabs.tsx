@@ -447,7 +447,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               </TabsContent>
 
               <TabsContent value="metrics" className="space-y-4 mt-0">
-                <MetricsTab serverId={serverId} />
+                <MetricsTab serverId={serverId} config={config} updateConfig={updateConfig} />
               </TabsContent>
 
               {showActivityTab && (
