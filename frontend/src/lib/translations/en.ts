@@ -663,7 +663,7 @@ export const en = {
   vtDetailsUnavailable: 'Details unavailable right now.',
   vtVersionMismatch: 'Made for Minecraft {code}, but this server runs {server}. The packs will load, but some may not work correctly.',
   vtInstallNote: 'The server downloads these from vanillatweaks.net and installs them into the world when it starts.',
-  vtPackCount: '{count} packs',
+  vtPackCount: 'Packs: {count}',
   allowNether: 'Allow Nether',
   allowNetherDescription: 'Enable or disable access to the Nether dimension',
   spawnProtection: 'Spawn Protection',

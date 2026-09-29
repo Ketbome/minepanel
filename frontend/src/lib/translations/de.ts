@@ -665,7 +665,7 @@ export const de: Record<TranslationKey, string> = {
   vtDetailsUnavailable: 'Details gerade nicht verfügbar.',
   vtVersionMismatch: 'Für Minecraft {code} gemacht, aber dieser Server läuft mit {server}. Die Pakete werden geladen, manche funktionieren aber eventuell nicht richtig.',
   vtInstallNote: 'Der Server lädt sie beim Start von vanillatweaks.net und installiert sie in die Welt.',
-  vtPackCount: '{count} Pakete',
+  vtPackCount: 'Pakete: {count}',
   allowNether: 'Nether erlauben',
   allowNetherDescription: 'Zugang zur Nether-Dimension aktivieren oder deaktivieren',
   spawnProtection: 'Spawn-Schutz',

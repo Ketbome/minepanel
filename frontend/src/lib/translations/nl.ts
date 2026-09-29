@@ -678,7 +678,7 @@ export const nl: Record<TranslationKey, string> = {
   vtDetailsUnavailable: 'Details nu niet beschikbaar.',
   vtVersionMismatch: 'Gemaakt voor Minecraft {code}, maar deze server draait {server}. De packs laden wel, maar sommige werken mogelijk niet goed.',
   vtInstallNote: 'De server downloadt ze bij het starten van vanillatweaks.net en installeert ze in de wereld.',
-  vtPackCount: '{count} packs',
+  vtPackCount: 'Packs: {count}',
   allowNether: 'Nether toestaan',
   allowNetherDescription: 'Schakel toegang tot de Nether dimensie in of uit',
   spawnProtection: 'Spawnbescherming',

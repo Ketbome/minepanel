@@ -659,7 +659,7 @@ export const pl: Record<TranslationKey, string> = {
   vtDetailsUnavailable: 'Szczegóły są teraz niedostępne.',
   vtVersionMismatch: 'Przygotowane dla Minecraft {code}, a ten serwer działa na {server}. Paczki się wczytają, ale niektóre mogą nie działać poprawnie.',
   vtInstallNote: 'Serwer pobiera je z vanillatweaks.net i instaluje w świecie przy starcie.',
-  vtPackCount: '{count} paczek',
+  vtPackCount: 'Paczki: {count}',
   allowNether: 'Zachowaj Nether',
   allowNetherDescription: 'Włącz lub wyłącz dostęp do wymiaru Nether',
   spawnProtection: 'Ochrona spawnu',

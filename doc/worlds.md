@@ -135,8 +135,12 @@ it was made for another Minecraft version (the packs still load, but may not wor
 - The codes are passed as `VANILLATWEAKS_SHARECODE`. When the server starts it downloads the
   packs from vanillatweaks.net and installs them into the world's `datapacks` folder, replacing
   older versions of the same packs.
-- The panel checks a new code with Vanilla Tweaks before saving it: an unknown code would stop
-  the server from starting. If Vanilla Tweaks can't be reached, the code is saved unchecked.
+- The panel checks a new code with Vanilla Tweaks before adding it: an unknown code would stop
+  the server from starting. While Vanilla Tweaks can't be reached it asks you to try again
+  instead of adding a code it could not check. A save through the API goes through unchecked in
+  that case, so an outage never blocks editing the rest of the config.
+- Codes picked here win over a `VANILLATWEAKS_SHARECODE` typed in the custom environment
+  variables; with no code picked, the custom value is used as before.
 - Resource pack codes are refused. The server can't send them to players, so they would only
   be downloaded into a folder nothing reads.
 

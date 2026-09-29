@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadR
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
-import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
+import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, ServerEdition, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
@@ -368,14 +368,21 @@ export class ServerManagementController {
   // Vanilla Tweaks does not know is rejected here instead. Resource pack codes are refused
   // too: itzg only downloads them into /data/resourcepacks, which the server never uses.
   // When Vanilla Tweaks is unreachable the save goes through rather than blocking all edits.
-  private async assertUsableVanillaTweaks(codes: string[] | undefined, current: string[]): Promise<void> {
-    for (const code of (codes ?? []).filter((code) => !current.includes(code))) {
-      const share = await this.vanillaTweaks.lookup(code).catch(() => undefined);
+  private async assertUsableVanillaTweaks(codes: string[] | undefined, current: string[], edition: ServerEdition | undefined): Promise<void> {
+    // Bedrock never sends them to itzg, so there is nothing to check.
+    if ((edition ?? 'JAVA') !== 'JAVA') return;
+
+    // Asked together: one after another, ten codes and an unreachable host add up to ten timeouts.
+    // The answers are read in the order given so the first bad code is the one reported.
+    const fresh = (codes ?? []).filter((code) => !current.includes(code));
+    const shares = await Promise.all(fresh.map((code) => this.vanillaTweaks.lookup(code).catch(() => undefined)));
+    fresh.forEach((code, index) => {
+      const share = shares[index];
       if (share === null) throw new BadRequestException(`Vanilla Tweaks share code ${code} was not found`);
       if (share?.type === 'resourcepacks') {
         throw new BadRequestException(`Vanilla Tweaks share code ${code} is a resource pack; the server cannot send it to players, only datapack and crafting tweak codes work`);
       }
-    }
+    });
   }
 
   private assertSafeEnvVars(envVars: string | undefined): void {
@@ -497,7 +504,7 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
-      await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, []);
+      await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, [], data.edition);
       this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
@@ -693,7 +700,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
-    await this.assertUsableVanillaTweaks(config.vanillaTweaksCodes, currentConfig.vanillaTweaksCodes ?? []);
+    await this.assertUsableVanillaTweaks(config.vanillaTweaksCodes, currentConfig.vanillaTweaksCodes ?? [], config.edition ?? currentConfig.edition);
     this.assertValidComposeSnippets(config.composeSnippets);
     // The form sends '' for a hostname that was never set, which is not a change.
     const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();

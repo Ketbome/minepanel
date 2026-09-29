@@ -16,6 +16,8 @@ const SHARE_CODE_URL = 'https://vanillatweaks.net/assets/server/sharecode.php';
 const TYPES: VanillaTweaksType[] = ['datapacks', 'craftingtweaks', 'resourcepacks'];
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const CACHE_MAX = 200;
+// A share code answer is well under 1 KB; this only keeps a misbehaving upstream from costing memory.
+const MAX_BODY_BYTES = 1_000_000;
 
 /** Looks up what a Vanilla Tweaks share code installs, the same way itzg's mc-image-helper does. */
 @Injectable()
@@ -29,26 +31,39 @@ export class VanillaTweaksService {
     const cached = this.cache.get(code);
     if (cached && cached.expires > Date.now()) return cached.value;
 
-    let data: unknown;
+    let value: VanillaTweaksShare | null;
     try {
-      const response = await axios.get(SHARE_CODE_URL, { params: { code }, timeout: 8000, validateStatus: (status) => status < 500 });
-      data = response.status === 404 ? null : response.data;
+      // Only a 200 or a 404 is an answer about the code. A 403 or 429 (Cloudflare) says nothing about
+      // it, and a challenge page is not JSON either: those must not be remembered as "not found".
+      const response = await axios.get(SHARE_CODE_URL, {
+        params: { code },
+        timeout: 8000,
+        maxRedirects: 0,
+        maxContentLength: MAX_BODY_BYTES,
+        validateStatus: (status) => status === 200 || status === 404,
+      });
+      const body = toObject(response.data);
+      if (response.status === 200 && !body) throw new Error('the answer is not JSON');
+      value = response.status === 404 ? null : parseShare(code, body);
     } catch (error) {
       this.logger.warn(`Vanilla Tweaks lookup failed for ${code}: ${(error as Error).message}`);
       throw new ServiceUnavailableException('Vanilla Tweaks could not be reached');
     }
 
-    const value = parseShare(code, data);
     if (this.cache.size >= CACHE_MAX) this.cache.delete(this.cache.keys().next().value as string);
     this.cache.set(code, { value, expires: Date.now() + CACHE_TTL_MS });
     return value;
   }
 }
 
-function parseShare(code: string, data: unknown): VanillaTweaksShare | null {
+function toObject(data: unknown): Record<string, unknown> | null {
   const body = typeof data === 'string' ? safeJson(data) : data;
-  if (!body || typeof body !== 'object') return null;
-  const { result, type, version, packs } = body as Record<string, unknown>;
+  return body && typeof body === 'object' ? (body as Record<string, unknown>) : null;
+}
+
+function parseShare(code: string, body: Record<string, unknown> | null): VanillaTweaksShare | null {
+  if (!body) return null;
+  const { result, type, version, packs } = body;
   if (result !== 'ok' || !TYPES.includes(type as VanillaTweaksType) || typeof version !== 'string' || !packs || typeof packs !== 'object') return null;
   const categories = Object.fromEntries(
     Object.entries(packs as Record<string, unknown>).map(([category, names]) => [category, Array.isArray(names) ? names.filter((name): name is string => typeof name === 'string') : []]),

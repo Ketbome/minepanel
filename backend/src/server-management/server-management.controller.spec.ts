@@ -776,6 +776,13 @@ describe('ServerManagementController', () => {
         await expect(controller.createServer(req, { id: 'ok', vanillaTweaksCodes: ['Gone99'] } as any)).rejects.toThrow(/Gone99 was not found/);
       });
 
+      // The Bedrock strategy never sends the codes to itzg, so a lookup would only cost a request.
+      it('does not look up Vanilla Tweaks codes for a Bedrock server', async () => {
+        dockerComposeService.createServer.mockResolvedValue({ id: 'ok' } as any);
+        await controller.createServer(req, { id: 'ok', edition: 'BEDROCK', vanillaTweaksCodes: ['Gone99'] } as any);
+        expect(vanillaTweaks.lookup).not.toHaveBeenCalled();
+      });
+
       it('accepts same-port game mappings from templates', async () => {
         dockerComposeService.createServer.mockResolvedValue({ id: 'ok' } as any);
         expect((await controller.createServer(req, { id: 'ok', extraPorts: ['19132:19132/udp', '24454:24454'], execDirectly: true } as any)).success).toBe(true);
@@ -924,6 +931,33 @@ describe('ServerManagementController', () => {
         await controller.updateServer(req, 'a', { vanillaTweaksCodes: ['Known1', 'Other2'] } as any);
         expect(vanillaTweaks.lookup.mock.calls.map(([code]) => code)).toEqual(['Gone99', 'RPack1', 'NewOne', 'Other2']);
         expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(2);
+      });
+
+      it('asks about the new Vanilla Tweaks codes together and reports the first bad one in order', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, vanillaTweaksCodes: [] } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+        const answers = new Map<string, (share: unknown) => void>();
+        vanillaTweaks.lookup.mockImplementation((code: string) => new Promise((resolve) => answers.set(code, resolve)));
+
+        const save = controller.updateServer(req, 'a', { vanillaTweaksCodes: ['First1', 'Second2', 'Third3'] } as any);
+        const rejected = expect(save).rejects.toThrow(/First1 was not found/);
+        // All three are in flight before any answers: ten codes and a dead host would otherwise add up to ten timeouts.
+        for (let i = 0; i < 200 && answers.size < 3; i++) await new Promise((resolve) => setTimeout(resolve, 5));
+        expect([...answers.keys()]).toEqual(['First1', 'Second2', 'Third3']);
+
+        // The later code answers first; the one reported is still the first in the list.
+        answers.get('Third3')?.({ type: 'datapacks' });
+        answers.get('Second2')?.(null);
+        answers.get('First1')?.(null);
+        await rejected;
+        vanillaTweaks.lookup.mockReset();
+      });
+
+      it('does not look up Vanilla Tweaks codes for a Bedrock server on update', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, edition: 'BEDROCK' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+        await controller.updateServer(req, 'a', { vanillaTweaksCodes: ['Gone99'] } as any);
+        expect(vanillaTweaks.lookup).not.toHaveBeenCalled();
       });
 
       it('gates version changes behind changeServerVersion', async () => {
