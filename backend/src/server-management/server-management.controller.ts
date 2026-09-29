@@ -4,6 +4,7 @@ import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets'
 import { ServerManagementService } from './server-management.service';
 import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
+import { UpdateSpawnPointDto } from './dto/spawn-point.dto';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -696,6 +697,9 @@ export class ServerManagementController {
       modWatchTargetVersion: _modWatchTargetVersion,
       activityTracking: _activityTracking,
       cfApiKey: _cfApiKey,
+      spawnX: _spawnX,
+      spawnY: _spawnY,
+      spawnZ: _spawnZ,
       ...configWithoutModWatch
     } = config;
 
@@ -730,6 +734,23 @@ export class ServerManagementController {
 
     const changed = [body.notes !== undefined ? 'notes' : null, body.targetVersion !== undefined ? 'target version' : null].filter(Boolean).join(' and ');
     await this.recordServerAudit(currentUser, 'update_mod_watch', id, `Updated Mod Watch ${changed || 'annotations'} for ${id}`);
+
+    return withoutSecrets(updatedConfig);
+  }
+
+  // Separate from PUT :id, like mod-watch: the Players/Commands tabs stay open while the
+  // server runs, so this write must not regenerate the compose file.
+  @Put(':id/spawn-point')
+  async updateSpawnPoint(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: UpdateSpawnPointDto,
+  ) {
+    const currentUser = await this.requireServerAccess(req, id);
+
+    const updatedConfig = await this.managementService.updateSpawnPoint(id, body);
+
+    await this.recordServerAudit(currentUser, 'update_spawn_point', id, `Updated default spawn point for ${id}`);
 
     return withoutSecrets(updatedConfig);
   }

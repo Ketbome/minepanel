@@ -10,13 +10,14 @@ import { getPlayerProfile, getPlayers, ItemMatch, PlayerProfile, PlayerSummary, 
 import { PlayerAvatar } from "../players/PlayerAvatar";
 import { PlayerActions } from "../players/PlayerActions";
 import { PlayerProfilePanel } from "../players/PlayerProfilePanel";
-import { formatPlayTime, humanizeId } from "../players/player-format";
+import { formatPlayTime, humanizeId, SpawnPoint } from "../players/player-format";
 
 interface PlayersTabProps {
   serverId: string;
   serverStatus: string;
   rconPort: string;
   rconPassword: string;
+  spawnPoint: SpawnPoint;
 }
 
 type Filter = "all" | "online" | "whitelisted" | "op" | "banned";
@@ -31,7 +32,7 @@ interface PlayerRow {
 
 const COMMAND_SETTLE_MS = 500;
 
-export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPort, rconPassword }) => {
+export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPort, rconPassword, spawnPoint }) => {
   const { t } = useLanguage();
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [onlineNames, setOnlineNames] = useState<string[]>([]);
@@ -253,7 +254,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                       </span>
                     </span>
                   </button>
-                  {!row.summary && <PlayerActions name={row.name} online whitelisted={false} op={false} banned={false} disabled={!isRunning} onRun={runCommand} />}
+                  {!row.summary && <PlayerActions name={row.name} online whitelisted={false} op={false} banned={false} disabled={!isRunning} onRun={runCommand} spawnPoint={spawnPoint} />}
                 </li>
               ))}
             </ul>
@@ -275,6 +276,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                     banned={profile.banned}
                     disabled={!isRunning || !profile.name}
                     onRun={runCommand}
+                    spawnPoint={spawnPoint}
                   />
                 )
               }
