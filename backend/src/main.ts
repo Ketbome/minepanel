@@ -2,6 +2,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { normalizeBasePath } from './config';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
@@ -25,7 +26,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  const basePath = (process.env.BASE_PATH || '').split('#')[0].trim();
+  const basePath = normalizeBasePath(process.env.BASE_PATH);
   if (basePath) {
     app.setGlobalPrefix(basePath);
   }
