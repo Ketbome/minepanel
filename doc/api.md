@@ -45,6 +45,12 @@ These routes do not require an authenticated session:
 | `POST` | `/auth/login` | Start a session |
 | `POST` | `/auth/refresh` | Renew access token using `refresh_token` cookie |
 | `POST` | `/auth/logout` | Clear session cookies and revoke refresh token when present |
+| `GET` | `/auth/setup-status` | Whether first-run setup is pending, whether password recovery is available, and the SSO login options |
+| `POST` | `/auth/setup-admin` | Create the first admin account; `409` once any user exists |
+| `POST` | `/auth/forgot-password` | Email a password reset link (rate limited) |
+| `POST` | `/auth/reset-password` | Set a new password with a reset token (rate limited) |
+| `GET` | `/auth/invitations/:token` | Read an invitation before accepting it |
+| `POST` | `/auth/invitations/accept` | Create an account from an invitation (rate limited) |
 | `GET` | `/auth/oidc/login` | Begin SSO login, redirects to the OIDC provider (when SSO is configured) |
 | `GET` | `/auth/oidc/callback` | OIDC provider callback; sets session cookies and redirects to the dashboard |
 | `POST` | `/servers/autoscale` | mc-router auto-scaling webhook; disabled unless auto-scaling is enabled in Settings |
@@ -103,6 +109,36 @@ curl -i -b cookies.txt -X POST https://panel.example.com/api/auth/logout
 - `POST /auth/refresh`
 - `POST /auth/logout`
 
+First-run setup and password recovery (public):
+
+- `GET /auth/setup-status` — `{ requiresSetup, passwordRecoveryEnabled, sso: { enabled,
+  providerName, passwordLoginDisabled, loginUrl } }`. `requiresSetup` is `true` until the first
+  user exists
+- `POST /auth/setup-admin` — body `{ username, email, password }`. Creates the first admin and
+  signs it in (session cookies, like login). Answers `409` once setup is complete
+- `POST /auth/forgot-password` — body `{ email }`. Always answers the same message whether or
+  not the address belongs to an account; `503` when SMTP is not configured. The link expires
+  after `PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES` (default 60)
+- `POST /auth/reset-password` — body `{ token, password }`. Single use; signs the user out of
+  every existing session
+
+`setup-admin` and `invitations/accept` create password accounts, so both are refused while SSO
+has password login turned off.
+
+Invitations (the **manage users** permission):
+
+- `GET /auth/invitations` — open invitations with their role, access and `expiresAt`
+- `POST /auth/invitations` — body `{ email?, permissions?, serverAccess? }`. Invited accounts
+  are always `USER`. Admin-only permissions are ignored unless an admin sends them. Returns the `inviteUrl`
+  and `emailSent` (the invitation is emailed when an address is given and SMTP is configured).
+  Invitations expire after 7 days
+- `GET /auth/invitations/:id/link` — `{ inviteUrl }` of an open invitation again (audited);
+  `403` for a non-admin when the invitation carries admin-only permissions
+- `GET /auth/invitations/:token` (public) — role, access, email and expiry of a valid
+  invitation; `400` when it is used or expired
+- `POST /auth/invitations/accept` (public) — body `{ token, username, password, email? }`.
+  Creates the account and signs it in. `email` is only used when the invitation has none
+
 ### Servers
 
 Main control plane for server creation, configuration, lifecycle, logs, commands, worlds, and related runtime actions.
@@ -118,10 +154,42 @@ Typical examples:
 - `POST /servers/:id/stop/force` — skips the shutdown announcement (see below)
 - `POST /servers/:id/restart`
 - `GET /servers/:id/logs`
+- `GET /servers/:id/logs/stream?lines=&since=` — `{ logs, hasErrors, lastUpdate, status,
+  lastTimestamp, metadata }`; `lines` defaults to 500 (max 5000)
+- `GET /servers/:id/logs/since/:timestamp` — only the lines after `timestamp`
+
+Log endpoints need the **view logs** permission. `since`/`timestamp` accept an ISO 8601
+timestamp, a Unix timestamp, or a duration such as `10m` or `1h30m`; anything else is `400`.
+
+- `GET /servers/:id/gamerules` — `{ supported, complete, rules: [{ name, value }] }`, read over
+  RCON; needs the **console** permission. Bedrock answers `supported: false`. `complete: false`
+  means the list is the vanilla one and modded rules may be missing (1.21.11+ no longer lists
+  rules in `help gamerule`)
+- `GET /servers/:id/backups/snapshots` — restic snapshots of the server's backups; `400` unless
+  the backup method is `restic`. Failures come back as `{ success: false, error }`
+- `GET /servers/:id/players/whitelist`, `GET /servers/:id/players/ops`,
+  `GET /servers/:id/players/banned` — the lists from the server's JSON files
+- `POST /servers/:id/players/online` — body `{ rconPort, rconPassword? }`. `{ online, max,
+  players, supportsRcon }` from the `list` command; Bedrock reads the answer from the log
 - `GET /servers/:id/runtime-stats` — live status, CPU, memory, player totals, uptime and
   game version for one server
 - `GET /servers/all-runtime-stats` — the same data keyed by server ID, filtered to the servers
   visible to the current user
+- `GET /servers/:id/status` — `{ status }`: `running`, `stopped`, `starting` or `not_found`
+- `GET /servers/all-status` — the same keyed by server ID, filtered to visible servers
+- `GET /servers/:id/resources` — Docker CPU, memory, memory limit and disk usage as display
+  strings plus `status`; every value is `N/A` while the server is not running
+- `GET /servers/all-resources` — the same keyed by server ID, filtered to visible servers
+- `GET /servers/:id/info` — container details plus the server's config, with secrets removed
+- `DELETE /servers/:id` — stops the server and removes its whole directory (`server.json`,
+  compose file and world data). Its player history and scheduled tasks are deleted and the ID
+  is removed from every user's and invitation's server access, so a new server reusing the ID
+  starts clean. Cannot be undone
+- `POST /servers/:id/clear-data` — stops the server and empties `mc-data` (worlds, configs,
+  mods); `server.json` is kept, so the next start rebuilds the server from its config
+- `POST /servers/regenerate-all` — admin only. Rewrites every `docker-compose.yml` from its
+  `server.json` and rebuilds the proxy routes; running containers keep their old settings until
+  they are recreated
 
 Game values (`playersOnline`, `playersMax`, `version`) are nullable. A container answers Docker
 resource checks before Minecraft is ready to answer its Java or Bedrock status query; in that
@@ -199,6 +267,13 @@ Examples:
 - `POST /files/:serverId/upload-multiple`
 - `PUT /files/:serverId/rename`
 - `DELETE /files/:serverId/delete?path=`
+- `POST /files/:serverId/mkdir` — body `{ path }`
+- `GET /files/:serverId/info?path=` — `{ name, path, isDirectory, size, modified, extension }`
+- `GET /files/:serverId/download-zip?path=` — a folder as a streamed `<folder>.zip`; `400`
+  when `path` is a file
+
+In the `_root` file manager, admin-only files stay hidden from other users in listings and zip
+downloads.
 
 Important path semantics:
 
@@ -235,6 +310,57 @@ Examples:
 - `PATCH /users/:id/role` (admin only, `{ "role": "ADMIN" | "USER" }`)
 - `DELETE /users/:id`
 - `POST /users/change-password`
+- `PUT /users/username/:username` — same body and rules as `PATCH /users/:id`, addressed by
+  username
+- `PATCH /users/:id/access` — body `{ isActive?, permissions?, serverAccess? }` (manage users).
+  Admin access cannot be changed, and admin-only permissions keep their stored value unless an
+  admin sends them
+- `PATCH /users/profile` — body `{ email }`, the caller's own address. With SMTP configured it
+  answers `{ requiresConfirmation: true, pendingEmail }` and emails a six-digit code valid for
+  15 minutes. Without SMTP only an admin can change their address (applied directly); other
+  users get `400`
+- `POST /users/profile/confirm-email` — body `{ code }`; applies the pending address
+  (rate limited)
+
+### Scheduled tasks
+
+Per-server restarts, console commands and rotating announcements. Requires access to the server.
+
+- `GET /scheduled-tasks/:serverId`
+- `POST /scheduled-tasks/:serverId` — body `{ name, type, command?, scheduleKind?,
+  intervalMinutes?, cronExpression?, enabled? }`
+- `PUT /scheduled-tasks/:serverId/:taskId` — same fields, all optional
+- `DELETE /scheduled-tasks/:serverId/:taskId`
+- `POST /scheduled-tasks/:serverId/:taskId/run` — runs it now and returns the task with its
+  `lastResult`
+
+`type` is `restart`, `command` or `announce`:
+
+- `command` runs `command` (up to 1024 characters) over RCON and needs the **console**
+  permission, for creating, editing and running it
+- `announce` takes one message per line in `command` (up to 20 lines of 256 characters). Each run
+  sends the next line with `tellraw`, so there is no `[Server]` prefix; `&` colour codes are
+  converted. Java only: on Bedrock the run is skipped with that reason in `lastResult`
+- `restart` ignores `command`
+
+`scheduleKind` is `interval` (default; `intervalMinutes` 1–43200) or `cron` (`cronExpression`,
+validated on save).
+
+### Alerts
+
+Discord alerts per server. Requires access to the server; the Discord webhook and the alert
+language come from `PATCH /settings`.
+
+- `GET /alerts/:serverId`
+- `PUT /alerts/:serverId` — body `{ downAlertEnabled?, resourceAlertEnabled?,
+  cpuThresholdPercent?, memoryThresholdPercent?, sustainedMinutes?, cooldownMinutes? }`.
+  Thresholds are 1–100 %, `sustainedMinutes` 1–1440 and `cooldownMinutes` 1–10080
+
+### Audit log
+
+- `GET /audit?userId=&action=&outcome=&serverId=&dateFrom=&dateTo=&limit=` — newest first,
+  `limit` defaults to 200 (max 500); `outcome` is `success` or `error` and the dates are ISO
+  8601. Needs the **manage users** permission
 
 ### Achievements
 
@@ -320,6 +446,16 @@ Host monitoring endpoints:
   only). Answers `400` when the panel was not started by Docker Compose
 
 ### Mod Providers
+
+CurseForge modpacks:
+
+- `GET /curseforge/popular?limit=10` — modpacks sorted by popularity
+- `GET /curseforge/modpacks/:ref` — one modpack by numeric ID or slug; `404` when no modpack
+  has that slug
+- `GET /curseforge/modpacks/:ref/files` — `{ data }`, up to 50 of the modpack's files
+- `GET /curseforge/:id` — one modpack by numeric ID
+
+Mods, datapacks and shared lookups:
 
 - `GET /curseforge/search`
 - `GET /curseforge/featured`
