@@ -19,8 +19,10 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((mod) => 
 interface FileEditorProps {
   path: string;
   content: string;
-  onSave: (content: string) => void;
+  onSave: (content: string) => Promise<void>;
   onClose: () => void;
+  onContentChange?: (content: string) => void;
+  baselineContent?: string;
 }
 
 const getLanguageFromPath = (path: string): string => {
@@ -49,24 +51,31 @@ const getLanguageFromPath = (path: string): string => {
   return langMap[ext || ""] || "plaintext";
 };
 
-export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose }) => {
+export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose, onContentChange, baselineContent }) => {
   const { t } = useLanguage();
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
-  const hasChanges = editedContent !== content;
+  const hasChanges = editedContent !== (baselineContent ?? content);
 
   const fileName = path.split("/").pop() || path;
   const language = getLanguageFromPath(path);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
-    await onSave(editedContent);
-    setIsSaving(false);
+    try {
+      await onSave(editedContent);
+    } catch {
+      // The caller shows the save error and keeps the editor open.
+    } finally {
+      setIsSaving(false);
+    }
   }, [editedContent, onSave]);
 
   const handleEditorChange = useCallback((value: string | undefined) => {
-    setEditedContent(value || "");
-  }, []);
+    const next = value || "";
+    setEditedContent(next);
+    onContentChange?.(next);
+  }, [onContentChange]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
