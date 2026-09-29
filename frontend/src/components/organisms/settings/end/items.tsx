@@ -15,6 +15,7 @@ export type ItemId =
   | 'arrow'
   | 'apple'
   | 'sword'
+  | 'ironSword'
   | 'eye'
   | 'egg'
   | 'emerald'
@@ -88,6 +89,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   arrow: { name: 'itemArrow', max: 64, icon: ArrowIcon },
   apple: { name: 'itemApple', max: 64, image: '/images/golden-apple.webp', food: 8 },
   sword: { name: 'itemSword', max: 1, image: '/images/diamond-sword.webp' },
+  ironSword: { name: 'itemIronSword', max: 1, pixels: SPRITES.ironSword },
   eye: { name: 'itemEye', max: 64, icon: EyeOfEnderIcon },
   egg: { name: 'itemEgg', max: 64, icon: DragonEggIcon },
   emerald: { name: 'itemEmerald', max: 64, image: '/images/emerald.webp' },

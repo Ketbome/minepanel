@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { cue } from '../end-audio';
 import { spawnEffect } from '../engine/Effects';
 import { runtime, useTarget, type Target } from '../engine/runtime';
+import { glow } from '../engine/shading';
 import { ISLAND_RADIUS, PILLAR_TOP_Y, PILLARS, randomIslandSpot, surfaceY } from '../acts/end-world';
 import { overworldKit } from '../overworld-voxels';
 import { createPortalMaterial, tickPortal } from '../shaders';
@@ -153,7 +154,7 @@ const ENDERMAN_EYES: SkinArt = {
 let eyesMaterial: THREE.MeshBasicMaterial | null = null;
 
 function endermanEyes() {
-  eyesMaterial ??= new THREE.MeshBasicMaterial({ map: skinOf(ENDERMAN_EYES).texture, alphaTest: 0.5 });
+  eyesMaterial ??= glow(new THREE.MeshBasicMaterial({ map: skinOf(ENDERMAN_EYES).texture, alphaTest: 0.5 }), 2.5);
   return eyesMaterial;
 }
 

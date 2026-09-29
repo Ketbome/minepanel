@@ -12,7 +12,7 @@ import { LeaderboardPanel } from './LeaderboardPanel';
 import { MapPanel } from './MapPanel';
 import { InventoryGrid, InvSlot, ItemSlot, PanelWindow } from './PanelWindow';
 
-const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest', city1: 'chest', city2: 'chest', city3: 'chest', city4: 'chest', igloo: 'chest', wreck: 'chest', buried: 'chest' };
+const CHEST_TITLES: Record<ChestId, LoreKey> = { camp: 'chest', backups: 'chestBackups', ruined: 'chest', city1: 'chest', city2: 'chest', city3: 'chest', city4: 'chest', igloo: 'chest', wreck: 'chest', buried: 'chest', sift: 'chest' };
 
 const BOOKS: Record<BookId, { readonly title: LoreKey; readonly by?: LoreKey; readonly pages: readonly LoreKey[] }> = {
   note: { title: 'itemNote', pages: ['note'] },

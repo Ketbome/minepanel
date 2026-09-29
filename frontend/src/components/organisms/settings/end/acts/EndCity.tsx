@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue, prefetch, startAmbience, stopAmbience } from '../end-audio';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
+import { Sun } from '../engine/Sun';
 import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { Admin, type AdminAct, type AdminId } from '../mobs/admins';
@@ -291,8 +292,8 @@ export function EndCity() {
     <>
       <color attach="background" args={['#130e1b']} />
       <fog attach="fog" args={['#130e1b', 50, 190]} />
-      <ambientLight intensity={1.8} color="#ddd3ea" />
-      <directionalLight position={[20, 50, 12]} intensity={1.3} color="#fff4e0" />
+      <ambientLight intensity={1.2} color="#ddd3ea" />
+      <Sun position={[20, 50, 12]} intensity={2.2} color="#fff4e0" />
       <pointLight position={[0, ISLET.y + 3, ISLET.z]} color="#9dff3f" intensity={5} distance={9} decay={1.6} />
       <EndSky fx={fx} />
       <WorldMesh world={world} />

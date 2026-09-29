@@ -267,8 +267,27 @@ Tooling / build (Next.js 16):
     and totem sounds when `blockedAt`/`savedAt` change. `lockPointer()` also takes the screen full
     screen and locks `KeyW`, so every caller must be a click. `runtime.hooks.vibration` is how steps, landings, blocks, chests
     and arrows reach the ancient city's noise and the Warden.
-  - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
-    `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
+  - Graphics (the shader-pack look): `engine/quality.ts` has three tiers the drei
+    `PerformanceMonitor` in `engine/Graphics.tsx` steps between (high: 2048 shadows plus the
+    `@react-three/postprocessing` composer with N8AO, bloom, grading and SMAA; medium: 1024
+    shadows; low: none, DPR 1). Never turn on `multisampling` in the composer: it cost more than the AO.
+    Zones with a sun use `engine/Sun.tsx` instead of a bare `directionalLight` (its position is a
+    direction; it follows the player for shadows). Bloom only catches values past 1: register a
+    glowing singleton material with `glow(material, boost)` (`engine/shading.ts`), which only
+    brightens it while bloom runs; `sway()` makes foliage move in the wind. A hand-written
+    `ShaderMaterial` must end with `outputColor()` (`OUTPUT_GLSL`) or it looks washed out inside the
+    composer. Water is not a cube per block: `WorldMesh` builds one mesh of its visible faces per
+    chunk (`engine/water.ts`), and the zone feeds its sky to `waterSky`/`setWaterSky`. With the
+    composer on, the hand's `Hud` renders at priority 2 so the scene is not drawn twice.
+  - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Sift`, `Nether`, `Stronghold`, `End`,
+    `EndCity`), plus shared props. The Sift is an optional side trip, never a split: `SiftGate.tsx`
+    puts four note blocks at the ancient city's frame; the sign's tune plays the Sift's song
+    (`playSong` in `end-audio.ts`, an original composition, never a Minecraft track), freezes the
+    noise meter while it plays, and sets `siftOpen`, after which the frame leads to `acts/Sift.tsx`.
+    The spirit is `acts/SiftSpirit.tsx`, timed off the note and kick times `playSong` returns. The
+    Sift's regions, heights and spots live in `acts/sift-layout.ts` (pure, shared by the builder and
+    the scene); Blubs, Sifters and turtles in `mobs/sift.tsx`; ichor hurts like lava. The diamond
+    sword has no recipe: it is The Sift's reward, and the camp's iron makes the run's sword. `mobs/`: models built from pixel-sized boxes with their AI;
     walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
     step-up, climbing out when buried, never into lava) on the same physics as the player. Mobs a
     run depends on for supplies (endermen for pearls, piglins for barters) come back through
@@ -333,7 +352,7 @@ Tooling / build (Next.js 16):
     (`hud/Screamer.tsx`), a few seconds with its hands over its face, and then the chase.
   - Sounds: CC0 clips in `public/sounds` (credited in `CREDITS.md`), each cue with a synth fallback
     in `end-audio.ts`. Block textures are painted at runtime (`voxels.tsx` End,
-    `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`).
+    `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`, `sift-voxels.tsx`).
   - The overlay is exempt from the no-perpetual-motion rule; it is not an operating screen. Reduced
     motion still plays, with a steady camera (`runtime.reducedMotion`: no bobbing, no FOV kicks, no
     hand sway) and the poem without scrolling; only a browser without WebGL2 falls back to the

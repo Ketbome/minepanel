@@ -1,11 +1,13 @@
 'use client';
 
-import { memo, useMemo, useRef, useSyncExternalStore } from 'react';
+import { memo, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { crossGeometry, overworldKit } from '../overworld-voxels';
 import { netherKit } from '../nether-voxels';
+import { siftKit } from '../sift-voxels';
 import { type Block, kit, VoxelMesh } from '../voxels';
+import { waterGeometry, waterMaterial } from './water';
 import { type BlockId, CHUNK, chunkCenter, chunkKey, type World } from './world';
 
 type Material = THREE.Material | THREE.Material[];
@@ -14,6 +16,7 @@ export function materialFor(id: BlockId): Material | null {
   const end = kit().mat;
   const over = overworldKit().mat;
   const nether = netherKit().mat;
+  const sift = siftKit().mat;
   const table: Partial<Record<BlockId, Material>> = {
     grass: over.grass,
     dirt: over.dirt,
@@ -25,7 +28,6 @@ export function materialFor(id: BlockId): Material | null {
     planks: over.planks,
     glass: over.glass,
     hay: over.hay,
-    water: over.water,
     obsidian: end.obsidian,
     crying: over.crying,
     goldBlock: over.goldBlock,
@@ -60,6 +62,14 @@ export function materialFor(id: BlockId): Material | null {
     spruceLeaves: over.spruceLeaves,
     cactus: over.cactus,
     tnt: over.tnt,
+    siftGrass: sift.siftGrass,
+    hillGrass: sift.hillGrass,
+    siftSculk: sift.siftSculk,
+    siftSand: sift.siftSand,
+    paleLog: sift.paleLog,
+    paleLeaves: sift.paleLeaves,
+    boneBlock: sift.boneBlock,
+    ichor: sift.ichor,
   };
   return table[id] ?? null;
 }
@@ -108,6 +118,13 @@ const PLANT_KINDS: readonly PlantKind[] = ['grass', 'flower', 'fern', 'deadBush'
 function plantMaterial(kind: PlantKind) {
   const { mat } = overworldKit();
   return kind === 'grass' ? mat.tallGrass : mat[kind];
+}
+
+// a chunk's water is one mesh of the faces that show, not a cube per block
+function WaterMesh({ world, blocks }: { readonly world: World; readonly blocks: readonly Block[] }) {
+  const geometry = useMemo(() => waterGeometry(world, blocks), [world, blocks]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return <mesh geometry={geometry} material={waterMaterial()} />;
 }
 
 // One instanced mesh per block type and chunk. Mining or placing a block rebuilds only its chunk.
@@ -179,6 +196,7 @@ const ChunkMesh = memo(
     return (
       <group ref={group}>
         {[...lists].map(([id, blocks]) => {
+          if (id === 'water') return <WaterMesh key={id} world={world} blocks={blocks} />;
           const draw = drawOf(id);
           return draw ? <VoxelMesh key={id} blocks={blocks} material={draw.material} geometry={draw.geometry} /> : null;
         })}

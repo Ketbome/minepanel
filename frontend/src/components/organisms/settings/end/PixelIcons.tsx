@@ -99,6 +99,30 @@ function bonePixels() {
   return pixels;
 }
 
+// an iron sword: a brown grip and pommel, a dark crossguard, and a pale blade shaded on one edge
+function ironSwordPixels() {
+  const pixels: Pixel[] = [
+    [2, 14, '#3b2a14'],
+    [3, 14, '#4a3218'],
+    [2, 13, '#4a3218'],
+  ];
+  for (let step = 0; step < 3; step += 1) pixels.push([3 + step, 13 - step, step % 2 ? '#6b4a2b' : '#8a6337']);
+  [
+    [4, 8],
+    [5, 9],
+    [7, 11],
+    [8, 12],
+  ].forEach(([x, y]) => pixels.push([x, y, '#4c4c4c']));
+  pixels.push([6, 10, '#6f6f6f']);
+  for (let step = 4; step < 12; step += 1) {
+    const x = 3 + step;
+    const y = 13 - step;
+    pixels.push([x, y, step % 3 === 0 ? '#ffffff' : '#e3e3e3'], [x - 1, y, '#c4c4c4'], [x, y + 1, '#8c8c8c']);
+  }
+  pixels.push([15, 1, '#e3e3e3'], [14, 1, '#c4c4c4']);
+  return pixels;
+}
+
 function arrowPixels() {
   const pixels = diagonal('#a8a8a8', '#8a6337', '#5f4122', 2, 10);
   [
@@ -249,6 +273,23 @@ const SHIELD_ROWS = ['...iiiiiiiiii...', '...ipPpppppPi...', '...ipPpppppPi...',
 const SHIELD_COLORS: Record<string, string> = { i: '#6f6f6f', I: '#cfcfcf', p: '#a07a45', P: '#7a5a30' };
 const SAND = blockPixels((x, y) => ((x * 7 + y * 3) % 8 === 0 ? '#c4b27a' : (x + y * 5) % 11 === 0 ? '#efe4b6' : '#dccf9c'), '#a8955c');
 
+// the Blub from the front: long ears, a boxy pale blue body, wide dark eyes
+const BLUB_ROWS = [
+  '....kk....kk....',
+  '....kbk..kbk....',
+  '....kik..kik....',
+  '....kik..kik....',
+  '...kkbkkkkbkk...',
+  '..kttttttttttk..',
+  '..kbbbbbbbbbbk..',
+  '..kbeebbbbeebk..',
+  '..kbEebbbbEebk..',
+  '..kbbbbmmbbbbk..',
+  '..kswwwwwwwwsk..',
+  '..kkskkkkkkskk..',
+];
+const BLUB_COLORS: Record<string, string> = { k: '#3b6f8f', b: '#9fd3f0', t: '#d8eff9', i: '#c4e6f7', s: '#7fb5d6', w: '#eef7fc', e: '#4a2340', E: '#7a4468', m: '#5a2b4c' };
+
 const EYE = eyePixels();
 const EGG = eggPixels();
 const HEAD = headPixels();
@@ -261,6 +302,8 @@ const OBSIDIAN = obsidianPixels();
 const DIRT = dirtPixels();
 const BLAZE = blazePixels();
 const HELMET = helmetPixels();
+const BLUB = rowPixels(BLUB_ROWS, BLUB_COLORS, 2);
+const IRON_SWORD = ironSwordPixels();
 
 // the same pixels, for the item pressed into a solid sprite in your hand
 export const SPRITES = {
@@ -270,6 +313,7 @@ export const SPRITES = {
   blaze: BLAZE,
   rod: ROD,
   arrow: ARROW,
+  ironSword: IRON_SWORD,
   bone: BONE,
   flint: FLINT,
   obsidian: OBSIDIAN,
@@ -310,6 +354,10 @@ export function EyeOfEnderIcon({ className }: { readonly className?: string }) {
 
 export function DragonEggIcon({ className }: { readonly className?: string }) {
   return <PixelSprite pixels={EGG} className={className} />;
+}
+
+export function BlubIcon({ className }: { readonly className?: string }) {
+  return <PixelSprite pixels={BLUB} className={className} />;
 }
 
 export function DragonHeadIcon({ className }: { readonly className?: string }) {

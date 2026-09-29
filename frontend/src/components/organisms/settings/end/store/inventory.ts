@@ -5,12 +5,14 @@ import type { Area, ChestId, EndGameState, InventorySlice, Slice, Zone } from '.
 const chest = (size: number, items: Record<number, Stack>): Slot[] => Object.assign(emptySlots(size), items);
 
 // the admin left the powder for ten eyes (4 powder + 3 blaze rods) but no pearls: those come from
-// the piglins now, for gold. Diamonds for a sword and a pickaxe.
+// the piglins now, for gold. Iron for a sword and diamonds for a pickaxe; the diamond sword is
+// The Sift's.
 export const initialChests = (): Record<ChestId, Slot[]> => ({
   camp: chest(27, {
     3: { item: 'note', count: 1 },
     5: { item: 'emerald', count: 4 },
-    10: { item: 'diamond', count: 5 },
+    10: { item: 'diamond', count: 3 },
+    12: { item: 'iron', count: 2 },
     // sticks for the sword, the pickaxe and the bow
     11: { item: 'stick', count: 6 },
     13: { item: 'blaze', count: 4 },
@@ -36,12 +38,14 @@ export const initialChests = (): Record<ChestId, Slot[]> => ({
   igloo: chest(27, { 11: { item: 'apple', count: 2 }, 15: { item: 'arrow', count: 16 } }),
   wreck: chest(27, { 4: { item: 'gold', count: 5 }, 13: { item: 'emerald', count: 3 }, 22: { item: 'arrow', count: 8 } }),
   buried: chest(27, { ...Object.fromEntries(Array.from({ length: 8 }, (_, index) => [index, { item: 'dirt', count: 64 }])), 13: { item: 'diamond', count: 1 } }),
+  // under the Carapace's ribs, for the way back to the main route
+  sift: chest(27, { 11: { item: 'pearl', count: 4 }, 13: { item: 'sword', count: 1 }, 15: { item: 'apple', count: 6 } }),
 });
 
 // what skipping into a zone hands you, so every zone can be played on its own
 const KITS: Partial<Record<Zone, readonly Stack[]>> = {
   nether: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -50,7 +54,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'helmet', count: 1 },
   ],
   stronghold: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -58,7 +62,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'pearl', count: 1 },
   ],
   end: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -66,7 +70,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'dirt', count: 64 },
   ],
   endcity: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 16 },
     { item: 'apple', count: 8 },
@@ -114,7 +118,7 @@ function quickMove(state: EndGameState, area: Area, index: number): Partial<EndG
 // what crafting unlocks in the story: the sword's advancement, and ten eyes to throw
 function afterCraft(get: () => EndGameState, output: ItemId) {
   const game = get();
-  if (output === 'sword' && !game.flags.swordCrafted) {
+  if (output === 'ironSword' && !game.flags.swordCrafted) {
     game.setFlag('swordCrafted');
     game.advance('task', 'advStrike', 'sword');
   }

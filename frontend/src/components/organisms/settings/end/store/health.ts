@@ -10,7 +10,7 @@ const INVULNERABLE_MS = 500;
 const PER_POINT = 0.04;
 // what a raised shield stops: blows, arrows, fireballs and blasts, never falls, lava or the
 // Warden (its attacks go through shields in the game too)
-const UNBLOCKABLE = new Set<DeathCause>(['lava', 'void', 'fall', 'bed', 'breath', 'elytra', 'cactus', 'warden', 'rake']);
+const UNBLOCKABLE = new Set<DeathCause>(['lava', 'void', 'fall', 'bed', 'breath', 'elytra', 'cactus', 'warden', 'rake', 'ichor']);
 
 export const initialHealth = { hp: MAX_HP, dead: null, hurtAt: -1e9, levitateUntil: 0, blocking: false, blockedAt: -1e9, savedAt: -1e9 };
 

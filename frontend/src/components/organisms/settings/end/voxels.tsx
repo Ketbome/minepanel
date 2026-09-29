@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { castsShadow, glow } from './engine/shading';
 
 // Procedural 16x16 block textures. Painting them at runtime keeps the easter egg free of
 // Mojang art while still reading as the real blocks: same palette, same pixel grid.
@@ -389,22 +390,22 @@ function buildKit() {
     endBricks: lambert(tex.endBricks),
     purpurPillar: lambert(tex.purpurPillar),
     chorusFlower: lambert(tex.chorusFlower),
-    lava: new THREE.MeshBasicMaterial({ map: tex.lava }),
+    lava: glow(new THREE.MeshBasicMaterial({ map: tex.lava }), 1.6),
     spawner: new THREE.MeshLambertMaterial({ map: tex.spawner, alphaTest: 0.5, side: THREE.DoubleSide }),
     iron: new THREE.MeshLambertMaterial({ color: '#8a8d93' }),
     torch: new THREE.MeshLambertMaterial({ color: '#6b4a2b' }),
-    flame: new THREE.MeshBasicMaterial({ color: '#ffe08a' }),
-    endRod: new THREE.MeshBasicMaterial({ color: '#fff6ee' }),
+    flame: glow(new THREE.MeshBasicMaterial({ color: '#ffe08a' }), 3),
+    endRod: glow(new THREE.MeshBasicMaterial({ color: '#fff6ee' }), 2.4),
     silverfish: new THREE.MeshLambertMaterial({ color: '#7d8286' }),
     // box face order is +x, -x, +y, -y, +z, -z
     glass: new THREE.MeshBasicMaterial({ map: tex.glass, transparent: true, depthWrite: false, side: THREE.DoubleSide }),
-    crystalCore: new THREE.MeshBasicMaterial({ map: tex.crystalCore }),
-    crystalGlow: new THREE.SpriteMaterial({ map: tex.glow, color: '#e879f9', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+    crystalCore: glow(new THREE.MeshBasicMaterial({ map: tex.crystalCore }), 2.2),
+    crystalGlow: glow(new THREE.SpriteMaterial({ map: tex.glow, color: '#e879f9', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }), 1.8),
     egg: new THREE.MeshLambertMaterial({ map: tex.egg, emissive: '#0d0616' }),
     // raycast target that draws nothing: bigger than the model so moving things stay clickable
     hitbox: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
     frame: [frameSideMat, frameSideMat, lambert(tex.frameTop), lambert(tex.endStone), frameSideMat, frameSideMat],
-    eye: [eyeSideMat, eyeSideMat, new THREE.MeshBasicMaterial({ map: tex.eye }), eyeSideMat, eyeSideMat, eyeSideMat],
+    eye: [eyeSideMat, eyeSideMat, glow(new THREE.MeshBasicMaterial({ map: tex.eye }), 1.5), eyeSideMat, eyeSideMat, eyeSideMat],
   };
   return { tex, mat };
 }
@@ -479,7 +480,7 @@ export function VoxelMesh({ blocks, material, geometry = UNIT_BOX }: VoxelMeshPr
     mesh.computeBoundingSphere();
   }, [blocks]);
 
-  return <instancedMesh ref={ref} args={[geometry, material, blocks.length]} />;
+  return <instancedMesh ref={ref} args={[geometry, material, blocks.length]} castShadow={castsShadow(material)} receiveShadow />;
 }
 
 export const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);

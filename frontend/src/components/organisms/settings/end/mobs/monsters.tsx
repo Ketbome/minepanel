@@ -7,6 +7,7 @@ import { cue } from '../end-audio';
 import { isBright } from '../engine/clock';
 import { dropLoot, type Loot } from '../engine/Drops';
 import { castBlocks, solidCell } from '../engine/raycast';
+import { glow } from '../engine/shading';
 import { playerCenter, runtime } from '../engine/runtime';
 import { useEndGame, type DeathCause } from '../store';
 import { PX, useDamage, useMob, useMobTarget, type MobControl, type Wander } from './parts';
@@ -137,7 +138,7 @@ const glows = new Map<SkinArt, THREE.MeshBasicMaterial>();
 export function Glow({ art, name = 'eyes', at }: { readonly art: SkinArt; readonly name?: string; readonly at: readonly [number, number, number] }) {
   let material = glows.get(art);
   if (!material) {
-    material = new THREE.MeshBasicMaterial({ map: skinOf(art).texture, alphaTest: 0.5 });
+    material = glow(new THREE.MeshBasicMaterial({ map: skinOf(art).texture, alphaTest: 0.5 }), 2.5);
     glows.set(art, material);
   }
   return <mesh geometry={skinOf(art).boxes[name]} material={material} position={[at[0] * PX, at[1] * PX, at[2] * PX]} />;

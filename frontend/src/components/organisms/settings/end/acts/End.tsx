@@ -8,6 +8,7 @@ import { cue, prefetch, startAmbience, stopAmbience } from '../end-audio';
 import { spawnEffect } from '../engine/Effects';
 import { spawnProjectile } from '../engine/Projectiles';
 import { playerCenter, runtime } from '../engine/runtime';
+import { Sun } from '../engine/Sun';
 import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
 import { countOf } from '../items';
@@ -360,15 +361,15 @@ export function End() {
       fxLight.current.intensity = fx.light * 900;
     }
     fx.light *= Math.exp(-dt * 5);
-    if (ambient.current) ambient.current.intensity = 1.9 + fx.flash * 1.4;
+    if (ambient.current) ambient.current.intensity = 1.3 + fx.flash * 1.4;
   });
 
   return (
     <>
       <color attach="background" args={['#130e1b']} />
       <fog attach="fog" args={['#130e1b', 60, 220]} />
-      <ambientLight ref={ambient} intensity={1.9} color="#ddd3ea" />
-      <directionalLight position={[20, 50, 12]} intensity={1.5} color="#fff4e0" />
+      <ambientLight ref={ambient} intensity={1.3} color="#ddd3ea" />
+      <Sun position={[20, 50, 12]} intensity={2.3} color="#fff4e0" />
       <pointLight ref={fxLight} color="#ffd9f5" intensity={0} distance={50} decay={1.4} />
 
       <EndSky fx={fx} />

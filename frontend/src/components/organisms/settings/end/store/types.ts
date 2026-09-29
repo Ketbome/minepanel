@@ -3,19 +3,19 @@ import type { BlockId } from '../engine/world';
 import type { ArmorId, ItemId, Slot } from '../items';
 import type { LoreKey } from '../lore/en';
 
-export type Zone = 'overworld' | 'ancient' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem' | 'server48';
+export type Zone = 'overworld' | 'ancient' | 'sift' | 'nether' | 'stronghold' | 'end' | 'endcity' | 'poem' | 'server48';
 export type Veil = 'black' | 'portal' | 'white' | 'none';
 // how this run is played, chosen before it starts: speedrun and hardcore are timed
 export type RunMode = 'normal' | 'speedrun' | 'hardcore' | 'bfuuny';
 // the zones whose first arrival is a split (the backend knows the same list)
 export type SplitZone = 'nether' | 'stronghold' | 'end' | 'endcity';
 export type Stage = 'arrival' | 'crystals' | 'dragon' | 'victory' | 'exit';
-export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus' | 'golem' | 'rabbit' | 'ownTnt';
-export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4' | 'igloo' | 'wreck' | 'buried';
+export type DeathCause = 'lava' | 'void' | 'fall' | 'bed' | 'warden' | 'enderman' | 'blaze' | 'dragon' | 'breath' | 'elytra' | 'shulker' | 'silverfish' | 'ghast' | 'creeper' | 'skeleton' | 'piglin' | 'rake' | 'zombie' | 'zombieVillager' | 'drowned' | 'spider' | 'witch' | 'slime' | 'phantom' | 'zombifiedPiglin' | 'hoglin' | 'magmaCube' | 'witherSkeleton' | 'endermite' | 'tnt' | 'cactus' | 'golem' | 'rabbit' | 'ownTnt' | 'ichor' | 'sifter';
+export type ChestId = 'camp' | 'backups' | 'ruined' | 'city1' | 'city2' | 'city3' | 'city4' | 'igloo' | 'wreck' | 'buried' | 'sift';
 export type BookId = 'note' | 'diary' | 'register' | 'admin2011' | 'guide3' | 'stop';
-export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote';
+export type SignId = 'incidents' | 'restart' | 'backups' | 'border' | 'toast' | 'cave' | 'quiet' | 'casi' | 'bed' | 'diamond' | 'uptime' | 'tomb' | 'bfuunyBed' | 'bfuunyShip' | 'bfuunyExit' | 'blasterSlow' | 'blasterRods' | 'bfuunyGrave' | 'server48' | 'server48Day1' | 'server48Blaster' | 'village' | 'templeBfuuny' | 'ruinDesert' | 'ruinTaiga' | 'ruinSwamp' | 'ruinCoast' | 'wreckNote' | 'siftSong';
 export type AdvancementKind = 'task' | 'goal';
-export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball' | 'dirt' | 'creeper' | 'totem' | 'barrier' | 'ruins' | 'skull';
+export type AdvancementIcon = 'eye' | 'pearl' | 'dragon' | 'egg' | 'sword' | 'rod' | 'elytra' | 'button' | 'fireball' | 'dirt' | 'creeper' | 'totem' | 'barrier' | 'ruins' | 'skull' | 'blub';
 
 // one-shot story beats; a flag never goes back to false within a run
 export type Flag =
@@ -69,7 +69,10 @@ export type Flag =
   | 'wolfTamed'
   | 'wolfLost'
   | 'pelusaBlew'
-  | 'skullFound';
+  | 'skullFound'
+  // The Sift: the ancient city's frame played open, and the first visit
+  | 'siftOpen'
+  | 'siftVisited';
 
 export type Panel =
   | { readonly kind: 'chest'; readonly id: ChestId }
