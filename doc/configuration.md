@@ -227,6 +227,7 @@ unless you deliberately want direct access:
 
 ```yaml
 # docker-compose.override.yml - merged on top of docker-compose.yml automatically
+# `!override` replaces the inherited port list; needs Compose 2.24.4 or later.
 services:
   backend:
     ports: !override
@@ -236,27 +237,11 @@ services:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
 ```
 
-::: danger Use `!override`, not a plain list
-Compose merges `ports` entries by `{ip, target, published, protocol}`. A loopback entry has a
-different `ip` from the original wildcard entry, so Compose keeps **both** and the wildcard
-binding survives:
-
-```yaml
-# a plain list merges additively - the 0.0.0.0 binding is still published
-- published: "8091"
-  target: 8091
-- host_ip: 127.0.0.1
-  published: "8091"
-  target: 8091
-```
-
-`!override` replaces the inherited list instead, leaving only the loopback binding. It needs
-Compose 2.24.4 or later. Always confirm the merged result rather than trusting the snippet:
+Check the merged result rather than trusting the snippet:
 
 ```bash
-docker compose config        # expect host_ip: 127.0.0.1 on both ports, and no entry without it
+docker compose config
 ```
-:::
 
 The reverse proxy runs on the same host and connects over loopback, so it keeps working; the
 containers stay on the `minepanel-network` bridge for everything else. Put the override in

@@ -12,9 +12,8 @@ describe('normalizeBasePath', () => {
     expect(normalizeBasePath('/api')).toBe('/api');
   });
 
-  // Nest registers a prefix without a slash as `/prefix`, so a value that reaches
-  // setGlobalPrefix but not the URL builders puts the panel and the router on
-  // different paths. Callers concatenate onto a port, where `8091` + `api` is one token.
+  // Nest applies a slash-less prefix as `/prefix`, so callers that concatenate onto a port
+  // get `8091` + `api` as one token unless this adds the separator.
   it('adds the missing leading slash', () => {
     expect(normalizeBasePath('panel-api')).toBe('/panel-api');
     expect(normalizeBasePath('api')).toBe('/api');
@@ -25,7 +24,6 @@ describe('normalizeBasePath', () => {
     expect(normalizeBasePath('  panel-api  ')).toBe('/panel-api');
   });
 
-  // `#` starts a comment in the value, the way COMPOSE_PROJECT and the compose files do it.
   it('drops a trailing comment', () => {
     expect(normalizeBasePath('/panel-api # behind caddy')).toBe('/panel-api');
     expect(normalizeBasePath('panel-api# note')).toBe('/panel-api');

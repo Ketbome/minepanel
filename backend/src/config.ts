@@ -188,13 +188,7 @@ const envBaseDir = process.env.BASE_DIR || '/app';
 const serversHostDir = detectHostDir(ownMounts, '/app/servers', path.join(envBaseDir, 'servers'));
 const dataHostDir = detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 'data'));
 
-/**
- * The global prefix, resolved once from `BASE_PATH` for both `setGlobalPrefix` and the URLs
- * the panel builds. `#` starts a comment in the value (the repo documents `BASE_PATH=# ...`
- * style annotations), and the leading slash is added when the operator left it out:
- * `main.ts` registers a prefix without one the same way Nest normalizes it, and callers
- * concatenate this value onto a port, where `8091` + `api` would otherwise be one token.
- */
+/** The global prefix, resolved once for `setGlobalPrefix` and the URLs the panel builds. */
 export function normalizeBasePath(value: string | undefined): string {
   const trimmed = (value || '').split('#')[0].trim().replace(/\/+$/, '');
   if (!trimmed) return '';
@@ -208,10 +202,6 @@ export default () => ({
   jwtAudience: process.env.JWT_AUDIENCE || 'minepanel-users',
   frontendUrl: process.env.FRONTEND_URL,
   composeProject: process.env.COMPOSE_PROJECT,
-  // Mirrors the resolution in main.ts: the same string has to reach setGlobalPrefix and
-  // every URL the panel hands out, or a prefixed deployment generates links with no prefix.
-  // The leading slash is added here so callers can concatenate without inserting one, which
-  // is what `BASE_PATH=api` (no slash) would otherwise produce: `:8091api/servers/...`.
   basePath: normalizeBasePath(process.env.BASE_PATH),
   backendPort: process.env.PORT ?? '8091',
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
