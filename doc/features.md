@@ -177,7 +177,9 @@ while the server is stopped because it reads the world files directly.
 | Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
 
 Minecraft writes player files on autosave and on logout, so data for online players can be a few
-minutes behind. Avatars are loaded by the browser from mc-heads.net using the player name.
+minutes behind. Avatars are loaded by the browser from mc-heads.net by UUID (Mojang and
+Floodgate/Bedrock players), or by name for offline-mode servers and players whose UUID is not
+known yet.
 Both world layouts are read: `players/data`, `players/stats` and `players/advancements` from
 Minecraft 26.1 on, and the top-level `playerdata`, `stats` and `advancements` folders before it.
 
