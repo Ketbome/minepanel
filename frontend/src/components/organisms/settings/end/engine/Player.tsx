@@ -5,10 +5,11 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bfuunyLaughs } from '../acts/props';
 import { cue } from '../end-audio';
-import { countOf, ITEMS, type ItemId } from '../items';
+import { countOf, isArmor, ITEMS, type ItemId } from '../items';
 import { CRACK_STAGES, overworldKit } from '../overworld-voxels';
 import { MAX_HP, useEndGame } from '../store';
 import { tickClock } from './clock';
+import { explode } from './explode';
 import { consumeEdges, held, input, pressLeft, pressRight, releaseAll } from './input';
 import { canStepUp, cellsInBody, GRAVITY, HALF_WIDTH, HEIGHT, JUMP_SPEED, move } from './physics';
 import { aimable, castBlocks, castTargets } from './raycast';
@@ -28,8 +29,12 @@ const CENTER = new THREE.Vector3();
 const SPOT = new THREE.Vector3();
 // holding right click keeps placing, a little slower than the game's four ticks
 const PLACE_REPEAT_S = 0.25;
+// lit TNT hisses this long before it goes, and blasts a little wider than a creeper
+const TNT_FUSE_S = 4;
+const TNT_BLAST = 4;
+let fuses: { readonly cell: readonly [number, number, number]; readonly zone: string; readonly at: number }[] = [];
 
-const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7, pickaxe: 5 };
+const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7, pickaxe: 5, trident: 8 };
 
 // the hand's action for a held item when the crosshair is on nothing usable
 function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vector3) {
@@ -39,8 +44,8 @@ function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vec
   if (item === 'map') game.openPanel({ kind: 'map' });
   else if (item === 'note') game.openPanel({ kind: 'book', id: 'note' });
   else if (item === 'register') game.openPanel({ kind: 'book', id: 'register' });
-  else if (item === 'helmet' && !game.helmet) {
-    game.wearHelmet();
+  else if (isArmor(item) && !game.armor[item]) {
+    game.wear();
     cue('equip');
   }
   else if (item === 'pearl' && game.spend('pearl')) {
@@ -73,7 +78,7 @@ export function Player() {
   const outline = useRef<THREE.LineSegments>(null);
   const crack = useRef<THREE.Mesh>(null);
   const cracks = overworldKit().mat.cracks;
-  const state = useRef({ spawned: -1, zone: '', breathAt: 0, mining: -1, progress: 0, cooldown: 0, charge: 0, eating: 0, stride: 0, regenAt: 0, hp: MAX_HP, fov: 70, placeAt: 0 });
+  const state = useRef({ spawned: -1, zone: '', breathAt: 0, mining: -1, progress: 0, cooldown: 0, charge: 0, eating: 0, stride: 0, regenAt: 0, hp: MAX_HP, fov: 70, placeAt: 0, blockedAt: -1e9, savedAt: -1e9 });
   const scratch = useMemo(() => ({ wish: new THREE.Vector3(), delta: new THREE.Vector3(), forward: new THREE.Vector3(), right: new THREE.Vector3() }), []);
 
   useEffect(() => {
@@ -90,6 +95,8 @@ export function Player() {
       if (event.key === 'Escape') escapeDown = true;
       if (!playing()) return;
       input.keys.add(event.code);
+      // Ctrl is sprint: without this Ctrl+S or Ctrl+D open the browser's save or bookmark dialog mid-run
+      if (event.ctrlKey && /^Key[WASD]$/.test(event.code)) event.preventDefault();
       if (event.code === 'Space') {
         input.jumpPressed = true;
         event.preventDefault();
@@ -220,6 +227,9 @@ export function Player() {
       s.spawned = game.spawnId;
       s.zone = game.zone;
     }
+    const lit = fuses.filter((fuse) => fuse.zone === game.zone && runtime.time - fuse.at >= TNT_FUSE_S);
+    fuses = fuses.filter((fuse) => fuse.zone === game.zone && !lit.includes(fuse));
+    lit.forEach((fuse) => explode(new THREE.Vector3(...fuse.cell), TNT_BLAST, 'ownTnt'));
 
     const active = !game.panel && !game.dead && !game.paused && !game.transition && (input.touch || document.pointerLockElement === gl.domElement);
     const edges = consumeEdges();
@@ -237,9 +247,12 @@ export function Player() {
     const forward = active ? Math.max(-1, Math.min(1, Number(held('KeyW')) - Number(held('KeyS')) - input.stickY)) : 0;
     const strafe = active ? Math.max(-1, Math.min(1, Number(held('KeyD')) - Number(held('KeyA')) + input.stickX)) : 0;
     p.sneaking = active && (held('ShiftLeft') || held('ShiftRight') || input.touchSneak);
+    // a raised shield slows you to a sneak
+    const blocking = active && input.right && game.inventory[game.selected]?.item === 'shield';
+    game.setBlocking(blocking);
     const sprintKey = held('ControlLeft') || held('ControlRight') || input.touchSprint;
-    p.sprinting = active && forward > 0.5 && !p.sneaking && (sprintKey || p.sprinting);
-    const speed = p.sneaking ? SNEAK : p.sprinting ? SPRINT : WALK;
+    p.sprinting = active && forward > 0.5 && !p.sneaking && !blocking && (sprintKey || p.sprinting);
+    const speed = p.sneaking || blocking ? SNEAK : p.sprinting ? SPRINT : WALK;
     const { wish, delta: step, forward: ahead, right } = scratch;
     ahead.set(-Math.sin(p.yaw), 0, -Math.cos(p.yaw));
     right.set(Math.cos(p.yaw), 0, -Math.sin(p.yaw));
@@ -419,7 +432,14 @@ export function Player() {
 
     const placeable = item && ITEMS[item].block;
     if (active && edges.right && target?.use) {
+      // the same click must not also place a block against what it just used (a portal gap's obsidian)
+      s.placeAt = runtime.time + PLACE_REPEAT_S;
       target.use();
+      game.bump();
+    } else if (active && edges.right && item === 'flint' && onBlock && world.get(...onBlock.cell) === 'tnt') {
+      // flint and steel lights a TNT block
+      fuses.push({ cell: [...onBlock.cell], zone: game.zone, at: runtime.time });
+      cue('hiss');
       game.bump();
     } else if (active && placeable && onBlock && (edges.right || (input.right && runtime.time > s.placeAt))) {
       // a block goes against the face you aim at, never into yourself
@@ -443,17 +463,35 @@ export function Player() {
           bfuunyLaughs('bfuunyDirt');
         }
       }
-    } else if (active && edges.right && item !== 'bow' && item !== 'apple') {
+    } else if (active && edges.right && item !== 'bow' && item !== 'trident' && item !== 'shield' && !(item && ITEMS[item].food)) {
       applyHeld(item, p.look, p.eye);
       game.bump();
     }
-    // the bow draws while held and fires on release; the apple is eaten while held
-    if (item === 'bow' && active && input.right && countOf(game.inventory, 'arrow') > 0) {
-      if (s.charge === 0) cue('bowDraw');
+    // the bow draws while held and fires on release, the trident is raised and thrown the same
+    // way; food is eaten while held
+    if (((item === 'bow' && countOf(game.inventory, 'arrow') > 0) || item === 'trident') && active && input.right) {
+      if (s.charge === 0 && item === 'bow') cue('bowDraw');
       s.charge = Math.min(1, s.charge + dt);
       game.setCharge(s.charge);
     } else if (s.charge > 0) {
-      if (s.charge > 0.2 && game.spend('arrow')) {
+      if (item === 'trident') {
+        if (s.charge > 0.4) {
+          game.consumeHeld();
+          cue('throw');
+          game.bump();
+          runtime.projectiles.push({
+            kind: 'trident',
+            pos: p.eye.clone().addScaledVector(p.look, 0.5),
+            vel: p.look.clone().multiplyScalar(18 + s.charge * 14),
+            gravity: 12,
+            fromPlayer: true,
+            damage: 8,
+            cause: 'fall',
+            age: 0,
+            done: false,
+          });
+        }
+      } else if (s.charge > 0.2 && game.spend('arrow')) {
         cue('bowShoot');
         game.bump();
         runtime.hooks.vibration?.(p.pos, 4);
@@ -472,12 +510,13 @@ export function Player() {
       s.charge = 0;
       game.setCharge(0);
     }
-    if (item === 'apple' && active && input.right && game.hp < MAX_HP) {
+    const food = item && ITEMS[item].food;
+    if (item && food && active && input.right && game.hp < MAX_HP) {
       if (Math.floor(s.eating * 4) !== Math.floor((s.eating + dt) * 4)) cue('eat');
       s.eating += dt;
       game.setCharge(Math.min(1, s.eating / 1.4));
-      if (s.eating >= 1.4 && game.spend('apple')) {
-        game.heal(8);
+      if (s.eating >= 1.4 && game.spend(item)) {
+        game.heal(food);
         s.eating = 0;
         game.setCharge(0);
       }
@@ -487,6 +526,14 @@ export function Player() {
     }
 
     if (game.hp < s.hp && !game.dead) cue('hurt');
+    if (game.blockedAt !== s.blockedAt) {
+      s.blockedAt = game.blockedAt;
+      if (game.blockedAt > 0) cue('shieldBlock');
+    }
+    if (game.savedAt !== s.savedAt) {
+      s.savedAt = game.savedAt;
+      if (game.savedAt > 0) cue('totem');
+    }
     if (game.dead && s.hp > 0) cue('death');
     s.hp = game.hp;
   });

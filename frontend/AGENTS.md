@@ -236,8 +236,11 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
 - `src/components/organisms/settings/end/` - the Danger Zone easter egg: a first-person
   Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
-  the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
-  `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
+  the store, audio and story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`,
+  `panels/`) on click, so `three`, the store and the story never reach the page. At page load it
+  reads only `store/persist.ts` and `store/admins.ts`: import those files directly, never the
+  `store` index. The start screen's Play unlocks the audio, since the button's click came before
+  the audio module loaded. Nothing outside this
   folder may import from it, except `AchievementsTrophy.tsx`: the dashboard header's trophy slot.
   It carries only the key catalog (`achievements.ts`) and the egg icon; its list, badges and lore
   load with `next/dynamic` when it opens. `advance()` reports each key through
@@ -254,8 +257,15 @@ Tooling / build (Next.js 16):
     effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
     events are not used. `BLOCKS` (`world.ts`) says how long a block takes by hand (`mine`) or with the
     pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
-    (hold to repeat). `Drops.tsx` holds item entities (mob loot, barters, your shot arrows) that you
-    pick up by walking over them. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    (hold to repeat), one with `food` is eaten by holding it. `Drops.tsx` holds item entities (mob
+    loot, barters, your shot arrows) that you pick up by walking over them; a monster's loot table is
+    the `loot` option of `useMonster`, rolled by `dropLoot` when it dies. Armor is four gold pieces
+    (`ARMOR` in `items.tsx`, the store's `armor`), 4% less damage per point; any piece calms piglins.
+    Holding right click with the shield sets the store's `blocking`, which `hurt()` honours for
+    every cause outside `UNBLOCKABLE` (`store/health.ts`); a totem anywhere in the inventory takes a
+    death. The store never imports `end-audio` (it would be a cycle): `Player.tsx` plays the block
+    and totem sounds when `blockedAt`/`savedAt` change. `lockPointer()` also takes the screen full
+    screen and locks `KeyW`, so every caller must be a click. `runtime.hooks.vibration` is how steps, landings, blocks, chests
     and arrows reach the ancient city's noise and the Warden.
   - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
     `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
@@ -365,6 +375,9 @@ i18n:
 
 - Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`, `tr`); the build fails if a dictionary is missing a key.
 - Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
+- Only `en` is bundled (it is the prerendered first render); every other dictionary is its own chunk,
+  loaded by `loadDictionary` when picked, and `useLanguage` switches only once it has arrived. Never
+  import a dictionary file from UI code: it would ship in every page's initial JS again.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 
 UI base components:

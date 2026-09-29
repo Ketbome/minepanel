@@ -3,7 +3,7 @@ import { ItemIcon } from '../items';
 import { DragonHeadIcon, DragonEggIcon, EyeOfEnderIcon } from '../PixelIcons';
 import type { AdvancementIcon } from '../store/types';
 
-const IMAGES: Partial<Record<AdvancementIcon, string>> = { creeper: 'creeper', totem: 'totem-of-undying', barrier: 'barrier', ruins: 'structure' };
+const IMAGES: Partial<Record<AdvancementIcon, string>> = { creeper: 'creeper', totem: 'totem-of-undying', barrier: 'barrier', ruins: 'structure', skull: 'wither-skeleton-skull' };
 
 export function AdvancementBadge({ icon }: { readonly icon: AdvancementIcon }) {
   if (icon === 'eye') return <EyeOfEnderIcon className="h-7 w-7" />;

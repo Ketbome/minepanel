@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { cue } from '../end-audio';
+import { dropLoot } from '../engine/Drops';
 import { spawnEffect } from '../engine/Effects';
 import { runtime } from '../engine/runtime';
 import { BFUUNY, BLASTER, useEndGame } from '../store';
@@ -513,6 +514,11 @@ export function IronGolem({ wander, name }: { readonly wander: Wander; readonly 
   const materials = useMemo(() => [material], [material]);
   const angry = useRef({ on: false, strikeAt: 0 });
   const control = useAnimal(root, wander, limbs, materials, 100, null, name, head, [1.4, 2.7], {
+    // like the game's: three to five iron ingots
+    died: () => {
+      const at = root.current?.position;
+      if (at) dropLoot([{ item: 'iron', min: 3, max: 5 }], at.clone().setY(at.y + 1));
+    },
     hit: () => {
       angry.current.on = true;
       const game = useEndGame.getState();

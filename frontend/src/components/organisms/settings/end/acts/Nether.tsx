@@ -9,7 +9,7 @@ import { spawnEffect } from '../engine/Effects';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import { World } from '../engine/world';
 import { WorldMesh } from '../engine/WorldMesh';
-import { countOf } from '../items';
+import { armorPoints, countOf } from '../items';
 import { Blaze, Ghast } from '../mobs/nether';
 import { Hoglin, MagmaCube, Strider, WitherSkeleton, ZombifiedPiglin } from '../mobs/nether-monsters';
 import { useRespawns } from '../mobs/parts';
@@ -233,7 +233,7 @@ export function Nether() {
     if (!game.flags.piglinMet && Math.hypot(p.x - CAMP.x, p.z - CAMP.z) < 13) {
       game.setFlag('piglinMet');
       game.say('ghostPiglin');
-      game.showActionBar(game.helmet ? 'hintPiglin' : 'hintHelmet');
+      game.showActionBar(armorPoints(game.armor) ? 'hintPiglin' : 'hintHelmet');
     }
     // the portal only takes you home once you have walked away from it
     if (!b.left && Math.hypot(p.x - 0.5, p.z - PORTAL.z) > 4) b.left = true;

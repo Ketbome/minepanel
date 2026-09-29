@@ -329,6 +329,8 @@ const CUES = {
   levitate: { file: 'levitate.ogg', synth: zap, volume: 0.45, caption: 'subLevitate' },
   wind: { file: 'wind.ogg', synth: whoosh, volume: 0.5 },
   pop: { synth: pop, volume: 0.35 },
+  shieldBlock: { synth: hit, volume: 0.7, caption: 'subShieldBlock' },
+  totem: { file: 'levelup.ogg', volume: 0.6, rate: [0.8, 0.85], caption: 'subTotem' },
   equip: { synth: clink, volume: 0.5, caption: 'subEquip' },
   piglin: { synth: snort, volume: 0.6, caption: 'subPiglin' },
   bones: { synth: rattle, volume: 0.5, caption: 'subSkeleton' },

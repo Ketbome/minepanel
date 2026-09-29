@@ -256,6 +256,12 @@ export function End() {
     if (!run.started && run.t > 6) {
       run.started = true;
       if (game.stage === 'arrival') game.setStage('crystals');
+      // the crystals need a bow, and the bow is crafted now: whoever comes without one gets his
+      if (!countOf(game.inventory, 'bow')) {
+        game.give('bow');
+        if (!countOf(game.inventory, 'arrow')) game.give('arrow', 16);
+        game.say('blasterBow', BLASTER);
+      }
       game.showActionBar('hintCrystalsBow');
     }
 

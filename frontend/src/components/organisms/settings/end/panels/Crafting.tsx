@@ -35,7 +35,7 @@ function RecipeBook() {
   const inventory = useEndGame((state) => state.inventory);
   const available = [...inventory, ...grid];
   return (
-    <ul className="mt-3 space-y-1.5">
+    <ul className="mt-3 max-h-56 space-y-1.5 overflow-y-auto pr-1">
       {RECIPES.map((recipe) => (
         <li key={recipe.output}>
           <button

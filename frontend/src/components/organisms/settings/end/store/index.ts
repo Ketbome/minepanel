@@ -26,7 +26,7 @@ export const useEndGame = create<EndGameState>()((...args) => {
         chests: initialChests(),
         grid: emptySlots(9),
         cursor: null,
-        helmet: false,
+        armor: {},
         panel: null,
       }),
   };

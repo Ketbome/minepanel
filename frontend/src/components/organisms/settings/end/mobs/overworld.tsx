@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { cue, type CueName } from '../end-audio';
+import { dropLoot, type Loot } from '../engine/Drops';
 import { explode } from '../engine/explode';
 import { castBlocks, solidCell } from '../engine/raycast';
 import { playerCenter, runtime } from '../engine/runtime';
@@ -335,7 +336,12 @@ export function Pig({ wander, name }: { readonly wander: Wander; readonly name: 
   const legs = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(PIG);
   const materials = useMemo(() => [material], [material]);
-  useAnimal(root, wander, legs, materials, 10, 'oink', name, head);
+  useAnimal(root, wander, legs, materials, 10, 'oink', name, head, undefined, {
+    died: () => {
+      const at = root.current?.position;
+      if (at) dropLoot([{ item: 'porkchop', min: 1, max: 3 }], at.clone().setY(at.y + 0.6));
+    },
+  });
 
   return (
     <group ref={root} position={wander.home}>
@@ -505,8 +511,11 @@ const CREEPER: SkinArt = {
   },
 };
 
-// Kevin follows you around. Walk away mid-hiss and he is hurt; stay, and you get the hug.
-export function Creeper({ wander, name }: { readonly wander: Wander; readonly name: string }) {
+const GUNPOWDER: readonly Loot[] = [{ item: 'gunpowder', min: 0, max: 2 }];
+
+// Kevin follows you around. Walk away mid-hiss and he is hurt; stay, and you get the hug. The
+// nameless ones come out at night and say nothing about it.
+export function Creeper({ wander, name, onDeath }: { readonly wander: Wander; readonly name?: string; readonly onDeath?: () => void }) {
   const root = useRef<THREE.Group>(null);
   const legs = useRef<(THREE.Group | null)[]>([]);
   const fuse = useRef(-1);
@@ -524,7 +533,8 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
     control.dead = true;
     group.visible = false;
     explode(at, BLAST, 'creeper');
-    useEndGame.getState().say('creeperGranted', name);
+    if (name) useEndGame.getState().say('creeperGranted', name);
+    onDeath?.();
   };
 
   useFrame(() => {
@@ -550,7 +560,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
         fuse.current = -1;
         group.scale.setScalar(1);
         material.emissive.set('#000000');
-        useEndGame.getState().say('creeperDenied', name);
+        if (name) useEndGame.getState().say('creeperDenied', name);
       } else if (age > FUSE_S) blow();
     }
   });
@@ -561,7 +571,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
     hostile: true,
     hit: (amount) => {
       if (control.dead) return;
-      useEndGame.getState().setFlag('kevinHit');
+      if (name) useEndGame.getState().setFlag('kevinHit');
       health.current -= amount;
       damage.hurt();
       control.knock(runtime.player.pos);
@@ -569,9 +579,11 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
       if (health.current > 0) return;
       control.dead = true;
       fuse.current = -1;
-      root.current?.scale.setScalar(1);
-      damage.die();
-      useEndGame.getState().obituary(name, 'mobSlain');
+      const group = root.current;
+      group?.scale.setScalar(1);
+      if (group) dropLoot(GUNPOWDER, group.position.clone().setY(group.position.y + 0.6));
+      damage.die(onDeath);
+      if (name) useEndGame.getState().obituary(name, 'mobSlain');
     },
   });
 
@@ -595,7 +607,7 @@ export function Creeper({ wander, name }: { readonly wander: Wander; readonly na
       ))}
       <Box skin={skin} name="body" at={[0, 12, 0]} material={material} />
       <Box skin={skin} name="head" at={[0, 22, 0]} material={material} />
-      <NameTag text={name} y={1.95} />
+      {name && <NameTag text={name} y={1.95} />}
     </group>
   );
 }

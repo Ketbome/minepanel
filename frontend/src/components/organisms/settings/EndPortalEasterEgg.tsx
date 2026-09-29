@@ -7,12 +7,13 @@ import { AnimatePresence, m, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getCurrentUser } from '@/services/users/users.service';
-import { cue, isMuted, unlockAudio } from './end/end-audio';
-import { loadLore, loreText } from './end/lore';
-import { daysSince, FIRST_GHOST, hasDragonEgg, useEndGame } from './end/store';
+import { FIRST_GHOST } from './end/store/admins';
+import { daysSince, hasDragonEgg } from './end/store/persist';
 import { DragonEggIcon } from './end/PixelIcons';
 
-// the whole run (HUD, windows, story) loads on the click, not with the settings page
+// the whole run (HUD, windows, story, and the store and audio behind them) loads on the click, not
+// with the settings page
+const loadRun = () => Promise.all([import('./end/end-audio'), import('./end/lore'), import('./end/store')]);
 const EndJourney = dynamic(() => import('./end/EndJourney').then((mod) => mod.EndJourney), { ssr: false });
 
 interface Spot {
@@ -26,8 +27,13 @@ function EggTrophy() {
   const [spot, setSpot] = useState<Spot>({ x: 50, y: 50 });
   const [left, setLeft] = useState<{ id: number; spot: Spot } | null>(null);
 
+  // the egg's sound is fetched once the trophy shows, so the first hop plays it
+  useEffect(() => {
+    void import('./end/end-audio');
+  }, []);
+
   const hop = () => {
-    cue('egg');
+    void import('./end/end-audio').then(({ cue }) => cue('egg'));
     setLeft((previous) => ({ id: (previous?.id ?? 0) + 1, spot }));
     setSpot({ x: 12 + Math.random() * 76, y: 22 + Math.random() * 56 });
   };
@@ -85,13 +91,14 @@ export function EndPortalEasterEgg() {
   }, [open]);
 
   const start = async () => {
-    unlockAudio();
     setLoading(true);
-    try {
-      await loadLore(language);
-    } finally {
-      setLoading(false);
-    }
+    const [{ isMuted, unlockAudio }, { loreText }, { useEndGame }] = await loadRun()
+      .then(async (run) => {
+        await run[1].loadLore(language);
+        return run;
+      })
+      .finally(() => setLoading(false));
+    unlockAudio();
     const game = useEndGame.getState();
     game.reset(loreText('player'), isMuted());
     // the run opens on the controls screen; Play takes the pointer

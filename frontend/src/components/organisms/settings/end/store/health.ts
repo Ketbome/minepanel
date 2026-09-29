@@ -1,13 +1,18 @@
+import { armorPoints, countOf } from '../items';
 import { BFUUNY, BLASTER } from './admins';
+import { DRAGON_MAX_HP } from './game';
 import { countDeath } from './persist';
-import type { HealthSlice, Slice } from './types';
+import type { DeathCause, HealthSlice, Slice } from './types';
 
 export const MAX_HP = 20;
 const INVULNERABLE_MS = 500;
-// a golden helmet is two armor points: 8% less damage, as in the game
-const HELMET_ARMOR = 0.92;
+// each armor point takes 4% off, as in the game: the golden helmet alone is 8%
+const PER_POINT = 0.04;
+// what a raised shield stops: blows, arrows, fireballs and blasts, never falls, lava or the
+// Warden (its attacks go through shields in the game too)
+const UNBLOCKABLE = new Set<DeathCause>(['lava', 'void', 'fall', 'bed', 'breath', 'elytra', 'cactus', 'warden', 'rake']);
 
-export const initialHealth = { hp: MAX_HP, dead: null, hurtAt: -1e9, levitateUntil: 0 };
+export const initialHealth = { hp: MAX_HP, dead: null, hurtAt: -1e9, levitateUntil: 0, blocking: false, blockedAt: -1e9, savedAt: -1e9 };
 
 export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
   ...initialHealth,
@@ -16,18 +21,31 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
     const state = get();
     const now = performance.now();
     if (state.dead || state.transition || now - state.hurtAt < INVULNERABLE_MS) return;
+    if (state.blocking && !UNBLOCKABLE.has(cause)) {
+      set({ hurtAt: now, blockedAt: now });
+      return;
+    }
     // Bfuuny mode: everything hurts twice as much, as it always has for him
     const raw = state.mode === 'bfuuny' ? amount * 2 : amount;
-    const taken = state.helmet ? Math.max(1, Math.round(raw * HELMET_ARMOR)) : raw;
+    const points = armorPoints(state.armor);
+    const taken = points ? Math.max(1, Math.round(raw * (1 - points * PER_POINT))) : raw;
     const hp = Math.max(0, state.hp - taken);
     if (hp > 0) {
       set({ hp, hurtAt: now });
+      return;
+    }
+    // the totem takes the death instead, from anywhere in the inventory, and leaves a heart
+    if (countOf(state.inventory, 'totem') && state.spend('totem')) {
+      set({ hp: 2, hurtAt: now, savedAt: now });
+      state.showTitle('totemUsed');
       return;
     }
     // whatever was on the crafting grid goes back to the inventory before the death screen
     state.closePanel();
     countDeath();
     set({ hp: 0, hurtAt: now, dead: cause, deaths: state.deaths + 1, levitateUntil: 0 });
+    // dying in the fight gives the dragon its health back; destroyed crystals stay destroyed
+    if (state.zone === 'end' && state.stage === 'dragon') set({ dragonHp: DRAGON_MAX_HP });
     // Bfuuny mode: your deaths go on his count, and the others laugh
     if (state.mode === 'bfuuny') {
       window.setTimeout(() => get().say('bfuunyModeDeath', BFUUNY), 900);
@@ -37,6 +55,7 @@ export const createHealthSlice: Slice<HealthSlice> = (set, get) => ({
   },
   heal: (amount) => set((state) => (state.dead ? state : { hp: Math.min(20, state.hp + amount) })),
   levitate: (seconds) => set({ levitateUntil: performance.now() + seconds * 1000 }),
+  setBlocking: (blocking) => set((state) => (state.blocking === blocking ? state : { blocking })),
   // you come back at the zone's checkpoint with everything you carried: keepInventory is on
   respawn: () => {
     const state = get();

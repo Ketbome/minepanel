@@ -210,6 +210,45 @@ function helmetPixels() {
   return pixels;
 }
 
+// the mob drops, drawn from rows of color letters like the helmet
+function rowPixels(rows: readonly string[], colors: Record<string, string>, top: number) {
+  const pixels: Pixel[] = [];
+  rows.forEach((row, y) =>
+    [...row].forEach((cell, x) => {
+      if (cell !== '.') pixels.push([x, y + top, colors[cell]]);
+    })
+  );
+  return pixels;
+}
+
+// a lumpy brown scrap with green rot and a dark rim
+const FLESH_ROWS = ['......oooo......', '....oogggGoo....', '...ogGgbggggo...', '..ogggggbgGgo...', '..obggGggggbo...', '...oggggbgggo...', '....ogbgggGo....', '...ogggggbgo....', '..ogGgbggggo....', '..obggggggo.....', '...oooggoo......', '......oo........'];
+const FLESH_COLORS: Record<string, string> = { o: '#3d2415', g: '#8a4f35', G: '#b06a45', b: '#6b7d3a' };
+// a raw chop: pink meat, a darker vein, a pale rind of fat
+const PORK_ROWS = ['.......oooo.....', '.....ooffffo....', '....offpPppfo...', '...ofpPpppppfo..', '...ofppppprppfo.', '..ofpppprrpppfo.', '..ofppprrpppfo..', '.ofpppppppffo...', '.ofppppppfoo....', '.ofpppppfo......', '..offfffo.......', '...ooooo........'];
+const PORK_COLORS: Record<string, string> = { o: '#6e2a2a', f: '#f6dcd2', p: '#e8878a', P: '#f7b3ad', r: '#bf5157' };
+// a small gold nugget
+const NUGGET_ROWS = ['.......dd.......', '......dyYd......', '....ddyYYyd.....', '...dyyYyyyod....', '...dyyyyyood....', '....doyyoodd....', '.....ddoodd.....', '.......dd.......'];
+const NUGGET_COLORS: Record<string, string> = { d: '#7a520a', y: '#f2c230', Y: '#fff08a', o: '#c78a14' };
+
+// a loose white thread
+const STRING_ROWS = ['...........ww...', '..........w..s..', '..........w..s..', '...........w.s..', '.......ww...s...', '......w..s......', '......w...s.....', '.......w...s....', '...ww...w..s....', '..w..s...ss.....', '..w...s.........', '...w...s........', '........s.......'];
+const STRING_COLORS: Record<string, string> = { w: '#ececec', s: '#a9a9a9' };
+// the blaze powder's heap in grays
+const GUNPOWDER_COLORS: Record<string, string> = { y: '#9a9a9a', Y: '#cfcfcf', o: '#6f6f6f', O: '#858585', r: '#3a3a3a' };
+// the raw chop's shape, browned
+const COOKED_COLORS: Record<string, string> = { o: '#43230f', f: '#d8b184', p: '#a4603a', P: '#c98654', r: '#76391c' };
+// the gold armor, in the helmet's colors
+const CHESTPLATE_ROWS = ['..ddd......ddd..', '.dyYyd....dyyod.', '.dyYyyddddyyyod.', '.ddYyyyyyyyyyod.', '...dYyyyyyyyod..', '...dYyyyyyyyod..', '...dyyyyyyyyod..', '...dyyyyyyyyod..', '...dyyyyyyyyod..', '...doooooooood..', '....dddddddd....'];
+const LEGGINGS_ROWS = ['...ddddddddddd..', '...dYyyyyyyyod..', '...dYyyyyyyyod..', '...dYyod.dyyod..', '...dYyod.dyyod..', '...dYyod.dyyod..', '...dYyod.dyyod..', '...dyyod.dyyod..', '...dyyod.dyyod..', '...ddddd.ddddd..'];
+const BOOTS_ROWS = ['..dddd....dddd..', '..dYyd....dyyd..', '..dYyd....dyyd..', '.ddYyd...ddyyd..', '.dyyyd...dyyyd..', '.ddddd...ddddd..'];
+// an iron ingot, and the shield: planks in an iron rim with an iron boss
+const IRON_ROWS = ['......ddddddd...', '.....dwWwwwwd...', '....dwWwwwwwgd..', '...dwwwwwwwggd..', '...dgggggggggd..', '...ddddddddddd..'];
+const IRON_COLORS: Record<string, string> = { d: '#4a4a4a', w: '#d8d8d8', W: '#ffffff', g: '#a0a0a0' };
+const SHIELD_ROWS = ['...iiiiiiiiii...', '...ipPpppppPi...', '...ipPpppppPi...', '...ipPpiipPPi...', '...ipPiIIipPi...', '...ipPiIIipPi...', '...ipPpiippPi...', '...ipPpppppPi...', '...ipPpppppPi...', '....ipPpppPi....', '.....ipPpPi.....', '......iiii......'];
+const SHIELD_COLORS: Record<string, string> = { i: '#6f6f6f', I: '#cfcfcf', p: '#a07a45', P: '#7a5a30' };
+const SAND = blockPixels((x, y) => ((x * 7 + y * 3) % 8 === 0 ? '#c4b27a' : (x + y * 5) % 11 === 0 ? '#efe4b6' : '#dccf9c'), '#a8955c');
+
 const EYE = eyePixels();
 const EGG = eggPixels();
 const HEAD = headPixels();
@@ -241,6 +280,18 @@ export const SPRITES = {
   netherrack: NETHERRACK,
   endStone: END_STONE,
   helmet: HELMET,
+  rottenFlesh: rowPixels(FLESH_ROWS, FLESH_COLORS, 2),
+  porkchop: rowPixels(PORK_ROWS, PORK_COLORS, 2),
+  nugget: rowPixels(NUGGET_ROWS, NUGGET_COLORS, 4),
+  string: rowPixels(STRING_ROWS, STRING_COLORS, 2),
+  gunpowder: rowPixels(BLAZE_ROWS, GUNPOWDER_COLORS, 7),
+  sand: SAND,
+  cookedPorkchop: rowPixels(PORK_ROWS, COOKED_COLORS, 2),
+  chestplate: rowPixels(CHESTPLATE_ROWS, HELMET_COLORS, 3),
+  leggings: rowPixels(LEGGINGS_ROWS, HELMET_COLORS, 3),
+  boots: rowPixels(BOOTS_ROWS, HELMET_COLORS, 6),
+  iron: rowPixels(IRON_ROWS, IRON_COLORS, 5),
+  shield: rowPixels(SHIELD_ROWS, SHIELD_COLORS, 2),
 };
 
 export function PixelSprite({ pixels, className }: { readonly pixels: readonly Pixel[]; readonly className?: string }) {
