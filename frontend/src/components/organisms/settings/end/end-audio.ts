@@ -12,6 +12,8 @@ interface CueDef {
   readonly volume: number;
   readonly file?: string;
   readonly rate?: readonly [number, number];
+  readonly slice?: readonly [offset: number, length: number];
+  readonly gap?: number;
   readonly synth?: Synth;
   readonly caption?: LoreKey;
 }
@@ -279,7 +281,7 @@ const CUES = {
   travel: { file: 'portal-travel.ogg', volume: 0.55, caption: 'subTravel' },
   lava: { synth: lava, volume: 0.35, caption: 'subLava' },
   growl: { file: 'dragon-growl.ogg', volume: 0.5, rate: [0.95, 1.05], caption: 'subGrowl' },
-  dragonHurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], caption: 'subHurt' },
+  dragonHurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], slice: [0.9, 1.2], gap: 1.5, synth: hit, caption: 'subHurt' },
   hit: { synth: hit, volume: 0.6 },
   dragonDeath: { file: 'dragon-growl.ogg', volume: 0.7, rate: [0.55, 0.6], synth: deathRise, caption: 'subDeath' },
   explode: { file: 'explosion.ogg', synth: explosion, volume: 0.8, caption: 'subCrystal' },
@@ -341,6 +343,9 @@ const CUES = {
 
 export type CueName = keyof typeof CUES;
 
+const voices = new Map<CueName, GainNode>();
+const playedAt = new Map<CueName, number>();
+
 function load(file: string) {
   let buffer = buffers.get(file);
   if (!buffer) {
@@ -373,10 +378,13 @@ export function cue(name: CueName, gain = 1) {
   const out = ctx.createGain();
   out.gain.value = def.volume * gain;
   out.connect(bus);
-  if (!def.file) {
+  // within its gap the clip is skipped and only the synth plays, so rapid hits don't chain growls
+  const recent = def.gap !== undefined && ctx.currentTime - (playedAt.get(name) ?? -Infinity) < def.gap;
+  if (!def.file || recent) {
     def.synth?.(ctx, out);
     return;
   }
+  if (def.gap) playedAt.set(name, ctx.currentTime);
   void load(def.file).then((buffer) => {
     if (!buffer) {
       def.synth?.(ctx, out);
@@ -386,7 +394,20 @@ export function cue(name: CueName, gain = 1) {
     source.buffer = buffer;
     if (def.rate) source.playbackRate.value = def.rate[0] + Math.random() * (def.rate[1] - def.rate[0]);
     source.connect(out);
-    source.start();
+    if (def.slice) {
+      // a short bite of the clip; a new one cuts the last instead of stacking on every hit
+      const [offset, length] = def.slice;
+      const end = ctx.currentTime + length / source.playbackRate.value;
+      out.gain.setValueAtTime(out.gain.value, end - 0.15);
+      out.gain.linearRampToValueAtTime(0, end);
+      const last = voices.get(name);
+      last?.gain.cancelScheduledValues(ctx.currentTime);
+      last?.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+      voices.set(name, out);
+      source.start(0, offset, length);
+    } else {
+      source.start();
+    }
     // the dragon's death keeps its synthesized rise under the recorded growl
     if (name === 'dragonDeath') def.synth?.(ctx, out);
   });
