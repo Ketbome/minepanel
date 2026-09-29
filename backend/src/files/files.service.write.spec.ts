@@ -13,6 +13,7 @@ jest.mock('fs-extra', () => ({
   remove: jest.fn().mockResolvedValue(undefined),
   rename: jest.fn().mockResolvedValue(undefined),
   move: jest.fn().mockResolvedValue(undefined),
+  link: jest.fn().mockResolvedValue(undefined),
   chown: jest.fn().mockResolvedValue(undefined),
   chmod: jest.fn().mockResolvedValue(undefined),
   lstat: jest.fn(),
@@ -136,19 +137,60 @@ describe('FilesService writes', () => {
     await expect(service.createZipStream('srv', ['../../x', 'a'])).rejects.toThrow(BadRequestException);
   });
 
-  it('does not replace a file that appears after the check when told not to overwrite', async () => {
-    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
-    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
-    await expect(service.saveUpload('srv', 'raced.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow(ConflictException);
-    expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/raced.txt`, { overwrite: false });
+  describe('when told not to overwrite', () => {
+    const staged = '/app/servers/.uploads/abc';
+    const gone = () => (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    const rejectWith = (mock: unknown, code: string, message = code) => (mock as jest.Mock).mockRejectedValueOnce(Object.assign(new Error(message), { code }));
 
-    // Any other failure is not a conflict, and an overwriting upload never maps to one.
-    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
-    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('EIO'));
-    await expect(service.saveUpload('srv', 'io.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow('EIO');
-    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
-    (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
-    await expect(service.saveUpload('srv', 'a.txt', '/app/servers/.uploads/abc', false, true)).rejects.toThrow('dest already exists.');
+    it('takes the name with a hard link, which cannot replace anything, and drops the staged file', async () => {
+      gone();
+      await service.saveUpload('srv', 'new.txt', staged, false, false);
+
+      expect(fs.link).toHaveBeenLastCalledWith(staged, `${BASE}/new.txt`);
+      expect(fs.remove).toHaveBeenLastCalledWith(staged);
+      expect(fs.move).not.toHaveBeenCalled();
+    });
+
+    it('turns a name taken after the check into a conflict and leaves the staged file alone', async () => {
+      gone();
+      rejectWith(fs.link, 'EEXIST');
+
+      await expect(service.saveUpload('srv', 'raced.txt', staged, false, false)).rejects.toThrow(ConflictException);
+      expect(fs.move).not.toHaveBeenCalled();
+      expect(fs.remove).not.toHaveBeenCalled();
+    });
+
+    // Another device, or a filesystem without hard links: the upload must still land.
+    it.each(['EXDEV', 'EPERM', 'ENOTSUP'])('falls back to a move when the link fails with %s', async (code) => {
+      gone();
+      rejectWith(fs.link, code);
+      await service.saveUpload('srv', 'a.txt', staged, false, false);
+      expect(fs.move).toHaveBeenLastCalledWith(staged, `${BASE}/a.txt`, { overwrite: false });
+
+      gone();
+      rejectWith(fs.link, code);
+      (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
+      await expect(service.saveUpload('srv', 'b.txt', staged, false, false)).rejects.toThrow(ConflictException);
+
+      gone();
+      rejectWith(fs.link, code);
+      (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('EIO'));
+      await expect(service.saveUpload('srv', 'c.txt', staged, false, false)).rejects.toThrow('EIO');
+    });
+
+    it('does not mistake a failed cleanup for a conflict once the file is in place', async () => {
+      gone();
+      (fs.remove as unknown as jest.Mock).mockRejectedValueOnce(new Error('EBUSY'));
+      await expect(service.saveUpload('srv', 'a.txt', staged, false, false)).rejects.toThrow('EBUSY');
+      expect(fs.move).not.toHaveBeenCalled();
+    });
+
+    it('never links when overwriting: the move replaces the name, which is what was asked', async () => {
+      gone();
+      await service.saveUpload('srv', 'a.txt', staged, false, true);
+      expect(fs.link).not.toHaveBeenCalled();
+      expect(fs.move).toHaveBeenLastCalledWith(staged, `${BASE}/a.txt`, { overwrite: true });
+    });
   });
 
   it('refuses to replace an existing file unless told to overwrite', async () => {

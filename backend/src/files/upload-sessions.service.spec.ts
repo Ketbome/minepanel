@@ -16,6 +16,18 @@ describe('UploadSessionsService', () => {
 
   const chunk = (text: string) => Readable.from([Buffer.from(text)]);
 
+  // Waits for what a test needs to have happened instead of for a while: how long a file
+  // read takes is up to the machine, and a slow runner reorders two requests otherwise.
+  const until = async (condition: () => boolean | Promise<boolean>) => {
+    for (let attempt = 0; attempt < 400; attempt++) {
+      if (await condition()) return;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    throw new Error('condition not reached');
+  };
+  const lockHeld = (id: string) => until(() => (service as unknown as { busy: Set<string> }).busy.has(id));
+  const partSize = (id: string) => fs.stat(path.join(dir, `${id}.part`)).then((stat) => stat.size, () => -1);
+
   beforeEach(async () => {
     root = await fs.mkdtemp(path.join(os.tmpdir(), 'upload-sessions-'));
     dir = path.join(root, UPLOAD_SESSIONS_DIR);
@@ -93,7 +105,7 @@ describe('UploadSessionsService', () => {
     const append = service.append(1, 'srv', id, 0, body);
 
     body.write('abcd');
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await until(async () => (await partSize(id)) === 4);
     body.destroy(new Error('client went away'));
 
     await expect(append).rejects.toThrow('client went away');
@@ -104,7 +116,7 @@ describe('UploadSessionsService', () => {
     const { id } = await service.create(1, 'srv', 'a.bin', 10, false);
     const body = new PassThrough();
     const first = service.append(1, 'srv', id, 0, body);
-    await new Promise((resolve) => setImmediate(resolve));
+    await lockHeld(id);
 
     await expect(service.append(1, 'srv', id, 0, chunk('x'))).rejects.toThrow(ConflictException);
     await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(ConflictException);
@@ -211,7 +223,7 @@ describe('UploadSessionsService', () => {
       const ids = await open(1, MAX_SESSIONS_PER_USER);
       const body = new PassThrough();
       const chunkInFlight = service.append(1, 'srv', ids[0], 0, body);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await lockHeld(ids[0]);
       await Promise.all(ids.map(age));
 
       await service.create(1, 'srv', 'more.bin', 5, false);
@@ -251,7 +263,7 @@ describe('UploadSessionsService', () => {
     });
 
     const first = service.complete(1, 'srv', id, false);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await lockHeld(id);
     await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(ConflictException);
 
     release();
@@ -266,7 +278,7 @@ describe('UploadSessionsService', () => {
     const body = new PassThrough();
     const chunkInFlight = service.append(1, 'srv', id, 0, body);
     body.write('abc');
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await until(async () => (await partSize(id)) === 3);
 
     await service.abort(1, 'srv', id);
     body.end('def');

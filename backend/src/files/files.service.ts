@@ -35,6 +35,32 @@ function assertReplaceable(existing: fs.Stats | null, overwrite: boolean): void 
   }
 }
 
+// link() fails with EEXIST when the name is taken, in one step. Checking first and renaming
+// after leaves a gap (fs-extra's move does exactly that) in which a file made by someone else
+// is replaced: 24 uploads racing for one name all "won".
+async function moveWithoutReplacing(stagedPath: string, fullPath: string): Promise<void> {
+  try {
+    await fs.link(stagedPath, fullPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new ConflictException('A file with that name already exists');
+    }
+
+    // No hard link between these two places (another device, a filesystem without them,
+    // as on some Docker Desktop mounts): move it, whose own name check is not atomic.
+    try {
+      await fs.move(stagedPath, fullPath, { overwrite: false });
+    } catch (moveError) {
+      if (/dest already exists/.test((moveError as Error).message)) {
+        throw new ConflictException('A file with that name already exists');
+      }
+      throw moveError;
+    }
+    return;
+  }
+  await fs.remove(stagedPath);
+}
+
 export interface FileItem {
   name: string;
   path: string;
@@ -208,15 +234,12 @@ export class FilesService {
       await fs.chown(stagedPath, existing.uid, existing.gid);
       await fs.chmod(stagedPath, existing.mode);
     }
-    try {
-      // The flag goes to the move itself: the stat above is stale by now (chown, chmod and
-      // ensureDir are awaits), and a file that appeared meanwhile must not be replaced.
-      await fs.move(stagedPath, fullPath, { overwrite });
-    } catch (error) {
-      if (!overwrite && /dest already exists/.test((error as Error).message)) {
-        throw new ConflictException('A file with that name already exists');
-      }
-      throw error;
+    // The stat above is stale by now (chown, chmod and ensureDir are awaits), so keeping
+    // a file that appeared meanwhile is decided by the move itself.
+    if (overwrite) {
+      await fs.move(stagedPath, fullPath, { overwrite: true });
+    } else {
+      await moveWithoutReplacing(stagedPath, fullPath);
     }
   }
 

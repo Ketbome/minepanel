@@ -316,7 +316,8 @@ Files module behavior:
   admin-only next to `server.json`, so non-admins get neither a listing nor a read, links included.
   A new staging folder under `servers/` must be added to `STAGING_DIRS`.
 - Chunked uploads (`upload-sessions.service.ts`): creates are queued, capped per user
-  (`MAX_SESSIONS_PER_USER`, an idle one is replaced) and checked against the free space minus what
+  (`MAX_SESSIONS_PER_USER`; a session idle for at least 15 minutes is replaced, and only when no
+  chunk is in flight) and checked against the free space minus what
   the other sessions still have to write. `complete` and a chunk share one `busy` lock.
 - Preserve traversal protection (`normalize` + `startsWith(basePath + path.sep)`, or equal to it).
   A bare `startsWith(basePath)` lets `_root` reach siblings such as `/app/servers-old`.
