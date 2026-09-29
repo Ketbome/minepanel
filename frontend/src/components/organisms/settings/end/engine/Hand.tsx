@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { ITEMS, type ItemId } from '../items';
 import { SPRITES, type Pixel } from '../PixelIcons';
 import { useEndGame, type Zone } from '../store';
+import { QUALITY, useQuality } from './quality';
 import { runtime } from './runtime';
 import { materialFor } from './WorldMesh';
 
@@ -17,7 +18,7 @@ const DEG = Math.PI / 180;
 const SWING_S = 0.3;
 const WALK = 4.3;
 // how lit the hand is in each zone, so it does not glow in the deep dark
-const LIGHT: Partial<Record<Zone, number>> = { overworld: 1, nether: 0.9, ancient: 0.5, stronghold: 0.6, end: 0.8, endcity: 0.9 };
+const LIGHT: Partial<Record<Zone, number>> = { overworld: 1, nether: 0.9, ancient: 0.5, sift: 1, stronghold: 0.6, end: 0.8, endcity: 0.9 };
 
 // the bow's 16x16 texture; drawing it bends the string back and nocks an arrow
 const BOW_ROWS = [
@@ -239,6 +240,8 @@ function useItemSprite(item: ItemId | undefined) {
 export function Hand() {
   const item = useEndGame((state) => state.inventory[state.selected]?.item);
   const zone = useEndGame((state) => state.zone);
+  // with post-processing the composer draws the world first, then the hand goes on top
+  const post = useQuality((state) => QUALITY[state.quality].post);
   const root = useRef<THREE.Group>(null);
   const bowRefs = useRef<(THREE.Mesh | null)[]>([]);
   const sprite = useItemSprite(item);
@@ -357,7 +360,7 @@ export function Hand() {
 
   const light = LIGHT[zone] ?? 1;
   return (
-    <Hud renderPriority={1}>
+    <Hud renderPriority={post ? 2 : 1}>
       <PerspectiveCamera makeDefault fov={70} near={0.01} far={10} />
       <ambientLight intensity={0.9 * light} />
       <directionalLight position={[-0.6, 1, 0.8]} intensity={1.6 * light} />

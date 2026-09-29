@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
+import { castsShadow } from '../engine/shading';
 import { rng } from '../voxels';
 import { PX } from './parts';
 
@@ -157,5 +158,5 @@ export function useSkin(art: SkinArt, options: THREE.MeshLambertMaterialParamete
 
 // one box of a skin, placed in model pixels like `Part`
 export function Box({ skin, name, at = [0, 0, 0], material }: { readonly skin: Skin; readonly name: string; readonly at?: Vec3; readonly material: THREE.Material }) {
-  return <mesh geometry={skin.boxes[name]} material={material} position={[at[0] * PX, at[1] * PX, at[2] * PX]} />;
+  return <mesh geometry={skin.boxes[name]} material={material} position={[at[0] * PX, at[1] * PX, at[2] * PX]} castShadow={castsShadow(material)} receiveShadow />;
 }

@@ -25,4 +25,5 @@ export const ACHIEVEMENTS: readonly { key: LoreKey; icon: AdvancementIcon }[] = 
   { key: 'advRuins', icon: 'ruins' },
   { key: 'advFaster', icon: 'fireball' },
   { key: 'advSkull', icon: 'skull' },
+  { key: 'advSift', icon: 'blub' },
 ];

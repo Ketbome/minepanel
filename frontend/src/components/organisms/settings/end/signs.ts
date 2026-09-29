@@ -31,4 +31,5 @@ export const SIGN_TEXT: Record<SignId, LoreKey> = {
   ruinSwamp: 'signRuinSwamp',
   ruinCoast: 'signRuinCoast',
   wreckNote: 'signWreckNote',
+  siftSong: 'signSiftSong',
 };

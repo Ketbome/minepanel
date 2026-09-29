@@ -16,10 +16,12 @@ import { Skeleton } from '../mobs/skeleton';
 import { BFUUNY, BLASTER, useEndGame, type ChestId } from '../store';
 import { hash, UNIT_BOX } from '../voxels';
 import { Chest, Lectern, Sign } from './props';
+import { SiftGate } from './SiftGate';
 
 // The ancient city, under the cave: a dark hall of deepslate and sculk, ruined houses along an
 // avenue of broken pillars, and at its end a frame far bigger than any End portal, switched off
-// long ago. The first button was here.
+// long ago. The first button was here. Played the right tune, the frame opens to The Sift
+// (SiftGate).
 
 const HALL = { x0: -40, x1: 40, z0: -92, z1: 0 };
 const CEILING = 18;
@@ -234,11 +236,16 @@ export function AncientCity() {
   const fog = useRef<THREE.Fog>(null);
   const ambient = useRef<THREE.AmbientLight>(null);
   const skeletons = useRespawns(45);
+  // while the Sift's song plays the city stays quiet: nothing you do reaches the Warden
+  const ritual = useRef(false);
 
   useEffect(() => {
     runtime.world = world;
     runtime.voidY = -20;
-    useEndGame.getState().setCheckpoint(0.5, 0.5, 6, 0);
+    const game = useEndGame.getState();
+    // back from The Sift you step out in front of the frame, facing the city
+    if (game.entry === 'sift') game.setCheckpoint(0.5, 0.5, FRAME.z + 6, Math.PI);
+    else game.setCheckpoint(0.5, 0.5, 6, 0);
     startAmbience('ancient');
     prefetch(['sculk', 'shriek', 'heartbeat', 'roar']);
     // steps, landings, blocks, chests and arrows all carry through the sculk
@@ -311,7 +318,7 @@ export function AncientCity() {
       if (close) b.near.add(index);
       else b.near.delete(index);
     });
-    noise = Math.max(0, Math.min(100, noise));
+    noise = ritual.current ? 0 : Math.max(0, Math.min(100, noise));
     if (noise >= 50 && b.shrieks === 0) {
       b.shrieks = 1;
       cue('shriek');
@@ -335,6 +342,10 @@ export function AncientCity() {
     if (Math.abs(noise - game.noise) > 2 || (noise === 0 && game.noise !== 0)) game.setNoise(noise);
 
     if (p.pos.z > TUNNEL.z1 - 1) game.travel('overworld', 'cave', 'black');
+    if (game.flags.siftOpen && p.pos.z < FRAME.z + 0.2 && Math.abs(p.pos.x) < FRAME.x1 && p.pos.y < FRAME.y1) {
+      game.travel('sift', 'arrive', 'portal');
+      cue('travel');
+    }
   });
 
   return (
@@ -360,6 +371,7 @@ export function AncientCity() {
       <Sign id="bfuunyGrave" at={[8, 2, FRAME.z + 2]} facing={-0.3} />
       <Lectern world={world} at={[4, 2, FRAME.z + 2]} book="admin2011" facing={-0.6} glow />
       <Button />
+      <SiftGate world={world} frame={FRAME} ritual={ritual} />
       {SKELETONS.map(({ id, wander }) => (
         <Skeleton key={`${id}:${skeletons.life(id)}`} wander={wander} onDeath={() => skeletons.died(id)} />
       ))}

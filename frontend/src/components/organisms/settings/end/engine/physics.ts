@@ -82,13 +82,14 @@ export function canStepUp(world: World, pos: THREE.Vector3, dirX: number, dirZ: 
 }
 
 // how far the ground drops one step ahead; mobs refuse to walk off anything deeper than 3, and
-// lava counts as a bottomless drop, so they never wander into it
+// lava and ichor count as a bottomless drop, so they never wander into them
 export function dropAhead(world: World, pos: THREE.Vector3, dirX: number, dirZ: number, half: number) {
   const x = Math.round(pos.x + dirX * (half + 0.45));
   const z = Math.round(pos.z + dirZ * (half + 0.45));
   const feet = Math.round(pos.y + 0.01);
   for (let depth = 0; depth <= 4; depth += 1) {
-    if (world.get(x, feet - 1 - depth, z) === 'lava') return 5;
+    const below = world.get(x, feet - 1 - depth, z);
+    if (below === 'lava' || below === 'ichor') return 5;
     if (world.solid(x, feet - 1 - depth, z)) return depth;
   }
   return 5;

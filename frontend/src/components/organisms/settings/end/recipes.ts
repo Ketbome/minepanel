@@ -12,7 +12,8 @@ export interface Recipe {
 }
 
 export const RECIPES: readonly Recipe[] = [
-  { output: 'sword', rows: [['diamond'], ['diamond'], ['stick']] },
+  // the diamond sword is not crafted: it waits in The Sift, and the camp's diamonds are the pickaxe's
+  { output: 'ironSword', rows: [['iron'], ['iron'], ['stick']] },
   { output: 'blaze', count: 2, ingredients: ['rod'] },
   { output: 'eye', ingredients: ['pearl', 'blaze'] },
   { output: 'pickaxe', rows: [['diamond', 'diamond', 'diamond'], [null, 'stick', null], [null, 'stick', null]] },

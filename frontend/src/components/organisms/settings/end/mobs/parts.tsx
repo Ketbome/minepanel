@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { spawnEffect } from '../engine/Effects';
 import { canStepUp, dropAhead, move, overlaps } from '../engine/physics';
+import { castsShadow } from '../engine/shading';
 import { runtime, useTarget, type Target } from '../engine/runtime';
 import { sizedBox } from '../voxels';
 
@@ -14,7 +15,7 @@ export const PX = 1 / 16;
 type Vec3 = readonly [number, number, number];
 
 export function Part({ size, at = [0, 0, 0], material }: { readonly size: Vec3; readonly at?: Vec3; readonly material: THREE.Material | THREE.Material[] }) {
-  return <mesh geometry={sizedBox(size[0] * PX, size[1] * PX, size[2] * PX)} material={material} position={[at[0] * PX, at[1] * PX, at[2] * PX]} />;
+  return <mesh geometry={sizedBox(size[0] * PX, size[1] * PX, size[2] * PX)} material={material} position={[at[0] * PX, at[1] * PX, at[2] * PX]} castShadow={castsShadow(material)} receiveShadow />;
 }
 
 const materials = new Map<string, THREE.MeshLambertMaterial>();

@@ -47,6 +47,8 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   golem: 'deathGolem',
   rabbit: 'deathRabbit',
   ownTnt: 'deathOwnTnt',
+  ichor: 'deathIchor',
+  sifter: 'deathSifter',
 };
 
 const MODES: readonly { readonly id: RunMode; readonly label: LoreKey }[] = [
@@ -75,6 +77,8 @@ export function skipZone(onClose: () => void) {
     game.travel('overworld', 'portal', 'portal');
   } else if (game.zone === 'ancient') {
     game.travel('overworld', 'cave', 'black');
+  } else if (game.zone === 'sift') {
+    game.travel('ancient', 'sift', 'black');
   } else if (game.zone === 'overworld') {
     game.grantKit('stronghold');
     game.setFlag('eyeLanded');

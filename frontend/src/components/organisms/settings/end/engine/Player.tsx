@@ -34,7 +34,7 @@ const TNT_FUSE_S = 4;
 const TNT_BLAST = 4;
 let fuses: { readonly cell: readonly [number, number, number]; readonly zone: string; readonly at: number }[] = [];
 
-const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7, pickaxe: 5, trident: 8 };
+const DAMAGE: Partial<Record<ItemId, number>> = { sword: 7, ironSword: 6, pickaxe: 5, trident: 8 };
 
 // the hand's action for a held item when the crosshair is on nothing usable
 function applyHeld(item: ItemId | undefined, look: THREE.Vector3, eye: THREE.Vector3) {
@@ -314,6 +314,9 @@ export function Player() {
 
     if (cellsInBody(p.pos, (x, y, z) => world.get(x, y, z) === 'lava')) {
       game.hurt(4, 'lava');
+      p.vel.multiplyScalar(0.5);
+    } else if (cellsInBody(p.pos, (x, y, z) => world.get(x, y, z) === 'ichor')) {
+      game.hurt(4, 'ichor');
       p.vel.multiplyScalar(0.5);
     }
     if (p.pos.y < runtime.voidY) game.hurt(999, 'void');
