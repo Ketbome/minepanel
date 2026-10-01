@@ -177,3 +177,10 @@ stat deltas to those sessions, never sessions of its own. It shows in the Player
 Session history comes from bounded Docker join/leave logs and SQLite cursors, not browser
 polling or `server.json`. Unknown intervals must not be counted as playtime; Java saved-world
 statistics are separate from recorded session totals.
+
+Notifications use `backend/src/notifications/notifications.service.ts` for Discord, email
+and Telegram delivery. Email/Telegram destinations and event switches are instance-wide,
+admin-only integration settings; the legacy first configured Discord webhook is preserved.
+Keep Telegram tokens encrypted and write-only, and provider failures isolated.
+
+Opt-in disk/backup notification probes run once a minute in `backend/src/notifications/notification-monitor.service.ts`. Recovery requires an observed incident and a valid healthy reading; raw backup logs must never be forwarded.

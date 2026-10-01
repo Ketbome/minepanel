@@ -323,10 +323,29 @@ Examples:
 - `POST /settings/test-discord-webhook`
 - `POST /settings/proxy/power` — body `{ "enabled": true | false }`. Starts or stops
   the mc-router container right away instead of waiting for a settings save
-- `GET /settings/integrations` — masked SMTP/OIDC config (admin only; secrets are
+- `GET /settings/integrations` — masked SMTP/OIDC/notification config (admin only; secrets are
   never returned)
 - `PATCH /settings/integrations` — write-only secrets: omit to keep, `""` to clear
 - `POST /settings/integrations/smtp/test`
+- `POST /settings/integrations/notifications/test` — admin only; body
+  `{ "channel": "email" }` or `{ "channel": "telegram" }`. Uses the saved destination,
+  even if automatic delivery is disabled. Returns `{ success, message }`.
+
+`PATCH /settings/integrations` accepts a nested `notifications` object:
+`{ discordEnabled?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
+telegramChatId?, lifecycleEnabled?, alertsEnabled?, diskAlertEnabled?,
+backupFailureEnabled?, recoveryEnabled?, diskFreeThresholdPercent?, alertCooldownMinutes?,
+minimumSeverity? }`. These are instance-wide,
+admin-managed destinations for all servers. Email accepts one address. Telegram accepts a
+numeric chat ID or `@channel_username`; enabled channels require their destination (and
+Telegram requires a token). `telegramToken` is write-only: omit to keep, `""` to clear.
+The GET/PATCH responses expose `hasTelegramToken`, never the token. Discord continues
+using the existing first configured user webhook. New channels default to disabled;
+Discord and both event groups default to enabled. The additional disk/backup/recovery rules
+start disabled. `diskFreeThresholdPercent` is 1–50 (default 10), `alertCooldownMinutes` is
+1–10080 (default 60), and `minimumSeverity` is `info` (default), `warning` or `error`.
+Severity filters affect automatic messages, including lifecycle events and recovery;
+test deliveries bypass them. Partial updates preserve omitted settings.
 
 ### Users
 
@@ -379,8 +398,10 @@ validated on save).
 
 ### Alerts
 
-Discord alerts per server. Requires access to the server; the Discord webhook and the alert
-language come from `PATCH /settings`.
+Alerts per server. Requires access to the server. Delivery uses the channels and event
+switches configured by an admin through `PATCH /settings/integrations`. The existing Discord
+webhook and alert language still come from the first configured user webhook settings;
+email and Telegram work without a Discord webhook.
 
 - `GET /alerts/:serverId`
 - `PUT /alerts/:serverId` — body `{ downAlertEnabled?, resourceAlertEnabled?,

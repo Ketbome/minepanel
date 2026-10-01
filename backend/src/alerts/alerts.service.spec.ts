@@ -3,14 +3,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { AlertsService } from './alerts.service';
 import { AlertConfig } from './entities/alert-config.entity';
 import { Settings } from 'src/users/entities/settings.entity';
-import { DiscordService } from 'src/discord/discord.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 
 describe('AlertsService', () => {
   let service: AlertsService;
   let alertConfigRepo: { find: jest.Mock; findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
   let settingsRepo: { findOne: jest.Mock };
-  let discordService: { sendCustomMessage: jest.Mock };
+  let discordService: { sendCustomMessage: jest.Mock; sendOperationalAlert: jest.Mock };
   let dockerComposeService: { getServerConfig: jest.Mock };
 
   const running = { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' };
@@ -40,7 +40,7 @@ describe('AlertsService', () => {
     settingsRepo = {
       findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://discord.test/webhook', language: 'en' }),
     };
-    discordService = { sendCustomMessage: jest.fn().mockResolvedValue(undefined) };
+    discordService = { sendCustomMessage: jest.fn().mockResolvedValue(undefined), sendOperationalAlert: jest.fn().mockResolvedValue(undefined) };
     dockerComposeService = { getServerConfig: jest.fn().mockResolvedValue({ enableAutoStop: false, enableAutoPause: false }) };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -48,7 +48,7 @@ describe('AlertsService', () => {
         AlertsService,
         { provide: getRepositoryToken(AlertConfig), useValue: alertConfigRepo },
         { provide: getRepositoryToken(Settings), useValue: settingsRepo },
-        { provide: DiscordService, useValue: discordService },
+        { provide: NotificationsService, useValue: discordService },
         { provide: DockerComposeService, useValue: dockerComposeService },
       ],
     }).compile();
@@ -171,7 +171,7 @@ describe('AlertsService', () => {
       await expect(service.evaluate({ srv: stopped }, readCrashInfo)).resolves.toBeUndefined();
     });
 
-    it('should skip the message when no webhook is configured', async () => {
+    it('should dispatch crash alerts to other channels without a webhook', async () => {
       alertConfigRepo.find.mockResolvedValue([downConfig()]);
       dockerComposeService.getServerConfig.mockResolvedValue(crashConfig);
       settingsRepo.findOne.mockResolvedValue(null);
@@ -180,7 +180,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: starting }, readCrashInfo);
       await service.evaluate({ srv: stopped }, readCrashInfo);
 
-      expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'error', expect.any(Array));
     });
   });
 
@@ -270,14 +270,14 @@ describe('AlertsService', () => {
       expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
     });
 
-    it('should not send anything when no webhook is configured', async () => {
+    it('should dispatch down alerts to other channels without a webhook', async () => {
       alertConfigRepo.find.mockResolvedValue([resourceConfig]);
       settingsRepo.findOne.mockResolvedValue(null);
 
       await service.evaluate({ srv: hot });
       await service.evaluate({ srv: hot });
 
-      expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'warning', expect.any(Array));
     });
   });
 
@@ -295,6 +295,45 @@ describe('AlertsService', () => {
       await service.updateConfig('srv', { cpuThresholdPercent: 75 });
 
       expect(alertConfigRepo.save).toHaveBeenCalledWith(expect.objectContaining({ serverId: 'srv', cpuThresholdPercent: 75 }));
+    });
+  });
+  describe('incident recovery', () => {
+    it('reports recovery exactly once after an unexpected down transition', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
+      await service.evaluate({ srv: running });await service.evaluate({ srv: running });
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down');
+    });
+
+    it('does not call recovery after planned stops or unknown resource readings', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 1 })]);
+      await service.evaluate({ srv: running });service.markExpectedStop('srv');
+      await service.evaluate({ srv: stopped });await service.evaluate({ srv: running });
+      expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+      await service.evaluate({ srv: { ...running, cpuUsage: '95%' } });
+      await service.evaluate({ srv: { ...running, cpuUsage: 'N/A', memoryUsage: 'N/A' } });
+      expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+      await service.evaluate({ srv: running });await service.evaluate({ srv: running });
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'cpu');
+    });
+
+    it('recovers memory incidents only from available memory measurements', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 1 })]);
+      await service.evaluate({ srv: { ...running, memoryUsage: '950MiB' } });
+      await service.evaluate({ srv: { ...running, memoryUsage: 'N/A' } });
+      expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+      await service.evaluate({ srv: running });
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'memory');
+    });
+
+    it('clears incident state when its rule is disabled', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 1 })]);
+      await service.evaluate({ srv: { ...running, cpuUsage: '95%' } });
+      alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: false })]);
+      await service.evaluate({ srv: running });
+      expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
     });
   });
 });

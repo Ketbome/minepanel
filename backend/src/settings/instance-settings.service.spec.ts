@@ -5,6 +5,8 @@ import { InstanceSettingsService } from './instance-settings.service';
 import { InstanceSettings } from './entities/instance-settings.entity';
 import { Settings } from '../users/entities/settings.entity';
 import { decryptSecret, encryptSecret, isEncrypted } from '../common/crypto/secret-cipher';
+import { plainToInstance } from 'class-transformer';
+import { UpdateIntegrationSettingsDto } from './dto/update-integration-settings.dto';
 
 describe('InstanceSettingsService', () => {
   const originalSecret = process.env.JWT_SECRET;
@@ -199,5 +201,36 @@ describe('InstanceSettingsService', () => {
 
       expect(row.proxyBaseDomain).toBeNull();
     });
+  });
+  it('returns notification defaults for existing installations', async () => {
+    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, minimumSeverity: 'info', hasTelegramToken: false });
+    expect((await service.getNotifications()).telegramToken).toBe('');
+  });
+
+  it('stores Telegram credentials encrypted and exposes only a presence flag', async () => {
+    const result = await service.updateIntegrations({ notifications: { telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', emailEnabled: true, emailTo: 'admin@example.com' } });
+    expect(isEncrypted(row.telegramTokenEnc)).toBe(true);
+    expect(JSON.stringify(row.notifications)).not.toContain('secret');
+    expect(result.notifications.hasTelegramToken).toBe(true);
+    expect(result.notifications).not.toHaveProperty('telegramToken');
+    expect((await service.getNotifications()).telegramToken).toBe('123:secret');
+    await service.updateIntegrations({ notifications: { alertsEnabled: false } });
+    expect((await service.getNotifications()).telegramToken).toBe('123:secret');
+    await service.updateIntegrations({ notifications: { telegramEnabled: false, telegramToken: '' } });
+    expect(row.telegramTokenEnc).toBeNull();
+  });
+
+  it('rejects enabled channels with missing destinations', async () => {
+    await expect(service.updateIntegrations({ notifications: { emailEnabled: true } })).rejects.toThrow('require a recipient');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { telegramEnabled: true } })).rejects.toThrow('require a bot token');
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it('preserves omitted settings after DTO transformation for a partial patch', async () => {
+    await service.updateIntegrations({ notifications: { emailEnabled: true, emailTo: 'admin@example.com', discordEnabled: false } });
+    const dto = plainToInstance(UpdateIntegrationSettingsDto, { notifications: { alertsEnabled: false } });
+    await service.updateIntegrations(dto);
+    expect((await service.getPublic()).notifications).toMatchObject({ emailEnabled: true, emailTo: 'admin@example.com', discordEnabled: false, alertsEnabled: false });
   });
 });

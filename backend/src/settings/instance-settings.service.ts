@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -282,6 +282,10 @@ export class InstanceSettingsService implements OnModuleInit {
     const [smtp, oidc] = await Promise.all([this.getSmtp(), this.getOidc()]);
 
     return {
+      notifications: {
+        ...this.notificationDefaults(row),
+        hasTelegramToken: !!row.telegramTokenEnc,
+      },
       smtp: {
         host: smtp.host ?? '',
         port: smtp.port ?? null,
@@ -328,6 +332,19 @@ export class InstanceSettingsService implements OnModuleInit {
   async updateIntegrations(dto: UpdateIntegrationSettingsDto) {
     const row = await this.getRow();
 
+    if (dto.notifications) {
+      const { telegramToken, ...preferences } = dto.notifications;
+      const provided = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value !== undefined));
+      row.notifications = { ...row.notifications, ...provided };
+      row.telegramTokenEnc = this.applySecret(row.telegramTokenEnc, telegramToken);
+      if (row.notifications.emailEnabled && !row.notifications.emailTo) {
+        throw new BadRequestException('Email notifications require a recipient');
+      }
+      if (row.notifications.telegramEnabled && (!row.notifications.telegramChatId || !row.telegramTokenEnc)) {
+        throw new BadRequestException('Telegram notifications require a bot token and chat ID');
+      }
+    }
+
     if (dto.smtp) {
       const s = dto.smtp;
       row.smtpHost = this.applyText(row.smtpHost, s.host);
@@ -352,5 +369,32 @@ export class InstanceSettingsService implements OnModuleInit {
     await this.repo.save(row);
     this.notifyChanged();
     return this.getPublic();
+  }
+
+  private notificationDefaults(row: InstanceSettings) {
+    return {
+      discordEnabled: true,
+      emailEnabled: false,
+      emailTo: '',
+      telegramEnabled: false,
+      telegramChatId: '',
+      lifecycleEnabled: true,
+      alertsEnabled: true,
+      diskAlertEnabled: false,
+      backupFailureEnabled: false,
+      recoveryEnabled: false,
+      diskFreeThresholdPercent: 10,
+      alertCooldownMinutes: 60,
+      minimumSeverity: 'info' as const,
+      ...row.notifications,
+    };
+  }
+
+  async getNotifications() {
+    const row = await this.getRow();
+    return {
+      ...this.notificationDefaults(row),
+      telegramToken: row.telegramTokenEnc ? decryptSecret(row.telegramTokenEnc) : '',
+    };
   }
 }

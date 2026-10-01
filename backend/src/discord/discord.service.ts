@@ -164,6 +164,7 @@ export class DiscordService {
         port: url.port || 443,
         path: url.pathname + url.search,
         method: 'POST',
+        signal: AbortSignal.timeout(10_000),
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
@@ -171,17 +172,13 @@ export class DiscordService {
       };
 
       const req = https.request(options, (res) => {
-        let responseData = '';
-
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
+        res.on('data', () => {});
 
         res.on('end', () => {
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve();
           } else {
-            reject(new Error(`Discord webhook returned status ${res.statusCode}: ${responseData}`));
+            reject(new Error(`Discord webhook returned status ${res.statusCode}`));
           }
         });
       });

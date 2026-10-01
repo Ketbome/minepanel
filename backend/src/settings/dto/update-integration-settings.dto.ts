@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
 
 // Secret fields (smtpPassword, oidcClientSecret) are write-only:
 // - omitted   -> keep the current value
@@ -63,7 +63,81 @@ export class OidcSettingsDto {
   disablePasswordLogin?: boolean;
 }
 
+export class NotificationSettingsDto {
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  discordEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  emailEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(254)
+  @Matches(/^$|^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/)
+  emailTo?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  telegramEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(256)
+  @Matches(/^$|^\d+:[A-Za-z0-9_-]+$/)
+  telegramToken?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(100)
+  @Matches(/^$|^-?\d+$|^@[A-Za-z0-9_]+$/)
+  telegramChatId?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  lifecycleEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  alertsEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  diskAlertEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  backupFailureEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  recoveryEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  diskFreeThresholdPercent?: number;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
+  @Max(10080)
+  alertCooldownMinutes?: number;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['info', 'warning', 'error'])
+  minimumSeverity?: 'info' | 'warning' | 'error';
+
+}
+
 export class UpdateIntegrationSettingsDto {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NotificationSettingsDto)
+  notifications?: NotificationSettingsDto;
+
   @IsOptional()
   @ValidateNested()
   @Type(() => SmtpSettingsDto)

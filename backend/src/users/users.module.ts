@@ -6,6 +6,7 @@ import { UsersService } from './services/users.service';
 import { SettingsController } from './controllers/settings.controller';
 import { Settings } from './entities/settings.entity';
 import { SettingsService } from './services/settings.service';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 import { DiscordModule } from 'src/discord/discord.module';
 import { UserInvitation } from './entities/user-invitation.entity';
 import { AccessControlService } from './services/access-control.service';
@@ -19,7 +20,7 @@ import { ProxyModule } from 'src/proxy/proxy.module';
 import { IntegrationSettingsController } from './controllers/integration-settings.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule, forwardRef(() => ProxyModule)],
+  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, NotificationsModule, SettingsModule, forwardRef(() => ProxyModule)],
   controllers: [UsersController, SettingsController, AuditLogController, IntegrationSettingsController],
   providers: [UsersService, SettingsService, AccessControlService, AuditLogService, AuthMailService],
   exports: [UsersService, SettingsService, AccessControlService, AuditLogService],

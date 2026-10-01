@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
@@ -12,7 +13,7 @@ import { Settings } from 'src/users/entities/settings.entity';
 import { Users } from 'src/users/entities/users.entity';
 import { UserInvitation } from 'src/users/entities/user-invitation.entity';
 import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
-import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
+import { ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
@@ -161,7 +162,7 @@ export class ServerManagementService {
     private readonly configService: ConfigService,
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
-    private readonly discordService: DiscordService,
+    private readonly notificationsService: NotificationsService,
     private readonly alertsService: AlertsService,
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
@@ -733,10 +734,9 @@ export class ServerManagementService {
     }
   }
 
-  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
+  private async sendServerNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
     try {
       const userSettings = await this.getUserSettings();
-      if (!userSettings.webhook) return;
 
       const enrichedDetails = { ...details };
 
@@ -773,9 +773,9 @@ export class ServerManagementService {
         }
       }
 
-      await this.discordService.sendServerNotification(userSettings.webhook, type, serverName, userSettings.lang, enrichedDetails);
+      await this.notificationsService.sendServerNotification(userSettings.webhook || '', type, serverName, userSettings.lang, enrichedDetails);
     } catch (error) {
-      this.logger.error('Discord notification error', error);
+      this.logger.error('Server notification error', error);
     }
   }
 
@@ -887,12 +887,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
-      await this.sendDiscordNotification('restarted', serverId);
+      await this.sendServerNotification('restarted', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to restart server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to restart server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
   }
@@ -1131,12 +1131,12 @@ export class ServerManagementService {
       }
 
       this.logger.log(`Server ${serverId} deleted successfully`);
-      await this.sendDiscordNotification('deleted', serverId);
+      await this.sendServerNotification('deleted', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to delete server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to delete server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
     }
   }
@@ -1968,12 +1968,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} started successfully`);
-      await this.sendDiscordNotification('started', serverId);
+      await this.sendServerNotification('started', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to start server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
     }
   }
@@ -2043,12 +2043,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(this.FORCE_STOP_GRACE_SECONDS));
 
       this.logger.log(`Server ${serverId} force stopped`);
-      await this.sendDiscordNotification('stopped', serverId);
+      await this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to force stop server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to force stop server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to force stop server' });
       return false;
     }
   }
@@ -2096,12 +2096,12 @@ export class ServerManagementService {
       await this.execComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
-      await this.sendDiscordNotification('stopped', serverId);
+      await this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to stop server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to stop server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
     }
   }

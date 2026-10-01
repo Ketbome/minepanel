@@ -31,6 +31,22 @@ flowchart TB
     style Docker fill:#0f172a,stroke:#0ea5e9,color:#fff
 ```
 
+## Notifications
+
+`backend/src/notifications/notifications.service.ts` fans out lifecycle events from
+server management and alerts from the metrics sampler to Discord, SMTP and Telegram.
+Instance-wide channel destinations and event switches are persisted by
+`InstanceSettingsService`; the Telegram token uses the existing AES-GCM secret cipher.
+Admin-only integration endpoints expose a masked configuration and saved-destination tests.
+The legacy first-configured-user Discord webhook remains supported. Provider calls run
+independently with bounded timeouts; delivery errors never fail server operations.
+`notification-monitor.service.ts` runs a separate non-overlapping one-minute pass for opt-in
+disk and backup probes. Disk readings use `statfs` on the server-data mount, not `/`.
+Backup probes read canonical config, use bounded shell-free Docker commands and never
+forward raw logs. The per-server alert evaluator tracks active incidents for one-shot
+recovery; unavailable samples do not clear incidents. Severity filtering is shared by
+all automatic delivery channels.
+
 ## Components
 
 ### Frontend (Next.js)

@@ -38,14 +38,15 @@ pnpm test:e2e
 - `src/server-management/` - server lifecycle and runtime actions
 - `src/docker-compose/` - compose generation
 - `src/files/` - file operations
-
-Every text save of an existing `server.properties` creates a timestamped `.bak` copy beside the file before writing. A failed backup stops the save.
+- `src/notifications/` - independent Discord, SMTP email and Telegram delivery for lifecycle events and alerts; admin-managed instance settings and masked Telegram credentials
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
 - `src/metrics/` - live resources and tick performance, plus 7-day history. Native
   NeoForge/CurseForge TPS is an estimate from mean tick time; compatible spark
   responses provide 1-minute TPS and 10-second median/P95 MSPT. RCON stays inside
   the container. Missing measurements remain null.
+
+Every text save of an existing `server.properties` creates a timestamped `.bak` copy beside the file before writing. A failed backup stops the save.
 
 ## References
 
@@ -56,3 +57,5 @@ Player activity is collected in `src/player-activity/` every 30 seconds from bou
 logs, with sessions and cursors persisted atomically in SQLite. Server-authorized list/detail
 endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
 file-size and realpath boundaries. No game files or RCON settings are changed.
+
+Opt-in disk and backup probes run independently every minute, with bounded Docker commands and no raw log forwarding. Recovery notifications require an observed incident followed by valid healthy state. Channels share a minimum-severity filter; disk/backup repeats are configurable independently of per-server CPU/RAM rules.

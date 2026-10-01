@@ -450,3 +450,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+Notification settings: `src/components/organisms/settings/notification-settings.tsx` is
+admin-only under Settings > Integrations. Destinations cover all servers. Keep the Telegram
+token input write-only; test buttons use saved settings and stay disabled while changes
+are unsaved. API calls live in `src/services/settings/settings.service.ts`.
+
+The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat/severity policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.

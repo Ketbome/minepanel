@@ -1,10 +1,11 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { AlertConfig } from './entities/alert-config.entity';
 import { UpdateAlertConfigDto } from './dto/update-alert-config.dto';
 import { Settings } from 'src/users/entities/settings.entity';
-import { DiscordService, SupportedLanguage } from 'src/discord/discord.service';
+import { SupportedLanguage } from 'src/discord/discord.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { parseCpuPercent, parseMemoryToMb } from 'src/metrics/metric-parse.util';
 import { getAlertMessages } from './alerts.translations';
@@ -36,6 +37,7 @@ interface ServerAlertState {
   highMemoryCount: number;
   lastAlertAt: Partial<Record<AlertType, number>>;
   expectedStopUntil: number;
+  incidents: Set<AlertType>;
 }
 
 @Injectable()
@@ -48,7 +50,7 @@ export class AlertsService {
     private readonly alertConfigRepo: Repository<AlertConfig>,
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
-    private readonly discordService: DiscordService,
+    private readonly notificationsService: NotificationsService,
     private readonly dockerComposeService: DockerComposeService,
   ) {}
 
@@ -85,6 +87,8 @@ export class AlertsService {
       return;
     }
 
+    const present = new Set(Object.keys(resources));
+    for (const id of this.state.keys()) if (!present.has(id)) this.state.delete(id);
     const configsByServer = new Map(configs.map((config) => [config.serverId, config]));
 
     for (const [serverId, data] of Object.entries(resources)) {
@@ -104,6 +108,12 @@ export class AlertsService {
         }
       }
 
+      if (config.downAlertEnabled && data.status === 'running') {
+        for (const type of ['down', 'crash'] as const) await this.recover(serverId, state, type);
+      }
+      if (!config.downAlertEnabled) { state.incidents.delete('down'); state.incidents.delete('crash'); }
+      if (!config.resourceAlertEnabled) { state.incidents.delete('cpu'); state.incidents.delete('memory'); }
+
       if (config.resourceAlertEnabled && data.status === 'running') {
         await this.checkResources(serverId, config, state, data);
       } else {
@@ -122,7 +132,7 @@ export class AlertsService {
   private getState(serverId: string): ServerAlertState {
     let state = this.state.get(serverId);
     if (!state) {
-      state = { lastStatus: null, highCpuCount: 0, highMemoryCount: 0, lastAlertAt: {}, expectedStopUntil: 0 };
+      state = { lastStatus: null, highCpuCount: 0, highMemoryCount: 0, lastAlertAt: {}, expectedStopUntil: 0, incidents: new Set() };
       this.state.set(serverId, state);
     }
     return state;
@@ -149,6 +159,7 @@ export class AlertsService {
       // If the config cannot be read, still alert: an unreachable server is worth reporting
     }
 
+    state.incidents.add('down');
     state.lastAlertAt.down = Date.now();
     await this.notify(serverId, 'down');
   }
@@ -180,6 +191,7 @@ export class AlertsService {
     }
 
     if (!this.isInCooldown(state, 'crash', config.cooldownMinutes)) {
+      state.incidents.add('crash');
       state.lastAlertAt.crash = Date.now();
       await this.notifyCrash(serverId, info, maxRetries);
     }
@@ -204,15 +216,25 @@ export class AlertsService {
       state.highMemoryCount = 0;
     }
 
+    if (cpuPercent !== null && cpuPercent < config.cpuThresholdPercent) await this.recover(serverId, state, 'cpu');
+    if (memoryPercent !== null && memoryPercent < config.memoryThresholdPercent) await this.recover(serverId, state, 'memory');
+
     if (state.highCpuCount >= config.sustainedMinutes && !this.isInCooldown(state, 'cpu', config.cooldownMinutes)) {
+      state.incidents.add('cpu');
       state.lastAlertAt.cpu = Date.now();
       await this.notify(serverId, 'cpu', { usage: `${cpuPercent?.toFixed(1)}%`, threshold: `${config.cpuThresholdPercent}%`, sustained: config.sustainedMinutes });
     }
 
     if (state.highMemoryCount >= config.sustainedMinutes && !this.isInCooldown(state, 'memory', config.cooldownMinutes)) {
+      state.incidents.add('memory');
       state.lastAlertAt.memory = Date.now();
       await this.notify(serverId, 'memory', { usage: `${memoryPercent?.toFixed(1)}% (${data.memoryUsage})`, threshold: `${config.memoryThresholdPercent}%`, sustained: config.sustainedMinutes });
     }
+  }
+
+  private async recover(serverId: string, state: ServerAlertState, type: AlertType): Promise<void> {
+    if (!state.incidents.delete(type)) return;
+    await this.notificationsService.sendOperationalAlert('recovery', serverId, type);
   }
 
   private isInCooldown(state: ServerAlertState, type: AlertType, cooldownMinutes: number): boolean {
@@ -223,10 +245,7 @@ export class AlertsService {
   private async notifyCrash(serverId: string, info: CrashInfo, maxRetries: number): Promise<void> {
     try {
       const settings = await this.findWebhookSettings();
-      const webhook = settings?.discordWebhook;
-      if (!webhook) {
-        return;
-      }
+      const webhook = settings?.discordWebhook || '';
 
       const t = getAlertMessages((settings?.language as SupportedLanguage) || 'es');
       const logTail = info.logTail.trim().slice(-LOG_TAIL_MAX_CHARS) || '-';
@@ -236,7 +255,7 @@ export class AlertsService {
         { name: t.retriesField, value: `\`${maxRetries}\``, inline: true },
         { name: t.logTailField, value: `\`\`\`\n${logTail}\n\`\`\`` },
       ];
-      await this.discordService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields);
+      await this.notificationsService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields);
     } catch (error) {
       this.logger.warn(`Failed to send crash alert for server ${serverId}: ${(error as Error).message}`);
     }
@@ -252,10 +271,7 @@ export class AlertsService {
   private async notify(serverId: string, type: AlertType, details?: { usage: string; threshold: string; sustained: number }): Promise<void> {
     try {
       const settings = await this.findWebhookSettings();
-      const webhook = settings?.discordWebhook;
-      if (!webhook) {
-        return;
-      }
+      const webhook = settings?.discordWebhook || '';
 
       const lang = (settings?.language as SupportedLanguage) || 'es';
       const t = getAlertMessages(lang);
@@ -263,7 +279,7 @@ export class AlertsService {
       const fields: Array<{ name: string; value: string; inline?: boolean }> = [{ name: t.serverField, value: `\`${serverId}\``, inline: true }];
 
       if (type === 'down') {
-        await this.discordService.sendCustomMessage(webhook, t.downTitle, t.downDescription, 'error', fields);
+        await this.notificationsService.sendCustomMessage(webhook, t.downTitle, t.downDescription, 'error', fields);
         return;
       }
 
@@ -273,7 +289,7 @@ export class AlertsService {
 
       const title = type === 'cpu' ? t.cpuTitle : t.memoryTitle;
       const description = type === 'cpu' ? t.cpuDescription : t.memoryDescription;
-      await this.discordService.sendCustomMessage(webhook, title, description, 'warning', fields);
+      await this.notificationsService.sendCustomMessage(webhook, title, description, 'warning', fields);
     } catch (error) {
       this.logger.warn(`Failed to send ${type} alert for server ${serverId}: ${(error as Error).message}`);
     }
