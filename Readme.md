@@ -61,7 +61,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **Networking** — Port mappings, per-server network settings and admin-only custom compose snippets · [Networking](https://minepanel.ketbome.com/networking)
 - **Users & access** — Admin and user roles, per-server permissions, invitations and an audit log · [Access control](https://minepanel.ketbome.com/features#roles-and-access-control)
 - **Single Sign-On** — OIDC login (Authentik, Google, …), with an SSO-only mode · [SSO](https://minepanel.ketbome.com/sso)
-- **Alerts** — Discord webhooks for server events and alerts (down, crash loop, high CPU/RAM)
+- **Notifications** — Discord webhooks, email and Telegram for server events and alerts (down, crash loop, high CPU/RAM, low disk space, failed backups and incident recovery), with admin-managed channel switches and test delivery · [Notifications](https://minepanel.ketbome.com/features#notifications)
 - **Updates** — Release notes in the panel for every version between yours and the newest, and a one-click update for admins
 - **Multi-language** — English, Spanish, Dutch, German, French, Polish, Russian, Portuguese and Turkish
 - **Multi-arch** — x86_64 and ARM64 (Raspberry Pi, Apple Silicon)

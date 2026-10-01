@@ -46,6 +46,7 @@ describe('DiscordService', () => {
 
     const [options] = (https.request as jest.Mock).mock.calls[0];
     expect(options).toMatchObject({ hostname: 'discord.com', port: 443, path: '/api/webhooks/1/abc?wait=true', method: 'POST' });
+    expect(options.signal).toBeInstanceOf(AbortSignal);
     const payload = JSON.parse(req.write.mock.calls[0][0]);
     expect(payload.embeds[0].fields).toEqual([
       { name: '🎮 survival', value: '```\nplay.example.com:25565\n```', inline: false },

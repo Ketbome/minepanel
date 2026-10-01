@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Settings } from '../users/entities/settings.entity';
 import { Users } from '../users/entities/users.entity';
 import { ScheduledTask } from '../scheduled-tasks/entities/scheduled-task.entity';
-import { DiscordService } from '../discord/discord.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Mock fs-extra with factory function
 jest.mock('fs-extra', () => ({
@@ -110,7 +110,7 @@ describe('ServerManagementService', () => {
         ServerManagementService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
-        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: NotificationsService, useValue: mockDiscordService },
         { provide: AlertsService, useValue: mockAlertsService },
         { provide: ServerStoreService, useValue: mockStore },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
@@ -402,7 +402,7 @@ describe('ServerManagementService', () => {
             },
           },
           { provide: getRepositoryToken(Settings), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
-          { provide: DiscordService, useValue: { sendServerNotification: jest.fn() } },
+          { provide: NotificationsService, useValue: { sendServerNotification: jest.fn() } },
           { provide: AlertsService, useValue: { markExpectedStop: jest.fn() } },
           { provide: ServerStoreService, useValue: { readConfig: jest.fn() } },
           { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },

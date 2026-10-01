@@ -59,11 +59,15 @@ The Metrics tab combines live TPS/MSPT, container CPU/RAM and player count with
 labelled as estimated TPS and mean MSPT. Compatible spark servers expose measured
 TPS and median/P95 durations. The view identifies disabled RCON, unavailable
 measurements and unsupported Bedrock ticks; resource charts remain available.
-Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Existing Discord alert
-settings remain below the charts.
+Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Per-server alert
+settings remain below the charts. Admins choose Discord, SMTP email and Telegram delivery
+under Settings > Integrations, with event switches and saved-destination tests. Telegram
+tokens are write-only; unsaved changes disable notification tests.
 
 **Players** shows persistent player profiles and paginated sessions for both editions,
 including offline players: on Java inside each profile's Sessions tab (`PlayerSessions`), on
 Bedrock as the session list itself (`player-activity.tsx`). Saved Java world statistics are shown separately
 from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
 30 seconds after completion; unknown presence is explicitly labeled.
+
+Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.

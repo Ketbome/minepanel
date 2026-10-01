@@ -29,6 +29,21 @@ flowchart LR
 | Minecraft servers | One compose project per server | `itzg/minecraft-server` or `itzg/minecraft-bedrock-server` |
 | Edge proxy | Its own compose project | mc-router in `data/proxy/` or Velocity in `data/velocity/`, never both |
 
+## Notifications
+
+`backend/src/notifications/notifications.service.ts` fans out lifecycle events from
+server management and alerts from the metrics sampler to Discord, SMTP and Telegram.
+Instance-wide channel destinations and event switches are persisted by
+`InstanceSettingsService`; the Telegram token uses the existing AES-GCM secret cipher.
+Admin-only integration endpoints expose a masked configuration and saved-destination tests.
+The legacy first-configured-user Discord webhook remains supported. Provider calls run
+independently with bounded timeouts; delivery errors never fail server operations.
+`notification-monitor.service.ts` runs a separate non-overlapping one-minute pass for opt-in
+disk and backup probes. Disk readings use `statfs` on the server-data mount, not `/`.
+Backup probes read canonical config, use bounded shell-free Docker commands and never
+forward raw logs. The per-server alert evaluator tracks active incidents for one-shot
+recovery; unavailable samples do not clear incidents. Crash log tails remain Discord-only; email and Telegram carry a plain-text summary.
+
 ## Components
 
 ### Frontend (Next.js)

@@ -110,9 +110,27 @@ export interface OidcIntegration {
 export interface IntegrationSettings {
   smtp: SmtpIntegration;
   oidc: OidcIntegration;
+  notifications: NotificationSettings;
+}
+
+export interface NotificationSettings {
+  discordEnabled: boolean;
+  emailEnabled: boolean;
+  emailTo: string;
+  telegramEnabled: boolean;
+  telegramChatId: string;
+  hasTelegramToken: boolean;
+  lifecycleEnabled: boolean;
+  alertsEnabled: boolean;
+  diskAlertEnabled: boolean;
+  backupFailureEnabled: boolean;
+  recoveryEnabled: boolean;
+  diskFreeThresholdPercent: number;
+  alertCooldownMinutes: number;
 }
 
 export interface UpdateIntegrationSettings {
+  notifications?: Partial<Omit<NotificationSettings, 'hasTelegramToken'>> & { telegramToken?: string };
   smtp?: {
     host?: string;
     port?: number;
@@ -199,5 +217,10 @@ export const updateIntegrationSettings = async (settings: UpdateIntegrationSetti
 
 export const testSmtp = async (): Promise<{ success: boolean; message: string }> => {
   const response = await api.post('/settings/integrations/smtp/test');
+  return response.data;
+};
+
+export const testNotification = async (channel: 'email' | 'telegram'): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post('/settings/integrations/notifications/test', { channel });
   return response.data;
 };
