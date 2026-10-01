@@ -281,6 +281,27 @@ describe('UploadSessionsService', () => {
     await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(NotFoundException);
   });
 
+  it('completes a session only for the kind it was opened for', async () => {
+    const assertTarget = jest.fn().mockResolvedValue(undefined);
+    const { id } = await service.createFor('modpack', 1, 'srv', 'pack.zip', 3, assertTarget);
+    expect(assertTarget).toHaveBeenCalled();
+    expect(filesService.assertUploadTarget).not.toHaveBeenCalled();
+    await service.append(1, 'srv', id, 0, chunk('abc'));
+
+    await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(NotFoundException);
+    await expect(service.completeFor('other', 1, 'srv', id, jest.fn())).rejects.toThrow(NotFoundException);
+
+    const move = jest.fn(async (staged: string) => (await fs.readFile(staged)).toString());
+    expect(await service.completeFor('modpack', 1, 'srv', id, move)).toBe('abc');
+    expect(move).toHaveBeenCalledWith(path.join(dir, `${id}.part`), expect.objectContaining({ path: 'pack.zip', kind: 'modpack' }));
+    expect(filesService.saveUpload).not.toHaveBeenCalled();
+  });
+
+  it('opens no session when the caller refuses the target', async () => {
+    await expect(service.createFor('modpack', 1, 'srv', 'pack.exe', 3, () => Promise.reject(new BadRequestException('nope')))).rejects.toThrow(BadRequestException);
+    expect(await fs.readdir(dir)).toEqual([]);
+  });
+
   it('refuses an abort while the file is being moved into place', async () => {
     const { id } = await service.create(1, 'srv', 'a.bin', 3, false);
     await service.append(1, 'srv', id, 0, chunk('abc'));

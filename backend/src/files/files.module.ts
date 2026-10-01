@@ -20,6 +20,6 @@ import { UsersModule } from 'src/users/users.module';
   ],
   controllers: [FilesController],
   providers: [FilesService, UploadSessionsService],
-  exports: [FilesService],
+  exports: [FilesService, UploadSessionsService],
 })
 export class FilesModule {}

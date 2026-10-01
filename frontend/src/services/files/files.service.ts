@@ -57,6 +57,51 @@ export interface DownloadOptions {
   signal?: AbortSignal;
 }
 
+// A dropped chunk is retried from the offset the server reports, so a flaky link
+// costs at most one chunk instead of the whole file. Opening and completing a session
+// is per feature (files, modpacks); chunks, offsets and aborts go to the files routes.
+export async function uploadInChunks<T = unknown>(serverId: string, file: File, createUrl: string, body: object, completeUrl: (id: string) => string, options?: UploadOptions): Promise<T> {
+  const { data } = await api.post(createUrl, body, { signal: options?.signal });
+  const url = `/files/${serverId}/uploads/${data.id}`;
+
+  try {
+    let offset = 0;
+    let failures = 0;
+
+    while (offset < file.size) {
+      const start = offset;
+      try {
+        const { data: next } = await api.put(url, file.slice(start, start + CHUNK_SIZE), {
+          params: { offset: start },
+          headers: { "Content-Type": "application/octet-stream" },
+          signal: options?.signal,
+          onUploadProgress: (event) => {
+            const loaded = start + event.loaded;
+            options?.onProgress?.({ loaded, total: file.size, percentage: Math.round((loaded * 100) / file.size) });
+          },
+        });
+        offset = next.offset;
+        failures = 0;
+      } catch (error) {
+        if (axios.isCancel(error) || ++failures > CHUNK_RETRIES) throw error;
+        // 400/403/404/413/507 will not get better by retrying.
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+        if (status && status !== 409 && status < 500) throw error;
+
+        await wait(Math.min(1000 * 2 ** (failures - 1), 15000), options?.signal);
+        offset = await api.get(url, { signal: options?.signal }).then((res) => res.data.offset, () => offset);
+      }
+    }
+
+    const { data: result } = await api.post(completeUrl(data.id), {}, { signal: options?.signal });
+    return result;
+  } catch (error) {
+    // Best effort: the server sweeps sessions left idle anyway.
+    api.delete(url).catch(() => undefined);
+    throw error;
+  }
+}
+
 export const filesService = {
   async listFiles(serverId: string, path: string = ""): Promise<FileItem[]> {
     const { data } = await api.get(`/files/${serverId}/list`, {
@@ -90,47 +135,9 @@ export const filesService = {
     await api.put(`/files/${serverId}/rename`, { path, newName });
   },
 
-  // A dropped chunk is retried from the offset the server reports, so a flaky link
-  // costs at most one chunk instead of the whole file.
   async uploadFileChunked(serverId: string, path: string, file: File, relativePath?: string, options?: UploadOptions): Promise<void> {
-    const { data } = await api.post(`/files/${serverId}/uploads`, { path, name: relativePath || file.name, size: file.size, overwrite: options?.overwrite ?? true }, { signal: options?.signal });
-    const url = `/files/${serverId}/uploads/${data.id}`;
-
-    try {
-      let offset = 0;
-      let failures = 0;
-
-      while (offset < file.size) {
-        const start = offset;
-        try {
-          const { data: next } = await api.put(url, file.slice(start, start + CHUNK_SIZE), {
-            params: { offset: start },
-            headers: { "Content-Type": "application/octet-stream" },
-            signal: options?.signal,
-            onUploadProgress: (event) => {
-              const loaded = start + event.loaded;
-              options?.onProgress?.({ loaded, total: file.size, percentage: Math.round((loaded * 100) / file.size) });
-            },
-          });
-          offset = next.offset;
-          failures = 0;
-        } catch (error) {
-          if (axios.isCancel(error) || ++failures > CHUNK_RETRIES) throw error;
-          // 400/403/404/413/507 will not get better by retrying.
-          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-          if (status && status !== 409 && status < 500) throw error;
-
-          await wait(Math.min(1000 * 2 ** (failures - 1), 15000), options?.signal);
-          offset = await api.get(url, { signal: options?.signal }).then((res) => res.data.offset, () => offset);
-        }
-      }
-
-      await api.post(`${url}/complete`, {}, { signal: options?.signal });
-    } catch (error) {
-      // Best effort: the server sweeps sessions left idle anyway.
-      api.delete(url).catch(() => undefined);
-      throw error;
-    }
+    const base = `/files/${serverId}/uploads`;
+    await uploadInChunks(serverId, file, base, { path, name: relativePath || file.name, size: file.size, overwrite: options?.overwrite ?? true }, (id) => `${base}/${id}/complete`, options);
   },
 
   async uploadMultipleFiles(serverId: string, path: string, files: File[], relativePaths?: string[], options?: UploadOptions): Promise<BatchUploadResult> {

@@ -25,7 +25,7 @@ const STALE_MS = 15 * 60 * 1000;
 
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-interface UploadSession {
+export interface UploadSession {
   id: string;
   userId: number;
   serverId: string;
@@ -33,7 +33,11 @@ interface UploadSession {
   size: number;
   overwrite: boolean;
   updatedAt: number;
+  // Set by uploads that land outside the file manager (modpacks); absent for the file manager.
+  kind?: string;
 }
+
+type SessionFields = Pick<UploadSession, 'userId' | 'serverId' | 'path' | 'size' | 'overwrite' | 'kind'>;
 
 // Large files arrive as a series of appends to one staged file, so no single request
 // has to carry the whole upload. Session files live on disk next to the servers: a
@@ -67,14 +71,25 @@ export class UploadSessionsService implements OnModuleDestroy {
   }
 
   create(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite = true): Promise<{ id: string; offset: number }> {
-    const run = this.createQueue.then(() => this.createSession(userId, serverId, filePath, size, admin, overwrite));
+    return this.open({ userId, serverId, path: filePath, size, overwrite }, () => this.filesService.assertUploadTarget(serverId, filePath, admin, overwrite));
+  }
+
+  // Uploads that land outside the file manager share the chunk handling; the caller checks
+  // the target before the first byte and moves the finished file itself (completeFor).
+  createFor(kind: string, userId: number, serverId: string, filePath: string, size: number, assertTarget: () => Promise<void>): Promise<{ id: string; offset: number }> {
+    return this.open({ userId, serverId, path: filePath, size, overwrite: true, kind }, assertTarget);
+  }
+
+  private open(fields: SessionFields, assertTarget: () => Promise<void>): Promise<{ id: string; offset: number }> {
+    const run = this.createQueue.then(() => this.createSession(fields, assertTarget));
     this.createQueue = run.catch(() => undefined);
     return run;
   }
 
-  private async createSession(userId: number, serverId: string, filePath: string, size: number, admin: boolean, overwrite: boolean): Promise<{ id: string; offset: number }> {
+  private async createSession(fields: SessionFields, assertTarget: () => Promise<void>): Promise<{ id: string; offset: number }> {
+    const { userId, size } = fields;
     // Fail before the first byte, not after gigabytes: the target must be writable...
-    await this.filesService.assertUploadTarget(serverId, filePath, admin, overwrite);
+    await assertTarget();
 
     const now = Date.now();
     let live = await this.readSessions();
@@ -99,7 +114,7 @@ export class UploadSessionsService implements OnModuleDestroy {
       throw new HttpException('Not enough free disk space for this upload', HttpStatus.INSUFFICIENT_STORAGE);
     }
 
-    const session: UploadSession = { id: randomUUID(), userId, serverId, path: filePath, size, overwrite, updatedAt: Date.now() };
+    const session: UploadSession = { ...fields, id: randomUUID(), updatedAt: Date.now() };
     // Metadata first: the sweeper discards a part file that has none.
     await fs.writeJson(this.metaPath(session.id), session);
     await fs.writeFile(this.partPath(session.id), '');
@@ -164,8 +179,20 @@ export class UploadSessionsService implements OnModuleDestroy {
     }
   }
 
-  async complete(userId: number, serverId: string, id: string, admin: boolean): Promise<{ path: string }> {
+  complete(userId: number, serverId: string, id: string, admin: boolean): Promise<{ path: string }> {
+    return this.completeFor(undefined, userId, serverId, id, async (staged, session) => {
+      // Checked again: the file may have appeared while the chunks were on their way.
+      await this.filesService.saveUpload(serverId, session.path, staged, admin, session.overwrite);
+      return { path: session.path };
+    });
+  }
+
+  async completeFor<T>(kind: string | undefined, userId: number, serverId: string, id: string, move: (staged: string, session: UploadSession) => Promise<T>): Promise<T> {
     const session = await this.load(userId, serverId, id);
+    // A session only completes where it was opened for: a modpack must not land in mc-data.
+    if (session.kind !== kind) {
+      throw new NotFoundException('Upload not found');
+    }
     // The same lock as a chunk: a second complete, or a chunk landing right before the
     // move, would otherwise end in a missing file halfway through.
     if (this.busy.has(id)) {
@@ -180,10 +207,9 @@ export class UploadSessionsService implements OnModuleDestroy {
         throw new ConflictException({ message: 'Upload is incomplete', offset });
       }
 
-      // Checked again: the file may have appeared while the chunks were on their way.
-      await this.filesService.saveUpload(serverId, session.path, this.partPath(id), admin, session.overwrite);
+      const result = await move(this.partPath(id), session);
       await fs.remove(this.metaPath(id));
-      return { path: session.path };
+      return result;
     } finally {
       this.busy.delete(id);
       this.completing.delete(id);
