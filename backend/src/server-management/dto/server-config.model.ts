@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, Min, Max, IsArray, ValidateNested, MaxLength, ValidateBy, buildMessage, IsIn, ArrayMaxSize } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsNotEmpty, IsObject, Matches, IsInt, IsNumber, Min, Max, IsArray, ValidateNested, MaxLength, ValidateBy, buildMessage, IsIn, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { isValidPortMapping } from 'src/common/compose/port-mapping';
 import { PartialType } from '@nestjs/mapped-types';
@@ -408,6 +408,13 @@ export class ServerConfigDto {
   @IsOptional()
   envVars?: string;
 
+  // Vanilla Tweaks share codes (datapacks or crafting tweaks), passed as VANILLATWEAKS_SHARECODE
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @Matches(/^[A-Za-z0-9]{3,16}$/, { each: true, message: 'Each Vanilla Tweaks share code must be 3-16 letters or digits' })
+  vanillaTweaksCodes?: string[];
+
   @IsString()
   @IsOptional()
   @MaxLength(16384)
@@ -779,6 +786,21 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   modWatchTargetVersion?: string;
+
+  // Default "TP Spawn" coordinates for the Players tab quick action; not compose input, saved
+  // through PUT /servers/:id/spawn-point, not the whole-form save. Falls back to (0, 100, 0)
+  // when unset.
+  @IsNumber()
+  @IsOptional()
+  spawnX?: number;
+
+  @IsNumber()
+  @IsOptional()
+  spawnY?: number;
+
+  @IsNumber()
+  @IsOptional()
+  spawnZ?: number;
 
   // Activity log opt-in (chat is personal data); saved through /activity, never compose input.
   @IsBoolean()

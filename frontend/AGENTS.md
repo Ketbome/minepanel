@@ -241,8 +241,11 @@ Tooling / build (Next.js 16):
 - `src/components/molecules/Tabs/ModWatchTab.tsx` - mod notes, target-version compatibility check, and on-demand changelog history; stays enabled while the server is running (unlike the Mods tab), and is read-only with respect to the mod list.
 - `src/components/organisms/settings/end/` - the Danger Zone easter egg: a first-person
   Minecraft-like run. Only `settings/EndPortalEasterEgg.tsx` is in the settings bundle; it loads
-  the story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`, `panels/`) with
-  `next/dynamic` on click, so `three` and the story never reach the page. Nothing outside this
+  the store, audio and story text (`lore/`) and then the journey (`EndJourney`, `JourneyScene`,
+  `panels/`) on click, so `three`, the store and the story never reach the page. At page load it
+  reads only `store/persist.ts` and `store/admins.ts`: import those files directly, never the
+  `store` index. The start screen's Play unlocks the audio, since the button's click came before
+  the audio module loaded. Nothing outside this
   folder may import from it, except `AchievementsTrophy.tsx`: the dashboard header's trophy slot.
   It carries only the key catalog (`achievements.ts`) and the egg icon; its list, badges and lore
   load with `next/dynamic` when it opens. `advance()` reports each key through
@@ -259,11 +262,37 @@ Tooling / build (Next.js 16):
     effects. Anything the crosshair can use or hit registers a `Target` (`runtime.ts`); R3F pointer
     events are not used. `BLOCKS` (`world.ts`) says how long a block takes by hand (`mine`) or with the
     pickaxe (`pick`) and what it `drop`s; an item with a `block` in `ITEMS` is placed with right click
-    (hold to repeat). `Drops.tsx` holds item entities (mob loot, barters, your shot arrows) that you
-    pick up by walking over them. `runtime.hooks.vibration` is how steps, landings, blocks, chests
+    (hold to repeat), one with `food` is eaten by holding it. `Drops.tsx` holds item entities (mob
+    loot, barters, your shot arrows) that you pick up by walking over them; a monster's loot table is
+    the `loot` option of `useMonster`, rolled by `dropLoot` when it dies. Armor is four gold pieces
+    (`ARMOR` in `items.tsx`, the store's `armor`), 4% less damage per point; any piece calms piglins.
+    Holding right click with the shield sets the store's `blocking`, which `hurt()` honours for
+    every cause outside `UNBLOCKABLE` (`store/health.ts`); a totem anywhere in the inventory takes a
+    death. The store never imports `end-audio` (it would be a cycle): `Player.tsx` plays the block
+    and totem sounds when `blockedAt`/`savedAt` change. `lockPointer()` also takes the screen full
+    screen and locks `KeyW`, so every caller must be a click. `runtime.hooks.vibration` is how steps, landings, blocks, chests
     and arrows reach the ancient city's noise and the Warden.
-  - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Nether`, `Stronghold`, `End`,
-    `EndCity`), plus shared props. `mobs/`: models built from pixel-sized boxes with their AI;
+  - Graphics (the shader-pack look): `engine/quality.ts` has three tiers the drei
+    `PerformanceMonitor` in `engine/Graphics.tsx` steps between (high: 2048 shadows plus the
+    `@react-three/postprocessing` composer with N8AO, bloom, grading and SMAA; medium: 1024
+    shadows; low: none, DPR 1). Never turn on `multisampling` in the composer: it cost more than the AO.
+    Zones with a sun use `engine/Sun.tsx` instead of a bare `directionalLight` (its position is a
+    direction; it follows the player for shadows). Bloom only catches values past 1: register a
+    glowing singleton material with `glow(material, boost)` (`engine/shading.ts`), which only
+    brightens it while bloom runs; `sway()` makes foliage move in the wind. A hand-written
+    `ShaderMaterial` must end with `outputColor()` (`OUTPUT_GLSL`) or it looks washed out inside the
+    composer. Water is not a cube per block: `WorldMesh` builds one mesh of its visible faces per
+    chunk (`engine/water.ts`), and the zone feeds its sky to `waterSky`/`setWaterSky`. With the
+    composer on, the hand's `Hud` renders at priority 2 so the scene is not drawn twice.
+  - `acts/`: one scene per zone (`Overworld`, `AncientCity`, `Sift`, `Nether`, `Stronghold`, `End`,
+    `EndCity`), plus shared props. The Sift is an optional side trip, never a split: `SiftGate.tsx`
+    puts four note blocks at the ancient city's frame; the sign's tune plays the Sift's song
+    (`playSong` in `end-audio.ts`, an original composition, never a Minecraft track), freezes the
+    noise meter while it plays, and sets `siftOpen`, after which the frame leads to `acts/Sift.tsx`.
+    The spirit is `acts/SiftSpirit.tsx`, timed off the note and kick times `playSong` returns. The
+    Sift's regions, heights and spots live in `acts/sift-layout.ts` (pure, shared by the builder and
+    the scene); Blubs, Sifters and turtles in `mobs/sift.tsx`; ichor hurts like lava. The diamond
+    sword has no recipe: it is The Sift's reward, and the camp's iron makes the run's sword. `mobs/`: models built from pixel-sized boxes with their AI;
     walking mobs move through `useMob` (`mobs/parts.tsx`: wander, chase, panic, knockback, gravity,
     step-up, climbing out when buried, never into lava) on the same physics as the player. Mobs a
     run depends on for supplies (endermen for pearls, piglins for barters) come back through
@@ -328,7 +357,7 @@ Tooling / build (Next.js 16):
     (`hud/Screamer.tsx`), a few seconds with its hands over its face, and then the chase.
   - Sounds: CC0 clips in `public/sounds` (credited in `CREDITS.md`), each cue with a synth fallback
     in `end-audio.ts`. Block textures are painted at runtime (`voxels.tsx` End,
-    `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`).
+    `overworld-voxels.tsx` Overworld and deep dark, `nether-voxels.tsx`, `sift-voxels.tsx`).
   - The overlay is exempt from the no-perpetual-motion rule; it is not an operating screen. Reduced
     motion still plays, with a steady camera (`runtime.reducedMotion`: no bobbing, no FOV kicks, no
     hand sway) and the poem without scrolling; only a browser without WebGL2 falls back to the
@@ -370,6 +399,9 @@ i18n:
 
 - Any new user-facing key must be added to all active dictionaries (`en`, `es`, `nl`, `de`, `fr`, `pl`, `ru`, `pt`, `tr`); the build fails if a dictionary is missing a key.
 - Register a new locale only in `src/lib/translations/index.ts`; `languageOptions` updates both selectors and the settings service uses `Language` from that registry.
+- Only `en` is bundled (it is the prerendered first render); every other dictionary is its own chunk,
+  loaded by `loadDictionary` when picked, and `useLanguage` switches only once it has arrived. Never
+  import a dictionary file from UI code: it would ship in every page's initial JS again.
 - Keep key naming consistent; avoid one-off names that break translation structure.
 
 UI base components:
@@ -399,6 +431,8 @@ Every frontend AGENTS update must include:
 ## Context Maintenance (Golden Rule)
 
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
+
+The Files tab opens `server.properties` in `src/components/molecules/FileBrowser/ServerPropertiesEditor.tsx`. It edits existing properties only, preserves comments and unknown lines, and leaves properties backed by `server.json` to Server Settings. `server-properties-model.ts` owns parsing, line replacement and the save/restore change summary. Guided and raw views share one draft; switching must preserve unsaved text. Backups are listed through the files service from the same folder, and restoring one uses the ordinary file write so the current file is backed up first.
 
 
 Player profiles: the Players tab renders `PlayersTab` on Java (sessions live in the profile's

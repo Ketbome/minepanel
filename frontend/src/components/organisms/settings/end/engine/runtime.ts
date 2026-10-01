@@ -30,7 +30,7 @@ export interface Target {
 }
 
 export interface Projectile {
-  kind: 'arrow' | 'fireball' | 'ghastball' | 'dragonball' | 'pearl' | 'bullet';
+  kind: 'arrow' | 'fireball' | 'ghastball' | 'dragonball' | 'pearl' | 'bullet' | 'trident';
   readonly pos: THREE.Vector3;
   readonly vel: THREE.Vector3;
   gravity: number;
@@ -95,10 +95,24 @@ export const runtime = {
   canvas: null as HTMLCanvasElement | null,
 };
 
+// Every Play, resume and respawn click also takes the screen: in full screen Chrome lets a page
+// keep Ctrl+W (sprint and walk forward) from closing the tab, and a short Escape (pause, close a
+// window) from leaving full screen; holding Escape still leaves it. Other browsers ignore the lock.
 export function lockPointer() {
   if (runtime.canvas && !document.pointerLockElement && !input.touch) {
     void Promise.resolve(runtime.canvas.requestPointerLock()).catch(() => {});
   }
+  const root = document.documentElement;
+  if (document.fullscreenElement || !root.requestFullscreen) return;
+  const keyboard = (navigator as Navigator & { keyboard?: { lock?: (codes: string[]) => Promise<void> } }).keyboard;
+  root
+    .requestFullscreen({ navigationUI: 'hide' })
+    .then(() => keyboard?.lock?.(['KeyW', 'Escape']))
+    .catch(() => {});
+}
+
+export function exitFullscreen() {
+  if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
 }
 
 export const EYE_HEIGHT = 1.62;

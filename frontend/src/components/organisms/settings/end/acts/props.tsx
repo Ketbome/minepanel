@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { cue } from '../end-audio';
+import { spawnDrop } from '../engine/Drops';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
 import type { World } from '../engine/world';
 import { overworldKit } from '../overworld-voxels';
@@ -99,6 +100,69 @@ export function CraftingTable({ world, at }: { readonly world: World; readonly a
   );
   useCellTarget(world, at, target);
   return <mesh geometry={UNIT_BOX} material={mat.table} position={at as [number, number, number]} />;
+}
+
+const COOK_S = 10;
+const FIRE_LOG = new THREE.BoxGeometry(1, 2 / 16, 4 / 16);
+const CHOP = new THREE.BoxGeometry(5 / 16, 1 / 16, 4 / 16);
+const CHOP_SPOTS: readonly [number, number][] = [
+  [-0.22, -0.22],
+  [0.22, -0.22],
+  [0.22, 0.22],
+  [-0.22, 0.22],
+];
+
+// The camp's fire, like the game's campfire: right click with raw porkchop lays one on it (up to
+// four), and each pops off cooked a few seconds later.
+export function Campfire({ world, at }: { readonly world: World; readonly at: Cell }) {
+  const { mat, tex } = kit();
+  const logs = useMemo(() => new THREE.MeshLambertMaterial({ color: '#5a4125' }), []);
+  const meat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#e8878a' }), []);
+  const flame = useRef<THREE.Mesh>(null);
+  const cooking = useRef<number[]>([]);
+  const [, redraw] = useState(0);
+  const target = useMemo<Omit<Target, 'box'>>(
+    () => ({
+      label: () => 'campfire',
+      use: () => {
+        const game = useEndGame.getState();
+        if (game.inventory[game.selected]?.item !== 'porkchop') return game.showActionBar('hintCampfire');
+        if (cooking.current.length >= CHOP_SPOTS.length) return;
+        game.consumeHeld();
+        cue('place');
+        cooking.current.push(runtime.time);
+        redraw((n) => n + 1);
+      },
+    }),
+    []
+  );
+  useCellTarget(world, at, target, 0.45);
+
+  useFrame(() => {
+    if (flame.current) flame.current.scale.set(0.35, 0.3 + Math.sin(runtime.time * 11) * 0.04 + Math.sin(runtime.time * 17) * 0.03, 0.35);
+    const done = cooking.current.filter((start) => runtime.time - start >= COOK_S);
+    if (!done.length) return;
+    cooking.current = cooking.current.filter((start) => !done.includes(start));
+    done.forEach(() => spawnDrop('cookedPorkchop', 1, new THREE.Vector3(at[0], at[1] - 0.1, at[2])));
+    cue('pop');
+    redraw((n) => n + 1);
+  });
+
+  return (
+    <group position={[at[0], at[1] - 0.5, at[2]]}>
+      <mesh geometry={FIRE_LOG} material={logs} position={[0, 1 / 16, -0.2]} />
+      <mesh geometry={FIRE_LOG} material={logs} position={[0, 1 / 16, 0.2]} />
+      <mesh geometry={FIRE_LOG} material={logs} position={[-0.2, 3 / 16, 0]} rotation={[0, Math.PI / 2, 0]} />
+      <mesh geometry={FIRE_LOG} material={logs} position={[0.2, 3 / 16, 0]} rotation={[0, Math.PI / 2, 0]} />
+      <mesh ref={flame} geometry={UNIT_BOX} material={mat.flame} position={[0, 0.3, 0]} scale={[0.35, 0.3, 0.35]} />
+      {cooking.current.map((start, index) => (
+        <mesh key={start} geometry={CHOP} material={meat} position={[CHOP_SPOTS[index][0], 0.33, CHOP_SPOTS[index][1]]} />
+      ))}
+      <sprite scale={2.4} position={[0, 0.45, 0]}>
+        <spriteMaterial map={tex.glow} color="#ffb347" transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.8} />
+      </sprite>
+    </group>
+  );
 }
 
 export function Torch({ position }: { readonly position: [number, number, number] }) {

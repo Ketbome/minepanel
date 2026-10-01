@@ -10,13 +10,14 @@ import { getPlayerProfile, getPlayers, ItemMatch, PlayerProfile, PlayerSummary, 
 import { PlayerAvatar } from "../players/PlayerAvatar";
 import { PlayerActions } from "../players/PlayerActions";
 import { PlayerProfilePanel } from "../players/PlayerProfilePanel";
-import { formatPlayTime, humanizeId } from "../players/player-format";
+import { formatPlayTime, humanizeId, SpawnPoint } from "../players/player-format";
 
 interface PlayersTabProps {
   serverId: string;
   serverStatus: string;
   rconPort: string;
   rconPassword: string;
+  spawnPoint: SpawnPoint;
 }
 
 type Filter = "all" | "online" | "whitelisted" | "op" | "banned";
@@ -31,7 +32,7 @@ interface PlayerRow {
 
 const COMMAND_SETTLE_MS = 500;
 
-export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPort, rconPassword }) => {
+export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPort, rconPassword, spawnPoint }) => {
   const { t } = useLanguage();
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [onlineNames, setOnlineNames] = useState<string[]>([]);
@@ -184,7 +185,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                   {itemMatches.map((match, index) => (
                     <li key={`${match.uuid}-${match.where}-${match.slot}-${index}`}>
                       <button type="button" onClick={() => setSelected(match.uuid)} className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-gray-800/60">
-                        <PlayerAvatar player={match.name ?? match.uuid} size={20} />
+                        <PlayerAvatar uuid={match.uuid} name={match.name ?? match.uuid} size={20} />
                         <span className="text-gray-100">{match.name ?? match.uuid}</span>
                         <span className="text-gray-300">
                           {match.count}× {match.itemName ? `${match.itemName} (${humanizeId(match.id)})` : humanizeId(match.id)}
@@ -238,7 +239,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                     onClick={() => setSelected(row.key)}
                     className={`flex-1 min-w-0 flex items-center gap-2 p-2 text-left border ${selected === row.key ? "border-emerald-500 bg-emerald-600/10" : "border-transparent hover:bg-gray-800/60"}`}
                   >
-                    <PlayerAvatar player={row.name} />
+                    <PlayerAvatar uuid={row.summary?.uuid} name={row.name} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         {row.online && <span className="h-2 w-2 bg-emerald-400 shrink-0" />}
@@ -253,7 +254,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                       </span>
                     </span>
                   </button>
-                  {!row.summary && <PlayerActions name={row.name} online whitelisted={false} op={false} banned={false} disabled={!isRunning} onRun={runCommand} />}
+                  {!row.summary && <PlayerActions name={row.name} online whitelisted={false} op={false} banned={false} disabled={!isRunning} onRun={runCommand} spawnPoint={spawnPoint} />}
                 </li>
               ))}
             </ul>
@@ -275,6 +276,7 @@ export const PlayersTab: FC<PlayersTabProps> = ({ serverId, serverStatus, rconPo
                     banned={profile.banned}
                     disabled={!isRunning || !profile.name}
                     onRun={runCommand}
+                    spawnPoint={spawnPoint}
                   />
                 )
               }

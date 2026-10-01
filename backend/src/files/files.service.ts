@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException,
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
+import { constants } from 'fs';
 import { Archiver, ZipArchive } from 'archiver';
 import { assertContained } from 'src/common/fs/contained-path';
 
@@ -213,6 +215,10 @@ export class FilesService {
   async writeFile(serverId: string, filePath: string, content: string, admin = false): Promise<void> {
     const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
     await fs.ensureDir(path.dirname(fullPath));
+    if (path.basename(fullPath) === 'server.properties' && await fs.pathExists(fullPath)) {
+      const backupPath = `${fullPath}.${new Date().toISOString().replace(/[:.]/g, '-')}.${randomUUID()}.bak`;
+      await fs.copyFile(fullPath, backupPath, constants.COPYFILE_EXCL);
+    }
     await fs.writeFile(fullPath, content, 'utf-8');
   }
 

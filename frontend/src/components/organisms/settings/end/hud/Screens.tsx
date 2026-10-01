@@ -3,7 +3,7 @@
 import { AnimatePresence, m } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useAchievementsStore } from '@/lib/store/achievements-store';
-import { setMuted } from '../end-audio';
+import { setMuted, unlockAudio } from '../end-audio';
 import { input } from '../engine/input';
 import { countOf } from '../items';
 import { lockPointer, runtime } from '../engine/runtime';
@@ -46,6 +46,9 @@ const DEATHS: Record<DeathCause, LoreKey> = {
   cactus: 'deathCactus',
   golem: 'deathGolem',
   rabbit: 'deathRabbit',
+  ownTnt: 'deathOwnTnt',
+  ichor: 'deathIchor',
+  sifter: 'deathSifter',
 };
 
 const MODES: readonly { readonly id: RunMode; readonly label: LoreKey }[] = [
@@ -74,6 +77,8 @@ export function skipZone(onClose: () => void) {
     game.travel('overworld', 'portal', 'portal');
   } else if (game.zone === 'ancient') {
     game.travel('overworld', 'cave', 'black');
+  } else if (game.zone === 'sift') {
+    game.travel('ancient', 'sift', 'black');
   } else if (game.zone === 'overworld') {
     game.grantKit('stronghold');
     game.setFlag('eyeLanded');
@@ -191,6 +196,9 @@ export function PauseMenu({ onClose }: { readonly onClose: () => void }) {
   }, [view]);
 
   const play = () => {
+    // a click of its own: Safari only starts audio from one, and the button that opened the run
+    // loaded the audio after its click
+    unlockAudio();
     const game = useEndGame.getState();
     game.setFlag('started');
     game.setPaused(false);

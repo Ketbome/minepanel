@@ -10,32 +10,40 @@ describe('MonitoringService', () => {
 
   beforeEach(() => {
     management = { getServerRuntimeStats: jest.fn().mockResolvedValue(runtime), readTickStats: jest.fn().mockResolvedValue({ success: true, output }) };
-    store = { readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', serverType: 'FABRIC', enableRcon: true }) };
+    store = { readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', serverType: 'FABRIC', enableRcon: true, rconPort: '25575', rconPassword: 'secret' }) };
     service = new MonitoringService(management as any, store as any);
   });
 
   afterEach(() => jest.restoreAllMocks());
 
   it('monitors CurseForge without treating AUTO_CURSEFORGE as a loader or exposing credentials', async () => {
-    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'AUTO_CURSEFORGE', enableRcon: true });
+    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'AUTO_CURSEFORGE', enableRcon: true, rconPort: '25575', rconPassword: 'secret' });
     management.readTickStats.mockResolvedValueOnce({ success: true, output: 'Unknown command' });
     expect(await service.getSnapshot('atm10')).toMatchObject({ cpuPercent: 150, memoryMb: 2048, memoryLimitMb: 8192, tps: 19.5, msptMedian: 25, msptP95: 65, tickStatus: 'available', playersOnline: 3 });
-    expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'spark');
+    expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'spark', '25575', 'secret');
   });
 
   it('prefers native NeoForge data for ATM10 and labels its estimated TPS source', async () => {
-    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'AUTO_CURSEFORGE', enableRcon: true });
+    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'AUTO_CURSEFORGE', enableRcon: true, rconPort: '25575', rconPassword: 'secret' });
     management.readTickStats.mockResolvedValue({ success: true, output: 'minecraft:overworld: 20 TPS (1 ms/tick) Overall: 16 TPS (62.5 ms/tick)' });
     expect(await service.getSnapshot('atm10')).toMatchObject({ tickSource: 'neoforge', tps: 16, msptMean: 62.5, msptMedian: null, msptP95: null });
     expect(management.readTickStats).toHaveBeenCalledTimes(1);
-    expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'neoforge');
+    expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'neoforge', '25575', 'secret');
   });
 
-  it('does not try more commands after a native RCON connection failure', async () => {
-    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'NEOFORGE', enableRcon: true });
+  it('falls back to the default RCON port when none is configured', async () => {
+    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'FABRIC', enableRcon: true });
+    await service.getSnapshot('atm10');
+    expect(management.readTickStats).toHaveBeenCalledWith('atm10', 'spark', '25575', undefined);
+  });
+
+  it('falls back to spark after a failed native NeoForge probe', async () => {
+    store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'NEOFORGE', enableRcon: true, rconPort: '25575', rconPassword: 'secret' });
     management.readTickStats.mockResolvedValue({ success: false, output: '' });
     expect(await service.getSnapshot('atm10')).toMatchObject({ tickStatus: 'unavailable', tickSource: null });
-    expect(management.readTickStats).toHaveBeenCalledTimes(1);
+    expect(management.readTickStats).toHaveBeenCalledTimes(2);
+    expect(management.readTickStats).toHaveBeenNthCalledWith(1, 'atm10', 'neoforge', '25575', 'secret');
+    expect(management.readTickStats).toHaveBeenNthCalledWith(2, 'atm10', 'spark', '25575', 'secret');
   });
 
   it('deduplicates concurrent live/history requests and caches the result', async () => {

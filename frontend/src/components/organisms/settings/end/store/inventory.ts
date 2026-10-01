@@ -1,19 +1,23 @@
-import { addItem, countOf, emptySlots, INVENTORY_SIZE, ITEMS, removeItem, type ItemId, type Slot, type Stack } from '../items';
+import { addItem, countOf, emptySlots, INVENTORY_SIZE, isArmor, ITEMS, removeItem, type ItemId, type Slot, type Stack } from '../items';
 import { craftAll, craftOnce } from '../recipes';
 import type { Area, ChestId, EndGameState, InventorySlice, Slice, Zone } from './types';
 
 const chest = (size: number, items: Record<number, Stack>): Slot[] => Object.assign(emptySlots(size), items);
 
 // the admin left the powder for ten eyes (4 powder + 3 blaze rods) but no pearls: those come from
-// the piglins now, for gold. Diamonds for a sword and a pickaxe.
+// the piglins now, for gold. Iron for a sword and diamonds for a pickaxe; the diamond sword is
+// The Sift's.
 export const initialChests = (): Record<ChestId, Slot[]> => ({
   camp: chest(27, {
     3: { item: 'note', count: 1 },
     5: { item: 'emerald', count: 4 },
-    10: { item: 'diamond', count: 5 },
-    11: { item: 'stick', count: 3 },
+    10: { item: 'diamond', count: 3 },
+    12: { item: 'iron', count: 2 },
+    // sticks for the sword, the pickaxe and the bow
+    11: { item: 'stick', count: 6 },
     13: { item: 'blaze', count: 4 },
-    14: { item: 'bow', count: 1 },
+    // the bow is yours to make
+    14: { item: 'string', count: 3 },
     15: { item: 'arrow', count: 32 },
     16: { item: 'apple', count: 8 },
   }),
@@ -34,12 +38,14 @@ export const initialChests = (): Record<ChestId, Slot[]> => ({
   igloo: chest(27, { 11: { item: 'apple', count: 2 }, 15: { item: 'arrow', count: 16 } }),
   wreck: chest(27, { 4: { item: 'gold', count: 5 }, 13: { item: 'emerald', count: 3 }, 22: { item: 'arrow', count: 8 } }),
   buried: chest(27, { ...Object.fromEntries(Array.from({ length: 8 }, (_, index) => [index, { item: 'dirt', count: 64 }])), 13: { item: 'diamond', count: 1 } }),
+  // under the Carapace's ribs, for the way back to the main route
+  sift: chest(27, { 11: { item: 'pearl', count: 4 }, 13: { item: 'sword', count: 1 }, 15: { item: 'apple', count: 6 } }),
 });
 
 // what skipping into a zone hands you, so every zone can be played on its own
 const KITS: Partial<Record<Zone, readonly Stack[]>> = {
   nether: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -48,7 +54,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'helmet', count: 1 },
   ],
   stronghold: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -56,7 +62,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'pearl', count: 1 },
   ],
   end: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 32 },
     { item: 'apple', count: 8 },
@@ -64,7 +70,7 @@ const KITS: Partial<Record<Zone, readonly Stack[]>> = {
     { item: 'dirt', count: 64 },
   ],
   endcity: [
-    { item: 'sword', count: 1 },
+    { item: 'ironSword', count: 1 },
     { item: 'bow', count: 1 },
     { item: 'arrow', count: 16 },
     { item: 'apple', count: 8 },
@@ -112,7 +118,7 @@ function quickMove(state: EndGameState, area: Area, index: number): Partial<EndG
 // what crafting unlocks in the story: the sword's advancement, and ten eyes to throw
 function afterCraft(get: () => EndGameState, output: ItemId) {
   const game = get();
-  if (output === 'sword' && !game.flags.swordCrafted) {
+  if (output === 'ironSword' && !game.flags.swordCrafted) {
     game.setFlag('swordCrafted');
     game.advance('task', 'advStrike', 'sword');
   }
@@ -126,7 +132,7 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
   chests: initialChests(),
   grid: emptySlots(9),
   cursor: null,
-  helmet: false,
+  armor: {},
   panel: null,
 
   // the game's clicks: left picks up, drops, merges or swaps a whole stack; right takes half
@@ -215,16 +221,17 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
       if (!stack) return state;
       return { inventory: state.inventory.map((slot, index) => (index === state.selected ? less(stack, 1) : slot)) };
     }),
-  wearHelmet: () => {
+  wear: () => {
     const state = get();
-    if (state.helmet || state.inventory[state.selected]?.item !== 'helmet') return;
+    const piece = state.inventory[state.selected]?.item;
+    if (!isArmor(piece) || state.armor[piece]) return;
     state.consumeHeld();
-    set({ helmet: true });
+    set({ armor: { ...state.armor, [piece]: true } });
   },
-  clickHelmet: () =>
+  clickArmor: (piece) =>
     set((state) => {
-      if (state.helmet && !state.cursor) return { helmet: false, cursor: { item: 'helmet', count: 1 } };
-      if (!state.helmet && state.cursor?.item === 'helmet') return { helmet: true, cursor: null };
+      if (state.armor[piece] && !state.cursor) return { armor: { ...state.armor, [piece]: undefined }, cursor: { item: piece, count: 1 } };
+      if (!state.armor[piece] && state.cursor?.item === piece) return { armor: { ...state.armor, [piece]: true }, cursor: null };
       return state;
     }),
   select: (slot) => set({ selected: ((slot % 9) + 9) % 9 }),
@@ -263,7 +270,7 @@ export const createInventorySlice: Slice<InventorySlice> = (set, get) => ({
     const kit = KITS[zone];
     if (!kit) return;
     set((state) => ({
-      inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) || (stack.item === 'helmet' && state.helmet) ? bar : addItem(bar, stack.item, stack.count)), state.inventory),
+      inventory: kit.reduce<Slot[]>((bar, stack) => (countOf(bar, stack.item) || (isArmor(stack.item) && state.armor[stack.item]) ? bar : addItem(bar, stack.item, stack.count)), state.inventory),
     }));
   },
 });

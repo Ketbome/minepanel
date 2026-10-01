@@ -9,6 +9,7 @@ import { FileList, SortKey, SortState } from "./FileList";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FileToolbar } from "./FileToolbar";
 import { FileEditor } from "./FileEditor";
+import { ServerPropertiesEditor } from "./ServerPropertiesEditor";
 import { DropZone } from "./DropZone";
 import { UploadProgress, UploadItem } from "./UploadProgress";
 import { FileStatusBar } from "./FileStatusBar";
@@ -226,8 +227,8 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   }, [visibleFiles, selectedPaths]);
 
   const handleSaveFile = useCallback(
-    async (content: string): Promise<boolean> => {
-      if (!editingFile) return false;
+    async (content: string): Promise<void> => {
+      if (!editingFile) return;
       try {
         await filesService.writeFile(serverId, editingFile.path, content);
         mcToast.success(t("fileSaved"));
@@ -236,11 +237,10 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
         // not bring the editor back.
         setEditingFile((current) => (current?.path === editingFile.path ? { path: current.path, content } : current));
         loadFiles(currentPath);
-        return true;
       } catch (error) {
         console.error("Error saving file:", error);
         mcToast.error(t("errorSavingFile"));
-        return false;
+        throw error;
       }
     },
     [editingFile, serverId, currentPath, loadFiles, t]
@@ -637,6 +637,9 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
   );
 
   if (editingFile) {
+    if (editingFile.path.split("/").pop() === "server.properties" && serverId !== "_root" && serverId !== ".world") {
+      return <ServerPropertiesEditor serverId={serverId} path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} />;
+    }
     return <FileEditor path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} />;
   }
 

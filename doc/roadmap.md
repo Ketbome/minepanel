@@ -138,10 +138,10 @@ Smaller, high-value items that fit the current single-node architecture.
 
 ### `server.properties` editor
 
-- Field validation and per-setting tooltips
-- Backup before save
+- ~~Field validation and per-setting tooltips~~ ✅ Shipped for detected fields; panel-managed settings remain in Server Settings
+- ~~Backup before save~~ ✅ Shipped for file editor saves
 
-> Basic `server.properties` editing already ships; this adds a guided editor.
+> The Files tab opens a guided editor for existing `server.properties` keys, with category and changed/error filters, a raw text view that shares the draft, and a change review before saving. Timestamped `.bak` copies can be previewed and restored from the editor; restoring backs up the current file first. Panel-managed keys link to Server Settings.
 
 ### Docker named volumes (under evaluation)
 

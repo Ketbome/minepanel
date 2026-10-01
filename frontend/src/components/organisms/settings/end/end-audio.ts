@@ -12,6 +12,8 @@ interface CueDef {
   readonly volume: number;
   readonly file?: string;
   readonly rate?: readonly [number, number];
+  readonly slice?: readonly [offset: number, length: number];
+  readonly gap?: number;
   readonly synth?: Synth;
   readonly caption?: LoreKey;
 }
@@ -276,10 +278,11 @@ const CUES = {
   eye: { file: 'eye-place.ogg', volume: 0.45, rate: [0.9, 1.15], caption: 'subEye' },
   portal: { file: 'portal-activate.ogg', volume: 0.7, caption: 'subPortal' },
   netherPortal: { file: 'portal-activate.ogg', volume: 0.6, rate: [1.2, 1.3], caption: 'subNetherPortal' },
+  siftPortal: { file: 'portal-activate.ogg', volume: 0.7, rate: [0.8, 0.85], caption: 'subSiftPortal' },
   travel: { file: 'portal-travel.ogg', volume: 0.55, caption: 'subTravel' },
   lava: { synth: lava, volume: 0.35, caption: 'subLava' },
   growl: { file: 'dragon-growl.ogg', volume: 0.5, rate: [0.95, 1.05], caption: 'subGrowl' },
-  dragonHurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], caption: 'subHurt' },
+  dragonHurt: { file: 'dragon-growl.ogg', volume: 0.35, rate: [1.45, 1.7], slice: [0.9, 1.2], gap: 1.5, synth: hit, caption: 'subHurt' },
   hit: { synth: hit, volume: 0.6 },
   dragonDeath: { file: 'dragon-growl.ogg', volume: 0.7, rate: [0.55, 0.6], synth: deathRise, caption: 'subDeath' },
   explode: { file: 'explosion.ogg', synth: explosion, volume: 0.8, caption: 'subCrystal' },
@@ -329,6 +332,8 @@ const CUES = {
   levitate: { file: 'levitate.ogg', synth: zap, volume: 0.45, caption: 'subLevitate' },
   wind: { file: 'wind.ogg', synth: whoosh, volume: 0.5 },
   pop: { synth: pop, volume: 0.35 },
+  shieldBlock: { synth: hit, volume: 0.7, caption: 'subShieldBlock' },
+  totem: { file: 'levelup.ogg', volume: 0.6, rate: [0.8, 0.85], caption: 'subTotem' },
   equip: { synth: clink, volume: 0.5, caption: 'subEquip' },
   piglin: { synth: snort, volume: 0.6, caption: 'subPiglin' },
   bones: { synth: rattle, volume: 0.5, caption: 'subSkeleton' },
@@ -338,6 +343,9 @@ const CUES = {
 } satisfies Record<string, CueDef>;
 
 export type CueName = keyof typeof CUES;
+
+const voices = new Map<CueName, GainNode>();
+const playedAt = new Map<CueName, number>();
 
 function load(file: string) {
   let buffer = buffers.get(file);
@@ -371,10 +379,13 @@ export function cue(name: CueName, gain = 1) {
   const out = ctx.createGain();
   out.gain.value = def.volume * gain;
   out.connect(bus);
-  if (!def.file) {
+  // within its gap the clip is skipped and only the synth plays, so rapid hits don't chain growls
+  const recent = def.gap !== undefined && ctx.currentTime - (playedAt.get(name) ?? -Infinity) < def.gap;
+  if (!def.file || recent) {
     def.synth?.(ctx, out);
     return;
   }
+  if (def.gap) playedAt.set(name, ctx.currentTime);
   void load(def.file).then((buffer) => {
     if (!buffer) {
       def.synth?.(ctx, out);
@@ -384,13 +395,175 @@ export function cue(name: CueName, gain = 1) {
     source.buffer = buffer;
     if (def.rate) source.playbackRate.value = def.rate[0] + Math.random() * (def.rate[1] - def.rate[0]);
     source.connect(out);
-    source.start();
+    if (def.slice) {
+      // a short bite of the clip; a new one cuts the last instead of stacking on every hit
+      const [offset, length] = def.slice;
+      const end = ctx.currentTime + length / source.playbackRate.value;
+      out.gain.setValueAtTime(out.gain.value, end - 0.15);
+      out.gain.linearRampToValueAtTime(0, end);
+      const last = voices.get(name);
+      last?.gain.cancelScheduledValues(ctx.currentTime);
+      last?.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+      voices.set(name, out);
+      source.start(0, offset, length);
+    } else {
+      source.start();
+    }
     // the dragon's death keeps its synthesized rise under the recorded growl
     if (name === 'dragonDeath') def.synth?.(ctx, out);
   });
 }
 
-type Ambience = 'overworld' | 'stronghold' | 'end' | 'nether' | 'ancient';
+// The Sift's song: an original tune in D minor that opens on the notes played at the frame,
+// built from note block plings, a bass, pads and drums, and resolving to D major as the portal
+// opens. Scheduled all at once on its own bus, so leaving the zone can cut it.
+
+const BEAT = 0.625;
+const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+let song: GainNode | null = null;
+
+function pling(ctx: AudioContext, out: AudioNode, midi: number, at: number, peak = 0.3) {
+  [
+    ['triangle', 1, peak],
+    ['sine', 2, peak * 0.25],
+  ].forEach(([type, octave, level]) => {
+    const osc = ctx.createOscillator();
+    osc.type = type as OscillatorType;
+    osc.frequency.value = hz(midi) * (octave as number);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(level as number, at + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.9);
+    osc.connect(gain).connect(out);
+    osc.start(at);
+    osc.stop(at + 0.95);
+  });
+}
+
+function held(ctx: AudioContext, out: AudioNode, type: OscillatorType, midi: number, at: number, length: number, peak: number, attack: number) {
+  const osc = ctx.createOscillator();
+  osc.type = type;
+  osc.frequency.value = hz(midi);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(peak, at + attack);
+  gain.gain.setValueAtTime(peak, at + Math.max(attack, length - 0.3));
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length + 0.5);
+  osc.connect(gain).connect(out);
+  osc.start(at);
+  osc.stop(at + length + 0.6);
+}
+
+function kick(ctx: AudioContext, out: AudioNode, at: number) {
+  const osc = ctx.createOscillator();
+  osc.frequency.setValueAtTime(120, at);
+  osc.frequency.exponentialRampToValueAtTime(40, at + 0.3);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(0.7, at + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.35);
+  osc.connect(gain).connect(out);
+  osc.start(at);
+  osc.stop(at + 0.4);
+}
+
+function snare(ctx: AudioContext, out: AudioNode, at: number, peak = 0.25, length = 0.14) {
+  const source = ctx.createBufferSource();
+  source.buffer = noiseBuffer(ctx);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 1800;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(peak, at + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  source.connect(band).connect(gain).connect(out);
+  source.start(at, Math.random() * 0.5);
+  source.stop(at + length + 0.05);
+}
+
+// [beat, midi, beats held]
+const MELODY: readonly (readonly [number, number, number])[] = [
+  // the tune from the frame, slowly
+  [0, 62, 1], [1, 69, 1], [2, 65, 1], [3, 72, 1], [4, 69, 3],
+  [8, 74, 1], [9, 72, 0.5], [9.5, 69, 0.5], [10, 74, 1], [11, 77, 1],
+  [12, 74, 1.5], [13.5, 70, 0.5], [14, 72, 1], [15, 74, 1],
+  [16, 72, 1], [17, 69, 0.5], [17.5, 65, 0.5], [18, 69, 1], [19, 72, 1],
+  [20, 76, 2], [22, 74, 0.5], [22.5, 72, 0.5], [23, 67, 1],
+  [24, 77, 1.5], [25.5, 79, 0.5], [26, 77, 1], [27, 74, 1],
+  [28, 76, 1.5], [29.5, 77, 0.5], [30, 79, 1], [31, 84, 1],
+  [32, 81, 2], [34, 79, 0.5], [34.5, 76, 0.5], [35, 73, 1],
+];
+// one chord per bar from beat 8: Dm, Bb, F, C, Bb, C, A, then D major to close
+const CHORDS: readonly (readonly [number, readonly number[], number])[] = [
+  [8, [50, 53, 57], 38],
+  [12, [46, 50, 53], 34],
+  [16, [53, 57, 60], 41],
+  [20, [48, 52, 55], 36],
+  [24, [46, 50, 53], 34],
+  [28, [48, 52, 55], 36],
+  [32, [49, 52, 57], 45],
+];
+const FINAL = 36;
+const SONG_BEATS = 42;
+
+export function playSong() {
+  stopSong();
+  const { audio: ctx, master: bus } = context();
+  const out = ctx.createGain();
+  out.gain.value = 0.8;
+  out.connect(bus);
+  song = out;
+  useEndGame.getState().caption('subSong');
+  const start = ctx.currentTime + 0.1;
+  const at = (beat: number) => start + beat * BEAT;
+
+  held(ctx, out, 'sine', 38, at(0), 8 * BEAT, 0.18, 1.5);
+  MELODY.forEach(([beat, midi]) => pling(ctx, out, midi, at(beat), beat >= 24 ? 0.34 : 0.28));
+  CHORDS.forEach(([beat, notes, root]) => {
+    notes.forEach((midi) => held(ctx, out, 'sawtooth', midi, at(beat), 4 * BEAT, 0.018, 0.3));
+    held(ctx, out, 'triangle', root, at(beat), 2 * BEAT, 0.22, 0.02);
+    held(ctx, out, 'triangle', root + 12, at(beat + 2), 2 * BEAT, 0.16, 0.02);
+    kick(ctx, out, at(beat));
+    kick(ctx, out, at(beat + 2));
+    if (beat >= 16) [1, 3].forEach((offset) => snare(ctx, out, at(beat + offset)));
+  });
+  for (let step = 0; step < 8; step += 1) snare(ctx, out, at(34 + step * 0.25), 0.1 + step * 0.03, 0.08);
+
+  // the close: a rolled D major chord over a long bass, a crash, and a shimmer on top
+  [74, 78, 81, 86].forEach((midi, index) => pling(ctx, out, midi, at(FINAL) + index * 0.08, 0.34));
+  [50, 54, 57].forEach((midi) => held(ctx, out, 'sawtooth', midi, at(FINAL), 5 * BEAT, 0.022, 0.2));
+  held(ctx, out, 'triangle', 38, at(FINAL), 5 * BEAT, 0.28, 0.02);
+  kick(ctx, out, at(FINAL));
+  snare(ctx, out, at(FINAL), 0.35, 1.6);
+  [86, 90, 93].forEach((midi, index) => held(ctx, out, 'sine', midi, at(FINAL) + 0.3 + index * 0.15, 3 * BEAT, 0.03, 0.4));
+
+  // when each note and each kick lands, in seconds from now, so the spirit can sing along
+  return { length: 0.1 + SONG_BEATS * BEAT, final: 0.1 + FINAL * BEAT, notes: MELODY.map(([beat]) => 0.1 + beat * BEAT), kicks: CHORDS.flatMap(([beat]) => [0.1 + beat * BEAT, 0.1 + (beat + 2) * BEAT]) };
+}
+
+export function stopSong() {
+  if (!song || !audio) return;
+  const out = song;
+  song = null;
+  out.gain.setTargetAtTime(0, audio.currentTime, 0.2);
+  window.setTimeout(() => out.disconnect(), 1500);
+}
+
+// a note block (or a singing flower): the same pling the song uses, at its pitch
+export function playNote(midi: number, caption: LoreKey = 'subNoteBlock') {
+  const { audio: ctx, master: bus } = context();
+  useEndGame.getState().caption(caption);
+  pling(ctx, bus, midi, ctx.currentTime, 0.3);
+}
+
+// a wrong note: a flat, low buzz
+export function playWrongNote() {
+  const { audio: ctx, master: bus } = context();
+  toneSweep(ctx, bus, 'square', { from: 98, to: 92, peak: 0.08, attack: 0.01, release: 0.4 });
+}
+
+type Ambience = 'overworld' | 'stronghold' | 'end' | 'nether' | 'ancient' | 'sift';
 
 // filtered noise for air, a few sine drones for dread; the Nether adds its recorded rumble
 const BEDS: Record<Ambience, { readonly cutoff: number; readonly level: number; readonly breathe: boolean; readonly drones: readonly number[]; readonly loop?: string }> = {
@@ -399,6 +572,8 @@ const BEDS: Record<Ambience, { readonly cutoff: number; readonly level: number; 
   end: { cutoff: 420, level: 0.07, breathe: true, drones: [55, 55.3, 82.5] },
   nether: { cutoff: 220, level: 0.16, breathe: true, drones: [36, 36.4, 54], loop: 'nether-ambience.ogg' },
   ancient: { cutoff: 120, level: 0.12, breathe: false, drones: [41, 41.25] },
+  // The Sift is bright: a soft wind and an open fifth, no dread
+  sift: { cutoff: 900, level: 0.04, breathe: true, drones: [110, 110.3, 165] },
 };
 
 export function startAmbience(kind: Ambience) {

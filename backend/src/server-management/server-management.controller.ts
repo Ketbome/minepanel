@@ -2,8 +2,9 @@ import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadR
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
-import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, UpdateServerConfigDto } from './dto/server-config.model';
+import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, ServerEdition, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
+import { UpdateSpawnPointDto } from './dto/spawn-point.dto';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -18,6 +19,7 @@ import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { Users } from 'src/users/entities/users.entity';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { VanillaTweaksService } from 'src/vanilla-tweaks/vanilla-tweaks.service';
 import * as path from 'path';
 
 // Accepts an ISO 8601 timestamp, a Unix timestamp, or a Go-style duration (e.g. "10m", "1h30m").
@@ -211,6 +213,7 @@ export class ServerManagementController {
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
+    private readonly vanillaTweaks: VanillaTweaksService,
   ) {}
 
   private async recordServerAudit(user: Users | null, action: string, serverId: string, summary: string, outcome: 'success' | 'error' = 'success', metadata?: Record<string, unknown>) {
@@ -362,6 +365,27 @@ export class ServerManagementController {
     }
   }
 
+  // itzg stops the server from starting when a share code cannot be installed, so a code
+  // Vanilla Tweaks does not know is rejected here instead. Resource pack codes are refused
+  // too: itzg only downloads them into /data/resourcepacks, which the server never uses.
+  // When Vanilla Tweaks is unreachable the save goes through rather than blocking all edits.
+  private async assertUsableVanillaTweaks(codes: string[] | undefined, current: string[], edition: ServerEdition | undefined): Promise<void> {
+    // Bedrock never sends them to itzg, so there is nothing to check.
+    if ((edition ?? 'JAVA') !== 'JAVA') return;
+
+    // Asked together: one after another, ten codes and an unreachable host add up to ten timeouts.
+    // The answers are read in the order given so the first bad code is the one reported.
+    const fresh = (codes ?? []).filter((code) => !current.includes(code));
+    const shares = await Promise.all(fresh.map((code) => this.vanillaTweaks.lookup(code).catch(() => undefined)));
+    fresh.forEach((code, index) => {
+      const share = shares[index];
+      if (share === null) throw new BadRequestException(`Vanilla Tweaks share code ${code} was not found`);
+      if (share?.type === 'resourcepacks') {
+        throw new BadRequestException(`Vanilla Tweaks share code ${code} is a resource pack; the server cannot send it to players, only datapack and crafting tweak codes work`);
+      }
+    });
+  }
+
   private assertSafeEnvVars(envVars: string | undefined): void {
     for (const entry of normalizeConfigValue(envVars).split('\n').filter(Boolean)) {
       const separator = entry.indexOf('=');
@@ -481,6 +505,7 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
+      await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, [], data.edition);
       this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
       if (!id) throw new BadRequestException('Server ID is required');
@@ -676,6 +701,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
     this.assertCanChangeAdvancedConfig(currentUser, config, currentConfig);
+    await this.assertUsableVanillaTweaks(config.vanillaTweaksCodes, currentConfig.vanillaTweaksCodes ?? [], config.edition ?? currentConfig.edition);
     this.assertValidComposeSnippets(config.composeSnippets);
     // The form sends '' for a hostname that was never set, which is not a change.
     const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();
@@ -696,6 +722,9 @@ export class ServerManagementController {
       modWatchTargetVersion: _modWatchTargetVersion,
       activityTracking: _activityTracking,
       cfApiKey: _cfApiKey,
+      spawnX: _spawnX,
+      spawnY: _spawnY,
+      spawnZ: _spawnZ,
       ...configWithoutModWatch
     } = config;
 
@@ -730,6 +759,23 @@ export class ServerManagementController {
 
     const changed = [body.notes !== undefined ? 'notes' : null, body.targetVersion !== undefined ? 'target version' : null].filter(Boolean).join(' and ');
     await this.recordServerAudit(currentUser, 'update_mod_watch', id, `Updated Mod Watch ${changed || 'annotations'} for ${id}`);
+
+    return withoutSecrets(updatedConfig);
+  }
+
+  // Separate from PUT :id, like mod-watch: the Players/Commands tabs stay open while the
+  // server runs, so this write must not regenerate the compose file.
+  @Put(':id/spawn-point')
+  async updateSpawnPoint(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: UpdateSpawnPointDto,
+  ) {
+    const currentUser = await this.requireServerAccess(req, id);
+
+    const updatedConfig = await this.managementService.updateSpawnPoint(id, body);
+
+    await this.recordServerAudit(currentUser, 'update_spawn_point', id, `Updated default spawn point for ${id}`);
 
     return withoutSecrets(updatedConfig);
   }

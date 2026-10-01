@@ -242,6 +242,20 @@ describe('JavaServerStrategy', () => {
       expect(strategy.buildEnvironment({ ...config, enableRcon: false } as any).RCON_CMDS_STARTUP).toBeUndefined();
     });
 
+    it('passes Vanilla Tweaks share codes only when some are set', () => {
+      expect(strategy.buildEnvironment({ ...baseConfig(), vanillaTweaksCodes: ['MGr52E', 'tF1zL2'] } as any).VANILLATWEAKS_SHARECODE).toBe('MGr52E,tF1zL2');
+      expect(strategy.buildEnvironment({ ...baseConfig(), vanillaTweaksCodes: [] } as any).VANILLATWEAKS_SHARECODE).toBeUndefined();
+    });
+
+    // Same rule as the experimental packs: what is picked in the panel wins over a hand-typed variable,
+    // and a hand-typed one still works when nothing is picked.
+    it('lets the Vanilla Tweaks codes chosen in the panel win over a custom VANILLATWEAKS_SHARECODE', () => {
+      const custom = { envVars: 'VANILLATWEAKS_SHARECODE=Typed1\nFOO=bar' };
+
+      expect(strategy.buildEnvironment({ ...baseConfig(), ...custom, vanillaTweaksCodes: ['MGr52E', 'tF1zL2'] } as any)).toMatchObject({ VANILLATWEAKS_SHARECODE: 'MGr52E,tF1zL2', FOO: 'bar' });
+      expect(strategy.buildEnvironment({ ...baseConfig(), ...custom, vanillaTweaksCodes: [] } as any).VANILLATWEAKS_SHARECODE).toBe('Typed1');
+    });
+
     it('maps world sources by scope and absolute path, and disables rcon explicitly', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), enableRcon: false, worldSource: 'w' } as any)).toMatchObject({ ENABLE_RCON: 'false', WORLD: '/data/.world-library/local/w' });
       expect(strategy.buildEnvironment({ ...baseConfig(), worldSource: '/abs/world' } as any).WORLD).toBe('/abs/world');

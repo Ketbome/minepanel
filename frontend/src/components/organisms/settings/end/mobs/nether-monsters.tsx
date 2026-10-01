@@ -3,6 +3,7 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import type * as THREE from 'three';
+import type { Loot } from '../engine/Drops';
 import { runtime } from '../engine/runtime';
 import { Glow, useHop, useMonster, zombieArms, type SlimeSize } from './monsters';
 import { useAnimal } from './overworld';
@@ -57,6 +58,18 @@ const ZOMBIFIED_PIGLIN: SkinArt = {
 };
 
 // hit one and every zombified piglin within twelve blocks comes for you, like the game's
+// nine nuggets make the ingot a piglin trades for
+const ZOMBIFIED_LOOT: readonly Loot[] = [
+  { item: 'rottenFlesh', min: 0, max: 1 },
+  { item: 'nugget', min: 1, max: 3 },
+];
+const HOGLIN_LOOT: readonly Loot[] = [{ item: 'porkchop', min: 2, max: 4 }];
+// the skull is rare, as in the game, but not that rare: there are only a few of them
+const WITHER_LOOT: readonly Loot[] = [
+  { item: 'bone', min: 0, max: 2 },
+  { item: 'skull', min: 1, max: 1, chance: 0.1 },
+];
+
 const anger = { at: -9, x: 0, z: 0 };
 const ANGER_RANGE = 12;
 
@@ -79,6 +92,7 @@ export function ZombifiedPiglin({ wander, onDeath }: { readonly wander: Wander; 
       size: [0.6, 1.95],
       speed: 3,
       onDeath,
+      loot: ZOMBIFIED_LOOT,
       calm: () => true,
       onHurt: () => {
         const at = root.current?.position;
@@ -196,7 +210,7 @@ export function Hoglin({ wander, onDeath }: { readonly wander: Wander; readonly 
   const legs = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(HOGLIN, { alphaTest: 0.5 });
   const materials = useMemo(() => [material], [material]);
-  useMonster(root, wander, legs, materials, { hp: 40, strike: 6, cause: 'hoglin', size: [1.4, 1.4], speed: 3, onDeath }, head);
+  useMonster(root, wander, legs, materials, { hp: 40, strike: 6, cause: 'hoglin', size: [1.4, 1.4], speed: 3, onDeath, loot: HOGLIN_LOOT }, head);
 
   return (
     <group ref={root} position={wander.home}>
@@ -337,7 +351,7 @@ export function WitherSkeleton({ wander, onDeath }: { readonly wander: Wander; r
   const arms = useRef<(THREE.Group | null)[]>([]);
   const { skin, material } = useSkin(WITHER_SKELETON);
   const materials = useMemo(() => [material], [material]);
-  const { state } = useMonster(root, wander, legs, materials, { hp: 20, strike: 8, cause: 'witherSkeleton', size: [0.7, 2.4], speed: 3, onDeath }, head);
+  const { state } = useMonster(root, wander, legs, materials, { hp: 20, strike: 8, cause: 'witherSkeleton', size: [0.7, 2.4], speed: 3, onDeath, loot: WITHER_LOOT }, head);
   const blade = flat('#8f8f8f');
   const edge = flat('#6b6b6b');
   const handle = flat('#5c3f24');

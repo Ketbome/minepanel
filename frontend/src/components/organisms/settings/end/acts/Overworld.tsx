@@ -9,6 +9,8 @@ import { isNight, light, skipNight, SUN_SIDE, sunDirection } from '../engine/clo
 import { spawnEffect } from '../engine/Effects';
 import { countOf } from '../items';
 import { cellBox, runtime, useTarget, type Target } from '../engine/runtime';
+import { Sun } from '../engine/Sun';
+import { waterSky } from '../engine/water';
 import { cellKey, cellOf, World, type BlockId } from '../engine/world';
 import { WorldMesh, type Plant } from '../engine/WorldMesh';
 import { Cat, Chicken, Cow, Horse, IronGolem, Wolf } from '../mobs/animals';
@@ -21,7 +23,7 @@ import { Biomes } from './Biomes';
 import { NightMobs } from './NightMobs';
 import { buildBiomeColumn, buildStructures, oak } from './overworld-biomes';
 import { biomeAt, CAMP, CAVE, DIG, groundHeight, OVERWORLD_RADIUS, RUINED, VILLAGE } from './overworld-layout';
-import { Bed, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
+import { Bed, Campfire, Chest, CraftingTable, inside, Lectern, NetherPortalSheet, Sign, Torch } from './props';
 
 const R = OVERWORLD_RADIUS;
 const SKY = new THREE.SphereGeometry(300, 24, 16);
@@ -230,9 +232,9 @@ function buildOverworld(mined: readonly number[], placed: readonly (readonly [nu
 
 // what the Overworld looks like at noon, at midnight and at dusk; the cycle blends between them
 const LOOKS = {
-  day: { sky: new THREE.Color('#b8d4f2'), ambient: new THREE.Color('#ffffff'), ambientI: 0.8, hemi: new THREE.Color('#cfe3ff'), ground: new THREE.Color('#4a6a32'), hemiI: 0.7, sun: new THREE.Color('#fff1d6'), sunI: 1.6 },
-  night: { sky: new THREE.Color('#0d1428'), ambient: new THREE.Color('#8090c0'), ambientI: 0.3, hemi: new THREE.Color('#26345c'), ground: new THREE.Color('#10180e'), hemiI: 0.35, sun: new THREE.Color('#9fb4ff'), sunI: 0.35 },
-  dusk: { sky: new THREE.Color('#d98a72'), ambient: new THREE.Color('#ffd9b8'), ambientI: 0.75, hemi: new THREE.Color('#ffb27a'), ground: new THREE.Color('#3a5a2a'), hemiI: 0.7, sun: new THREE.Color('#ffb070'), sunI: 1.5 },
+  day: { zenith: new THREE.Color('#6b9be6'), sky: new THREE.Color('#b8d4f2'), ambient: new THREE.Color('#ffffff'), ambientI: 0.4, hemi: new THREE.Color('#cfe3ff'), ground: new THREE.Color('#4a6a32'), hemiI: 0.6, sun: new THREE.Color('#fff1d6'), sunI: 2.5 },
+  night: { zenith: new THREE.Color('#050a1c'), sky: new THREE.Color('#0d1428'), ambient: new THREE.Color('#8090c0'), ambientI: 0.3, hemi: new THREE.Color('#26345c'), ground: new THREE.Color('#10180e'), hemiI: 0.35, sun: new THREE.Color('#9fb4ff'), sunI: 0.35 },
+  dusk: { zenith: new THREE.Color('#5a5a9a'), sky: new THREE.Color('#d98a72'), ambient: new THREE.Color('#ffd9b8'), ambientI: 0.4, hemi: new THREE.Color('#ffb27a'), ground: new THREE.Color('#3a5a2a'), hemiI: 0.6, sun: new THREE.Color('#ffb070'), sunI: 2.3 },
 };
 type Look = (typeof LOOKS)['day'];
 const sun = new THREE.Vector3();
@@ -276,7 +278,13 @@ export function DayCycle() {
       directional.current.position.copy(sun).multiplyScalar(sun.y < 0 ? -40 : 40);
       blend((look) => look.sun, day, dusk, directional.current.color);
       directional.current.intensity = mix((look) => look.sunI, day, dusk);
+      // the water mirrors this sky and glints with the sun, or the moon by night
+      waterSky.uSun.value.copy(directional.current.position).normalize();
+      waterSky.uSunColor.value.copy(directional.current.color).multiplyScalar(directional.current.intensity / 2.5);
     }
+    blend((look) => look.sky, day, dusk, waterSky.uHorizon.value);
+    blend((look) => look.zenith, day, dusk, waterSky.uZenith.value);
+    waterSky.uDay.value = day;
   });
   return (
     <>
@@ -284,7 +292,7 @@ export function DayCycle() {
       <fog attach="fog" args={['#b8d4f2', 22, 70]} />
       <ambientLight ref={ambient} />
       <hemisphereLight ref={hemi} />
-      <directionalLight ref={directional} />
+      <Sun light={directional} />
       <mesh ref={mesh} geometry={SKY} material={material} renderOrder={-1} frustumCulled={false} />
     </>
   );
@@ -564,6 +572,7 @@ export function Overworld() {
       <Chest world={world} id="backups" at={[CAMP.x - 2, 1, CAMP.z]} />
       <CraftingTable world={world} at={[CAMP.x + 2, 1, CAMP.z]} />
       <CampBed world={world} />
+      <Campfire world={world} at={[CAMP.x - 1, 1, CAMP.z - 2]} />
       <Biomes world={world} />
       <Torch position={[CAMP.x - 1, 0.78, CAMP.z + 1.3]} />
       <Sign id="incidents" at={[CAMP.x + 1, 1, CAMP.z - 2]} />

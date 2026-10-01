@@ -39,6 +39,12 @@ function objectives(game: EndGameState): Objective[] {
       { key: 'objButton', done: Boolean(flags.buttonPressed), optional: true },
     ];
   }
+  if (zone === 'sift') {
+    return [
+      { key: 'objSiftChest', done: game.chests.sift.every((slot) => !slot), optional: true },
+      { key: 'objSiftReturn', done: false },
+    ];
+  }
   if (zone === 'nether') {
     const rods = game.killed.filter((id) => BLAZES.includes(id)).length;
     const pearls = Math.min(10, countOf(inventory, 'pearl') + countOf(inventory, 'eye'));

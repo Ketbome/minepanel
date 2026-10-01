@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Ban, Crown, Diamond, Gamepad2, Gavel, Heart, MapPin, MoreVertical, Shield, ShieldOff, UserMinus, UserPlus } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { DEFAULT_SPAWN_POINT, SpawnPoint } from "./player-format";
 
 interface PlayerActionsProps {
   name: string;
@@ -12,11 +13,14 @@ interface PlayerActionsProps {
   banned: boolean;
   disabled: boolean;
   onRun: (command: string, successMessage: string) => void;
+  // Server's saved default TP-spawn point; falls back to the coordinates this action always used.
+  spawnPoint?: SpawnPoint;
 }
 
-export const PlayerActions: FC<PlayerActionsProps> = ({ name, online, whitelisted, op, banned, disabled, onRun }) => {
+export const PlayerActions: FC<PlayerActionsProps> = ({ name, online, whitelisted, op, banned, disabled, onRun, spawnPoint = DEFAULT_SPAWN_POINT }) => {
   const { t } = useLanguage();
   const item = "text-gray-200 hover:bg-gray-700";
+  const spawnLabel = `${spawnPoint.x}, ${spawnPoint.y}, ${spawnPoint.z}`;
 
   return (
     <DropdownMenu>
@@ -34,7 +38,11 @@ export const PlayerActions: FC<PlayerActionsProps> = ({ name, online, whiteliste
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator className="bg-gray-700" />
-            <DropdownMenuItem onClick={() => onRun(`tp ${name} 0 100 0`, t("playerTeleported"))} className={item}>
+            <DropdownMenuItem
+              onClick={() => onRun(`tp ${name} ${spawnPoint.x} ${spawnPoint.y} ${spawnPoint.z}`, `${t("playerTeleported")} (${spawnLabel})`)}
+              title={`${t("defaultSpawnPoint")}: ${spawnLabel}`}
+              className={item}
+            >
               <MapPin className="h-3 w-3 mr-2 text-blue-400" /> TP Spawn
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onRun(`effect give ${name} minecraft:instant_health 1 10`, t("playerHealed"))} className={item}>

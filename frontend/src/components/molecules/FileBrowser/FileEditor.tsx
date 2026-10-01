@@ -22,8 +22,10 @@ interface FileEditorProps {
   // The last saved text: after a save the parent passes the new one, which is what
   // "unsaved" is measured against.
   content: string;
-  onSave: (content: string) => Promise<boolean>;
+  onSave: (content: string) => Promise<void>;
   onClose: () => void;
+  onContentChange?: (content: string) => void;
+  baselineContent?: string;
 }
 
 const getLanguageFromPath = (path: string): string => {
@@ -52,7 +54,7 @@ const getLanguageFromPath = (path: string): string => {
   return langMap[ext || ""] || "plaintext";
 };
 
-export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose }) => {
+export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose, onContentChange, baselineContent }) => {
   const { t } = useLanguage();
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,7 +62,7 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
   // While the dialog's save is in flight nothing else may decide: a Cancel followed by
   // a late success would otherwise close the editor over edits made in the meantime.
   const [closingSave, setClosingSave] = useState(false);
-  const hasChanges = editedContent !== content;
+  const hasChanges = editedContent !== (baselineContent ?? content);
 
   // Leaving the page (reload, closing the tab) would drop the edits just as silently.
   useEffect(() => {
@@ -80,13 +82,20 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
-    await onSave(editedContent);
-    setIsSaving(false);
+    try {
+      await onSave(editedContent);
+    } catch {
+      // The caller shows the save error and keeps the editor open.
+    } finally {
+      setIsSaving(false);
+    }
   }, [editedContent, onSave]);
 
   const handleEditorChange = useCallback((value: string | undefined) => {
-    setEditedContent(value || "");
-  }, []);
+    const next = value || "";
+    setEditedContent(next);
+    onContentChange?.(next);
+  }, [onContentChange]);
 
   // Monaco swallows keys typed inside it, so the container's handler never sees Ctrl+S
   // there; the command is registered on the editor itself and reads the latest state.
@@ -201,10 +210,14 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
               className="gap-2"
               onClick={async () => {
                 setClosingSave(true);
-                const saved = await onSave(editedContent);
-                setClosingSave(false);
-                if (saved) onClose();
-                else setConfirmClose(false);
+                try {
+                  await onSave(editedContent);
+                  onClose();
+                } catch {
+                  setConfirmClose(false);
+                } finally {
+                  setClosingSave(false);
+                }
               }}
             >
               {(closingSave || isSaving) && <Loader2 className="h-4 w-4 animate-spin" />}

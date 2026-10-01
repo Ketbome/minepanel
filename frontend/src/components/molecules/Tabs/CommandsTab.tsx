@@ -6,19 +6,23 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Send, Trash, Terminal, AlertTriangle, Shield, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
 import { useServerCommands } from "@/lib/hooks/useServerCommands";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { executeServerCommand } from "@/services/docker/fetchs";
+import { executeServerCommand, updateSpawnPoint } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import Image from "next/image";
 import { GamerulesEditor } from "./GamerulesEditor";
+import { ServerConfig } from "@/lib/types/types";
+import { resolveSpawnPoint } from "../players/player-format";
 
 interface CommandsTabProps {
   serverId: string;
   serverStatus: string;
   rconPort: string;
   rconPassword: string;
+  config: ServerConfig;
+  updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rconPort, rconPassword }) => {
+export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rconPort, rconPassword, config, updateConfig }) => {
   const { t } = useLanguage();
   const { command, response, executing, executeCommand, setCommand, clearResponse } = useServerCommands(serverId, rconPort, rconPassword);
 
@@ -27,10 +31,42 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [activeSection, setActiveSection] = useState<"commands" | "world">("commands");
-  const [tpCoords, setTpCoords] = useState({ x: "0", y: "100", z: "0" });
+  const spawnPoint = resolveSpawnPoint(config);
+  const [tpCoords, setTpCoords] = useState({ x: String(spawnPoint.x), y: String(spawnPoint.y), z: String(spawnPoint.z) });
+  const [savingSpawnPoint, setSavingSpawnPoint] = useState(false);
   const [borderSize, setBorderSize] = useState("1000");
 
   const isServerRunning = serverStatus === "running";
+
+  // Switching servers reuses this component, so the coordinate inputs have to be re-seeded
+  // from the default spawn point that belongs to the server now on screen.
+  useEffect(() => {
+    setTpCoords({ x: String(spawnPoint.x), y: String(spawnPoint.y), z: String(spawnPoint.z) });
+    // Only on server switch: re-seeding on every config change would fight the admin's edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverId]);
+
+  const handleSaveDefaultSpawnPoint = async () => {
+    const x = Number(tpCoords.x);
+    const y = Number(tpCoords.y);
+    const z = Number(tpCoords.z);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+      mcToast.error(t("error"));
+      return;
+    }
+    setSavingSpawnPoint(true);
+    try {
+      const saved = await updateSpawnPoint(serverId, { x, y, z });
+      updateConfig("spawnX", saved.spawnX);
+      updateConfig("spawnY", saved.spawnY);
+      updateConfig("spawnZ", saved.spawnZ);
+      mcToast.success(t("save"));
+    } catch {
+      mcToast.error(t("error"));
+    } finally {
+      setSavingSpawnPoint(false);
+    }
+  };
 
   // Helper para ejecutar comandos RCON
   const runCommand = async (cmd: string, successMsg: string) => {
@@ -522,14 +558,18 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
               </div>
               {/* TP to coords */}
               <p className="text-xs text-gray-400 mb-2">{t("tpAllToCoords")}:</p>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap items-center">
                 <Input value={tpCoords.x} onChange={(e) => setTpCoords((p) => ({ ...p, x: e.target.value }))} placeholder="X" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
                 <Input value={tpCoords.y} onChange={(e) => setTpCoords((p) => ({ ...p, y: e.target.value }))} placeholder="Y" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
                 <Input value={tpCoords.z} onChange={(e) => setTpCoords((p) => ({ ...p, z: e.target.value }))} placeholder="Z" className="w-16 h-8 text-sm bg-gray-900/60 border-gray-700/50 text-gray-200" />
-                <Button type="button" size="sm" onClick={() => runCommand(`tp @a ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, t("playerTeleported"))} className="gap-1 text-xs">
+                <Button type="button" size="sm" onClick={() => runCommand(`tp @a ${tpCoords.x} ${tpCoords.y} ${tpCoords.z}`, `${t("playerTeleported")} (${tpCoords.x}, ${tpCoords.y}, ${tpCoords.z})`)} className="gap-1 text-xs">
                   <Navigation className="h-3 w-3" /> TP All
                 </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleSaveDefaultSpawnPoint} disabled={savingSpawnPoint} className="gap-1 text-xs bg-gray-800/60 border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white" title={t("defaultSpawnPointDesc")}>
+                  <MapPin className="h-3 w-3" /> {t("saveAsDefaultSpawn")}
+                </Button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">{t("defaultSpawnPointDesc")}</p>
             </div>
           </div>
         )}

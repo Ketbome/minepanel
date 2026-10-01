@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { glow } from './engine/shading';
 import { fill, paint, pick, type Painter } from './voxels';
 
 // Nether blocks, painted at runtime like the other kits.
@@ -62,7 +63,7 @@ function buildNetherKit() {
     netherrack: new THREE.MeshLambertMaterial({ map: tex.netherrack }),
     netherGold: new THREE.MeshLambertMaterial({ map: tex.netherGold }),
     netherBricks: new THREE.MeshLambertMaterial({ map: tex.netherBricks }),
-    glowstone: new THREE.MeshBasicMaterial({ map: tex.glowstone }),
+    glowstone: glow(new THREE.MeshBasicMaterial({ map: tex.glowstone }), 1.8),
     magma: new THREE.MeshLambertMaterial({ map: tex.magma, emissive: '#3a1204' }),
   };
   return { tex, mat };

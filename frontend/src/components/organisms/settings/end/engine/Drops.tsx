@@ -32,6 +32,21 @@ let nextId = 0;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((listener) => listener());
 
+// what a mob leaves when it dies: each entry rolls between min and max, if its chance comes up
+export interface Loot {
+  readonly item: ItemId;
+  readonly min: number;
+  readonly max: number;
+  readonly chance?: number;
+}
+
+export function dropLoot(loot: readonly Loot[], at: THREE.Vector3) {
+  for (const { item, min, max, chance = 1 } of loot) {
+    const count = min + Math.floor(Math.random() * (max - min + 1));
+    if (count > 0 && Math.random() < chance) spawnDrop(item, count, at);
+  }
+}
+
 export function spawnDrop(item: ItemId, count: number, at: THREE.Vector3, vel?: THREE.Vector3) {
   drops = [...drops, { id: (nextId += 1), item, count, pos: at.clone(), vel: vel?.clone() ?? new THREE.Vector3((Math.random() - 0.5) * 2, 3, (Math.random() - 0.5) * 2), age: 0 }];
   changed();
@@ -113,6 +128,10 @@ export function Drops() {
       if (drop.age > 0.5 && !game.dead && pos.distanceTo(center) < PICKUP) {
         game.give(drop.item, drop.count);
         cue('pop');
+        if (drop.item === 'skull' && !game.flags.skullFound) {
+          game.setFlag('skullFound');
+          game.advance('goal', 'advSkull', 'skull');
+        }
         return false;
       }
       return true;

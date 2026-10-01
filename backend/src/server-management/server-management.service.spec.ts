@@ -283,6 +283,43 @@ describe('ServerManagementService', () => {
     });
   });
 
+  describe('updateSpawnPoint', () => {
+    it('writes the coordinates without regenerating the compose file', async () => {
+      const config = await service.updateSpawnPoint('myserver', { x: 100, y: 64, z: -200 });
+
+      expect(config.spawnX).toBe(100);
+      expect(config.spawnY).toBe(64);
+      expect(config.spawnZ).toBe(-200);
+      expect(mockDockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(mockDockerComposeService.refreshComposeFile).not.toHaveBeenCalled();
+    });
+
+    it('clears an axis set to null and leaves an omitted axis alone', async () => {
+      mockStore.updateConfig.mockImplementation(async (_serverId: string, mutate: (config: any) => void) => {
+        const config = { id: 'myserver', spawnX: 100, spawnY: 64, spawnZ: -200 } as any;
+        mutate(config);
+        return config;
+      });
+
+      const config = await service.updateSpawnPoint('myserver', { x: null, z: 50 });
+
+      expect(config.spawnX).toBeUndefined();
+      expect(config.spawnY).toBe(64);
+      expect(config.spawnZ).toBe(50);
+    });
+
+    it('throws when the server has no server.json', async () => {
+      mockStore.updateConfig.mockResolvedValue(null);
+
+      await expect(service.updateSpawnPoint('ghost', { x: 0 })).rejects.toThrow('not found');
+    });
+
+    it('rejects an invalid server ID without touching the store', async () => {
+      await expect(service.updateSpawnPoint('../hack', { x: 0 })).rejects.toThrow('Invalid server ID');
+      expect(mockStore.updateConfig).not.toHaveBeenCalled();
+    });
+  });
+
   describe('startServer', () => {
     it('should fail for invalid server ID', async () => {
       const result = await service.startServer('invalid;id');
@@ -499,37 +536,44 @@ describe('ServerManagementService', () => {
   });
 
   describe('readTickStats', () => {
-    it('uses a fixed bounded command and container-side credentials', async () => {
+    it('passes explicit RCON credentials instead of trusting the container env', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: '\u001b[32mTPS data\u001b[0m', exitCode: 0 });
-      expect(await service.readTickStats('atm10', 'spark')).toEqual({ success: true, output: 'TPS data' });
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'spark tps'], { timeout: 5000 });
+      expect(await service.readTickStats('atm10', 'spark', '25575', 'secret')).toEqual({ success: true, output: 'TPS data' });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', 'spark tps'], { timeout: 5000 });
+    });
+
+    it('omits --password when no RCON password is configured', async () => {
+      jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
+      const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'TPS data', exitCode: 0 });
+      await service.readTickStats('atm10', 'spark', '25575');
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', 'spark tps'], { timeout: 5000 });
     });
 
     it('reads native NeoForge tick measurements', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'Overall: 20 TPS (25 ms/tick)', exitCode: 0 });
-      await service.readTickStats('atm10', 'neoforge');
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', 'neoforge tps'], { timeout: 5000 });
+      await service.readTickStats('atm10', 'neoforge', '25575', 'secret');
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', 'neoforge tps'], { timeout: 5000 });
     });
 
     it('rejects invalid ids and missing containers', async () => {
       const find = jest.spyOn(service as any, 'findContainerId').mockResolvedValue(null);
-      expect((await service.readTickStats('../data', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('../data', 'spark', '25575')).success).toBe(false);
       expect(find).not.toHaveBeenCalled();
-      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('atm10', 'spark', '25575')).success).toBe(false);
       expect(find).toHaveBeenCalledTimes(1);
 
       (fs.pathExists as jest.Mock).mockResolvedValue(false);
-      expect((await service.readTickStats('backend', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('backend', 'spark', '25575')).success).toBe(false);
       expect(find).toHaveBeenCalledTimes(1);
     });
 
     it('treats timeouts and failed commands as missing measurements', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       jest.spyOn(service as any, 'executeProcess').mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce({ stdout: '', exitCode: 1 });
-      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
-      expect((await service.readTickStats('atm10', 'spark')).success).toBe(false);
+      expect((await service.readTickStats('atm10', 'spark', '25575')).success).toBe(false);
+      expect((await service.readTickStats('atm10', 'spark', '25575')).success).toBe(false);
     });
   });
 

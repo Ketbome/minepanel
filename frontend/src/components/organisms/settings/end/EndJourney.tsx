@@ -6,7 +6,7 @@ import { Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { setMuted, stopAmbience } from './end-audio';
 import { releaseAll } from './engine/input';
-import { runtime } from './engine/runtime';
+import { exitFullscreen, runtime } from './engine/runtime';
 import { EndPoem } from './EndPoem';
 import { Hud } from './hud/Hud';
 import { useLore } from './lore';
@@ -112,8 +112,8 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
     leave.current?.focus({ preventScroll: true });
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    // E opens the inventory and closes any window, Escape closes a window or the pause menu; with
-    // the pointer locked, the browser itself turns Escape into a pause
+    // E opens the inventory and closes any window, Escape closes a window or the pause menu, or
+    // pauses; with Escape held by the keyboard lock the pointer stays locked, so pause from here
     let pausedAt = 0;
     const unsubscribe = useEndGame.subscribe((game, previous) => {
       if (game.paused && !previous.paused) pausedAt = performance.now();
@@ -132,7 +132,7 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
       } else if (event.key === 'Escape' && game.paused) {
         // the same Escape that just paused (by leaving the lock) must not resume at once
         if (game.flags.started && performance.now() - pausedAt > 400) game.setPaused(false);
-      } else if (event.key === 'Escape' && !document.pointerLockElement) {
+      } else if (event.key === 'Escape') {
         game.setPaused(true);
       } else if (event.key === 'm' || event.key === 'M') {
         setMuted(!game.muted);
@@ -146,6 +146,7 @@ export function EndJourney({ onClose, still }: EndJourneyProps) {
       window.removeEventListener('keydown', onKey);
       stopAmbience();
       releaseAll();
+      exitFullscreen();
     };
   }, [onClose]);
 

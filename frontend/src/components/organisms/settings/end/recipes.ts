@@ -12,12 +12,21 @@ export interface Recipe {
 }
 
 export const RECIPES: readonly Recipe[] = [
-  { output: 'sword', rows: [['diamond'], ['diamond'], ['stick']] },
+  // the diamond sword is not crafted: it waits in The Sift, and the camp's diamonds are the pickaxe's
+  { output: 'ironSword', rows: [['iron'], ['iron'], ['stick']] },
   { output: 'blaze', count: 2, ingredients: ['rod'] },
   { output: 'eye', ingredients: ['pearl', 'blaze'] },
   { output: 'pickaxe', rows: [['diamond', 'diamond', 'diamond'], [null, 'stick', null], [null, 'stick', null]] },
   { output: 'planks', count: 4, ingredients: ['log'] },
   { output: 'stick', count: 4, rows: [['planks'], ['planks']] },
+  { output: 'gold', rows: [['nugget', 'nugget', 'nugget'], ['nugget', 'nugget', 'nugget'], ['nugget', 'nugget', 'nugget']] },
+  { output: 'bow', rows: [[null, 'stick', 'string'], ['stick', null, 'string'], [null, 'stick', 'string']] },
+  { output: 'tnt', rows: [['gunpowder', 'sand', 'gunpowder'], ['sand', 'gunpowder', 'sand'], ['gunpowder', 'sand', 'gunpowder']] },
+  { output: 'shield', rows: [['planks', 'iron', 'planks'], ['planks', 'planks', 'planks'], [null, 'planks', null]] },
+  { output: 'helmet', rows: [['gold', 'gold', 'gold'], ['gold', null, 'gold']] },
+  { output: 'chestplate', rows: [['gold', null, 'gold'], ['gold', 'gold', 'gold'], ['gold', 'gold', 'gold']] },
+  { output: 'leggings', rows: [['gold', 'gold', 'gold'], ['gold', null, 'gold'], ['gold', null, 'gold']] },
+  { output: 'boots', rows: [['gold', null, 'gold'], ['gold', null, 'gold']] },
 ];
 
 const SIZE = 3;

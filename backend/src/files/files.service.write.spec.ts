@@ -10,6 +10,7 @@ jest.mock('fs-extra', () => ({
   stat: jest.fn(),
   readdir: jest.fn(),
   writeFile: jest.fn().mockResolvedValue(undefined),
+  copyFile: jest.fn().mockResolvedValue(undefined),
   remove: jest.fn().mockResolvedValue(undefined),
   rename: jest.fn().mockResolvedValue(undefined),
   move: jest.fn().mockResolvedValue(undefined),
@@ -46,6 +47,22 @@ describe('FilesService writes', () => {
     expect(fs.emptyDirSync).toHaveBeenCalledWith('/app/servers/.uploads');
 
     await expect(service.writeFile('srv', '../../etc/passwd', 'x')).rejects.toThrow(BadRequestException);
+  });
+
+  it('backs up an existing server.properties before writing it', async () => {
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true);
+    await service.writeFile('srv', 'server.properties', 'motd=New');
+    const backupPath = (fs.copyFile as unknown as jest.Mock).mock.calls[0][1] as string;
+    expect(backupPath).toMatch(/^\/app\/servers\/srv\/mc-data\/server\.properties\..+\.bak$/);
+    expect((fs.copyFile as unknown as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+      (fs.writeFile as unknown as jest.Mock).mock.invocationCallOrder[0],
+    );
+
+    jest.clearAllMocks();
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(true);
+    (fs.copyFile as unknown as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+    await expect(service.writeFile('srv', 'server.properties', 'motd=Unsafe')).rejects.toThrow('disk full');
+    expect(fs.writeFile).not.toHaveBeenCalled();
   });
 
   it('keeps the owner and mode of a file an upload replaces', async () => {

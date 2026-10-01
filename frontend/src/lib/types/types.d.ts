@@ -89,6 +89,7 @@ export interface ServerConfig {
   rconCmdsOnConnect?: string;
   rconCmdsOnDisconnect?: string;
   rconCmdsLastDisconnect?: string;
+  vanillaTweaksCodes?: string[];
   allowNether: boolean;
   entityBroadcastRange: string;
 
@@ -198,6 +199,12 @@ export interface ServerConfig {
   // Mod Watch tab through PUT /servers/:id/mod-watch, not the whole-form save.
   modNotes?: Record<string, string>;
   modWatchTargetVersion?: string;
+
+  // Default "TP Spawn" coordinates for the Players tab quick action. Neither reaches the
+  // compose file; saved through PUT /servers/:id/spawn-point, not the whole-form save.
+  spawnX?: number;
+  spawnY?: number;
+  spawnZ?: number;
 
   // GTNH specific
   gtnhPackVersion?: string;

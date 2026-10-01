@@ -2,7 +2,7 @@
 
 import { AnimatePresence, m } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ItemIcon, ITEMS } from '../items';
+import { armorPoints, ItemIcon, ITEMS } from '../items';
 import { useLore } from '../lore';
 import { MAX_HP, useEndGame } from '../store';
 
@@ -54,20 +54,27 @@ function Hearts() {
   );
 }
 
-// the game's chestplate icon; the golden helmet's two armor points fill one of them
+// the game's chestplate icons: each is two armor points, an odd point shows half of one
 const ARMOR_ROWS = ['.XXX.XXX.', 'XWWXXXWWX', 'XWGGGGGWX', 'XXGGGGGXX', '.XGGGGGX.', '.XGGGGGX.', '.XGGGGGX.', '.XGGGGGX.', '.XXXXXXX.'];
 
 function Armor() {
   const lore = useLore();
-  const helmet = useEndGame((state) => state.helmet);
-  if (!helmet) return null;
+  const points = useEndGame((state) => armorPoints(state.armor));
+  if (!points) return null;
   return (
     <div className="flex" role="img" aria-label={lore('armor')}>
-      <svg viewBox="0 0 9 9" className="h-3.5 w-3.5 sm:h-4 sm:w-4" shapeRendering="crispEdges" aria-hidden>
-        {ARMOR_ROWS.flatMap((row, y) =>
-          [...row].map((cell, x) => (cell === '.' ? null : <rect key={`${x}:${y}`} x={x} y={y} width={1} height={1} fill={cell === 'X' ? '#1a1a1a' : cell === 'W' ? '#ffffff' : '#c6c6c6'} />))
-        )}
-      </svg>
+      {Array.from({ length: Math.ceil(points / 2) }, (_, index) => {
+        const half = points - index * 2 === 1;
+        return (
+          <svg key={index} viewBox="0 0 9 9" className="h-3.5 w-3.5 sm:h-4 sm:w-4" shapeRendering="crispEdges" aria-hidden>
+            {ARMOR_ROWS.flatMap((row, y) =>
+              [...row].map((cell, x) =>
+                cell === '.' ? null : <rect key={`${x}:${y}`} x={x} y={y} width={1} height={1} fill={cell === 'X' ? '#1a1a1a' : half && x >= 5 ? '#4a4a4a' : cell === 'W' ? '#ffffff' : '#c6c6c6'} />
+              )
+            )}
+          </svg>
+        );
+      })}
     </div>
   );
 }

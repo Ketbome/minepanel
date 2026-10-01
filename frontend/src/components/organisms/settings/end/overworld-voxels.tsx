@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { sway } from './engine/shading';
 import { CLEAR, fill, line, paint, pick, type Painter } from './voxels';
 
 // Overworld blocks for the prologue, painted at runtime like the End kit in voxels.tsx.
@@ -361,8 +362,6 @@ const haySide: Painter = (dot, rand, size) => {
   }
 };
 
-const water: Painter = (dot, rand, size) => fill(dot, rand, size, ['rgba(52,92,200,0.72)', 'rgba(60,104,214,0.72)', 'rgba(44,80,184,0.72)']);
-
 const crying: Painter = (dot, rand, size) => {
   fill(dot, rand, size, ['#140f1d', '#191223', '#100c17', '#1d1528']);
   for (let tear = 0; tear < 9; tear += 1) {
@@ -477,7 +476,6 @@ function buildOverworldKit() {
     glass: paint(73, glass),
     hayTop: paint(74, hayTop),
     haySide: paint(75, haySide),
-    water: paint(76, water),
     crying: paint(77, crying),
     goldBlock: paint(78, goldBlock),
     deepslate: paint(79, deepslate),
@@ -526,20 +524,19 @@ function buildOverworldKit() {
     planks: planksMat,
     grass: [grassSideMat, grassSideMat, lambert(tex.grassTop), dirtMat, grassSideMat, grassSideMat],
     log: [logSideMat, logSideMat, logTopMat, logTopMat, logSideMat, logSideMat],
-    leaves: new THREE.MeshLambertMaterial({ map: tex.leaves, alphaTest: 0.5 }),
+    leaves: sway(new THREE.MeshLambertMaterial({ map: tex.leaves, alphaTest: 0.5 }), 'leaves'),
     table: [tableSideMat, tableSideMat, lambert(tex.tableTop), planksMat, lambert(tex.tableFront), tableSideMat],
     chest: [chestSideMat, chestSideMat, chestInside, chestSideMat, lambert(tex.chestFront), chestSideMat],
     lid: [chestSideMat, chestSideMat, chestSideMat, chestInside, lambert(tex.lidFront), chestSideMat],
     giftChest: [giftMat, giftMat, chestInside, giftMat, lambert(tex.giftFront), giftMat],
     giftLid: [giftMat, giftMat, giftMat, chestInside, lambert(tex.giftLidFront), giftMat],
     bookshelf: [shelfMat, shelfMat, planksMat, planksMat, shelfMat, shelfMat],
-    tallGrass: new THREE.MeshLambertMaterial({ map: tex.tallGrass, alphaTest: 0.5, side: THREE.DoubleSide }),
+    tallGrass: sway(new THREE.MeshLambertMaterial({ map: tex.tallGrass, alphaTest: 0.5, side: THREE.DoubleSide }), 'plant'),
     stone: lambert(tex.stone),
     cobble: lambert(tex.cobble),
     path: [dirtMat, dirtMat, lambert(tex.pathTop), dirtMat, dirtMat, dirtMat],
     glass: new THREE.MeshLambertMaterial({ map: tex.glass, transparent: true, depthWrite: false }),
     hay: [lambert(tex.haySide), lambert(tex.haySide), lambert(tex.hayTop), lambert(tex.hayTop), lambert(tex.haySide), lambert(tex.haySide)],
-    water: new THREE.MeshLambertMaterial({ map: tex.water, transparent: true, depthWrite: false }),
     crying: new THREE.MeshLambertMaterial({ map: tex.crying, emissive: '#2a0a44' }),
     goldBlock: lambert(tex.goldBlock),
     deepslate: lambert(tex.deepslate),
@@ -559,12 +556,12 @@ function buildOverworldKit() {
     snow: snowMat,
     ice: new THREE.MeshLambertMaterial({ map: tex.ice, transparent: true, depthWrite: false }),
     spruceLog: [spruceSideMat, spruceSideMat, spruceTopMat, spruceTopMat, spruceSideMat, spruceSideMat],
-    spruceLeaves: new THREE.MeshLambertMaterial({ map: tex.spruceLeaves, alphaTest: 0.5 }),
+    spruceLeaves: sway(new THREE.MeshLambertMaterial({ map: tex.spruceLeaves, alphaTest: 0.5 }), 'leaves'),
     cactus: [cactusSideMat, cactusSideMat, lambert(tex.cactusTop), lambert(tex.cactusTop), cactusSideMat, cactusSideMat],
     tnt: [tntSideMat, tntSideMat, lambert(tex.tntTop), lambert(tex.tntTop), tntSideMat, tntSideMat],
-    flower: new THREE.MeshLambertMaterial({ map: tex.flower, alphaTest: 0.5, side: THREE.DoubleSide }),
-    fern: new THREE.MeshLambertMaterial({ map: tex.fern, alphaTest: 0.5, side: THREE.DoubleSide }),
-    deadBush: new THREE.MeshLambertMaterial({ map: tex.deadBush, alphaTest: 0.5, side: THREE.DoubleSide }),
+    flower: sway(new THREE.MeshLambertMaterial({ map: tex.flower, alphaTest: 0.5, side: THREE.DoubleSide }), 'plant'),
+    fern: sway(new THREE.MeshLambertMaterial({ map: tex.fern, alphaTest: 0.5, side: THREE.DoubleSide }), 'plant'),
+    deadBush: sway(new THREE.MeshLambertMaterial({ map: tex.deadBush, alphaTest: 0.5, side: THREE.DoubleSide }), 'plant'),
     cracks: tex.cracks.map(
       (map) => new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
     ),

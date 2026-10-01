@@ -51,7 +51,15 @@ export type BlockId =
   | 'spruceLog'
   | 'spruceLeaves'
   | 'cactus'
-  | 'tnt';
+  | 'tnt'
+  | 'siftGrass'
+  | 'hillGrass'
+  | 'siftSculk'
+  | 'siftSand'
+  | 'paleLog'
+  | 'paleLeaves'
+  | 'boneBlock'
+  | 'ichor';
 
 interface BlockDef {
   readonly solid: boolean;
@@ -107,7 +115,7 @@ export const BLOCKS: Record<BlockId, BlockDef> = {
   chorusFlower: { solid: false },
   endRod: { solid: false },
   // the biomes' blocks drop nothing: there are no items for them yet
-  sand: { solid: true, mine: 0.5, pick: 0.3 },
+  sand: { solid: true, mine: 0.5, pick: 0.3, drop: 'sand' },
   sandstone: { solid: true, pick: 0.8 },
   snowyGrass: { solid: true, mine: 0.9, pick: 0.45, drop: 'dirt' },
   snow: { solid: true, mine: 0.3 },
@@ -115,7 +123,16 @@ export const BLOCKS: Record<BlockId, BlockDef> = {
   spruceLog: { solid: true, mine: 2.4, pick: 1.4, drop: 'log' },
   spruceLeaves: { solid: true, clear: true, mine: 0.3 },
   cactus: { solid: true, clear: true, mine: 0.4 },
-  tnt: { solid: true, mine: 0.1 },
+  tnt: { solid: true, mine: 0.1, drop: 'tnt' },
+  // The Sift's blocks drop nothing either
+  siftGrass: { solid: true, mine: 0.9, pick: 0.45 },
+  hillGrass: { solid: true, mine: 0.9, pick: 0.45 },
+  siftSculk: { solid: true, mine: 0.5, pick: 0.3 },
+  siftSand: { solid: true, mine: 0.5, pick: 0.3 },
+  paleLog: { solid: true, mine: 2.4, pick: 1.4 },
+  paleLeaves: { solid: true, clear: true, mine: 0.3 },
+  boneBlock: { solid: true, pick: 0.8 },
+  ichor: { solid: false },
 };
 
 const OFFSET = 512;

@@ -32,6 +32,7 @@ export function Projectiles() {
   const materials = useMemo(
     () => ({
       arrow: new THREE.MeshLambertMaterial({ color: '#8a6337' }),
+      trident: new THREE.MeshLambertMaterial({ color: '#3e9b8c' }),
       fireball: new THREE.MeshBasicMaterial({ color: '#ffb347' }),
       ghastball: new THREE.MeshBasicMaterial({ color: '#ff7a1a' }),
       dragonball: new THREE.MeshBasicMaterial({ color: '#c34dff' }),
@@ -105,8 +106,10 @@ export function Projectiles() {
         if (hit) {
           if (shot.kind === 'arrow') cue('arrowHit');
           const at = shot.pos.clone().addScaledVector(dir, hit.distance);
-          const bounced = hit.target.hit!(shot.damage, shot.kind === 'arrow' ? 'arrow' : 'fireball') === false;
+          const bounced = hit.target.hit!(shot.damage, shot.kind === 'arrow' || shot.kind === 'trident' ? 'arrow' : 'fireball') === false;
           if (bounced && shot.kind === 'arrow') spawnDrop('arrow', 1, at, dir.clone().multiplyScalar(-3).setY(4));
+          // the trident falls where it hit, to be picked up again
+          if (shot.kind === 'trident') spawnDrop('trident', 1, at, dir.clone().multiplyScalar(-2).setY(3));
           shot.onLand?.(at, hit.target);
           shot.done = true;
           continue;
@@ -122,6 +125,7 @@ export function Projectiles() {
           runtime.hooks.vibration?.(at, 15);
           if (shot.fromPlayer) spawnDrop('arrow', 1, at, dir.clone().multiplyScalar(-0.5));
         }
+        if (shot.kind === 'trident') spawnDrop('trident', 1, at, dir.clone().multiplyScalar(-0.5));
         continue;
       }
       shot.pos.addScaledVector(shot.vel, dt);
@@ -134,14 +138,15 @@ export function Projectiles() {
       const glow = glows.current[index];
       if (!mesh || !glow) return;
       mesh.visible = Boolean(shot);
-      glow.visible = Boolean(shot) && shot.kind !== 'arrow' && shot.kind !== 'pearl';
+      glow.visible = Boolean(shot) && shot.kind !== 'arrow' && shot.kind !== 'trident' && shot.kind !== 'pearl';
       if (!shot) return;
       mesh.position.copy(shot.pos);
       glow.position.copy(shot.pos);
       mesh.material = materials[shot.kind];
-      if (shot.kind === 'arrow') {
+      if (shot.kind === 'arrow' || shot.kind === 'trident') {
         mesh.quaternion.setFromUnitVectors(FORWARD, dir.copy(shot.vel).normalize());
-        mesh.scale.set(0.06, 0.06, 0.8);
+        if (shot.kind === 'trident') mesh.scale.set(0.08, 0.08, 1.4);
+        else mesh.scale.set(0.06, 0.06, 0.8);
         return;
       }
       const size = shot.kind === 'ghastball' ? 0.9 : shot.kind === 'dragonball' ? 0.7 : shot.kind === 'pearl' ? 0.22 : 0.3;

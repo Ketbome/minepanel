@@ -267,6 +267,14 @@ describe('DockerComposeService', () => {
       expect(result?.envVars ?? '').not.toContain('RCON_CMDS');
     });
 
+    it('should read VANILLATWEAKS_SHARECODE into vanillaTweaksCodes instead of the custom env textarea', async () => {
+      const result = await loadFromCompose('java-server', {
+        services: { mc: { image: 'itzg/minecraft-server:latest', environment: { ID_MANAGER: 'java-server', TYPE: 'VANILLA', VANILLATWEAKS_SHARECODE: 'MGr52E, tF1zL2' } } },
+      });
+      expect(result?.vanillaTweaksCodes).toEqual(['MGr52E', 'tF1zL2']);
+      expect(result?.envVars ?? '').not.toContain('VANILLATWEAKS');
+    });
+
     it('should read the Bedrock seed and game mode from the keys Bedrock writes', async () => {
       const result = await loadFromCompose('bedrock-server', {
         services: {

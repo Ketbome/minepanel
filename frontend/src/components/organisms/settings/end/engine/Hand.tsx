@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { ITEMS, type ItemId } from '../items';
 import { SPRITES, type Pixel } from '../PixelIcons';
 import { useEndGame, type Zone } from '../store';
+import { QUALITY, useQuality } from './quality';
 import { runtime } from './runtime';
 import { materialFor } from './WorldMesh';
 
@@ -17,7 +18,7 @@ const DEG = Math.PI / 180;
 const SWING_S = 0.3;
 const WALK = 4.3;
 // how lit the hand is in each zone, so it does not glow in the deep dark
-const LIGHT: Partial<Record<Zone, number>> = { overworld: 1, nether: 0.9, ancient: 0.5, stronghold: 0.6, end: 0.8, endcity: 0.9 };
+const LIGHT: Partial<Record<Zone, number>> = { overworld: 1, nether: 0.9, ancient: 0.5, sift: 1, stronghold: 0.6, end: 0.8, endcity: 0.9 };
 
 // the bow's 16x16 texture; drawing it bends the string back and nocks an arrow
 const BOW_ROWS = [
@@ -239,6 +240,8 @@ function useItemSprite(item: ItemId | undefined) {
 export function Hand() {
   const item = useEndGame((state) => state.inventory[state.selected]?.item);
   const zone = useEndGame((state) => state.zone);
+  // with post-processing the composer draws the world first, then the hand goes on top
+  const post = useQuality((state) => QUALITY[state.quality].post);
   const root = useRef<THREE.Group>(null);
   const bowRefs = useRef<(THREE.Mesh | null)[]>([]);
   const sprite = useItemSprite(item);
@@ -310,12 +313,16 @@ export function Hand() {
       // and nearly face-on while drawing, the arrow aimed at the crosshair
       let yaw = 100;
       let roll = 0;
-      if (held === 'apple' && m.charge > 0) {
+      if (held && ITEMS[held].food && m.charge > 0) {
         // up to the mouth, bobbing while you chew
         const lift = Math.min(1, m.charge * 6);
         const chew = m.charge > 0.2 ? Math.abs(Math.cos(m.charge * 7 * Math.PI)) * 0.04 : 0;
         translate(0.61 - lift * 0.53, -0.27 - lift * 0.04 + chew - m.equip * 0.6, -1.02 + lift * 0.22);
         yaw -= lift * 80;
+      } else if (held === 'shield' && game.blocking) {
+        // raised in front of you, face on
+        translate(0.3, -0.36 - m.equip * 0.6, -0.78);
+        yaw = 10;
       } else if (drawing) {
         // pulled toward the eye, trembling once the string is taut
         const pull = Math.min(1, (m.charge * m.charge + m.charge * 2) / 3);
@@ -325,7 +332,9 @@ export function Hand() {
         roll = 10;
         frame = pull < 0.65 ? 1 : pull < 0.9 ? 2 : 3;
       } else {
-        translate(-0.4 * Math.sin(early * Math.PI), 0.2 * Math.sin(early * Math.PI * 2), -0.2 * Math.sin(swing * Math.PI));
+        // a trident about to be thrown is drawn back and up
+        const pull = held === 'trident' ? Math.min(1, m.charge * 2) : 0;
+        translate(-0.4 * Math.sin(early * Math.PI), 0.2 * Math.sin(early * Math.PI * 2) + pull * 0.1, -0.2 * Math.sin(swing * Math.PI) + pull * 0.15);
         translate(0.56, -0.52 - m.equip * 0.6, -0.72);
         rotate('y', 45 + Math.sin(swing * swing * Math.PI) * -20);
         rotate('z', Math.sin(early * Math.PI) * -20);
@@ -351,7 +360,7 @@ export function Hand() {
 
   const light = LIGHT[zone] ?? 1;
   return (
-    <Hud renderPriority={1}>
+    <Hud renderPriority={post ? 2 : 1}>
       <PerspectiveCamera makeDefault fov={70} near={0.01} far={10} />
       <ambientLight intensity={0.9 * light} />
       <directionalLight position={[-0.6, 1, 0.8]} intensity={1.6 * light} />
