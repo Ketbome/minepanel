@@ -73,6 +73,7 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
   const selectedFileId = selectedFile ? String(selectedFile.id) : fileId.trim();
   const detectedVersion = findMinecraftVersion(selectedFile?.gameVersions);
   const distributionBlocked = modpack.allowModDistribution === false;
+  const downloadUrl = `${modpack.links.websiteUrl}/${selectedFileId ? `download/${selectedFileId}` : "files"}`;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -102,7 +103,8 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
         cfMethod: method,
         cfUrl: method === "url" ? (selectedFileId ? `${modpack.links.websiteUrl}/download/${selectedFileId}` : modpack.links.websiteUrl) : "",
         cfSlug: method === "url" ? "" : modpack.slug,
-        cfFile: method === "slug" ? selectedFileId : "",
+        // Ignored by File, but it is what the Mods tab links for the manual download.
+        cfFile: method === "url" ? "" : selectedFileId,
         ...(detectedVersion ? { minecraftVersion: detectedVersion, dockerImage: getSuggestedJavaImage(detectedVersion) } : {}),
       };
 
@@ -164,14 +166,15 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
             {/* itzg cannot download a pack whose author opted out of the API, so
                 the install would fail halfway through provisioning. */}
             {distributionBlocked ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
+              <div className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                <p className="text-xs text-amber-200">
+                <p className="min-w-0 flex-1 basis-64 text-xs text-amber-200">
                   {t("modpackNoDistribution")}{" "}
                   <a href={LINK_MODPACK_ZIP} target="_blank" rel="noopener noreferrer" className="text-amber-100 underline underline-offset-2">
                     {t("documentation")}
                   </a>
                 </p>
+                <DownloadButton href={downloadUrl} label={t("modpackDownloadFromCurseForge")} />
               </div>
             ) : null}
 
@@ -216,14 +219,15 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
               </div>
 
               {distributionBlocked ? (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
+                <div className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                  <p className="text-xs text-amber-200">
+                  <p className="min-w-0 flex-1 basis-64 text-xs text-amber-200">
                     {t("modpackNoDistribution")}{" "}
                     <a href={LINK_MODPACK_ZIP} target="_blank" rel="noopener noreferrer" className="text-amber-100 underline underline-offset-2">
                       {t("documentation")}
                     </a>
                   </p>
+                  <DownloadButton href={downloadUrl} label={t("modpackDownloadFromCurseForge")} />
                 </div>
               ) : null}
 
@@ -320,6 +324,15 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
     </Dialog>
   );
 }
+
+const DownloadButton: FC<{ readonly href: string; readonly label: string }> = ({ href, label }) => (
+  <Button asChild size="sm" className="shrink-0 bg-amber-500 font-minecraft text-xs text-gray-950 hover:bg-amber-400">
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      <Download className="mr-1.5 h-3.5 w-3.5" />
+      {label}
+    </a>
+  </Button>
+);
 
 const StatTile: FC<{ readonly icon: React.ReactNode; readonly label: string; readonly value: string; readonly tone: string }> = ({ icon, label, value, tone }) => (
   <div className={`rounded-lg border p-3 ${tone}`}>

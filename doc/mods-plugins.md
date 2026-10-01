@@ -434,8 +434,14 @@ For modpacks that are not published on CurseForge: your own pack, one a friend s
 private pack exported from the CurseForge app.
 
 1. Select **File** as installation method
-2. Click **Upload modpack** and pick the `.zip`
+2. Click **Upload modpack** and pick the `.zip`. A progress bar shows the percentage and the
+   megabytes sent; once it reaches 100% the server still reads the archive before it appears
+   in the list.
 3. Select the uploaded file in the list
+
+When the File method still knows which CurseForge pack it stands for (a blocked pack created
+from the browser, or a server switched over from URL/Slug), it shows a **Download from
+CurseForge** button pointing at that pack's file until a `.zip` is selected.
 
 The file is stored in `servers/<server-id>/modpacks/` and mounted read-only at `/modpacks`, and the
 panel sets `CF_MODPACK_ZIP` to it. A CurseForge API key is still required, because the mods listed
@@ -561,6 +567,9 @@ in the result grid, the details dialog drops the URL/Slug choice and creates the
 pack turns out to be blocked gets a warning in the Mods tab with a one-click switch to the File
 method. On an existing server the switch is a button rather than automatic: the flag is the
 author's and it does get turned back on, so a stale `false` must not rewrite a config that works.
+
+Every one of those warnings carries a **Download from CurseForge** button that opens the
+download page of the selected file, so the zip to upload is one click away.
 :::
 
 The modpack itself is always pinned to the file that was picked: a pack that updates on its

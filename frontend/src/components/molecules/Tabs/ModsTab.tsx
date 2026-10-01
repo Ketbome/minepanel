@@ -85,13 +85,15 @@ export const ModsTab: FC<ModsTabProps> = ({ serverId, config, updateConfig }) =>
       // Pinned to a file on purpose: a modpack that updates itself can break the
       // world, so moving to a newer release stays a manual step.
       updateConfig("cfUrl", latestFileId ? `${modpack.links.websiteUrl}/download/${latestFileId}` : modpack.links.websiteUrl);
-    } else if (config.cfMethod === "slug") {
+    } else if (config.cfMethod === "slug" || config.cfMethod === "file") {
+      // With File they only name the install and point the download notice at it.
       updateConfig("cfSlug", modpack.slug);
       if (latestFileId) {
         updateConfig("cfFile", latestFileId.toString());
       }
     }
     mcToast.success(`${t("modpackSelected")}: ${modpack.name}`);
+    if (modpack.allowModDistribution === false) mcToast.warning(t("modpackNoDistributionTitle"), { description: t("modpackNoDistribution") });
 
     // The docker image is manual for modpacks, so the java tag has to follow the
     // pack's Minecraft version instead of the auto rule in the server type tab.

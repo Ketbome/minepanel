@@ -4,6 +4,7 @@ export const LINK_GITHUB = `https://github.com/${GITHUB_REPOSITORY}`;
 export const LINK_DOCUMENTATION = `${LINK}/configuration.html`;
 export const LINK_LEARN_HOW_LAN = `${LINK}/networking.html#how-to-get-your-lan-ip`;
 export const LINK_MODS_PLUGINS = `${LINK}/mods-plugins.html`;
+export const LINK_TPS = `${LINK}/features.html#tps`;
 export const LINK_MODPACK_ZIP = `${LINK}/mods-plugins.html#modpack-zip-inspection`;
 export const LINK_MODPACK_NO_LOADER = `${LINK}/mods-plugins.html#modpack-zip-no-loader`;
 export const LINK_WORLD_SETTINGS = `${LINK}/server-types.html#world-sources-folders-zip-tar`;

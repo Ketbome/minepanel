@@ -56,6 +56,18 @@ describe('DiscordService', () => {
     expect(req.end).toHaveBeenCalled();
   });
 
+  it('adds the modpack next to the version', async () => {
+    const req = stubRequest(204);
+
+    await service.sendServerNotification('https://hooks.example/x', 'started', 'srv', 'en', { version: '1.20.1', modpack: 'atm9' });
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload.embeds[0].fields.slice(1, 3)).toEqual([
+      { name: '📦 Version', value: '`1.20.1`', inline: true },
+      { name: '🧩 Modpack', value: '`atm9`', inline: true },
+    ]);
+  });
+
   it('builds the connection value from whatever details are available', async () => {
     const cases: Array<[Record<string, string>, string]> = [
       [{ ip: 'host' }, 'host'],
