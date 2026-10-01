@@ -96,7 +96,8 @@ export const runtime = {
 };
 
 // Every Play, resume and respawn click also takes the screen: in full screen Chrome lets a page
-// keep Ctrl+W (sprint and walk forward) from closing the tab. Escape leaves it with the pointer.
+// keep Ctrl+W (sprint and walk forward) from closing the tab, and a short Escape (pause, close a
+// window) from leaving full screen; holding Escape still leaves it. Other browsers ignore the lock.
 export function lockPointer() {
   if (runtime.canvas && !document.pointerLockElement && !input.touch) {
     void Promise.resolve(runtime.canvas.requestPointerLock()).catch(() => {});
@@ -106,7 +107,7 @@ export function lockPointer() {
   const keyboard = (navigator as Navigator & { keyboard?: { lock?: (codes: string[]) => Promise<void> } }).keyboard;
   root
     .requestFullscreen({ navigationUI: 'hide' })
-    .then(() => keyboard?.lock?.(['KeyW']))
+    .then(() => keyboard?.lock?.(['KeyW', 'Escape']))
     .catch(() => {});
 }
 
