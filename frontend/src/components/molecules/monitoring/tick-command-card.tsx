@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Terminal } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { useConfigMode } from "@/lib/hooks/useConfigMode";
 import { ServerConfig } from "@/lib/types/types";
 import { updateTickCommand } from "@/services/docker/fetchs";
 import { getCurrentUser } from "@/services/users/users.service";
@@ -19,10 +20,28 @@ interface TickCommandCardProps {
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
+// Commands the panel has a built-in reader for; picking one needs no patterns.
+const PRESETS = [
+  { value: "tabtps", label: "TabTPS (tickinfo)", command: "tickinfo" },
+  { value: "neoforge", label: "NeoForge (neoforge tps)", command: "neoforge tps" },
+  { value: "spark", label: "spark (spark tps)", command: "spark tps" },
+] as const;
+
+type Choice = "auto" | "custom" | (typeof PRESETS)[number]["value"];
+
+const choiceFor = (config: ServerConfig): Choice => {
+  const command = config.tickCommand?.trim();
+  if (!command) return "auto";
+  const preset = PRESETS.find((candidate) => candidate.command === command);
+  return preset && !config.tickTpsPattern && !config.tickMsptPattern ? preset.value : "custom";
+};
+
 // Admin only, like the endpoints behind it: the command runs on every metrics poll.
 export const TickCommandCard: FC<TickCommandCardProps> = ({ serverId, config, updateConfig }) => {
   const { t } = useLanguage();
+  const { mode } = useConfigMode();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [choice, setChoice] = useState<Choice>(() => choiceFor(config));
   const [command, setCommand] = useState(config.tickCommand ?? "");
   const [tpsPattern, setTpsPattern] = useState(config.tickTpsPattern ?? "");
   const [msptPattern, setMsptPattern] = useState(config.tickMsptPattern ?? "");
@@ -39,6 +58,18 @@ export const TickCommandCard: FC<TickCommandCardProps> = ({ serverId, config, up
   }, []);
 
   if (!isAdmin) return null;
+
+  // Patterns are an Advanced-mode tool, but saved ones stay visible so nothing in effect is hidden.
+  const showPatterns = choice === "custom" && (mode === "advanced" || Boolean(tpsPattern.trim() || msptPattern.trim()));
+
+  const handleChoice = (next: Choice) => {
+    setChoice(next);
+    setResult(null);
+    if (next === "custom") return;
+    setCommand(PRESETS.find((candidate) => candidate.value === next)?.command ?? "");
+    setTpsPattern("");
+    setMsptPattern("");
+  };
 
   const draft = { tickCommand: command.trim(), tickTpsPattern: tpsPattern.trim() || undefined, tickMsptPattern: msptPattern.trim() || undefined };
 
@@ -84,19 +115,31 @@ export const TickCommandCard: FC<TickCommandCardProps> = ({ serverId, config, up
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm">
         <div className="flex flex-col gap-1">
-          <Label htmlFor="tick-command">{t("monitoringCommand")}</Label>
-          <Input id="tick-command" value={command} maxLength={100} placeholder="tickinfo" onChange={(event) => setCommand(event.target.value)} />
+          <Label htmlFor="tick-preset">{t("monitoringPresetLabel")}</Label>
+          <select id="tick-preset" className="mc-input px-3 py-2" value={choice} onChange={(event) => handleChoice(event.target.value as Choice)}>
+            <option value="auto">{t("monitoringPresetAuto")}</option>
+            {PRESETS.map((preset) => <option key={preset.value} value={preset.value}>{preset.label}</option>)}
+            <option value="custom">{t("monitoringPresetCustom")}</option>
+          </select>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        {choice === "custom" && (
           <div className="flex flex-col gap-1">
-            <Label htmlFor="tick-tps-pattern">{t("monitoringTpsPattern")}</Label>
-            <Input id="tick-tps-pattern" value={tpsPattern} maxLength={200} className="font-mono" placeholder="TPS: ([\d.]+)" onChange={(event) => setTpsPattern(event.target.value)} />
+            <Label htmlFor="tick-command">{t("monitoringCommand")}</Label>
+            <Input id="tick-command" value={command} maxLength={100} placeholder="tickinfo" onChange={(event) => setCommand(event.target.value)} />
           </div>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="tick-mspt-pattern">{t("monitoringMsptPattern")}</Label>
-            <Input id="tick-mspt-pattern" value={msptPattern} maxLength={200} className="font-mono" placeholder="avg ([\d.]+)" disabled={!tpsPattern.trim()} onChange={(event) => setMsptPattern(event.target.value)} />
+        )}
+        {showPatterns && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="tick-tps-pattern">{t("monitoringTpsPattern")}</Label>
+              <Input id="tick-tps-pattern" value={tpsPattern} maxLength={200} className="font-mono" placeholder="TPS: ([\d.]+)" onChange={(event) => setTpsPattern(event.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="tick-mspt-pattern">{t("monitoringMsptPattern")}</Label>
+              <Input id="tick-mspt-pattern" value={msptPattern} maxLength={200} className="font-mono" placeholder="avg ([\d.]+)" disabled={!tpsPattern.trim()} onChange={(event) => setMsptPattern(event.target.value)} />
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100" disabled={testing || !command.trim()} onClick={handleTest}>
             {testing && <Loader2 className="size-4 animate-spin" />}{t("monitoringRunTest")}

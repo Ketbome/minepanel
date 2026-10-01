@@ -94,21 +94,27 @@ custom command (below) avoid this.
 
 ### Custom tick command
 
-Administrators can replace the built-in probes with their own RCON command from
-the **Custom tick command** card at the bottom of the Metrics tab, for example
-`tickinfo` from [TabTPS](https://github.com/jpenilla/TabTPS). The reply must come
-back over RCON. **Run & test** runs the command once, shows the raw reply and what
-was read from it, without saving, so a command that answers with nothing is visible
+Administrators choose how TPS is read from the **Custom tick command** card at the bottom
+of the Metrics tab. The **Tick source** dropdown offers:
+
+- **Automatic (built-in)**: the NeoForge and spark probes described above.
+- **TabTPS (`tickinfo`)**, **NeoForge (`neoforge tps`)** and **spark (`spark tps`)**: run that
+  one command and read its reply with the built-in reader. TabTPS reports the 1-minute TPS and
+  the 60-second average MSPT.
+- **Custom command…**: any other single-line RCON command (up to 100 characters, not starting
+  with `-`). TabTPS, NeoForge and spark output is still recognized automatically.
+
+The reply must come back over RCON. **Run & test** runs the command once, shows the raw reply
+and what was read from it, without saving, so a command that answers with nothing is visible
 right away.
 
-TabTPS, NeoForge and spark output is recognized automatically (TabTPS reports the
-1-minute TPS and the 60-second average MSPT). For any other command, give a TPS
-pattern and optionally an MSPT pattern: regular expressions (case-insensitive) with
-one capture group around the number, matched against the first 4 KB of the reply.
-Patterns win over automatic detection and the source is shown as `custom`. Values
-that cannot be read stay blank; the panel never falls back to another probe.
-Saving with an empty command restores the defaults. The command runs on every
-metrics poll, so only administrators can set it.
+For a custom command whose output nothing recognizes, **Advanced mode** (the Simple/Advanced
+toggle above the tabs) shows a TPS pattern and an optional MSPT pattern: regular
+expressions (case-insensitive) with one capture group around the number, matched against the
+first 4 KB of the reply. Patterns win over automatic detection and the source is shown as
+`custom`. Patterns that are already saved stay visible in Simple mode. Values that cannot be
+read stay blank; the panel never falls back to another probe. Choosing **Automatic** and saving
+restores the defaults. The command runs on every metrics poll, so only administrators can set it.
 
 Every pattern match is limited to 50 ms, so a badly written pattern (for example
 `(a+)+$`) cannot stall the panel; one that is too slow is rejected when you save or
