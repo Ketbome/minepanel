@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
+import { normalizeBasePath } from 'src/config';
 import { HostContextService } from 'src/common/docker/host-context.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from './proxy-router.service';
@@ -50,7 +51,10 @@ describe('ProxyRouterService', () => {
 
   // The host paths are read in the constructor, so a test that needs different ones
   // builds its own instance.
-  const build = async (unresolvedHostPaths: string[] = []): Promise<ProxyRouterService> => {
+  const build = async (
+    unresolvedHostPaths: string[] = [],
+    config: Record<string, unknown> = {},
+  ): Promise<ProxyRouterService> => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProxyRouterService,
@@ -60,7 +64,7 @@ describe('ProxyRouterService', () => {
             get: jest.fn((key: string) => {
               if (key === 'dataHostDir') return '/host/minepanel/data';
               if (key === 'unresolvedHostPaths') return unresolvedHostPaths;
-              return null;
+              return config[key] ?? null;
             }),
           },
         },
@@ -130,6 +134,48 @@ describe('ProxyRouterService', () => {
       expect(environment.AUTO_SCALE_WEBHOOK_URL).toBe('http://backend:8091/servers/autoscale');
       expect(environment.AUTO_SCALE_WEBHOOK_HEADERS).toBe('Authorization=Bearer secret');
       expect(environment.AUTO_SCALE_DOWN_AFTER).toBe('10m');
+    });
+
+    it('keeps the global prefix in the webhook URL when BASE_PATH is set', async () => {
+      const prefixed = await build([], { basePath: '/panel-api', backendPort: '8091' });
+      instanceSettings.getRouterSettings.mockResolvedValue(
+        routerSettings({ autoScaleEnabled: true, autoScaleToken: 'secret' }),
+      );
+
+      await prefixed.generateComposeFile();
+      const compose = yaml.load(lastWrittenCompose()) as any;
+
+      expect(compose.services['mc-router'].environment.AUTO_SCALE_WEBHOOK_URL).toBe(
+        'http://backend:8091/panel-api/servers/autoscale',
+      );
+    });
+
+    it('builds the webhook URL from a normalized prefix when BASE_PATH has no leading slash', async () => {
+      const unprefixed = await build([], { basePath: normalizeBasePath('panel-api') });
+      instanceSettings.getRouterSettings.mockResolvedValue(
+        routerSettings({ autoScaleEnabled: true, autoScaleToken: 'secret' }),
+      );
+
+      await unprefixed.generateComposeFile();
+      const compose = yaml.load(lastWrittenCompose()) as any;
+
+      expect(compose.services['mc-router'].environment.AUTO_SCALE_WEBHOOK_URL).toBe(
+        'http://backend:8091/panel-api/servers/autoscale',
+      );
+    });
+
+    it('uses the backend port the panel listens on, not a hard-coded one', async () => {
+      const customPort = await build([], { basePath: '', backendPort: '9091' });
+      instanceSettings.getRouterSettings.mockResolvedValue(
+        routerSettings({ autoScaleEnabled: true, autoScaleToken: 'secret' }),
+      );
+
+      await customPort.generateComposeFile();
+      const compose = yaml.load(lastWrittenCompose()) as any;
+
+      expect(compose.services['mc-router'].environment.AUTO_SCALE_WEBHOOK_URL).toBe(
+        'http://backend:9091/servers/autoscale',
+      );
     });
 
     // The all-in-one image runs the panel as "minepanel", not "backend".

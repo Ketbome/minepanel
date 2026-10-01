@@ -212,6 +212,43 @@ backend:
 Prebuilt frontend images cannot switch to a different `NEXT_PUBLIC_BASE_PATH` at runtime only. If you need `/minepanel`, build the frontend image with that value.
 :::
 
+::: warning Published ports are reachable on every interface
+`docker-compose.yml` publishes the backend on `${BACKEND_PORT:-8091}` and the frontend on
+`${FRONTEND_PORT:-3000}` without binding them to an address, so Docker listens on `0.0.0.0`
+and both containers are reachable directly from anywhere that can route to the host. A reverse
+proxy in front of them does not change that: `http://<host-ip>:8091/...` still reaches the API,
+bypassing the proxy's TLS, its access rules, and — because the prefix lives in the proxy path —
+`BASE_PATH` itself.
+
+That is fine on a host where nothing else can reach those ports, and it is how the default
+compose is meant to work for a plain LAN install. On a host with a cloud firewall that permits
+inbound traffic (a VPS or a cloud VM), narrow the published ports to the loopback interface
+unless you deliberately want direct access:
+
+```yaml
+# docker-compose.override.yml - merged on top of docker-compose.yml automatically
+# `!override` replaces the inherited port list; needs Compose 2.24.4 or later.
+services:
+  backend:
+    ports: !override
+      - '127.0.0.1:${BACKEND_PORT:-8091}:8091'
+  frontend:
+    ports: !override
+      - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
+```
+
+Check the merged result rather than trusting the snippet:
+
+```bash
+docker compose config
+```
+
+The reverse proxy runs on the same host and connects over loopback, so it keeps working; the
+containers stay on the `minepanel-network` bridge for everything else. Put the override in
+`docker-compose.override.yml` rather than editing `docker-compose.yml`, so a `git pull` does not
+overwrite it.
+:::
+
 ## Related
 
 - [Networking](/networking) - Remote access, SSL, proxy

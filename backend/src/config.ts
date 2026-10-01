@@ -188,6 +188,13 @@ const envBaseDir = process.env.BASE_DIR || '/app';
 const serversHostDir = detectHostDir(ownMounts, '/app/servers', path.join(envBaseDir, 'servers'));
 const dataHostDir = detectHostDir(ownMounts, '/app/data', path.join(envBaseDir, 'data'));
 
+/** The global prefix, resolved once for `setGlobalPrefix` and the URLs the panel builds. */
+export function normalizeBasePath(value: string | undefined): string {
+  const trimmed = (value || '').split('#')[0].trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+}
+
 export default () => ({
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
@@ -195,6 +202,8 @@ export default () => ({
   jwtAudience: process.env.JWT_AUDIENCE || 'minepanel-users',
   frontendUrl: process.env.FRONTEND_URL,
   composeProject: process.env.COMPOSE_PROJECT,
+  basePath: normalizeBasePath(process.env.BASE_PATH),
+  backendPort: process.env.PORT ?? '8091',
   defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'en',
   passwordResetTokenExpiresInMinutes: Number(process.env.PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES || 60),
   oidc: {

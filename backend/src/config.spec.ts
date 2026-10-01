@@ -1,4 +1,40 @@
-import { readOwnMounts, resolveHostPath, type DockerMount } from './config';
+import { readOwnMounts, resolveHostPath, normalizeBasePath, type DockerMount } from './config';
+
+describe('normalizeBasePath', () => {
+  it('returns an empty prefix when BASE_PATH is unset or blank', () => {
+    expect(normalizeBasePath(undefined)).toBe('');
+    expect(normalizeBasePath('')).toBe('');
+    expect(normalizeBasePath('   ')).toBe('');
+  });
+
+  it('keeps a leading slash', () => {
+    expect(normalizeBasePath('/panel-api')).toBe('/panel-api');
+    expect(normalizeBasePath('/api')).toBe('/api');
+  });
+
+  // Nest applies a slash-less prefix as `/prefix`, so callers that concatenate onto a port
+  // get `8091` + `api` as one token unless this adds the separator.
+  it('adds the missing leading slash', () => {
+    expect(normalizeBasePath('panel-api')).toBe('/panel-api');
+    expect(normalizeBasePath('api')).toBe('/api');
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(normalizeBasePath('  /panel-api  ')).toBe('/panel-api');
+    expect(normalizeBasePath('  panel-api  ')).toBe('/panel-api');
+  });
+
+  it('drops a trailing comment', () => {
+    expect(normalizeBasePath('/panel-api # behind caddy')).toBe('/panel-api');
+    expect(normalizeBasePath('panel-api# note')).toBe('/panel-api');
+  });
+
+  it('drops trailing slashes so the prefix is not doubled in a URL', () => {
+    expect(normalizeBasePath('/panel-api/')).toBe('/panel-api');
+    expect(normalizeBasePath('panel-api//')).toBe('/panel-api');
+    expect(normalizeBasePath('/')).toBe('');
+  });
+});
 
 describe('resolveHostPath', () => {
   const bind = (source: string, destination: string): DockerMount => ({ Type: 'bind', Source: source, Destination: destination });
