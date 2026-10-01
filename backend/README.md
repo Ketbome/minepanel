@@ -38,6 +38,8 @@ pnpm test:e2e
 - `src/server-management/` - server lifecycle and runtime actions
 - `src/docker-compose/` - compose generation
 - `src/files/` - file operations
+
+Every text save of an existing `server.properties` creates a timestamped `.bak` copy beside the file before writing. A failed backup stops the save.
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
 - `src/metrics/` - live resources and tick performance, plus 7-day history. Native

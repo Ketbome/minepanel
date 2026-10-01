@@ -370,6 +370,8 @@ Every backend AGENTS update must include:
 
 The agent must keep `backend/AGENTS.md` and `backend/README.md` updated whenever backend workflow, architecture, commands, or conventions change.
 
+`src/files/files.service.ts` copies an existing `server.properties` to a timestamped `.bak` sibling before every text write. If backup creation fails, the write must fail; retain this behavior for both guided and raw file editing.
+
 Player activity (`src/player-activity/`): commit session changes and the log cursor in one
 transaction. Bound Docker log windows to 10,001 lines; overflow is an unknown interval.
 Boot changes and gaps over two minutes interrupt open sessions at the last observation.

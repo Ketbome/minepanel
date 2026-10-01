@@ -419,10 +419,13 @@ Recommended approach:
 Bedrock servers use `send-command` instead of RCON. Command output appears in server logs rather than returning directly.
 :::
 
+## File editing
+
+The Files tab opens `server.properties` as searchable settings grouped by category. Changed and invalid fields can be filtered, and a raw text view shares the same unsaved draft. A change summary appears before saving. Each save creates a timestamped backup; the editor can preview and restore those backups. Properties managed by the panel link to Server Settings.
+
 ## Coming Soon
 
 - Export logs from the log viewer
-- Dedicated `server.properties` editor with validation
 - Cron-style scheduling (specific times) for scheduled tasks
 - Bedrock console commands
 

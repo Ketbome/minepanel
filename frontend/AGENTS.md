@@ -427,6 +427,8 @@ Every frontend AGENTS update must include:
 
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
 
+The Files tab opens `server.properties` in `src/components/molecules/FileBrowser/ServerPropertiesEditor.tsx`. It edits existing properties only, preserves comments and unknown lines, and leaves properties backed by `server.json` to Server Settings. `server-properties-model.ts` owns parsing, line replacement and the save/restore change summary. Guided and raw views share one draft; switching must preserve unsaved text. Backups are listed through the files service from the same folder, and restoring one uses the ordinary file write so the current file is backed up first.
+
 
 Player profiles: the Players tab renders `PlayersTab` on Java (sessions live in the profile's
 Sessions sub-tab, `PlayerSessions`) and `src/components/molecules/players/player-activity.tsx`
