@@ -1,9 +1,10 @@
 "use client";
 
-import { FC, useState, useCallback } from "react";
+import { FC, useState, useCallback, useEffect, useRef } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import dynamic from "next/dynamic";
 
 // Dynamic import for Monaco to avoid SSR issues
@@ -18,6 +19,8 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((mod) => 
 
 interface FileEditorProps {
   path: string;
+  // The last saved text: after a save the parent passes the new one, which is what
+  // "unsaved" is measured against.
   content: string;
   onSave: (content: string) => Promise<void>;
   onClose: () => void;
@@ -55,7 +58,24 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
   const { t } = useLanguage();
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  // While the dialog's save is in flight nothing else may decide: a Cancel followed by
+  // a late success would otherwise close the editor over edits made in the meantime.
+  const [closingSave, setClosingSave] = useState(false);
   const hasChanges = editedContent !== (baselineContent ?? content);
+
+  // Leaving the page (reload, closing the tab) would drop the edits just as silently.
+  useEffect(() => {
+    if (!hasChanges) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasChanges]);
+
+  const requestClose = useCallback(() => {
+    if (hasChanges) setConfirmClose(true);
+    else onClose();
+  }, [hasChanges, onClose]);
 
   const fileName = path.split("/").pop() || path;
   const language = getLanguageFromPath(path);
@@ -77,6 +97,13 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
     onContentChange?.(next);
   }, [onContentChange]);
 
+  // Monaco swallows keys typed inside it, so the container's handler never sees Ctrl+S
+  // there; the command is registered on the editor itself and reads the latest state.
+  const saveShortcutRef = useRef(() => {});
+  saveShortcutRef.current = () => {
+    if (hasChanges && !isSaving) handleSave();
+  };
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
@@ -89,7 +116,7 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
 
   return (
     <div
-      className="flex flex-col h-[600px] bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden"
+      className="flex flex-col h-[70vh] min-h-[480px] bg-gray-900/60 border border-gray-700/50 rounded-lg overflow-hidden"
       onKeyDown={handleKeyDown}
     >
       {/* Header */}
@@ -99,7 +126,8 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700/50"
-            onClick={onClose}
+            onClick={requestClose}
+            aria-label={t("close")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -116,7 +144,8 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
         <Button
           onClick={handleSave}
           disabled={!hasChanges || isSaving}
-          className="gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+          variant="minepanel"
+          className="gap-2 disabled:opacity-50"
           size="sm"
         >
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -131,6 +160,9 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
           language={language}
           value={editedContent}
           onChange={handleEditorChange}
+          onMount={(editor, monaco) => {
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveShortcutRef.current());
+          }}
           theme="vs-dark"
           options={{
             minimap: { enabled: false },
@@ -156,6 +188,44 @@ export const FileEditor: FC<FileEditorProps> = ({ path, content, onSave, onClose
         <span>{path}</span>
         <span>Ctrl+S {t("toSave")}</span>
       </div>
+
+      <Dialog open={confirmClose} onOpenChange={(open) => !closingSave && setConfirmClose(open)}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-gray-200">{t("unsavedChanges")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-400">{t("fmUnsavedMessage").replace("{name}", fileName)}</p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmClose(false)} disabled={closingSave}>
+              {t("cancel")}
+            </Button>
+            {/* A header save may still be running too: discarding or saving again from here
+                would race it. */}
+            <Button variant="destructive" onClick={onClose} disabled={closingSave || isSaving}>
+              {t("discardChanges")}
+            </Button>
+            <Button
+              variant="minepanel"
+              disabled={closingSave || isSaving}
+              className="gap-2"
+              onClick={async () => {
+                setClosingSave(true);
+                try {
+                  await onSave(editedContent);
+                  onClose();
+                } catch {
+                  setConfirmClose(false);
+                } finally {
+                  setClosingSave(false);
+                }
+              }}
+            >
+              {(closingSave || isSaving) && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

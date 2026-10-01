@@ -119,6 +119,30 @@ describe('FilesService', () => {
       (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => (target.endsWith('/link') ? `${SERVERS_DIR}/srv/server.json` : target));
       await expect(service.getFullPath('_root', 'srv/mc-data/link')).rejects.toThrow(ForbiddenException);
     });
+
+    // Another user's half-received upload is readable content: .part is the file so far and
+    // .json names the owner and the target path.
+    it.each(['.upload-sessions', '.uploads'])('keeps %s out of reach of non-admins, links included', async (dir) => {
+      await expect(service.getFullPath('_root', dir)).rejects.toThrow(ForbiddenException);
+      await expect(service.getFullPath('_root', `${dir}/0a1b2c.part`)).rejects.toThrow(ForbiddenException);
+      await expect(service.getFullPath('_root', `${dir}/0a1b2c.json`)).rejects.toThrow(ForbiddenException);
+      await expect(service.readFile('_root', `${dir}/0a1b2c.part`)).rejects.toThrow(ForbiddenException);
+      expect(await service.getFullPath('_root', `${dir}/0a1b2c.part`, true)).toBe(`${SERVERS_DIR}/${dir}/0a1b2c.part`);
+
+      // A link planted in mc-data that points into the staging folder.
+      (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => (target.endsWith('/staging-link') ? `${SERVERS_DIR}/${dir}/0a1b2c.part` : target));
+      await expect(service.getFullPath('_root', 'srv/mc-data/staging-link')).rejects.toThrow(ForbiddenException);
+      (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => target);
+    });
+
+    it('does not list the staging folders to non-admins', async () => {
+      (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+      (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true, size: 0, mtime: new Date() });
+      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['.upload-sessions', '.uploads', '.world', 'srv'].map((name) => ({ name, isDirectory: () => true })));
+
+      expect((await service.listFiles('_root', '')).map((f) => f.name)).toEqual(['.world', 'srv']);
+      expect((await service.listFiles('_root', '', true)).map((f) => f.name)).toEqual(['.upload-sessions', '.uploads', '.world', 'srv']);
+    });
   });
 
   describe('readFile', () => {

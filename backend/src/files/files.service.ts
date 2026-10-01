@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
@@ -10,6 +10,11 @@ import { assertContained } from 'src/common/fs/contained-path';
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export const UPLOADS_DIR = '.uploads';
+export const UPLOAD_SESSIONS_DIR = '.upload-sessions';
+
+// Half-received uploads sit inside the tree "_root" shows, and they belong to whoever is
+// sending them, so the global browser keeps them from everyone but admins.
+const STAGING_DIRS = new Set([UPLOADS_DIR, UPLOAD_SESSIONS_DIR]);
 
 // server.json and the generated compose file hold secrets (the CurseForge key, RCON and
 // restic passwords), so the global browser only shows them to admins.
@@ -17,7 +22,45 @@ const ADMIN_ONLY_FILES = new Set(['server.json', 'docker-compose.yml']);
 
 function isAdminOnlyFile(serversDir: string, fullPath: string): boolean {
   const [id, file, ...rest] = path.relative(serversDir, fullPath).split(path.sep);
+  if (STAGING_DIRS.has(id)) return true;
   return rest.length === 0 && SERVER_ID_PATTERN.test(id) && ADMIN_ONLY_FILES.has(file);
+}
+
+// An overwriting move removes whatever is there first, a whole folder included, so an
+// upload never replaces a folder; a file only when the caller chose to overwrite.
+function assertReplaceable(existing: fs.Stats | null, overwrite: boolean): void {
+  if (existing?.isDirectory()) {
+    throw new BadRequestException('A folder with that name already exists');
+  }
+  if (existing && !overwrite) {
+    throw new ConflictException('A file with that name already exists');
+  }
+}
+
+// link() fails with EEXIST when the name is taken, in one step. Checking first and renaming
+// after leaves a gap (fs-extra's move does exactly that) in which a file made by someone else
+// is replaced: 24 uploads racing for one name all "won".
+async function moveWithoutReplacing(stagedPath: string, fullPath: string): Promise<void> {
+  try {
+    await fs.link(stagedPath, fullPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new ConflictException('A file with that name already exists');
+    }
+
+    // No hard link between these two places (another device, a filesystem without them,
+    // as on some Docker Desktop mounts): move it, whose own name check is not atomic.
+    try {
+      await fs.move(stagedPath, fullPath, { overwrite: false });
+    } catch (moveError) {
+      if (/dest already exists/.test((moveError as Error).message)) {
+        throw new ConflictException('A file with that name already exists');
+      }
+      throw moveError;
+    }
+    return;
+  }
+  await fs.remove(stagedPath);
 }
 
 export interface FileItem {
@@ -179,18 +222,31 @@ export class FilesService {
     await fs.writeFile(fullPath, content, 'utf-8');
   }
 
+  // Checked before a chunked upload starts, so a refused target costs no transfer.
+  async assertUploadTarget(serverId: string, filePath: string, admin = false, overwrite = true): Promise<void> {
+    const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
+    assertReplaceable(await fs.stat(fullPath).catch(() => null), overwrite);
+  }
+
   // Multer stages complete uploads under UPLOADS_DIR; only then are they moved into place.
-  async saveUpload(serverId: string, filePath: string, stagedPath: string, admin = false): Promise<void> {
+  async saveUpload(serverId: string, filePath: string, stagedPath: string, admin = false, overwrite = true): Promise<void> {
     const fullPath = await this.validatePath(serverId, filePath, true, true, admin);
     await fs.ensureDir(path.dirname(fullPath));
     // The move replaces the inode, so a replaced file would end up owned by the panel
     // and the server could no longer rewrite it.
     const existing = await fs.stat(fullPath).catch(() => null);
+    assertReplaceable(existing, overwrite);
     if (existing) {
       await fs.chown(stagedPath, existing.uid, existing.gid);
       await fs.chmod(stagedPath, existing.mode);
     }
-    await fs.move(stagedPath, fullPath, { overwrite: true });
+    // The stat above is stale by now (chown, chmod and ensureDir are awaits), so keeping
+    // a file that appeared meanwhile is decided by the move itself.
+    if (overwrite) {
+      await fs.move(stagedPath, fullPath, { overwrite: true });
+    } else {
+      await moveWithoutReplacing(stagedPath, fullPath);
+    }
   }
 
   async deleteFile(serverId: string, filePath: string, admin = false): Promise<void> {
@@ -250,25 +306,41 @@ export class FilesService {
     return this.validatePath(serverId, filePath, false, true, admin);
   }
 
-  async createZipStream(serverId: string, dirPath: string, admin = false): Promise<{ stream: Archiver; name: string }> {
-    const fullPath = await this.validatePath(serverId, dirPath, false, true, admin);
-
-    if (!(await fs.pathExists(fullPath))) {
-      throw new NotFoundException('Directory not found');
+  // One folder, or a selection of files and folders, streamed as a single archive.
+  async createZipStream(serverId: string, paths: string[], admin = false): Promise<{ stream: Archiver; name: string }> {
+    if (paths.length === 0) {
+      throw new BadRequestException('Path is required');
     }
 
-    const stats = await fs.stat(fullPath);
-    if (!stats.isDirectory()) {
+    const entries: Array<{ fullPath: string; isDirectory: boolean }> = [];
+    for (const entryPath of paths) {
+      const fullPath = await this.validatePath(serverId, entryPath, false, true, admin);
+      const stats = await fs.stat(fullPath).catch(() => null);
+      if (!stats) {
+        throw new NotFoundException('Path not found');
+      }
+      entries.push({ fullPath, isDirectory: stats.isDirectory() });
+    }
+
+    if (entries.length === 1 && !entries[0].isDirectory) {
       throw new BadRequestException('Path is not a directory');
     }
 
-    const folderName = path.basename(fullPath);
     const archive = new ZipArchive({ zlib: { level: 6 } });
-
     const hidden = !admin && serverId === '_root';
-    archive.directory(fullPath, folderName, (entry) => (hidden && isAdminOnlyFile(this.SERVERS_DIR, path.join(fullPath, entry.name)) ? false : entry));
+
+    for (const { fullPath, isDirectory } of entries) {
+      const name = path.basename(fullPath);
+      if (isDirectory) {
+        archive.directory(fullPath, name, (entry) => (hidden && isAdminOnlyFile(this.SERVERS_DIR, path.join(fullPath, entry.name)) ? false : entry));
+      } else {
+        archive.file(fullPath, { name });
+      }
+    }
     archive.finalize();
 
-    return { stream: archive, name: `${folderName}.zip` };
+    // A selection is named after the folder it was made in.
+    const base = entries.length === 1 ? entries[0].fullPath : path.dirname(entries[0].fullPath);
+    return { stream: archive, name: `${path.basename(base) || 'files'}.zip` };
   }
 }

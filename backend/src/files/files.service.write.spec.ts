@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import { FilesService } from './files.service';
 
@@ -14,6 +14,7 @@ jest.mock('fs-extra', () => ({
   remove: jest.fn().mockResolvedValue(undefined),
   rename: jest.fn().mockResolvedValue(undefined),
   move: jest.fn().mockResolvedValue(undefined),
+  link: jest.fn().mockResolvedValue(undefined),
   chown: jest.fn().mockResolvedValue(undefined),
   chmod: jest.fn().mockResolvedValue(undefined),
   lstat: jest.fn(),
@@ -22,7 +23,7 @@ jest.mock('fs-extra', () => ({
 
 jest.mock('src/common/fs/contained-path', () => ({ assertContained: jest.fn().mockResolvedValue(undefined) }));
 
-const mockArchive = { directory: jest.fn(), finalize: jest.fn() };
+const mockArchive = { directory: jest.fn(), file: jest.fn(), finalize: jest.fn() };
 jest.mock('archiver', () => ({ ZipArchive: jest.fn(() => mockArchive) }));
 
 describe('FilesService writes', () => {
@@ -65,12 +66,25 @@ describe('FilesService writes', () => {
   });
 
   it('keeps the owner and mode of a file an upload replaces', async () => {
-    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664 });
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ uid: 1000, gid: 1000, mode: 0o100664, isDirectory: () => false });
     await service.saveUpload('srv', 'server.properties', '/app/servers/.uploads/abc');
 
     expect(fs.chown).toHaveBeenCalledWith('/app/servers/.uploads/abc', 1000, 1000);
     expect(fs.chmod).toHaveBeenCalledWith('/app/servers/.uploads/abc', 0o100664);
     expect(fs.move).toHaveBeenLastCalledWith('/app/servers/.uploads/abc', `${BASE}/server.properties`, { overwrite: true });
+  });
+
+  it('never lets an upload replace a folder', async () => {
+    const folder = { isDirectory: () => true };
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce(folder);
+    await expect(service.saveUpload('srv', 'world', '/app/servers/.uploads/abc')).rejects.toThrow(BadRequestException);
+    expect(fs.move).not.toHaveBeenCalled();
+
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce(folder);
+    await expect(service.assertUploadTarget('srv', 'world')).rejects.toThrow(BadRequestException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.assertUploadTarget('srv', 'world.zip')).resolves.toBeUndefined();
+    await expect(service.assertUploadTarget('srv', '../../x')).rejects.toThrow(BadRequestException);
   });
 
   it('deletes existing paths only', async () => {
@@ -116,18 +130,95 @@ describe('FilesService writes', () => {
   });
 
   it('zips directories', async () => {
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValueOnce(false);
-    await expect(service.createZipStream('srv', 'dir')).rejects.toThrow(NotFoundException);
+    await expect(service.createZipStream('srv', [])).rejects.toThrow(BadRequestException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.createZipStream('srv', ['dir'])).rejects.toThrow(NotFoundException);
 
-    (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
-    await expect(service.createZipStream('srv', 'file')).rejects.toThrow(BadRequestException);
+    await expect(service.createZipStream('srv', ['file'])).rejects.toThrow(BadRequestException);
 
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true });
-    const result = await service.createZipStream('srv', 'world');
+    const result = await service.createZipStream('srv', ['world']);
     expect(result).toEqual({ stream: mockArchive, name: 'world.zip' });
     expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/world`, 'world', expect.any(Function));
     expect(mockArchive.finalize).toHaveBeenCalled();
+  });
+
+  it('zips a selection of files and folders under the name of their folder', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => true }).mockResolvedValueOnce({ isDirectory: () => false });
+
+    const result = await service.createZipStream('srv', ['plugins/Essentials', 'plugins/a.jar']);
+    expect(result.name).toBe('plugins.zip');
+    expect(mockArchive.directory).toHaveBeenCalledWith(`${BASE}/plugins/Essentials`, 'Essentials', expect.any(Function));
+    expect(mockArchive.file).toHaveBeenCalledWith(`${BASE}/plugins/a.jar`, { name: 'a.jar' });
+    await expect(service.createZipStream('srv', ['../../x', 'a'])).rejects.toThrow(BadRequestException);
+  });
+
+  describe('when told not to overwrite', () => {
+    const staged = '/app/servers/.uploads/abc';
+    const gone = () => (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    const rejectWith = (mock: unknown, code: string, message = code) => (mock as jest.Mock).mockRejectedValueOnce(Object.assign(new Error(message), { code }));
+
+    it('takes the name with a hard link, which cannot replace anything, and drops the staged file', async () => {
+      gone();
+      await service.saveUpload('srv', 'new.txt', staged, false, false);
+
+      expect(fs.link).toHaveBeenLastCalledWith(staged, `${BASE}/new.txt`);
+      expect(fs.remove).toHaveBeenLastCalledWith(staged);
+      expect(fs.move).not.toHaveBeenCalled();
+    });
+
+    it('turns a name taken after the check into a conflict and leaves the staged file alone', async () => {
+      gone();
+      rejectWith(fs.link, 'EEXIST');
+
+      await expect(service.saveUpload('srv', 'raced.txt', staged, false, false)).rejects.toThrow(ConflictException);
+      expect(fs.move).not.toHaveBeenCalled();
+      expect(fs.remove).not.toHaveBeenCalled();
+    });
+
+    // Another device, or a filesystem without hard links: the upload must still land.
+    it.each(['EXDEV', 'EPERM', 'ENOTSUP'])('falls back to a move when the link fails with %s', async (code) => {
+      gone();
+      rejectWith(fs.link, code);
+      await service.saveUpload('srv', 'a.txt', staged, false, false);
+      expect(fs.move).toHaveBeenLastCalledWith(staged, `${BASE}/a.txt`, { overwrite: false });
+
+      gone();
+      rejectWith(fs.link, code);
+      (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('dest already exists.'));
+      await expect(service.saveUpload('srv', 'b.txt', staged, false, false)).rejects.toThrow(ConflictException);
+
+      gone();
+      rejectWith(fs.link, code);
+      (fs.move as unknown as jest.Mock).mockRejectedValueOnce(new Error('EIO'));
+      await expect(service.saveUpload('srv', 'c.txt', staged, false, false)).rejects.toThrow('EIO');
+    });
+
+    it('does not mistake a failed cleanup for a conflict once the file is in place', async () => {
+      gone();
+      (fs.remove as unknown as jest.Mock).mockRejectedValueOnce(new Error('EBUSY'));
+      await expect(service.saveUpload('srv', 'a.txt', staged, false, false)).rejects.toThrow('EBUSY');
+      expect(fs.move).not.toHaveBeenCalled();
+    });
+
+    it('never links when overwriting: the move replaces the name, which is what was asked', async () => {
+      gone();
+      await service.saveUpload('srv', 'a.txt', staged, false, true);
+      expect(fs.link).not.toHaveBeenCalled();
+      expect(fs.move).toHaveBeenLastCalledWith(staged, `${BASE}/a.txt`, { overwrite: true });
+    });
+  });
+
+  it('refuses to replace an existing file unless told to overwrite', async () => {
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
+    await expect(service.saveUpload('srv', 'a.txt', '/app/servers/.uploads/abc', false, false)).rejects.toThrow(ConflictException);
+    expect(fs.move).not.toHaveBeenCalled();
+
+    (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });
+    await expect(service.assertUploadTarget('srv', 'a.txt', false, false)).rejects.toThrow(ConflictException);
+    (fs.stat as unknown as jest.Mock).mockRejectedValueOnce(new Error('enoent'));
+    await expect(service.saveUpload('srv', 'new.txt', '/app/servers/.uploads/abc', false, false)).resolves.toBeUndefined();
   });
 
   it('leaves server.json and the compose file out of global zips for non-admins', async () => {
@@ -136,14 +227,14 @@ describe('FilesService writes', () => {
     const root = new FilesService({ get: () => '/app/servers' } as any);
     const entry = (name: string) => ({ name });
 
-    await root.createZipStream('_root', 'srv');
+    await root.createZipStream('_root', ['srv']);
     const lastFilter = () => mockArchive.directory.mock.calls[mockArchive.directory.mock.calls.length - 1][2];
     const filter = lastFilter();
     expect(filter(entry('server.json'))).toBe(false);
     expect(filter(entry('docker-compose.yml'))).toBe(false);
     expect(filter(entry('mc-data/server.json'))).toEqual(entry('mc-data/server.json'));
 
-    await root.createZipStream('_root', 'srv', true);
+    await root.createZipStream('_root', ['srv'], true);
     expect(lastFilter()(entry('server.json'))).toEqual(entry('server.json'));
   });
 

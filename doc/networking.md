@@ -200,10 +200,30 @@ server {
         proxy_set_header Host $host;
     }
 }
+
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+
+    # nginx rejects request bodies over 1 MB by default, which breaks file uploads.
+    client_max_body_size 0;
+    # Stream uploads to the panel instead of buffering them to nginx's disk first.
+    proxy_request_buffering off;
+    proxy_read_timeout 600s;
+    proxy_send_timeout 600s;
+
+    location / {
+        proxy_pass http://localhost:8091;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+}
 ```
 
 ```bash
-sudo certbot --nginx -d minepanel.yourdomain.com
+sudo certbot --nginx -d minepanel.yourdomain.com -d api.yourdomain.com
 ```
 
 Update environment:
