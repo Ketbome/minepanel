@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 interface DropZoneProps {
   onFilesDropped: (files: File[], relativePaths?: string[]) => void;
+  // Drops are still swallowed so the browser does not open the file instead.
+  disabled?: boolean;
   children: React.ReactNode;
   className?: string;
 }
@@ -24,9 +26,15 @@ async function traverseDirectory(entry: FileSystemEntry, basePath: string = ""):
   } else if (entry.isDirectory) {
     const dirEntry = entry as FileSystemDirectoryEntry;
     const reader = dirEntry.createReader();
-    const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
-      reader.readEntries(resolve, reject);
-    });
+    // readEntries hands out a directory in batches (100 in Chrome); an empty batch marks the end.
+    const entries: FileSystemEntry[] = [];
+    for (;;) {
+      const batch = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+        reader.readEntries(resolve, reject);
+      });
+      if (batch.length === 0) break;
+      entries.push(...batch);
+    }
     const newBasePath = basePath ? `${basePath}/${entry.name}` : entry.name;
     for (const childEntry of entries) {
       const childResults = await traverseDirectory(childEntry, newBasePath);
@@ -37,7 +45,7 @@ async function traverseDirectory(entry: FileSystemEntry, basePath: string = ""):
   return results;
 }
 
-export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, className }) => {
+export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, disabled = false, children, className }) => {
   const { t } = useLanguage();
   const [isDragging, setIsDragging] = useState(false);
   const [dragCounter, setDragCounter] = useState(0);
@@ -46,10 +54,10 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
     e.preventDefault();
     e.stopPropagation();
     setDragCounter((prev) => prev + 1);
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+    if (!disabled && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
       setIsDragging(true);
     }
-  }, []);
+  }, [disabled]);
 
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -74,6 +82,7 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
       e.stopPropagation();
       setIsDragging(false);
       setDragCounter(0);
+      if (disabled) return;
 
       const items = e.dataTransfer.items;
       const allFiles: File[] = [];
@@ -104,7 +113,7 @@ export const DropZone: FC<DropZoneProps> = ({ onFilesDropped, children, classNam
         onFilesDropped(allFiles, allPaths.length > 0 ? allPaths : undefined);
       }
     },
-    [onFilesDropped]
+    [onFilesDropped, disabled]
   );
 
   return (

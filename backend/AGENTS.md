@@ -21,7 +21,8 @@ backend/src/
 |- server-management/       Runtime control, status, logs, commands
 |  |- strategies/           Java/Bedrock strategy pattern
 |- docker-compose/          Compose generation and server config persistence
-|- files/                   File browser API over server directories
+|- files/                   File browser API over server directories; chunked uploads staged in
+|                           servers/.upload-sessions (upload-sessions.service.ts)
 |- world-discovery/         World import/discovery into global world library
 |- proxy/                   mc-router routes.json generation
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
@@ -310,6 +311,17 @@ Files module behavior:
 - `serverId="_root"` maps to `/app/servers` in files API.
 - `serverId=".world"` maps to `/app/servers/.world/worlds` in files API.
 - Other server IDs map to `/app/servers/<serverId>/mc-data`.
+- `.uploads` (multipart staging) and `.upload-sessions` (chunked staging) sit inside the tree
+  `_root` exposes and hold other users' half-received files. `isAdminOnlyFile` treats them as
+  admin-only next to `server.json`, so non-admins get neither a listing nor a read, links included.
+  A new staging folder under `servers/` must be added to `STAGING_DIRS`.
+- Chunked uploads (`upload-sessions.service.ts`): creates are queued, capped per user
+  (`MAX_SESSIONS_PER_USER`; a session idle for at least 15 minutes is replaced, and only when no
+  chunk is in flight) and checked against the free space minus what
+  the other sessions still have to write (idle sessions excluded). `complete` and a chunk share
+  one `busy` lock, and `abort` is refused while a `complete` runs: with overwrite the move removes
+  the target first. Modpacks reuse the sessions through `createFor`/`completeFor` with
+  `kind: 'modpack'`; a session completes only for the kind it was opened with.
 - Preserve traversal protection (`normalize` + `startsWith(basePath + path.sep)`, or equal to it).
   A bare `startsWith(basePath)` lets `_root` reach siblings such as `/app/servers-old`.
 - `serverId` is a percent-decoded route param (`..%2F` arrives as `../`), so any other id must

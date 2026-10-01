@@ -1,4 +1,5 @@
 import api from "../axios.service";
+import { CHUNK_SIZE, uploadInChunks } from "../files/files.service";
 
 export type ModpackLoader = "FORGE" | "NEOFORGE" | "FABRIC" | "QUILT";
 
@@ -62,6 +63,14 @@ export const modpacksService = {
   },
 
   async upload(serverId: string, file: File, onProgress?: (percentage: number) => void): Promise<UploadedModpackFile> {
+    // Large packs go up in chunks: one request past Cloudflare's 100 MB limit is refused.
+    if (file.size > CHUNK_SIZE) {
+      const base = `/servers/${serverId}/modpacks/uploads`;
+      return uploadInChunks<UploadedModpackFile>(serverId, file, base, { name: file.name, size: file.size }, (id) => `${base}/${id}/complete`, {
+        onProgress: (progress) => onProgress?.(progress.percentage),
+      });
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 

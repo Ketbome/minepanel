@@ -129,7 +129,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 ### File manager
 
-- Large file uploads (chunked)
+- ~~Large file uploads (chunked)~~ ✅ Shipped (files over 8 MB upload in resumable chunks)
 
 ### Log viewer
 

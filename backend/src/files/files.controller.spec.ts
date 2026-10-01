@@ -1,7 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { EventEmitter } from 'node:events';
 import * as fs from 'fs-extra';
-import { FilesController } from './files.controller';
+import { FilesController, attachmentHeader } from './files.controller';
 
 jest.mock('fs-extra', () => ({
   pathExists: jest.fn(),
@@ -11,9 +11,10 @@ jest.mock('fs-extra', () => ({
 }));
 
 describe('FilesController', () => {
-  const req = { user: { userId: 1 } };
+  const req = { user: { userId: 1 }, headers: {} as Record<string, string> };
   let filesService: Record<string, jest.Mock>;
   let accessControl: Record<string, jest.Mock>;
+  let uploadSessions: Record<string, jest.Mock>;
   let controller: FilesController;
   let res: any;
 
@@ -33,8 +34,15 @@ describe('FilesController', () => {
     };
     accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
     const usersService = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
-    controller = new FilesController(filesService as any, usersService as any, accessControl as any);
-    res = { setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false };
+    uploadSessions = {
+      create: jest.fn().mockResolvedValue({ id: 'u1', offset: 0 }),
+      getOffset: jest.fn().mockResolvedValue({ offset: 5 }),
+      append: jest.fn().mockResolvedValue({ offset: 10 }),
+      complete: jest.fn().mockResolvedValue({ path: 'dir/big.zip' }),
+      abort: jest.fn().mockResolvedValue(undefined),
+    };
+    controller = new FilesController(filesService as any, uploadSessions as any, usersService as any, accessControl as any);
+    res = Object.assign(new EventEmitter(), { destroy: jest.fn(), writableFinished: false, setHeader: jest.fn(), status: jest.fn().mockReturnThis(), send: jest.fn(), headersSent: false });
   });
 
   it('routes access checks to global or per-server permissions', async () => {
@@ -74,12 +82,12 @@ describe('FilesController', () => {
   it('downloads a file as an attachment', async () => {
     (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
     (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => false, size: 12 });
-    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn() });
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), destroy: jest.fn() });
     (fs.createReadStream as jest.Mock).mockReturnValue(stream);
 
     await controller.downloadFile(req, 'srv', 'dir/a b.txt', res);
 
-    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="a%20b.txt"');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="a b.txt"; filename*=UTF-8''a%20b.txt`);
     expect(res.setHeader).toHaveBeenCalledWith('Content-Length', 12);
     expect(stream.pipe).toHaveBeenCalledWith(res);
 
@@ -89,6 +97,15 @@ describe('FilesController', () => {
     res.status.mockClear();
     stream.emit('error', new Error('io'));
     expect(res.status).not.toHaveBeenCalled();
+
+    res.emit('close');
+    expect(stream.destroy).toHaveBeenCalled();
+  });
+
+  it('names downloads in UTF-8, Latin-1 names included', () => {
+    expect(attachmentHeader('büyük dünya.zip')).toBe(`attachment; filename="b_y_k d_nya.zip"; filename*=UTF-8''b%C3%BCy%C3%BCk%20d%C3%BCnya.zip`);
+    expect(attachmentHeader('şş.txt')).toBe(`attachment; filename="__.txt"; filename*=UTF-8''%C5%9F%C5%9F.txt`);
+    expect(attachmentHeader(`a"b\\c'(1)*.txt`)).toBe(`attachment; filename="a_b_c'(1)*.txt"; filename*=UTF-8''a%22b%5Cc%27%281%29%2A.txt`);
   });
 
   it('rejects downloads of missing files and directories', async () => {
@@ -100,11 +117,36 @@ describe('FilesController', () => {
   });
 
   it('streams a zip of a directory', async () => {
-    const stream = { pipe: jest.fn() };
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), abort: jest.fn() });
     filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
     await controller.downloadZip(req, 'srv', 'dir', res);
-    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="dir.zip"');
+    expect(filesService.createZipStream).toHaveBeenCalledWith('srv', ['dir'], false);
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="dir.zip"; filename*=UTF-8''dir.zip`);
+
+    await controller.downloadZip(req, 'srv', ['dir/a', 'dir/b'], res);
+    expect(filesService.createZipStream).toHaveBeenLastCalledWith('srv', ['dir/a', 'dir/b'], false);
     expect(stream.pipe).toHaveBeenCalledWith(res);
+
+    stream.emit('warning', new Error('ENOENT'));
+    const failure = new Error('EACCES');
+    stream.emit('error', failure);
+    expect(res.destroy).toHaveBeenCalledWith(failure);
+  });
+
+  it('stops zipping when the client leaves before the end, not after it', async () => {
+    const stream = Object.assign(new EventEmitter(), { pipe: jest.fn(), abort: jest.fn(), unpipe: jest.fn(), resume: jest.fn() });
+    filesService.createZipStream.mockResolvedValue({ stream, name: 'dir.zip' });
+
+    await controller.downloadZip(req, 'srv', 'dir', res);
+    res.writableFinished = true;
+    res.emit('close');
+    expect(stream.abort).not.toHaveBeenCalled();
+
+    res.writableFinished = false;
+    res.emit('close');
+    expect(stream.abort).toHaveBeenCalled();
+    expect(stream.unpipe).toHaveBeenCalledWith(res);
+    expect(stream.resume).toHaveBeenCalled();
   });
 
   it('uploads a single file preserving the relative path', async () => {
@@ -113,7 +155,9 @@ describe('FilesController', () => {
     const file = { originalname: 'orig.txt', path: '/app/servers/.uploads/abc' } as Express.Multer.File;
     expect(await controller.uploadFile(req, 'srv', 'mods', 'sub/a.txt', file)).toEqual({ success: true, path: 'mods/sub/a.txt' });
     expect(await controller.uploadFile(req, 'srv', '', '', file)).toEqual({ success: true, path: 'orig.txt' });
-    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false);
+    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false, true);
+    await controller.uploadFile(req, 'srv', '', '', file, 'false');
+    expect(filesService.saveUpload).toHaveBeenLastCalledWith('srv', 'orig.txt', file.path, false, false);
     expect(fs.remove).toHaveBeenLastCalledWith(file.path);
   });
 
@@ -129,17 +173,37 @@ describe('FilesController', () => {
     expect(fs.remove).toHaveBeenCalledTimes(2);
   });
 
-  it('uploads multiple files and counts failures', async () => {
+  it('uploads multiple files and reports skipped and failed ones by name', async () => {
     await expect(controller.uploadMultipleFiles(req, 'srv', '', [], {})).rejects.toThrow('At least one file');
 
-    const files = [{ originalname: 'a.txt', path: '/tmp/a' }, { originalname: 'b.txt', path: '/tmp/b' }] as Express.Multer.File[];
-    filesService.saveUpload.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk'));
+    const files = [{ originalname: 'a.txt', path: '/tmp/a' }, { originalname: 'b.txt', path: '/tmp/b' }, { originalname: 'c.txt', path: '/tmp/c' }] as Express.Multer.File[];
+    filesService.saveUpload.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk')).mockRejectedValueOnce(new ConflictException('exists'));
 
-    const result = await controller.uploadMultipleFiles(req, 'srv', 'dir', files, { relativePaths: JSON.stringify(['x/a.txt']) });
+    const result = await controller.uploadMultipleFiles(req, 'srv', 'dir', files, { relativePaths: JSON.stringify(['x/a.txt']) }, 'false');
 
-    expect(result).toEqual({ success: true, uploaded: 1, errors: 1 });
-    expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false);
-    expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false);
+    expect(result).toEqual({ success: true, uploaded: 1, errors: 1, skipped: ['c.txt'], failed: ['b.txt'] });
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(1, 'srv', 'dir/x/a.txt', '/tmp/a', false, false);
+    expect(filesService.saveUpload).toHaveBeenNthCalledWith(2, 'srv', 'dir/b.txt', '/tmp/b', false, false);
     expect(fs.remove).toHaveBeenCalledWith('/tmp/b');
+  });
+
+  it('checks write access on every chunked upload step and forwards to the sessions', async () => {
+    expect(await controller.createUpload(req, 'srv', { path: 'dir', name: 'big.zip', size: 10 })).toEqual({ id: 'u1', offset: 0 });
+    expect(uploadSessions.create).toHaveBeenCalledWith(1, 'srv', 'dir/big.zip', 10, false, true);
+    await controller.createUpload(req, 'srv', { name: 'top.zip', size: 1, overwrite: false });
+    expect(uploadSessions.create).toHaveBeenLastCalledWith(1, 'srv', 'top.zip', 1, false, false);
+
+    expect(await controller.getUpload(req, 'srv', 'u1')).toEqual({ offset: 5 });
+    expect(await controller.appendUpload(req, 'srv', 'u1', 5)).toEqual({ offset: 10 });
+    expect(uploadSessions.append).toHaveBeenCalledWith(1, 'srv', 'u1', 5, req, undefined);
+    const sized = { ...req, headers: { 'content-length': '7' } };
+    await controller.appendUpload(sized, 'srv', 'u1', 5);
+    expect(uploadSessions.append).toHaveBeenLastCalledWith(1, 'srv', 'u1', 5, sized, 7);
+    expect(await controller.completeUpload(req, 'srv', 'u1')).toEqual({ success: true, path: 'dir/big.zip' });
+    expect(await controller.abortUpload(req, 'srv', 'u1')).toEqual({ success: true });
+    expect(uploadSessions.abort).toHaveBeenCalledWith(1, 'srv', 'u1');
+
+    expect(accessControl.assertServerFiles).toHaveBeenCalledTimes(7);
+    for (const call of accessControl.assertServerFiles.mock.calls) expect(call).toEqual([{ id: 1 }, 'srv', true]);
   });
 });

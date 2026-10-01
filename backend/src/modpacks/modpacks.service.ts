@@ -71,6 +71,30 @@ export class ModpacksService {
     };
   }
 
+  // Checked before a chunked upload starts, so a refused name costs no transfer.
+  async assertUploadTarget(serverId: string, fileName: string): Promise<void> {
+    this.validateFileName(fileName);
+    await this.getModpacksDir(serverId);
+  }
+
+  // A finished chunked upload: the archive is already on disk, so it is moved, not rewritten.
+  async saveStaged(serverId: string, fileName: string, stagedPath: string): Promise<InspectedModpackFile> {
+    const name = this.validateFileName(fileName);
+    const filePath = path.join(await this.getModpacksDir(serverId), name);
+
+    await fs.move(stagedPath, filePath, { overwrite: true });
+    this.logger.log(`Stored modpack ${name} for server ${serverId}`);
+
+    const stats = await fs.stat(filePath);
+    return {
+      name,
+      size: stats.size,
+      modified: stats.mtime,
+      containerPath: `/modpacks/${name}`,
+      inspection: inspectModpackArchive(filePath),
+    };
+  }
+
   // Reading a modpack archive means loading it whole, so `list` stays cheap and
   // inspection is only done for the file the user actually picked.
   async inspect(serverId: string, fileName: string): Promise<ModpackInspection> {
