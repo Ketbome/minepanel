@@ -23,6 +23,7 @@ interface ServerNotificationDetails {
   lanIp?: string;
   players?: string;
   version?: string;
+  modpack?: string;
   reason?: string;
 }
 
@@ -78,6 +79,10 @@ export class DiscordService {
       // Version if available
       if (details?.version) {
         fields.push({ name: '📦 Version', value: `\`${details.version}\``, inline: true });
+      }
+
+      if (details?.modpack) {
+        fields.push({ name: '🧩 Modpack', value: `\`${details.modpack}\``, inline: true });
       }
 
       // Status indicator

@@ -585,6 +585,34 @@ describe('ServerManagementService lifecycle', () => {
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ ip: 'srv.mc.example.com' }));
     });
 
+    it('adds the version and the modpack from server.json', async () => {
+      const cases: Array<[Record<string, string>, string | undefined]> = [
+        [{ serverType: 'AUTO_CURSEFORGE', cfMethod: 'url', cfUrl: 'https://www.curseforge.com/minecraft/modpacks/atm9/download/123' }, 'atm9'],
+        [{ serverType: 'AUTO_CURSEFORGE', cfMethod: 'slug', cfSlug: 'atm9' }, 'atm9'],
+        [{ serverType: 'AUTO_CURSEFORGE', cfMethod: 'file', cfModpackZip: '/modpacks/pack.zip' }, 'pack.zip'],
+        [{ serverType: 'AUTO_CURSEFORGE', cfMethod: 'slug' }, undefined],
+        [{ serverType: 'CURSEFORGE', cfServerMod: '/modpacks/server.zip' }, 'server.zip'],
+        [{ serverType: 'MODRINTH', modrinthModpack: 'https://modrinth.com/modpack/cobblemon' }, 'cobblemon'],
+        [{ serverType: 'FTBA', ftbModpackId: '119' }, 'FTB #119'],
+        [{ serverType: 'FTBA' }, undefined],
+        [{ serverType: 'GTNH', gtnhPackVersion: '2.7.2' }, 'GT New Horizons 2.7.2'],
+        [{ serverType: 'PAPER' }, undefined],
+      ];
+
+      for (const [config, modpack] of cases) {
+        store.readConfig.mockResolvedValue({ edition: 'JAVA', minecraftVersion: '1.20.1', ...config });
+        await service.stopServer('srv');
+        const details = discord.sendServerNotification.mock.lastCall[4];
+        expect(details.version).toBe('1.20.1');
+        expect(details.modpack).toBe(modpack);
+      }
+
+      // Deleted servers have no server.json left to read.
+      store.readConfig.mockRejectedValue(new Error('gone'));
+      await service.stopServer('srv');
+      expect(discord.sendServerNotification.mock.lastCall[4]).not.toHaveProperty('version');
+    });
+
     it('skips notifications without a webhook and survives settings errors', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       await service.stopServer('srv');

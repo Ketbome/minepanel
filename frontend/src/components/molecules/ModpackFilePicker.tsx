@@ -3,6 +3,7 @@
 import { ChangeEvent, FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Check, FileArchive, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { modpacksService, ModpackFile, ModpackInspection, ModpackKind } from "@/services/modpacks/modpacks.service";
@@ -33,7 +34,7 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<ModpackFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
+  const [upload, setUpload] = useState<{ size: number; percent: number } | null>(null);
   const [inspection, setInspection] = useState<ModpackInspection | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
 
@@ -116,16 +117,16 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
       return;
     }
 
-    setIsUploading(true);
+    setUpload({ size: file.size, percent: 0 });
     try {
-      const uploaded = await modpacksService.upload(serverId, file);
+      const uploaded = await modpacksService.upload(serverId, file, (percent) => setUpload({ size: file.size, percent }));
       mcToast.success(t("modpackUploaded"));
       onChange(uploaded.containerPath);
       await load();
     } catch {
       mcToast.error(t("modpackUploadError"));
     } finally {
-      setIsUploading(false);
+      setUpload(null);
     }
   };
 
@@ -141,6 +142,7 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
   };
 
   const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  const isUploading = upload !== null;
 
   return (
     <div className="space-y-3">
@@ -215,6 +217,16 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
         {isUploading ? t("uploading") : t("modpackUpload")}
       </Button>
+
+      {/* The archive is read whole before the response, so 100% is not the end of it. */}
+      {upload && (
+        <div className="space-y-1">
+          <Progress value={upload.percent} className="h-2 rounded-none bg-gray-800" />
+          <p className="text-xs text-gray-400">
+            {upload.percent < 100 ? `${upload.percent}% · ${formatSize((upload.size * upload.percent) / 100)} / ${formatSize(upload.size)}` : t("modpackUploadProcessing")}
+          </p>
+        </div>
+      )}
 
       <p className="text-xs text-gray-400">{t("modpackHint")}</p>
     </div>

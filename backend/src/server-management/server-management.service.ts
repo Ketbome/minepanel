@@ -711,7 +711,29 @@ export class ServerManagementService {
     return 'JAVA';
   }
 
-  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; reason?: string }): Promise<void> {
+  // Named by what the config points at: the pack's title would cost a CurseForge
+  // call on every event.
+  private describeModpack(config: ServerConfig): string | undefined {
+    const lastSegment = (value?: string) => value?.split('/').pop() || undefined;
+    switch (config.serverType) {
+      case 'AUTO_CURSEFORGE':
+        if (config.cfMethod === 'slug') return config.cfSlug || undefined;
+        if (config.cfMethod === 'file') return config.cfSlug || lastSegment(config.cfModpackZip);
+        return /\/modpacks\/([^/?#]+)/.exec(config.cfUrl ?? '')?.[1];
+      case 'CURSEFORGE':
+        return lastSegment(config.cfServerMod);
+      case 'MODRINTH':
+        return lastSegment(config.modrinthModpack);
+      case 'FTBA':
+        return config.ftbModpackId ? `FTB #${config.ftbModpackId}` : undefined;
+      case 'GTNH':
+        return ['GT New Horizons', config.gtnhPackVersion].filter(Boolean).join(' ');
+      default:
+        return undefined;
+    }
+  }
+
+  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
     try {
       const userSettings = await this.getUserSettings();
       if (!userSettings.webhook) return;
@@ -722,6 +744,11 @@ export class ServerManagementService {
       if (!enrichedDetails.port) {
         enrichedDetails.port = await this.getServerPort(serverName);
       }
+
+      const config = await this.store.readConfig(serverName).catch(() => null);
+      if (config?.minecraftVersion) enrichedDetails.version ??= config.minecraftVersion;
+      const modpack = config && this.describeModpack(config);
+      if (modpack) enrichedDetails.modpack ??= modpack;
 
       // Get server edition - proxy only works with Java
       const edition = await this.getServerEdition(serverName);

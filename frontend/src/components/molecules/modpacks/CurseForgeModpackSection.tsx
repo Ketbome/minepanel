@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { AlertTriangle, ArrowUpCircle, ExternalLink, FileArchive, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowUpCircle, Download, ExternalLink, FileArchive, HelpCircle, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,10 @@ import { ModVersionItem } from '@/services/mods/mods-browser.service';
 
 const LATEST_VALUE = '__latest__';
 const MODPACK_URL_BASE = 'https://www.curseforge.com/minecraft/modpacks';
+
+// A pinned file's page starts its download; without one, the file list is the way in.
+const downloadPageUrl = (slug: string, fileId: string) =>
+  `${MODPACK_URL_BASE}/${slug}/${fileId ? `download/${fileId}` : 'files'}`;
 
 type CfMethod = 'url' | 'slug' | 'file';
 
@@ -183,7 +187,13 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
     // CF_SLUG only names the install in this method, and the resolved pack is
     // the best name available for it.
     if (ref && !config.cfSlug) updateConfig('cfSlug', ref);
+    // Ignored by the File method, kept so the notice links the same file to download.
+    if (fileId) updateConfig('cfFile', fileId);
   };
+
+  // What the File method still knows about the pack it replaced, if anything.
+  const zipSlug = (config.cfSlug || parsedUrl.slug || '').trim();
+  const zipFileId = (config.cfFile || parsedUrl.fileId || '').trim();
 
   const methodOptions: Array<{ value: CfMethod; label: string; description: string }> = [
     { value: 'url', label: t('methodUrl'), description: t('installFromUrl') },
@@ -261,10 +271,18 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             {t('modpackNoDistributionTitle')}
           </p>
           <p className="text-[11px] leading-relaxed text-amber-100/80">{t('modpackNoDistribution')}</p>
-          <Button type="button" onClick={switchToFileMethod} className="h-9 font-minecraft text-xs">
-            <FileArchive className="mr-1.5 h-3.5 w-3.5" />
-            {t('modpackSwitchToFile')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={switchToFileMethod} className="h-9 font-minecraft text-xs">
+              <FileArchive className="mr-1.5 h-3.5 w-3.5" />
+              {t('modpackSwitchToFile')}
+            </Button>
+            <Button asChild variant="outline" className="h-9 font-minecraft text-xs border-amber-500/50 bg-amber-900/20 text-amber-200 hover:bg-amber-800/30 hover:text-amber-100">
+              <a href={downloadPageUrl(ref, fileId)} target="_blank" rel="noopener noreferrer">
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                {t('modpackDownloadFromCurseForge')}
+              </a>
+            </Button>
+          </div>
         </div>
       )}
 
@@ -274,6 +292,21 @@ export const CurseForgeModpackSection: FC<CurseForgeModpackSectionProps> = ({
             <Image src="/images/book.webp" alt="Modpack" width={16} height={16} />
             {t('modpackFiles')}
           </Label>
+          {zipSlug && !config.cfModpackZip && (
+            <div className="space-y-2 border-2 border-amber-500/40 bg-amber-900/15 p-3">
+              <p className="flex items-center gap-2 font-minecraft text-xs text-amber-300">
+                <Download className="h-4 w-4 shrink-0" />
+                {t('modpackManualDownloadTitle')}
+              </p>
+              <p className="text-[11px] leading-relaxed text-amber-100/80">{t('modpackManualDownloadSteps')}</p>
+              <Button asChild className="h-9 font-minecraft text-xs">
+                <a href={downloadPageUrl(zipSlug, zipFileId)} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                  {t('modpackDownloadFromCurseForge')}
+                </a>
+              </Button>
+            </div>
+          )}
           <ModpackFilePicker
             serverId={serverId}
             value={config.cfModpackZip}

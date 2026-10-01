@@ -51,12 +51,34 @@ running servers. Player totals and version come from a game status query that wo
 and Bedrock. If the container is up but the game is not answering yet, those values stay blank
 instead of reporting zero players.
 
+### TPS and tick time {#tps}
+
+**TPS** (ticks per second) is how many game ticks the server completes each second; 20 is
+full speed and anything lower is lag players can feel. **MSPT** (milliseconds per tick) is
+how long each tick takes; at 20 TPS a tick has a 50 ms budget, so MSPT over 50 is what
+drags TPS down.
+
+Open **Monitoring → Metrics**. The panel reads these values over RCON, so the first
+requirement for every Java server is **RCON enabled** in the server's **Access** tab,
+followed by a restart. What else is needed depends on the server type:
+
+| Server type | Source | What to do |
+| ----------- | ------ | ---------- |
+| CurseForge modpacks (`AUTO_CURSEFORGE`, `CURSEFORGE`), NeoForge | NeoForge's own `neoforge tps` | Nothing beyond RCON. Packs on another loader (Forge, Fabric) fall back to spark, see the Fabric/Forge row |
+| Paper, Purpur and other Paper forks | spark | Nothing on 1.21+: Paper bundles spark. On older versions, add spark in the **Plugins** tab (Spiget resource `57242`) and restart |
+| Spigot, Bukkit | spark | Add spark in the **Plugins** tab (Spiget resource `57242`) and restart |
+| Fabric, Forge, Modrinth modpacks | spark | Add `spark` to **Modrinth projects** in the **Mods** tab (or search it from the mod browser) and restart |
+| Vanilla | — | No tick readings: spark needs a mod or plugin loader. Switch to Paper or Fabric if you need them. CPU, RAM and players still work |
+| Bedrock | — | No tick readings. CPU, RAM and players still work |
+
+The status line under the live cards says which of these is missing: RCON off, spark not
+installed, or no usable response yet (normal for a minute or two after start).
+
 ### CurseForge / NeoForge monitoring
 
-Open **Monitoring → Metrics**. Live values refresh about every 10 seconds. For
-NeoForge-based modpacks, Minepanel reads `neoforge tps` through the itzg container's
-`rcon-cli`. Keep the CurseForge server type; there is no need to switch to Paper
-or install an additional monitoring mod. RCON must be enabled in **Network**.
+For NeoForge-based modpacks, Minepanel reads `neoforge tps` through the itzg container's
+`rcon-cli`, refreshing about every 10 seconds. Keep the CurseForge server type; there is
+no need to switch to Paper or install an additional monitoring mod.
 
 The overall NeoForge report provides mean tick duration (MSPT) and **estimated
 TPS**, calculated by NeoForge from tick time. This is different from directly
@@ -397,7 +419,7 @@ Recommended approach:
 | ---------------- | ----------------------------------------- |
 | Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
-| Discord webhooks | Server event notifications                |
+| Discord webhooks | Server event notifications with address, version and modpack |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
