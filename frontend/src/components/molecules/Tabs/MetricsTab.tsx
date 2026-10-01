@@ -9,12 +9,12 @@ import { TranslationKey } from "@/lib/translations";
 import { getServerMetrics, getServerMonitoring, MetricPoint, MonitoringSnapshot, TickStatus } from "@/services/metrics/metrics.service";
 import { MonitoringAlerts } from "../monitoring/monitoring-alerts";
 import { MonitoringChart } from "../monitoring/monitoring-chart";
+import { TickCommandCard } from "../monitoring/tick-command-card";
 import { LINK_TPS } from "@/lib/providers/constants";
+import { ServerConfig } from "@/lib/types/types";
 
 // The states a change on the server can fix, as opposed to offline or Bedrock.
 const SETUP_STATUSES: TickStatus[] = ["rcon_disabled", "spark_missing", "unavailable"];
-import { TickCommandCard } from "../monitoring/tick-command-card";
-import { ServerConfig } from "@/lib/types/types";
 
 const STATUS_KEYS: Record<TickStatus, TranslationKey> = {
   available: "monitoringConnected",

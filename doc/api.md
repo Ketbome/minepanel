@@ -426,7 +426,8 @@ The endpoints require authentication and access to the requested server.
   Runs the command once over RCON without saving and returns
   `{ success, output, parsed: { source, tps, msptMean, msptMedian, msptP95 } | null }`.
   Patterns must compile, contain a capture group, and match within 50 ms (400 otherwise, also
-  for a pattern that backtracks catastrophically).
+  for a pattern that backtracks catastrophically). Each run is recorded in the audit log as
+  `test_tick_command` with the command text, like console commands.
 - `GET /metrics/:id/history?hours=24` — `{ serverId, hours, points }`, with the
   window clamped to 1–168 hours. Points contain `timestamp`, `cpuPercent`,
   `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,
@@ -547,7 +548,10 @@ back to the default.
   Stores the Metrics tab's custom tick command on `server.json` (single line, at most 100
   characters; patterns at most 200 characters and must compile with a capture group; a bad
   pattern is a 400). Empty values clear the setting, and an MSPT pattern without a TPS pattern
-  is dropped. Like `spawn-point`, it does not regenerate the compose file.
+  is dropped. Like `spawn-point`, it does not regenerate the compose file. The audit entry
+  `update_tick_command` carries the command and patterns. The `tick*` fields are ignored for
+  non-admins on `POST /servers` and `POST /servers/:id/clone` (an admin's clone keeps them), and
+  stripped from `PUT /servers/:id`, so this endpoint is the only way to change them.
 
 This is the **only** way to write either field. `PUT /servers/:id` drops them: the panel submits the
 whole config it loaded, so a page opened before a note was written would otherwise put its stale copy

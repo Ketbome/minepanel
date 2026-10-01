@@ -354,7 +354,7 @@ describe('ServerManagementService', () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'TPS: 20', exitCode: 0 });
       expect(await service.readTickCommand('atm10', 'tickinfo', '25575', 'secret')).toEqual({ success: true, output: 'TPS: 20' });
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', 'tickinfo'], { timeout: 5000 });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', '--', 'tickinfo'], { timeout: 5000 });
     });
   });
 
@@ -578,21 +578,21 @@ describe('ServerManagementService', () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: '\u001b[32mTPS data\u001b[0m', exitCode: 0 });
       expect(await service.readTickStats('atm10', 'spark', '25575', 'secret')).toEqual({ success: true, output: 'TPS data' });
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', 'spark tps'], { timeout: 5000 });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', '--', 'spark tps'], { timeout: 5000 });
     });
 
     it('omits --password when no RCON password is configured', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'TPS data', exitCode: 0 });
       await service.readTickStats('atm10', 'spark', '25575');
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', 'spark tps'], { timeout: 5000 });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--', 'spark tps'], { timeout: 5000 });
     });
 
     it('reads native NeoForge tick measurements', async () => {
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
       const execute = jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: 'Overall: 20 TPS (25 ms/tick)', exitCode: 0 });
       await service.readTickStats('atm10', 'neoforge', '25575', 'secret');
-      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', 'neoforge tps'], { timeout: 5000 });
+      expect(execute).toHaveBeenCalledWith('docker', ['exec', 'container123', 'rcon-cli', '--port', '25575', '--password', 'secret', '--', 'neoforge tps'], { timeout: 5000 });
     });
 
     it('rejects invalid ids and missing containers', async () => {

@@ -10,7 +10,7 @@ describe('TickCommandDto', () => {
     expect(await errors({ tickCommand: '', tickTpsPattern: '' })).toHaveLength(0);
   });
 
-  it.each(['tickinfo\nstop', 'tick\rinfo', 'a\u0000b', 'x'.repeat(101)])('rejects a multi-line, control-character or oversized command: %j', async (tickCommand) => {
+  it.each(['tickinfo\nstop', 'tick\rinfo', 'a\u0000b', 'x'.repeat(101), '--host=evil', '-h'])('rejects a multi-line, control-character, oversized or flag-like command: %j', async (tickCommand) => {
     expect(await errors({ tickCommand })).toHaveLength(1);
   });
 

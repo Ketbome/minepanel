@@ -34,6 +34,10 @@ function assertValidSince(since: string): void {
   }
 }
 
+// The Metrics tab's custom tick command and its patterns. The sampler runs it over RCON, so only
+// admins may set it, through PUT /servers/:id/tick-command (or create/clone as an admin).
+const TICK_COMMAND_KEYS = ['tickCommand', 'tickTpsPattern', 'tickMsptPattern'] as const;
+
 // Fields that reach the Docker host or decide which code runs inside the container.
 // Being assigned to a server is enough to operate it, but not to change these.
 const ADMIN_ONLY_CONFIG_FIELDS = [
@@ -507,6 +511,9 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
+      // The sampler runs the tick command over RCON every minute, so it is admin-only to set and
+      // would otherwise be a way around the console permission. Dropped, not rejected, like PUT :id.
+      if (!this.accessControlService.isAdmin(currentUser)) for (const key of TICK_COMMAND_KEYS) delete data[key];
       await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, [], data.edition);
       this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
@@ -581,6 +588,8 @@ export class ServerManagementController {
       backupHostDir: undefined,
       dockerVolumes: this.dockerComposeService.remapVolumesToServer(config.dockerVolumes, id, body.newId),
     };
+    // An admin's tick command is not the cloner's to copy unless they are an admin themselves.
+    if (!this.accessControlService.isAdmin(currentUser)) for (const key of TICK_COMMAND_KEYS) delete clonePayload[key];
     if (config.worldScope === 'local' && config.worldSource) {
       clonePayload.worldSource = '';
       clonePayload.forceWorldCopy = false;
@@ -803,7 +812,14 @@ export class ServerManagementController {
 
     const updatedConfig = await this.managementService.updateTickCommand(id, body);
 
-    await this.recordServerAudit(currentUser, 'update_tick_command', id, `Updated metrics tick command for ${id}`);
+    await this.recordServerAudit(
+      currentUser,
+      'update_tick_command',
+      id,
+      body.tickCommand?.trim() ? `Set metrics tick command on ${id}: ${body.tickCommand.trim()}` : `Cleared metrics tick command on ${id}`,
+      'success',
+      { command: body.tickCommand?.trim() || null, tpsPattern: body.tickTpsPattern?.trim() || null, msptPattern: body.tickMsptPattern?.trim() || null },
+    );
 
     return withoutSecrets(updatedConfig);
   }

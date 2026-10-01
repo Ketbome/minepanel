@@ -1826,7 +1826,8 @@ export class ServerManagementService {
       if (!containerId) return { success: false, output: '' };
       const args = ['exec', containerId, 'rcon-cli', '--port', rconPort];
       if (rconPassword) args.push('--password', rconPassword);
-      args.push(command);
+      // `--` ends rcon-cli's flags: a command such as `--host=evil` must stay the command.
+      args.push('--', command);
       const { stdout, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
       return { success: exitCode === 0, output: this.sanitizeCommandOutput(stdout) };
     } catch {
