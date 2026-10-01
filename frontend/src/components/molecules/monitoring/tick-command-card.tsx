@@ -93,6 +93,11 @@ export const TickCommandCard: FC<TickCommandCardProps> = ({ serverId, config, up
       updateConfig("tickCommand", saved.tickCommand);
       updateConfig("tickTpsPattern", saved.tickTpsPattern);
       updateConfig("tickMsptPattern", saved.tickMsptPattern);
+      // The server normalizes what it stores (an empty command clears the patterns too), so show that.
+      setChoice(choiceFor(saved));
+      setCommand(saved.tickCommand ?? "");
+      setTpsPattern(saved.tickTpsPattern ?? "");
+      setMsptPattern(saved.tickMsptPattern ?? "");
       mcToast.success(t("save"));
     } catch {
       mcToast.error(t("error"));
