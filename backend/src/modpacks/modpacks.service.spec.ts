@@ -50,6 +50,24 @@ describe('ModpacksService', () => {
     await expect(service.inspect('srv', 'missing.zip')).rejects.toThrow(NotFoundException);
   });
 
+  it('moves a finished chunked upload into place and inspects it from disk', async () => {
+    const zip = new AdmZip();
+    zip.addFile('manifest.json', Buffer.from(JSON.stringify({ minecraft: { version: '1.21.1', modLoaders: [{ id: 'neoforge-21.1.72' }] } })));
+    const staged = path.join(tempDir, 'staged.part');
+    await fs.writeFile(staged, zip.toBuffer());
+
+    await service.assertUploadTarget('srv', 'pack.zip');
+    const saved = await service.saveStaged('srv', '../pack.zip', staged);
+    expect(saved).toMatchObject({ name: 'pack.zip', containerPath: '/modpacks/pack.zip', inspection: { loader: 'NEOFORGE' } });
+    expect(await fs.pathExists(staged)).toBe(false);
+    expect(await fs.pathExists(path.join(tempDir, 'srv', 'modpacks', 'pack.zip'))).toBe(true);
+  });
+
+  it('refuses a chunked upload target before any byte is sent', async () => {
+    await expect(service.assertUploadTarget('srv', 'pack.exe')).rejects.toThrow(BadRequestException);
+    await expect(service.assertUploadTarget('missing', 'pack.zip')).rejects.toThrow(NotFoundException);
+  });
+
   it('scans the mods of a stored pack and writes a copy without the ones picked', async () => {
     const mod = new AdmZip();
     mod.addFile('fabric.mod.json', Buffer.from(JSON.stringify({ id: 'sodium', environment: 'client' })));

@@ -208,6 +208,11 @@ in `servers/<id>/modpacks/` and mounted read-only at `/modpacks`:
   left untouched
 - `GET /servers/:id/modpacks`
 - `POST /servers/:id/modpacks` — multipart `file`
+- `POST /servers/:id/modpacks/uploads` — body `{ name, size }`; opens a chunked upload (the
+  dashboard uses it for packs over 8 MB). Chunks, `offset` and abort go through the
+  `/files/:serverId/uploads/:id` routes below
+- `POST /servers/:id/modpacks/uploads/:uploadId/complete` — moves the pack into `modpacks/` and
+  returns it with its `inspection`, like the multipart upload
 - `GET /servers/:id/modpacks/:fileName/inspect`
 - `GET /servers/:id/modpacks/:fileName/mods`
 - `POST /servers/:id/modpacks/:fileName/strip` — body `{ entries: string[] }`
@@ -296,7 +301,9 @@ Sessions belong to the user and server that opened them. They are staged in
 
 The disk is protected on creation: a user can have 5 uploads in progress (`429` beyond that; one
 that has been idle for 15 minutes is treated as abandoned and replaced), and the free-space check
-also counts what the other uploads in progress still have to write (`507`).
+also counts what the other uploads in progress still have to write (`507`); one idle for 15
+minutes no longer holds that space. An upload cannot be aborted while it is being completed
+(`409`), and a session only completes through the route that opened it (files or modpacks).
 
 Important path semantics:
 

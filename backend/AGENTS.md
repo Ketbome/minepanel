@@ -318,7 +318,10 @@ Files module behavior:
 - Chunked uploads (`upload-sessions.service.ts`): creates are queued, capped per user
   (`MAX_SESSIONS_PER_USER`; a session idle for at least 15 minutes is replaced, and only when no
   chunk is in flight) and checked against the free space minus what
-  the other sessions still have to write. `complete` and a chunk share one `busy` lock.
+  the other sessions still have to write (idle sessions excluded). `complete` and a chunk share
+  one `busy` lock, and `abort` is refused while a `complete` runs: with overwrite the move removes
+  the target first. Modpacks reuse the sessions through `createFor`/`completeFor` with
+  `kind: 'modpack'`; a session completes only for the kind it was opened with.
 - Preserve traversal protection (`normalize` + `startsWith(basePath + path.sep)`, or equal to it).
   A bare `startsWith(basePath)` lets `_root` reach siblings such as `/app/servers-old`.
 - `serverId` is a percent-decoded route param (`..%2F` arrives as `../`), so any other id must

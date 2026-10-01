@@ -34,6 +34,7 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
   const [files, setFiles] = useState<ModpackFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [inspection, setInspection] = useState<ModpackInspection | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
 
@@ -117,8 +118,9 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
-      const uploaded = await modpacksService.upload(serverId, file);
+      const uploaded = await modpacksService.upload(serverId, file, setUploadProgress);
       mcToast.success(t("modpackUploaded"));
       onChange(uploaded.containerPath);
       await load();
@@ -213,7 +215,7 @@ export const ModpackFilePicker: FC<ModpackFilePickerProps> = ({ serverId, value,
 
       <Button type="button" variant="minepanelOutline" onClick={() => inputRef.current?.click()} disabled={disabled || isUploading} className="w-full font-minecraft">
         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-        {isUploading ? t("uploading") : t("modpackUpload")}
+        {isUploading ? `${t("uploading")} ${uploadProgress}%` : t("modpackUpload")}
       </Button>
 
       <p className="text-xs text-gray-400">{t("modpackHint")}</p>

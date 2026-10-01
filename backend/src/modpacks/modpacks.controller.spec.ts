@@ -6,6 +6,7 @@ describe('ModpacksController', () => {
   let service: Record<string, jest.Mock>;
   let accessControl: { assertServerFiles: jest.Mock };
   let controller: ModpacksController;
+  let uploadSessions: { createFor: jest.Mock; completeFor: jest.Mock };
 
   beforeEach(() => {
     service = {
@@ -15,9 +16,18 @@ describe('ModpacksController', () => {
       inspect: jest.fn().mockResolvedValue({ kind: 'generic' }),
       scanMods: jest.fn().mockResolvedValue({ mods: [], truncated: false }),
       stripMods: jest.fn().mockResolvedValue({ name: 'a-server.zip' }),
+      assertUploadTarget: jest.fn().mockResolvedValue(undefined),
+      saveStaged: jest.fn().mockResolvedValue({ name: 'big.zip' }),
+    };
+    uploadSessions = {
+      createFor: jest.fn(async (_kind, _userId, _serverId, _path, _size, assertTarget: () => Promise<void>) => {
+        await assertTarget();
+        return { id: 'u1', offset: 0 };
+      }),
+      completeFor: jest.fn(async (_kind, _userId, _serverId, _id, move: (staged: string, session: { path: string }) => Promise<unknown>) => move('/staged.part', { path: 'big.zip' })),
     };
     accessControl = { assertServerFiles: jest.fn() };
-    controller = new ModpacksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
+    controller = new ModpacksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any, uploadSessions as any);
   });
 
   it('uses read access for listing and write access for changes', async () => {
@@ -33,6 +43,19 @@ describe('ModpacksController', () => {
     expect(accessControl.assertServerFiles).toHaveBeenLastCalledWith({ id: 1 }, 'srv', true);
     expect(await controller.remove(req, 'srv', 'a.zip')).toEqual({ success: true });
     expect(service.remove).toHaveBeenCalledWith('srv', 'a.zip');
+  });
+
+  it('opens and finishes chunked modpack uploads with write access', async () => {
+    expect(await controller.createUpload(req, 'srv', { name: 'big.zip', size: 10 })).toEqual({ id: 'u1', offset: 0 });
+    expect(uploadSessions.createFor).toHaveBeenCalledWith('modpack', 1, 'srv', 'big.zip', 10, expect.any(Function));
+    expect(service.assertUploadTarget).toHaveBeenCalledWith('srv', 'big.zip');
+    expect(accessControl.assertServerFiles).toHaveBeenLastCalledWith({ id: 1 }, 'srv', true);
+
+    accessControl.assertServerFiles.mockClear();
+    expect(await controller.completeUpload(req, 'srv', 'u1')).toEqual({ name: 'big.zip' });
+    expect(uploadSessions.completeFor).toHaveBeenCalledWith('modpack', 1, 'srv', 'u1', expect.any(Function));
+    expect(service.saveStaged).toHaveBeenCalledWith('srv', 'big.zip', '/staged.part');
+    expect(accessControl.assertServerFiles).toHaveBeenLastCalledWith({ id: 1 }, 'srv', true);
   });
 
   it('rejects a strip request that is not a list of paths', async () => {

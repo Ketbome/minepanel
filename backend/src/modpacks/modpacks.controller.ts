@@ -1,8 +1,11 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseFilePipeBuilder, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, ParseFilePipeBuilder, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
+import { uploadBodyPipe } from 'src/files/files.controller';
+import { UploadSessionsService } from 'src/files/upload-sessions.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { UsersService } from 'src/users/services/users.service';
+import { CreateModpackUploadDto } from './dto/create-modpack-upload.dto';
 import { MAX_MODPACK_SIZE, ModpacksService } from './modpacks.service';
 
 @Controller('servers/:serverId/modpacks')
@@ -12,6 +15,7 @@ export class ModpacksController {
     private readonly modpacksService: ModpacksService,
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
+    private readonly uploadSessions: UploadSessionsService,
   ) {}
 
   @Get()
@@ -31,6 +35,22 @@ export class ModpacksController {
   ) {
     await this.assertAccess(req, serverId, true);
     return this.modpacksService.save(serverId, file);
+  }
+
+  // Large archives go up in chunks past proxy body limits (Cloudflare: 100 MB). Chunks,
+  // offsets and aborts use the file manager's routes (/files/:serverId/uploads/:id);
+  // only opening and finishing an upload is specific to modpacks.
+  @Post('uploads')
+  async createUpload(@Request() req, @Param('serverId') serverId: string, @Body(uploadBodyPipe) body: CreateModpackUploadDto) {
+    await this.assertAccess(req, serverId, true);
+    return this.uploadSessions.createFor('modpack', req.user.userId, serverId, body.name, body.size, () => this.modpacksService.assertUploadTarget(serverId, body.name));
+  }
+
+  @Post('uploads/:uploadId/complete')
+  @HttpCode(200)
+  async completeUpload(@Request() req, @Param('serverId') serverId: string, @Param('uploadId') uploadId: string) {
+    await this.assertAccess(req, serverId, true);
+    return this.uploadSessions.completeFor('modpack', req.user.userId, serverId, uploadId, (staged, session) => this.modpacksService.saveStaged(serverId, session.path, staged));
   }
 
   @Get(':fileName/inspect')
