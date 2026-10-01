@@ -43,6 +43,9 @@ export class UploadSessionsService implements OnModuleDestroy {
   private readonly logger = new Logger(UploadSessionsService.name);
   private readonly dir: string;
   private readonly busy = new Set<string>();
+  // An abort must not land while complete is moving the file: with overwrite the move
+  // removes the target first, and losing the part file then would lose both.
+  private readonly completing = new Set<string>();
   private readonly sweepTimer: NodeJS.Timeout;
   // Creates run one at a time: the limit and the free-space check read every session, so
   // two at once would both pass on the same numbers.
@@ -73,9 +76,9 @@ export class UploadSessionsService implements OnModuleDestroy {
     // Fail before the first byte, not after gigabytes: the target must be writable...
     await this.filesService.assertUploadTarget(serverId, filePath, admin, overwrite);
 
+    const now = Date.now();
     let live = await this.readSessions();
     if (live.filter(({ session }) => session.userId === userId).length >= MAX_SESSIONS_PER_USER) {
-      const now = Date.now();
       const stale = live.filter(({ session }) => session.userId === userId && now - session.updatedAt > STALE_MS && !this.busy.has(session.id));
       await Promise.all(stale.map(({ session }) => this.discard(session.id)));
       live = live.filter((entry) => !stale.includes(entry));
@@ -87,8 +90,11 @@ export class UploadSessionsService implements OnModuleDestroy {
 
     // ...and the disk must hold the file on top of what the other sessions still have to
     // write: what they already wrote is gone from the free space, the rest is promised.
+    // Only while they are moving, so a session left idle cannot hold the disk for a day.
     const { bavail, bsize } = await fsp.statfs(this.dir);
-    const reserved = live.reduce((total, { session, offset }) => total + Math.max(0, session.size - offset), 0);
+    const reserved = live
+      .filter(({ session }) => now - session.updatedAt <= STALE_MS)
+      .reduce((total, { session, offset }) => total + Math.max(0, session.size - offset), 0);
     if (bavail * bsize - reserved < size) {
       throw new HttpException('Not enough free disk space for this upload', HttpStatus.INSUFFICIENT_STORAGE);
     }
@@ -166,6 +172,7 @@ export class UploadSessionsService implements OnModuleDestroy {
       throw new ConflictException('This upload is still being written or completed');
     }
     this.busy.add(id);
+    this.completing.add(id);
 
     try {
       const offset = await this.currentOffset(id);
@@ -179,11 +186,15 @@ export class UploadSessionsService implements OnModuleDestroy {
       return { path: session.path };
     } finally {
       this.busy.delete(id);
+      this.completing.delete(id);
     }
   }
 
   async abort(userId: number, serverId: string, id: string): Promise<void> {
     await this.load(userId, serverId, id);
+    if (this.completing.has(id)) {
+      throw new ConflictException('This upload is being completed');
+    }
     await this.discard(id);
   }
 

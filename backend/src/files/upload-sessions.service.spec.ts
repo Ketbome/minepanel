@@ -245,6 +245,14 @@ describe('UploadSessionsService', () => {
       await service.create(2, 'srv', 'b.bin', 60, false);
     });
 
+    it('stops holding free space for a session left idle', async () => {
+      jest.spyOn(fsp, 'statfs').mockResolvedValue({ bavail: 100, bsize: 1 } as any);
+
+      const idle = await service.create(1, 'srv', 'a.bin', 100, false);
+      await age(idle.id);
+      await service.create(2, 'srv', 'b.bin', 60, false);
+    });
+
     it('ignores a session record it cannot read', async () => {
       await fs.writeFile(path.join(dir, 'broken.json'), '{oops');
       await service.create(1, 'srv', 'a.bin', 5, false);
@@ -271,6 +279,26 @@ describe('UploadSessionsService', () => {
     expect(filesService.saveUpload).toHaveBeenCalledTimes(1);
     expect(saved?.toString()).toBe('abc');
     await expect(service.complete(1, 'srv', id, false)).rejects.toThrow(NotFoundException);
+  });
+
+  it('refuses an abort while the file is being moved into place', async () => {
+    const { id } = await service.create(1, 'srv', 'a.bin', 3, false);
+    await service.append(1, 'srv', id, 0, chunk('abc'));
+
+    let release = () => {};
+    filesService.saveUpload.mockImplementationOnce(async (_serverId: string, _path: string, staged: string) => {
+      await new Promise<void>((resolve) => (release = resolve));
+      saved = await fs.readFile(staged);
+      await fs.remove(staged);
+    });
+
+    const completing = service.complete(1, 'srv', id, false);
+    await lockHeld(id);
+    await expect(service.abort(1, 'srv', id)).rejects.toThrow(ConflictException);
+
+    release();
+    await completing;
+    expect(saved?.toString()).toBe('abc');
   });
 
   it('does not bring an aborted session back when its last chunk finishes', async () => {
