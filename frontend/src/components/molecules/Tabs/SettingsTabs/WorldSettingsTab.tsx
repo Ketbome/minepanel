@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { LINK_WORLD_SETTINGS } from "@/lib/providers/constants";
+import { VanillaTweaksSection } from "./VanillaTweaksSection";
 
 // Built-in feature packs; the backend accepts exactly these (EXPERIMENTAL_PACKS in server-config.model.ts).
 const EXPERIMENTAL_PACKS = [
@@ -291,6 +292,7 @@ export const WorldSettingsTab: FC<WorldSettingsTabProps> = ({ config, updateConf
           </AccordionItem>
         </Accordion>
       )}
+      {isJava && <VanillaTweaksSection config={config} updateConfig={updateConfig} />}
     </div>
   );
 };

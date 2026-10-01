@@ -114,6 +114,11 @@ export class JavaServerStrategy implements IServerStrategy {
     if (config.experimentalPacks?.length) {
       env['INITIAL_ENABLED_PACKS'] = config.experimentalPacks.join(',');
     }
+    // Same for Vanilla Tweaks: itzg installs these into the world's datapacks on every start, and a
+    // VANILLATWEAKS_SHARECODE typed in the custom variables must not silently replace the picked codes.
+    if (config.vanillaTweaksCodes?.length) {
+      env['VANILLATWEAKS_SHARECODE'] = config.vanillaTweaksCodes.join(',');
+    }
 
     return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined && value !== ''));
   }
