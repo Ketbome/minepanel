@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import { AuthMailService } from 'src/auth/auth-mail.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { getRandomEvent } from 'src/discord/discord.translations';
@@ -11,28 +10,23 @@ import { operationalMessages } from './operational-messages';
 
 export type NotificationChannel = 'email' | 'telegram';
 type NotificationConfig = Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
-type NotificationField = { name: string; value: string; inline?: boolean };
+type NotificationField = { name: string; value: string; inline?: boolean; discordOnly?: boolean };
 type ServerDetails = { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string };
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private transporter: Transporter | null = null;
 
   constructor(
     private readonly settings: InstanceSettingsService,
     private readonly discord: DiscordService,
     @InjectRepository(Settings) private readonly userSettings: Repository<Settings>,
-  ) {
-    this.settings.registerResetHandler(() => {
-      this.transporter?.close();
-      this.transporter = null;
-    });
-  }
+    private readonly mail: AuthMailService,
+  ) {}
 
   async sendServerNotification(webhook: string, type: ServerEventType, serverName: string, lang: SupportedLanguage, details?: ServerDetails): Promise<void> {
     const config = await this.settings.getNotifications();
-    if (!config.lifecycleEnabled || !this.accepts(config, type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info')) return;
+    if (!config.lifecycleEnabled) return;
     const event = getRandomEvent(lang, type);
     const text = [serverName, event.description, ...Object.entries(details ?? {}).filter(([, value]) => value).map(([key, value]) => `${key}: ${value}`)].join('\n');
     await this.deliver(config, event.title, text, () => this.discord.sendServerNotification(webhook, type, serverName, lang, details), webhook);
@@ -40,22 +34,17 @@ export class NotificationsService {
 
   async sendCustomMessage(webhook: string, title: string, description: string, color: 'error' | 'warning' | 'success', fields: NotificationField[]): Promise<void> {
     const config = await this.settings.getNotifications();
-    if (!config.alertsEnabled || !this.accepts(config, color === 'success' ? 'info' : color)) return;
-    const text = [description, ...fields.map((field) => `${field.name}: ${field.value}`)].join('\n');
-    await this.deliver(config, title, text, () => this.discord.sendCustomMessage(webhook, title, description, color, fields), webhook);
+    if (!config.alertsEnabled) return;
+    const text = [description, ...fields.filter((field) => !field.discordOnly).map((field) => `${field.name}: ${field.value.replace(/`/g, '')}`)].join('\n');
+    await this.deliver(config, title, text, () => this.discord.sendCustomMessage(webhook, title, description, color, fields.map(({ discordOnly: _discordOnly, ...field }) => field)), webhook);
   }
 
-  private accepts(config: NotificationConfig, severity: 'info' | 'warning' | 'error'): boolean {
-    const levels = { info: 0, warning: 1, error: 2 };
-    return levels[severity] >= levels[config.minimumSeverity];
-  }
-
-  async sendOperationalAlert(kind: 'disk' | 'backup' | 'recovery', subject: string, detail: string): Promise<void> {
+  async sendOperationalAlert(kind: 'disk' | 'backup' | 'recovery', subject: string, detail: string, incidentSeverity: 'warning' | 'error' = 'warning'): Promise<void> {
     const config = await this.settings.getNotifications();
     if (!config.alertsEnabled || !(kind === 'disk' ? config.diskAlertEnabled : kind === 'backup' ? config.backupFailureEnabled : config.recoveryEnabled)) return;
     const settings = await this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } });
     const t = operationalMessages((settings?.language as SupportedLanguage) || 'en');
-    await this.sendCustomMessage(settings?.discordWebhook || '', t[kind], kind === 'recovery' ? t.recovered : t.description, kind === 'backup' ? 'error' : kind === 'disk' ? 'warning' : 'success', [
+    await this.sendCustomMessage(settings?.discordWebhook || '', t[kind], kind === 'recovery' ? t.recovered : t.description, kind === 'backup' ? 'error' : kind === 'disk' ? 'warning' : incidentSeverity, [
       { name: 'Minepanel', value: subject }, { name: 'Details', value: detail },
     ]);
   }
@@ -79,26 +68,26 @@ export class NotificationsService {
       if (channel === 'email') await this.sendEmail(config, 'Notification test', text);
       else await this.sendTelegram(config, 'Notification test', text);
       return { success: true, message: 'Test notification sent' };
-    } catch {
-      return { success: false, message: 'Notification failed. Check the saved destination and integration settings.' };
+    } catch (error) {
+      const reason = this.failureReason(error);
+      this.logger.warn(`${channel} notification test failed: ${reason}`);
+      return { success: false, message: `Notification failed: ${reason}` };
     }
   }
 
   private async sendEmail(config: NotificationConfig, title: string, text: string): Promise<void> {
-    const smtp = await this.settings.getSmtp();
-    if (!smtp.enabled || !config.emailTo) throw new Error('Email notification is not configured');
-    if (!this.transporter) {
-      this.transporter = nodemailer.createTransport({
-        host: smtp.host,
-        port: smtp.port,
-        secure: smtp.secure,
-        auth: { user: smtp.user, pass: smtp.pass },
-        connectionTimeout: 10_000,
-        greetingTimeout: 10_000,
-        socketTimeout: 10_000,
-      });
-    }
-    await this.transporter.sendMail({ from: smtp.from, to: config.emailTo, subject: `Minepanel | ${title.replace(/[\r\n]/g, ' ').slice(0, 200)}`, text: text.slice(0, 20_000) });
+    if (!config.emailTo) throw new Error('Email notification is not configured');
+    await this.mail.sendNotificationEmail(config.emailTo, title, text);
+  }
+
+  private failureReason(error: unknown): string {
+    const message = error instanceof Error ? error.message : '';
+    const known = ['Email notification is not configured', 'Email delivery is not configured', 'Telegram notification is not configured'];
+    if (known.includes(message) || /^Telegram notification rejected \(HTTP \d{3}\)$/.test(message)) return message;
+    const code = (error as { code?: string })?.code;
+    if (code && ['EAUTH', 'ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'ECONNREFUSED', 'ENOTFOUND', 'EENVELOPE'].includes(code)) return `SMTP failure (${code})`;
+    if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) return 'Request timed out';
+    return 'Provider request failed';
   }
 
   private async sendTelegram(config: NotificationConfig, title: string, text: string): Promise<void> {
@@ -110,6 +99,6 @@ export class NotificationsService {
       signal: AbortSignal.timeout(10_000),
     });
     const result = await response.json() as { ok?: boolean };
-    if (!response.ok || result.ok !== true) throw new Error('Telegram notification rejected');
+    if (!response.ok || result.ok !== true) throw new Error(`Telegram notification rejected (HTTP ${response.status || 200})`);
   }
 }

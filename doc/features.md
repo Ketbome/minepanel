@@ -472,15 +472,19 @@ Additional opt-in rules are configured in the Notifications section:
 | Rule | Behavior |
 | --- | --- |
 | Low disk space | Checks the filesystem mounted at the backend’s server-data directory every minute. Warns when available space is at or below the configured percentage (1–50%, default 10%). Recovery requires more than two percentage points above the threshold to prevent flapping. |
-| Backup failures | For servers with backups enabled and the game container running, checks the backup sidecar for a nonzero exit/restart or the explicit `Backup failed with exit code` log marker. Clean exits and SIGTERM (143) do not trigger an alert. Probe failures stay unknown. |
+| Backup failures | For servers with backups enabled and the game container running, resolves the Compose `mc` and `backup` service IDs and checks the backup sidecar for a nonzero exit/restart or the explicit `Backup failed with exit code` log marker. Clean exits and SIGTERM (143) do not trigger an alert. Probe failures stay unknown. |
 | Incident recovery | Sends one informational notification when an observed down/crash, CPU/RAM or disk incident clears. Unknown readings do not count as recovery. This does not infer backup success from missing error logs. |
 
 Disk and backup rules use a configurable **Repeat interval** (1–10080 minutes, default 60).
-CPU/RAM/down/crash cooldowns remain per-server. **Minimum severity** applies to automatic
-messages across channels: all severities, warnings/errors, or errors only. Disk alerts are
-warnings, backup failures are errors, and recovery and normal lifecycle events are
-informational. Test deliveries bypass this filter. The **All alerts** switch mutes all alert
-rules, including the new ones; normal lifecycle messages have their own switch.
+CPU/RAM/down/crash cooldowns remain per-server. Per-type switches control delivery.
+Recovery closes the same warning/error level as the original incident. The **All alerts**
+switch mutes all alert rules; normal lifecycle messages have their own switch.
+
+If a saved Telegram token cannot be decrypted after rotating `JWT_SECRET`, Telegram is
+unavailable until the token is replaced; Discord and email continue independently. Account
+emails and notification emails share the existing SMTP transporter. Test failures expose and
+log only sanitized reason codes or HTTP statuses. Crash notifications include the server log
+tail only in Discord; email and Telegram receive a summary without the log or Discord markup.
 
 The additional rules default to disabled. Monitoring state is held in memory and resets on
 panel restart. Backup log reads are bounded to 500 lines, 512 KiB and at most five minutes

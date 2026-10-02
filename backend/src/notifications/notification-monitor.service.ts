@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { statfs } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
+import path from 'node:path';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { NotificationsService } from './notifications.service';
@@ -9,10 +10,10 @@ import { NotificationsService } from './notifications.service';
 const INTERVAL_MS = 60_000;
 type Policy = Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
 
-function runDocker(args: string[]): Promise<{ stdout: string; stderr: string }> {
+function runDocker(args: string[], cwd?: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    execFile('docker', args, { timeout: 5_000, maxBuffer: 512 * 1024 }, (error, stdout, stderr) => {
-      if (error) reject(error);
+    execFile('docker', args, { timeout: 5_000, maxBuffer: 512 * 1024, ...(cwd ? { cwd } : {}) }, (error, stdout, stderr) => {
+      if (error) reject(Object.assign(error, { stderr }));
       else resolve({ stdout, stderr });
     });
   });
@@ -67,7 +68,10 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
       for (const id of this.backupLastAlerts.keys()) if (!present.has(id)) this.backupLastAlerts.delete(id);
       for (let offset = 0; offset < ids.length; offset += 4) {
         await Promise.all(ids.slice(offset, offset + 4).map(async (id) => {
-          try { await this.checkBackup(id, policy); } catch { this.logger.warn(`Backup notification probe unavailable for ${id}`); }
+          try { await this.checkBackup(id, policy); } catch (error) {
+            const diagnostic = `${(error as Error)?.message ?? ''} ${(error as { stderr?: string })?.stderr ?? ''}`;
+            if (!/no such (?:object|container)/i.test(diagnostic)) this.logger.warn(`Backup notification probe unavailable for ${id}`);
+          }
         }));
       }
     } catch {
@@ -104,14 +108,21 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
       this.backupLastAlerts.delete(serverId);
       return;
     }
-    const inspection = await runDocker(['inspect', '--format', '{{json .State}}', serverId, `${serverId}-backup`]);
+    const directory = path.join(this.config.get<string>('serversDir'), serverId);
+    const prefix = this.config.get<string>('composeProject')?.trim();
+    const compose = ['compose', ...(prefix ? ['--project-name', `${prefix.toLowerCase()}_${serverId.toLowerCase()}`] : [])];
+    const mc = (await runDocker([...compose, 'ps', '-q', 'mc'], directory)).stdout.trim();
+    if (!mc) return;
+    const backup = (await runDocker([...compose, 'ps', '-a', '-q', 'backup'], directory)).stdout.trim();
+    if (!backup) return;
+    const inspection = await runDocker(['inspect', '--format', '{{json .State}}', mc, backup]);
     const states = inspection.stdout.trim().split('\n').map((line) => JSON.parse(line) as { Running: boolean; Restarting?: boolean; ExitCode: number });
     if (states.length !== 2 || states[0].Running !== true) return;
     const now = Date.now();
     let failed = (states[1].Running === false || states[1].Restarting === true) && Number.isInteger(states[1].ExitCode) && states[1].ExitCode > 0 && states[1].ExitCode !== 143;
     if (states[1].Running === true) {
       const since = Math.max(this.backupCursors.get(serverId) ?? now - INTERVAL_MS, now - 5 * INTERVAL_MS);
-      const logs = await runDocker(['logs', '--timestamps', '--tail', '500', '--since', new Date(since).toISOString(), '--until', new Date(now).toISOString(), `${serverId}-backup`]);
+      const logs = await runDocker(['logs', '--timestamps', '--tail', '500', '--since', new Date(since).toISOString(), '--until', new Date(now).toISOString(), backup]);
       const lines = `${logs.stdout}\n${logs.stderr}`.split('\n');
       failed ||= lines.some((line) => {
         const match = /^(\S+)\s+\S+\s+(?:ERROR|WARN)\s+Backup failed with exit code ([1-9]\d*)\s*$/.exec(line);

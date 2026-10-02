@@ -81,6 +81,7 @@ export class AlertsService {
   }
 
   async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {
+    if (Object.keys(resources).length === 0) return;
     const configs = await this.alertConfigRepo.find();
     if (configs.length === 0) {
       this.primeState(resources);
@@ -234,7 +235,7 @@ export class AlertsService {
 
   private async recover(serverId: string, state: ServerAlertState, type: AlertType): Promise<void> {
     if (!state.incidents.delete(type)) return;
-    await this.notificationsService.sendOperationalAlert('recovery', serverId, type);
+    await this.notificationsService.sendOperationalAlert('recovery', serverId, type, type === 'down' || type === 'crash' ? 'error' : 'warning');
   }
 
   private isInCooldown(state: ServerAlertState, type: AlertType, cooldownMinutes: number): boolean {
@@ -253,7 +254,7 @@ export class AlertsService {
         { name: t.serverField, value: `\`${serverId}\``, inline: true },
         { name: t.exitCodeField, value: `\`${info.exitCode}\``, inline: true },
         { name: t.retriesField, value: `\`${maxRetries}\``, inline: true },
-        { name: t.logTailField, value: `\`\`\`\n${logTail}\n\`\`\`` },
+        { name: t.logTailField, value: `\`\`\`\n${logTail}\n\`\`\``, discordOnly: true },
       ];
       await this.notificationsService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields);
     } catch (error) {

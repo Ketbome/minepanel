@@ -33,10 +33,11 @@ describe('NotificationMonitorService', () => {
     backupRunning = gameRunning = true; exitCode = 0; output = '';
     (statfs as jest.Mock).mockResolvedValue({ blocks: 100, bavail: 50 });
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
-      if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: gameRunning }) + '\n' + JSON.stringify({ Running: backupRunning, ExitCode: exitCode }), '');
+      if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'generated-mc-id\n' : 'backup-id\n', '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: gameRunning }) + '\n' + JSON.stringify({ Running: backupRunning, ExitCode: exitCode }), '');
       else callback(null, '', output);
     });
-    service = new NotificationMonitorService(settings as unknown as InstanceSettingsService, notifications as unknown as NotificationsService, store as unknown as ServerStoreService, { get: () => '/mock/servers' } as unknown as ConfigService);
+    service = new NotificationMonitorService(settings as unknown as InstanceSettingsService, notifications as unknown as NotificationsService, store as unknown as ServerStoreService, { get: (key: string) => key === 'serversDir' ? '/mock/servers' : undefined } as unknown as ConfigService);
   });
 
   afterEach(() => { service.onModuleDestroy(); jest.useRealTimers(); jest.restoreAllMocks(); });
@@ -73,7 +74,7 @@ describe('NotificationMonitorService', () => {
     expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
     expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
     expect(JSON.stringify(notifications.sendOperationalAlert.mock.calls)).not.toContain('secret');
-    expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['--tail', '500', '--since', '--until', 'srv-backup']), expect.objectContaining({ timeout: 5000, maxBuffer: 512 * 1024 }), expect.any(Function));
+    expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['--tail', '500', '--since', '--until', 'backup-id']), expect.objectContaining({ timeout: 5000, maxBuffer: 512 * 1024 }), expect.any(Function));
   });
 
   it('does not mistake generic errors, stale logs or a successful exit for backup failure', async () => {
@@ -116,8 +117,24 @@ describe('NotificationMonitorService', () => {
     backupRunning = false;exitCode = 143;await service.collect();
     expect(notifications.sendOperationalAlert).not.toHaveBeenCalled();
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
+      if (args[0] === 'compose') return callback(null, args.at(-1) === 'mc' ? 'generated-mc-id\n' : 'backup-id\n', '');
       callback(null, args[0] === 'inspect' ? JSON.stringify({ Running: true }) + '\n' + JSON.stringify({ Running: true, Restarting: true, ExitCode: 1 }) : '', '');
     });
     await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+  });
+  it('resolves Compose service IDs rather than assuming the Minecraft container name', async () => {
+    (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
+      if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'generated-mc-id\n' : 'backup-id\n', '');
+      else if (args[0] === 'inspect' && args.includes('generated-mc-id')) callback(null, JSON.stringify({ Running: true }) + '\n' + JSON.stringify({ Running: false, ExitCode: 1 }), '');
+      else callback(new Error('No such object: srv'));
+    });
+    await service.collect();
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    expect(Logger.prototype.warn).not.toHaveBeenCalled();
+  });
+
+  it('does not warn when stopped Compose projects have no containers', async () => {
+    (execFile as unknown as jest.Mock).mockImplementation((_cmd, _args, _opts, callback) => callback(new Error('Error response from daemon: No such object: srv')));
+    await service.collect();expect(Logger.prototype.warn).not.toHaveBeenCalled();
   });
 });

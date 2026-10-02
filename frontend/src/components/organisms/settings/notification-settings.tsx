@@ -28,7 +28,7 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
   const [token, setToken] = useState('');
   const [clearToken, setClearToken] = useState(false);
   const [busy, setBusy] = useState<'save' | 'email' | 'telegram' | null>(null);
-  const [feedback, setFeedback] = useState<{ scope: 'save' | 'email' | 'telegram'; success: boolean; key: TranslationKey } | null>(null);
+  const [feedback, setFeedback] = useState<{ scope: 'save' | 'email' | 'telegram'; success: boolean; key: TranslationKey; detail?: string } | null>(null);
   const dirty = token !== '' || clearToken || JSON.stringify(form) !== JSON.stringify(saved);
   const disabled = busy !== null || testingDiscord;
   const update = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => setForm((current) => ({ ...current, [key]: value }));
@@ -63,13 +63,13 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
     setFeedback(null);
     try {
       const result = await testNotification(channel);
-      setFeedback({ scope: channel, success: result.success, key: result.success ? 'notificationTestSuccess' : 'notificationTestFailed' });
+      setFeedback({ scope: channel, success: result.success, key: result.success ? 'notificationTestSuccess' : 'notificationTestFailed', detail: result.success ? undefined : result.message });
     } catch { setFeedback({ scope: channel, success: false, key: 'notificationTestFailed' }); }
     finally { setBusy(null); }
   };
 
   const showFeedback = (scope: 'save' | 'email' | 'telegram') => feedback?.scope === scope ? (
-    <p role={feedback.success ? 'status' : 'alert'} className={feedback.success ? 'text-sm text-emerald-300' : 'text-sm text-red-300'}>{t(feedback.key)}</p>
+    <p role={feedback.success ? 'status' : 'alert'} className={feedback.success ? 'text-sm text-emerald-300' : 'text-sm text-red-300'}>{t(feedback.key)}{feedback.detail ? ` ${feedback.detail}` : null}</p>
   ) : null;
 
   const channelHeader = (key: ToggleKey, label: TranslationKey, configured: boolean) => (
@@ -151,14 +151,6 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               <div className="min-w-0 flex flex-col gap-2">
                 <Label htmlFor="notification-cooldown">{t('notificationCooldown')}</Label>
                 <Input id="notification-cooldown" type="number" min={1} max={10080} value={form.alertCooldownMinutes} onChange={(e) => update('alertCooldownMinutes', Number(e.target.value))} className="text-base" />
-              </div>
-              <div className="min-w-0 flex flex-col gap-2 md:col-span-2">
-                <Label htmlFor="notification-severity">{t('notificationSeverity')}</Label>
-                <select id="notification-severity" value={form.minimumSeverity} onChange={(e) => update('minimumSeverity', e.target.value as NotificationSettings['minimumSeverity'])} className="mc-input h-10 min-w-0 w-full text-base">
-                  <option value="info">{t('notificationSeverityInfo')}</option>
-                  <option value="warning">{t('notificationSeverityWarning')}</option>
-                  <option value="error">{t('notificationSeverityError')}</option>
-                </select>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t('notificationPolicyHelp')}</p>

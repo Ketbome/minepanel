@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
 
 // Secret fields (smtpPassword, oidcClientSecret) are write-only:
 // - omitted   -> keep the current value
@@ -126,9 +126,6 @@ export class NotificationSettingsDto {
   @Max(10080)
   alertCooldownMinutes?: number;
 
-  @ValidateIf((_object, value) => value !== undefined)
-  @IsIn(['info', 'warning', 'error'])
-  minimumSeverity?: 'info' | 'warning' | 'error';
 
 }
 

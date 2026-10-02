@@ -303,7 +303,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
       await service.evaluate({ srv: running });await service.evaluate({ srv: running });
       expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error');
     });
 
     it('does not call recovery after planned stops or unknown resource readings', async () => {
@@ -316,7 +316,7 @@ describe('AlertsService', () => {
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
       await service.evaluate({ srv: running });await service.evaluate({ srv: running });
       expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'cpu');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'cpu', 'warning');
     });
 
     it('recovers memory incidents only from available memory measurements', async () => {
@@ -325,7 +325,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: { ...running, memoryUsage: 'N/A' } });
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
       await service.evaluate({ srv: running });
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'memory');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'memory', 'warning');
     });
 
     it('clears incident state when its rule is disabled', async () => {
@@ -335,5 +335,11 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: running });
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
     });
+  });
+  it('retains an open incident through an empty failed sample', async () => {
+    alertConfigRepo.find.mockResolvedValue([downConfig()]);
+    await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
+    await service.evaluate({});await service.evaluate({ srv: running });
+    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error');
   });
 });

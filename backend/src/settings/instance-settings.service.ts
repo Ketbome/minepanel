@@ -372,6 +372,8 @@ export class InstanceSettingsService implements OnModuleInit {
   }
 
   private notificationDefaults(row: InstanceSettings) {
+    const preferences = { ...row.notifications };
+    delete (preferences as Record<string, unknown>).minimumSeverity;
     return {
       discordEnabled: true,
       emailEnabled: false,
@@ -385,16 +387,18 @@ export class InstanceSettingsService implements OnModuleInit {
       recoveryEnabled: false,
       diskFreeThresholdPercent: 10,
       alertCooldownMinutes: 60,
-      minimumSeverity: 'info' as const,
-      ...row.notifications,
+      ...preferences,
     };
   }
 
   async getNotifications() {
     const row = await this.getRow();
-    return {
-      ...this.notificationDefaults(row),
-      telegramToken: row.telegramTokenEnc ? decryptSecret(row.telegramTokenEnc) : '',
-    };
+    let telegramToken = '';
+    try {
+      if (row.telegramTokenEnc) telegramToken = decryptSecret(row.telegramTokenEnc);
+    } catch {
+      this.logger.warn('Telegram token could not be decrypted; reconfigure Telegram credentials');
+    }
+    return { ...this.notificationDefaults(row), telegramToken };
   }
 }

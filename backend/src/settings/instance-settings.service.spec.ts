@@ -203,7 +203,7 @@ describe('InstanceSettingsService', () => {
     });
   });
   it('returns notification defaults for existing installations', async () => {
-    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, minimumSeverity: 'info', hasTelegramToken: false });
+    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
     expect((await service.getNotifications()).telegramToken).toBe('');
   });
 
@@ -232,5 +232,13 @@ describe('InstanceSettingsService', () => {
     const dto = plainToInstance(UpdateIntegrationSettingsDto, { notifications: { alertsEnabled: false } });
     await service.updateIntegrations(dto);
     expect((await service.getPublic()).notifications).toMatchObject({ emailEnabled: true, emailTo: 'admin@example.com', discordEnabled: false, alertsEnabled: false });
+  });
+  it('isolates a Telegram decryption failure after JWT_SECRET rotation', async () => {
+    row.telegramTokenEnc = encryptSecret('123:private-token');
+    const current = process.env.JWT_SECRET;
+    process.env.JWT_SECRET = 'rotated-test-secret';
+    try {
+      await expect(service.getNotifications()).resolves.toMatchObject({ discordEnabled: true, telegramToken: '' });
+    } finally { process.env.JWT_SECRET = current; }
   });
 });

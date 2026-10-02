@@ -44,8 +44,7 @@ independently with bounded timeouts; delivery errors never fail server operation
 disk and backup probes. Disk readings use `statfs` on the server-data mount, not `/`.
 Backup probes read canonical config, use bounded shell-free Docker commands and never
 forward raw logs. The per-server alert evaluator tracks active incidents for one-shot
-recovery; unavailable samples do not clear incidents. Severity filtering is shared by
-all automatic delivery channels.
+recovery; unavailable samples do not clear incidents. Crash log tails remain Discord-only; email and Telegram carry a plain-text summary.
 
 ## Components
 

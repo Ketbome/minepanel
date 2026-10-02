@@ -8,7 +8,7 @@ const validateNotification = (notifications: unknown) => validate(plainToInstanc
 
 describe('Notification settings validation', () => {
   it('accepts channel destinations, disabled switches and write-only clearing', async () => {
-    expect(await validateNotification({ emailTo: 'admin@example.com', telegramToken: '123:token-abc', telegramChatId: '-100123', discordEnabled: false, emailEnabled: true, telegramEnabled: true, lifecycleEnabled: false, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: true, recoveryEnabled: true, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, minimumSeverity: 'info' })).toEqual([]);
+    expect(await validateNotification({ emailTo: 'admin@example.com', telegramToken: '123:token-abc', telegramChatId: '-100123', discordEnabled: false, emailEnabled: true, telegramEnabled: true, lifecycleEnabled: false, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: true, recoveryEnabled: true, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 })).toEqual([]);
     expect(await validateNotification({ emailTo: '', telegramToken: '', telegramChatId: '' })).toEqual([]);
     expect(await validateNotification({ telegramChatId: '@my_channel' })).toEqual([]);
   });

@@ -11,6 +11,7 @@ export class AuthMailService {
     // Drop the cached transporter when SMTP settings change so the next email
     // uses the new configuration without a restart.
     this.instanceSettings.registerResetHandler(() => {
+      this.transporter?.close();
       this.transporter = null;
     });
   }
@@ -87,6 +88,15 @@ export class AuthMailService {
     });
   }
 
+  async sendNotificationEmail(to: string, title: string, text: string): Promise<void> {
+    const smtp = await this.requireSmtp('Email delivery is not configured');
+    await this.getTransporter().sendMail({
+      from: smtp.from, to,
+      subject: `Minepanel | ${title.replace(/[\r\n]/g, ' ').slice(0, 200)}`,
+      text: text.slice(0, 20_000),
+    });
+  }
+
   private async requireSmtp(message: string) {
     const smtp = await this.instanceSettings.getSmtp();
     if (!smtp.enabled) {
@@ -98,6 +108,9 @@ export class AuthMailService {
         port: smtp.port,
         secure: smtp.secure,
         auth: { user: smtp.user, pass: smtp.pass },
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 10_000,
       });
     }
     return smtp;

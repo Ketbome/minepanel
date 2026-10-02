@@ -70,4 +70,4 @@ Bedrock as the session list itself (`player-activity.tsx`). Saved Java world sta
 from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
 30 seconds after completion; unknown presence is explicitly labeled.
 
-Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, select severity, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.
+Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.

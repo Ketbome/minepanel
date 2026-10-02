@@ -114,7 +114,6 @@ export interface NotificationSettings {
   recoveryEnabled: boolean;
   diskFreeThresholdPercent: number;
   alertCooldownMinutes: number;
-  minimumSeverity: 'info' | 'warning' | 'error';
 }
 
 export interface UpdateIntegrationSettings {

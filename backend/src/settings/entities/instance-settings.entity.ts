@@ -22,7 +22,6 @@ export class InstanceSettings {
     recoveryEnabled?: boolean;
     diskFreeThresholdPercent?: number;
     alertCooldownMinutes?: number;
-    minimumSeverity?: 'info' | 'warning' | 'error';
   } | null;
 
   @Column({ type: 'text', nullable: true, name: 'telegram_token_enc' })

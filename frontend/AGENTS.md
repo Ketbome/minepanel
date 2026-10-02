@@ -456,4 +456,4 @@ admin-only under Settings > Integrations. Destinations cover all servers. Keep t
 token input write-only; test buttons use saved settings and stay disabled while changes
 are unsaved. API calls live in `src/services/settings/settings.service.ts`.
 
-The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat/severity policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.
+The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.

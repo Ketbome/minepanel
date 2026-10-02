@@ -58,4 +58,6 @@ logs, with sessions and cursors persisted atomically in SQLite. Server-authorize
 endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
 file-size and realpath boundaries. No game files or RCON settings are changed.
 
-Opt-in disk and backup probes run independently every minute, with bounded Docker commands and no raw log forwarding. Recovery notifications require an observed incident followed by valid healthy state. Channels share a minimum-severity filter; disk/backup repeats are configurable independently of per-server CPU/RAM rules.
+Opt-in disk and backup probes run independently every minute, with bounded Docker commands and no raw log forwarding. Recovery notifications require an observed incident followed by valid healthy state. Disk/backup repeats are configurable independently of per-server CPU/RAM rules.
+
+`SettingsModule` exports the single shared `AuthMailService` transporter used by account emails and notification delivery. Telegram decryption failures are isolated from other channels. Backup probes use Compose service IDs; empty samples preserve active alert state. Crash log tails are included only in Discord embeds.

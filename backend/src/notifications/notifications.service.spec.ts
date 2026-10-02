@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { AuthMailService } from 'src/auth/auth-mail.service';
 import { NotificationsService } from './notifications.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DiscordService } from 'src/discord/discord.service';
@@ -8,6 +9,7 @@ jest.mock('nodemailer', () => ({ createTransport: jest.fn() }));
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
+  let mail: AuthMailService;
   let config: Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
   let settings: { getNotifications: jest.Mock; getSmtp: jest.Mock; registerResetHandler: jest.Mock };
   let discord: { sendServerNotification: jest.Mock; sendCustomMessage: jest.Mock };
@@ -16,7 +18,7 @@ describe('NotificationsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config = { discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, minimumSeverity: 'info' };
+    config = { discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
     settings = {
       getNotifications: jest.fn(async () => config),
       getSmtp: jest.fn().mockResolvedValue({ enabled: true, host: 'smtp.test', port: 587, secure: false, user: 'admin', pass: 'smtp-secret', from: 'panel@example.com' }),
@@ -27,7 +29,8 @@ describe('NotificationsService', () => {
     (nodemailer.createTransport as jest.Mock).mockReturnValue(transporter);
     fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) } as Response);
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
-    service = new NotificationsService(settings as unknown as InstanceSettingsService, discord as unknown as DiscordService, { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) } as never);
+    mail = new AuthMailService(settings as never);
+    service = new NotificationsService(settings as unknown as InstanceSettingsService, discord as unknown as DiscordService, { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) } as never, mail);
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -139,15 +142,6 @@ describe('NotificationsService', () => {
   it('resets safely before a transport has been created', () => {
     expect(() => settings.registerResetHandler.mock.calls[0][0]()).not.toThrow();
   });
-  it('filters automatic delivery by minimum severity while keeping tests available', async () => {
-    config.minimumSeverity = 'error';
-    await service.sendServerNotification('https://hook', 'started', 'srv', 'en');
-    await service.sendCustomMessage('https://hook', 'CPU', 'High', 'warning', []);
-    expect(fetchMock).not.toHaveBeenCalled();
-    await service.sendCustomMessage('https://hook', 'Crash', 'Failed', 'error', []);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect((await service.testChannel('telegram')).success).toBe(true);
-  });
 
   it('honors operational switches and uses the saved Discord webhook', async () => {
     await service.sendOperationalAlert('disk', '/servers', '5% free');
@@ -160,19 +154,42 @@ describe('NotificationsService', () => {
     await service.sendOperationalAlert('recovery', 'srv', 'cpu');
     expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Low disk space', expect.any(String), 'warning', expect.any(Array));
     expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Backup failed', expect.any(String), 'error', expect.any(Array));
-    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Incident resolved', expect.any(String), 'success', expect.any(Array));
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Incident resolved', expect.any(String), 'warning', expect.any(Array));
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it('mutes informational recovery at warning severity', async () => {
-    config.recoveryEnabled = true;config.minimumSeverity = 'warning';
-    await service.sendOperationalAlert('recovery', 'srv', 'cpu');
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
   it('preserves version and modpack metadata across all delivery channels', async () => {
     await service.sendServerNotification('https://hook', 'started', 'modded', 'en', { version: '1.20.1', modpack: 'ATM9' });
     expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'modded', 'en', { version: '1.20.1', modpack: 'ATM9' });
     expect(transporter.sendMail).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('modpack: ATM9') }));
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toContain('version: 1.20.1');
+  });
+  it('keeps crash log tails exclusively in Discord and strips markup from plain text', async () => {
+    await service.sendCustomMessage('https://hook', 'Crash', 'Failed', 'error', [
+      { name: 'Server', value: '`srv`' },
+      { name: 'Log tail', value: '```private-log-tail```', discordOnly: true },
+    ]);
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Crash', 'Failed', 'error', [
+      { name: 'Server', value: '`srv`' }, { name: 'Log tail', value: '```private-log-tail```' },
+    ]);
+    const plain = transporter.sendMail.mock.calls[0][0].text;
+    expect(plain).toContain('Server: srv');expect(plain).not.toContain('private-log-tail');expect(plain).not.toContain('`');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).not.toContain('private-log-tail');
+  });
+
+  it('logs safe diagnostic reasons for test failures without credentials', async () => {
+    transporter.sendMail.mockRejectedValue(Object.assign(new Error('smtp-secret'), { code: 'EAUTH' }));
+    expect((await service.testChannel('email')).message).toContain('EAUTH');
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({ ok: false, description: '123:secret' }) });
+    expect((await service.testChannel('telegram')).message).toContain('HTTP 401');
+    fetchMock.mockRejectedValue(new Error('https://api.telegram.org/bot123:secret/sendMessage'));
+    await service.testChannel('telegram');
+    expect(JSON.stringify((Logger.prototype.warn as jest.Mock).mock.calls)).not.toContain('secret');
+  });
+  it('reuses the same SMTP transport for account mail and notifications', async () => {
+    await mail.sendTestEmail('admin@example.com');
+    await service.testChannel('email');
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
+    expect(transporter.sendMail).toHaveBeenCalledTimes(2);
   });
 });
