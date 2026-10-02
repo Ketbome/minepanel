@@ -337,7 +337,8 @@ it from the panel.
 The panel exposes `POST /servers/autoscale` for this. It is the only
 unauthenticated endpoint that controls servers, it is rejected unless the
 auto-scale token matches, and it only accepts servers that are currently in the
-proxy routes.
+proxy routes. A sleep request for a server that is already stopped, or that still
+has players online, is ignored.
 
 ### Bedrock Connection
 

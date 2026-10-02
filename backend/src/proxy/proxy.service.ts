@@ -81,7 +81,13 @@ export class ProxyService {
 
     const config: ProxyRoutesConfig = { mappings };
 
-    await fs.writeJson(this.ROUTES_FILE, config, { spaces: 2 });
+    // mc-router re-arms the scale-down timer of every route on each write, so an unchanged
+    // file must not be touched.
+    const content = JSON.stringify(config, null, 2) + '\n';
+    const current = await fs.readFile(this.ROUTES_FILE, 'utf8').catch(() => null);
+    if (current === content) return;
+
+    await fs.writeFile(this.ROUTES_FILE, content);
     this.logger.log(`Generated routes.json with ${Object.keys(mappings).length} mappings`);
   }
 
