@@ -879,6 +879,15 @@ describe('ServerManagementController', () => {
         expect((await controller.cloneServer(req, 'a', { newId: 'b' } as any)).success).toBe(true);
       });
 
+      it('never carries Velocity membership over to the clone', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Lobby', serverType: 'PAPER', velocityEnabled: true, velocityFallbackOrder: 1 } as any);
+        dockerComposeService.createServer.mockResolvedValue({ id: 'b' } as any);
+
+        await controller.cloneServer(req, 'a', { newId: 'b' } as any);
+
+        expect(dockerComposeService.createServer).toHaveBeenCalledWith('b', expect.objectContaining({ velocityEnabled: undefined, velocityFallbackOrder: undefined }), expect.anything());
+      });
+
       it('validates the source and clones with remapped volumes', async () => {
         dockerComposeService.getServerConfig.mockResolvedValueOnce({ id: 'a', serverExists: false } as any);
         await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(NotFoundException);
@@ -925,7 +934,18 @@ describe('ServerManagementController', () => {
       expect(velocity.syncConfig).toHaveBeenCalled();
     });
 
+    it('only lets admins create a Velocity member', async () => {
+      for (const membership of [{ velocityEnabled: true }, { velocityFallbackOrder: 1 }]) {
+        await expect(controller.createServer(req, { id: 'ok', edition: 'JAVA', serverType: 'PAPER', ...membership } as any)).rejects.toThrow(/Only admins can add a server to the Velocity network/);
+      }
+      expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+
+      await controller.createServer(req, { id: 'ok', edition: 'JAVA', serverType: 'PAPER', velocityEnabled: false, velocityFallbackOrder: null } as any);
+      expect(dockerComposeService.createServer).toHaveBeenCalled();
+    });
+
     it('refuses to create a Velocity member that cannot forward', async () => {
+      accessControlService.isAdmin.mockReturnValue(true);
       await expect(controller.createServer(req, { id: 'ok', edition: 'JAVA', serverType: 'VANILLA', velocityEnabled: true } as any)).rejects.toThrow(BadRequestException);
       expect(dockerComposeService.createServer).not.toHaveBeenCalled();
     });
@@ -978,7 +998,22 @@ describe('ServerManagementController', () => {
         expect(proxyRouter.syncRoutes).toHaveBeenCalled();
       });
 
+      it('only lets admins change Velocity membership', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER', minecraftVersion: '1.21.4', velocityFallbackOrder: 2 } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+
+        for (const change of [{ velocityEnabled: true }, { velocityFallbackOrder: 1 }, { velocityFallbackOrder: null }]) {
+          await expect(controller.updateServer(req, 'a', change as any)).rejects.toThrow(/Only admins can change these settings: velocity/);
+        }
+        expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+
+        // A whole-form save that leaves membership as it was is not a change; unset and false are equal.
+        await controller.updateServer(req, 'a', { velocityEnabled: false, velocityFallbackOrder: 2, serverName: 'renamed' } as any);
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+      });
+
       it('only lets Paper-family servers on 1.19+ join the Velocity network', async () => {
+        accessControlService.isAdmin.mockReturnValue(true);
         accessControlService.canUsePermission.mockReturnValue(true);
         dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'FABRIC' } as any);
         dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
@@ -994,6 +1029,7 @@ describe('ServerManagementController', () => {
       });
 
       it('syncs velocity.toml instead of routes.json while Velocity is the edge', async () => {
+        accessControlService.isAdmin.mockReturnValue(true);
         dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER' } as any);
         dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
         useEdge('velocity');
@@ -1006,6 +1042,7 @@ describe('ServerManagementController', () => {
       });
 
       it('checks forced hosts only against other Velocity members', async () => {
+        accessControlService.isAdmin.mockReturnValue(true);
         dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER' } as any);
         dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
         useEdge('velocity');

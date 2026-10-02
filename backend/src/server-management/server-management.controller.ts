@@ -57,6 +57,10 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
   'jvmDdOpts',
   'execDirectly',
   'extraPorts',
+  // Every Velocity member gets the network's forwarding secret in its paper-global.yml, and
+  // with it whoever operates the server can log in as any player on any member.
+  'velocityEnabled',
+  'velocityFallbackOrder',
 ] as const;
 
 // Creation has no persisted config to compare against, so these are rejected
@@ -285,6 +289,8 @@ export class ServerManagementController {
 
       const next = normalizeConfigValue(incoming[field]);
       if (next === normalizeConfigValue(current[field])) return false;
+      // An unset membership and `false` are the same thing.
+      if (field === 'velocityEnabled') return (incoming.velocityEnabled === true) !== (current.velocityEnabled === true);
       // The panel derives the java tag from the Minecraft version, so the version
       // permission has to cover it or the whole save is rejected.
       if (field === 'dockerImage') return !(canChangeVersion && VERSION_DOCKER_IMAGE_TAGS.test(next));
@@ -357,6 +363,10 @@ export class ServerManagementController {
 
     if (config.execDirectly === false) {
       throw new ForbiddenException('Only admins can set these settings: execDirectly');
+    }
+
+    if (config.velocityEnabled === true || (config.velocityFallbackOrder ?? null) !== null) {
+      throw new ForbiddenException('Only admins can add a server to the Velocity network');
     }
 
     this.assertTrustedGenericPack(config.genericPack);
@@ -583,6 +593,9 @@ export class ServerManagementController {
       serverName: body.serverName?.trim() || `${config.serverName} (copy)`,
       extraPorts: [],
       proxyHostname: undefined,
+      // Joining the Velocity network is an admin decision, never inherited.
+      velocityEnabled: undefined,
+      velocityFallbackOrder: undefined,
       backupHostDir: undefined,
       dockerVolumes: this.dockerComposeService.remapVolumesToServer(config.dockerVolumes, id, body.newId),
     };

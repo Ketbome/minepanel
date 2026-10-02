@@ -395,6 +395,13 @@ the secret. Do not publish its game port yourself (extra ports or a compose snip
 do not turn Velocity forwarding off in its `paper-global.yml`.
 :::
 
+::: danger Only admins add servers to the network
+Every member holds the network's forwarding secret in its `paper-global.yml`, and whoever
+has it can join any member as any player, ops included. That is why only admins can turn
+membership or the lobby order on or off, and a cloned server never inherits them. Treat
+everyone with file or plugin access to a member as trusted with the whole network.
+:::
+
 Adding, removing or reordering members is applied with `velocity reload`, so players
 already connected stay connected.
 

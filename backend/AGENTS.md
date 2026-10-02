@@ -56,7 +56,9 @@ Integration settings & secrets:
 - The Velocity forwarding secret and RCON password are minted by the panel on first use
   (`InstanceSettingsService.getVelocitySecrets`), stored encrypted and never returned over
   HTTP. The secret is written in plaintext only where it must be read: Velocity's
-  `forwarding.secret` and each member's `paper-global.yml`.
+  `forwarding.secret` and each member's `paper-global.yml`. Since anyone operating a member
+  can read it there, `velocityEnabled`/`velocityFallbackOrder` are in
+  `ADMIN_ONLY_CONFIG_FIELDS` (`server-management.controller.ts`) and cloning drops them.
 
 Primary runtime relationship:
 
