@@ -1,3 +1,8 @@
+jest.mock('fs-extra', () => {
+  const actual = jest.requireActual('fs-extra');
+  return { ...actual, chown: jest.fn((...args: unknown[]) => actual.chown(...args)) };
+});
+
 import * as fs from 'fs-extra';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -46,6 +51,26 @@ describe('VelocityForwardingService', () => {
     await service.apply(paper(), 'velocity');
 
     expect(fs.readFileSync(file(), 'utf8')).toMatch(/^# header/);
+  });
+
+  it('gives what it creates to the owner of mc-data, and keeps the owner of an existing file', async () => {
+    const chown = fs.chown as unknown as jest.Mock;
+    chown.mockClear();
+    const { uid, gid } = await fs.stat(path.join(serversDir, 'lobby', 'mc-data'));
+
+    await service.apply(paper(), 'velocity');
+    expect(chown).toHaveBeenCalledWith(path.dirname(file()), uid, gid);
+    expect(chown).toHaveBeenCalledWith(file(), uid, gid);
+
+    chown.mockClear();
+    await service.apply(paper({ velocityEnabled: false }), 'velocity');
+    expect(chown).not.toHaveBeenCalled();
+  });
+
+  it('never makes a server that cannot forward a member', async () => {
+    await service.apply(paper({ minecraftVersion: '1.18.2' }), 'velocity');
+
+    expect(await fs.pathExists(file())).toBe(false);
   });
 
   it('turns forwarding off when the server leaves the network or the edge is not Velocity', async () => {

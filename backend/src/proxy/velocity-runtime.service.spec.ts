@@ -50,11 +50,13 @@ describe('VelocityRuntimeService', () => {
     };
     dockerCompose = {
       getServerIndex: jest.fn().mockResolvedValue([
-        { id: 'survival', velocityEnabled: true, velocityFallbackOrder: 2 },
-        { id: 'lobby', velocityEnabled: true, velocityFallbackOrder: 1, proxyHostname: 'hub' },
-        { id: 'minigames', velocityEnabled: true, velocityFallbackOrder: null },
-        { id: 'standalone', velocityEnabled: false },
+        { id: 'survival', serverType: 'PAPER', velocityEnabled: true, velocityFallbackOrder: 2 },
+        { id: 'lobby', serverType: 'PURPUR', minecraftVersion: '1.21.4', velocityEnabled: true, velocityFallbackOrder: 1, proxyHostname: 'hub' },
+        { id: 'minigames', serverType: 'PAPER', velocityEnabled: true, velocityFallbackOrder: null },
+        { id: 'standalone', serverType: 'PAPER', velocityEnabled: false },
         { id: 'bedrock', edition: 'BEDROCK', velocityEnabled: true },
+        // Turned into Fabric while mc-router was the edge: it can no longer forward.
+        { id: 'modded', serverType: 'FABRIC', velocityEnabled: true, velocityFallbackOrder: 3 },
       ]),
     };
     service = build();
@@ -86,6 +88,7 @@ describe('VelocityRuntimeService', () => {
       expect(toml).toContain('"minigames" = "minigames:25565"');
       expect(toml).not.toContain('standalone');
       expect(toml).not.toContain('bedrock');
+      expect(toml).not.toContain('modded');
       expect(toml).toContain('try = ["lobby", "survival"]');
       expect(toml).toContain('"hub.mc.example.com" = ["lobby"]');
       expect(toml).toContain('"survival.mc.example.com" = ["survival"]');
@@ -96,6 +99,24 @@ describe('VelocityRuntimeService', () => {
       const toml = service.buildVelocityToml([{ id: 'lobby', fallbackOrder: 0 }], null);
 
       expect(toml).toMatch(/\[forced-hosts\]\n\n?$/);
+    });
+
+    it('leaves out forced hosts that are invalid or already taken', () => {
+      const toml = service.buildVelocityToml(
+        [
+          { id: 'lobby', hostname: 'play' },
+          { id: 'survival', hostname: 'PLAY' },
+          { id: 'evil', hostname: 'x"\n[servers]' },
+          { id: 'game' },
+        ],
+        'mc.example.com',
+      );
+
+      expect(toml).toContain('"play.mc.example.com" = ["lobby"]');
+      expect(toml).not.toContain('["survival"]');
+      expect(toml).not.toContain('["evil"]');
+      expect(toml).toContain('"game.mc.example.com" = ["game"]');
+      expect(toml.match(/^\[servers\]$/gm)).toHaveLength(1);
     });
 
     it('escapes quotes and backslashes', () => {

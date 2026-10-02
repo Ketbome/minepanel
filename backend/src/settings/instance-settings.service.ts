@@ -1,12 +1,16 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
+import * as fs from 'fs-extra';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstanceSettings } from './entities/instance-settings.entity';
 import { Settings } from '../users/entities/settings.entity';
 import { UpdateIntegrationSettingsDto } from './dto/update-integration-settings.dto';
 import { decryptSecret, encryptSecret } from '../common/crypto/secret-cipher';
+
+// Written by VelocityRuntimeService.writeConfig, in plaintext because Velocity reads it.
+const VELOCITY_FORWARDING_SECRET_FILE = '/app/data/velocity/server/forwarding.secret';
 
 export interface ResolvedSmtp {
   host?: string;
@@ -151,11 +155,26 @@ export class InstanceSettingsService implements OnModuleInit {
 
   async getVelocitySecrets(): Promise<{ forwardingSecret: string; rconPassword: string }> {
     const row = await this.getRow();
-    if (!row.velocitySecretEnc || !row.velocityRconEnc) {
-      row.velocitySecretEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
-      row.velocityRconEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
-      await this.repo.save(row);
+    if (row.velocitySecretEnc && row.velocityRconEnc) {
+      try {
+        return { forwardingSecret: decryptSecret(row.velocitySecretEnc), rconPassword: decryptSecret(row.velocityRconEnc) };
+      } catch {
+        // JWT_SECRET was rotated and the stored copies no longer decrypt. Every member already
+        // holds the forwarding secret Velocity reads from disk, so keeping it spares a restart of
+        // the whole network; the RCON password only lives between the panel and the proxy.
+        const onDisk = (await fs.readFile(VELOCITY_FORWARDING_SECRET_FILE, 'utf8').catch(() => '')).trim();
+        this.logger.warn(
+          onDisk
+            ? 'Velocity secrets no longer decrypt (was JWT_SECRET changed?); kept the forwarding secret from disk'
+            : 'Velocity secrets no longer decrypt (was JWT_SECRET changed?); minted new ones, restart the network members',
+        );
+        row.velocitySecretEnc = onDisk ? encryptSecret(onDisk) : null;
+        row.velocityRconEnc = null;
+      }
     }
+    row.velocitySecretEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+    row.velocityRconEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+    await this.repo.save(row);
     return { forwardingSecret: decryptSecret(row.velocitySecretEnc), rconPassword: decryptSecret(row.velocityRconEnc) };
   }
 

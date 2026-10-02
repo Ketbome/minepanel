@@ -375,13 +375,16 @@ flowchart LR
 
 The base domain is optional. With one, each member also gets a forced host
 (`{server-id}.mc.example.com`, or its custom hostname) that takes players straight to
-it; without one, everyone enters through the lobby.
+it; without one, everyone enters through the lobby. Hostnames take letters, numbers,
+`-`, `_` and dots. If two members end up with the same forced host (for example, names
+set before the base domain), only the first one keeps it and the panel logs a warning.
 
 ### What joining changes
 
 - **Supported servers:** Paper, Purpur, Leaf, Folia and Pufferfish on Minecraft 1.19 or
   newer (they read forwarding from `config/paper-global.yml`). The switch is disabled for
-  anything else.
+  anything else. While mc-router is the edge, changing a member to another type or an older
+  version takes it out of the network.
 - **No host port:** the server is reachable only by Velocity, over `minepanel-network`.
 - **Offline mode:** Velocity checks each account and passes the player on with a shared
   secret (modern forwarding), so the server itself runs with `online-mode=false`. Players
@@ -404,6 +407,11 @@ everyone with file or plugin access to a member as trusted with the whole networ
 
 Adding, removing or reordering members is applied with `velocity reload`, so players
 already connected stay connected.
+
+The forwarding secret is stored encrypted with a key derived from `JWT_SECRET`. If you
+change `JWT_SECRET`, the panel keeps the secret from `data/velocity/server/forwarding.secret`,
+so members keep working. Without that file it mints a new one, and every member needs a
+restart.
 
 ### Proxy plugins
 

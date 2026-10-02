@@ -621,7 +621,7 @@ describe('ServerManagementService lifecycle', () => {
 
     it('points a Velocity member at the proxy port, since it publishes none of its own', async () => {
       instanceSettings.getComposeEdge.mockResolvedValue('velocity');
-      store.readConfig.mockResolvedValue({ edition: 'JAVA', velocityEnabled: true });
+      store.readConfig.mockResolvedValue({ edition: 'JAVA', serverType: 'PAPER', velocityEnabled: true });
       compose = 'services:\n  mc:\n    image: itzg/minecraft-server\n';
 
       await service.stopServer('srv');

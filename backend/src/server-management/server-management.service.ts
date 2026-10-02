@@ -23,6 +23,7 @@ import { VelocityForwardingService } from 'src/proxy/velocity-forwarding.service
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { MinecraftStatusProbe, parseMinecraftStatus } from './minecraft-status.util';
 import { assertContained } from 'src/common/fs/contained-path';
+import { isVelocityBackend } from 'src/proxy/velocity-backend';
 
 const execAsync = promisify(exec);
 
@@ -787,7 +788,9 @@ export class ServerManagementService {
 
   private async isVelocityMember(serverId: string): Promise<boolean> {
     const edge = await this.instanceSettings.getComposeEdge();
-    return edge === 'velocity' && (await this.store.readConfig(serverId))?.velocityEnabled === true;
+    if (edge !== 'velocity') return false;
+    const config = await this.store.readConfig(serverId);
+    return config?.velocityEnabled === true && isVelocityBackend(config);
   }
 
   private async getServerProxyHostname(serverId: string, baseDomain: string): Promise<string | null> {

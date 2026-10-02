@@ -3,6 +3,13 @@ jest.mock('../common/crypto/secret-cipher', () => ({
   decryptSecret: jest.fn((value: string) => value.replace(/^enc:/, '')),
 }));
 
+jest.mock('fs-extra', () => {
+  const actual = jest.requireActual('fs-extra');
+  return { ...actual, readFile: jest.fn((...args: unknown[]) => actual.readFile(...args)) };
+});
+
+import * as fs from 'fs-extra';
+import { decryptSecret } from '../common/crypto/secret-cipher';
 import { InstanceSettingsService } from './instance-settings.service';
 
 describe('InstanceSettingsService router, defaults and OIDC', () => {
@@ -69,6 +76,32 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
       expect(row.velocitySecretEnc).toBe(`enc:${first.forwardingSecret}`);
       expect(await service.getVelocitySecrets()).toEqual(first);
       expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the forwarding secret from disk when the stored copies no longer decrypt', async () => {
+      row.velocitySecretEnc = 'enc:old-secret';
+      row.velocityRconEnc = 'enc:old-rcon';
+      const decrypt = decryptSecret as jest.Mock;
+      decrypt.mockImplementationOnce(() => {
+        throw new Error('Unsupported state or unable to authenticate data');
+      });
+      const readFile = fs.readFile as unknown as jest.Mock;
+      readFile.mockResolvedValueOnce('old-secret\n');
+
+      const secrets = await service.getVelocitySecrets();
+
+      expect(readFile).toHaveBeenCalledWith('/app/data/velocity/server/forwarding.secret', 'utf8');
+      expect(secrets.forwardingSecret).toBe('old-secret');
+      expect(secrets.rconPassword).not.toBe('old-rcon');
+      expect(row.velocitySecretEnc).toBe('enc:old-secret');
+
+      // Without the file there is nothing to keep, so both are minted again.
+      row.velocitySecretEnc = 'enc:old-secret';
+      decrypt.mockImplementationOnce(() => {
+        throw new Error('bad key');
+      });
+      readFile.mockRejectedValueOnce(new Error('ENOENT'));
+      expect((await service.getVelocitySecrets()).forwardingSecret).toMatch(/^[\w-]{32}$/);
     });
   });
 

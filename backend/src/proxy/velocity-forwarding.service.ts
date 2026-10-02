@@ -6,7 +6,7 @@ import * as yaml from 'js-yaml';
 import { assertContained } from 'src/common/fs/contained-path';
 import { ServerConfig } from 'src/server-management/dto/server-config.model';
 import { ComposeEdge, InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { VELOCITY_BACKEND_TYPES } from './velocity-backend';
+import { isVelocityBackend, VELOCITY_BACKEND_TYPES } from './velocity-backend';
 
 type PaperGlobal = { proxies?: { velocity?: Record<string, unknown> } } & Record<string, unknown>;
 
@@ -30,7 +30,7 @@ export class VelocityForwardingService {
   async apply(config: ServerConfig, edge: ComposeEdge): Promise<void> {
     if ((config.edition ?? 'JAVA') !== 'JAVA' || !VELOCITY_BACKEND_TYPES.includes(config.serverType)) return;
 
-    const member = edge === 'velocity' && config.velocityEnabled === true;
+    const member = edge === 'velocity' && config.velocityEnabled === true && isVelocityBackend(config);
     const root = path.join(this.SERVERS_DIR, config.id, 'mc-data');
     const file = path.join(root, 'config', 'paper-global.yml');
     const exists = await fs.pathExists(file);
@@ -54,7 +54,15 @@ export class VelocityForwardingService {
     }
 
     doc.proxies = { ...doc.proxies, velocity };
-    await fs.ensureDir(path.dirname(file));
+    const dir = path.dirname(file);
+    const dirExists = await fs.pathExists(dir);
+    await fs.ensureDir(dir);
     await fs.writeFile(file, yaml.dump(doc, { lineWidth: -1 }));
+
+    // The panel writes as root but the server runs as the owner of mc-data: Paper must be able to
+    // rewrite this file and add its other configs next to it. A rewritten file keeps its owner.
+    const { uid, gid } = await fs.stat(root);
+    if (!dirExists) await fs.chown(dir, uid, gid);
+    if (!exists) await fs.chown(file, uid, gid);
   }
 }

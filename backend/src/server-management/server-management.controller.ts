@@ -11,7 +11,7 @@ import { SettingsService } from 'src/users/services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
-import { ProxyService } from 'src/proxy/proxy.service';
+import { isValidHostname, ProxyService } from 'src/proxy/proxy.service';
 import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
@@ -462,6 +462,13 @@ export class ServerManagementController {
     }
   }
 
+  private assertValidHostname(hostname: string | undefined): void {
+    const value = hostname?.trim();
+    if (value && !isValidHostname(value)) {
+      throw new BadRequestException('A hostname can only contain letters, numbers, hyphens, underscores and dots');
+    }
+  }
+
   // Each hostname maps to one backend (an mc-router route or a Velocity forced host), so
   // taking another server's name would silently steal its players. A blank hostname
   // routes as `<id>.<baseDomain>`.
@@ -533,6 +540,7 @@ export class ServerManagementController {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
       this.assertVelocityBackend(data);
+      this.assertValidHostname(data.proxyHostname);
       await this.assertProxyHostnameFree(id, data);
 
       const user = req.user as PayloadToken;
@@ -719,6 +727,7 @@ export class ServerManagementController {
     const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();
     const proxyTurnedOn = currentConfig.useProxy === false && config.useProxy === true;
     const velocityTurnedOn = currentConfig.velocityEnabled !== true && config.velocityEnabled === true;
+    if (hostnameChanged) this.assertValidHostname(config.proxyHostname);
     if (hostnameChanged || proxyTurnedOn || velocityTurnedOn) {
       await this.assertProxyHostnameFree(id, {
         proxyHostname: config.proxyHostname ?? currentConfig.proxyHostname,
@@ -727,7 +736,15 @@ export class ServerManagementController {
         edition: currentConfig.edition,
       });
     }
-    this.assertVelocityBackend({ ...currentConfig, ...config });
+    const merged = { ...currentConfig, ...config };
+    if (currentConfig.velocityEnabled === true && merged.velocityEnabled && !isVelocityBackend(merged) && (await this.instanceSettings.getEdge()).mode !== 'velocity') {
+      // The Velocity section is hidden while mc-router is the edge, so a member that stopped
+      // qualifying leaves the network instead of failing a save it has no control to fix.
+      config.velocityEnabled = false;
+      config.velocityFallbackOrder = null;
+    } else {
+      this.assertVelocityBackend(merged);
+    }
 
     // Mod Watch and activity tracking save through their own endpoints; dropping them here stops
     // a stale whole-form save from clobbering what's on disk. GET never returns cfApiKey, so the

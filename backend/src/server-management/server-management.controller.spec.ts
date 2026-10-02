@@ -1014,6 +1014,7 @@ describe('ServerManagementController', () => {
 
       it('only lets Paper-family servers on 1.19+ join the Velocity network', async () => {
         accessControlService.isAdmin.mockReturnValue(true);
+        useEdge('velocity');
         accessControlService.canUsePermission.mockReturnValue(true);
         dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'FABRIC' } as any);
         dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
@@ -1026,6 +1027,33 @@ describe('ServerManagementController', () => {
 
         await controller.updateServer(req, 'a', { velocityFallbackOrder: 1 } as any);
         expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+      });
+
+      it('drops the membership of a server that stops qualifying while mc-router is the edge', async () => {
+        useEdge('mc-router');
+        accessControlService.canUsePermission.mockReturnValue(true);
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER', minecraftVersion: '1.21.4', velocityEnabled: true, velocityFallbackOrder: 1 } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+
+        // A non-admin whole-form save: the hidden membership comes back as it was stored.
+        await controller.updateServer(req, 'a', { serverType: 'FABRIC', velocityEnabled: true, velocityFallbackOrder: 1 } as any);
+
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith('a', expect.objectContaining({ serverType: 'FABRIC', velocityEnabled: false, velocityFallbackOrder: null }), true);
+      });
+
+      it('rejects hostnames that could not be routed', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, proxyHostname: 'bad name' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+
+        for (const proxyHostname of ['play\n[servers]', 'a"b', 'two words']) {
+          await expect(controller.updateServer(req, 'a', { proxyHostname } as any)).rejects.toThrow(/A hostname can only contain/);
+        }
+        await expect(controller.createServer(req, { id: 'ok', edition: 'JAVA', proxyHostname: 'a/b' } as any)).rejects.toThrow(/A hostname can only contain/);
+
+        // An invalid value already stored does not block saving the rest of the form.
+        await controller.updateServer(req, 'a', { proxyHostname: 'bad name', serverName: 'renamed' } as any);
+        await controller.updateServer(req, 'a', { proxyHostname: 'play.mc.example.com' } as any);
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(2);
       });
 
       it('syncs velocity.toml instead of routes.json while Velocity is the edge', async () => {

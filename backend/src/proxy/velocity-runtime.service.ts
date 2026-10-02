@@ -8,7 +8,8 @@ import * as yaml from 'js-yaml';
 import { escapeComposeValues } from 'src/common/compose/compose-escape';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { ProxyService } from './proxy.service';
+import { isValidHostname, ProxyService } from './proxy.service';
+import { isVelocityBackend } from './velocity-backend';
 
 const execAsync = promisify(exec);
 
@@ -110,9 +111,19 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
       .filter((member) => typeof member.fallbackOrder === 'number')
       .sort((a, b) => (a.fallbackOrder as number) - (b.fallbackOrder as number))
       .map((member) => tomlString(member.id));
-    const forcedHosts = baseDomain
-      ? members.map((member) => `${tomlString(this.proxyService.generateHostname(member.id, baseDomain, member.hostname))} = [${tomlString(member.id)}]`)
-      : [];
+    // A duplicate key makes Velocity refuse the whole file, so a host that is invalid or
+    // already taken (possible when hostnames were set before the base domain) is left out.
+    const taken = new Set<string>();
+    const forcedHosts: string[] = [];
+    for (const member of baseDomain ? members : []) {
+      const host = this.proxyService.generateHostname(member.id, baseDomain as string, member.hostname?.trim()).toLowerCase();
+      if (!isValidHostname(host) || taken.has(host)) {
+        this.logger.warn(`Skipping the forced host ${JSON.stringify(host)} of ${member.id}: it is invalid or used by another member`);
+        continue;
+      }
+      taken.add(host);
+      forcedHosts.push(`${tomlString(host)} = [${tomlString(member.id)}]`);
+    }
 
     return [
       ...GENERATED_HEADER,
@@ -137,7 +148,7 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
   private async getMembers(): Promise<VelocityMember[]> {
     const index = await this.dockerComposeService.getServerIndex();
     return index
-      .filter((server) => server.velocityEnabled && server.edition !== 'BEDROCK')
+      .filter((server) => server.velocityEnabled && isVelocityBackend(server))
       .map((server) => ({ id: server.id, fallbackOrder: server.velocityFallbackOrder, hostname: server.proxyHostname }));
   }
 

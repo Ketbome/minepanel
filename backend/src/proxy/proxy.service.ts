@@ -17,6 +17,12 @@ interface ProxyRoutesConfig {
   mappings: Record<string, string>;
 }
 
+// Dot-separated labels of letters, digits, `-` and `_` (server ids may carry `_`). Anything
+// else, a newline above all, would break velocity.toml.
+export function isValidHostname(hostname: string): boolean {
+  return /^(?=.{1,253}$)[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$/.test(hostname);
+}
+
 interface ServerProxyInfo {
   id: string;
   hostname?: string;
