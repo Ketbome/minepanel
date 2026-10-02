@@ -6,6 +6,8 @@ import { ServerManagementService } from './server-management.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { SettingsService } from '../users/services/settings.service';
 import { ProxyService } from '../proxy/proxy.service';
+import { ProxyRouterService } from '../proxy/proxy-router.service';
+import { VelocityRuntimeService } from '../proxy/velocity-runtime.service';
 import { BedrockAddonsService } from '../bedrock-addons/bedrock-addons.service';
 import { UsersService } from '../users/services/users.service';
 import { AccessControlService } from '../users/services/access-control.service';
@@ -24,6 +26,13 @@ describe('ServerManagementController', () => {
   let bedrockAddonsService: jest.Mocked<BedrockAddonsService>;
   let accessControlService: jest.Mocked<AccessControlService>;
   let auditLogService: { record: jest.Mock };
+  let velocity: { syncConfig: jest.Mock };
+  let proxyRouter: { syncRoutes: jest.Mock };
+
+  const useEdge = (mode: 'mc-router' | 'velocity', baseDomain: string | null = 'mc.example.com') => {
+    mockInstanceSettings.getEdge.mockResolvedValue({ enabled: true, mode, baseDomain });
+    mockInstanceSettings.getComposeEdge.mockResolvedValue(mode === 'velocity' ? 'velocity' : true);
+  };
 
   beforeEach(async () => {
     const mockServerService = {
@@ -73,6 +82,8 @@ describe('ServerManagementController', () => {
 
     mockInstanceSettings = {
       getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      getEdge: jest.fn().mockResolvedValue({ enabled: false, mode: 'mc-router', baseDomain: null }),
+      getComposeEdge: jest.fn().mockResolvedValue(false),
       getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
       getJavaServerDefaults: jest.fn().mockResolvedValue(null),
       setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
@@ -111,6 +122,8 @@ describe('ServerManagementController', () => {
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: ProxyService, useValue: mockProxyService },
+        { provide: VelocityRuntimeService, useValue: (velocity = { syncConfig: jest.fn() }) },
+        { provide: ProxyRouterService, useValue: (proxyRouter = { syncRoutes: jest.fn() }) },
         { provide: BedrockAddonsService, useValue: mockBedrockAddonsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: AccessControlService, useValue: mockAccessControlService },
@@ -366,7 +379,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should refuse a proxy hostname that another server already routes', async () => {
-      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       dockerComposeService.getServerIndex = jest.fn().mockResolvedValue([{ id: 'victim' }, { id: 'lobby', edition: 'JAVA' }, { id: 'old', useProxy: false, proxyHostname: 'free' }]) as any;
 
       await expect(controller.updateServer(mockReq, 'victim', { proxyHostname: 'lobby' } as any)).rejects.toThrow(ConflictException);
@@ -375,7 +388,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should check the default hostname when the proxy is turned back on', async () => {
-      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       dockerComposeService.getServerConfig.mockResolvedValue({ ...persistedConfig, useProxy: false } as any);
       dockerComposeService.getServerIndex = jest.fn().mockResolvedValue([{ id: 'lobby', proxyHostname: 'victim' }]) as any;
 
@@ -390,7 +403,7 @@ describe('ServerManagementController', () => {
 
       // Both would collide with lobby's `victim` hostname if they were checked.
       await controller.updateServer(mockReq, 'victim', { proxyHostname: 'victim' } as any);
-      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       await controller.updateServer(mockReq, 'victim', { proxyHostname: '', serverName: 'renamed' } as any);
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(2);
     });
@@ -643,7 +656,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should refuse a new server whose default hostname is already routed', async () => {
-      (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       dockerComposeService.getServerIndex.mockResolvedValue([{ id: 'lobby', proxyHostname: 'demo' }] as any);
 
       await expect(controller.createServer(mockReq, { id: 'demo', edition: 'JAVA' } as any)).rejects.toThrow(ConflictException);
@@ -674,7 +687,7 @@ describe('ServerManagementController', () => {
 
       const proxyService = (controller as any).proxyService;
       expect(proxyService.clearRoutesFile).toHaveBeenCalled();
-      expect(proxyService.generateRoutesFile).not.toHaveBeenCalled();
+      expect(proxyRouter.syncRoutes).not.toHaveBeenCalled();
     });
   });
   describe('selectServerWorld', () => {
@@ -848,9 +861,9 @@ describe('ServerManagementController', () => {
 
       it('regenerates proxy routes when the proxy is on', async () => {
         dockerComposeService.createServer.mockResolvedValue({ id: 'ok' } as any);
-        proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+        useEdge('mc-router');
         await controller.createServer(req, { id: 'ok' } as any);
-        expect(proxy.generateRoutesFile).toHaveBeenCalledWith([{ id: 'a', hostname: 'play', useProxy: true }], 'mc.example.com');
+        expect(proxyRouter.syncRoutes).toHaveBeenCalled();
       });
     });
 
@@ -858,7 +871,6 @@ describe('ServerManagementController', () => {
       it('needs the console permission to clone a server that has event commands', async () => {
         dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Alpha', rconCmdsStartup: 'op Griefer' } as any);
         dockerComposeService.createServer.mockResolvedValue({ id: 'b' } as any);
-        proxy.getProxySettings.mockResolvedValue({ enabled: false });
 
         await expect(controller.cloneServer(req, 'a', { newId: 'b' } as any)).rejects.toThrow(/console permission/);
         expect(dockerComposeService.createServer).not.toHaveBeenCalled();
@@ -873,14 +885,14 @@ describe('ServerManagementController', () => {
 
         dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Alpha', worldScope: 'local', worldSource: 'w.zip', forceWorldCopy: true, dockerVolumes: './mc-data:/data' } as any);
         dockerComposeService.createServer.mockResolvedValue({ id: 'b', cfApiKey: 'source-key' } as any);
-        proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+        useEdge('mc-router');
 
         const result = await controller.cloneServer(req, 'a', { newId: 'b' } as any);
 
         expect(result).toMatchObject({ success: true, server: { id: 'b' } });
         expect(result.server).not.toHaveProperty('cfApiKey');
         expect(dockerComposeService.createServer).toHaveBeenCalledWith('b', expect.objectContaining({ id: 'b', serverName: 'Alpha (copy)', worldSource: '', forceWorldCopy: false, extraPorts: [], dockerVolumes: './mc-data:/data' }), true);
-        expect(proxy.generateRoutesFile).toHaveBeenCalled();
+        expect(proxyRouter.syncRoutes).toHaveBeenCalled();
 
         dockerComposeService.createServer.mockRejectedValueOnce(new Error('exists'));
         await expect(controller.cloneServer(req, 'a', { newId: 'b', serverName: ' Beta ' } as any)).rejects.toThrow('exists');
@@ -893,20 +905,37 @@ describe('ServerManagementController', () => {
     it('regenerateAll rebuilds routes when the proxy is on', async () => {
       accessControlService.isAdmin.mockReturnValue(true);
       dockerComposeService.regenerateAllDockerCompose.mockResolvedValue({ updated: ['a'], errors: [] } as any);
-      proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       expect(await controller.regenerateAllDockerCompose(req)).toMatchObject({ success: true, message: 'Regenerated 1 servers' });
-      expect(proxy.generateRoutesFile).toHaveBeenCalled();
+      expect(proxyRouter.syncRoutes).toHaveBeenCalled();
 
       accessControlService.isAdmin.mockReturnValue(false);
       await expect(controller.regenerateAllDockerCompose(req)).rejects.toThrow(ForbiddenException);
     });
 
+    it('regenerateAll clears routes.json and syncs Velocity when it is the edge', async () => {
+      accessControlService.isAdmin.mockReturnValue(true);
+      dockerComposeService.regenerateAllDockerCompose.mockResolvedValue({ updated: [], errors: [] } as any);
+      useEdge('velocity', null);
+
+      await controller.regenerateAllDockerCompose(req);
+
+      expect(dockerComposeService.regenerateAllDockerCompose).toHaveBeenCalledWith('velocity');
+      expect(proxy.clearRoutesFile).toHaveBeenCalled();
+      expect(velocity.syncConfig).toHaveBeenCalled();
+    });
+
+    it('refuses to create a Velocity member that cannot forward', async () => {
+      await expect(controller.createServer(req, { id: 'ok', edition: 'JAVA', serverType: 'VANILLA', velocityEnabled: true } as any)).rejects.toThrow(BadRequestException);
+      expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+    });
+
     it('deleteServer regenerates routes and reports failures', async () => {
       dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a' } as any);
       serverService.deleteServer.mockResolvedValueOnce(true);
-      proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      useEdge('mc-router');
       expect((await controller.deleteServer(req, 'a')).success).toBe(true);
-      expect(proxy.generateRoutesFile).toHaveBeenCalled();
+      expect(proxyRouter.syncRoutes).toHaveBeenCalled();
 
       serverService.deleteServer.mockResolvedValueOnce(false);
       expect((await controller.deleteServer(req, 'a')).message).toMatch(/Failed/);
@@ -944,9 +973,46 @@ describe('ServerManagementController', () => {
         await expect(controller.updateServer(req, 'a', {} as any)).rejects.toThrow(NotFoundException);
 
         dockerComposeService.updateServerConfig.mockResolvedValue({ ...current, useProxy: true } as any);
-        proxy.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+        useEdge('mc-router');
         await controller.updateServer(req, 'a', { useProxy: true } as any);
-        expect(proxy.generateRoutesFile).toHaveBeenCalled();
+        expect(proxyRouter.syncRoutes).toHaveBeenCalled();
+      });
+
+      it('only lets Paper-family servers on 1.19+ join the Velocity network', async () => {
+        accessControlService.canUsePermission.mockReturnValue(true);
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'FABRIC' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+        await expect(controller.updateServer(req, 'a', { velocityEnabled: true } as any)).rejects.toThrow(/can join the Velocity network/);
+
+        // The merged config is what counts: a type change away from Paper is refused too.
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER', velocityEnabled: true } as any);
+        await expect(controller.updateServer(req, 'a', { serverType: 'SPIGOT' } as any)).rejects.toThrow(BadRequestException);
+        await expect(controller.updateServer(req, 'a', { minecraftVersion: '1.18.2' } as any)).rejects.toThrow(BadRequestException);
+
+        await controller.updateServer(req, 'a', { velocityFallbackOrder: 1 } as any);
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
+      });
+
+      it('syncs velocity.toml instead of routes.json while Velocity is the edge', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+        useEdge('velocity');
+
+        await controller.updateServer(req, 'a', { velocityEnabled: true, velocityFallbackOrder: 0 } as any);
+
+        expect(dockerComposeService.updateServerConfig).toHaveBeenCalledWith('a', expect.anything(), 'velocity');
+        expect(velocity.syncConfig).toHaveBeenCalled();
+        expect(proxyRouter.syncRoutes).not.toHaveBeenCalled();
+      });
+
+      it('checks forced hosts only against other Velocity members', async () => {
+        dockerComposeService.getServerConfig.mockResolvedValue({ ...current, serverType: 'PAPER' } as any);
+        dockerComposeService.updateServerConfig.mockResolvedValue(current as any);
+        useEdge('velocity');
+        dockerComposeService.getServerIndex.mockResolvedValue([{ id: 'lobby', proxyHostname: 'hub' }, { id: 'hub-member', proxyHostname: 'play', velocityEnabled: true }] as any);
+
+        await controller.updateServer(req, 'a', { velocityEnabled: true, proxyHostname: 'hub' } as any);
+        await expect(controller.updateServer(req, 'a', { velocityEnabled: true, proxyHostname: 'play' } as any)).rejects.toThrow(ConflictException);
       });
 
       it('gates event command changes behind the console permission', async () => {

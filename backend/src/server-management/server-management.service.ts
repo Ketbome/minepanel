@@ -19,6 +19,7 @@ import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
+import { VelocityForwardingService } from 'src/proxy/velocity-forwarding.service';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { MinecraftStatusProbe, parseMinecraftStatus } from './minecraft-status.util';
 import { assertContained } from 'src/common/fs/contained-path';
@@ -166,6 +167,7 @@ export class ServerManagementService {
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly composeService: DockerComposeService,
+    private readonly velocityForwarding: VelocityForwardingService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
@@ -771,12 +773,21 @@ export class ServerManagementService {
         if (!enrichedDetails.lanIp) {
           enrichedDetails.lanIp = userSettings.lanIp || undefined;
         }
+        // A Velocity member publishes no port of its own: players come in through the proxy.
+        if (supportsProxy && (await this.isVelocityMember(serverName))) {
+          enrichedDetails.port = (await this.instanceSettings.getRouterSettings()).proxyPort;
+        }
       }
 
       await this.discordService.sendServerNotification(userSettings.webhook, type, serverName, userSettings.lang, enrichedDetails);
     } catch (error) {
       this.logger.error('Discord notification error', error);
     }
+  }
+
+  private async isVelocityMember(serverId: string): Promise<boolean> {
+    const edge = await this.instanceSettings.getComposeEdge();
+    return edge === 'velocity' && (await this.store.readConfig(serverId))?.velocityEnabled === true;
   }
 
   private async getServerProxyHostname(serverId: string, baseDomain: string): Promise<string | null> {
@@ -1070,8 +1081,11 @@ export class ServerManagementService {
   }
 
   private async refreshComposeFile(serverId: string): Promise<void> {
-    const { enabled: proxyEnabled } = await this.instanceSettings.getProxy();
-    await this.composeService.refreshComposeFile(serverId, proxyEnabled);
+    const edge = await this.instanceSettings.getComposeEdge();
+    await this.composeService.refreshComposeFile(serverId, edge);
+    // Before `up`: Paper reads the forwarding secret once, on boot.
+    const config = await this.store.readConfig(serverId);
+    if (config) await this.velocityForwarding.apply(config, edge);
   }
 
   async deleteServer(serverId: string): Promise<boolean> {

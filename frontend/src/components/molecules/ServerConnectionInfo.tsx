@@ -35,11 +35,14 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
         setPublicIP(ipData.publicIP);
         setLocalIPs(ipData.localIPs);
 
-        // Check if proxy is enabled and get server hostname (Java only)
-        if (supportsProxy && proxyStatus.enabled && proxyStatus.baseDomain) {
+        // Check if proxy is enabled and get server hostname (Java only). Velocity can
+        // route without a domain, so its members are listed at the public IP then.
+        const velocity = proxyStatus.mode === 'velocity';
+        if (supportsProxy && proxyStatus.enabled && (velocity || proxyStatus.baseDomain)) {
           setProxyEnabled(true);
           const hostname = await getServerProxyHostname(serverId);
-          setProxyHostname(hostname);
+          const proxyPort = velocity && hostname && proxyStatus.proxyPort && proxyStatus.proxyPort !== '25565' ? `:${proxyStatus.proxyPort}` : '';
+          setProxyHostname(hostname && `${hostname}${proxyPort}`);
         }
       } catch (error) {
         console.error('Error fetching connection info:', error);

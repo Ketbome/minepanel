@@ -29,6 +29,18 @@ export interface ResolvedOidc {
   enabled: boolean;
 }
 
+export type EdgeMode = 'mc-router' | 'velocity';
+
+export interface Edge {
+  enabled: boolean;
+  mode: EdgeMode;
+  baseDomain: string | null;
+}
+
+// What a server compose file is generated against: true routes Java servers
+// through mc-router, 'velocity' only moves the servers that joined its network.
+export type ComposeEdge = boolean | 'velocity';
+
 @Injectable()
 export class InstanceSettingsService implements OnModuleInit {
   private readonly logger = new Logger(InstanceSettingsService.name);
@@ -97,13 +109,28 @@ export class InstanceSettingsService implements OnModuleInit {
     }
   }
 
-  async getProxy(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+  async getEdge(): Promise<Edge> {
     const row = await this.getRow();
     const baseDomain = row.proxyBaseDomain?.trim() || null;
-    return { enabled: (row.proxyEnabled ?? false) && !!baseDomain, baseDomain };
+    const mode: EdgeMode = row.edgeMode === 'velocity' ? 'velocity' : 'mc-router';
+    // Velocity can send everyone to the lobby; mc-router has nothing to route by without a domain.
+    const enabled = (row.proxyEnabled ?? false) && (mode === 'velocity' || !!baseDomain);
+    return { enabled, mode, baseDomain };
   }
 
-  async setProxy(update: { enabled?: boolean; baseDomain?: string | null }): Promise<{ enabled: boolean; baseDomain: string | null }> {
+  // mc-router hostname routing only: what routes.json and the server compose files react to.
+  async getProxy(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    const { enabled, mode, baseDomain } = await this.getEdge();
+    return { enabled: enabled && mode === 'mc-router', baseDomain };
+  }
+
+  async getComposeEdge(): Promise<ComposeEdge> {
+    const { enabled, mode } = await this.getEdge();
+    if (!enabled) return false;
+    return mode === 'velocity' ? 'velocity' : true;
+  }
+
+  async setProxy(update: { enabled?: boolean; baseDomain?: string | null; edgeMode?: EdgeMode }): Promise<Edge> {
     const row = await this.getRow();
     if (update.baseDomain !== undefined) {
       row.proxyBaseDomain = update.baseDomain?.trim() || null;
@@ -111,12 +138,25 @@ export class InstanceSettingsService implements OnModuleInit {
     if (update.enabled !== undefined) {
       row.proxyEnabled = update.enabled;
     }
+    if (update.edgeMode !== undefined) {
+      row.edgeMode = update.edgeMode;
+    }
     // Routing by hostname is meaningless without a base domain.
-    if (!row.proxyBaseDomain) {
+    if (!row.proxyBaseDomain && row.edgeMode !== 'velocity') {
       row.proxyEnabled = false;
     }
     await this.repo.save(row);
-    return this.getProxy();
+    return this.getEdge();
+  }
+
+  async getVelocitySecrets(): Promise<{ forwardingSecret: string; rconPassword: string }> {
+    const row = await this.getRow();
+    if (!row.velocitySecretEnc || !row.velocityRconEnc) {
+      row.velocitySecretEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+      row.velocityRconEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+      await this.repo.save(row);
+    }
+    return { forwardingSecret: decryptSecret(row.velocitySecretEnc), rconPassword: decryptSecret(row.velocityRconEnc) };
   }
 
   async getNetwork(): Promise<{ publicIp: string | null; lanIp: string | null }> {

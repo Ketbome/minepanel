@@ -14,6 +14,8 @@ export interface ServerIndexEntry {
   useProxy?: boolean;
   proxyHostname?: string;
   useAutoScale?: boolean;
+  velocityEnabled?: boolean;
+  velocityFallbackOrder?: number | null;
   active?: boolean;
 }
 
@@ -110,6 +112,8 @@ export class ServerStoreService {
       useProxy: config.useProxy,
       proxyHostname: config.proxyHostname,
       useAutoScale: config.useAutoScale,
+      velocityEnabled: config.velocityEnabled,
+      velocityFallbackOrder: config.velocityFallbackOrder,
     };
   }
 

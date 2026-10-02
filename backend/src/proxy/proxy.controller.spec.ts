@@ -5,6 +5,8 @@ describe('ProxyController', () => {
   let proxyService: Record<string, jest.Mock>;
   let accessControl: { assertServerAccess: jest.Mock; getVisibleServerIds: jest.Mock };
   let controller: ProxyController;
+  let instanceSettings: Record<string, jest.Mock>;
+  let velocity: { isRunning: jest.Mock; getAddresses: jest.Mock };
 
   beforeEach(() => {
     proxyService = {
@@ -16,10 +18,16 @@ describe('ProxyController', () => {
       removeServerFromProxy: jest.fn().mockResolvedValue(undefined),
     };
     accessControl = { assertServerAccess: jest.fn(), getVisibleServerIds: jest.fn((_user, ids: string[]) => ids.filter((id) => id === 'a')) };
+    instanceSettings = {
+      getEdge: jest.fn().mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' }),
+      getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: 25565, autoScaleEnabled: true, autoScaleToken: 't' }),
+    };
+    velocity = { isRunning: jest.fn().mockResolvedValue(false), getAddresses: jest.fn().mockResolvedValue({ a: 'a.mc.example.com', b: 'b.mc.example.com' }) } as any;
     controller = new ProxyController(
       proxyService as any,
-      { getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: 25565, autoScaleEnabled: true, autoScaleToken: 't' }) } as any,
+      instanceSettings as any,
       { isRunning: jest.fn().mockResolvedValue(true) } as any,
+      velocity as any,
       { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any,
       accessControl as any,
     );
@@ -29,6 +37,7 @@ describe('ProxyController', () => {
     expect(await controller.getStatus()).toEqual({
       available: true,
       enabled: true,
+      mode: 'mc-router',
       baseDomain: 'mc.example.com',
       proxyPort: 25565,
       autoScaleAvailable: true,
@@ -44,8 +53,24 @@ describe('ProxyController', () => {
   });
 
   it('reports the proxy as unavailable without a base domain', async () => {
-    proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: null });
+    instanceSettings.getEdge.mockResolvedValue({ enabled: false, mode: 'mc-router', baseDomain: null });
     expect(await controller.getStatus()).toMatchObject({ available: false, enabled: false });
+  });
+
+  it('reports the Velocity container and hides auto-scaling while Velocity is the edge', async () => {
+    instanceSettings.getEdge.mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: null });
+    velocity.isRunning.mockResolvedValue(true);
+    expect(await controller.getStatus()).toMatchObject({ enabled: true, mode: 'velocity', running: true, autoScaleAvailable: false });
+  });
+
+  it('serves Velocity forced hosts instead of routes.json while Velocity is the edge', async () => {
+    instanceSettings.getEdge.mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: 'mc.example.com' });
+
+    expect(await controller.getMappings(req)).toEqual([{ host: 'a.mc.example.com', backend: 'a:25565' }]);
+    expect(await controller.getServerHostname(req, 'a')).toEqual({ hostname: 'a.mc.example.com' });
+    velocity.getAddresses.mockResolvedValue({});
+    expect(await controller.getServerHostname(req, 'a')).toEqual({ hostname: null });
+    expect(proxyService.getAllMappings).not.toHaveBeenCalled();
   });
 
   it('checks server access before per-server routes', async () => {

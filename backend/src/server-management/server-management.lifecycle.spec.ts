@@ -79,7 +79,8 @@ describe('ServerManagementService lifecycle', () => {
   let alerts: { markExpectedStop: jest.Mock };
   let store: { removeFromIndex: jest.Mock; readConfig: jest.Mock };
   let composeService: { refreshComposeFile: jest.Mock };
-  let instanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock };
+  let instanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock; getComposeEdge: jest.Mock; getRouterSettings: jest.Mock };
+  let velocityForwarding: { apply: jest.Mock };
   let compose: string;
 
   const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => execRoutes.unshift([pattern, result]);
@@ -94,6 +95,7 @@ describe('ServerManagementService lifecycle', () => {
       store as any,
       instanceSettings as any,
       composeService as any,
+      velocityForwarding as any,
     );
 
   beforeEach(() => {
@@ -139,7 +141,10 @@ describe('ServerManagementService lifecycle', () => {
     instanceSettings = {
       getNetwork: jest.fn().mockResolvedValue({ publicIp: '1.2.3.4', lanIp: '10.0.0.2' }),
       getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      getComposeEdge: jest.fn().mockResolvedValue(false),
+      getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: '25577' }),
     };
+    velocityForwarding = { apply: jest.fn().mockResolvedValue(undefined) };
     service = build();
   });
 
@@ -222,6 +227,7 @@ describe('ServerManagementService lifecycle', () => {
       service = build(' Panel ');
       expect(await service.restartServer('srv')).toBe(true);
       expect(composeService.refreshComposeFile).toHaveBeenCalledWith('srv', false);
+      expect(velocityForwarding.apply).toHaveBeenCalledWith({ edition: 'JAVA', maxPlayers: '20' }, false);
       const upCall = mockExec.mock.calls.find((call) => call[0] === 'docker compose up -d');
       expect(upCall[1]).toEqual({ cwd: '/app/servers/srv', env: expect.objectContaining({ COMPOSE_PROJECT_NAME: 'panel_srv' }) });
 
@@ -611,6 +617,16 @@ describe('ServerManagementService lifecycle', () => {
       store.readConfig.mockRejectedValue(new Error('gone'));
       await service.stopServer('srv');
       expect(discord.sendServerNotification.mock.lastCall[4]).not.toHaveProperty('version');
+    });
+
+    it('points a Velocity member at the proxy port, since it publishes none of its own', async () => {
+      instanceSettings.getComposeEdge.mockResolvedValue('velocity');
+      store.readConfig.mockResolvedValue({ edition: 'JAVA', velocityEnabled: true });
+      compose = 'services:\n  mc:\n    image: itzg/minecraft-server\n';
+
+      await service.stopServer('srv');
+
+      expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ ip: '1.2.3.4', port: '25577' }));
     });
 
     it('skips notifications without a webhook and survives settings errors', async () => {

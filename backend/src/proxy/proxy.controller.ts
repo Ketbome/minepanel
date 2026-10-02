@@ -5,6 +5,7 @@ import { UsersService } from 'src/users/services/users.service';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { ProxyService } from './proxy.service';
 import { ProxyRouterService } from './proxy-router.service';
+import { VelocityRuntimeService } from './velocity-runtime.service';
 
 @Controller('proxy')
 export class ProxyController {
@@ -12,9 +13,15 @@ export class ProxyController {
     private readonly proxyService: ProxyService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyRouter: ProxyRouterService,
+    private readonly velocity: VelocityRuntimeService,
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
   ) {}
+
+  private async isVelocityEdge(): Promise<boolean> {
+    const { enabled, mode } = await this.instanceSettings.getEdge();
+    return enabled && mode === 'velocity';
+  }
 
   private async assertServerAccess(req, serverId: string) {
     const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
@@ -23,20 +30,21 @@ export class ProxyController {
 
   @Get('status')
   async getStatus() {
-    const [routes, settings, router, running] = await Promise.all([
+    const [routes, edge, router] = await Promise.all([
       this.proxyService.getRoutesStatus(),
-      this.proxyService.getProxySettings(),
+      this.instanceSettings.getEdge(),
       this.instanceSettings.getRouterSettings(),
-      this.proxyRouter.isRunning(),
     ]);
+    const running = edge.mode === 'velocity' ? await this.velocity.isRunning() : await this.proxyRouter.isRunning();
 
     return {
-      available: !!settings.baseDomain,
-      enabled: settings.enabled && !!settings.baseDomain,
-      baseDomain: settings.baseDomain,
-      // The host port mc-router publishes: what players actually connect to.
+      available: !!edge.baseDomain,
+      enabled: edge.enabled,
+      mode: edge.mode,
+      baseDomain: edge.baseDomain,
+      // The host port the edge publishes: what players actually connect to.
       proxyPort: router.proxyPort,
-      autoScaleAvailable: router.autoScaleEnabled,
+      autoScaleAvailable: edge.mode === 'mc-router' && router.autoScaleEnabled,
       // Whether the container is actually up, not whether a routes file exists.
       running,
       ...routes,
@@ -47,7 +55,9 @@ export class ProxyController {
   @Get('mappings')
   async getMappings(@Request() req) {
     const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
-    const mappings = await this.proxyService.getAllMappings();
+    const mappings = (await this.isVelocityEdge())
+      ? Object.entries(await this.velocity.getAddresses()).map(([id, host]) => ({ host, backend: `${id}:25565` }))
+      : await this.proxyService.getAllMappings();
     const serverId = (mapping: { backend: string }) => mapping.backend.split(':')[0];
     const visible = new Set(this.accessControlService.getVisibleServerIds(user, mappings.map(serverId)));
     return mappings.filter((mapping) => visible.has(serverId(mapping)));
@@ -56,7 +66,7 @@ export class ProxyController {
   @Get('server/:id/hostname')
   async getServerHostname(@Request() req, @Param('id') serverId: string) {
     await this.assertServerAccess(req, serverId);
-    const hostname = await this.proxyService.getServerHostname(serverId);
+    const hostname = (await this.isVelocityEdge()) ? ((await this.velocity.getAddresses())[serverId] ?? null) : await this.proxyService.getServerHostname(serverId);
     return { hostname };
   }
 

@@ -13,6 +13,7 @@ describe('SettingsService updates', () => {
   let usersService: { getUserById: jest.Mock };
   let instanceSettings: Record<string, jest.Mock>;
   let proxyRouter: { reconcile: jest.Mock };
+  let velocity: { reconcile: jest.Mock };
 
   beforeEach(() => {
     repo = {
@@ -23,15 +24,16 @@ describe('SettingsService updates', () => {
     };
     usersService = { getUserById: jest.fn().mockResolvedValue({ id: 1 }) };
     instanceSettings = {
-      setProxy: jest.fn().mockResolvedValue(undefined),
+      setProxy: jest.fn().mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' }),
       updateRouterSettings: jest.fn().mockResolvedValue(undefined),
       setNetwork: jest.fn().mockResolvedValue(undefined),
       setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
-      getProxy: jest.fn().mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' }),
+      getEdge: jest.fn().mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' }),
       getNetwork: jest.fn().mockResolvedValue({ publicIp: '1.2.3.4', lanIp: null }),
     };
     proxyRouter = { reconcile: jest.fn().mockResolvedValue(undefined) };
-    service = new SettingsService(repo as any, usersService as any, instanceSettings as any, proxyRouter as any);
+    velocity = { reconcile: jest.fn().mockResolvedValue(undefined) };
+    service = new SettingsService(repo as any, usersService as any, instanceSettings as any, proxyRouter as any, velocity as any);
   });
 
   it('getSettings and createSettings', async () => {
@@ -58,9 +60,10 @@ describe('SettingsService updates', () => {
 
     const saved = await service.updateSettings(dto, 1);
 
-    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true, baseDomain: 'mc.example.com' });
+    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true, baseDomain: 'mc.example.com', edgeMode: undefined });
     expect(instanceSettings.updateRouterSettings).toHaveBeenCalledWith({ proxyPort: 25565 });
     expect(proxyRouter.reconcile).toHaveBeenCalled();
+    expect(velocity.reconcile).toHaveBeenCalled();
     expect(instanceSettings.setNetwork).toHaveBeenCalledWith({ publicIp: null, lanIp: '10.0.0.5' });
     expect(instanceSettings.setJavaServerDefaults).toHaveBeenCalledWith({ maxPlayers: '20' });
     expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ preferences: expect.objectContaining({ auditRetentionDays: 7 }) }));
@@ -68,9 +71,28 @@ describe('SettingsService updates', () => {
     expect(dto.proxy).toBeUndefined();
   });
 
+  // Both runtimes bind the public port, so the one being left has to stop first.
+  it('stops the runtime being switched away from before starting the other', async () => {
+    const order: string[] = [];
+    proxyRouter.reconcile.mockImplementation(async () => order.push('router'));
+    velocity.reconcile.mockImplementation(async () => order.push('velocity'));
+
+    await service.reconcileEdge('velocity');
+    expect(order).toEqual(['router', 'velocity']);
+
+    order.length = 0;
+    await service.reconcileEdge('mc-router');
+    expect(order).toEqual(['velocity', 'router']);
+  });
+
+  it('forwards the edge mode', async () => {
+    await service.updateSettings({ proxy: { edgeMode: 'velocity' } } as any, 1);
+    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: undefined, baseDomain: undefined, edgeMode: 'velocity' });
+  });
+
   it('updateSettings handles undefined and null optional text and clears the api key', async () => {
     await service.updateSettings({ proxy: { proxyEnabled: false }, network: { publicIp: null }, cfApiKey: '' } as any, 1);
-    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: false, baseDomain: undefined });
+    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: false, baseDomain: undefined, edgeMode: undefined });
     expect(instanceSettings.setNetwork).toHaveBeenCalledWith({ publicIp: null, lanIp: undefined });
     expect(repo.save).toHaveBeenLastCalledWith(expect.objectContaining({ cfApiKey: null }));
   });
@@ -92,7 +114,7 @@ describe('SettingsService updates', () => {
   });
 
   it('exposes proxy, network and retention settings', async () => {
-    expect(await service.getProxySettings()).toEqual({ enabled: true, baseDomain: 'mc.example.com', available: true });
+    expect(await service.getProxySettings()).toEqual({ enabled: true, baseDomain: 'mc.example.com', available: true, edgeMode: 'mc-router' });
     expect(await service.getNetworkSettings()).toEqual({ publicIp: '1.2.3.4', lanIp: null });
     expect(await service.getAuditRetentionDays()).toBe(30);
     repo.find.mockResolvedValueOnce([{ id: 1, preferences: { auditRetentionDays: 0 } }]);

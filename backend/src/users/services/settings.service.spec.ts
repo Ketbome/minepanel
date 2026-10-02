@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { SettingsService } from './settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
+import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 import { Settings } from '../entities/settings.entity';
 import { UsersService } from './users.service';
 import { isEncrypted } from 'src/common/crypto/secret-cipher';
@@ -28,7 +29,7 @@ describe('SettingsService', () => {
     };
 
     instanceSettings = {
-      setProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
+      setProxy: jest.fn().mockResolvedValue({ enabled: false, mode: 'mc-router', baseDomain: null }),
       setNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
       setJavaServerDefaults: jest.fn().mockResolvedValue(undefined),
       getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
@@ -51,6 +52,7 @@ describe('SettingsService', () => {
         },
         { provide: InstanceSettingsService, useValue: instanceSettings },
         { provide: ProxyRouterService, useValue: { reconcile: jest.fn().mockResolvedValue(undefined) } },
+        { provide: VelocityRuntimeService, useValue: { reconcile: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 
@@ -64,7 +66,7 @@ describe('SettingsService', () => {
 
     await service.updateSettings({ proxy: { proxyEnabled: true, proxyBaseDomain: '   ' } }, 1);
 
-    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true, baseDomain: null });
+    expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true, baseDomain: null, edgeMode: undefined });
   });
 
   it('forwards network settings to the instance settings, normalising blanks to null', async () => {

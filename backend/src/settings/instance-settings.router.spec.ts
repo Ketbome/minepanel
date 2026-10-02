@@ -30,6 +30,48 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
     expect(repo.create).toHaveBeenCalledWith({ id: 1 });
   });
 
+  describe('edge mode', () => {
+    it('keeps mc-router as the edge for rows saved before Velocity existed', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      expect(await service.getEdge()).toEqual({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
+      expect(await service.getProxy()).toEqual({ enabled: true, baseDomain: 'mc.example.com' });
+    });
+
+    // Server compose files and routes.json only react to mc-router routing.
+    it('turns mc-router routing off while Velocity is the edge', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      row.edgeMode = 'velocity';
+      expect(await service.getEdge()).toEqual({ enabled: true, mode: 'velocity', baseDomain: 'mc.example.com' });
+      expect(await service.getProxy()).toEqual({ enabled: false, baseDomain: 'mc.example.com' });
+    });
+
+    it('lets Velocity run without a base domain, but not mc-router', async () => {
+      expect(await service.setProxy({ enabled: true, edgeMode: 'velocity' })).toEqual({ enabled: true, mode: 'velocity', baseDomain: null });
+      expect(await service.setProxy({ edgeMode: 'mc-router' })).toEqual({ enabled: false, mode: 'mc-router', baseDomain: null });
+      expect(row.proxyEnabled).toBe(false);
+    });
+
+    it('tells compose generation which edge to build against', async () => {
+      expect(await service.getComposeEdge()).toBe(false);
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      expect(await service.getComposeEdge()).toBe(true);
+      row.edgeMode = 'velocity';
+      expect(await service.getComposeEdge()).toBe('velocity');
+    });
+
+    it('mints the Velocity secrets once and keeps them', async () => {
+      const first = await service.getVelocitySecrets();
+      expect(first.forwardingSecret).toMatch(/^[\w-]{32}$/);
+      expect(first.rconPassword).not.toBe(first.forwardingSecret);
+      expect(row.velocitySecretEnc).toBe(`enc:${first.forwardingSecret}`);
+      expect(await service.getVelocitySecrets()).toEqual(first);
+      expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('returns router defaults and mints an auto-scale token once', async () => {
     expect(await service.getRouterSettings()).toEqual({
       proxyPort: '25565',

@@ -5,8 +5,9 @@ import { Settings } from '../entities/settings.entity';
 import { UpdateSettingsDto } from '../dtos/settings.dto';
 import { UsersService } from 'src/users/services/users.service';
 import { decryptSecret, encryptSecret } from 'src/common/crypto/secret-cipher';
-import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { EdgeMode, InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
+import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 
 const DEFAULT_AUDIT_RETENTION_DAYS = 15;
 
@@ -40,6 +41,7 @@ export class SettingsService {
     private readonly usersService: UsersService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyRouter: ProxyRouterService,
+    private readonly velocity: VelocityRuntimeService,
   ) {}
 
   private normalizeOptionalText(value: string | undefined | null): string | null | undefined {
@@ -81,15 +83,16 @@ export class SettingsService {
 
     // Proxy and network settings are instance-wide, not per user.
     if (dto.proxy) {
-      await this.instanceSettings.setProxy({
+      const edge = await this.instanceSettings.setProxy({
         enabled: dto.proxy.proxyEnabled,
         baseDomain: dto.proxy.proxyBaseDomain === undefined ? undefined : this.normalizeOptionalText(dto.proxy.proxyBaseDomain),
+        edgeMode: dto.proxy.edgeMode,
       });
       if (dto.proxy.router) {
         await this.instanceSettings.updateRouterSettings(dto.proxy.router);
       }
-      // The panel owns the router container, so saving is what starts or stops it.
-      await this.proxyRouter.reconcile();
+      // The panel owns the edge containers, so saving is what starts or stops them.
+      await this.reconcileEdge(edge.mode);
       delete (dto as any).proxy;
     }
 
@@ -139,9 +142,21 @@ export class SettingsService {
     }, {} as Record<string, any>);
   }
 
-  async getProxySettings(): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean }> {
-    const { enabled, baseDomain } = await this.instanceSettings.getProxy();
-    return { enabled, baseDomain, available: !!baseDomain };
+  // Both runtimes bind the same public port: the one being switched away from
+  // has to stop before the other one starts.
+  async reconcileEdge(mode: EdgeMode): Promise<void> {
+    if (mode === 'velocity') {
+      await this.proxyRouter.reconcile();
+      await this.velocity.reconcile();
+    } else {
+      await this.velocity.reconcile();
+      await this.proxyRouter.reconcile();
+    }
+  }
+
+  async getProxySettings(): Promise<{ enabled: boolean; baseDomain: string | null; available: boolean; edgeMode: EdgeMode }> {
+    const { enabled, baseDomain, mode } = await this.instanceSettings.getEdge();
+    return { enabled, baseDomain, available: !!baseDomain, edgeMode: mode };
   }
 
   async getNetworkSettings(): Promise<{ publicIp: string | null; lanIp: string | null }> {

@@ -4,8 +4,10 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import { normalizeBasePath } from 'src/config';
 import { HostContextService } from 'src/common/docker/host-context.service';
+import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from './proxy-router.service';
+import { ProxyService } from './proxy.service';
 
 const execMock = jest.fn();
 jest.mock('node:child_process', () => ({
@@ -70,6 +72,8 @@ describe('ProxyRouterService', () => {
         },
         { provide: InstanceSettingsService, useValue: instanceSettings },
         { provide: HostContextService, useValue: hostContext },
+        { provide: DockerComposeService, useValue: { getServerIndex: jest.fn().mockResolvedValue([]) } },
+        { provide: ProxyService, useValue: { generateRoutesFile: jest.fn() } },
       ],
     }).compile();
 
