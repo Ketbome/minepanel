@@ -200,6 +200,12 @@ export interface ServerConfig {
   modNotes?: Record<string, string>;
   modWatchTargetVersion?: string;
 
+  // Custom Metrics tick command (admin only) and optional regexes that read TPS / average MSPT
+  // from its reply. Saved through PUT /servers/:id/tick-command, not the whole-form save.
+  tickCommand?: string;
+  tickTpsPattern?: string;
+  tickMsptPattern?: string;
+
   // Default "TP Spawn" coordinates for the Players tab quick action. Neither reaches the
   // compose file; saved through PUT /servers/:id/spawn-point, not the whole-form save.
   spawnX?: number;

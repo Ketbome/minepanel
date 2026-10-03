@@ -413,14 +413,21 @@ Timed finishes of the End Portal easter egg (Speedrun and Hardcore modes), share
 
 ### Server monitoring
 
-Both endpoints require authentication and access to the requested server.
+The endpoints require authentication and access to the requested server.
 
 - `GET /metrics/:id/live` — resource usage, players, uptime, timestamp and tick
   measurements, cached for 10 seconds with concurrent request deduplication.
   `tickStatus` is `available`, `offline`, `unsupported`, `rcon_disabled`,
-  `spark_missing`, or `unavailable`. `tickSource` is `neoforge`, `spark`, or null.
+  `spark_missing`, `custom_paused`, or `unavailable`. `tickSource` is `neoforge`, `spark`, `tabtps`, `custom`, or null.
   NeoForge returns estimated `tps` and `msptMean`; spark returns 1-minute `tps`,
-  `msptMedian` and `msptP95` over 10 seconds. Unavailable values are null.
+  `msptMedian` and `msptP95` over 10 seconds; TabTPS and custom patterns return
+  `tps` and `msptMean`. Unavailable values are null.
+- `POST /metrics/:id/tick-test` — admin only. Body `{ "tickCommand": string, "tickTpsPattern"?: string, "tickMsptPattern"?: string }`.
+  Runs the command once over RCON without saving and returns
+  `{ success, output, parsed: { source, tps, msptMean, msptMedian, msptP95 } | null }`.
+  Patterns must compile, contain a capture group, and match within 50 ms (400 otherwise, also
+  for a pattern that backtracks catastrophically). Each run is recorded in the audit log as
+  `test_tick_command` with the command text, like console commands.
 - `GET /metrics/:id/history?hours=24` — `{ serverId, hours, points }`, with the
   window clamped to 1–168 hours. Points contain `timestamp`, `cpuPercent`,
   `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,
@@ -536,6 +543,15 @@ share one per-server default, stored as `spawnX`/`spawnY`/`spawnZ` on `server.js
 Like `mod-watch`, this writes `server.json` directly without regenerating the compose file, so it
 stays usable while the server is running. Omitting an axis leaves it untouched; `null` clears it
 back to the default.
+
+- `PUT /servers/:id/tick-command` — admin only. Body `{ "tickCommand"?: string, "tickTpsPattern"?: string, "tickMsptPattern"?: string }`.
+  Stores the Metrics tab's custom tick command on `server.json` (single line, at most 100
+  characters; patterns at most 200 characters and must compile with a capture group; a bad
+  pattern is a 400). Empty values clear the setting, and an MSPT pattern without a TPS pattern
+  is dropped. Like `spawn-point`, it does not regenerate the compose file. The audit entry
+  `update_tick_command` carries the command and patterns. The `tick*` fields are ignored for
+  non-admins on `POST /servers` and `POST /servers/:id/clone` (an admin's clone keeps them), and
+  stripped from `PUT /servers/:id`, so this endpoint is the only way to change them.
 
 This is the **only** way to write either field. `PUT /servers/:id` drops them: the panel submits the
 whole config it loaded, so a page opened before a note was written would otherwise put its stale copy

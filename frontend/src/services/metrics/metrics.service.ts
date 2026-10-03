@@ -1,11 +1,13 @@
 import api from "../axios.service";
 
+export type TickSource = 'neoforge' | 'spark' | 'tabtps' | 'custom';
+
 export interface MetricPoint {
   cpuPercent: number;
   memoryMb: number;
   memoryLimitMb: number | null;
   tps: number | null;
-  tickSource: 'neoforge' | 'spark' | null;
+  tickSource: TickSource | null;
   msptMean: number | null;
   msptMedian: number | null;
   msptP95: number | null;
@@ -13,7 +15,7 @@ export interface MetricPoint {
   timestamp: string;
 }
 
-export type TickStatus = "available" | "offline" | "unsupported" | "rcon_disabled" | "spark_missing" | "unavailable";
+export type TickStatus = "available" | "offline" | "unsupported" | "rcon_disabled" | "spark_missing" | "custom_paused" | "unavailable";
 
 export interface MonitoringSnapshot {
   timestamp: string;
@@ -25,7 +27,7 @@ export interface MonitoringSnapshot {
   playersMax: number | null;
   uptimeSeconds: number | null;
   tickStatus: TickStatus;
-  tickSource: 'neoforge' | 'spark' | null;
+  tickSource: TickSource | null;
   tps: number | null;
   msptMean: number | null;
   msptMedian: number | null;
@@ -52,3 +54,17 @@ export const getServerMetrics = async (serverId: string, hours = 24): Promise<Me
     throw error;
   }
 };
+
+export interface TickTestResult {
+  success: boolean;
+  output: string;
+  parsed: { source: TickSource; tps: number; msptMean: number | null } | null;
+}
+
+export async function testTickCommand(
+  serverId: string,
+  body: { tickCommand: string; tickTpsPattern?: string; tickMsptPattern?: string },
+): Promise<TickTestResult> {
+  const response = await api.post(`/metrics/${serverId}/tick-test`, body);
+  return response.data;
+}

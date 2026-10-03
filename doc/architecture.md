@@ -166,7 +166,8 @@ This is the same pattern used by Portainer, Yacht, and other Docker management p
 `MonitoringService` combines runtime status with fixed, bounded, container-local
 RCON probes; it shares cached results between the UI and the background sampler.
 NeoForge/CurseForge uses native overall tick data first, with spark support on
-compatible Java servers. `MetricSample` stores the source alongside distinct
+compatible Java servers. An admin-set `tickCommand` in `server.json` replaces both
+and is parsed by `tick-stats.ts` (TabTPS, NeoForge, spark or regex patterns). `MetricSample` stores the source alongside distinct
 mean, median and P95 columns; schema synchronization adds nullable fields so
 existing resource history is preserved. No generated compose files are parsed.
 

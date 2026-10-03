@@ -87,9 +87,42 @@ lines do not imply that a deliberately changed tick rate is unhealthy.
 
 On servers with a usable `spark tps` RCON response, Minepanel displays 1-minute
 TPS and 10-second median/P95 tick duration. P95 is the duration below which 95%
-of ticks fall; it is not the mean. Some spark versions return an empty RCON
-response because commands are asynchronous. Installing spark alone does not
-guarantee RCON monitoring works; NeoForge's native command avoids this.
+of ticks fall; it is not the mean. Spark often returns an empty RCON reply (see
+[lucko/spark#119](https://github.com/lucko/spark/issues/119)), so installing spark
+alone does not guarantee RCON monitoring works; NeoForge's native command and a
+custom command (below) avoid this.
+
+### Custom tick command
+
+Administrators choose how TPS is read from the **Custom tick command** card at the bottom
+of the Metrics tab. The **Tick source** dropdown offers:
+
+- **Automatic (built-in)**: the NeoForge and spark probes described above.
+- **TabTPS (`tickinfo`)**, **NeoForge (`neoforge tps`)** and **spark (`spark tps`)**: run that
+  one command and read its reply with the built-in reader. TabTPS reports the 1-minute TPS and
+  the 60-second average MSPT.
+- **Custom command…**: any other single-line RCON command (up to 100 characters, not starting
+  with `-`). TabTPS, NeoForge and spark output is still recognized automatically.
+
+The reply must come back over RCON. **Run & test** runs the command once, shows the raw reply
+and what was read from it, without saving, so a command that answers with nothing is visible
+right away.
+
+For a custom command whose output nothing recognizes, **Advanced mode** (the Simple/Advanced
+toggle above the tabs) shows a TPS pattern and an optional MSPT pattern: regular
+expressions (case-insensitive) with one capture group around the number, matched against the
+first 4 KB of the reply. Patterns win over automatic detection and the source is shown as
+`custom`. Patterns that are already saved stay visible in Simple mode. Values that cannot be
+read stay blank; the panel never falls back to another probe. Choosing **Automatic** and saving
+restores the defaults. The command runs on every metrics poll, so only administrators can set it.
+
+Every pattern match is limited to 50 ms, so a badly written pattern (for example
+`(a+)+$`) cannot stall the panel; one that is too slow is rejected when you save or
+test it. A command that keeps returning nothing usable (an empty reply, output nothing
+recognizes, or a pattern that times out) five polls in a row is **paused for 15
+minutes** instead of being polled forever, then retried once. Failing to reach RCON,
+for example while the server starts, does not count. Editing the command or a pattern,
+or a passing **Run & test**, resumes it immediately.
 
 Missing readings stay blank, and charts leave gaps for missing samples or server
 downtime. Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB; use the time-range
