@@ -29,7 +29,7 @@ describe('AutoScaleController', () => {
         { provide: InstanceSettingsService, useValue: { getAutoScaleToken: jest.fn(async () => token ?? null) } },
         {
           provide: ServerManagementService,
-          useValue: { getServerStatus: jest.fn(), startServer: jest.fn(), stopServer: jest.fn() },
+          useValue: { getServerStatus: jest.fn(), getServerRuntimeStats: jest.fn(), startServer: jest.fn(), stopServer: jest.fn() },
         },
         { provide: ProxyService, useValue: { getAllMappings: jest.fn() } },
         { provide: DockerComposeService, useValue: { getServerConfig: jest.fn() } },
@@ -69,6 +69,7 @@ describe('AutoScaleController', () => {
   });
 
   it('stops the server on scale down', async () => {
+    serverService.getServerRuntimeStats.mockResolvedValue({ status: 'running', playersOnline: 0 } as any);
     serverService.stopServer.mockResolvedValue(true);
 
     await expect(controller.autoScale(AUTH, { action: 'down', serverAddress: 'survival.mc.example.com' })).resolves.toEqual({
@@ -76,6 +77,26 @@ describe('AutoScaleController', () => {
       status: 'stopped',
     });
     expect(serverService.stopServer).toHaveBeenCalledWith('survival');
+  });
+
+  it.each(['stopped', 'not_found'])('does not stop a server that is already %s', async (status) => {
+    serverService.getServerRuntimeStats.mockResolvedValue({ status, playersOnline: null } as any);
+
+    await expect(controller.autoScale(AUTH, { action: 'down', backend: 'survival:25565' })).resolves.toEqual({
+      serverId: 'survival',
+      status: 'stopped',
+    });
+    expect(serverService.stopServer).not.toHaveBeenCalled();
+  });
+
+  it('does not stop a server that still has players online', async () => {
+    serverService.getServerRuntimeStats.mockResolvedValue({ status: 'running', playersOnline: 2 } as any);
+
+    await expect(controller.autoScale(AUTH, { action: 'down', backend: 'survival:25565' })).resolves.toEqual({
+      serverId: 'survival',
+      status: 'skipped',
+    });
+    expect(serverService.stopServer).not.toHaveBeenCalled();
   });
 
   it('leaves a server alone when auto-scaling is disabled for it', async () => {
@@ -97,6 +118,7 @@ describe('AutoScaleController', () => {
 
   it('keeps scaling servers without the opt-out label', async () => {
     composeService.getServerConfig.mockResolvedValue({ id: 'survival', useAutoScale: undefined } as any);
+    serverService.getServerRuntimeStats.mockResolvedValue({ status: 'running', playersOnline: 0 } as any);
     serverService.stopServer.mockResolvedValue(true);
 
     await expect(controller.autoScale(AUTH, { action: 'down', backend: 'survival:25565' })).resolves.toEqual({
@@ -149,6 +171,7 @@ describe('AutoScaleController', () => {
     });
 
     it('fails when the server cannot be stopped', async () => {
+      serverService.getServerRuntimeStats.mockResolvedValue({ status: 'running', playersOnline: null } as any);
       serverService.stopServer.mockResolvedValue(false);
       await expect(controller.autoScale(AUTH, { action: 'down', backend: 'survival:25565' } as any)).rejects.toThrow('Failed to stop');
     });

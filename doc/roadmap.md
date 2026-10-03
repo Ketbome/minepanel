@@ -248,14 +248,15 @@ Possible later, needs code inside the Minecraft server (not available, needs a d
 
 ### Network features
 
-- **Possible first iteration:** panel-managed Velocity as an alternative to
-  mc-router for Java networks, with static lobby/game backends, ordered fallback,
-  forced hosts, and validated modern forwarding.
-- **Later possibilities:** lobby pools, health-aware routing, auto-scaling,
-  multi-node backends, BungeeCord compatibility, and Bedrock support.
+Velocity networks with Paper-family backends are available (see
+[Networking](/networking#velocity-network-java-only)). Next possibilities:
 
-> This direction still needs an implementation design covering topology,
-> lifecycle, backend compatibility, network isolation, and forwarding secrets.
+- **More backends:** legacy forwarding for Spigot/Bukkit, Fabric/Quilt through
+  FabricProxy-Lite, Forge/NeoForge through a forwarding mod, and Paper before 1.19
+- **Proxy management:** plugin installs, console and logs for the proxy from the UI,
+  and forwarding secret rotation
+- **Scaling:** lobby pools, health-aware routing, auto-scaling, and multi-node backends
+- **Other editions:** BungeeCord compatibility and Bedrock support
 
 ### Resource limits per user
 

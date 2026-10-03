@@ -57,6 +57,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **Backups** — Scheduled backups with retention, locally or to S3-compatible storage · [Backups](https://minepanel.ketbome.com/features#backups)
 - **File manager** — Browse, edit, upload and download server files, with streamed uploads and ZIP downloads · [Files](https://minepanel.ketbome.com/features#file-management)
 - **Proxy** — mc-router for single-port multi-server (Java), managed by the panel, with auto-scaling (sleep when idle, wake on join) · [mc-router](https://minepanel.ketbome.com/networking#mc-proxy-router-java-only)
+- **Velocity network** — lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel · [Velocity](https://minepanel.ketbome.com/networking#velocity-network-java-only)
 - **Networking** — Port mappings, per-server network settings and admin-only custom compose snippets · [Networking](https://minepanel.ketbome.com/networking)
 - **Users & access** — Admin and user roles, per-server permissions, invitations and an audit log · [Access control](https://minepanel.ketbome.com/features#roles-and-access-control)
 - **Single Sign-On** — OIDC login (Authentik, Google, …), with an SSO-only mode · [SSO](https://minepanel.ketbome.com/sso)
@@ -100,6 +101,7 @@ Minepanel is built on top of amazing open source projects by [itzg](https://gith
 | [itzg/docker-minecraft-bedrock-server](https://github.com/itzg/docker-minecraft-bedrock-server) | Docker image for Bedrock Edition servers |
 | [itzg/docker-mc-backup](https://github.com/itzg/docker-mc-backup)                               | Automatic backup sidecar container       |
 | [itzg/mc-router](https://github.com/itzg/mc-router)                                             | Minecraft proxy for routing by hostname  |
+| [itzg/docker-bungeecord](https://github.com/itzg/docker-bungeecord)                             | Docker image for the Velocity proxy      |
 
 Thank you itzg for making Minecraft server hosting accessible to everyone!
 

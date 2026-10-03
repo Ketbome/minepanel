@@ -1857,7 +1857,7 @@ export const es: Record<TranslationKey, string> = {
   // PROXY SETTINGS
   // ===========================
   proxySettings: 'Configuración de Proxy',
-  proxySettingsDesc: 'Configura mc-router para usar un solo puerto para todos los servidores',
+  proxySettingsDesc: 'Enruta todos los servidores Java por un solo puerto público',
   proxyBaseDomain: 'Dominio Base',
   proxyBaseDomainDesc:
     'El dominio que se usará para los subdominios de servidores (ej: mc.example.com)',
@@ -1892,6 +1892,24 @@ export const es: Record<TranslationKey, string> = {
     'Antes de guardar, asegúrate de que todos los servidores estén apagados. Cambiar el proxy global con servidores encendidos puede causar problemas.',
   proxyRequiresDomain: 'Configura un dominio base para habilitar la función de proxy',
   proxyDnsInfo: 'Configura un registro DNS wildcard apuntando a tu servidor:',
+  edgeMode: 'Tipo de proxy',
+  edgeModeRouter: 'mc-router',
+  edgeModeRouterDesc: 'Envía cada hostname a su propio servidor. Necesita un dominio base y un registro DNS wildcard.',
+  edgeModeVelocity: 'Velocity',
+  edgeModeVelocityDesc: 'Una sola red con lobby, servidores de respaldo y cambio con /server. Solo pueden unirse servidores basados en Paper.',
+  edgeModeSavePending: 'Guarda los cambios para cambiar el tipo de proxy antes de encenderlo.',
+  enableVelocityDesc: 'Los jugadores se conectan a Velocity, que los envía al primer lobby disponible',
+  velocityBaseDomainDesc: 'Opcional. Con un dominio, <servidor>.<dominio> lleva a los jugadores directo a ese servidor',
+  velocityPluginsInfo: 'Los plugins de Velocity van en data/velocity/server/plugins y se cargan al reiniciar el proxy.',
+  velocityNetwork: 'Red de Velocity',
+  velocityJoin: 'Unir a la red de Velocity',
+  velocityJoinDesc: 'Los jugadores llegan a este servidor a través de Velocity en lugar de su propio puerto.',
+  velocityIncompatible: 'Solo los servidores Paper, Purpur, Leaf, Folia y Pufferfish en Minecraft 1.19 o superior pueden unirse a la red.',
+  velocityFallbackOrder: 'Orden de lobby',
+  velocityFallbackOrderDesc: 'Los jugadores nuevos entran primero al número más bajo y pasan al siguiente si está caído. Déjalo vacío para llegar a este servidor solo por su hostname o con /server.',
+  velocityHostnameDesc: 'Opcional. Necesita un dominio base en Configuración. Déjalo vacío para usar <id-servidor>.<dominio>',
+  velocityMemberInfo: 'Mientras esté en la red, este servidor corre en offline mode y no publica ningún puerto: Velocity verifica cada cuenta y la reenvía con un secreto compartido. Reinicia el servidor para aplicar los cambios.',
+  velocityPortInfo: 'El puerto lo gestiona Velocity. Los jugadores se conectan al proxy y llegan a este servidor desde ahí.',
   proxyHostname: 'Hostname Personalizado',
   proxyHostnameDesc:
     'Hostname personalizado opcional para este servidor. Deja vacío para auto-generar desde el ID',

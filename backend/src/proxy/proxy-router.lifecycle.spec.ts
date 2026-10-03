@@ -15,6 +15,8 @@ const mockExec = jest.requireMock('node:util').promisify();
 
 describe('ProxyRouterService lifecycle', () => {
   let instanceSettings: Record<string, jest.Mock>;
+  let compose: { getServerIndex: jest.Mock };
+  let proxy: { generateRoutesFile: jest.Mock };
   let service: ProxyRouterService;
 
   const build = (unresolved: string[] = []) =>
@@ -22,6 +24,8 @@ describe('ProxyRouterService lifecycle', () => {
       { get: jest.fn((key: string) => (key === 'dataHostDir' ? '/srv/minepanel/data' : key === 'unresolvedHostPaths' ? unresolved : undefined)) } as any,
       instanceSettings as any,
       { get: jest.fn().mockResolvedValue({ service: 'backend' }) } as any,
+      compose as any,
+      proxy as any,
     );
 
   beforeEach(() => {
@@ -30,6 +34,8 @@ describe('ProxyRouterService lifecycle', () => {
       getProxy: jest.fn().mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' }),
       getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: '25565', autoScaleEnabled: false, autoScaleToken: null, autoScaleDownAfter: '10m', autoScaleWakeTimeout: '180s', autoScaleAsleepMotd: 'a', autoScaleLoadingMotd: 'b', extraNetworks: null }),
     };
+    compose = { getServerIndex: jest.fn().mockResolvedValue([]) };
+    proxy = { generateRoutesFile: jest.fn().mockResolvedValue(undefined) };
     service = build();
   });
 
@@ -63,6 +69,29 @@ describe('ProxyRouterService lifecycle', () => {
     expect(await service.start()).toBe(false);
 
     expect(await build(['/app/data']).start()).toBe(false);
+  });
+
+  it('writes routes.json from the server index before starting', async () => {
+    compose.getServerIndex.mockResolvedValue([
+      { id: 'a', edition: 'JAVA', proxyHostname: 'play' },
+      { id: 'b', edition: 'JAVA', useProxy: false },
+      { id: 'c', edition: 'BEDROCK' },
+    ]);
+    mockExec.mockResolvedValueOnce({ stdout: '' });
+
+    await service.start();
+
+    expect(proxy.generateRoutesFile).toHaveBeenCalledWith([{ id: 'a', hostname: 'play', useProxy: true }], 'mc.example.com');
+    expect(proxy.generateRoutesFile.mock.invocationCallOrder[0]).toBeLessThan(mockExec.mock.invocationCallOrder[0]);
+  });
+
+  it('has no routes to write without a base domain', async () => {
+    instanceSettings.getProxy.mockResolvedValue({ enabled: false, baseDomain: null });
+
+    await service.syncRoutes();
+
+    expect(compose.getServerIndex).not.toHaveBeenCalled();
+    expect(proxy.generateRoutesFile).not.toHaveBeenCalled();
   });
 
   it('stops only when a compose file exists and reports failures', async () => {

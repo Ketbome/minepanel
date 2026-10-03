@@ -753,6 +753,18 @@ export class ServerConfigDto {
   @IsOptional()
   useAutoScale?: boolean;
 
+  // Velocity network membership; only honoured while the edge is Velocity.
+  @IsBoolean()
+  @IsOptional()
+  velocityEnabled?: boolean;
+
+  // Position in Velocity's `try` list; null keeps the server out of the fallback chain.
+  @IsInt()
+  @Min(0)
+  @Max(999)
+  @IsOptional()
+  velocityFallbackOrder?: number | null;
+
   // Bedrock-specific configuration
   @IsBoolean()
   @IsOptional()

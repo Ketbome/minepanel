@@ -73,6 +73,18 @@ export class InstanceSettings {
   @Column({ type: 'text', nullable: true, name: 'proxy_extra_networks' })
   proxyExtraNetworks?: string | null;
 
+  // Which runtime owns the public Minecraft port when the proxy is on. Null is
+  // mc-router, so installs from before Velocity keep behaving the same.
+  @Column({ type: 'text', nullable: true, name: 'edge_mode' })
+  edgeMode?: string | null;
+
+  // Shared with every Velocity backend's paper-global.yml; minted on first use.
+  @Column({ type: 'text', nullable: true, name: 'velocity_secret_enc' })
+  velocitySecretEnc?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'velocity_rcon_enc' })
+  velocityRconEnc?: string | null;
+
   // Set once the values above have been lifted out of a user's preferences, so
   // clearing one of them does not get undone on the next boot.
   @Column({ type: 'boolean', default: false, name: 'preferences_migrated' })

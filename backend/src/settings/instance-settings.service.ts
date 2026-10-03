@@ -1,12 +1,16 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
+import * as fs from 'fs-extra';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstanceSettings } from './entities/instance-settings.entity';
 import { Settings } from '../users/entities/settings.entity';
 import { UpdateIntegrationSettingsDto } from './dto/update-integration-settings.dto';
 import { decryptSecret, encryptSecret } from '../common/crypto/secret-cipher';
+
+// Written by VelocityRuntimeService.writeConfig, in plaintext because Velocity reads it.
+const VELOCITY_FORWARDING_SECRET_FILE = '/app/data/velocity/server/forwarding.secret';
 
 export interface ResolvedSmtp {
   host?: string;
@@ -28,6 +32,18 @@ export interface ResolvedOidc {
   disablePasswordLogin: boolean;
   enabled: boolean;
 }
+
+export type EdgeMode = 'mc-router' | 'velocity';
+
+export interface Edge {
+  enabled: boolean;
+  mode: EdgeMode;
+  baseDomain: string | null;
+}
+
+// What a server compose file is generated against: true routes Java servers
+// through mc-router, 'velocity' only moves the servers that joined its network.
+export type ComposeEdge = boolean | 'velocity';
 
 @Injectable()
 export class InstanceSettingsService implements OnModuleInit {
@@ -97,13 +113,28 @@ export class InstanceSettingsService implements OnModuleInit {
     }
   }
 
-  async getProxy(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+  async getEdge(): Promise<Edge> {
     const row = await this.getRow();
     const baseDomain = row.proxyBaseDomain?.trim() || null;
-    return { enabled: (row.proxyEnabled ?? false) && !!baseDomain, baseDomain };
+    const mode: EdgeMode = row.edgeMode === 'velocity' ? 'velocity' : 'mc-router';
+    // Velocity can send everyone to the lobby; mc-router has nothing to route by without a domain.
+    const enabled = (row.proxyEnabled ?? false) && (mode === 'velocity' || !!baseDomain);
+    return { enabled, mode, baseDomain };
   }
 
-  async setProxy(update: { enabled?: boolean; baseDomain?: string | null }): Promise<{ enabled: boolean; baseDomain: string | null }> {
+  // mc-router hostname routing only: what routes.json and the server compose files react to.
+  async getProxy(): Promise<{ enabled: boolean; baseDomain: string | null }> {
+    const { enabled, mode, baseDomain } = await this.getEdge();
+    return { enabled: enabled && mode === 'mc-router', baseDomain };
+  }
+
+  async getComposeEdge(): Promise<ComposeEdge> {
+    const { enabled, mode } = await this.getEdge();
+    if (!enabled) return false;
+    return mode === 'velocity' ? 'velocity' : true;
+  }
+
+  async setProxy(update: { enabled?: boolean; baseDomain?: string | null; edgeMode?: EdgeMode }): Promise<Edge> {
     const row = await this.getRow();
     if (update.baseDomain !== undefined) {
       row.proxyBaseDomain = update.baseDomain?.trim() || null;
@@ -111,12 +142,40 @@ export class InstanceSettingsService implements OnModuleInit {
     if (update.enabled !== undefined) {
       row.proxyEnabled = update.enabled;
     }
+    if (update.edgeMode !== undefined) {
+      row.edgeMode = update.edgeMode;
+    }
     // Routing by hostname is meaningless without a base domain.
-    if (!row.proxyBaseDomain) {
+    if (!row.proxyBaseDomain && row.edgeMode !== 'velocity') {
       row.proxyEnabled = false;
     }
     await this.repo.save(row);
-    return this.getProxy();
+    return this.getEdge();
+  }
+
+  async getVelocitySecrets(): Promise<{ forwardingSecret: string; rconPassword: string }> {
+    const row = await this.getRow();
+    if (row.velocitySecretEnc && row.velocityRconEnc) {
+      try {
+        return { forwardingSecret: decryptSecret(row.velocitySecretEnc), rconPassword: decryptSecret(row.velocityRconEnc) };
+      } catch {
+        // JWT_SECRET was rotated and the stored copies no longer decrypt. Every member already
+        // holds the forwarding secret Velocity reads from disk, so keeping it spares a restart of
+        // the whole network; the RCON password only lives between the panel and the proxy.
+        const onDisk = (await fs.readFile(VELOCITY_FORWARDING_SECRET_FILE, 'utf8').catch(() => '')).trim();
+        this.logger.warn(
+          onDisk
+            ? 'Velocity secrets no longer decrypt (was JWT_SECRET changed?); kept the forwarding secret from disk'
+            : 'Velocity secrets no longer decrypt (was JWT_SECRET changed?); minted new ones, restart the network members',
+        );
+        row.velocitySecretEnc = onDisk ? encryptSecret(onDisk) : null;
+        row.velocityRconEnc = null;
+      }
+    }
+    row.velocitySecretEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+    row.velocityRconEnc ??= encryptSecret(randomBytes(24).toString('base64url'));
+    await this.repo.save(row);
+    return { forwardingSecret: decryptSecret(row.velocitySecretEnc), rconPassword: decryptSecret(row.velocityRconEnc) };
   }
 
   async getNetwork(): Promise<{ publicIp: string | null; lanIp: string | null }> {

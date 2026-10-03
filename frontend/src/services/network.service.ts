@@ -73,11 +73,12 @@ export async function getAllIPs(): Promise<{
 export interface ProxyStatus {
   available: boolean;
   enabled: boolean;
+  mode?: 'mc-router' | 'velocity';
   baseDomain: string | null;
-  /** Host port the mc-router container publishes. */
+  /** Host port the edge container publishes. */
   proxyPort?: string;
   autoScaleAvailable?: boolean;
-  /** Whether the mc-router container is actually up. */
+  /** Whether the edge container is actually up. */
   running?: boolean;
   routesCount?: number;
 }

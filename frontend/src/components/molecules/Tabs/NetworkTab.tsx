@@ -19,6 +19,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getProxyStatus } from '@/services/network.service';
 import { LINK_CONNECTIVITY_SETTINGS } from '@/lib/providers/constants';
 import { isValidPortMapping } from '@/lib/server-config/port-mapping';
+import { isVelocityBackend } from '@/lib/server-config/velocity-backend';
 
 interface NetworkTabProps {
   config: ServerConfig;
@@ -44,17 +45,20 @@ const normalizeExtraPort = (input: string) => {
 export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
   const { t } = useLanguage();
   const [proxyEnabled, setProxyEnabled] = useState(false);
+  const [velocityEdge, setVelocityEdge] = useState(false);
   const [autoScaleAvailable, setAutoScaleAvailable] = useState(false);
   const [newPort, setNewPort] = useState('');
 
   useEffect(() => {
     getProxyStatus()
       .then((status) => {
-        setProxyEnabled(status.enabled);
+        setProxyEnabled(status.enabled && status.mode !== 'velocity');
+        setVelocityEdge(status.enabled && status.mode === 'velocity');
         setAutoScaleAvailable(!!status.autoScaleAvailable);
       })
       .catch(() => {
         setProxyEnabled(false);
+        setVelocityEdge(false);
         setAutoScaleAvailable(false);
       });
   }, []);
@@ -62,7 +66,9 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
   const isJava = config.edition !== 'BEDROCK';
   const isBedrock = config.edition === 'BEDROCK';
   // Proxy only works with Java edition
-  const serverUsesProxy = isJava && proxyEnabled && config.useProxy !== false;
+  const velocityMember = isJava && velocityEdge && config.velocityEnabled === true;
+  const serverUsesProxy = (isJava && proxyEnabled && config.useProxy !== false) || velocityMember;
+  const canJoinVelocity = isVelocityBackend(config);
   const defaultPort = isBedrock ? '19132' : '25565';
 
   const normalizedNewPort = normalizeExtraPort(newPort);
@@ -137,7 +143,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
             {serverUsesProxy ? (
               <Alert className="bg-cyan-900/30 border-cyan-800 text-cyan-200 mt-2 py-2">
                 <Info className="h-4 w-4" />
-                <AlertDescription>{t('serverPortProxyInfo')}</AlertDescription>
+                <AlertDescription>{velocityMember ? t('velocityPortInfo') : t('serverPortProxyInfo')}</AlertDescription>
               </Alert>
             ) : (
               <Alert className="bg-amber-900/30 border-amber-800 text-amber-200 mt-2 py-2">
@@ -199,8 +205,79 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
           )}
         </div>
 
+        {isJava && velocityEdge && (
+          <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
+            <div className="flex items-center gap-2 text-gray-200 font-minecraft text-sm">
+              <Network className="h-4 w-4 text-cyan-400" />
+              {t('velocityNetwork')}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="velocityEnabled" className="text-gray-200 font-minecraft text-sm">
+                  {t('velocityJoin')}
+                </Label>
+                <Switch
+                  id="velocityEnabled"
+                  checked={config.velocityEnabled === true}
+                  // A server that stopped qualifying (type or version changed) can still leave.
+                  disabled={!canJoinVelocity && config.velocityEnabled !== true}
+                  onCheckedChange={(checked) => updateConfig('velocityEnabled', checked)}
+                />
+              </div>
+              <p className="text-xs text-gray-400">{t('velocityJoinDesc')}</p>
+              {!canJoinVelocity && (
+                <Alert className="bg-amber-900/30 border-amber-800 text-amber-200 py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{t('velocityIncompatible')}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {config.velocityEnabled === true && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="velocityFallbackOrder" className="text-gray-200 font-minecraft text-sm">
+                    {t('velocityFallbackOrder')}
+                  </Label>
+                  <Input
+                    id="velocityFallbackOrder"
+                    type="number"
+                    min={0}
+                    max={999}
+                    value={config.velocityFallbackOrder ?? ''}
+                    onChange={(e) => updateConfig('velocityFallbackOrder', e.target.value === '' ? null : Number(e.target.value))}
+                    placeholder="0"
+                    className="bg-gray-800/70 border-gray-700/50 focus:border-cyan-500/50 focus:ring-cyan-500/30"
+                  />
+                  <p className="text-xs text-gray-400">{t('velocityFallbackOrderDesc')}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="velocityHostname" className="text-gray-200 font-minecraft text-sm">
+                    {t('proxyHostname')}
+                  </Label>
+                  <Input
+                    id="velocityHostname"
+                    value={config.proxyHostname || ''}
+                    onChange={(e) => updateConfig('proxyHostname', e.target.value)}
+                    placeholder={`${config.id}.mc.example.com`}
+                    className="bg-gray-800/70 border-gray-700/50 focus:border-cyan-500/50 focus:ring-cyan-500/30"
+                  />
+                  <p className="text-xs text-gray-400">{t('velocityHostnameDesc')}</p>
+                </div>
+
+                <Alert className="bg-cyan-900/30 border-cyan-800 text-cyan-200">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>{t('velocityMemberInfo')}</AlertDescription>
+                </Alert>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Proxy settings - Java only (mc-router doesn't support Bedrock UDP) */}
-        {isJava && (
+        {isJava && !velocityEdge && (
           <Accordion
             type="single"
             collapsible

@@ -10,10 +10,13 @@ export interface ServerIndexEntry {
   motd?: string;
   port?: string;
   serverType?: string;
+  minecraftVersion?: string;
   edition?: string;
   useProxy?: boolean;
   proxyHostname?: string;
   useAutoScale?: boolean;
+  velocityEnabled?: boolean;
+  velocityFallbackOrder?: number | null;
   active?: boolean;
 }
 
@@ -106,10 +109,13 @@ export class ServerStoreService {
       motd: config.motd,
       port: config.port,
       serverType: config.serverType,
+      minecraftVersion: config.minecraftVersion,
       edition: config.edition,
       useProxy: config.useProxy,
       proxyHostname: config.proxyHostname,
       useAutoScale: config.useAutoScale,
+      velocityEnabled: config.velocityEnabled,
+      velocityFallbackOrder: config.velocityFallbackOrder,
     };
   }
 

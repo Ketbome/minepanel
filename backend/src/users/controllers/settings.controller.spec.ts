@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
+import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ForbiddenException } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
@@ -14,6 +15,7 @@ describe('SettingsController', () => {
   let settingsService: jest.Mocked<SettingsService>;
   let usersService: jest.Mocked<UsersService>;
   let proxyRouter: any;
+  let velocity: any;
   let instanceSettings: any;
   let accessControlService: jest.Mocked<AccessControlService>;
 
@@ -50,6 +52,7 @@ describe('SettingsController', () => {
             getProxySettings: jest.fn(),
             getNetworkSettings: jest.fn(),
             getAuditRetentionDays: jest.fn(),
+            reconcileEdge: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -76,6 +79,10 @@ describe('SettingsController', () => {
           useValue: { reconcile: jest.fn().mockResolvedValue(undefined), isRunning: jest.fn().mockResolvedValue(true) },
         },
         {
+          provide: VelocityRuntimeService,
+          useValue: { reconcile: jest.fn().mockResolvedValue(undefined), isRunning: jest.fn().mockResolvedValue(false) },
+        },
+        {
           provide: AuditLogService,
           useValue: {
             record: jest.fn(),
@@ -86,6 +93,7 @@ describe('SettingsController', () => {
 
     controller = module.get(SettingsController);
     proxyRouter = module.get(ProxyRouterService);
+    velocity = module.get(VelocityRuntimeService);
     instanceSettings = module.get(InstanceSettingsService);
     settingsService = module.get(SettingsService);
     usersService = module.get(UsersService);
@@ -200,18 +208,28 @@ describe('SettingsController', () => {
 
   describe('powering the proxy on and off', () => {
     it('turns the container on and reports what it ended up as', async () => {
-      instanceSettings.setProxy.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
       proxyRouter.isRunning.mockResolvedValue(true);
 
       const result = await controller.setProxyPower({ user: { userId: 1 } }, { enabled: true });
 
       expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: true });
-      expect(proxyRouter.reconcile).toHaveBeenCalled();
-      expect(result).toEqual({ enabled: true, baseDomain: 'mc.example.com', running: true });
+      expect(settingsService.reconcileEdge).toHaveBeenCalledWith('mc-router');
+      expect(result).toEqual({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com', running: true });
+    });
+
+    it('reports the Velocity container when that is the edge', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: null });
+      velocity.isRunning.mockResolvedValue(true);
+
+      const result = await controller.setProxyPower({ user: { userId: 1 } }, { enabled: true });
+
+      expect(settingsService.reconcileEdge).toHaveBeenCalledWith('velocity');
+      expect(result.running).toBe(true);
     });
 
     it('turns it off', async () => {
-      instanceSettings.setProxy.mockResolvedValue({ enabled: false, baseDomain: 'mc.example.com' });
+      instanceSettings.setProxy.mockResolvedValue({ enabled: false, mode: 'mc-router', baseDomain: 'mc.example.com' });
       proxyRouter.isRunning.mockResolvedValue(false);
 
       const result = await controller.setProxyPower({ user: { userId: 1 } }, { enabled: false });
@@ -228,7 +246,7 @@ describe('SettingsController', () => {
       });
 
       await expect(controller.setProxyPower({ user: { userId: 1 } }, { enabled: true })).rejects.toBeInstanceOf(ForbiddenException);
-      expect(proxyRouter.reconcile).not.toHaveBeenCalled();
+      expect(settingsService.reconcileEdge).not.toHaveBeenCalled();
     });
   });
 });
