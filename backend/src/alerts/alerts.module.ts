@@ -5,11 +5,11 @@ import { AlertConfig } from './entities/alert-config.entity';
 import { AlertsController } from './alerts.controller';
 import { AlertsService } from './alerts.service';
 import { Settings } from 'src/users/entities/settings.entity';
-import { DiscordModule } from 'src/discord/discord.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [DockerComposeModule, TypeOrmModule.forFeature([AlertConfig, Settings]), DiscordModule, UsersModule],
+  imports: [DockerComposeModule, TypeOrmModule.forFeature([AlertConfig, Settings]), NotificationsModule, UsersModule],
   controllers: [AlertsController],
   providers: [AlertsService],
   exports: [AlertsService],

@@ -629,14 +629,14 @@ describe('ServerManagementService lifecycle', () => {
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ ip: '1.2.3.4', port: '25577' }));
     });
 
-    it('skips notifications without a webhook and survives settings errors', async () => {
+    it('dispatches other channels without a webhook and survives settings errors', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       await service.stopServer('srv');
-      expect(discord.sendServerNotification).not.toHaveBeenCalled();
+      expect(discord.sendServerNotification).toHaveBeenLastCalledWith('', 'stopped', 'srv', 'es', expect.any(Object));
 
       settingsRepo.findOne.mockRejectedValue(new Error('db'));
       await service.stopServer('srv');
-      expect(discord.sendServerNotification).not.toHaveBeenCalled();
+      expect(discord.sendServerNotification).toHaveBeenLastCalledWith('', 'stopped', 'srv', 'es', expect.any(Object));
 
       settingsRepo.findOne.mockResolvedValue({ discordWebhook: 'https://hook' });
       discord.sendServerNotification.mockRejectedValueOnce(new Error('discord down'));

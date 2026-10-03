@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { IntegrationSettingsController } from './integration-settings.controller';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { AuthMailService } from 'src/auth/auth-mail.service';
 import { UsersService } from '../services/users.service';
 import { AccessControlService } from '../services/access-control.service';
@@ -13,6 +14,7 @@ describe('IntegrationSettingsController', () => {
   let usersService: { getRequiredUserById: jest.Mock; hasSsoCapableAdmin: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let authMailService: { sendTestEmail: jest.Mock };
+  let notifications: { testChannel: jest.Mock; getDeliveryState: jest.Mock; isDiscordConfigured: jest.Mock };
 
   beforeEach(async () => {
     instanceSettings = {
@@ -23,6 +25,7 @@ describe('IntegrationSettingsController', () => {
     usersService = { getRequiredUserById: jest.fn(), hasSsoCapableAdmin: jest.fn(async () => true) };
     auditLogService = { record: jest.fn() };
     authMailService = { sendTestEmail: jest.fn() };
+    notifications = { isDiscordConfigured: jest.fn().mockResolvedValue(false), getDeliveryState: jest.fn().mockReturnValue({}), testChannel: jest.fn().mockResolvedValue({ success: true }) };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IntegrationSettingsController],
@@ -32,6 +35,7 @@ describe('IntegrationSettingsController', () => {
         { provide: UsersService, useValue: usersService },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: AuthMailService, useValue: authMailService },
+        { provide: NotificationsService, useValue: notifications },
       ],
     }).compile();
 
@@ -47,7 +51,7 @@ describe('IntegrationSettingsController', () => {
   it('returns masked settings for admins', async () => {
     usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' });
     const result = await controller.getIntegrations({ user: { userId: 1 } } as any);
-    expect(result).toEqual({ smtp: {}, oidc: {} });
+    expect(result).toEqual({ smtp: {}, oidc: {}, notificationDelivery: {}, systemDiscordConfigured: false });
     expect(instanceSettings.getPublic).toHaveBeenCalled();
   });
 
@@ -74,5 +78,16 @@ describe('IntegrationSettingsController', () => {
 
     await controller.updateIntegrations({ user: { userId: 1, username: 'admin' } } as any, { oidc: { disablePasswordLogin: true } });
     expect(instanceSettings.updateIntegrations).toHaveBeenCalledWith({ oidc: { disablePasswordLogin: true } });
+  });
+  it('rejects notification tests for non-admins', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 2, role: 'USER' });
+    await expect(controller.testNotification({ user: { userId: 2 } }, { channel: 'telegram' })).rejects.toBeInstanceOf(ForbiddenException);
+    expect(notifications.testChannel).not.toHaveBeenCalled();
+  });
+
+  it('tests the saved destination for admins', async () => {
+    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' });
+    await expect(controller.testNotification({ user: { userId: 1 } }, { channel: 'email' })).resolves.toEqual({ success: true });
+    expect(notifications.testChannel).toHaveBeenCalledWith('email');
   });
 });

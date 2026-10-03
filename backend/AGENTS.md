@@ -29,7 +29,8 @@ backend/src/
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
-|- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
+|- notifications/           Discord/SMTP/Telegram fan-out; admin-only instance channel settings
+|- alerts/                  Per-server alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
 |                           + public `GET /item-textures/:version/:item` (cached vanilla PNGs, see item-textures.service.ts)
@@ -397,3 +398,16 @@ Boot changes and gaps over two minutes interrupt open sessions at the last obser
 Do not parse chat as join/leave events. Java identity is name-based; Bedrock uses XUID.
 `player-stats.service.ts` must keep realpath containment, file-size limits, and UUID validation;
 never expose raw player/world files through the activity API.
+
+Notification delivery: `src/notifications/notifications.service.ts` consumes the instance
+SMTP and channel settings, with independent provider calls and timeouts. Telegram tokens
+are encrypted in `InstanceSettings.telegramTokenEnc`, never inside the preferences JSON
+or API responses. Test delivery is admin-only and uses saved destinations. Channel flags
+and lifecycle/alert switches do not affect auth emails. Do not log provider errors that
+may contain credentials. The legacy first configured user Discord webhook remains supported.
+
+`notifications/notification-monitor.service.ts` owns the independent one-minute disk/backup loop. Use `statfs(serversDir)` for the actual data filesystem, bounded `execFile` Docker calls and `ServerStoreService.readConfig` for backup settings. Unknown probes never establish recovery. Backup failure markers are explicit, logs are capped and never included in delivery. State is bounded to current servers and resets on restart. Account mail and notifications share the AuthMailService instance exported by SettingsModule.
+
+Notification backups resolve Compose service IDs with the same project prefix and working directory as server management; never assume a Minecraft container name. Missing containers are stopped, not probe failures. Empty resource samples must preserve incidents and cooldowns. Unreadable Telegram credentials disable only Telegram. Test failures log only allowlisted reason codes/statuses, never raw provider errors.
+
+Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.

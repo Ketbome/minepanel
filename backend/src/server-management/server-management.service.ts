@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
@@ -12,7 +13,7 @@ import { Settings } from 'src/users/entities/settings.entity';
 import { Users } from 'src/users/entities/users.entity';
 import { UserInvitation } from 'src/users/entities/user-invitation.entity';
 import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
-import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
+import { ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
 import { AlertsService } from 'src/alerts/alerts.service';
@@ -68,7 +69,10 @@ export interface ServerRuntimeStats extends ServerResourceInfo {
   uptimeSeconds: number | null;
   version: string | null;
   gameReachable: boolean;
+  gameQueryStatus: 'healthy' | 'failed' | 'unknown';
 }
+
+interface GameProbeResult { value: MinecraftStatusProbe | null; status: 'healthy' | 'failed' | 'unknown' }
 
 export interface ServerInfo {
   exists: boolean;
@@ -156,14 +160,14 @@ export class ServerManagementService {
   // Home (15s) and the server page (10s) both poll runtime stats, often from several
   // tabs: share one `docker exec` probe per server instead of multiplying them.
   private readonly STATUS_PROBE_TTL_MS = 8_000;
-  private readonly statusProbeCache = new Map<string, { at: number; value: MinecraftStatusProbe | null }>();
-  private readonly statusProbeInFlight = new Map<string, Promise<MinecraftStatusProbe | null>>();
+  private readonly statusProbeCache = new Map<string, { at: number; value: GameProbeResult }>();
+  private readonly statusProbeInFlight = new Map<string, Promise<GameProbeResult>>();
 
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
-    private readonly discordService: DiscordService,
+    private readonly notificationsService: NotificationsService,
     private readonly alertsService: AlertsService,
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
@@ -736,10 +740,9 @@ export class ServerManagementService {
     }
   }
 
-  private async sendDiscordNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
+  private async sendServerNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
     try {
       const userSettings = await this.getUserSettings();
-      if (!userSettings.webhook) return;
 
       const enrichedDetails = { ...details };
 
@@ -780,9 +783,9 @@ export class ServerManagementService {
         }
       }
 
-      await this.discordService.sendServerNotification(userSettings.webhook, type, serverName, userSettings.lang, enrichedDetails);
+      await this.notificationsService.sendServerNotification(userSettings.webhook || '', type, serverName, userSettings.lang, enrichedDetails);
     } catch (error) {
-      this.logger.error('Discord notification error', error);
+      this.logger.error('Server notification error', error);
     }
   }
 
@@ -873,7 +876,7 @@ export class ServerManagementService {
     return false;
   }
 
-  async restartServer(serverId: string): Promise<boolean> {
+  async restartServer(serverId: string, notifyFailure = true): Promise<boolean> {
     try {
       if (!this.validateServerId(serverId)) {
         this.logger.error(`Invalid server ID: ${serverId}`);
@@ -901,12 +904,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
-      await this.sendDiscordNotification('restarted', serverId);
+      await this.sendServerNotification('restarted', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to restart server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to restart server' });
+      if (notifyFailure) await this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
   }
@@ -1148,12 +1151,12 @@ export class ServerManagementService {
       }
 
       this.logger.log(`Server ${serverId} deleted successfully`);
-      await this.sendDiscordNotification('deleted', serverId);
+      await this.sendServerNotification('deleted', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to delete server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to delete server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
     }
   }
@@ -1330,7 +1333,7 @@ export class ServerManagementService {
     }
   }
 
-  private async probeMinecraftStatus(serverId: string, containerId: string, edition: ServerEdition): Promise<MinecraftStatusProbe | null> {
+  private async probeMinecraftStatus(serverId: string, containerId: string, edition: ServerEdition): Promise<GameProbeResult> {
     const cached = this.statusProbeCache.get(serverId);
     if (cached && Date.now() - cached.at < this.STATUS_PROBE_TTL_MS) {
       return cached.value;
@@ -1356,7 +1359,7 @@ export class ServerManagementService {
 
   // mc-monitor ships inside the itzg images (it backs their healthcheck), so the probe
   // works for Java and Bedrock without RCON credentials.
-  private async runMinecraftStatusProbe(containerId: string, edition: ServerEdition): Promise<MinecraftStatusProbe | null> {
+  private async runMinecraftStatusProbe(containerId: string, edition: ServerEdition): Promise<GameProbeResult> {
     const isBedrock = edition === 'BEDROCK';
     const args = [
       'exec',
@@ -1372,14 +1375,18 @@ export class ServerManagementService {
     ];
 
     try {
-      const { stdout, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
+      const { stdout, stderr, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
       if (exitCode !== 0) {
-        return null;
+        const diagnostic = `${stderr} ${stdout}`;
+        const infrastructure = /docker daemon|error response from daemon|OCI runtime|exec failed|permission denied|executable file not found|no such container/i.test(diagnostic);
+        const failedQuery = /failed to ping 127\.0\.0\.1:25565|server not ready 127\.0\.0\.1:25565|failed to ping Bedrock server|failed to query bedrock server 127\.0\.0\.1:19132/i.test(diagnostic);
+        return { value: null, status: !infrastructure && failedQuery ? 'failed' : 'unknown' };
       }
-      return parseMinecraftStatus(this.sanitizeCommandOutput(stdout));
+      const value = parseMinecraftStatus(this.sanitizeCommandOutput(stdout));
+      return { value, status: value ? 'healthy' : 'unknown' };
     } catch (error) {
       this.logger.debug(`Minecraft status probe failed for container ${containerId}: ${(error as Error).message}`);
-      return null;
+      return { value: null, status: 'unknown' };
     }
   }
 
@@ -1445,10 +1452,12 @@ export class ServerManagementService {
       uptimeSeconds: null,
       version: null,
       gameReachable: false,
+      gameQueryStatus: 'unknown',
     };
   }
 
-  private buildRuntimeStats(resource: ServerResourceInfo, probe: MinecraftStatusProbe | null, playersMaxFallback: number | null, uptimeSeconds: number | null): ServerRuntimeStats {
+  private buildRuntimeStats(resource: ServerResourceInfo, result: GameProbeResult, playersMaxFallback: number | null, uptimeSeconds: number | null): ServerRuntimeStats {
+    const probe = result.value;
     return {
       ...resource,
       playersOnline: probe?.playersOnline ?? null,
@@ -1456,6 +1465,7 @@ export class ServerManagementService {
       uptimeSeconds,
       version: probe?.version ?? null,
       gameReachable: probe !== null,
+      gameQueryStatus: result.status,
     };
   }
 
@@ -1985,12 +1995,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} started successfully`);
-      await this.sendDiscordNotification('started', serverId);
+      await this.sendServerNotification('started', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to start server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to start server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
     }
   }
@@ -2060,12 +2070,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(this.FORCE_STOP_GRACE_SECONDS));
 
       this.logger.log(`Server ${serverId} force stopped`);
-      await this.sendDiscordNotification('stopped', serverId);
+      await this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to force stop server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to force stop server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to force stop server' });
       return false;
     }
   }
@@ -2113,12 +2123,12 @@ export class ServerManagementService {
       await this.execComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
-      await this.sendDiscordNotification('stopped', serverId);
+      await this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to stop server ${serverId}`, error);
-      await this.sendDiscordNotification('error', serverId, { reason: 'Failed to stop server' });
+      await this.sendServerNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
     }
   }
