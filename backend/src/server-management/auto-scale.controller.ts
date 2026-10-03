@@ -47,6 +47,18 @@ export class AutoScaleController {
     }
 
     if (body.action === 'down') {
+      // The router arms a scale-down timer for every route whenever routes.json is reloaded,
+      // without counting connections opened before the reload. So it also asks to stop servers
+      // that are already down (a duplicate "stopped" notification) or still have players.
+      const { status, playersOnline } = await this.managementService.getServerRuntimeStats(serverId);
+      if (status === 'stopped' || status === 'not_found') {
+        return { serverId, status: 'stopped' };
+      }
+      if (playersOnline) {
+        this.logger.log(`Auto-scale down: ${serverId} still has ${playersOnline} players online`);
+        return { serverId, status: 'skipped' };
+      }
+
       this.logger.log(`Auto-scale down: stopping ${serverId}`);
       if (!(await this.managementService.stopServer(serverId))) {
         throw new ServiceUnavailableException(`Failed to stop server ${serverId}`);

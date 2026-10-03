@@ -10,7 +10,10 @@ import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { PayloadToken } from 'src/auth/models/token.model';
-import { ProxyService } from 'src/proxy/proxy.service';
+import { ProxyRouterService } from 'src/proxy/proxy-router.service';
+import { isValidHostname, ProxyService } from 'src/proxy/proxy.service';
+import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
+import { isVelocityBackend } from 'src/proxy/velocity-backend';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
 import { CloneServerDto } from './dto/clone-server.dto';
 import { SelectWorldDto } from './dto/select-world.dto';
@@ -54,6 +57,10 @@ const ADMIN_ONLY_CONFIG_FIELDS = [
   'jvmDdOpts',
   'execDirectly',
   'extraPorts',
+  // Every Velocity member gets the network's forwarding secret in its paper-global.yml, and
+  // with it whoever operates the server can log in as any player on any member.
+  'velocityEnabled',
+  'velocityFallbackOrder',
 ] as const;
 
 // Creation has no persisted config to compare against, so these are rejected
@@ -209,6 +216,8 @@ export class ServerManagementController {
     private readonly settingsService: SettingsService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyService: ProxyService,
+    private readonly velocity: VelocityRuntimeService,
+    private readonly proxyRouter: ProxyRouterService,
     private readonly bedrockAddonsService: BedrockAddonsService,
     private readonly usersService: UsersService,
     private readonly accessControlService: AccessControlService,
@@ -280,6 +289,8 @@ export class ServerManagementController {
 
       const next = normalizeConfigValue(incoming[field]);
       if (next === normalizeConfigValue(current[field])) return false;
+      // An unset membership and `false` are the same thing.
+      if (field === 'velocityEnabled') return (incoming.velocityEnabled === true) !== (current.velocityEnabled === true);
       // The panel derives the java tag from the Minecraft version, so the version
       // permission has to cover it or the whole save is rejected.
       if (field === 'dockerImage') return !(canChangeVersion && VERSION_DOCKER_IMAGE_TAGS.test(next));
@@ -352,6 +363,10 @@ export class ServerManagementController {
 
     if (config.execDirectly === false) {
       throw new ForbiddenException('Only admins can set these settings: execDirectly');
+    }
+
+    if (config.velocityEnabled === true || (config.velocityFallbackOrder ?? null) !== null) {
+      throw new ForbiddenException('Only admins can add a server to the Velocity network');
     }
 
     this.assertTrustedGenericPack(config.genericPack);
@@ -429,33 +444,45 @@ export class ServerManagementController {
     return ServerListItemDto.fromIndexEntries(index.filter((server) => visibleIds.includes(server.id)));
   }
 
-  // Routing depends on a handful of fields, so this reads the server index
-  // instead of opening every server's config.
-  private async regenerateProxyRoutes(baseDomain: string): Promise<void> {
-    const index = await this.dockerComposeService.getServerIndex();
-    const proxyServers = index
-      .filter((server) => server.useProxy !== false && server.edition !== 'BEDROCK')
-      .map((server) => ({
-        id: server.id,
-        hostname: server.proxyHostname,
-        useProxy: true,
-      }));
-    await this.proxyService.generateRoutesFile(proxyServers, baseDomain);
+  // Keeps whichever edge is on in line with the server index.
+  private async syncEdgeRoutes(): Promise<void> {
+    const { enabled, mode } = await this.instanceSettings.getEdge();
+    if (!enabled) return;
+    if (mode === 'velocity') {
+      await this.velocity.syncConfig();
+    } else {
+      await this.proxyRouter.syncRoutes();
+    }
   }
 
-  // mc-router maps each hostname to one backend, so taking another server's name
-  // would silently steal its players. A blank hostname routes as `<id>.<baseDomain>`.
-  private async assertProxyHostnameFree(id: string, config: Pick<ServerConfig, 'proxyHostname' | 'useProxy' | 'edition'>): Promise<void> {
-    if (config.useProxy === false || config.edition === 'BEDROCK') return;
+  // Membership survives switching the edge back to mc-router, so it is checked whatever the edge is.
+  private assertVelocityBackend(config: Pick<ServerConfig, 'velocityEnabled' | 'edition' | 'serverType' | 'minecraftVersion'>): void {
+    if (config.velocityEnabled && !isVelocityBackend(config)) {
+      throw new BadRequestException('Only Paper, Purpur, Leaf, Folia and Pufferfish servers on Minecraft 1.19 or newer can join the Velocity network');
+    }
+  }
 
-    const { baseDomain } = await this.proxyService.getProxySettings();
-    if (!baseDomain) return;
+  private assertValidHostname(hostname: string | undefined): void {
+    const value = hostname?.trim();
+    if (value && !isValidHostname(value)) {
+      throw new BadRequestException('A hostname can only contain letters, numbers, hyphens, underscores and dots');
+    }
+  }
+
+  // Each hostname maps to one backend (an mc-router route or a Velocity forced host), so
+  // taking another server's name would silently steal its players. A blank hostname
+  // routes as `<id>.<baseDomain>`.
+  private async assertProxyHostnameFree(id: string, config: Pick<ServerConfig, 'proxyHostname' | 'useProxy' | 'edition' | 'velocityEnabled'>): Promise<void> {
+    const { mode, baseDomain } = await this.instanceSettings.getEdge();
+    const routed = (server: Pick<ServerConfig, 'useProxy' | 'velocityEnabled'>) => (mode === 'velocity' ? server.velocityEnabled === true : server.useProxy !== false);
+    if (!baseDomain || !routed(config) || config.edition === 'BEDROCK') return;
+
     const wanted = this.proxyService.generateHostname(id, baseDomain, config.proxyHostname?.trim()).toLowerCase();
     const index = await this.dockerComposeService.getServerIndex();
     const owner = index.find(
       (server) =>
         server.id !== id &&
-        server.useProxy !== false &&
+        routed(server) &&
         server.edition !== 'BEDROCK' &&
         this.proxyService.generateHostname(server.id, baseDomain, server.proxyHostname).toLowerCase() === wanted,
     );
@@ -512,6 +539,8 @@ export class ServerManagementController {
       if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
         throw new BadRequestException('Server ID can only contain letters, numbers, hyphens, and underscores');
       }
+      this.assertVelocityBackend(data);
+      this.assertValidHostname(data.proxyHostname);
       await this.assertProxyHostnameFree(id, data);
 
       const user = req.user as PayloadToken;
@@ -524,7 +553,7 @@ export class ServerManagementController {
         data.cfApiKey = cfApiKey;
       }
 
-      const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
+      const edge = await this.instanceSettings.getComposeEdge();
       const javaServerDefaults =
         (data.edition ?? 'JAVA') === 'JAVA'
           ? this.sanitizeJavaServerDefaults(await this.instanceSettings.getJavaServerDefaults())
@@ -535,12 +564,8 @@ export class ServerManagementController {
         ...data,
       };
 
-      const serverConfig = await this.dockerComposeService.createServer(id, createPayload, proxyEnabled);
-
-      // Regenerate routes.json if proxy is enabled (Java only, mc-router doesn't support Bedrock)
-      if (proxyEnabled && baseDomain) {
-        await this.regenerateProxyRoutes(baseDomain);
-      }
+      const serverConfig = await this.dockerComposeService.createServer(id, createPayload, edge);
+      await this.syncEdgeRoutes();
 
       return {
         success: true,
@@ -568,7 +593,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
+    const edge = await this.instanceSettings.getComposeEdge();
 
     const clonePayload = {
       ...config,
@@ -576,6 +601,9 @@ export class ServerManagementController {
       serverName: body.serverName?.trim() || `${config.serverName} (copy)`,
       extraPorts: [],
       proxyHostname: undefined,
+      // Joining the Velocity network is an admin decision, never inherited.
+      velocityEnabled: undefined,
+      velocityFallbackOrder: undefined,
       backupHostDir: undefined,
       dockerVolumes: this.dockerComposeService.remapVolumesToServer(config.dockerVolumes, id, body.newId),
     };
@@ -589,11 +617,8 @@ export class ServerManagementController {
     await this.assertProxyHostnameFree(body.newId, clonePayload);
 
     try {
-      const serverConfig = await this.dockerComposeService.createServer(body.newId, clonePayload, proxyEnabled);
-
-      if (proxyEnabled && baseDomain) {
-        await this.regenerateProxyRoutes(baseDomain);
-      }
+      const serverConfig = await this.dockerComposeService.createServer(body.newId, clonePayload, edge);
+      await this.syncEdgeRoutes();
 
       await this.recordServerAudit(currentUser, 'clone_server', body.newId, `Cloned server ${id} to ${body.newId}`, 'success', { sourceServerId: id });
 
@@ -610,16 +635,15 @@ export class ServerManagementController {
   @Post('regenerate-all')
   async regenerateAllDockerCompose(@Request() req) {
     await this.requireAdmin(req);
-    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
+    const edge = await this.instanceSettings.getComposeEdge();
 
-    const result = await this.dockerComposeService.regenerateAllDockerCompose(proxyEnabled);
+    const result = await this.dockerComposeService.regenerateAllDockerCompose(edge);
 
-    // Generate routes.json for mc-router if proxy is enabled (Java only)
-    if (proxyEnabled && baseDomain) {
-      await this.regenerateProxyRoutes(baseDomain);
-    } else {
+    // routes.json only has content while mc-router is the edge (Java only)
+    if (edge !== true) {
       await this.proxyService.clearRoutesFile();
     }
+    await this.syncEdgeRoutes();
 
     return {
       success: true,
@@ -638,13 +662,9 @@ export class ServerManagementController {
 
     const result = await this.managementService.deleteServer(id);
 
-    // Regenerate routes.json to remove deleted server
+    // Drop the deleted server from the edge's routes
     if (result) {
-      const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
-
-      if (proxyEnabled && baseDomain) {
-        await this.regenerateProxyRoutes(baseDomain);
-      }
+      await this.syncEdgeRoutes();
     }
 
     return {
@@ -706,12 +726,24 @@ export class ServerManagementController {
     // The form sends '' for a hostname that was never set, which is not a change.
     const hostnameChanged = config.proxyHostname !== undefined && (config.proxyHostname ?? '').trim() !== (currentConfig.proxyHostname ?? '').trim();
     const proxyTurnedOn = currentConfig.useProxy === false && config.useProxy === true;
-    if (hostnameChanged || proxyTurnedOn) {
+    const velocityTurnedOn = currentConfig.velocityEnabled !== true && config.velocityEnabled === true;
+    if (hostnameChanged) this.assertValidHostname(config.proxyHostname);
+    if (hostnameChanged || proxyTurnedOn || velocityTurnedOn) {
       await this.assertProxyHostnameFree(id, {
         proxyHostname: config.proxyHostname ?? currentConfig.proxyHostname,
         useProxy: config.useProxy ?? currentConfig.useProxy,
+        velocityEnabled: config.velocityEnabled ?? currentConfig.velocityEnabled,
         edition: currentConfig.edition,
       });
+    }
+    const merged = { ...currentConfig, ...config };
+    if (currentConfig.velocityEnabled === true && merged.velocityEnabled && !isVelocityBackend(merged) && (await this.instanceSettings.getEdge()).mode !== 'velocity') {
+      // The Velocity section is hidden while mc-router is the edge, so a member that stopped
+      // qualifying leaves the network instead of failing a save it has no control to fix.
+      config.velocityEnabled = false;
+      config.velocityFallbackOrder = null;
+    } else {
+      this.assertVelocityBackend(merged);
     }
 
     // Mod Watch and activity tracking save through their own endpoints; dropping them here stops
@@ -728,16 +760,16 @@ export class ServerManagementController {
       ...configWithoutModWatch
     } = config;
 
-    const { enabled: proxyEnabled, baseDomain } = await this.proxyService.getProxySettings();
+    const edge = await this.instanceSettings.getComposeEdge();
 
-    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, configWithoutModWatch, proxyEnabled);
+    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, configWithoutModWatch, edge);
     if (!updatedConfig) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    // Regenerate routes.json if proxy settings changed (Java only)
-    if (proxyEnabled && baseDomain && (config.proxyHostname !== undefined || config.useProxy !== undefined)) {
-      await this.regenerateProxyRoutes(baseDomain);
+    // Regenerate the edge's routes if routing fields changed (Java only)
+    if ([config.proxyHostname, config.useProxy, config.velocityEnabled, config.velocityFallbackOrder].some((value) => value !== undefined)) {
+      await this.syncEdgeRoutes();
     }
 
     await this.recordServerAudit(currentUser, 'update_server_config', id, `Updated server configuration for ${id}`);
@@ -828,7 +860,7 @@ export class ServerManagementController {
       }
     }
 
-    const { enabled: proxyEnabled } = await this.proxyService.getProxySettings();
+    const edge = await this.instanceSettings.getComposeEdge();
 
     const nextConfig: Partial<ServerConfig> = {
       worldSource: requestedSource,
@@ -839,7 +871,7 @@ export class ServerManagementController {
       cfSetLevelFrom: '',
     };
 
-    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, nextConfig, proxyEnabled);
+    const updatedConfig = await this.dockerComposeService.updateServerConfig(id, nextConfig, edge);
     if (!updatedConfig) {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
@@ -879,8 +911,7 @@ export class ServerManagementController {
       throw new NotFoundException(`Server with ID "${id}" not found`);
     }
 
-    const { enabled: proxyEnabled } = await this.proxyService.getProxySettings();
-    await this.dockerComposeService.updateServerConfig(id, {}, proxyEnabled);
+    await this.dockerComposeService.updateServerConfig(id, {}, await this.instanceSettings.getComposeEdge());
 
     const result = await this.managementService.clearServerData(id);
 

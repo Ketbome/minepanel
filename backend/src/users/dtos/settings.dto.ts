@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean, IsEnum, ValidateNested, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsEnum, IsIn, ValidateNested, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 // mc-router container settings. The panel generates the router's compose file,
@@ -46,6 +46,10 @@ export class ProxySettingsDto {
   @IsOptional()
   @IsString()
   proxyBaseDomain?: string;
+
+  @IsOptional()
+  @IsIn(['mc-router', 'velocity'])
+  edgeMode?: 'mc-router' | 'velocity';
 
   @IsOptional()
   @ValidateNested()
