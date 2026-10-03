@@ -1888,7 +1888,7 @@ export const tr: Record<TranslationKey, string> = {
   // PROXY SETTINGS
   // ===========================
   proxySettings: 'Proxy ayarları',
-  proxySettingsDesc: 'Tüm sunucular için tek port kullanmak üzere mc-router yapılandırın',
+  proxySettingsDesc: 'Tüm Java sunucularını tek bir genel port üzerinden yönlendirir',
   proxyBaseDomain: 'Temel alan adı',
   proxyBaseDomainDesc:
     'Sunucu alt alan adları için kullanılacak alan adı (örn. mc.example.com)',
@@ -1922,6 +1922,24 @@ export const tr: Record<TranslationKey, string> = {
     'Kaydetmeden önce tüm sunucuların durdurulduğundan emin olun. Sunucular çalışırken genel proxy ayarını değiştirmek sorun çıkarabilir.',
   proxyRequiresDomain: 'Proxy özelliğini etkinleştirmek için bir temel alan adı yapılandırın',
   proxyDnsInfo: 'Sunucunuza işaret eden bir joker DNS kaydı oluşturun:',
+  edgeMode: 'Proxy türü',
+  edgeModeRouter: 'mc-router',
+  edgeModeRouterDesc: 'Her ana bilgisayar adını kendi sunucusuna gönderir. Bir temel alan adı ve wildcard DNS kaydı gerekir.',
+  edgeModeVelocity: 'Velocity',
+  edgeModeVelocityDesc: 'Lobi, yedek sunucular ve /server ile geçiş içeren tek bir ağ. Yalnızca Paper tabanlı sunucular katılabilir.',
+  edgeModeSavePending: 'Proxy türünü değiştirmek için başlatmadan önce değişiklikleri kaydet.',
+  enableVelocityDesc: 'Oyuncular Velocity\'ye bağlanır ve Velocity onları ilk uygun lobiye gönderir',
+  velocityBaseDomainDesc: 'İsteğe bağlı. Bir alan adıyla <sunucu>.<alan> oyuncuları doğrudan o sunucuya götürür',
+  velocityPluginsInfo: 'Velocity eklentileri data/velocity/server/plugins klasörüne konur ve proxy bir sonraki yeniden başlatmada yükler.',
+  velocityNetwork: 'Velocity ağı',
+  velocityJoin: 'Velocity ağına katıl',
+  velocityJoinDesc: 'Oyuncular bu sunucuya kendi portu yerine Velocity üzerinden ulaşır.',
+  velocityIncompatible: 'Ağa yalnızca Minecraft 1.19 veya daha yeni sürümdeki Paper, Purpur, Leaf, Folia ve Pufferfish sunucuları katılabilir.',
+  velocityFallbackOrder: 'Lobi sırası',
+  velocityFallbackOrderDesc: 'Yeni oyuncular önce en küçük numaraya girer, o kapalıysa bir sonrakine geçer. Bu sunucuya yalnızca ana bilgisayar adıyla veya /server ile ulaşılsın istiyorsan boş bırak.',
+  velocityHostnameDesc: 'İsteğe bağlı. Ayarlar\'da bir temel alan adı gerekir. <sunucu-id>.<alan> kullanmak için boş bırak',
+  velocityMemberInfo: 'Ağda olduğu sürece bu sunucu çevrimdışı modda çalışır ve port yayınlamaz: Velocity her hesabı doğrular ve paylaşılan bir gizli anahtarla iletir. Değişiklikleri uygulamak için sunucuyu yeniden başlat.',
+  velocityPortInfo: 'Portu Velocity yönetir. Oyuncular proxy\'ye bağlanır ve bu sunucuya oradan ulaşır.',
   proxyHostname: 'Özel ana makine adı',
   proxyHostnameDesc:
     'Bu sunucu için isteğe bağlı özel ana makine adı. Sunucu kimliğinden otomatik oluşturulması için boş bırakın',

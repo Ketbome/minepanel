@@ -41,6 +41,7 @@ import { PlayerSession, PlayerTracking } from '../player-activity/entities/playe
 import { ServerStoreService } from '../docker-compose/server-store.service';
 import { DockerComposeService } from '../docker-compose/docker-compose.service';
 import { InstanceSettingsService } from '../settings/instance-settings.service';
+import { VelocityForwardingService } from '../proxy/velocity-forwarding.service';
 import * as fs from 'fs-extra';
 
 // Get the mocked promisify result
@@ -98,7 +99,8 @@ describe('ServerManagementService', () => {
     mockInstanceSettings = {
       getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }),
       getProxy: jest.fn().mockResolvedValue({ enabled: false, baseDomain: null }),
-    };
+      getComposeEdge: jest.fn().mockResolvedValue(false),
+    } as any;
 
     (fs.ensureDirSync as jest.Mock).mockImplementation(() => {});
     (fs.pathExists as jest.Mock).mockResolvedValue(true);
@@ -113,6 +115,7 @@ describe('ServerManagementService', () => {
         { provide: ServerStoreService, useValue: mockStore },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
         { provide: InstanceSettingsService, useValue: mockInstanceSettings },
+        { provide: VelocityForwardingService, useValue: { apply: jest.fn() } },
       ],
     }).compile();
 
@@ -366,6 +369,7 @@ describe('ServerManagementService', () => {
           { provide: ServerStoreService, useValue: { readConfig: jest.fn() } },
           { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },
           { provide: InstanceSettingsService, useValue: {} },
+          { provide: VelocityForwardingService, useValue: { apply: jest.fn() } },
         ],
       }).compile();
 

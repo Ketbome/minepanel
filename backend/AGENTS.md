@@ -24,7 +24,8 @@ backend/src/
 |- files/                   File browser API over server directories; chunked uploads staged in
 |                           servers/.upload-sessions (upload-sessions.service.ts)
 |- world-discovery/         World import/discovery into global world library
-|- proxy/                   mc-router routes.json generation
+|- proxy/                   Edge proxy: mc-router (routes.json) or Velocity (velocity.toml,
+|                           paper-global.yml forwarding on member servers)
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
@@ -53,6 +54,12 @@ Integration settings & secrets:
   (`hasPassword`, `hasCfApiKey`, ...), never the value. The CurseForge key is decrypted only
   server-side (`SettingsService.getCfApiKey`) and injected into the generated compose plaintext
   so itzg reads it. Admin-only endpoints live in `users/controllers/integration-settings.controller.ts`.
+- The Velocity forwarding secret and RCON password are minted by the panel on first use
+  (`InstanceSettingsService.getVelocitySecrets`), stored encrypted and never returned over
+  HTTP. The secret is written in plaintext only where it must be read: Velocity's
+  `forwarding.secret` and each member's `paper-global.yml`. Since anyone operating a member
+  can read it there, `velocityEnabled`/`velocityFallbackOrder` are in
+  `ADMIN_ONLY_CONFIG_FIELDS` (`server-management.controller.ts`) and cloning drops them.
 
 Primary runtime relationship:
 

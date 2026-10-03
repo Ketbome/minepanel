@@ -11,6 +11,7 @@ jest.mock('fs-extra', () => ({
   pathExists: jest.fn().mockResolvedValue(false),
   readJson: jest.fn(),
   writeJson: jest.fn().mockResolvedValue(undefined),
+  writeFile: jest.fn().mockResolvedValue(undefined),
   readFile: jest.fn(),
 }));
 
@@ -154,6 +155,8 @@ describe('ProxyService', () => {
     });
 
     it('generateRoutesFile writes only servers that use the proxy', async () => {
+      (fs.readFile as unknown as jest.Mock).mockRejectedValue(new Error('ENOENT'));
+
       await service.generateRoutesFile(
         [
           { id: 'a', useProxy: true },
@@ -163,7 +166,15 @@ describe('ProxyService', () => {
         'proxy.test',
       );
 
-      expect(fs.writeJson).toHaveBeenCalledWith('/app/data/proxy/routes.json', { mappings: { 'a.proxy.test': 'a:25565', 'custom.proxy.test': 'b:25565' } }, { spaces: 2 });
+      expect(fs.writeFile).toHaveBeenCalledWith('/app/data/proxy/routes.json', JSON.stringify({ mappings: { 'a.proxy.test': 'a:25565', 'custom.proxy.test': 'b:25565' } }, null, 2) + '\n');
+    });
+
+    it('generateRoutesFile leaves an unchanged routes.json alone so mc-router does not reload', async () => {
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue(JSON.stringify({ mappings: { 'a.proxy.test': 'a:25565' } }, null, 2) + '\n');
+
+      await service.generateRoutesFile([{ id: 'a', useProxy: true }], 'proxy.test');
+
+      expect(fs.writeFile).not.toHaveBeenCalled();
     });
 
     it('addServerToProxy replaces the previous hostname of the same server', async () => {

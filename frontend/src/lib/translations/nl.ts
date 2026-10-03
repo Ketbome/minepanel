@@ -1869,7 +1869,7 @@ export const nl: Record<TranslationKey, string> = {
   // PROXY SETTINGS
   // ===========================
   proxySettings: 'Proxy Instellingen',
-  proxySettingsDesc: 'Configureer mc-router om een enkele poort te gebruiken voor alle servers',
+  proxySettingsDesc: 'Leid alle Java-servers via één openbare poort',
   proxyBaseDomain: 'Basis Domein',
   proxyBaseDomainDesc:
     'Het domein dat wordt gebruikt voor server subdomeinen (bijv. mc.example.com)',
@@ -1903,6 +1903,24 @@ export const nl: Record<TranslationKey, string> = {
     'Zorg ervoor dat alle servers zijn gestopt voordat je opslaat. Het wijzigen van de globale proxy terwijl servers draaien kan problemen veroorzaken.',
   proxyRequiresDomain: 'Configureer een basisdomein om de proxyfunctie in te schakelen',
   proxyDnsInfo: 'Configureer een wildcard DNS record dat naar je server wijst:',
+  edgeMode: 'Proxytype',
+  edgeModeRouter: 'mc-router',
+  edgeModeRouterDesc: 'Stuurt elke hostnaam naar een eigen server. Vereist een basisdomein en een wildcard-DNS-record.',
+  edgeModeVelocity: 'Velocity',
+  edgeModeVelocityDesc: 'Eén netwerk met een lobby, uitwijkservers en wisselen met /server. Alleen op Paper gebaseerde servers kunnen meedoen.',
+  edgeModeSavePending: 'Sla de wijzigingen op om het proxytype te wisselen voordat je het start.',
+  enableVelocityDesc: 'Spelers verbinden met Velocity, dat ze naar de eerste beschikbare lobby stuurt',
+  velocityBaseDomainDesc: 'Optioneel. Met een domein brengt <server>.<domein> spelers direct naar die server',
+  velocityPluginsInfo: 'Velocity-plugins horen in data/velocity/server/plugins en worden geladen bij de volgende herstart van de proxy.',
+  velocityNetwork: 'Velocity-netwerk',
+  velocityJoin: 'Deelnemen aan het Velocity-netwerk',
+  velocityJoinDesc: 'Spelers bereiken deze server via Velocity in plaats van via de eigen poort.',
+  velocityIncompatible: 'Alleen Paper-, Purpur-, Leaf-, Folia- en Pufferfish-servers op Minecraft 1.19 of nieuwer kunnen deelnemen aan het netwerk.',
+  velocityFallbackOrder: 'Lobbyvolgorde',
+  velocityFallbackOrderDesc: 'Nieuwe spelers komen eerst op het laagste nummer en gaan door naar het volgende als dat offline is. Laat leeg om deze server alleen via de hostnaam of /server te bereiken.',
+  velocityHostnameDesc: 'Optioneel. Vereist een basisdomein in Instellingen. Laat leeg voor <server-id>.<domein>',
+  velocityMemberInfo: 'Zolang deze server in het netwerk zit, draait hij in offline mode en publiceert hij geen poort: Velocity controleert elk account en geeft het door met een gedeeld geheim. Herstart de server om wijzigingen toe te passen.',
+  velocityPortInfo: 'De poort wordt beheerd door Velocity. Spelers verbinden met de proxy en bereiken deze server vanaf daar.',
   proxyHostname: 'Aangepaste Hostnaam',
   proxyHostnameDesc:
     'Optionele aangepaste hostnaam voor deze server. Laat leeg om automatisch te genereren',

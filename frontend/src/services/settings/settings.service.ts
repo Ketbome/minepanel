@@ -13,20 +13,24 @@ export interface ProxyRouterSettings {
   extraNetworks?: string | null;
 }
 
+export type EdgeMode = 'mc-router' | 'velocity';
+
 export interface ProxySettings {
   enabled: boolean;
   baseDomain: string | null;
   available: boolean;
+  edgeMode?: EdgeMode;
   router?: ProxyRouterSettings;
 }
 
 export interface ProxyPowerResult {
   enabled: boolean;
+  mode: EdgeMode;
   baseDomain: string | null;
   running: boolean;
 }
 
-// Acts immediately: the router container is a thing you switch on, so it does
+// Acts immediately: the edge container is a thing you switch on, so it does
 // not wait for the settings form to be saved.
 export async function setProxyPower(enabled: boolean): Promise<ProxyPowerResult> {
   const response = await api.post<ProxyPowerResult>('/settings/proxy/power', { enabled });
@@ -144,6 +148,7 @@ export interface UpdateUserSettings {
   proxy?: {
     proxyEnabled?: boolean;
     proxyBaseDomain?: string;
+    edgeMode?: EdgeMode;
     router?: ProxyRouterSettings;
   };
   network?: {

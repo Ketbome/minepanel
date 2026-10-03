@@ -3,6 +3,13 @@ jest.mock('../common/crypto/secret-cipher', () => ({
   decryptSecret: jest.fn((value: string) => value.replace(/^enc:/, '')),
 }));
 
+jest.mock('fs-extra', () => {
+  const actual = jest.requireActual('fs-extra');
+  return { ...actual, readFile: jest.fn((...args: unknown[]) => actual.readFile(...args)) };
+});
+
+import * as fs from 'fs-extra';
+import { decryptSecret } from '../common/crypto/secret-cipher';
 import { InstanceSettingsService } from './instance-settings.service';
 
 describe('InstanceSettingsService router, defaults and OIDC', () => {
@@ -28,6 +35,74 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
     repo.findOne.mockResolvedValueOnce(null);
     expect(await service.getNetwork()).toEqual({ publicIp: null, lanIp: null });
     expect(repo.create).toHaveBeenCalledWith({ id: 1 });
+  });
+
+  describe('edge mode', () => {
+    it('keeps mc-router as the edge for rows saved before Velocity existed', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      expect(await service.getEdge()).toEqual({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
+      expect(await service.getProxy()).toEqual({ enabled: true, baseDomain: 'mc.example.com' });
+    });
+
+    // Server compose files and routes.json only react to mc-router routing.
+    it('turns mc-router routing off while Velocity is the edge', async () => {
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      row.edgeMode = 'velocity';
+      expect(await service.getEdge()).toEqual({ enabled: true, mode: 'velocity', baseDomain: 'mc.example.com' });
+      expect(await service.getProxy()).toEqual({ enabled: false, baseDomain: 'mc.example.com' });
+    });
+
+    it('lets Velocity run without a base domain, but not mc-router', async () => {
+      expect(await service.setProxy({ enabled: true, edgeMode: 'velocity' })).toEqual({ enabled: true, mode: 'velocity', baseDomain: null });
+      expect(await service.setProxy({ edgeMode: 'mc-router' })).toEqual({ enabled: false, mode: 'mc-router', baseDomain: null });
+      expect(row.proxyEnabled).toBe(false);
+    });
+
+    it('tells compose generation which edge to build against', async () => {
+      expect(await service.getComposeEdge()).toBe(false);
+      row.proxyEnabled = true;
+      row.proxyBaseDomain = 'mc.example.com';
+      expect(await service.getComposeEdge()).toBe(true);
+      row.edgeMode = 'velocity';
+      expect(await service.getComposeEdge()).toBe('velocity');
+    });
+
+    it('mints the Velocity secrets once and keeps them', async () => {
+      const first = await service.getVelocitySecrets();
+      expect(first.forwardingSecret).toMatch(/^[\w-]{32}$/);
+      expect(first.rconPassword).not.toBe(first.forwardingSecret);
+      expect(row.velocitySecretEnc).toBe(`enc:${first.forwardingSecret}`);
+      expect(await service.getVelocitySecrets()).toEqual(first);
+      expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the forwarding secret from disk when the stored copies no longer decrypt', async () => {
+      row.velocitySecretEnc = 'enc:old-secret';
+      row.velocityRconEnc = 'enc:old-rcon';
+      const decrypt = decryptSecret as jest.Mock;
+      decrypt.mockImplementationOnce(() => {
+        throw new Error('Unsupported state or unable to authenticate data');
+      });
+      const readFile = fs.readFile as unknown as jest.Mock;
+      readFile.mockResolvedValueOnce('old-secret\n');
+
+      const secrets = await service.getVelocitySecrets();
+
+      expect(readFile).toHaveBeenCalledWith('/app/data/velocity/server/forwarding.secret', 'utf8');
+      expect(secrets.forwardingSecret).toBe('old-secret');
+      expect(secrets.rconPassword).not.toBe('old-rcon');
+      expect(row.velocitySecretEnc).toBe('enc:old-secret');
+
+      // Without the file there is nothing to keep, so both are minted again.
+      row.velocitySecretEnc = 'enc:old-secret';
+      decrypt.mockImplementationOnce(() => {
+        throw new Error('bad key');
+      });
+      readFile.mockRejectedValueOnce(new Error('ENOENT'));
+      expect((await service.getVelocitySecrets()).forwardingSecret).toMatch(/^[\w-]{32}$/);
+    });
   });
 
   it('returns router defaults and mints an auto-scale token once', async () => {

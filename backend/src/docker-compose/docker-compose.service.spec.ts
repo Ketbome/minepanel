@@ -608,6 +608,38 @@ describe('DockerComposeService', () => {
       expect(parsed.services.mc.networks['minepanel-network'].aliases).toEqual(['proxyserver']);
     });
 
+    describe('with Velocity as the edge', () => {
+      const generate = async (overrides: Record<string, unknown>) => {
+        const config = { ...(service as any).createDefaultConfig('lobby'), serverType: 'PAPER', onlineMode: true, ...overrides };
+        await service.generateDockerComposeFile(config, 'velocity');
+        const writeFileMock = fs.writeFile as unknown as jest.Mock;
+        return yaml.load(writeFileMock.mock.calls[0][1] as string) as any;
+      };
+
+      it('puts a member on the panel network, with no host port and offline mode', async () => {
+        const parsed = await generate({ velocityEnabled: true });
+
+        expect(parsed.services.mc.ports).toBeUndefined();
+        expect(parsed.services.mc.networks['minepanel-network'].aliases).toEqual(['lobby']);
+        expect(parsed.services.mc.environment.ONLINE_MODE).toBe('FALSE');
+        expect(parsed.networks['minepanel-network']).toEqual({ external: true });
+      });
+
+      it('keeps a non-member on its own host port and online mode, and off the 25565 the proxy owns', async () => {
+        const parsed = await generate({ velocityEnabled: false });
+
+        expect(parsed.services.mc.ports).toContain('25566:25565');
+        expect(parsed.services.mc.networks).toBeUndefined();
+        expect(parsed.services.mc.environment.ONLINE_MODE).toBe('true');
+      });
+
+      it('overrides an ONLINE_MODE set through custom env vars for a member', async () => {
+        const parsed = await generate({ velocityEnabled: true, envVars: 'ONLINE_MODE=TRUE' });
+
+        expect(parsed.services.mc.environment.ONLINE_MODE).toBe('FALSE');
+      });
+    });
+
     it('should reserve port 25565 for direct java servers when global proxy is enabled', async () => {
       const config = (service as any).createDefaultConfig('direct-server');
       config.useProxy = false;
@@ -621,7 +653,7 @@ describe('DockerComposeService', () => {
       expect(parsed.services.mc.ports).toContain('25566:25565');
     });
 
-    it('should reserve port 25565 when mc-router is running even if global proxy is disabled', async () => {
+    it('should reserve port 25565 when mc-router or Velocity is running even if global proxy is disabled', async () => {
       const childProcess = jest.requireMock('node:child_process') as { exec: jest.Mock };
       childProcess.exec.mockImplementation((_: string, callback: (error: Error | null, result: { stdout: string; stderr: string }) => void) => {
         callback(null, { stdout: 'router-id\n', stderr: '' });
@@ -635,7 +667,7 @@ describe('DockerComposeService', () => {
       const [, yamlContent] = writeFileMock.mock.calls[0];
       const parsed = yaml.load(yamlContent as string) as any;
 
-      expect(parsed.services.mc.ports).toContain('25566:25565');
+      expect(parsed.services.mc.ports).toContain('25566:25565');      expect(childProcess.exec).toHaveBeenCalledWith(expect.stringContaining('name=^/mc-velocity$'), expect.any(Function));
     });
 
     it('should attach backup service to proxy network when proxy is enabled', async () => {

@@ -337,7 +337,8 @@ it from the panel.
 The panel exposes `POST /servers/autoscale` for this. It is the only
 unauthenticated endpoint that controls servers, it is rejected unless the
 auto-scale token matches, and it only accepts servers that are currently in the
-proxy routes.
+proxy routes. A sleep request for a server that is already stopped, or that still
+has players online, is ignored.
 
 ### Bedrock Connection
 
@@ -347,6 +348,81 @@ Bedrock servers connect directly via IP and port:
 Server Address: your-ip
 Port: 19132 (or assigned port)
 ```
+
+## Velocity Network (Java Only)
+
+A lobby and game servers behind one address: players join the lobby, move with
+`/server <name>`, and land on the next lobby when one goes down. Velocity replaces
+mc-router as the proxy on the public port; the two never run together.
+
+```mermaid
+flowchart LR
+    P["👤 play.example.com"] --> V["Velocity:25565"]
+    V --> L["lobby (Paper)"]
+    V --> S["survival (Paper)"]
+    V --> M["minigames (Purpur)"]
+```
+
+### Setup
+
+1. **Settings → Network:** pick **Velocity** as the proxy type and save.
+2. Press **Start proxy**. The panel generates the proxy's compose file, `velocity.toml`
+   and the forwarding secret, and starts the `mc-velocity` container on the
+   **Router port**.
+3. **Server → Network → Velocity network:** turn on **Join the Velocity network** for
+   each server, and give the lobbies a **Lobby order** (lowest first).
+4. Restart the servers you changed.
+
+The base domain is optional. With one, each member also gets a forced host
+(`{server-id}.mc.example.com`, or its custom hostname) that takes players straight to
+it; without one, everyone enters through the lobby. Hostnames take letters, numbers,
+`-`, `_` and dots. If two members end up with the same forced host (for example, names
+set before the base domain), only the first one keeps it and the panel logs a warning.
+
+### What joining changes
+
+- **Supported servers:** Paper, Purpur, Leaf, Folia and Pufferfish on Minecraft 1.19 or
+  newer (they read forwarding from `config/paper-global.yml`). The switch is disabled for
+  anything else. While mc-router is the edge, changing a member to another type or an older
+  version takes it out of the network.
+- **No host port:** the server is reachable only by Velocity, over `minepanel-network`.
+- **Offline mode:** Velocity checks each account and passes the player on with a shared
+  secret (modern forwarding), so the server itself runs with `online-mode=false`. Players
+  keep their real UUIDs and skins. Leaving the network restores the server's own setting.
+- **Forwarding:** before each start the panel writes only `proxies.velocity` in the
+  server's `paper-global.yml`. Everything else in that file is yours.
+
+::: warning Keep members unreachable from outside
+A member accepts players only through Velocity because Paper rejects connections without
+the secret. Do not publish its game port yourself (extra ports or a compose snippet), and
+do not turn Velocity forwarding off in its `paper-global.yml`.
+:::
+
+::: danger Only admins add servers to the network
+Every member holds the network's forwarding secret in its `paper-global.yml`, and whoever
+has it can join any member as any player, ops included. That is why only admins can turn
+membership or the lobby order on or off, and a cloned server never inherits them. Treat
+everyone with file or plugin access to a member as trusted with the whole network.
+:::
+
+Adding, removing or reordering members is applied with `velocity reload`, so players
+already connected stay connected.
+
+The forwarding secret is stored encrypted with a key derived from `JWT_SECRET`. If you
+change `JWT_SECRET`, the panel keeps the secret from `data/velocity/server/forwarding.secret`,
+so members keep working. Without that file it mints a new one, and every member needs a
+restart.
+
+### Proxy plugins
+
+Velocity plugins go in `data/velocity/server/plugins` and load on the next proxy restart.
+The panel only owns `velocity.toml` and `forwarding.secret` in that folder; the rest is
+yours.
+
+### Not supported yet
+
+Spigot/Bukkit (legacy forwarding), Fabric/Quilt and Forge/NeoForge backends, Paper
+before 1.19, auto-scaling, and Bedrock. See the [roadmap](/roadmap).
 
 ## Troubleshooting
 

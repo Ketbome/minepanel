@@ -122,7 +122,7 @@ describe('InstanceSettingsService', () => {
 
       const result = await service.setProxy({ enabled: true, baseDomain: null });
 
-      expect(result).toEqual({ enabled: false, baseDomain: null });
+      expect(result).toEqual({ enabled: false, mode: 'mc-router', baseDomain: null });
     });
 
     it('reports the proxy as disabled when there is no base domain to route by', async () => {
@@ -136,7 +136,7 @@ describe('InstanceSettingsService', () => {
       row.proxyBaseDomain = 'mc.example.com';
       row.proxyEnabled = false;
 
-      expect(await service.setProxy({ enabled: true })).toEqual({ enabled: true, baseDomain: 'mc.example.com' });
+      expect(await service.setProxy({ enabled: true })).toEqual({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
     });
 
     it('clears network values when they are blank', async () => {

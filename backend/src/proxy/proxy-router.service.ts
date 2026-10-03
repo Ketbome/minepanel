@@ -7,7 +7,9 @@ import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import { HostContextService } from 'src/common/docker/host-context.service';
 import { escapeComposeValues } from 'src/common/compose/compose-escape';
+import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
+import { ProxyService } from './proxy.service';
 
 const execAsync = promisify(exec);
 
@@ -40,6 +42,8 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     private readonly configService: ConfigService,
     private readonly instanceSettings: InstanceSettingsService,
     private readonly hostContext: HostContextService,
+    private readonly dockerComposeService: DockerComposeService,
+    private readonly proxyService: ProxyService,
   ) {
     this.DATA_HOST_DIR = this.configService.get('dataHostDir');
     this.DATA_HOST_DIR_IS_A_GUESS = (this.configService.get<string[]>('unresolvedHostPaths') ?? []).includes('/app/data');
@@ -156,6 +160,18 @@ export class ProxyRouterService implements OnApplicationBootstrap {
       .filter((line) => line && line !== PANEL_NETWORK);
   }
 
+  // Routing depends on a handful of fields, so this reads the server index instead of
+  // opening every server's config. The router watches the file, so it needs no restart.
+  async syncRoutes(): Promise<void> {
+    const { baseDomain } = await this.instanceSettings.getProxy();
+    if (!baseDomain) return;
+    const index = await this.dockerComposeService.getServerIndex();
+    const servers = index
+      .filter((server) => server.useProxy !== false && server.edition !== 'BEDROCK')
+      .map((server) => ({ id: server.id, hostname: server.proxyHostname, useProxy: true }));
+    await this.proxyService.generateRoutesFile(servers, baseDomain);
+  }
+
   async start(): Promise<boolean> {
     // The router reads routes.json off a bind mount, so an unknown host path would put it
     // in a crash loop against an empty directory. Failing here at least says why.
@@ -168,6 +184,9 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     }
 
     try {
+      // The routes are only kept up to date while the router is the edge, and it exits
+      // when the file is missing, so it always starts from a fresh one.
+      await this.syncRoutes();
       await this.generateComposeFile();
       await execAsync('docker compose up -d', { cwd: this.PROJECT_DIR });
       this.logger.log('mc-router is up');

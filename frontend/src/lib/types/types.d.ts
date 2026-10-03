@@ -277,6 +277,8 @@ export interface ServerConfig {
   proxyHostname?: string;
   useProxy?: boolean;
   useAutoScale?: boolean;
+  velocityEnabled?: boolean;
+  velocityFallbackOrder?: number | null;
 
   // Bedrock-specific configuration
   allowCheats?: boolean;

@@ -31,8 +31,10 @@ minepanel/
 Main flow: UI -> API -> `server.json` -> compose generation -> `docker compose up/down`
 -> status/logs/commands.
 
-The mc-router proxy is also a panel-managed compose project (`data/proxy/`), not a
-service in the root compose file.
+The edge proxy is also a panel-managed compose project, not a service in the root compose
+file: mc-router in `data/proxy/` or Velocity in `data/velocity/` (never both; they share the
+public port). Velocity members opt in per server and must be Paper-family 1.19+
+(`backend/src/proxy/velocity-backend.ts`, duplicated in the frontend).
 
 ## Key Commands
 
