@@ -375,6 +375,14 @@ describe('ServerManagementController', () => {
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
     });
 
+    it('should drop the tick command fields from a whole-form save', async () => {
+      await controller.updateServer(mockReq, 'victim', { serverName: 'x', tickCommand: 'op me', tickTpsPattern: '(1)', tickMsptPattern: '(2)' } as any);
+      const saved = dockerComposeService.updateServerConfig.mock.calls[0][1];
+      expect(saved).not.toHaveProperty('tickCommand');
+      expect(saved).not.toHaveProperty('tickTpsPattern');
+      expect(saved).not.toHaveProperty('tickMsptPattern');
+    });
+
     it('should check the default hostname when the proxy is turned back on', async () => {
       (controller as any).proxyService.getProxySettings.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
       dockerComposeService.getServerConfig.mockResolvedValue({ ...persistedConfig, useProxy: false } as any);

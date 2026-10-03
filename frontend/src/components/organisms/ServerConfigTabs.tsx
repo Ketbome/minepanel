@@ -220,16 +220,18 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     }
   }, [config, savedConfig]);
 
-  // Detect unsaved changes. Mod Watch fields are excluded: they save through their own
-  // endpoint and PUT /servers/:id drops them, so they can never be a pending whole-form change.
+  // Detect unsaved changes. Mod Watch, spawn point and tick command fields are excluded: they save
+  // through their own endpoints and PUT /servers/:id drops them, so they can never be a pending whole-form change.
   useEffect(() => {
     if (!savedConfig) {
       setHasUnsavedChanges(false);
       return;
     }
-    const { modNotes: _n1, modWatchTargetVersion: _v1, ...configRest } = config;
-    const { modNotes: _n2, modWatchTargetVersion: _v2, ...savedConfigRest } = savedConfig;
-    const configChanged = JSON.stringify(configRest) !== JSON.stringify(savedConfigRest);
+    const wholeForm = (source: ServerConfig) => {
+      const { modNotes, modWatchTargetVersion, spawnX, spawnY, spawnZ, tickCommand, tickTpsPattern, tickMsptPattern, ...rest } = source;
+      return rest;
+    };
+    const configChanged = JSON.stringify(wholeForm(config)) !== JSON.stringify(wholeForm(savedConfig));
     setHasUnsavedChanges(configChanged);
   }, [config, savedConfig]);
 

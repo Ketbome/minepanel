@@ -91,7 +91,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const meanHistory = meanBased || points.some((point) => point.tickSource != null && point.tickSource !== "spark");
   const nativeHistory = native || points.some((point) => point.tickSource === "neoforge");
   const cards = [
-    { icon: Gauge, label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: t(native ? "monitoringNativeHelp" : "monitoringTpsWindow") },
+    { icon: Gauge, label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: native ? t("monitoringNativeHelp") : live?.tickSource === "spark" ? t("monitoringTpsWindow") : t("monitoringTpsDefault") },
     { icon: Timer, label: "MSPT", value: `${number(meanBased ? live?.msptMean : live?.msptMedian)} ms`, help: meanBased ? t("monitoringMeanHelp") : `${t("monitoringMsptWindow")} · P95 ${number(live?.msptP95)} ms` },
     { icon: Cpu, label: t("metricsCpu"), value: `${number(live?.cpuPercent)}%`, help: t("monitoringCpuHelp") },
     { icon: MemoryStick, label: t("metricsMemory"), value: `${number(live?.memoryMb == null ? null : live.memoryMb / 1024, 2)} GiB`, help: t("monitoringMemoryHelp") },

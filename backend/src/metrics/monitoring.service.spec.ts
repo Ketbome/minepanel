@@ -191,14 +191,19 @@ describe('MonitoringService', () => {
       expect((await poll()).tickStatus).toBe('unavailable');
     });
 
-    it('keeps servers independent, and a passing test resumes a paused command', async () => {
+    it('keeps servers independent, and a passing test of the saved command resumes it', async () => {
       await failLimitTimes({ success: true, output: '' });
       expect((await poll('other')).tickStatus).toBe('unavailable');
-      store.readConfig.mockResolvedValue({ edition: 'JAVA', enableRcon: true });
       management.readTickCommand.mockResolvedValue({ success: true, output: tabTps });
-      await service.testTickCommand('atm10', 'tickinfo');
-      store.readConfig.mockResolvedValue(config);
+      await service.testTickCommand('atm10', config.tickCommand);
       expect((await poll()).tickStatus).toBe('available');
+    });
+
+    it('leaves a pause alone when the tested command is not the saved one', async () => {
+      await failLimitTimes({ success: true, output: '' });
+      management.readTickCommand.mockResolvedValue({ success: true, output: tabTps });
+      await service.testTickCommand('atm10', 'tickinfo --other');
+      expect((await poll()).tickStatus).toBe('custom_paused');
     });
   });
 

@@ -136,8 +136,12 @@ export class MonitoringService {
   }
 
   // Editing the command or its patterns starts over, so the breaker needs no explicit reset call.
+  private fingerprint(command: string, patterns: CustomTickPatterns): string {
+    return JSON.stringify([command, patterns.tps, patterns.mspt]);
+  }
+
   private breakerFor(serverId: string, command: string, patterns: CustomTickPatterns): CustomTickBreaker {
-    const fingerprint = JSON.stringify([command, patterns.tps, patterns.mspt]);
+    const fingerprint = this.fingerprint(command, patterns);
     let breaker = this.breakers.get(serverId);
     if (!breaker || breaker.fingerprint !== fingerprint) {
       breaker = { fingerprint, failures: 0, pausedUntil: 0 };
@@ -177,8 +181,11 @@ export class MonitoringService {
       if (error instanceof TickPatternTimeoutError) throw new BadRequestException('Pattern is too slow: it exceeded the match time limit');
       throw error;
     }
-    // A working command is a reason to try again straight away instead of waiting out a pause.
-    if (parsed) this.breakers.delete(serverId);
+    // A working saved command is a reason to try again straight away instead of waiting out a pause.
+    // A different candidate says nothing about the saved one, so it leaves the breaker alone.
+    if (parsed && config.tickCommand === command && this.breakers.get(serverId)?.fingerprint === this.fingerprint(command, patterns)) {
+      this.breakers.delete(serverId);
+    }
     return { ...response, parsed };
   }
 }

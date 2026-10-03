@@ -14,6 +14,11 @@ describe('TickCommandDto', () => {
     expect(await errors({ tickCommand })).toHaveLength(1);
   });
 
+  it('trims the command before checking it, so a padded flag is still rejected', async () => {
+    expect(await errors({ tickCommand: ' --host=x' })).toHaveLength(1);
+    expect(plainToInstance(TickCommandDto, { tickCommand: ' tickinfo ' }).tickCommand).toBe('tickinfo');
+  });
+
   it('rejects oversized patterns', async () => {
     expect(await errors({ tickTpsPattern: 'a'.repeat(201) })).toHaveLength(1);
   });
