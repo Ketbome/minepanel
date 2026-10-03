@@ -20,6 +20,12 @@ export class InstanceSettings {
     diskAlertEnabled?: boolean;
     backupFailureEnabled?: boolean;
     recoveryEnabled?: boolean;
+    taskFailureEnabled?: boolean;
+    gameAlertEnabled?: boolean;
+    staleBackupEnabled?: boolean;
+    gameFailureSamples?: number;
+    gameStartupGraceMinutes?: number;
+    staleBackupToleranceMinutes?: number;
     diskFreeThresholdPercent?: number;
     alertCooldownMinutes?: number;
   } | null;

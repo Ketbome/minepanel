@@ -87,11 +87,11 @@ describe('DiscordService', () => {
     }
   });
 
-  it('uses a neutral status for warnings and swallows webhook failures', async () => {
+  it('uses a neutral status and propagates failures to the dispatcher', async () => {
     const req = stubRequest(400, 'bad request');
-    await expect(service.sendServerNotification('https://hooks.example/x', 'warning', 'srv')).resolves.toBeUndefined();
+    await expect(service.sendServerNotification('https://hooks.example/x', 'warning', 'srv')).rejects.toThrow('400');
     expect(JSON.parse(req.write.mock.calls[0][0]).embeds[0].fields[1].value).toContain('🟡');
-    expect(console.error).toHaveBeenCalledWith('Discord webhook error:', expect.stringContaining('400'));
+
   });
 
   it('posts custom messages and reports failures', async () => {
@@ -101,8 +101,7 @@ describe('DiscordService', () => {
     expect(payload.embeds[0]).toMatchObject({ title: 'Title', description: 'Body', color: 0xeab308, fields: [{ name: 'a', value: 'b' }], footer: { text: 'MinePanel' } });
 
     stubRequest(0, '', new Error('offline'));
-    await service.sendCustomMessage('https://hooks.example/x', 'Title', 'Body');
-    expect(console.error).toHaveBeenCalledWith('Discord custom message error:', 'offline');
+    await expect(service.sendCustomMessage('https://hooks.example/x', 'Title', 'Body')).rejects.toThrow('offline');
   });
 
   it('testWebhook reports success and failure', async () => {
@@ -110,8 +109,22 @@ describe('DiscordService', () => {
     expect(await service.testWebhook('https://hooks.example/x', 'nl')).toEqual({ success: true, message: expect.any(String) });
 
     stubRequest(0, '', new Error('offline'));
-    expect(await service.testWebhook('https://hooks.example/x')).toEqual({ success: false, message: 'offline' });
+    expect(await service.testWebhook('https://hooks.example/x')).toEqual({ success: false, message: 'Provider request failed' });
 
-    expect(await service.testWebhook('not a url')).toEqual({ success: false, message: expect.stringContaining('Invalid URL') });
+    expect(await service.testWebhook('not a url')).toEqual({ success: false, message: 'Provider request failed' });
+  });
+  it('forces message confirmation and retries a JSON 429 only once', async () => {
+    let count = 0;
+    (https.request as jest.Mock).mockImplementation((_options, handler: Handler) => {
+      const req = Object.assign(new EventEmitter(), { write: jest.fn(), end: jest.fn() });
+      process.nextTick(() => {
+        const res = Object.assign(new EventEmitter(), { statusCode: ++count === 1 ? 429 : 200 });
+        handler(res);res.emit('data', '{"retry_after":0}');res.emit('end');
+      });
+      return req;
+    });
+    await service.sendCustomMessage('https://hooks.example/x?wait=false', 'Title', 'Body');
+    expect(https.request).toHaveBeenCalledTimes(2);
+    expect((https.request as jest.Mock).mock.calls[0][0].path).toBe('/x?wait=true');
   });
 });

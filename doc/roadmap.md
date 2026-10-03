@@ -203,7 +203,9 @@ high CPU/RAM (configurable thresholds, sustain window and cooldown, in the
 Metrics tab), plus admin-managed notification channels, lifecycle/alert switches and
 saved-destination tests under Settings > Integrations. Email uses the instance SMTP settings;
 Telegram stores the bot token encrypted. Opt-in low disk space, failed backup and incident
-recovery alerts also ship, with repeat intervals.
+recovery alerts also ship, with repeat intervals. Opt-in scheduled task failures, sustained
+game-query failures and Java/restic overdue-backup alerts join per-channel attempt outcomes
+and bounded explicit rate-limit retry.
 
 Still planned:
 

@@ -98,7 +98,11 @@ export interface OidcIntegration {
   source: 'db' | 'env' | 'unset';
 }
 
+export interface NotificationDelivery { status: 'accepted' | 'failed' | 'unknown'; attemptedAt: string; source: 'automatic' | 'test'; reason?: string }
+
 export interface IntegrationSettings {
+  systemDiscordConfigured?: boolean;
+  notificationDelivery?: Record<'discord' | 'email' | 'telegram', NotificationDelivery | null>;
   smtp: SmtpIntegration;
   oidc: OidcIntegration;
   notifications: NotificationSettings;
@@ -116,6 +120,12 @@ export interface NotificationSettings {
   diskAlertEnabled: boolean;
   backupFailureEnabled: boolean;
   recoveryEnabled: boolean;
+  taskFailureEnabled: boolean;
+  gameAlertEnabled: boolean;
+  staleBackupEnabled: boolean;
+  gameFailureSamples: number;
+  gameStartupGraceMinutes: number;
+  staleBackupToleranceMinutes: number;
   diskFreeThresholdPercent: number;
   alertCooldownMinutes: number;
 }
@@ -204,7 +214,7 @@ export const testSmtp = async (): Promise<{ success: boolean; message: string }>
   return response.data;
 };
 
-export const testNotification = async (channel: 'email' | 'telegram'): Promise<{ success: boolean; message: string }> => {
+export const testNotification = async (channel: 'discord' | 'email' | 'telegram'): Promise<{ success: boolean; message: string }> => {
   const response = await api.post('/settings/integrations/notifications/test', { channel });
   return response.data;
 };

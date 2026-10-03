@@ -201,3 +201,5 @@ interrupted session drops its baseline, since its deltas are unknown.
 rejects escapes and returns selected numeric counters. Game files are never modified.
 The frontend lazily loads the Players tab, polls after request completion, and cancels
 requests on player/server/page changes.
+
+Notification attempts record only bounded per-channel outcome metadata in memory, fenced against stale in-flight completion after a configuration change. Discord and Telegram honor one bounded explicit rate-limit retry; network ambiguity is never retried. Scheduled task outcomes distinguish success/failure/skipped and emit sanitized failures. Game status probes keep measured game failure separate from infrastructure/parse errors; the alert evaluator applies startup grace and incident state. Restic freshness is an opt-in filtered snapshot metadata check with a five-minute cadence, independent of integrity verification.

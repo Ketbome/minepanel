@@ -203,7 +203,7 @@ describe('InstanceSettingsService', () => {
     });
   });
   it('returns notification defaults for existing installations', async () => {
-    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
+    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
     expect((await service.getNotifications()).telegramToken).toBe('');
   });
 

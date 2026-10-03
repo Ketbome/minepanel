@@ -127,6 +127,36 @@ export class NotificationSettingsDto {
   alertCooldownMinutes?: number;
 
 
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  taskFailureEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  gameAlertEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  staleBackupEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  gameFailureSamples?: number;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
+  @Max(1440)
+  gameStartupGraceMinutes?: number;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
+  @Max(10080)
+  staleBackupToleranceMinutes?: number;
+
 }
 
 export class UpdateIntegrationSettingsDto {

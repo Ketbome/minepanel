@@ -12,7 +12,7 @@ jest.mock('node:child_process', () => ({ execFile: jest.fn() }));
 
 describe('NotificationMonitorService', () => {
   let service: NotificationMonitorService;
-  let policy: { alertsEnabled: boolean; diskAlertEnabled: boolean; backupFailureEnabled: boolean; diskFreeThresholdPercent: number; alertCooldownMinutes: number };
+  let policy: { alertsEnabled: boolean; diskAlertEnabled: boolean; backupFailureEnabled: boolean; staleBackupEnabled: boolean; staleBackupToleranceMinutes: number; diskFreeThresholdPercent: number; alertCooldownMinutes: number };
   let settings: { getNotifications: jest.Mock };
   let notifications: { sendOperationalAlert: jest.Mock };
   let store: { listServerDirs: jest.Mock; readConfig: jest.Mock };
@@ -26,7 +26,7 @@ describe('NotificationMonitorService', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(now);
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
-    policy = { alertsEnabled: true, diskAlertEnabled: true, backupFailureEnabled: true, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
+    policy = { alertsEnabled: true, diskAlertEnabled: true, backupFailureEnabled: true, staleBackupEnabled: false, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
     settings = { getNotifications: jest.fn(async () => policy) };
     notifications = { sendOperationalAlert: jest.fn().mockResolvedValue(undefined) };
     store = { listServerDirs: jest.fn().mockResolvedValue(['srv']), readConfig: jest.fn().mockResolvedValue({ enableBackup: true }) };
@@ -94,7 +94,7 @@ describe('NotificationMonitorService', () => {
     store.listServerDirs.mockResolvedValue(['srv', '../escape']);store.readConfig.mockResolvedValue({ enableBackup: false });
     await service.collect();expect(store.readConfig).toHaveBeenCalledTimes(1);expect(execFile).not.toHaveBeenCalled();
     store.readConfig.mockResolvedValue({ enableBackup: true });backupRunning = false;exitCode = 1;await service.collect();
-    store.listServerDirs.mockResolvedValue([]);await service.collect();
+    store.listServerDirs.mockResolvedValue(['other']);store.readConfig.mockResolvedValueOnce({ enableBackup: false });await service.collect();
     store.listServerDirs.mockResolvedValue(['srv']);await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(2);
   });
 
@@ -136,5 +136,42 @@ describe('NotificationMonitorService', () => {
   it('does not warn when stopped Compose projects have no containers', async () => {
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, _args, _opts, callback) => callback(new Error('Error response from daemon: No such object: srv')));
     await service.collect();expect(Logger.prototype.warn).not.toHaveBeenCalled();
+  });
+  it('detects overdue restic snapshots and recovers only after a valid fresh snapshot', async () => {
+    policy.staleBackupEnabled = true;policy.backupFailureEnabled = false;
+    store.readConfig.mockResolvedValue({ enableBackup: true, edition: 'JAVA', backupMethod: 'restic', backupInterval: '1h', backupInitialDelay: '0' });
+    let snapshots: unknown = [];
+    (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
+      if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'mc-id' : 'backup-id', '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true }), '');
+      else callback(null, JSON.stringify(snapshots), '');
+    });
+    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('stale', 'srv', expect.any(String));
+    snapshots = [{ time: 'bad timestamp' }];jest.setSystemTime(now + 5 * 60_000);await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
+    snapshots = [{ time: new Date(now + 9 * 60_000).toISOString() }];jest.setSystemTime(now + 10 * 60_000);await service.collect();
+    expect(notifications.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'A new restic snapshot was observed.');
+    expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['--host', 'srv', '--path', '/data']), expect.any(Object), expect.any(Function));
+  });
+
+  it('does not infer overdue backups for Bedrock, intentional pauses or custom compose schedules', async () => {
+    policy.staleBackupEnabled = true;policy.backupFailureEnabled = false;
+    for (const config of [{ edition: 'BEDROCK' }, { edition: 'JAVA', pauseIfNoPlayers: true }, { edition: 'JAVA', composeSnippets: [{ yaml: 'custom' }] }]) {
+      store.readConfig.mockResolvedValue({ enableBackup: true, backupMethod: 'restic', ...config });await service.collect();
+    }
+    expect(notifications.sendOperationalAlert).not.toHaveBeenCalled();
+    expect((execFile as unknown as jest.Mock).mock.calls.some((call) => call[1][0] === 'exec')).toBe(false);
+  });
+  it('keeps explicit backup failure detection independent from an unknown freshness probe', async () => {
+    policy.staleBackupEnabled = true;policy.backupFailureEnabled = true;
+    store.readConfig.mockResolvedValue({ enableBackup: true, edition: 'JAVA', backupMethod: 'restic', backupInterval: '1h' });
+    output = '2026-10-01T11:59:50Z 2026-10-01T11:59:50+0000 ERROR Backup failed with exit code 1';
+    (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
+      if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'mc-id' : 'backup-id', '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true }), '');
+      else if (args[0] === 'exec') callback(new Error('private repository credentials'));
+      else callback(null, '', output);
+    });
+    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    expect(JSON.stringify((Logger.prototype.warn as jest.Mock).mock.calls)).not.toContain('credentials');
   });
 });

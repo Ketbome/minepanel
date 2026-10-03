@@ -1,3 +1,5 @@
+import { backupDuration } from './backup-freshness';
+import { ServerConfig } from 'src/server-management/dto/server-config.model';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { statfs } from 'node:fs/promises';
@@ -26,6 +28,9 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
   private collecting = false;
   private diskIncident = false;
   private diskLastAlert: number | null = null;
+  private readonly freshnessChecks = new Map<string, number>();
+  private readonly staleIncidents = new Set<string>();
+  private readonly staleAlerts = new Map<string, number>();
   private readonly backupCursors = new Map<string, number>();
   private readonly backupLastAlerts = new Map<string, number>();
 
@@ -57,13 +62,18 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
         this.diskIncident = false;
         this.diskLastAlert = null;
       }
-      if (!policy.backupFailureEnabled) {
+      if (!policy.backupFailureEnabled && !policy.staleBackupEnabled) {
+        this.freshnessChecks.clear(); this.staleIncidents.clear(); this.staleAlerts.clear();
         this.backupCursors.clear();
         this.backupLastAlerts.clear();
         return;
       }
       const ids = (await this.store.listServerDirs()).filter((id) => /^[a-zA-Z0-9_-]+$/.test(id));
+      if (ids.length === 0) return;
       const present = new Set(ids);
+      for (const id of this.freshnessChecks.keys()) if (!present.has(id)) this.freshnessChecks.delete(id);
+      for (const id of this.staleIncidents) if (!present.has(id)) this.staleIncidents.delete(id);
+      for (const id of this.staleAlerts.keys()) if (!present.has(id)) this.staleAlerts.delete(id);
       for (const id of this.backupCursors.keys()) if (!present.has(id)) this.backupCursors.delete(id);
       for (const id of this.backupLastAlerts.keys()) if (!present.has(id)) this.backupLastAlerts.delete(id);
       for (let offset = 0; offset < ids.length; offset += 4) {
@@ -104,6 +114,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
   private async checkBackup(serverId: string, policy: Policy): Promise<void> {
     const config = await this.store.readConfig(serverId);
     if (!config?.enableBackup) {
+      this.staleIncidents.delete(serverId); this.staleAlerts.delete(serverId); this.freshnessChecks.delete(serverId);
       this.backupCursors.delete(serverId);
       this.backupLastAlerts.delete(serverId);
       return;
@@ -116,8 +127,15 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     const backup = (await runDocker([...compose, 'ps', '-a', '-q', 'backup'], directory)).stdout.trim();
     if (!backup) return;
     const inspection = await runDocker(['inspect', '--format', '{{json .State}}', mc, backup]);
-    const states = inspection.stdout.trim().split('\n').map((line) => JSON.parse(line) as { Running: boolean; Restarting?: boolean; ExitCode: number });
+    const states = inspection.stdout.trim().split('\n').map((line) => JSON.parse(line) as { Running: boolean; Restarting?: boolean; ExitCode: number; StartedAt?: string });
     if (states.length !== 2 || states[0].Running !== true) return;
+    if (policy.staleBackupEnabled) {
+      if (states[1].Running === true && states[1].Restarting !== true) {
+        try { await this.checkFreshness(serverId, config, policy, backup, states[0].StartedAt); }
+        catch { this.logger.warn(`Backup freshness probe unavailable for ${serverId}`); }
+      }
+    } else { this.staleIncidents.delete(serverId); this.staleAlerts.delete(serverId); }
+    if (!policy.backupFailureEnabled) return;
     const now = Date.now();
     let failed = (states[1].Running === false || states[1].Restarting === true) && Number.isInteger(states[1].ExitCode) && states[1].ExitCode > 0 && states[1].ExitCode !== 143;
     if (states[1].Running === true) {
@@ -138,4 +156,35 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     // Backup logs may contain repository credentials; never forward the raw log text.
     await this.notifications.sendOperationalAlert('backup', serverId, 'The backup sidecar reported a failed backup or exited with an error. Check its logs.');
   }
+
+  private async checkFreshness(serverId: string, config: ServerConfig, policy: Policy, backup: string, startedAt?: string): Promise<void> {
+    if (config.edition === 'BEDROCK' || config.backupMethod !== 'restic' || config.pauseIfNoPlayers || config.composeSnippets?.length) return;
+    const interval = backupDuration(config.backupInterval || '24h');
+    const initial = backupDuration(config.backupInitialDelay || '2m', true);
+    const started = Date.parse(startedAt || '');
+    const now = Date.now();
+    if (interval === null || initial === null || !Number.isFinite(started) || started > now) return;
+    const lastCheck = this.freshnessChecks.get(serverId);
+    if (lastCheck !== undefined && now - lastCheck < 5 * INTERVAL_MS) return;
+    this.freshnessChecks.set(serverId, now);
+    const result = await runDocker(['exec', backup, 'restic', 'snapshots', '--json', '--host', serverId, '--path', '/data', '--latest', '1']);
+    const snapshots = JSON.parse(result.stdout) as Array<{ time?: string }>;
+    if (!Array.isArray(snapshots)) return;
+    const times = snapshots.map((snapshot) => Date.parse(snapshot.time || ''));
+    if (times.some((time) => !Number.isFinite(time) || time > now)) return;
+    const latest = times.length ? Math.max(...times) : 0;
+    const expected = latest >= started ? latest + interval : started + initial + (config.backupOnStartup === false ? interval : 0);
+    if (now > expected + policy.staleBackupToleranceMinutes * INTERVAL_MS) {
+      this.staleIncidents.add(serverId);
+      const previous = this.staleAlerts.get(serverId);
+      if (previous === undefined || now - previous >= policy.alertCooldownMinutes * INTERVAL_MS) {
+        this.staleAlerts.set(serverId, now);
+        await this.notifications.sendOperationalAlert('stale', serverId, 'No new restic snapshot was observed within the expected interval and tolerance.');
+      }
+    } else if (latest > 0 && this.staleIncidents.delete(serverId)) {
+      this.staleAlerts.delete(serverId);
+      await this.notifications.sendOperationalAlert('recovery', serverId, 'A new restic snapshot was observed.');
+    }
+  }
+
 }

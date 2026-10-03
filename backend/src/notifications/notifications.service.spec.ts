@@ -18,7 +18,7 @@ describe('NotificationsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config = { discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
+    config = { discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
     settings = {
       getNotifications: jest.fn(async () => config),
       getSmtp: jest.fn().mockResolvedValue({ enabled: true, host: 'smtp.test', port: 587, secure: false, user: 'admin', pass: 'smtp-secret', from: 'panel@example.com' }),
@@ -79,8 +79,8 @@ describe('NotificationsService', () => {
     fetchMock.mockRejectedValue(new Error('https://api.telegram.org/bot123:secret/sendMessage'));
     await expect(service.sendServerNotification('https://hook', 'error', 'srv', 'en')).resolves.toBeUndefined();
     expect(discord.sendServerNotification).toHaveBeenCalledTimes(1);
-    expect(Logger.prototype.warn).toHaveBeenCalledWith('Email notification delivery failed');
-    expect(Logger.prototype.warn).toHaveBeenCalledWith('Telegram notification delivery failed');
+    expect(Logger.prototype.warn).toHaveBeenCalledWith('email notification delivery failed');
+    expect(Logger.prototype.warn).toHaveBeenCalledWith('telegram notification delivery failed');
     expect(JSON.stringify((Logger.prototype.warn as jest.Mock).mock.calls)).not.toContain('secret');
   });
 
@@ -191,5 +191,29 @@ describe('NotificationsService', () => {
     await service.testChannel('email');
     expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
     expect(transporter.sendMail).toHaveBeenCalledTimes(2);
+  });
+  it('records accepted, failed and unknown channel outcomes without raw secrets', async () => {
+    transporter.sendMail.mockRejectedValue(Object.assign(new Error('private'), { name: 'TimeoutError' }));
+    fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ ok: false, description: 'private Telegram URL' }) });
+    await service.sendCustomMessage('https://hook', 'Notice', 'Body', 'warning', []);
+    expect(service.getDeliveryState().discord?.status).toBe('accepted');
+    expect(service.getDeliveryState().email?.status).toBe('unknown');
+    expect(service.getDeliveryState().telegram?.status).toBe('failed');
+    expect(JSON.stringify(service.getDeliveryState())).not.toContain('private');
+    service.resetDeliveryState();expect(service.getDeliveryState().discord).toBeNull();
+  });
+
+  it('ignores an old in-flight result after settings changed', async () => {
+    let release: () => void;
+    transporter.sendMail.mockImplementationOnce(() => new Promise<void>((resolve) => { release = resolve; }));
+    const pending = service.testChannel('email');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    service.resetDeliveryState();release!();await pending;
+    expect(service.getDeliveryState().email).toBeNull();
+  });
+
+  it('handles Telegram rate limits once without retrying timeouts', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({ ok: false, parameters: { retry_after: 0 } }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
+    expect((await service.testChannel('telegram')).success).toBe(true);expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
