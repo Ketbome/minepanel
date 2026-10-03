@@ -188,3 +188,5 @@ Keep Telegram tokens encrypted and write-only, and provider failures isolated.
 Opt-in disk/backup notification probes run once a minute in `backend/src/notifications/notification-monitor.service.ts`. Recovery requires an observed incident and a valid healthy reading; raw backup logs must never be forwarded.
 
 Account email and notifications share the `AuthMailService` exported by `SettingsModule`; do not redeclare it in consumer modules. Resolve backup targets through Compose service IDs and keep empty-sample/decryption failures isolated from other notifications.
+
+Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.

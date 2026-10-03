@@ -889,7 +889,7 @@ describe('ServerManagementService', () => {
       } as never);
       jest.spyOn(service as any, 'getServerLimits').mockResolvedValue({ cpuLimit: '2', memoryLimit: '4G' });
       jest.spyOn(service as any, 'findContainerId').mockResolvedValue('container123');
-      jest.spyOn(service as any, 'runMinecraftStatusProbe').mockResolvedValue(probe);
+      jest.spyOn(service as any, 'runMinecraftStatusProbe').mockResolvedValue({ value: probe, status: probe ? 'healthy' : 'unknown' });
       jest.spyOn(service as any, 'getContainersStartedAt').mockResolvedValue({ container123: NOW - 120_000 });
     };
 
@@ -984,4 +984,13 @@ describe('ServerManagementService', () => {
     });
   });
 
+  it.each([
+    ['failed to ping 127.0.0.1:25565 : connection refused', 'failed'],
+    ['{"msg":"Failed to ping Bedrock server","error":"read timeout"}', 'failed'],
+    ['Error response from daemon: permission denied', 'unknown'],
+    ['context deadline exceeded', 'unknown'],
+  ])('classifies game probe diagnostic %s without counting infrastructure failure', async (stderr, status) => {
+    jest.spyOn(service as any, 'executeProcess').mockResolvedValue({ stdout: '', stderr, exitCode: 1 });
+    expect(await (service as any).runMinecraftStatusProbe('container', 'JAVA')).toEqual({ value: null, status });
+  });
 });

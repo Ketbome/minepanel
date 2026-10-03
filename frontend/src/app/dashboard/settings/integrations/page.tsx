@@ -252,7 +252,7 @@ export default function IntegrationsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={hasDiscordWebhook} onTestDiscord={handleTestWebhook} testingDiscord={testingWebhook} /> : null}
+      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={integrations.systemDiscordConfigured ?? hasDiscordWebhook} delivery={integrations.notificationDelivery} /> : null}
       {/* CurseForge + Discord */}
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>

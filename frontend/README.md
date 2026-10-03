@@ -71,3 +71,5 @@ from recorded playtime. The tab cancels in-flight requests on navigation and ref
 30 seconds after completion; unknown presence is explicitly labeled.
 
 Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.
+
+Integrations show each channel’s last accepted/failed/unknown attempt and expose opt-in task failures, sustained game-query failures and Java/restic overdue-backup rules.

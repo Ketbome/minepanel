@@ -11,8 +11,8 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 import { IsIn } from 'class-validator';
 
 export class TestNotificationDto {
-  @IsIn(['email', 'telegram'])
-  channel: 'email' | 'telegram';
+  @IsIn(['discord', 'email', 'telegram'])
+  channel: 'discord' | 'email' | 'telegram';
 }
 
 @Controller('settings/integrations')
@@ -56,7 +56,7 @@ export class IntegrationSettingsController {
   @Get()
   async getIntegrations(@Request() req) {
     await this.requireAdmin(req.user as PayloadToken);
-    return this.instanceSettings.getPublic();
+    return { ...await this.instanceSettings.getPublic(), notificationDelivery: this.notificationsService.getDeliveryState(), systemDiscordConfigured: await this.notificationsService.isDiscordConfigured() };
   }
 
   @Patch()
@@ -75,7 +75,7 @@ export class IntegrationSettingsController {
       summary: 'Updated integration settings (SMTP/OIDC/notifications)',
     });
 
-    return result;
+    return { ...result, notificationDelivery: this.notificationsService.getDeliveryState(), systemDiscordConfigured: await this.notificationsService.isDiscordConfigured() };
   }
 
   @Post('smtp/test')

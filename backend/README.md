@@ -61,3 +61,5 @@ file-size and realpath boundaries. No game files or RCON settings are changed.
 Opt-in disk and backup probes run independently every minute, with bounded Docker commands and no raw log forwarding. Recovery notifications require an observed incident followed by valid healthy state. Disk/backup repeats are configurable independently of per-server CPU/RAM rules.
 
 `SettingsModule` exports the single shared `AuthMailService` transporter used by account emails and notification delivery. Telegram decryption failures are isolated from other channels. Backup probes use Compose service IDs; empty samples preserve active alert state. Crash log tails are included only in Discord embeds.
+
+Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.

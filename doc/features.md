@@ -547,8 +547,7 @@ Lifecycle notifications cover start, stop, restart, delete and operation errors.
 For unexpected server down, crash loops and sustained high CPU/RAM, enable the appropriate
 per-server alerts in the **Metrics** tab. Their existing thresholds, sustain windows and
 cooldowns still apply. Channels are attempted independently; email, Telegram and Discord
-requests have timeouts. Failed messages are logged without credentials; this first version
-does not queue or retry deliveries.
+requests have timeouts. Failed messages are logged without credentials; delivery is awaited and does not use a persistent queue. Explicit Discord/Telegram rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
 
 Additional opt-in rules are configured in the Notifications section:
 
@@ -568,6 +567,31 @@ unavailable until the token is replaced; Discord and email continue independentl
 emails and notification emails share the existing SMTP transporter. Test failures expose and
 log only sanitized reason codes or HTTP statuses. Crash notifications include the server log
 tail only in Discord; email and Telegram receive a summary without the log or Discord markup.
+
+The Integrations page shows the last attempt for each channel: **provider accepted**, **failed**
+or **outcome unknown**, with time, automatic/test source and a sanitized reason. This state
+is in memory and resets on panel restart or integration changes. SMTP acceptance does not
+mean inbox delivery; timeout/connection loss may leave the result unknown. Discord sends
+with `wait=true` and reports failures to the shared fan-out. Saved-destination tests also
+support Discord and use the same first configured webhook as automatic delivery.
+
+Three additional rules are available, disabled by default:
+
+- **Scheduled task failures:** restart/command/announcement execution failures, excluding
+  supported intentional skips. Messages contain only task ID/type, never raw command output.
+  Failed scheduled restarts suppress the separate lifecycle error when this rule is enabled;
+  repeats use the global cooldown.
+- **Game query failures:** Java and Bedrock. Requires consecutive measured query failures
+  after a configurable startup grace period (default three one-minute samples / five minutes).
+  Missing binaries, Docker errors and unreadable probes stay unknown; they do not count as
+  failed samples or recovery. Configured auto-pause/auto-stop suppresses this rule. It checks
+  the container-local game endpoint, not external port/DNS reachability.
+- **Overdue backups:** Java/restic only, checked at most every five minutes. Snapshot queries
+  are filtered by server hostname and `/data`; grace follows `backupInitialDelay`,
+  `backupOnStartup`, `backupInterval` and a configurable tolerance (default 60 minutes).
+  Stopped servers, servers configured for no-player pauses, unknown durations and custom compose snippets
+  are excluded. Unknown repository reads never mean a missing backup or recovery. A valid
+  fresh snapshot can close an existing incident; this does not verify its file contents.
 
 The additional rules default to disabled. Monitoring state is held in memory and resets on
 panel restart. Backup log reads are bounded to 500 lines, 512 KiB and at most five minutes

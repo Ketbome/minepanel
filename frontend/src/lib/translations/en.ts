@@ -2279,6 +2279,21 @@ export const en = {
   notificationUnsaved: "Unsaved changes — save before testing.",
   notificationAllSaved: "All changes saved",
   notificationDiscard: "Discard changes",
+
+  notificationTask: "Scheduled task failures",
+  notificationTaskHelp: "Reports execution failures, excluding intentionally skipped tasks.",
+  notificationGame: "Game query failures",
+  notificationGameHelp: "Consecutive failed game queries after startup grace. Unknown probes do not mean a failed game.",
+  notificationStale: "Overdue backups",
+  notificationStaleHelp: "Java/restic only. Stopped servers, initial delay and intentional backup pauses are excluded.",
+  notificationGameSamples: "Failed samples required",
+  notificationGameGrace: "Startup grace (minutes)",
+  notificationStaleTolerance: "Backup tolerance (minutes)",
+  notificationLastAttempt: "Last attempt",
+  notificationAccepted: "Provider accepted",
+  notificationUnknown: "Outcome unknown",
+  notificationFailed: "Failed",
+  notificationNoAttempts: "No recorded attempts; results reset on panel restart.",
 };
 
 export type TranslationKey = keyof typeof en;

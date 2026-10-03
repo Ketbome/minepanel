@@ -69,7 +69,10 @@ export interface ServerRuntimeStats extends ServerResourceInfo {
   uptimeSeconds: number | null;
   version: string | null;
   gameReachable: boolean;
+  gameQueryStatus: 'healthy' | 'failed' | 'unknown';
 }
+
+interface GameProbeResult { value: MinecraftStatusProbe | null; status: 'healthy' | 'failed' | 'unknown' }
 
 export interface ServerInfo {
   exists: boolean;
@@ -157,8 +160,8 @@ export class ServerManagementService {
   // Home (15s) and the server page (10s) both poll runtime stats, often from several
   // tabs: share one `docker exec` probe per server instead of multiplying them.
   private readonly STATUS_PROBE_TTL_MS = 8_000;
-  private readonly statusProbeCache = new Map<string, { at: number; value: MinecraftStatusProbe | null }>();
-  private readonly statusProbeInFlight = new Map<string, Promise<MinecraftStatusProbe | null>>();
+  private readonly statusProbeCache = new Map<string, { at: number; value: GameProbeResult }>();
+  private readonly statusProbeInFlight = new Map<string, Promise<GameProbeResult>>();
 
   // Modpack first boots can take well over ten minutes before the server accepts players.
   private readonly READY_POLL_INTERVAL_MS = 5_000;
@@ -907,7 +910,7 @@ export class ServerManagementService {
     return false;
   }
 
-  async restartServer(serverId: string): Promise<boolean> {
+  async restartServer(serverId: string, notifyFailure = true): Promise<boolean> {
     try {
       if (!this.validateServerId(serverId)) {
         this.logger.error(`Invalid server ID: ${serverId}`);
@@ -940,7 +943,7 @@ export class ServerManagementService {
       return true;
     } catch (error) {
       this.logger.error(`Failed to restart server ${serverId}`, error);
-      await this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
+      if (notifyFailure) await this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
   }
@@ -1366,7 +1369,7 @@ export class ServerManagementService {
     }
   }
 
-  private async probeMinecraftStatus(serverId: string, containerId: string, edition: ServerEdition): Promise<MinecraftStatusProbe | null> {
+  private async probeMinecraftStatus(serverId: string, containerId: string, edition: ServerEdition): Promise<GameProbeResult> {
     const cached = this.statusProbeCache.get(serverId);
     if (cached && Date.now() - cached.at < this.STATUS_PROBE_TTL_MS) {
       return cached.value;
@@ -1392,7 +1395,7 @@ export class ServerManagementService {
 
   // mc-monitor ships inside the itzg images (it backs their healthcheck), so the probe
   // works for Java and Bedrock without RCON credentials.
-  private async runMinecraftStatusProbe(containerId: string, edition: ServerEdition): Promise<MinecraftStatusProbe | null> {
+  private async runMinecraftStatusProbe(containerId: string, edition: ServerEdition): Promise<GameProbeResult> {
     const isBedrock = edition === 'BEDROCK';
     const args = [
       'exec',
@@ -1408,14 +1411,18 @@ export class ServerManagementService {
     ];
 
     try {
-      const { stdout, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
+      const { stdout, stderr, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
       if (exitCode !== 0) {
-        return null;
+        const diagnostic = `${stderr} ${stdout}`;
+        const infrastructure = /docker daemon|error response from daemon|OCI runtime|exec failed|permission denied|executable file not found|no such container/i.test(diagnostic);
+        const failedQuery = /failed to ping 127\.0\.0\.1:25565|server not ready 127\.0\.0\.1:25565|failed to ping Bedrock server|failed to query bedrock server 127\.0\.0\.1:19132/i.test(diagnostic);
+        return { value: null, status: !infrastructure && failedQuery ? 'failed' : 'unknown' };
       }
-      return parseMinecraftStatus(this.sanitizeCommandOutput(stdout));
+      const value = parseMinecraftStatus(this.sanitizeCommandOutput(stdout));
+      return { value, status: value ? 'healthy' : 'unknown' };
     } catch (error) {
       this.logger.debug(`Minecraft status probe failed for container ${containerId}: ${(error as Error).message}`);
-      return null;
+      return { value: null, status: 'unknown' };
     }
   }
 
@@ -1517,10 +1524,12 @@ export class ServerManagementService {
       uptimeSeconds: null,
       version: null,
       gameReachable: false,
+      gameQueryStatus: 'unknown',
     };
   }
 
-  private buildRuntimeStats(resource: ServerResourceInfo, probe: MinecraftStatusProbe | null, playersMaxFallback: number | null, uptimeSeconds: number | null): ServerRuntimeStats {
+  private buildRuntimeStats(resource: ServerResourceInfo, result: GameProbeResult, playersMaxFallback: number | null, uptimeSeconds: number | null): ServerRuntimeStats {
+    const probe = result.value;
     return {
       ...resource,
       playersOnline: probe?.playersOnline ?? null,
@@ -1528,6 +1537,7 @@ export class ServerManagementService {
       uptimeSeconds,
       version: probe?.version ?? null,
       gameReachable: probe !== null,
+      gameQueryStatus: result.status,
     };
   }
 

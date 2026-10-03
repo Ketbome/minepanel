@@ -17,9 +17,11 @@ interface ServerResources {
   cpuUsage: string;
   memoryUsage: string;
   memoryLimit: string;
+  gameQueryStatus?: 'healthy' | 'failed' | 'unknown';
+  uptimeSeconds?: number | null;
 }
 
-type AlertType = 'down' | 'cpu' | 'memory' | 'crash';
+type AlertType = 'down' | 'cpu' | 'memory' | 'crash' | 'game';
 
 export interface CrashInfo {
   exitCode: number;
@@ -35,6 +37,7 @@ interface ServerAlertState {
   lastStatus: string | null;
   highCpuCount: number;
   highMemoryCount: number;
+  gameFailureCount: number;
   lastAlertAt: Partial<Record<AlertType, number>>;
   expectedStopUntil: number;
   incidents: Set<AlertType>;
@@ -82,8 +85,9 @@ export class AlertsService {
 
   async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {
     if (Object.keys(resources).length === 0) return;
+    const gameRule = await this.notificationsService.getAlertRules();
     const configs = await this.alertConfigRepo.find();
-    if (configs.length === 0) {
+    if (configs.length === 0 && !(gameRule.enabled && gameRule.gameAlertEnabled)) {
       this.primeState(resources);
       return;
     }
@@ -97,6 +101,20 @@ export class AlertsService {
       const config = configsByServer.get(serverId);
       const previousStatus = state.lastStatus;
       state.lastStatus = data.status;
+
+      const gameConfig = gameRule.enabled && gameRule.gameAlertEnabled ? await this.dockerComposeService.getServerConfig(serverId).catch(() => null) : null;
+      if (gameConfig && !gameConfig.enableAutoPause && !gameConfig.enableAutoStop && gameRule.enabled && gameRule.gameAlertEnabled && data.status === 'running' && Date.now() >= state.expectedStopUntil) {
+        if (data.gameQueryStatus === 'healthy') {
+          state.gameFailureCount = 0;
+          await this.recover(serverId, state, 'game');
+        } else if (data.gameQueryStatus === 'failed' && data.uptimeSeconds != null && data.uptimeSeconds >= gameRule.gameStartupGraceMinutes * 60) {
+          state.gameFailureCount++;
+          if (state.gameFailureCount >= gameRule.gameFailureSamples && !this.isInCooldown(state, 'game', gameRule.cooldownMinutes)) {
+            state.incidents.add('game'); state.lastAlertAt.game = Date.now();
+            await this.notificationsService.sendOperationalAlert('game', serverId, `Game query failed for ${gameRule.gameFailureSamples} consecutive samples`);
+          }
+        } else state.gameFailureCount = 0;
+      } else { state.gameFailureCount = 0; if (!gameRule.gameAlertEnabled) state.incidents.delete('game'); }
 
       if (!config) {
         continue;
@@ -133,7 +151,7 @@ export class AlertsService {
   private getState(serverId: string): ServerAlertState {
     let state = this.state.get(serverId);
     if (!state) {
-      state = { lastStatus: null, highCpuCount: 0, highMemoryCount: 0, lastAlertAt: {}, expectedStopUntil: 0, incidents: new Set() };
+      state = { lastStatus: null, highCpuCount: 0, highMemoryCount: 0, gameFailureCount: 0, lastAlertAt: {}, expectedStopUntil: 0, incidents: new Set() };
       this.state.set(serverId, state);
     }
     return state;

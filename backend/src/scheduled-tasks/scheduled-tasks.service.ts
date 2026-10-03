@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Repository } from 'typeorm';
@@ -7,6 +8,8 @@ import { CreateScheduledTaskDto } from './dto/create-scheduled-task.dto';
 import { UpdateScheduledTaskDto } from './dto/update-scheduled-task.dto';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
+
+interface TaskRunResult { outcome: 'success' | 'failed' | 'skipped'; text: string }
 
 const CHECK_INTERVAL_MS = 30_000;
 const MAX_ANNOUNCEMENTS = 20;
@@ -30,6 +33,7 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ScheduledTasksService.name);
   private timer: NodeJS.Timeout | null = null;
   private running = false;
+  private readonly failureAlerts = new Map<number, number>();
   // Task ids being executed, so "Run now" and the timer never run the same task at once.
   private readonly inFlight = new Set<number>();
 
@@ -38,6 +42,7 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
     private readonly taskRepo: Repository<ScheduledTask>,
     private readonly serverManagement: ServerManagementService,
     private readonly dockerComposeService: DockerComposeService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   onModuleInit(): void {
@@ -123,6 +128,7 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
   async remove(serverId: string, taskId: number): Promise<void> {
     const task = await this.getOwnedTask(serverId, taskId);
     await this.taskRepo.remove(task);
+    this.failureAlerts.delete(task.id);
   }
 
   async runNow(serverId: string, taskId: number, canUseConsole = true): Promise<ScheduledTask> {
@@ -158,58 +164,77 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     this.inFlight.add(task.id);
+    let failed = false;
+    const rule = await this.notifications.getAlertRules().catch(() => ({ enabled: false, taskFailureEnabled: false, cooldownMinutes: 60 }));
+    const notifyFailure = rule.enabled && rule.taskFailureEnabled;
     try {
       if (task.type === 'restart') {
-        const ok = await this.serverManagement.restartServer(task.serverId);
+        const ok = notifyFailure ? await this.serverManagement.restartServer(task.serverId, false) : await this.serverManagement.restartServer(task.serverId);
         task.lastResult = ok ? 'Server restarted' : 'Failed to restart server';
+        failed = !ok;
       } else if (task.type === 'announce') {
-        task.lastResult = await this.executeAnnouncementTask(task);
+        const result = await this.executeAnnouncementTask(task);
+        task.lastResult = result.text; failed = result.outcome === 'failed';
       } else {
-        task.lastResult = await this.executeCommandTask(task);
+        const result = await this.executeCommandTask(task);
+        task.lastResult = result.text; failed = result.outcome === 'failed';
       }
     } catch (error) {
+      failed = true;
       task.lastResult = `Execution failed: ${(error as Error).message}`;
       this.logger.warn(`Scheduled task ${task.id} failed: ${(error as Error).message}`);
     } finally {
       task.lastRunAt = new Date();
       task.nextRunAt = this.computeNextRun(task);
-      await this.taskRepo.save(task).finally(() => this.inFlight.delete(task.id));
+      try {
+        await this.taskRepo.save(task);
+        if (failed && notifyFailure) {
+          const now = Date.now();
+          const previous = this.failureAlerts.get(task.id);
+          if (previous === undefined || now - previous >= rule.cooldownMinutes * 60_000) {
+            if (this.failureAlerts.size >= 512) { const oldest = this.failureAlerts.keys().next().value; if (oldest !== undefined) this.failureAlerts.delete(oldest); }
+            this.failureAlerts.set(task.id, now);
+            await this.notifications.sendOperationalAlert('task', task.serverId, `Task #${task.id} (${task.type}) failed`).catch(() => this.logger.warn('Scheduled task notification failed'));
+          }
+        }
+      } finally { this.inFlight.delete(task.id); }
     }
   }
 
-  private async executeAnnouncementTask(task: ScheduledTask): Promise<string> {
+  private async executeAnnouncementTask(task: ScheduledTask): Promise<TaskRunResult> {
     const messages = announcementLines(task.command);
     if (messages.length === 0) {
-      return 'No messages configured';
+      return { outcome: 'skipped', text: 'No messages configured' };
     }
     // Bedrock has no working command path yet; "sent" there would silently skip messages.
     const config = await this.dockerComposeService.getServerConfig(task.serverId);
     if (config?.edition === 'BEDROCK') {
-      return 'Announcement skipped: announcements are only supported on Java servers';
+      return { outcome: 'skipped', text: 'Announcement skipped: announcements are only supported on Java servers' };
     }
     const index = (task.announcementIndex ?? 0) % messages.length;
     const result = await this.executeCommandTask(task, announcementCommand(messages[index]));
     // Advance only when the message went out, so a stopped server does not skip one.
-    if (!result.startsWith('Command failed') && !result.startsWith('Command skipped')) {
+    if (result.outcome === 'success') {
       task.announcementIndex = (index + 1) % messages.length;
-      return `Announced ${index + 1}/${messages.length}: ${messages[index]}`;
+      return { outcome: 'success', text: `Announced ${index + 1}/${messages.length}: ${messages[index]}` };
     }
     return result;
   }
 
-  private async executeCommandTask(task: ScheduledTask, command = task.command): Promise<string> {
+  private async executeCommandTask(task: ScheduledTask, command = task.command): Promise<TaskRunResult> {
     if (!command) {
-      return 'No command configured';
+      return { outcome: 'skipped', text: 'No command configured' };
     }
 
     const config = await this.dockerComposeService.getServerConfig(task.serverId);
+    if (config?.edition === 'BEDROCK') return { outcome: 'skipped', text: 'Command skipped: commands are only supported on Java servers' };
     const rconPort = config?.rconPort;
     if (!rconPort) {
-      return 'Command skipped: RCON port not configured for this server';
+      return { outcome: 'skipped', text: 'Command skipped: RCON port not configured for this server' };
     }
 
     const result = await this.serverManagement.executeCommand(task.serverId, command, rconPort, config?.rconPassword);
-    return result.success ? result.output || 'Command executed' : `Command failed: ${result.output}`;
+    return { outcome: result.success ? 'success' : 'failed', text: result.success ? result.output || 'Command executed' : `Command failed: ${result.output}` };
   }
 
   private async getOwnedTask(serverId: string, taskId: number): Promise<ScheduledTask> {

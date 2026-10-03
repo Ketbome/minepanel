@@ -460,3 +460,5 @@ token input write-only; test buttons use saved settings and stay disabled while 
 are unsaved. API calls live in `src/services/settings/settings.service.ts`.
 
 The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.
+
+Notification delivery outcomes are transient provider results, not inbox/read receipts. Keep unknown outcomes distinct, show source/time and only sanitized reasons. Task/game/freshness rules and thresholds are opt-in global settings.

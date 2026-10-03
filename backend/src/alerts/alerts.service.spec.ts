@@ -10,7 +10,7 @@ describe('AlertsService', () => {
   let service: AlertsService;
   let alertConfigRepo: { find: jest.Mock; findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
   let settingsRepo: { findOne: jest.Mock };
-  let discordService: { sendCustomMessage: jest.Mock; sendOperationalAlert: jest.Mock };
+  let discordService: { sendCustomMessage: jest.Mock; sendOperationalAlert: jest.Mock; getAlertRules: jest.Mock };
   let dockerComposeService: { getServerConfig: jest.Mock };
 
   const running = { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' };
@@ -40,7 +40,7 @@ describe('AlertsService', () => {
     settingsRepo = {
       findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://discord.test/webhook', language: 'en' }),
     };
-    discordService = { sendCustomMessage: jest.fn().mockResolvedValue(undefined), sendOperationalAlert: jest.fn().mockResolvedValue(undefined) };
+    discordService = { getAlertRules: jest.fn().mockResolvedValue({ enabled: true, gameAlertEnabled: false }), sendCustomMessage: jest.fn().mockResolvedValue(undefined), sendOperationalAlert: jest.fn().mockResolvedValue(undefined) };
     dockerComposeService = { getServerConfig: jest.fn().mockResolvedValue({ enableAutoStop: false, enableAutoPause: false }) };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -341,5 +341,21 @@ describe('AlertsService', () => {
     await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
     await service.evaluate({});await service.evaluate({ srv: running });
     expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error');
+  });
+  it('alerts on sustained measured game failures, with startup grace and unknown-sample isolation', async () => {
+    discordService.getAlertRules.mockResolvedValue({ enabled: true, gameAlertEnabled: true, gameFailureSamples: 2, gameStartupGraceMinutes: 5, cooldownMinutes: 60 });
+    dockerComposeService.getServerConfig.mockResolvedValue({});
+    const failed = { ...running, gameQueryStatus: 'failed' as const, uptimeSeconds: 600 };
+    await service.evaluate({ srv: { ...failed, uptimeSeconds: 30 } });
+    await service.evaluate({ srv: failed });
+    await service.evaluate({ srv: { ...failed, gameQueryStatus: 'unknown' } });
+    await service.evaluate({ srv: failed });
+    expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+    await service.evaluate({ srv: failed });
+    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('game', 'srv', expect.any(String));
+    await service.evaluate({ srv: { ...failed, gameQueryStatus: 'unknown' } });
+    expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
+    await service.evaluate({ srv: { ...failed, gameQueryStatus: 'healthy' } });
+    expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'game', 'warning');
   });
 });

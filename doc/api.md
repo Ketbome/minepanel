@@ -363,13 +363,14 @@ Examples:
 - `PATCH /settings/integrations` — write-only secrets: omit to keep, `""` to clear
 - `POST /settings/integrations/smtp/test`
 - `POST /settings/integrations/notifications/test` — admin only; body
-  `{ "channel": "email" }` or `{ "channel": "telegram" }`. Uses the saved destination,
+  `{ "channel": "discord" }`, `{ "channel": "email" }` or `{ "channel": "telegram" }`. Uses the saved destination,
   even if automatic delivery is disabled. Returns `{ success, message }`.
 
 `PATCH /settings/integrations` accepts a nested `notifications` object:
 `{ discordEnabled?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
 telegramChatId?, lifecycleEnabled?, alertsEnabled?, diskAlertEnabled?,
-backupFailureEnabled?, recoveryEnabled?, diskFreeThresholdPercent?, alertCooldownMinutes? }`. These are instance-wide,
+backupFailureEnabled?, recoveryEnabled?, diskFreeThresholdPercent?, alertCooldownMinutes?, taskFailureEnabled?, gameAlertEnabled?, staleBackupEnabled?,
+gameFailureSamples?, gameStartupGraceMinutes?, staleBackupToleranceMinutes? }`. These are instance-wide,
 admin-managed destinations for all servers. Email accepts one address. Telegram accepts a
 numeric chat ID or `@channel_username`; enabled channels require their destination (and
 Telegram requires a token). `telegramToken` is write-only: omit to keep, `""` to clear.
@@ -380,6 +381,15 @@ start disabled. `diskFreeThresholdPercent` is 1–50 (default 10), `alertCooldow
 1–10080 (default 60). Per-type switches control which automatic messages are sent.
 Partial updates preserve omitted settings. Test failures return and log sanitized diagnostic
 reasons (such as an SMTP error code or Telegram HTTP status), never raw provider responses.
+
+The admin-only GET/PATCH integration responses include `systemDiscordConfigured` and
+`notificationDelivery` (`discord`, `email`, `telegram`, each null or
+`{ status: "accepted" | "failed" | "unknown", attemptedAt, source: "automatic" | "test", reason? }`).
+Results are transient, contain no recipient/token/log payload and reset on restart or settings change.
+New rules default to disabled: `gameFailureSamples` 1–30 (default 3),
+`gameStartupGraceMinutes` 1–1440 (default 5), `staleBackupToleranceMinutes` 1–10080 (default 60).
+Runtime stats additionally expose `gameQueryStatus: "healthy" | "failed" | "unknown"`;
+`gameReachable` and nullable player/version values retain their existing behavior.
 
 ### Users
 

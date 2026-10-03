@@ -14,7 +14,7 @@ describe('IntegrationSettingsController', () => {
   let usersService: { getRequiredUserById: jest.Mock; hasSsoCapableAdmin: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let authMailService: { sendTestEmail: jest.Mock };
-  let notifications: { testChannel: jest.Mock };
+  let notifications: { testChannel: jest.Mock; getDeliveryState: jest.Mock; isDiscordConfigured: jest.Mock };
 
   beforeEach(async () => {
     instanceSettings = {
@@ -25,7 +25,7 @@ describe('IntegrationSettingsController', () => {
     usersService = { getRequiredUserById: jest.fn(), hasSsoCapableAdmin: jest.fn(async () => true) };
     auditLogService = { record: jest.fn() };
     authMailService = { sendTestEmail: jest.fn() };
-    notifications = { testChannel: jest.fn().mockResolvedValue({ success: true }) };
+    notifications = { isDiscordConfigured: jest.fn().mockResolvedValue(false), getDeliveryState: jest.fn().mockReturnValue({}), testChannel: jest.fn().mockResolvedValue({ success: true }) };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IntegrationSettingsController],
@@ -51,7 +51,7 @@ describe('IntegrationSettingsController', () => {
   it('returns masked settings for admins', async () => {
     usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' });
     const result = await controller.getIntegrations({ user: { userId: 1 } } as any);
-    expect(result).toEqual({ smtp: {}, oidc: {} });
+    expect(result).toEqual({ smtp: {}, oidc: {}, notificationDelivery: {}, systemDiscordConfigured: false });
     expect(instanceSettings.getPublic).toHaveBeenCalled();
   });
 
