@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, RefreshCw, Cpu, MemoryStick, Users, Timer, Gauge } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,9 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const meanBased = live?.tickSource != null && live.tickSource !== "spark";
   const native = live?.tickSource === "neoforge";
   const meanHistory = meanBased || points.some((point) => point.tickSource != null && point.tickSource !== "spark");
+  // A window spanning a source change mixes statistics: spark has no mean, so its P95 fills the gap.
+  const mixedHistory = meanHistory && points.some((point) => point.tickSource === "spark");
+  const msptPoints = useMemo(() => mixedHistory ? points.map((point) => point.tickSource === "spark" ? { ...point, msptMean: point.msptP95 } : point) : points, [mixedHistory, points]);
   const nativeHistory = native || points.some((point) => point.tickSource === "neoforge");
   const cards = [
     { icon: Gauge, label: native ? t("monitoringEstimatedTps") : "TPS", value: number(live?.tps), help: native ? t("monitoringNativeHelp") : live?.tickSource === "spark" ? t("monitoringTpsWindow") : t("monitoringTpsDefault") },
@@ -140,7 +143,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
       {loading ? <p role="status" className="py-8 text-center text-gray-400">{t("loading")}</p> : (
         <div key={hours} className="grid gap-4 lg:grid-cols-2">
           <MonitoringChart title={nativeHistory ? t("monitoringEstimatedTps") : "TPS"} description={t(nativeHistory ? "monitoringNativeHelp" : "monitoringTpsWindow")} points={points} metric="tps" reference={20} />
-          <MonitoringChart title={meanHistory ? "MSPT" : "MSPT · P95"} description={t(meanHistory ? "monitoringMeanHelp" : "monitoringP95Help")} points={points} metric={meanHistory ? "msptMean" : "msptP95"} unit=" ms" reference={50} />
+          <MonitoringChart title={mixedHistory ? "MSPT · mean / P95" : meanHistory ? "MSPT" : "MSPT · P95"} description={mixedHistory ? `${t("monitoringMeanHelp")} · ${t("monitoringP95Help")}` : t(meanHistory ? "monitoringMeanHelp" : "monitoringP95Help")} points={msptPoints} metric={meanHistory ? "msptMean" : "msptP95"} unit=" ms" reference={50} />
           <MonitoringChart title={t("metricsCpu")} description={t("monitoringCpuHelp")} points={points} metric="cpuPercent" unit="%" />
           <MonitoringChart title={t("metricsMemory")} description={t("monitoringMemoryHelp")} points={points} metric="memoryMb" unit=" MiB" />
           <MonitoringChart title={t("players")} description={t("monitoringPlayersHelp")} points={points} metric="playersOnline" />

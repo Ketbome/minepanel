@@ -146,10 +146,10 @@ export const TickCommandCard: FC<TickCommandCardProps> = ({ serverId, config, up
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100" disabled={testing || !command.trim()} onClick={handleTest}>
+          <Button type="button" size="sm" variant="outline" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100" disabled={testing || !command.trim()} onClick={handleTest}>
             {testing && <Loader2 className="size-4 animate-spin" />}{t("monitoringRunTest")}
           </Button>
-          <Button size="sm" disabled={saving} onClick={handleSave}>{saving && <Loader2 className="size-4 animate-spin" />}{t("save")}</Button>
+          <Button type="button" size="sm" disabled={saving} onClick={handleSave}>{saving && <Loader2 className="size-4 animate-spin" />}{t("save")}</Button>
         </div>
         {result && (
           <div role="status" className="flex flex-col gap-2">
