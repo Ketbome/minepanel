@@ -763,6 +763,15 @@ environment:
 
 If using Xbox Live accounts, ensure `ONLINE_MODE=true`.
 
+5. **NetherNet error (BDS 1.26.51+):**
+
+Bedrock Dedicated Server 1.26.51 switched its default transport to NetherNet, which needs a TCP
+signaling port and a UDP range advertised with your public IP. Minepanel sets `TRANSPORT=raknet`
+on Bedrock servers so the single published UDP port keeps working; the server log still prints a
+"TRANSPORT TYPE ERROR" banner, which you can ignore. Restart servers created before this change
+so their compose file picks it up. This needs `itzg/minecraft-bedrock-server` 2026.9.0 or newer
+(the default `latest` tag is).
+
 ### Bedrock Commands Not Working
 
 **Symptoms:** Commands sent but nothing happens
