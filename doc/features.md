@@ -436,7 +436,7 @@ Recommended approach:
 | ---------------- | ----------------------------------------- |
 | Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
-| Discord webhooks | Server event notifications with address, version and modpack |
+| Discord webhooks | Server event notifications with address, version and modpack. "Started"/"restarted" is sent once the server answers a status ping (not when the container starts); after 20 minutes without an answer a warning is sent instead |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Velocity network | Lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel |
