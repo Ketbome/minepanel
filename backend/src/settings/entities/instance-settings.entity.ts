@@ -13,6 +13,10 @@ export class InstanceSettings {
     discordEnabled?: boolean;
     emailEnabled?: boolean;
     emailTo?: string;
+    ntfyEnabled?: boolean;
+    ntfyServerUrl?: string;
+    ntfyTopic?: string;
+    slackEnabled?: boolean;
     telegramEnabled?: boolean;
     telegramChatId?: string;
     lifecycleEnabled?: boolean;
@@ -32,6 +36,12 @@ export class InstanceSettings {
 
   @Column({ type: 'text', nullable: true, name: 'telegram_token_enc' })
   telegramTokenEnc?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'ntfy_token_enc' })
+  ntfyTokenEnc?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'slack_webhook_enc' })
+  slackWebhookEnc?: string | null;
 
   // SMTP
   @Column({ type: 'text', nullable: true, name: 'smtp_host' })

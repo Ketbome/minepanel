@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, IsUrl, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
 
 // Secret fields (smtpPassword, oidcClientSecret) are write-only:
 // - omitted   -> keep the current value
@@ -64,6 +64,39 @@ export class OidcSettingsDto {
 }
 
 export class NotificationSettingsDto {
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  ntfyEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(2048)
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false, disallow_auth: true })
+  @Matches(/^https?:\/\/[^\s?#@\\]+$/)
+  ntfyServerUrl?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^$|^[A-Za-z0-9_-]+$/)
+  ntfyTopic?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(512)
+  @Matches(/^$|^[A-Za-z0-9_-]+$/)
+  ntfyToken?: string;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  slackEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @MaxLength(512)
+  @Matches(/^$|^https:\/\/hooks\.slack(?:-gov)?\.com\/services\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+$/)
+  slackWebhook?: string;
+
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   discordEnabled?: boolean;

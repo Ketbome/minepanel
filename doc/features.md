@@ -54,7 +54,7 @@ New Java servers start from the instance-wide defaults in **Settings → Java De
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |
 | Tick performance | Native NeoForge estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
-| Alerts    | Opt-in alerts per server via Discord, email or Telegram: unexpected server down, crash loops (with an exit code and log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; configure channels in Settings > Integrations) |
+| Alerts    | Opt-in alerts per server via Discord, email, Telegram, ntfy or Slack: unexpected server down, crash loops (with an exit code and a Discord-only log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; configure channels in Settings > Integrations) |
 
 - Runtime stats refresh on their own on the home page and the server page, and only render for
   running servers.
@@ -521,7 +521,7 @@ Admins configure channels under **Settings > Integrations > Notifications**.
 These are instance-wide destinations: they receive events from **all servers**, including
 Java and Bedrock. Channel switches and the **Server lifecycle events** / **Server alerts**
 switches control automatic delivery. Existing Discord webhooks remain enabled by default;
-email and Telegram start disabled. The page separates delivery channels from alert rules,
+email, Telegram, ntfy and Slack start disabled. The page separates delivery channels from alert rules,
 shows saved configuration status, keeps tests beside each channel and offers **Discard changes**.
 
 - **Discord:** uses the existing webhook field on the Integrations page. The
@@ -529,6 +529,16 @@ shows saved configuration status, keeps tests beside each channel and offers **D
   with a webhook; this is not a separate per-user subscription system.
 - **Email:** configure SMTP in the same page, then enter one recipient address and enable
   email notifications. Notifications reuse the instance SMTP configuration.
+- **ntfy:** enter the server URL (default `https://ntfy.sh`) and topic, then subscribe to
+  that topic in the ntfy app. Self-hosted HTTP/HTTPS servers and URL path prefixes are
+  supported. An access token is optional for public topics; for private alerts use an
+  access-controlled topic and a token permitted to publish. Public topics are readable
+  by anyone who knows the name. Tokens are encrypted and write-only. Clear a saved token
+  after disabling the channel; an unreadable saved token never falls back to anonymous delivery.
+- **Slack:** create an [incoming webhook](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)
+  for the destination channel and save it here. Slack and GovSlack webhook URLs are
+  supported. The whole webhook URL is encrypted and write-only; omit to retain it, or
+  disable the channel and clear it. Messages use plain text without mentions or crash logs.
 - **Telegram:** create a bot with [@BotFather](https://t.me/BotFather), start a private chat
   with the bot or add it to the target group, and enter its token and the chat ID. For a
   channel, add the bot with permission to post and use its `@channel_username` or numeric ID.
@@ -609,7 +619,7 @@ This integration sends notifications; it does not receive chat commands.
 | ---------------- | ----------------------------------------- |
 | Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
-| Notifications | Discord webhooks, SMTP email and Telegram for server events and alerts with address, version and modpack. "Started"/"restarted" is sent once the server answers a status ping (not when the container starts); after 20 minutes without an answer a warning is sent instead |
+| Notifications | Discord webhooks, SMTP email, Telegram, ntfy and Slack for server events and alerts with address, version and modpack. "Started"/"restarted" is sent once the server answers a status ping (not when the container starts); after 20 minutes without an answer a warning is sent instead |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Velocity network | Lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel |

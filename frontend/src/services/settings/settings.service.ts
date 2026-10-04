@@ -107,11 +107,13 @@ export interface OidcIntegration {
   source: 'db' | 'env' | 'unset';
 }
 
+export type NotificationChannel = 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
+
 export interface NotificationDelivery { status: 'accepted' | 'failed' | 'unknown'; attemptedAt: string; source: 'automatic' | 'test'; reason?: string }
 
 export interface IntegrationSettings {
   systemDiscordConfigured?: boolean;
-  notificationDelivery?: Record<'discord' | 'email' | 'telegram', NotificationDelivery | null>;
+  notificationDelivery?: Record<NotificationChannel, NotificationDelivery | null>;
   smtp: SmtpIntegration;
   oidc: OidcIntegration;
   notifications: NotificationSettings;
@@ -121,6 +123,12 @@ export interface NotificationSettings {
   discordEnabled: boolean;
   emailEnabled: boolean;
   emailTo: string;
+  ntfyEnabled: boolean;
+  ntfyServerUrl: string;
+  ntfyTopic: string;
+  hasNtfyToken: boolean;
+  slackEnabled: boolean;
+  hasSlackWebhook: boolean;
   telegramEnabled: boolean;
   telegramChatId: string;
   hasTelegramToken: boolean;
@@ -140,7 +148,7 @@ export interface NotificationSettings {
 }
 
 export interface UpdateIntegrationSettings {
-  notifications?: Partial<Omit<NotificationSettings, 'hasTelegramToken'>> & { telegramToken?: string };
+  notifications?: Partial<Omit<NotificationSettings, 'hasTelegramToken' | 'hasNtfyToken' | 'hasSlackWebhook'>> & { telegramToken?: string; ntfyToken?: string; slackWebhook?: string };
   smtp?: {
     host?: string;
     port?: number;
@@ -230,7 +238,7 @@ export const testSmtp = async (): Promise<{ success: boolean; message: string }>
   return response.data;
 };
 
-export const testNotification = async (channel: 'discord' | 'email' | 'telegram'): Promise<{ success: boolean; message: string }> => {
+export const testNotification = async (channel: NotificationChannel): Promise<{ success: boolean; message: string }> => {
   const response = await api.post('/settings/integrations/notifications/test', { channel });
   return response.data;
 };

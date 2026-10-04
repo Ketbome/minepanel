@@ -32,7 +32,7 @@ flowchart LR
 ## Notifications
 
 `backend/src/notifications/notifications.service.ts` fans out lifecycle events from
-server management and alerts from the metrics sampler to Discord, SMTP and Telegram.
+server management and alerts from the metrics sampler to Discord, SMTP, Telegram, ntfy and Slack.
 Instance-wide channel destinations and event switches are persisted by
 `InstanceSettingsService`; the Telegram token uses the existing AES-GCM secret cipher.
 Admin-only integration endpoints expose a masked configuration and saved-destination tests.
@@ -42,7 +42,7 @@ independently with bounded timeouts; delivery errors never fail server operation
 disk and backup probes. Disk readings use `statfs` on the server-data mount, not `/`.
 Backup probes read canonical config, use bounded shell-free Docker commands and never
 forward raw logs. The per-server alert evaluator tracks active incidents for one-shot
-recovery; unavailable samples do not clear incidents. Crash log tails remain Discord-only; email and Telegram carry a plain-text summary.
+recovery; unavailable samples do not clear incidents. Crash log tails remain Discord-only; other channels carry a plain-text summary.
 
 ## Components
 
@@ -239,4 +239,4 @@ rejects escapes and returns selected numeric counters. Game files are never modi
 The frontend lazily loads the Players tab, polls after request completion, and cancels
 requests on player/server/page changes.
 
-Notification attempts record only bounded per-channel outcome metadata in memory, fenced against stale in-flight completion after a configuration change. Discord and Telegram honor one bounded explicit rate-limit retry; network ambiguity is never retried. Scheduled task outcomes distinguish success/failure/skipped and emit sanitized failures. Game status probes keep measured game failure separate from infrastructure/parse errors; the alert evaluator applies startup grace and incident state. Restic freshness is an opt-in filtered snapshot metadata check with a five-minute cadence, independent of integrity verification.
+Notification attempts record only bounded per-channel outcome metadata in memory, fenced against stale in-flight completion after a configuration change. Discord, Telegram, ntfy and Slack honor one bounded explicit rate-limit retry; network ambiguity is never retried. Scheduled task outcomes distinguish success/failure/skipped and emit sanitized failures. Game status probes keep measured game failure separate from infrastructure/parse errors; the alert evaluator applies startup grace and incident state. Restic freshness is an opt-in filtered snapshot metadata check with a five-minute cadence, independent of integrity verification.

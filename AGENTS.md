@@ -180,8 +180,8 @@ Session history comes from bounded Docker join/leave logs and SQLite cursors, no
 polling or `server.json`. Unknown intervals must not be counted as playtime; Java saved-world
 statistics are separate from recorded session totals.
 
-Notifications use `backend/src/notifications/notifications.service.ts` for Discord, email
-and Telegram delivery. Email/Telegram destinations and event switches are instance-wide,
+Notifications use `backend/src/notifications/notifications.service.ts` for Discord, email,
+Telegram, ntfy and Slack delivery. Email/Telegram destinations and event switches are instance-wide,
 admin-only integration settings; the legacy first configured Discord webhook is preserved.
 Keep Telegram tokens encrypted and write-only, and provider failures isolated.
 
@@ -190,3 +190,8 @@ Opt-in disk/backup notification probes run once a minute in `backend/src/notific
 Account email and notifications share the `AuthMailService` exported by `SettingsModule`; do not redeclare it in consumer modules. Resolve backup targets through Compose service IDs and keep empty-sample/decryption failures isolated from other notifications.
 
 Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.
+
+ntfy and Slack use the shared notification fan-out and admin-only integration settings.
+Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
+start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

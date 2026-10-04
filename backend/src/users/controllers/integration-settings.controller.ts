@@ -11,8 +11,8 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 import { IsIn } from 'class-validator';
 
 export class TestNotificationDto {
-  @IsIn(['discord', 'email', 'telegram'])
-  channel: 'discord' | 'email' | 'telegram';
+  @IsIn(['discord', 'email', 'telegram', 'ntfy', 'slack'])
+  channel: 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
 }
 
 @Controller('settings/integrations')

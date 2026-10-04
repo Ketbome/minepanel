@@ -38,7 +38,7 @@ pnpm test:e2e
 - `src/server-management/` - server lifecycle and runtime actions
 - `src/docker-compose/` - compose generation
 - `src/files/` - file operations
-- `src/notifications/` - independent Discord, SMTP email and Telegram delivery for lifecycle events and alerts; admin-managed instance settings and masked Telegram credentials
+- `src/notifications/` - independent Discord, SMTP email, Telegram, ntfy and Slack delivery for lifecycle events and alerts; admin-managed instance settings and masked Telegram credentials
 - `src/auth/` - authentication
 - `src/system-monitoring/` - host metrics
 - `src/metrics/` - live resources and tick performance, plus 7-day history. Native
@@ -63,3 +63,8 @@ Opt-in disk and backup probes run independently every minute, with bounded Docke
 `SettingsModule` exports the single shared `AuthMailService` transporter used by account emails and notification delivery. Telegram decryption failures are isolated from other channels. Backup probes use Compose service IDs; empty samples preserve active alert state. Crash log tails are included only in Discord embeds.
 
 Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.
+
+ntfy and Slack use the shared notification fan-out and admin-only integration settings.
+Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
+start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

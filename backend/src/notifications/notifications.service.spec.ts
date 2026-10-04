@@ -18,7 +18,7 @@ describe('NotificationsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config = { discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
+    config = { ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', ntfyTokenUnreadable: false, slackEnabled: false, slackWebhook: '', discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
     settings = {
       getNotifications: jest.fn(async () => config),
       getSmtp: jest.fn().mockResolvedValue({ enabled: true, host: 'smtp.test', port: 587, secure: false, user: 'admin', pass: 'smtp-secret', from: 'panel@example.com' }),
@@ -216,4 +216,70 @@ describe('NotificationsService', () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({ ok: false, parameters: { retry_after: 0 } }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
     expect((await service.testChannel('telegram')).success).toBe(true);expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+  it('delivers to ntfy and Slack with private credentials and plain summaries', async () => {
+    Object.assign(config, { ntfyEnabled: true, ntfyServerUrl: 'http://ntfy.internal/push/', ntfyTopic: 'private-alerts', ntfyToken: 'tk_secret', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/secret' });
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }), body: { cancel: jest.fn().mockResolvedValue(undefined) } });
+    await service.sendCustomMessage('https://hook', 'Crash', '<!channel> & failed', 'error', [{ name: 'Log', value: 'sensitive-log', discordOnly: true }]);
+    const ntfy = fetchMock.mock.calls.find(([url]) => url === 'http://ntfy.internal/push/');
+    expect(ntfy?.[1]).toMatchObject({ redirect: 'error', headers: { Authorization: 'Bearer tk_secret' } });
+    expect(JSON.parse(ntfy?.[1].body)).toEqual({ topic: 'private-alerts', title: 'Crash', message: '<!channel> & failed' });
+    const slack = fetchMock.mock.calls.find(([url]) => url === config.slackWebhook);
+    const payload = JSON.parse(slack?.[1].body);
+    expect(slack?.[1].redirect).toBe('error');
+    expect(payload.blocks[0].text).toMatchObject({ type: 'plain_text', text: 'Crash\n\n<!channel> & failed' });
+    expect(payload.text).toContain('&lt;!channel&gt; &amp;');
+    expect(JSON.stringify(payload)).not.toContain('sensitive-log');
+    expect(service.getDeliveryState()).toMatchObject({ ntfy: { status: 'accepted' }, slack: { status: 'accepted' } });
+  });
+
+  it('supports anonymous ntfy and tests saved channels while disabled', async () => {
+    config.ntfyTopic = 'minepanel'; config.slackWebhook = 'https://hooks.slack.com/services/T/B/secret';
+    expect((await service.testChannel('ntfy')).success).toBe(true);
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty('Authorization');
+    expect((await service.testChannel('slack')).success).toBe(true);
+  });
+
+  it('fails missing or unreadable new credentials before any request', async () => {
+    expect((await service.testChannel('ntfy')).success).toBe(false);
+    expect((await service.testChannel('slack')).success).toBe(false);
+    config.ntfyTopic = 'private'; config.ntfyTokenUnreadable = true;
+    expect((await service.testChannel('ntfy')).success).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['ntfy', 'slack'] as const)('isolates %s rejection and sanitizes provider diagnostics', async (channel) => {
+    Object.assign(config, { ntfyEnabled: true, ntfyTopic: 'private', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/secret' });
+    fetchMock.mockImplementation(async (url: string) => url.startsWith('https://api.telegram.org') ? { ok: true, json: async () => ({ ok: true }) } : { ok: false, status: 403 });
+    expect((await service.testChannel(channel)).message).toContain('HTTP 403');
+    expect(service.getDeliveryState()[channel]?.status).toBe('failed');
+    fetchMock.mockRejectedValueOnce(new Error('private-token and secret-webhook'));
+    expect((await service.testChannel(channel)).message).not.toContain('secret');
+    await service.sendCustomMessage('https://hook', 'Alert', 'Body', 'warning', []);
+    expect(discord.sendCustomMessage).toHaveBeenCalled();
+    expect(transporter.sendMail).toHaveBeenCalled();
+    expect(service.getDeliveryState().telegram?.status).toBe('accepted');
+    expect(JSON.stringify((Logger.prototype.warn as jest.Mock).mock.calls)).not.toContain('secret');
+  });
+
+  it.each(['ntfy', 'slack'] as const)('retries %s only on a bounded explicit rate limit', async (channel) => {
+    config.ntfyTopic = 'private'; config.slackWebhook = 'https://hooks.slack.com/services/T/B/secret';
+    const cancel = jest.fn().mockResolvedValue(undefined);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 429, headers: new Headers({ 'retry-after': '0' }), body: { cancel } }).mockResolvedValueOnce({ ok: true, body: { cancel } });
+    expect((await service.testChannel(channel)).success).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2); expect(cancel).toHaveBeenCalledTimes(2);
+    fetchMock.mockClear(); fetchMock.mockRejectedValue(Object.assign(new Error('token'), { name: 'TimeoutError' }));
+    expect((await service.testChannel(channel)).success).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1); expect(service.getDeliveryState()[channel]?.status).toBe('unknown');
+  });
+
+  it('bounds new provider messages while keeping Unicode intact', async () => {
+    Object.assign(config, { telegramEnabled: false, ntfyEnabled: true, ntfyTopic: 'private', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/secret' });
+    await service.sendCustomMessage('', '😀'.repeat(300), '😀'.repeat(5000), 'error', []);
+    const ntfy = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(Buffer.byteLength(ntfy.message)).toBeLessThanOrEqual(3000);
+    expect(ntfy.message).not.toMatch(/[\uD800-\uDBFF]$/);
+    const slack = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(Array.from(slack.blocks[0].text.text)).toHaveLength(3000);
+  });
+
 });

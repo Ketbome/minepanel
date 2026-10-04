@@ -197,12 +197,12 @@ Still planned:
 
 ### Alerts
 
-Shipped so far: per-server Discord, email and Telegram alerts for unexpected server down, crash
+Shipped so far: per-server Discord, email, Telegram, ntfy and Slack alerts for unexpected server down, crash
 loops (restart retry limit ran out, with exit code and log tail) and sustained
 high CPU/RAM (configurable thresholds, sustain window and cooldown, in the
 Metrics tab), plus admin-managed notification channels, lifecycle/alert switches and
 saved-destination tests under Settings > Integrations. Email uses the instance SMTP settings;
-Telegram stores the bot token encrypted. Opt-in low disk space, failed backup and incident
+Telegram/ntfy tokens and Slack webhook URLs are encrypted and write-only. Opt-in low disk space, failed backup and incident
 recovery alerts also ship, with repeat intervals. Opt-in scheduled task failures, sustained
 game-query failures and Java/restic overdue-backup alerts join per-channel attempt outcomes
 and bounded explicit rate-limit retry.

@@ -10,25 +10,29 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
-import { NotificationSettings, NotificationDelivery, getIntegrationSettings, testNotification, updateIntegrationSettings } from '@/services/settings/settings.service';
+import { NotificationSettings, NotificationDelivery, NotificationChannel, getIntegrationSettings, testNotification, updateIntegrationSettings } from '@/services/settings/settings.service';
 import type { TranslationKey } from '@/lib/translations/en';
 
-type ToggleKey = 'discordEnabled' | 'emailEnabled' | 'telegramEnabled' | 'lifecycleEnabled' | 'alertsEnabled' | 'diskAlertEnabled' | 'backupFailureEnabled' | 'recoveryEnabled' | 'taskFailureEnabled' | 'gameAlertEnabled' | 'staleBackupEnabled';
+type ToggleKey = 'discordEnabled' | 'emailEnabled' | 'telegramEnabled' | 'ntfyEnabled' | 'slackEnabled' | 'lifecycleEnabled' | 'alertsEnabled' | 'diskAlertEnabled' | 'backupFailureEnabled' | 'recoveryEnabled' | 'taskFailureEnabled' | 'gameAlertEnabled' | 'staleBackupEnabled';
 
 export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWebhook, delivery }: {
   initial: NotificationSettings;
   smtpConfigured: boolean;
   hasDiscordWebhook: boolean;
-  delivery?: Record<'discord' | 'discord' | 'email' | 'telegram', NotificationDelivery | null>;
+  delivery?: Record<NotificationChannel, NotificationDelivery | null>;
 }) {
   const { t } = useLanguage();
   const [saved, setSaved] = useState(initial);
   const [form, setForm] = useState(initial);
   const [token, setToken] = useState('');
+  const [ntfyToken, setNtfyToken] = useState('');
+  const [slackWebhook, setSlackWebhook] = useState('');
+  const [clearNtfy, setClearNtfy] = useState(false);
+  const [clearSlack, setClearSlack] = useState(false);
   const [clearToken, setClearToken] = useState(false);
-  const [busy, setBusy] = useState<'save' | 'discord' | 'discord' | 'email' | 'telegram' | null>(null);
-  const [feedback, setFeedback] = useState<{ scope: 'save' | 'discord' | 'discord' | 'email' | 'telegram'; success: boolean; key: TranslationKey; detail?: string } | null>(null);
-  const dirty = token !== '' || clearToken || JSON.stringify(form) !== JSON.stringify(saved);
+  const [busy, setBusy] = useState<'save' | NotificationChannel | null>(null);
+  const [feedback, setFeedback] = useState<{ scope: 'save' | NotificationChannel; success: boolean; key: TranslationKey; detail?: string } | null>(null);
+  const dirty = token !== '' || ntfyToken !== '' || slackWebhook !== '' || clearNtfy || clearSlack || clearToken || JSON.stringify(form) !== JSON.stringify(saved);
   const disabled = busy !== null;
   const [outcomes, setOutcomes] = useState(delivery);
   const update = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => setForm((current) => ({ ...current, [key]: value }));
@@ -43,26 +47,27 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
     ['recoveryEnabled', 'notificationRecovery', 'notificationRecoveryHelp'],
   ];
 
-  const reset = () => { setForm(saved); setToken(''); setClearToken(false); setFeedback(null); };
+  const reset = () => { setForm(saved); setToken(''); setClearToken(false); setNtfyToken(''); setSlackWebhook(''); setClearNtfy(false); setClearSlack(false); setFeedback(null); };
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy('save');
     setFeedback(null);
     try {
-      const { hasTelegramToken: _hasToken, ...preferences } = form;
-      const result = await updateIntegrationSettings({ notifications: { ...preferences, ...(token || clearToken ? { telegramToken: clearToken ? '' : token } : {}) } });
+      const { hasTelegramToken: _hasToken, hasNtfyToken: _hasNtfy, hasSlackWebhook: _hasSlack, ...preferences } = form;
+      const result = await updateIntegrationSettings({ notifications: { ...preferences, ...(token || clearToken ? { telegramToken: clearToken ? '' : token } : {}), ...(ntfyToken || clearNtfy ? { ntfyToken: clearNtfy ? '' : ntfyToken } : {}), ...(slackWebhook || clearSlack ? { slackWebhook: clearSlack ? '' : slackWebhook } : {}) } });
       setOutcomes(result.notificationDelivery);
       setSaved(result.notifications);
       setForm(result.notifications);
       setToken('');
       setClearToken(false);
+      setNtfyToken(''); setSlackWebhook(''); setClearNtfy(false); setClearSlack(false);
       mcToast.success(t('settingsSaved'));
     } catch {
       setFeedback({ scope: 'save', success: false, key: 'notificationSaveFailed' });
     } finally { setBusy(null); }
   };
 
-  const test = async (channel: 'discord' | 'email' | 'telegram') => {
+  const test = async (channel: NotificationChannel) => {
     setBusy(channel);
     setFeedback(null);
     try {
@@ -74,11 +79,11 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
     finally { setBusy(null); }
   };
 
-  const showFeedback = (scope: 'save' | 'discord' | 'discord' | 'email' | 'telegram') => feedback?.scope === scope ? (
+  const showFeedback = (scope: 'save' | NotificationChannel) => feedback?.scope === scope ? (
     <p role={feedback.success ? 'status' : 'alert'} className={feedback.success ? 'text-sm text-emerald-300' : 'text-sm text-red-300'}>{t(feedback.key)}{feedback.detail ? ` ${feedback.detail}` : null}</p>
   ) : null;
 
-  const channelOutcome = (channel: 'discord' | 'email' | 'telegram') => {
+  const channelOutcome = (channel: NotificationChannel) => {
     const state = outcomes?.[channel];
     return state ? <p className="text-xs text-muted-foreground">{t('notificationLastAttempt')}: {new Date(state.attemptedAt).toLocaleString()} · {t(state.status === 'accepted' ? 'notificationAccepted' : state.status === 'unknown' ? 'notificationUnknown' : 'notificationFailed')}{state.source === 'test' ? ` (${t('test')})` : ''}{state.reason ? ` — ${state.reason}` : ''}</p> : <p className="text-xs text-muted-foreground">{t('notificationNoAttempts')}</p>;
   };
@@ -125,7 +130,7 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               {channelOutcome('email')}
               {showFeedback('email')}
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 border-b border-border pb-5">
               {channelHeader('telegramEnabled', 'notificationTelegram', saved.hasTelegramToken && !!saved.telegramChatId)}
               <div className="grid min-w-0 gap-4 md:grid-cols-2">
                 <div className="flex min-w-0 flex-col gap-2">
@@ -144,6 +149,34 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               </div>
               {channelOutcome('telegram')}
               {showFeedback('telegram')}
+            </div>
+            <div className="flex flex-col gap-3 border-b border-border pb-5">
+              {channelHeader('ntfyEnabled', 'notificationNtfy', !!saved.ntfyTopic)}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="notification-ntfy-server">{t('notificationNtfyServer')}</Label>
+                <Input id="notification-ntfy-server" type="url" required value={form.ntfyServerUrl} onChange={(e) => update('ntfyServerUrl', e.target.value)} placeholder="https://ntfy.sh" className="text-base" />
+                <Label htmlFor="notification-ntfy-topic">{t('notificationNtfyTopic')}</Label>
+                <Input id="notification-ntfy-topic" value={form.ntfyTopic} onChange={(e) => update('ntfyTopic', e.target.value)} required={form.ntfyEnabled} maxLength={64} pattern="[A-Za-z0-9_\-]+" className="text-base" />
+                <Label htmlFor="notification-ntfy-token">{t('notificationNtfyToken')}</Label>
+                <Input id="notification-ntfy-token" type="password" autoComplete="new-password" value={ntfyToken} onChange={(e) => { setNtfyToken(e.target.value); setClearNtfy(false); }} placeholder={saved.hasNtfyToken && !clearNtfy ? t('secretConfiguredPlaceholder') : ''} className="text-base" />
+              </div>
+              <p className="text-sm text-muted-foreground">{t('notificationNtfyHelp')}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => test('ntfy')} disabled={disabled || dirty || !saved.ntfyTopic}>{busy === 'ntfy' ? <Loader2 className="animate-spin" /> : null}{t('test')}</Button>
+                {saved.hasNtfyToken ? <Button type="button" variant="ghost" onClick={() => { setClearNtfy(true); setNtfyToken(''); update('ntfyEnabled', false); }} disabled={clearNtfy}>{t('notificationClearToken')}</Button> : null}
+              </div>
+              {channelOutcome('ntfy')}{showFeedback('ntfy')}
+            </div>
+            <div className="flex flex-col gap-3">
+              {channelHeader('slackEnabled', 'notificationSlack', saved.hasSlackWebhook)}
+              <Label htmlFor="notification-slack-webhook">{t('notificationSlackWebhook')}</Label>
+              <Input id="notification-slack-webhook" type="password" autoComplete="new-password" value={slackWebhook} onChange={(e) => { setSlackWebhook(e.target.value); setClearSlack(false); }} required={form.slackEnabled && (!saved.hasSlackWebhook || clearSlack)} placeholder={saved.hasSlackWebhook && !clearSlack ? t('secretConfiguredPlaceholder') : 'https://hooks.slack.com/services/…'} className="text-base" />
+              <p className="text-sm text-muted-foreground">{t('notificationSlackHelp')}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => test('slack')} disabled={disabled || dirty || !saved.hasSlackWebhook}>{busy === 'slack' ? <Loader2 className="animate-spin" /> : null}{t('test')}</Button>
+                {saved.hasSlackWebhook ? <Button type="button" variant="ghost" onClick={() => { setClearSlack(true); setSlackWebhook(''); update('slackEnabled', false); }} disabled={clearSlack}>{t('notificationClearWebhook')}</Button> : null}
+              </div>
+              {channelOutcome('slack')}{showFeedback('slack')}
             </div>
           </fieldset>
 

@@ -29,7 +29,7 @@ backend/src/
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
 |- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
-|- notifications/           Discord/SMTP/Telegram fan-out; admin-only instance channel settings
+|- notifications/           Discord/SMTP/Telegram/ntfy/Slack fan-out; admin-only instance channel settings
 |- alerts/                  Per-server alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
@@ -426,3 +426,8 @@ may contain credentials. The legacy first configured user Discord webhook remain
 Notification backups resolve Compose service IDs with the same project prefix and working directory as server management; never assume a Minecraft container name. Missing containers are stopped, not probe failures. Empty resource samples must preserve incidents and cooldowns. Unreadable Telegram credentials disable only Telegram. Test failures log only allowlisted reason codes/statuses, never raw provider errors.
 
 Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.
+
+ntfy and Slack use the shared notification fan-out and admin-only integration settings.
+Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
+start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

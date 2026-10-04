@@ -203,7 +203,7 @@ describe('InstanceSettingsService', () => {
     });
   });
   it('returns notification defaults for existing installations', async () => {
-    expect((await service.getPublic()).notifications).toEqual({ discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
+    expect((await service.getPublic()).notifications).toEqual({ ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', slackEnabled: false, hasNtfyToken: false, hasSlackWebhook: false, discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
     expect((await service.getNotifications()).telegramToken).toBe('');
   });
 
@@ -241,4 +241,33 @@ describe('InstanceSettingsService', () => {
       await expect(service.getNotifications()).resolves.toMatchObject({ discordEnabled: true, telegramToken: '' });
     } finally { process.env.JWT_SECRET = current; }
   });
+  it('encrypts new provider secrets, masks responses and preserves omitted secrets', async () => {
+    const webhook = 'https://hooks.slack.com/services/T/B/private';
+    await service.updateIntegrations({ notifications: { ntfyEnabled: true, ntfyTopic: 'private', ntfyToken: 'tk_private', slackEnabled: true, slackWebhook: webhook } });
+    expect(isEncrypted(row.ntfyTokenEnc)).toBe(true); expect(isEncrypted(row.slackWebhookEnc)).toBe(true);
+    expect(JSON.stringify(row.notifications)).not.toContain('tk_private'); expect(JSON.stringify(row.notifications)).not.toContain(webhook);
+    expect((await service.getPublic()).notifications).toMatchObject({ hasNtfyToken: true, hasSlackWebhook: true });
+    expect(JSON.stringify(await service.getPublic())).not.toContain(webhook);
+    await service.updateIntegrations({ notifications: { alertsEnabled: false } });
+    expect(await service.getNotifications()).toMatchObject({ ntfyToken: 'tk_private', slackWebhook: webhook });
+    await service.updateIntegrations({ notifications: { ntfyEnabled: false, slackEnabled: false, ntfyToken: '', slackWebhook: '' } });
+    expect(row.ntfyTokenEnc).toBeNull(); expect(row.slackWebhookEnc).toBeNull();
+  });
+
+  it('requires new channel destinations while accepting anonymous ntfy', async () => {
+    await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true } })).rejects.toThrow('require a topic');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { slackEnabled: true } })).rejects.toThrow('require a webhook');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true, ntfyTopic: 'public' } })).resolves.toBeDefined();
+  });
+
+  it('isolates unreadable new secrets without downgrading ntfy to anonymous', async () => {
+    row.ntfyTokenEnc = encryptSecret('tk_private'); row.slackWebhookEnc = encryptSecret('https://hooks.slack.com/services/T/B/private');
+    const current = process.env.JWT_SECRET; process.env.JWT_SECRET = 'new-secret';
+    try {
+      expect(await service.getNotifications()).toMatchObject({ discordEnabled: true, ntfyToken: '', ntfyTokenUnreadable: true, slackWebhook: '' });
+    } finally { process.env.JWT_SECRET = current; }
+  });
+
 });

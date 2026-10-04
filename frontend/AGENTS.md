@@ -462,3 +462,8 @@ are unsaved. API calls live in `src/services/settings/settings.service.ts`.
 The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.
 
 Notification delivery outcomes are transient provider results, not inbox/read receipts. Keep unknown outcomes distinct, show source/time and only sanitized reasons. Task/game/freshness rules and thresholds are opt-in global settings.
+
+ntfy and Slack use the shared notification fan-out and admin-only integration settings.
+Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
+start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

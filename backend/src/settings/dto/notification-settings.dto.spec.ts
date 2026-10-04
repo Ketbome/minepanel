@@ -11,6 +11,8 @@ describe('Notification settings validation', () => {
     expect(await validateNotification({ emailTo: 'admin@example.com', telegramToken: '123:token-abc', telegramChatId: '-100123', discordEnabled: false, emailEnabled: true, telegramEnabled: true, lifecycleEnabled: false, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: true, recoveryEnabled: true, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 })).toEqual([]);
     expect(await validateNotification({ emailTo: '', telegramToken: '', telegramChatId: '' })).toEqual([]);
     expect(await validateNotification({ telegramChatId: '@my_channel' })).toEqual([]);
+    expect(await validateNotification({ ntfyEnabled: true, ntfyServerUrl: 'http://localhost:8080/ntfy', ntfyTopic: 'minepanel-alerts', ntfyToken: 'tk_token', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/key' })).toEqual([]);
+    expect(await validateNotification({ ntfyToken: '', slackWebhook: '' })).toEqual([]);
   });
 
   it.each([
@@ -28,6 +30,20 @@ describe('Notification settings validation', () => {
     { alertCooldownMinutes: 0 },
     { minimumSeverity: 'critical' },
     { recoveryEnabled: null },
+    { ntfyToken: 'token\r\nInjected: yes' },
+    { ntfyTopic: '../admin' },
+    { ntfyTopic: 'a/b' },
+    { ntfyServerUrl: 'file:///etc/passwd' },
+    { ntfyServerUrl: 'https://user:pass@host' },
+    { ntfyServerUrl: 'https://host?token=private' },
+    { ntfyServerUrl: 'https://host/#fragment' },
+    { ntfyServerUrl: 'https://host\\evil' },
+    { ntfyEnabled: null },
+    { slackWebhook: 'http://hooks.slack.com/services/T/B/key' },
+    { slackWebhook: 'https://hooks.slack.com.evil/services/T/B/key' },
+    { slackWebhook: 'https://example.com/hook' },
+    { slackWebhook: null },
+    { hasSlackWebhook: true },
   ])('rejects malformed values and unknown fields: %j', async (value) => {
     expect((await validateNotification(value)).length).toBeGreaterThan(0);
   });
@@ -35,6 +51,7 @@ describe('Notification settings validation', () => {
   it('only accepts supported test channels', async () => {
     expect(await validate(plainToInstance(TestNotificationDto, { channel: 'email' }))).toEqual([]);
     expect(await validate(plainToInstance(TestNotificationDto, { channel: 'telegram' }))).toEqual([]);
+    for (const channel of ['ntfy', 'slack']) expect(await validate(plainToInstance(TestNotificationDto, { channel }))).toEqual([]);
     expect((await validate(plainToInstance(TestNotificationDto, { channel: 'webhook' }))).length).toBeGreaterThan(0);
   });
 });

@@ -60,7 +60,7 @@ labelled as estimated TPS and mean MSPT. Compatible spark servers expose measure
 TPS and median/P95 durations. The view identifies disabled RCON, unavailable
 measurements and unsupported Bedrock ticks; resource charts remain available.
 Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Per-server alert
-settings remain below the charts. Admins choose Discord, SMTP email and Telegram delivery
+settings remain below the charts. Admins choose Discord, SMTP email, Telegram, ntfy and Slack delivery
 under Settings > Integrations, with event switches and saved-destination tests. Telegram
 tokens are write-only; unsaved changes disable notification tests.
 
@@ -73,3 +73,8 @@ from recorded playtime. The tab cancels in-flight requests on navigation and ref
 Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.
 
 Integrations show each channel’s last accepted/failed/unknown attempt and expose opt-in task failures, sustained game-query failures and Java/restic overdue-backup rules.
+
+ntfy and Slack use the shared notification fan-out and admin-only integration settings.
+Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
+start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

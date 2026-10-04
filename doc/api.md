@@ -363,11 +363,11 @@ Examples:
 - `PATCH /settings/integrations` — write-only secrets: omit to keep, `""` to clear
 - `POST /settings/integrations/smtp/test`
 - `POST /settings/integrations/notifications/test` — admin only; body
-  `{ "channel": "discord" }`, `{ "channel": "email" }` or `{ "channel": "telegram" }`. Uses the saved destination,
+  `{ "channel": "discord" }`, `{ "channel": "email" }`, `{ "channel": "telegram" }`, `{ "channel": "ntfy" }` or `{ "channel": "slack" }`. Uses the saved destination,
   even if automatic delivery is disabled. Returns `{ success, message }`.
 
 `PATCH /settings/integrations` accepts a nested `notifications` object:
-`{ discordEnabled?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
+`{ ntfyEnabled?, ntfyServerUrl?, ntfyTopic?, ntfyToken?, slackEnabled?, slackWebhook?, discordEnabled?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
 telegramChatId?, lifecycleEnabled?, alertsEnabled?, diskAlertEnabled?,
 backupFailureEnabled?, recoveryEnabled?, diskFreeThresholdPercent?, alertCooldownMinutes?, taskFailureEnabled?, gameAlertEnabled?, staleBackupEnabled?,
 gameFailureSamples?, gameStartupGraceMinutes?, staleBackupToleranceMinutes? }`. These are instance-wide,
@@ -382,8 +382,17 @@ start disabled. `diskFreeThresholdPercent` is 1–50 (default 10), `alertCooldow
 Partial updates preserve omitted settings. Test failures return and log sanitized diagnostic
 reasons (such as an SMTP error code or Telegram HTTP status), never raw provider responses.
 
+ntfy defaults to `https://ntfy.sh`; `ntfyServerUrl` accepts HTTP/HTTPS without credentials,
+query or fragment, including a self-hosted path prefix. `ntfyTopic` uses 1–64 letters,
+digits, underscores or hyphens when enabled. `ntfyToken` is optional and write-only.
+`slackWebhook` accepts HTTPS incoming webhook URLs under `hooks.slack.com/services/`
+or `hooks.slack-gov.com/services/`, and is write-only. GET/PATCH return only
+`hasNtfyToken` / `hasSlackWebhook`. Secret fields accept `""` to clear and omission to retain.
+Both new channels start disabled and use the existing event switches and test endpoint.
+Requests reject redirects to avoid forwarding credentials to another host.
+
 The admin-only GET/PATCH integration responses include `systemDiscordConfigured` and
-`notificationDelivery` (`discord`, `email`, `telegram`, each null or
+`notificationDelivery` (`discord`, `email`, `telegram`, `ntfy`, `slack`, each null or
 `{ status: "accepted" | "failed" | "unknown", attemptedAt, source: "automatic" | "test", reason? }`).
 Results are transient, contain no recipient/token/log payload and reset on restart or settings change.
 New rules default to disabled: `gameFailureSamples` 1–30 (default 3),

@@ -9,8 +9,19 @@ import { IsNull, Not, Repository } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { operationalMessages } from './operational-messages';
 
-export type NotificationChannel = 'discord' | 'email' | 'telegram';
+export type NotificationChannel = 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
 export interface DeliveryState { status: 'accepted' | 'failed' | 'unknown'; attemptedAt: string; source: 'automatic' | 'test'; reason?: string }
+function truncateUtf8(text: string, maxBytes: number): string {
+  let bytes = 0;
+  let result = '';
+  for (const character of text) {
+    bytes += Buffer.byteLength(character);
+    if (bytes > maxBytes) break;
+    result += character;
+  }
+  return result;
+}
+
 type NotificationConfig = Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
 type NotificationField = { name: string; value: string; inline?: boolean; discordOnly?: boolean };
 type ServerDetails = { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string };
@@ -41,7 +52,7 @@ export class NotificationsService {
     catch { return false; }
   }
 
-  getDeliveryState() { return { discord: this.outcomes.discord ?? null, email: this.outcomes.email ?? null, telegram: this.outcomes.telegram ?? null }; }
+  getDeliveryState() { return { discord: this.outcomes.discord ?? null, email: this.outcomes.email ?? null, telegram: this.outcomes.telegram ?? null, ntfy: this.outcomes.ntfy ?? null, slack: this.outcomes.slack ?? null }; }
 
   private async recordAttempt(channel: NotificationChannel, source: 'automatic' | 'test', send: () => Promise<void>): Promise<void> {
     const attemptedAt = new Date().toISOString();
@@ -93,6 +104,8 @@ export class NotificationsService {
     if (config.discordEnabled && webhook) jobs.push({ channel: 'discord', send: discord });
     if (config.emailEnabled) jobs.push({ channel: 'email', send: () => this.sendEmail(config, title, text) });
     if (config.telegramEnabled) jobs.push({ channel: 'telegram', send: () => this.sendTelegram(config, title, text) });
+    if (config.ntfyEnabled) jobs.push({ channel: 'ntfy', send: () => this.sendNtfy(config, title, text) });
+    if (config.slackEnabled) jobs.push({ channel: 'slack', send: () => this.sendSlack(config, title, text) });
     const results = await Promise.allSettled(jobs.map((job) => this.recordAttempt(job.channel, 'automatic', job.send)));
     results.forEach((result, index) => {
       // Provider errors may contain credentials (Telegram embeds its token in the URL).
@@ -106,6 +119,8 @@ export class NotificationsService {
       const text = 'This is a test notification from Minepanel.';
       await this.recordAttempt(channel, 'test', async () => {
         if (channel === 'email') await this.sendEmail(config, 'Notification test', text);
+        else if (channel === 'ntfy') await this.sendNtfy(config, 'Notification test', text);
+        else if (channel === 'slack') await this.sendSlack(config, 'Notification test', text);
         else if (channel === 'telegram') await this.sendTelegram(config, 'Notification test', text);
         else {
           const row = await this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } });
@@ -124,6 +139,37 @@ export class NotificationsService {
   private async sendEmail(config: NotificationConfig, title: string, text: string): Promise<void> {
     if (!config.emailTo) throw new Error('Email notification is not configured');
     await this.mail.sendNotificationEmail(config.emailTo, title, text);
+  }
+
+  private async sendNtfy(config: NotificationConfig, title: string, text: string): Promise<void> {
+    if (!config.ntfyTopic || config.ntfyTokenUnreadable) throw new Error('ntfy notification is not configured');
+    await withRateLimitRetry(async (signal) => {
+      const response = await fetch(`${config.ntfyServerUrl.replace(/\/+$/, '')}/`, {
+        method: 'POST', redirect: 'error', signal,
+        headers: { 'Content-Type': 'application/json', ...(config.ntfyToken ? { Authorization: `Bearer ${config.ntfyToken}` } : {}) },
+        body: JSON.stringify({ topic: config.ntfyTopic, title: truncateUtf8(title, 200), message: truncateUtf8(text, 3000) }),
+      });
+      try {
+        if (response.status === 429) throw new RateLimitedError(response.headers.get('retry-after'));
+        if (!response.ok) throw new Error(`ntfy notification rejected (HTTP ${response.status})`);
+      } finally { await response.body?.cancel(); }
+    });
+  }
+
+  private async sendSlack(config: NotificationConfig, title: string, text: string): Promise<void> {
+    if (!config.slackWebhook) throw new Error('Slack notification is not configured');
+    await withRateLimitRetry(async (signal) => {
+      const plain = Array.from(`${title}\n\n${text}`).slice(0, 3000).join('');
+      const response = await fetch(config.slackWebhook, {
+        method: 'POST', redirect: 'error', signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: plain.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), blocks: [{ type: 'section', text: { type: 'plain_text', text: plain, emoji: false } }], unfurl_links: false, unfurl_media: false }),
+      });
+      try {
+        if (response.status === 429) throw new RateLimitedError(response.headers.get('retry-after'));
+        if (!response.ok) throw new Error(`Slack notification rejected (HTTP ${response.status})`);
+      } finally { await response.body?.cancel(); }
+    });
   }
 
   private async sendTelegram(config: NotificationConfig, title: string, text: string): Promise<void> {

@@ -344,6 +344,8 @@ export class InstanceSettingsService implements OnModuleInit {
       notifications: {
         ...this.notificationDefaults(row),
         hasTelegramToken: !!row.telegramTokenEnc,
+        hasNtfyToken: !!row.ntfyTokenEnc,
+        hasSlackWebhook: !!row.slackWebhookEnc,
       },
       smtp: {
         host: smtp.host ?? '',
@@ -392,10 +394,18 @@ export class InstanceSettingsService implements OnModuleInit {
     const row = await this.getRow();
 
     if (dto.notifications) {
-      const { telegramToken, ...preferences } = dto.notifications;
+      const { telegramToken, ntfyToken, slackWebhook, ...preferences } = dto.notifications;
       const provided = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value !== undefined));
       row.notifications = { ...row.notifications, ...provided };
       row.telegramTokenEnc = this.applySecret(row.telegramTokenEnc, telegramToken);
+      row.ntfyTokenEnc = this.applySecret(row.ntfyTokenEnc, ntfyToken);
+      row.slackWebhookEnc = this.applySecret(row.slackWebhookEnc, slackWebhook);
+      if (row.notifications.ntfyEnabled && !row.notifications.ntfyTopic) {
+        throw new BadRequestException('ntfy notifications require a topic');
+      }
+      if (row.notifications.slackEnabled && !row.slackWebhookEnc) {
+        throw new BadRequestException('Slack notifications require a webhook');
+      }
       if (row.notifications.emailEnabled && !row.notifications.emailTo) {
         throw new BadRequestException('Email notifications require a recipient');
       }
@@ -434,6 +444,10 @@ export class InstanceSettingsService implements OnModuleInit {
     const preferences = { ...row.notifications };
     delete (preferences as Record<string, unknown>).minimumSeverity;
     return {
+      ntfyEnabled: false,
+      ntfyServerUrl: 'https://ntfy.sh',
+      ntfyTopic: '',
+      slackEnabled: false,
       discordEnabled: true,
       emailEnabled: false,
       emailTo: '',
@@ -458,12 +472,20 @@ export class InstanceSettingsService implements OnModuleInit {
 
   async getNotifications() {
     const row = await this.getRow();
-    let telegramToken = '';
-    try {
-      if (row.telegramTokenEnc) telegramToken = decryptSecret(row.telegramTokenEnc);
-    } catch {
-      this.logger.warn('Telegram token could not be decrypted; reconfigure Telegram credentials');
-    }
-    return { ...this.notificationDefaults(row), telegramToken };
+    const readSecret = (encrypted: string | null | undefined, channel: string): string => {
+      try { return encrypted ? decryptSecret(encrypted) : ''; }
+      catch {
+        this.logger.warn(`${channel} credentials could not be decrypted; reconfigure the channel`);
+        return '';
+      }
+    };
+    const ntfyToken = readSecret(row.ntfyTokenEnc, 'ntfy');
+    return {
+      ...this.notificationDefaults(row),
+      telegramToken: readSecret(row.telegramTokenEnc, 'Telegram'),
+      ntfyToken,
+      ntfyTokenUnreadable: !!row.ntfyTokenEnc && !ntfyToken,
+      slackWebhook: readSecret(row.slackWebhookEnc, 'Slack'),
+    };
   }
 }
