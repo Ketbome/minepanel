@@ -74,6 +74,7 @@ describe('ServerManagementService lifecycle', () => {
   let existing: string[];
   let execRoutes: Array<[RegExp, ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)]>;
   let spawnQueue: SpawnResult[];
+  let probe: SpawnResult;
   let settingsRepo: { findOne: jest.Mock };
   let discord: { sendServerNotification: jest.Mock };
   let alerts: { markExpectedStop: jest.Mock };
@@ -85,6 +86,9 @@ describe('ServerManagementService lifecycle', () => {
 
   const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => execRoutes.unshift([pattern, result]);
   const execCalls = () => mockExec.mock.calls.map((call) => call[0] as string);
+  const settle = async () => {
+    for (let i = 0; i < 20; i += 1) await new Promise((resolve) => setImmediate(resolve));
+  };
 
   const build = (composeProject?: string) =>
     new ServerManagementService(
@@ -103,6 +107,7 @@ describe('ServerManagementService lifecycle', () => {
     existing = ['/app/servers/srv', '/app/servers/srv/docker-compose.yml'];
     execRoutes = [];
     spawnQueue = [];
+    probe = { stdout: 'version=1.21.4 online=0 max=20', exitCode: 0 };
     compose = COMPOSE_JAVA;
 
     (fs.pathExists as unknown as jest.Mock).mockImplementation(async (p: string) => existing.includes(p));
@@ -115,8 +120,8 @@ describe('ServerManagementService lifecycle', () => {
       }
       return { stdout: '', stderr: '' };
     });
-    (spawn as jest.Mock).mockImplementation(() => {
-      const result = spawnQueue.shift() ?? { stdout: '', exitCode: 0 };
+    (spawn as jest.Mock).mockImplementation((_cmd: string, args: string[]) => {
+      const result = spawnQueue.shift() ?? (args[2] === 'mc-monitor' ? probe : { stdout: '', exitCode: 0 });
       const child = Object.assign(new EventEmitter(), { stdout: new EventEmitter(), stderr: new EventEmitter() });
       process.nextTick(() => {
         if (result.error) {
@@ -245,6 +250,7 @@ describe('ServerManagementService lifecycle', () => {
       (fs.readdir as unknown as jest.Mock).mockResolvedValue([]);
 
       expect(await service.startServer('srv')).toBe(true);
+      await settle();
 
       const chown = (spawn as jest.Mock).mock.calls.find((call) => call[1][0] === 'run');
       expect(chown[1]).toEqual(['run', '--rm', '-v', '/srv/servers/srv/mc-data:/data', 'alpine', 'chown', '-R', '1001:1000', '/data']);
@@ -295,6 +301,75 @@ describe('ServerManagementService lifecycle', () => {
       existing.push('/app/servers/srv/docker-compose.yml');
       route(/docker compose down/, () => Promise.reject(new Error('down failed')));
       expect(await service.forceStopServer('srv')).toBe(false);
+    });
+  });
+
+  describe('readiness notification', () => {
+    const notified = (type: string) => discord.sendServerNotification.mock.calls.filter((call) => call[1] === type);
+
+    beforeEach(() => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+      probe = { stdout: '', exitCode: 1 };
+    });
+
+    afterEach(() => jest.useRealTimers());
+
+    it('posts "started" only once Minecraft answers the status probe', async () => {
+      expect(await service.startServer('srv')).toBe(true);
+      await settle();
+      expect(notified('started')).toHaveLength(0);
+
+      probe = { stdout: 'version=1.21.4 online=0 max=20', exitCode: 0 };
+      await jest.advanceTimersByTimeAsync(5_000);
+      await settle();
+      expect(notified('started')).toHaveLength(1);
+      expect((spawn as jest.Mock).mock.lastCall[1]).toEqual(['exec', 'abc123', 'mc-monitor', 'status', '--host', '127.0.0.1', '--port', '25565', '--timeout', '3s']);
+    });
+
+    it('posts "restarted" once the restarted server answers', async () => {
+      probe = { stdout: 'version=1.21.4 online=0 max=20', exitCode: 0 };
+      expect(await service.restartServer('srv')).toBe(true);
+      await settle();
+      expect(notified('restarted')).toHaveLength(1);
+    });
+
+    it('gives up silently when the container stops while booting', async () => {
+      expect(await service.startServer('srv')).toBe(true);
+      await settle();
+
+      route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'exited\n' });
+      await jest.advanceTimersByTimeAsync(5_000);
+      await settle();
+      probe = { stdout: 'version=1.21.4 online=0 max=20', exitCode: 0 };
+      await jest.advanceTimersByTimeAsync(25 * 60_000);
+      await settle();
+
+      expect(notified('started')).toHaveLength(0);
+      expect(notified('warning')).toHaveLength(0);
+    });
+
+    it('never posts a late "started" after the server was stopped', async () => {
+      expect(await service.startServer('srv')).toBe(true);
+      await settle();
+      expect(await service.stopServer('srv')).toBe(true);
+
+      probe = { stdout: 'version=1.21.4 online=0 max=20', exitCode: 0 };
+      await jest.advanceTimersByTimeAsync(5_000);
+      await settle();
+
+      expect(notified('started')).toHaveLength(0);
+      expect(notified('stopped')).toHaveLength(1);
+    });
+
+    it('warns when the server is still unreachable after the ceiling', async () => {
+      expect(await service.startServer('srv')).toBe(true);
+      await settle();
+
+      await jest.advanceTimersByTimeAsync(20 * 60_000 + 5_000);
+      await settle();
+
+      expect(notified('started')).toHaveLength(0);
+      expect(notified('warning')).toEqual([['https://hook', 'warning', 'srv', 'en', expect.objectContaining({ reason: 'Server started but not reachable after 20 minutes' })]]);
     });
   });
 

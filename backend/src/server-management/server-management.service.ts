@@ -159,6 +159,11 @@ export class ServerManagementService {
   private readonly statusProbeCache = new Map<string, { at: number; value: MinecraftStatusProbe | null }>();
   private readonly statusProbeInFlight = new Map<string, Promise<MinecraftStatusProbe | null>>();
 
+  // Modpack first boots can take well over ten minutes before the server accepts players.
+  private readonly READY_POLL_INTERVAL_MS = 5_000;
+  private readonly READY_TIMEOUT_MS = 20 * 60_000;
+  private readonly readyWatches = new Map<string, number>();
+
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(Settings)
@@ -901,7 +906,7 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
-      await this.sendDiscordNotification('restarted', serverId);
+      void this.notifyWhenReady(serverId, 'restarted');
 
       return true;
     } catch (error) {
@@ -923,6 +928,7 @@ export class ServerManagementService {
 
       if (await fs.pathExists(dockerComposePath)) {
         this.alertsService.markExpectedStop(serverId);
+        this.cancelReadyWatch(serverId);
         await this.execComposeDown(serverId);
       }
 
@@ -1109,6 +1115,7 @@ export class ServerManagementService {
       if (await fs.pathExists(dockerComposePath)) {
         try {
           this.alertsService.markExpectedStop(serverId);
+          this.cancelReadyWatch(serverId);
           await this.execComposeDown(serverId);
         } catch (error) {
           this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
@@ -1380,6 +1387,42 @@ export class ServerManagementService {
     } catch (error) {
       this.logger.debug(`Minecraft status probe failed for container ${containerId}: ${(error as Error).message}`);
       return null;
+    }
+  }
+
+  // Bumping the generation makes any readiness watch still running for this server give up.
+  private cancelReadyWatch(serverId: string): number {
+    const generation = (this.readyWatches.get(serverId) ?? 0) + 1;
+    this.readyWatches.set(serverId, generation);
+    return generation;
+  }
+
+  // compose up returns as soon as the container runs, minutes before Minecraft accepts
+  // players, so "started" waits for the status probe instead. A container that stops
+  // meanwhile is left to the crash/down alerts.
+  private async notifyWhenReady(serverId: string, type: 'started' | 'restarted'): Promise<void> {
+    const generation = this.cancelReadyWatch(serverId);
+    const deadline = Date.now() + this.READY_TIMEOUT_MS;
+    const isCurrent = () => this.readyWatches.get(serverId) === generation;
+    const edition = await this.getServerEdition(serverId);
+
+    while (isCurrent()) {
+      const status = await this.getServerStatus(serverId);
+      if (status === 'stopped' || status === 'not_found') return;
+
+      const containerId = status === 'running' ? await this.findContainerId(serverId).catch(() => '') : '';
+      const ready = containerId !== '' && (await this.runMinecraftStatusProbe(containerId, edition)) !== null;
+      if (!isCurrent()) return;
+
+      if (ready) {
+        await this.sendDiscordNotification(type, serverId);
+        return;
+      }
+      if (Date.now() >= deadline) {
+        await this.sendDiscordNotification('warning', serverId, { reason: `Server started but not reachable after ${this.READY_TIMEOUT_MS / 60_000} minutes` });
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, this.READY_POLL_INTERVAL_MS));
     }
   }
 
@@ -1985,7 +2028,7 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} started successfully`);
-      await this.sendDiscordNotification('started', serverId);
+      void this.notifyWhenReady(serverId, 'started');
 
       return true;
     } catch (error) {
@@ -2050,6 +2093,7 @@ export class ServerManagementService {
       }
 
       this.alertsService.markExpectedStop(serverId);
+      this.cancelReadyWatch(serverId);
 
       const edition = await this.getServerEdition(serverId);
       if (edition !== 'BEDROCK') {
@@ -2110,6 +2154,7 @@ export class ServerManagementService {
       }
 
       this.alertsService.markExpectedStop(serverId);
+      this.cancelReadyWatch(serverId);
       await this.execComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
