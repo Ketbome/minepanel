@@ -116,6 +116,10 @@ Notes:
 
 ::: warning Bedrock UDP
 Bedrock uses UDP, not TCP. Make sure your firewall rules specify the correct protocol.
+Minepanel runs Bedrock with `TRANSPORT=raknet` so that single UDP port is enough. To use
+NetherNet instead, set `TRANSPORT=nethernet` and `SERVER_UDP_PORTS=<public-ip>:19140-19155:19140-19155`
+in the server's environment variables and add `19132:19132/tcp` and `19140-19155:19140-19155/udp`
+as extra ports.
 :::
 
 **Open firewall:**

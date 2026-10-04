@@ -56,6 +56,9 @@ export class BedrockServerStrategy implements IServerStrategy {
       WHITE_LIST: String(config.whiteList ?? false),
       VIEW_DISTANCE: config.viewDistance,
       PLAYER_IDLE_TIMEOUT: config.playerIdleTimeout || '0',
+      // BDS 1.26.51+ defaults to NetherNet, which needs TCP signaling plus a public UDP range.
+      // RakNet still accepts current clients over the single published UDP port.
+      TRANSPORT: 'raknet',
     };
 
     // Version handling - always include VERSION, default to LATEST
