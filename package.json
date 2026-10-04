@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "husky": "9.1.7",
-    "lint-staged": "17.5.1"
+    "lint-staged": "17.6.0"
   },
   "lint-staged": {
     "backend/**/*.ts": "pnpm --filter ./backend lint:fix --",
