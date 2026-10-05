@@ -42,11 +42,15 @@ describe('parseTabTpsStats', () => {
   it('reads 1m TPS and the 60s average MSPT from flattened output', () => {
     expect(parseTabTpsStats(TABTPS_OUTPUT)).toEqual({ tps: 19.5, msptMean: 0.2 });
   });
+  it('parses Paper output where the 5s window is omitted', () => {
+    expect(parseTabTpsStats('TPS: 20.02 (1m), 20.00 (5m), 20.00 (15m)')).toEqual({ tps: 20.02, msptMean: null });
+    expect(parseTabTpsStats(TABTPS_OUTPUT.replace('20.00 (5s), ', ''))).toEqual({ tps: 19.5, msptMean: 0.2 });
+  });
   it('falls back to the 10s row and tolerates missing MSPT', () => {
     expect(parseTabTpsStats(TABTPS_OUTPUT.replace(/└─ 60s.*?CPU/, 'CPU'))?.msptMean).toBe(0.09);
     expect(parseTabTpsStats('TPS: 20.00 (5s), 18.00 (1m), 20 (5m)')).toEqual({ tps: 18, msptMean: null });
   });
-  it.each(['', 'Unknown command', 'TPS: 20.00 (5s), abc (1m)', 'Overall: 16 TPS (62.5 ms/tick)'])('rejects %s', (output) => {
+  it.each(['', 'Unknown command', 'TPS: 20.00 (5s), abc (1m)', 'TPS: abc (1m)', 'Overall: 16 TPS (62.5 ms/tick)'])('rejects %s', (output) => {
     expect(parseTabTpsStats(output)).toBeNull();
   });
 });

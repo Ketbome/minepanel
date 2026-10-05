@@ -40,12 +40,13 @@ export function parseSparkStats(output: string): SparkStats | null {
   };
 }
 
-// TabTPS /tickinfo: "TPS: 20.00 (5s), 20.00 (1m), ..." and "MSPT - Average, Minimum, Maximum"
-// rows per window ("60s - 0.20, 0.04, 38.49"). RCON can flatten the reply onto one line, so match
-// on the labels, never on line breaks. Only the average MSPT is kept: it has no median or p95.
+// TabTPS /tickinfo: "TPS: [20.00 (5s), ]20.00 (1m), ..." and "MSPT - Average, Minimum, Maximum"
+// rows per window ("60s - 0.20, 0.04, 38.49"). Paper omits the 5s window. RCON can flatten the
+// reply onto one line, so match on the labels, never on line breaks. Only the average MSPT is kept:
+// it has no median or p95.
 export function parseTabTpsStats(output: string): { tps: number; msptMean: number | null } | null {
   const text = stripFormatting(output);
-  const tpsMatch = text.match(/TPS:\s*[\d.,]+\s*\(5s\),\s*([\d.,]+)\s*\(1m\)/i);
+  const tpsMatch = text.match(/TPS:\s*(?:[\d.,]+\s*\(5s\),\s*)?([\d.,]+)\s*\(1m\)/i);
   if (!tpsMatch) return null;
   const tps = toNumber(tpsMatch[1]);
   if (tps === null) return null;
