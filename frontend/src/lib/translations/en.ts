@@ -2141,7 +2141,7 @@ export const en = {
   metricsDescription: 'Historical CPU and memory usage for this server.',
   metricsEmpty: 'No metrics yet. Samples are collected every minute while the server runs.',
   alertsTitle: 'Alerts',
-  alertsDescription: "Receive Discord, email or Telegram notifications when this server goes down or exceeds resource thresholds.",
+  alertsDescription: "Receive notifications on your enabled channels when this server goes down or exceeds resource thresholds.",
   downAlert: 'Alert when the server stops unexpectedly',
   resourceAlert: 'Alert on sustained high CPU/RAM usage',
   cpuThreshold: 'CPU threshold (%)',

@@ -2216,7 +2216,7 @@ export const tr: Record<TranslationKey, string> = {
   metricsDescription: 'Bu sunucunun geçmiş CPU ve bellek kullanımı.',
   metricsEmpty: 'Henüz ölçüm verisi yok. Sunucu çalışırken dakikada bir örnek toplanır.',
   alertsTitle: 'Uyarılar',
-  alertsDescription: 'Sunucu kapandığında veya kaynak eşiklerini aştığında Discord, e-posta ya da Telegram bildirimi alın.',
+  alertsDescription: 'Sunucu kapandığında veya kaynak eşiklerini aştığında etkin kanallarınızdan bildirim alın.',
   downAlert: 'Sunucu beklenmedik şekilde durduğunda uyar',
   resourceAlert: 'Sürekli yüksek CPU/RAM kullanımında uyar',
   cpuThreshold: 'CPU eşiği (%)',

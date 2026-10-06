@@ -2166,7 +2166,7 @@ export const pt: Record<TranslationKey, string> = {
   metricsDescription: 'Uso histórico de CPU e memória deste servidor.',
   metricsEmpty: 'Ainda não há métricas. Elas são registradas a cada minuto enquanto o servidor está em execução.',
   alertsTitle: 'Alertas',
-  alertsDescription: "Receba notificações por Discord, e-mail ou Telegram quando este servidor cair ou exceder os limites.",
+  alertsDescription: "Receba notificações nos seus canais ativados quando este servidor cair ou exceder os limites.",
   downAlert: 'Alertar quando o servidor parar inesperadamente',
   resourceAlert: 'Alertar por uso alto sustentado de CPU/RAM',
   cpuThreshold: 'Limite de CPU (%)',

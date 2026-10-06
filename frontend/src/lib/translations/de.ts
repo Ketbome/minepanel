@@ -2172,7 +2172,7 @@ export const de: Record<TranslationKey, string> = {
   metricsDescription: 'Historische CPU- und Speicherauslastung für diesen Server.',
   metricsEmpty: 'Noch keine Metriken. Daten werden jede Minute erfasst, während der Server läuft.',
   alertsTitle: 'Alarme',
-  alertsDescription: "Erhalte Discord-, E-Mail- oder Telegram-Benachrichtigungen bei Serverausfällen oder überschrittenen Schwellenwerten.",
+  alertsDescription: "Erhalte Benachrichtigungen über deine aktivierten Kanäle bei Serverausfällen oder überschrittenen Schwellenwerten.",
   downAlert: 'Alarm, wenn der Server unerwartet stoppt',
   resourceAlert: 'Alarm bei anhaltend hoher CPU-/RAM-Auslastung',
   cpuThreshold: 'CPU-Schwellenwert (%)',

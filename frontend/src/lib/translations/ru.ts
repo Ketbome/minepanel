@@ -2142,7 +2142,7 @@ export const ru: Record<TranslationKey, string> = {
   metricsDescription: 'Историческое использование CPU и памяти этим сервером.',
   metricsEmpty: 'Метрик пока нет. Пробы собираются каждую минуту, пока сервер работает.',
   alertsTitle: 'Оповещения',
-  alertsDescription: "Получайте уведомления Discord, почты или Telegram при отключении сервера или превышении порогов.",
+  alertsDescription: "Получайте уведомления в включённых каналах при отключении сервера или превышении порогов.",
   downAlert: 'Оповещать при неожиданной остановке сервера',
   resourceAlert: 'Оповещать о длительной высокой загрузке CPU/RAM',
   cpuThreshold: 'Порог CPU (%)',

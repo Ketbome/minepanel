@@ -549,15 +549,15 @@ shows saved configuration status, keeps tests beside each channel and offers **D
   Tokens are encrypted at rest and never returned by the API. You can replace or clear a
   saved token; disable Telegram before clearing the token.
 
-**Save changes before testing.** Email and Telegram test buttons use the saved destination
-and work even when automatic delivery is disabled. Discord has its existing webhook test.
+**Save changes before testing.** Every channel's test button (email, Telegram, Discord, ntfy and Slack) uses the saved
+destination and works even when automatic delivery is disabled.
 No live notification is sent merely by saving settings.
 
 Lifecycle notifications cover start, stop, restart, delete and operation errors.
 For unexpected server down, crash loops and sustained high CPU/RAM, enable the appropriate
 per-server alerts in the **Metrics** tab. Their existing thresholds, sustain windows and
-cooldowns still apply. Channels are attempted independently; email, Telegram and Discord
-requests have timeouts. Failed messages are logged without credentials; delivery is awaited and does not use a persistent queue. Explicit Discord/Telegram rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
+cooldowns still apply. Channels are attempted independently; email, Telegram, Discord, ntfy and Slack
+requests have timeouts. Failed messages are logged without credentials; delivery is awaited and does not use a persistent queue. Explicit Discord/Telegram/ntfy/Slack rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
 
 Additional opt-in rules are configured in the Notifications section:
 

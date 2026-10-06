@@ -102,7 +102,7 @@ export class AlertsService {
       const previousStatus = state.lastStatus;
       state.lastStatus = data.status;
 
-      const gameConfig = gameRule.enabled && gameRule.gameAlertEnabled ? await this.dockerComposeService.getServerConfig(serverId).catch(() => null) : null;
+      const gameConfig = gameRule.enabled && gameRule.gameAlertEnabled && data.status === 'running' ? await this.dockerComposeService.getServerConfig(serverId).catch(() => null) : null;
       if (gameConfig && !gameConfig.enableAutoPause && !gameConfig.enableAutoStop && gameRule.enabled && gameRule.gameAlertEnabled && data.status === 'running' && Date.now() >= state.expectedStopUntil) {
         if (data.gameQueryStatus === 'healthy') {
           state.gameFailureCount = 0;

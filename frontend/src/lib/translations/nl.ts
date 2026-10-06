@@ -2176,7 +2176,7 @@ export const nl: Record<TranslationKey, string> = {
   metricsDescription: 'Historisch CPU- en geheugengebruik voor deze server.',
   metricsEmpty: 'Nog geen statistieken. Gegevens worden elke minuut verzameld terwijl de server draait.',
   alertsTitle: 'Meldingen',
-  alertsDescription: "Ontvang Discord-, e-mail- of Telegram-meldingen als deze server uitvalt of drempelwaarden overschrijdt.",
+  alertsDescription: "Ontvang meldingen via je ingeschakelde kanalen als deze server uitvalt of drempelwaarden overschrijdt.",
   downAlert: 'Melding wanneer de server onverwacht stopt',
   resourceAlert: 'Melding bij aanhoudend hoog CPU-/RAM-gebruik',
   cpuThreshold: 'CPU-drempel (%)',
