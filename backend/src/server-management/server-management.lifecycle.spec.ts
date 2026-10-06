@@ -228,6 +228,13 @@ describe('ServerManagementService lifecycle', () => {
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'error', 'srv', 'en', expect.objectContaining({ reason: 'Failed to stop server' }));
     });
 
+    it('ignores a COMPOSE_PROJECT that is really an inline .env comment', async () => {
+      service = build('# optional prefix for server compose project names (final name: <prefix>_<serverid>)');
+      await service.restartServer('srv');
+      const upCall = mockExec.mock.calls.find((call) => call[0] === 'docker compose up -d');
+      expect(upCall[1]).toEqual({ cwd: '/app/servers/srv' });
+    });
+
     it('restartServer refreshes the compose file and uses the compose project name', async () => {
       service = build(' Panel ');
       expect(await service.restartServer('srv')).toBe(true);
