@@ -12,7 +12,7 @@ import { mcToast } from "@/lib/utils/minecraft-toast";
 import { filesService, type FileItem } from "@/services/files/files.service";
 import { FileEditor } from "./FileEditor";
 import { appendProperty, describePropertyChanges, managedTab, PANEL_KEYS, parseProperties, propertyCategory, replacePropertyValue, type PropertyCategory } from "./server-properties-model";
-import { isAvailable, isValidValue, PROPERTY_BY_KEY, SERVER_PROPERTIES } from "./server-properties-schema";
+import { isAvailable, isIgnored, isValidValue, PROPERTY_BY_KEY, SERVER_PROPERTIES } from "./server-properties-schema";
 
 interface Props {
   serverId: string;
@@ -201,7 +201,7 @@ export function ServerPropertiesEditor({ serverId, path, content, onSave, onClos
               <select className="mc-input w-full" value={entry.value} aria-invalid={invalid} onChange={(event) => set(event.target.value)}>{[...new Set(["true", "false", entry.value])].map((option) => <option key={option} value={option}>{option}</option>)}</select> :
               <Input value={entry.value} type={def?.type === "int" ? "number" : "text"} min={def?.min} max={def?.max} aria-invalid={invalid} onChange={(event) => set(event.target.value)} />}
             <span className="mt-2 block text-xs text-muted-foreground">{help}</span>
-            {def && !isAvailable(def, version) && <span className="block text-xs text-amber-400">{t("propertiesIgnored")}</span>}
+            {def && isIgnored(def, version) && <span className="block text-xs text-amber-400">{t("propertiesIgnored")}</span>}
             {invalid && <span role="alert" className="text-xs text-destructive">{t("propertiesInvalid")}</span>}
           </label>;
         })}</div>

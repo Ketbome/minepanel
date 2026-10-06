@@ -95,8 +95,14 @@ const PROPERTIES: PropertyDef[] = [
   { key: "rcon.password", category: "network", type: "string", default: "", description: "RCON password. Managed by the panel." },
   { key: "broadcast-rcon-to-ops", category: "network", type: "boolean", default: "true", description: "Send RCON command output to online operators." },
   { key: "enable-jmx-monitoring", category: "network", type: "boolean", default: "false", description: "Expose JMX tick-time beans.", since: "1.16" },
+  { key: "max-build-height", category: "game", type: "int", default: "256", min: 1, max: 2147483647, description: "Highest block players can build at." },
+  { key: "snooper-enabled", category: "other", type: "boolean", default: "true", description: "Send anonymous usage data to Mojang." },
+  { key: "previews-chat", category: "other", type: "boolean", default: "false", description: "Enable chat previews." },
+  { key: "spawn-animals", category: "game", type: "boolean", default: "true", description: "Animals spawn." },
+  { key: "spawn-npcs", category: "game", type: "boolean", default: "true", description: "Villagers spawn." },
 ];
 
+// From the Minecraft Wiki history of server.properties. A key missing here exists in every release.
 const SINCE: Record<string, string> = {
   "generator-settings": "1.8", "network-compression-threshold": "1.8", "prevent-proxy-connections": "1.11", "function-permission-level": "1.14.4",
   "sync-chunk-writes": "1.16", "enable-jmx-monitoring": "1.16", "enable-status": "1.16", "entity-broadcast-range-percentage": "1.16",
@@ -110,17 +116,21 @@ const SINCE: Record<string, string> = {
   // Not in the wiki history; it is in the current default file, so it is dated with the rest of the management protocol.
   "management-server-allowed-origins": "1.21.9",
   "chat-spam-threshold-seconds": "26.2", "command-spam-threshold-seconds": "26.2",
+  "previews-chat": "1.19",
   "allowed-connection-ids": "26.4", "enable-legacy-status": "26.4", "status-contact-details": "26.4",
 };
-const UNTIL: Record<string, string> = { pvp: "1.21.9", "allow-nether": "1.21.9", "enable-command-block": "1.21.9", "spawn-monsters": "1.21.9" };
+const UNTIL: Record<string, string> = { "max-build-height": "1.17", "snooper-enabled": "1.18", "previews-chat": "1.19.3", "spawn-animals": "1.21.2", "spawn-npcs": "1.21.2", pvp: "1.21.9", "allow-nether": "1.21.9", "enable-command-block": "1.21.9", "spawn-monsters": "1.21.9" };
 
 
 export const SERVER_PROPERTIES: PropertyDef[] = PROPERTIES.map((p) => ({ ...p, since: SINCE[p.key], until: UNTIL[p.key] }));
 
 export const PROPERTY_BY_KEY = new Map(SERVER_PROPERTIES.map((p) => [p.key, p]));
 
-// "1.21.4", "26.1.2" and "1.21.4-rc1" compare numerically; LATEST, SNAPSHOT, empty or a modpack id
-// carry no version, and those servers get the newest keys.
+// Newest release at the time of writing (Mojang version manifest). Update it, and SINCE, when a release adds keys.
+const LATEST_RELEASE = "26.3";
+
+// "1.21.4", "26.1.2", "26.4-snapshot-3" and "1.21.4-rc1" compare numerically. LATEST, an empty value or a
+// modpack id carry no version, so they count as the newest release; SNAPSHOT counts as newer than any.
 function parseVersion(version?: string): number[] | null {
   const m = /^(\d+)\.(\d+)(?:\.(\d+))?/.exec(version ?? "");
   return m ? [Number(m[1]), Number(m[2]), Number(m[3] ?? 0)] : null;
@@ -128,10 +138,16 @@ function parseVersion(version?: string): number[] | null {
 
 const compare = (a: number[], b: number[]) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 
+// Does this version read the key? Used to decide which missing keys to offer.
 export function isAvailable(def: PropertyDef, version?: string): boolean {
-  const v = parseVersion(version);
-  if (!v) return !def.until;
+  const v = parseVersion(version) ?? (/^snapshot$/i.test(version ?? "") ? [Infinity, 0, 0] : parseVersion(LATEST_RELEASE)!);
   return (!def.since || compare(v, parseVersion(def.since)!) >= 0) && (!def.until || compare(v, parseVersion(def.until)!) < 0);
+}
+
+// Should a key already in the file be flagged? Without an explicit version only keys the newest
+// release dropped are, so a stale LATEST_RELEASE never mislabels a key a newer release added.
+export function isIgnored(def: PropertyDef, version?: string): boolean {
+  return parseVersion(version) ? !isAvailable(def, version) : !!def.until;
 }
 
 // Same checks as the server: type, enum and range. Unknown keys are never an error.
