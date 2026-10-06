@@ -57,6 +57,15 @@ describe('NotificationMonitorService', () => {
     expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(3);
   });
 
+  it('forgets incidents while alerts are globally disabled', async () => {
+    (statfs as jest.Mock).mockResolvedValue({ blocks: 100, bavail: 5 });await service.collect();
+    policy.alertsEnabled = false;await service.collect();
+    (statfs as jest.Mock).mockResolvedValue({ blocks: 100, bavail: 50 });
+    policy.alertsEnabled = true;await service.collect();
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
+    expect(notifications.sendOperationalAlert).not.toHaveBeenCalledWith('recovery', expect.anything(), expect.anything());
+  });
+
   it('never counts an unknown disk reading as recovery', async () => {
     (statfs as jest.Mock).mockResolvedValue({ blocks: 100, bavail: 0 });await service.collect();
     (statfs as jest.Mock).mockResolvedValue({ blocks: 0, bavail: 0 });await service.collect();

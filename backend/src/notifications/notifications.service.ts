@@ -175,15 +175,16 @@ export class NotificationsService {
   private async sendTelegram(config: NotificationConfig, title: string, text: string): Promise<void> {
     if (!config.telegramToken || !config.telegramChatId) throw new Error('Telegram notification is not configured');
     await withRateLimitRetry(async (signal) => {
-    const response = await fetch(`https://api.telegram.org/bot${config.telegramToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: config.telegramChatId, text: Array.from(`${title}\n\n${text}`).slice(0, 4096).join(''), link_preview_options: { is_disabled: true } }),
-      signal,
-    });
-    const result = await response.json() as { ok?: boolean; parameters?: { retry_after?: number } };
-    if (response.status === 429) throw new RateLimitedError(result.parameters?.retry_after);
-    if (!response.ok || result.ok !== true) throw new Error(`Telegram notification rejected (HTTP ${response.status || 200})`);
+      const response = await fetch(`https://api.telegram.org/bot${config.telegramToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: config.telegramChatId, text: Array.from(`${title}\n\n${text}`).slice(0, 4096).join(''), link_preview_options: { is_disabled: true } }),
+        signal,
+      });
+      // An HTTP error status is a definite rejection even when a proxy answers with HTML.
+      const result = await response.json().catch(() => (response.ok ? Promise.reject(new Error('Malformed Telegram response')) : {})) as { ok?: boolean; parameters?: { retry_after?: number } };
+      if (response.status === 429) throw new RateLimitedError(result.parameters?.retry_after);
+      if (!response.ok || result.ok !== true) throw new Error(`Telegram notification rejected (HTTP ${response.status || 200})`);
     });
   }
 }

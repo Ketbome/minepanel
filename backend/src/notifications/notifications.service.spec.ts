@@ -122,6 +122,12 @@ describe('NotificationsService', () => {
     expect(result.message).not.toContain('secret');
   });
 
+  it('reports a non-JSON Telegram error page as a definite HTTP failure', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 502, json: async () => { throw new SyntaxError('Unexpected token <'); } });
+    expect((await service.testChannel('telegram')).message).toBe('Notification failed: Telegram notification rejected (HTTP 502)');
+    expect(service.getDeliveryState().telegram).toMatchObject({ status: 'failed' });
+  });
+
   it('bounds Telegram messages without breaking Unicode characters', async () => {
     await service.sendCustomMessage('', 'Crash', '😀'.repeat(5000), 'error', []);
     const text = JSON.parse(fetchMock.mock.calls[0][1].body).text as string;

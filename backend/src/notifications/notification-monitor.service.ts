@@ -10,6 +10,7 @@ import { InstanceSettingsService } from 'src/settings/instance-settings.service'
 import { NotificationsService } from './notifications.service';
 
 const INTERVAL_MS = 60_000;
+const MINUTE_MS = 60_000;
 type Policy = Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
 
 function runDocker(args: string[], cwd?: string): Promise<{ stdout: string; stderr: string }> {
@@ -55,19 +56,21 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     this.collecting = true;
     try {
       const policy = await this.settings.getNotifications();
-      if (!policy.alertsEnabled) return;
-      if (policy.diskAlertEnabled) {
-        try { await this.checkDisk(policy); } catch { this.logger.warn('Disk notification probe unavailable'); }
-      } else {
+      // Incidents seen before a switch was turned off are no longer observed; never recover them later.
+      if (!policy.alertsEnabled || !policy.diskAlertEnabled) {
         this.diskIncident = false;
         this.diskLastAlert = null;
       }
-      if (!policy.backupFailureEnabled && !policy.staleBackupEnabled) {
+      if (!policy.alertsEnabled || (!policy.backupFailureEnabled && !policy.staleBackupEnabled)) {
         this.freshnessChecks.clear(); this.staleIncidents.clear(); this.staleAlerts.clear();
         this.backupCursors.clear();
         this.backupLastAlerts.clear();
-        return;
       }
+      if (!policy.alertsEnabled) return;
+      if (policy.diskAlertEnabled) {
+        try { await this.checkDisk(policy); } catch { this.logger.warn('Disk notification probe unavailable'); }
+      }
+      if (!policy.backupFailureEnabled && !policy.staleBackupEnabled) return;
       const ids = (await this.store.listServerDirs()).filter((id) => /^[a-zA-Z0-9_-]+$/.test(id));
       if (ids.length === 0) return;
       const present = new Set(ids);
@@ -99,7 +102,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     const freePercent = Math.max(0, stats.bavail / stats.blocks * 100);
     if (freePercent <= policy.diskFreeThresholdPercent) {
       this.diskIncident = true;
-      if (this.diskLastAlert === null || Date.now() - this.diskLastAlert >= policy.alertCooldownMinutes * INTERVAL_MS) {
+      if (this.diskLastAlert === null || Date.now() - this.diskLastAlert >= policy.alertCooldownMinutes * MINUTE_MS) {
         this.diskLastAlert = Date.now();
         await this.notifications.sendOperationalAlert('disk', directory, `${freePercent.toFixed(1)}% free; threshold ${policy.diskFreeThresholdPercent}%`);
       }
@@ -151,7 +154,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     }
     if (!failed) return;
     const last = this.backupLastAlerts.get(serverId);
-    if (last !== undefined && now - last < policy.alertCooldownMinutes * INTERVAL_MS) return;
+    if (last !== undefined && now - last < policy.alertCooldownMinutes * MINUTE_MS) return;
     this.backupLastAlerts.set(serverId, now);
     // Backup logs may contain repository credentials; never forward the raw log text.
     await this.notifications.sendOperationalAlert('backup', serverId, 'The backup sidecar reported a failed backup or exited with an error. Check its logs.');
@@ -165,7 +168,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     const now = Date.now();
     if (interval === null || initial === null || !Number.isFinite(started) || started > now) return;
     const lastCheck = this.freshnessChecks.get(serverId);
-    if (lastCheck !== undefined && now - lastCheck < 5 * INTERVAL_MS) return;
+    if (lastCheck !== undefined && now - lastCheck < 5 * MINUTE_MS) return;
     this.freshnessChecks.set(serverId, now);
     const result = await runDocker(['exec', backup, 'restic', 'snapshots', '--json', '--host', serverId, '--path', '/data', '--latest', '1']);
     const snapshots = JSON.parse(result.stdout) as Array<{ time?: string }>;
@@ -174,10 +177,10 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     if (times.some((time) => !Number.isFinite(time) || time > now)) return;
     const latest = times.length ? Math.max(...times) : 0;
     const expected = latest >= started ? latest + interval : started + initial + (config.backupOnStartup === false ? interval : 0);
-    if (now > expected + policy.staleBackupToleranceMinutes * INTERVAL_MS) {
+    if (now > expected + policy.staleBackupToleranceMinutes * MINUTE_MS) {
       this.staleIncidents.add(serverId);
       const previous = this.staleAlerts.get(serverId);
-      if (previous === undefined || now - previous >= policy.alertCooldownMinutes * INTERVAL_MS) {
+      if (previous === undefined || now - previous >= policy.alertCooldownMinutes * MINUTE_MS) {
         this.staleAlerts.set(serverId, now);
         await this.notifications.sendOperationalAlert('stale', serverId, 'No new restic snapshot was observed within the expected interval and tolerance.');
       }
