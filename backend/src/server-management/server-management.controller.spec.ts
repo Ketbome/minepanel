@@ -56,6 +56,7 @@ describe('ServerManagementController', () => {
       listAvailableWorlds: jest.fn(),
       updateModWatch: jest.fn(),
       updateSpawnPoint: jest.fn(),
+      updateTickCommand: jest.fn(),
     };
 
     const mockDockerComposeService = {
@@ -387,6 +388,14 @@ describe('ServerManagementController', () => {
       expect(dockerComposeService.updateServerConfig).toHaveBeenCalledTimes(1);
     });
 
+    it('should drop the tick command fields from a whole-form save', async () => {
+      await controller.updateServer(mockReq, 'victim', { serverName: 'x', tickCommand: 'op me', tickTpsPattern: '(1)', tickMsptPattern: '(2)' } as any);
+      const saved = dockerComposeService.updateServerConfig.mock.calls[0][1];
+      expect(saved).not.toHaveProperty('tickCommand');
+      expect(saved).not.toHaveProperty('tickTpsPattern');
+      expect(saved).not.toHaveProperty('tickMsptPattern');
+    });
+
     it('should check the default hostname when the proxy is turned back on', async () => {
       useEdge('mc-router');
       dockerComposeService.getServerConfig.mockResolvedValue({ ...persistedConfig, useProxy: false } as any);
@@ -588,6 +597,56 @@ describe('ServerManagementController', () => {
     });
   });
 
+  describe('updateTickCommand', () => {
+    const mockReq = { user: { userId: 1 } };
+
+    beforeEach(() => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 1, username: 'root', role: 'ADMIN' });
+      serverService.updateTickCommand.mockResolvedValue({ id: 'survival', tickCommand: 'tickinfo' } as any);
+    });
+
+    it('is admin only', async () => {
+      accessControlService.isAdmin.mockReturnValueOnce(false);
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'tickinfo' })).rejects.toThrow('Only admin');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
+    });
+
+    it('saves without regenerating compose and records an audit entry', async () => {
+      accessControlService.isAdmin.mockReturnValueOnce(true);
+      await controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'tickinfo', tickTpsPattern: 'TPS: ([\\d.]+)' });
+      expect(serverService.updateTickCommand).toHaveBeenCalledWith('survival', { tickCommand: 'tickinfo', tickTpsPattern: 'TPS: ([\\d.]+)' });
+      expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();
+      expect(auditLogService.record).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'update_tick_command',
+        serverId: 'survival',
+        summary: 'Set metrics tick command on survival: tickinfo',
+        metadata: { command: 'tickinfo', tpsPattern: 'TPS: ([\\d.]+)', msptPattern: null },
+      }));
+    });
+
+    it('records a cleared command', async () => {
+      accessControlService.isAdmin.mockReturnValueOnce(true);
+      await controller.updateTickCommand(mockReq, 'survival', { tickCommand: '' });
+      expect(auditLogService.record).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Cleared metrics tick command on survival', metadata: { command: null, tpsPattern: null, msptPattern: null } }));
+    });
+
+    it('rejects a pattern that does not compile or has no capture group', async () => {
+      accessControlService.isAdmin.mockReturnValue(true);
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'x', tickTpsPattern: '(' })).rejects.toThrow('regular expressions');
+      await expect(controller.updateTickCommand(mockReq, 'survival', { tickCommand: 'x', tickTpsPattern: 'a', tickMsptPattern: 'b' })).rejects.toThrow('regular expressions');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTickCommand pattern time limit', () => {
+    it('rejects a pattern that backtracks catastrophically', async () => {
+      (controller as any).getCurrentUser = jest.fn().mockResolvedValue({ id: 1, username: 'root', role: 'ADMIN' });
+      accessControlService.isAdmin.mockReturnValue(true);
+      await expect(controller.updateTickCommand({ user: { userId: 1 } }, 'survival', { tickCommand: 'x', tickTpsPattern: '(a+)+$' })).rejects.toThrow('too slow');
+      expect(serverService.updateTickCommand).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createServer host mounts', () => {
     const mockReq = { user: { userId: 1 } };
 
@@ -624,6 +683,19 @@ describe('ServerManagementController', () => {
       ).rejects.toThrow(ForbiddenException);
 
       expect(dockerComposeService.createServer).not.toHaveBeenCalled();
+    });
+
+    it('drops the tick command fields from a non-admin create, but keeps them for an admin', async () => {
+      const tick = { tickCommand: 'op someone', tickTpsPattern: '(1)', tickMsptPattern: '(2)' };
+      await controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', ...tick } as any);
+      const created = dockerComposeService.createServer.mock.lastCall![1] as any;
+      expect(created).not.toHaveProperty('tickCommand');
+      expect(created).not.toHaveProperty('tickTpsPattern');
+      expect(created).not.toHaveProperty('tickMsptPattern');
+
+      accessControlService.isAdmin.mockReturnValue(true);
+      await controller.createServer(mockReq, { id: 'demo', edition: 'JAVA', ...tick } as any);
+      expect(dockerComposeService.createServer).toHaveBeenLastCalledWith('demo', expect.objectContaining(tick), expect.anything());
     });
 
     it('should still allow template envVars and extraPorts', async () => {
@@ -877,6 +949,23 @@ describe('ServerManagementController', () => {
 
         accessControlService.canUsePermission.mockReturnValue(true);
         expect((await controller.cloneServer(req, 'a', { newId: 'b' } as any)).success).toBe(true);
+      });
+
+      it('does not hand a source server\'s tick command to a non-admin clone', async () => {
+        const tick = { tickCommand: 'op someone', tickTpsPattern: '(1)', tickMsptPattern: '(2)' };
+        dockerComposeService.getServerConfig.mockResolvedValue({ id: 'a', serverExists: true, serverName: 'Alpha', ...tick } as any);
+        dockerComposeService.createServer.mockResolvedValue({ id: 'b' } as any);
+        proxy.getProxySettings.mockResolvedValue({ enabled: false });
+
+        await controller.cloneServer(req, 'a', { newId: 'b' } as any);
+        const cloned = dockerComposeService.createServer.mock.lastCall![1] as any;
+        expect(cloned).not.toHaveProperty('tickCommand');
+        expect(cloned).not.toHaveProperty('tickTpsPattern');
+        expect(cloned).not.toHaveProperty('tickMsptPattern');
+
+        accessControlService.isAdmin.mockReturnValue(true);
+        await controller.cloneServer(req, 'a', { newId: 'b' } as any);
+        expect(dockerComposeService.createServer).toHaveBeenLastCalledWith('b', expect.objectContaining(tick), false);
       });
 
       it('never carries Velocity membership over to the clone', async () => {

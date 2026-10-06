@@ -5,6 +5,8 @@ import { ServerManagementService } from './server-management.service';
 import { EVENT_COMMAND_FIELDS, EventCommandField, normalizeEventCommands, ServerConfig, ServerEdition, UpdateServerConfigDto } from './dto/server-config.model';
 import { UpdateModWatchDto } from './dto/mod-watch.dto';
 import { UpdateSpawnPointDto } from './dto/spawn-point.dto';
+import { TickCommandDto } from './dto/tick-command.dto';
+import { compileTickPattern, isTickPatternSlow } from 'src/metrics/tick-stats';
 import { ServerListItemDto } from './dto/server-list-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { SettingsService } from 'src/users/services/settings.service';
@@ -34,6 +36,10 @@ function assertValidSince(since: string): void {
     throw new BadRequestException('Invalid "since" value: expected an ISO 8601 timestamp, a Unix timestamp, or a duration like "10m" or "1h".');
   }
 }
+
+// The Metrics tab's custom tick command and its patterns. The sampler runs it over RCON, so only
+// admins may set it, through PUT /servers/:id/tick-command (or create/clone as an admin).
+const TICK_COMMAND_KEYS = ['tickCommand', 'tickTpsPattern', 'tickMsptPattern'] as const;
 
 // Fields that reach the Docker host or decide which code runs inside the container.
 // Being assigned to a server is enough to operate it, but not to change these.
@@ -532,6 +538,9 @@ export class ServerManagementController {
       const currentUser = await this.getCurrentUser(req);
       this.accessControlService.assertCreateServers(currentUser);
       this.assertSafeNewServerConfig(currentUser, data);
+      // The sampler runs the tick command over RCON every minute, so it is admin-only to set and
+      // would otherwise be a way around the console permission. Dropped, not rejected, like PUT :id.
+      if (!this.accessControlService.isAdmin(currentUser)) for (const key of TICK_COMMAND_KEYS) delete data[key];
       await this.assertUsableVanillaTweaks(data.vanillaTweaksCodes, [], data.edition);
       this.assertValidComposeSnippets(data.composeSnippets);
       const id = data.id;
@@ -607,6 +616,8 @@ export class ServerManagementController {
       backupHostDir: undefined,
       dockerVolumes: this.dockerComposeService.remapVolumesToServer(config.dockerVolumes, id, body.newId),
     };
+    // An admin's tick command is not the cloner's to copy unless they are an admin themselves.
+    if (!this.accessControlService.isAdmin(currentUser)) for (const key of TICK_COMMAND_KEYS) delete clonePayload[key];
     if (config.worldScope === 'local' && config.worldSource) {
       clonePayload.worldSource = '';
       clonePayload.forceWorldCopy = false;
@@ -757,6 +768,9 @@ export class ServerManagementController {
       spawnX: _spawnX,
       spawnY: _spawnY,
       spawnZ: _spawnZ,
+      tickCommand: _tickCommand,
+      tickTpsPattern: _tickTpsPattern,
+      tickMsptPattern: _tickMsptPattern,
       ...configWithoutModWatch
     } = config;
 
@@ -808,6 +822,36 @@ export class ServerManagementController {
     const updatedConfig = await this.managementService.updateSpawnPoint(id, body);
 
     await this.recordServerAudit(currentUser, 'update_spawn_point', id, `Updated default spawn point for ${id}`);
+
+    return withoutSecrets(updatedConfig);
+  }
+
+  // Separate from PUT :id, like spawn-point. Admin only: the panel runs this RCON command on every
+  // metrics poll, unattended.
+  @Put(':id/tick-command')
+  async updateTickCommand(
+    @Request() req,
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: TickCommandDto,
+  ) {
+    const currentUser = await this.requireAdmin(req);
+    for (const pattern of [body.tickTpsPattern, body.tickMsptPattern]) {
+      if (pattern && !compileTickPattern(pattern)) {
+        throw new BadRequestException('Patterns must be valid regular expressions with a capture group for the number');
+      }
+      if (pattern && isTickPatternSlow(pattern)) throw new BadRequestException('Pattern is too slow: it backtracks catastrophically on simple input');
+    }
+
+    const updatedConfig = await this.managementService.updateTickCommand(id, body);
+
+    await this.recordServerAudit(
+      currentUser,
+      'update_tick_command',
+      id,
+      body.tickCommand?.trim() ? `Set metrics tick command on ${id}: ${body.tickCommand.trim()}` : `Cleared metrics tick command on ${id}`,
+      'success',
+      { command: body.tickCommand?.trim() || null, tpsPattern: body.tickTpsPattern?.trim() || null, msptPattern: body.tickMsptPattern?.trim() || null },
+    );
 
     return withoutSecrets(updatedConfig);
   }

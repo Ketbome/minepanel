@@ -7,6 +7,7 @@ import { ServerManagementService } from 'src/server-management/server-management
 import { AlertsService } from 'src/alerts/alerts.service';
 import { MonitoringService } from './monitoring.service';
 
+import { TickSource } from './tick-stats';
 const SAMPLE_INTERVAL_MS = 60_000;
 const RETENTION_DAYS = 7;
 
@@ -15,7 +16,7 @@ export interface MetricPoint {
   memoryMb: number;
   memoryLimitMb: number | null;
   tps: number | null;
-  tickSource: 'neoforge' | 'spark' | null;
+  tickSource: TickSource | null;
   msptMean: number | null;
   msptMedian: number | null;
   msptP95: number | null;

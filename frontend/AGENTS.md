@@ -228,6 +228,9 @@ Tooling / build (Next.js 16):
   Charts show the latest sample, labelled scales and min/max of available samples;
   memory uses GiB in cards and charts. Chart probes support hover, touch and keyboard
   navigation; keep pointer state local and never project samples into downtime gaps. Keep the history view free of sliders.
+  The admin-only `monitoring/tick-command-card.tsx` picks the tick source from a preset dropdown
+  (Automatic, TabTPS, NeoForge, spark, Custom); its regex patterns show only in Advanced mode, or
+  whenever saved ones exist, so nothing in effect is hidden.
   Live polls run after completion (10s); history every 60s. Failed live requests clear
   values; history failures are shown without presenting old samples as current.
 - `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,

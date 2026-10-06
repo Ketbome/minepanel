@@ -799,6 +799,21 @@ export class ServerConfigDto {
   @IsOptional()
   modWatchTargetVersion?: string;
 
+  // Custom Metrics tick command and optional regexes (one capture group each) that read TPS and
+  // average MSPT from its reply. Not compose input, saved through PUT /servers/:id/tick-command
+  // (admin only), not the whole-form save. Unset means the built-in NeoForge/spark probes.
+  @IsString()
+  @IsOptional()
+  tickCommand?: string;
+
+  @IsString()
+  @IsOptional()
+  tickTpsPattern?: string;
+
+  @IsString()
+  @IsOptional()
+  tickMsptPattern?: string;
+
   // Default "TP Spawn" coordinates for the Players tab quick action; not compose input, saved
   // through PUT /servers/:id/spawn-point, not the whole-form save. Falls back to (0, 100, 0)
   // when unset.

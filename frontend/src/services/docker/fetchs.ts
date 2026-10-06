@@ -43,6 +43,14 @@ export const updateSpawnPoint = async (
   return response.data;
 };
 
+export const updateTickCommand = async (
+  serverId: string,
+  update: { tickCommand?: string; tickTpsPattern?: string; tickMsptPattern?: string },
+): Promise<ServerConfig> => {
+  const response = await api.put(`/servers/${serverId}/tick-command`, update);
+  return response.data;
+};
+
 export const getServerWorlds = async (serverId: string): Promise<AvailableWorld[]> => {
   const response = await api.get(`/servers/${serverId}/worlds`);
   return response.data;

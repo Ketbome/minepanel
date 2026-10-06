@@ -207,6 +207,25 @@ export class ServerManagementService {
     return config;
   }
 
+  // Writes server.json directly, like updateModWatch: the Metrics tab stays open while the
+  // server runs, so this write must not regenerate the compose file. An empty value clears it.
+  async updateTickCommand(serverId: string, update: { tickCommand?: string; tickTpsPattern?: string; tickMsptPattern?: string }): Promise<ServerConfig> {
+    if (!this.validateServerId(serverId)) {
+      throw new BadRequestException(`Invalid server ID: ${serverId}`);
+    }
+
+    const config = await this.store.updateConfig(serverId, (current) => {
+      current.tickCommand = update.tickCommand?.trim() || undefined;
+      current.tickTpsPattern = current.tickCommand ? update.tickTpsPattern?.trim() || undefined : undefined;
+      current.tickMsptPattern = current.tickCommand && current.tickTpsPattern ? update.tickMsptPattern?.trim() || undefined : undefined;
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Server with ID "${serverId}" not found`);
+    }
+    return config;
+  }
+
   // Writes server.json directly, like updateModWatch: the Players/Commands tabs stay open
   // while the server runs, so this write must not regenerate the compose file.
   async updateSpawnPoint(serverId: string, update: { x?: number | null; y?: number | null; z?: number | null }): Promise<ServerConfig> {
@@ -1852,18 +1871,23 @@ export class ServerManagementService {
   }
 
   async readTickStats(serverId: string, source: 'neoforge' | 'spark', rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
+    return this.readTickCommand(serverId, source === 'neoforge' ? 'neoforge tps' : 'spark tps', rconPort, rconPassword);
+  }
+
+  // Bounded, non-throwing RCON read for monitoring. Pass credentials explicitly (as executeCommand
+  // does) instead of trusting the container's own env, which goes stale if RCON settings change
+  // without a container recreate. The command is either fixed or an admin-chosen tick command
+  // (see updateTickCommand); it is passed as one argv entry, never through a shell.
+  async readTickCommand(serverId: string, command: string, rconPort: string, rconPassword?: string): Promise<CommandExecutionResponse> {
     if (!this.validateServerId(serverId)) return { success: false, output: '' };
     try {
       if (!(await this.serverExists(serverId))) return { success: false, output: '' };
       const containerId = await this.findContainerId(serverId);
       if (!containerId) return { success: false, output: '' };
-      // Fixed read-only command; pass credentials explicitly (as executeCommand does) instead of
-      // trusting the container's own env, which goes stale if RCON settings change without a
-      // container recreate.
-      const command = source === 'neoforge' ? 'neoforge tps' : 'spark tps';
       const args = ['exec', containerId, 'rcon-cli', '--port', rconPort];
       if (rconPassword) args.push('--password', rconPassword);
-      args.push(command);
+      // `--` ends rcon-cli's flags: a command such as `--host=evil` must stay the command.
+      args.push('--', command);
       const { stdout, exitCode } = await this.executeProcess('docker', args, { timeout: 5_000 });
       return { success: exitCode === 0, output: this.sanitizeCommandOutput(stdout) };
     } catch {
