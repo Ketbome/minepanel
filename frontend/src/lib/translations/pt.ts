@@ -2240,6 +2240,8 @@ export const pt: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Chaves duplicadas exigem o editor de texto',
   propertiesNoFields: 'Nenhuma configuração editável neste arquivo.',
   propertiesCustomHelp: 'Configuração personalizada. Consulte a documentação do servidor.',
+  propertiesIgnored: "Esta versão do Minecraft não lê esta chave. Ela só está no arquivo.",
+  propertiesAddMissing: "Adicionar uma propriedade ausente",
   propertiesInvalid: 'Digite um valor válido para esta configuração.',
   propertiesPanelManaged: 'As configurações gerenciadas pelo painel são editadas em Configurações do servidor e podem ser reescritas na inicialização.',
 };

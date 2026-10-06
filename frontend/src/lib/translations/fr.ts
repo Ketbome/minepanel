@@ -2219,6 +2219,8 @@ export const fr: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Les clés en double nécessitent l’éditeur de texte',
   propertiesNoFields: 'Aucun paramètre modifiable dans ce fichier.',
   propertiesCustomHelp: 'Paramètre personnalisé. Consultez la documentation du serveur.',
+  propertiesIgnored: "Cette version de Minecraft ne lit pas cette clé. Elle n'est que dans le fichier.",
+  propertiesAddMissing: "Ajouter une propriété manquante",
   propertiesInvalid: 'Saisissez une valeur valide pour ce paramètre.',
   propertiesPanelManaged: 'Les paramètres gérés par le panneau se modifient dans les paramètres du serveur et peuvent être réécrits au démarrage.',
 };

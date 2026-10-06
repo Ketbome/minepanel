@@ -2242,6 +2242,8 @@ export const pl: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Zduplikowane klucze wymagają edytora tekstu',
   propertiesNoFields: 'Brak edytowalnych ustawień w tym pliku.',
   propertiesCustomHelp: 'Ustawienie niestandardowe. Sprawdź dokumentację serwera.',
+  propertiesIgnored: "Ta wersja Minecrafta nie odczytuje tego klucza. Jest tylko w pliku.",
+  propertiesAddMissing: "Dodaj brakującą właściwość",
   propertiesInvalid: 'Wpisz poprawną wartość tego ustawienia.',
   propertiesPanelManaged: 'Ustawienia zarządzane przez panel edytuje się w Ustawieniach serwera; mogą zostać nadpisane przy uruchomieniu.',
 };

@@ -45,7 +45,7 @@ pnpm lint
 - `src/lib/store/` - global state
 - `src/lib/translations/` - i18n
 
-The Files tab opens a guided editor for `server.properties`. It shows existing settings with type checks, explanations, category and state filters, and links to Server Settings for panel-managed values. Guided and raw text views share unsaved edits. Before saving or restoring a backup, the editor shows changed lines for review; the backup history lets you preview and restore earlier versions. Comments and custom lines are preserved.
+The Files tab opens a guided editor for `server.properties`. It shows existing settings with type checks, explanations, version-aware keys (flags settings the server's Minecraft version ignores and lets you add the ones it reads), category and state filters, and links to Server Settings for panel-managed values. Guided and raw text views share unsaved edits. Before saving or restoring a backup, the editor shows changed lines for review; the backup history lets you preview and restore earlier versions. Comments and custom lines are preserved.
 
 ## References
 

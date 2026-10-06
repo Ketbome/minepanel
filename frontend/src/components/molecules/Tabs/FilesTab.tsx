@@ -8,9 +8,10 @@ import { LINK_FILE_MANAGEMENT } from "@/lib/providers/constants";
 
 interface FilesTabProps {
   serverId: string;
+  minecraftVersion?: string;
 }
 
-export const FilesTab: FC<FilesTabProps> = ({ serverId }) => {
+export const FilesTab: FC<FilesTabProps> = ({ serverId, minecraftVersion }) => {
   const { t } = useLanguage();
 
   return (
@@ -32,7 +33,7 @@ export const FilesTab: FC<FilesTabProps> = ({ serverId }) => {
       </CardHeader>
 
       <CardContent>
-        <FileBrowser serverId={serverId} />
+        <FileBrowser serverId={serverId} minecraftVersion={minecraftVersion} />
       </CardContent>
     </Card>
   );

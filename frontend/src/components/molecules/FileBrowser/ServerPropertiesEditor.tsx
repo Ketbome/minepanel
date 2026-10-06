@@ -11,7 +11,8 @@ import type { TranslationKey } from "@/lib/translations";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { filesService, type FileItem } from "@/services/files/files.service";
 import { FileEditor } from "./FileEditor";
-import { describePropertyChanges, managedTab, PANEL_KEYS, parseProperties, propertyCategory, replacePropertyValue, type PropertyCategory } from "./server-properties-model";
+import { appendProperty, describePropertyChanges, managedTab, PANEL_KEYS, parseProperties, propertyCategory, replacePropertyValue, type PropertyCategory } from "./server-properties-model";
+import { isAvailable, isValidValue, PROPERTY_BY_KEY, SERVER_PROPERTIES } from "./server-properties-schema";
 
 interface Props {
   serverId: string;
@@ -19,27 +20,27 @@ interface Props {
   content: string;
   onSave: (content: string) => Promise<void>;
   onClose: () => void;
+  version?: string;
 }
 
-type Rule = { kind: "boolean" | "integer" | "text"; min?: number; max?: number; help: TranslationKey };
 type Pending = { kind: "save" | "restore"; next: string; backupName?: string };
 type CategoryFilter = PropertyCategory | "all";
 type StateFilter = "all" | "changed" | "errors";
 
-const RULES: Record<string, Rule> = {
-  "max-tick-time": { kind: "integer", min: -1, help: "propertiesMaxTickTimeHelp" },
-  "network-compression-threshold": { kind: "integer", min: -1, help: "propertiesCompressionHelp" },
-  "max-world-size": { kind: "integer", min: 1, help: "propertiesMaxWorldSizeHelp" },
-  "require-resource-pack": { kind: "boolean", help: "propertiesRequirePackHelp" },
-  "hide-online-players": { kind: "boolean", help: "propertiesHidePlayersHelp" },
-  "broadcast-console-to-ops": { kind: "boolean", help: "propertiesBroadcastHelp" },
-  "resource-pack-prompt": { kind: "text", help: "propertiesPackPromptHelp" },
+const HELP: Record<string, TranslationKey> = {
+  "max-tick-time": "propertiesMaxTickTimeHelp",
+  "network-compression-threshold": "propertiesCompressionHelp",
+  "max-world-size": "propertiesMaxWorldSizeHelp",
+  "require-resource-pack": "propertiesRequirePackHelp",
+  "hide-online-players": "propertiesHidePlayersHelp",
+  "broadcast-console-to-ops": "propertiesBroadcastHelp",
+  "resource-pack-prompt": "propertiesPackPromptHelp",
 };
 
 const BACKUP_NAME = /^server\.properties\.\d{4}-\d{2}-\d{2}T[\d-]+Z\.[0-9a-f-]+\.bak$/;
 const MAX_PREVIEW_CHANGES = 20;
 
-export function ServerPropertiesEditor({ serverId, path, content, onSave, onClose }: Props) {
+export function ServerPropertiesEditor({ serverId, path, content, onSave, onClose, version }: Props) {
   const { t, language } = useLanguage();
   const [draft, setDraft] = useState(content);
   const [raw, setRaw] = useState(false);
@@ -68,15 +69,14 @@ export function ServerPropertiesEditor({ serverId, path, content, onSave, onClos
     }
     return result;
   }, [entries]);
-  const errors = editable.flatMap((entry) => {
-    const rule = RULES[entry.key];
-    if (!rule) return [];
-    if (rule.kind === "boolean" && entry.value !== "true" && entry.value !== "false") return [entry.key];
-    if (rule.kind === "integer" && (!/^-?\d+$/.test(entry.value) || Number(entry.value) < (rule.min ?? -Infinity) || Number(entry.value) > (rule.max ?? Infinity))) return [entry.key];
-    return [];
-  });
+  const errors = editable.filter((entry) => !isValidValue(PROPERTY_BY_KEY.get(entry.key), entry.value)).map((entry) => entry.key);
+  const missing = useMemo(() => {
+    const present = new Set(entries.map((entry) => entry.key));
+    return SERVER_PROPERTIES.filter((def) => isAvailable(def, version) && !PANEL_KEYS.has(def.key) && !present.has(def.key));
+  }, [entries, version]);
+  const matches = (key: string) => key.toLowerCase().includes(query.trim().toLowerCase());
   const filtered = editable.filter((entry) => {
-    if (!entry.key.toLowerCase().includes(query.trim().toLowerCase())) return false;
+    if (!matches(entry.key)) return false;
     if (category !== "all" && propertyCategory(entry.key) !== category) return false;
     if (stateFilter === "changed" && oldLines[entry.index] === draftLines[entry.index]) return false;
     if (stateFilter === "errors" && !errors.includes(entry.key)) return false;
@@ -184,17 +184,24 @@ export function ServerPropertiesEditor({ serverId, path, content, onSave, onClos
           </select>
         </div>
         {duplicates.size > 0 && <Alert className="mb-4"><AlertDescription>{t("propertiesDuplicates")}: {[...duplicates].join(", ")}</AlertDescription></Alert>}
+        {missing.length > 0 && <details className="mb-4 border border-border p-3"><summary className="cursor-pointer text-sm">{t("propertiesAddMissing")} ({missing.length})</summary>
+          <ul className="mt-2 flex flex-wrap gap-2">{missing.filter((def) => matches(def.key) && (category === "all" || def.category === category)).map((def) => <li key={def.key}><Button size="sm" variant="outline" title={def.description} onClick={() => setDraft((old) => appendProperty(old, def.key, def.default))}><code>{def.key}</code></Button></li>)}</ul>
+        </details>}
         {editable.length === 0 ? <p className="text-muted-foreground">{t("propertiesNoFields")}</p> : filtered.length === 0 ? <p className="text-muted-foreground">{t("propertiesNoMatches")}</p> : null}
         <div className="grid gap-3 md:grid-cols-2">{filtered.map((entry) => {
-          const rule = RULES[entry.key];
+          const def = PROPERTY_BY_KEY.get(entry.key);
           const invalid = errors.includes(entry.key);
-          const help = t(rule?.help ?? "propertiesCustomHelp");
+          const help = HELP[entry.key] ? t(HELP[entry.key]) : def?.description ?? t("propertiesCustomHelp");
+          const set = (value: string) => setDraft((old) => replacePropertyValue(old, entry.index, value));
           return <label key={entry.index} className="block border border-border bg-background p-3" data-invalid={invalid || undefined}>
             <span className="mb-2 flex items-center gap-2 text-sm font-medium"><code>{entry.key}</code><span title={help} aria-label={help} className="cursor-help rounded border border-border px-1 text-xs text-muted-foreground">?</span></span>
-            {rule?.kind === "boolean" || (!rule && (entry.value === "true" || entry.value === "false")) ?
-              <select className="mc-input w-full" value={entry.value} aria-invalid={invalid} onChange={(event) => setDraft((old) => replacePropertyValue(old, entry.index, event.target.value))}><option value="true">true</option><option value="false">false</option></select> :
-              <Input value={entry.value} type={rule?.kind === "integer" ? "number" : "text"} min={rule?.min} max={rule?.max} aria-invalid={invalid} onChange={(event) => setDraft((old) => replacePropertyValue(old, entry.index, event.target.value))} />}
+            {def?.type === "enum" ?
+              <select className="mc-input w-full" value={entry.value} aria-invalid={invalid} onChange={(event) => set(event.target.value)}>{[...new Set([...def.options!, entry.value])].map((option) => <option key={option} value={option}>{option}</option>)}</select> :
+            def?.type === "boolean" || (!def && (entry.value === "true" || entry.value === "false")) ?
+              <select className="mc-input w-full" value={entry.value} aria-invalid={invalid} onChange={(event) => set(event.target.value)}>{[...new Set(["true", "false", entry.value])].map((option) => <option key={option} value={option}>{option}</option>)}</select> :
+              <Input value={entry.value} type={def?.type === "int" ? "number" : "text"} min={def?.min} max={def?.max} aria-invalid={invalid} onChange={(event) => set(event.target.value)} />}
             <span className="mt-2 block text-xs text-muted-foreground">{help}</span>
+            {def && !isAvailable(def, version) && <span className="block text-xs text-amber-400">{t("propertiesIgnored")}</span>}
             {invalid && <span role="alert" className="text-xs text-destructive">{t("propertiesInvalid")}</span>}
           </label>;
         })}</div>

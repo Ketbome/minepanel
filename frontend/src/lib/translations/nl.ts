@@ -2250,6 +2250,8 @@ export const nl: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Dubbele sleutels vereisen de teksteditor',
   propertiesNoFields: 'Geen bewerkbare instellingen in dit bestand.',
   propertiesCustomHelp: 'Aangepaste instelling. Raadpleeg de serverdocumentatie.',
+  propertiesIgnored: "Deze Minecraft-versie leest deze sleutel niet. Hij staat alleen in het bestand.",
+  propertiesAddMissing: "Ontbrekende eigenschap toevoegen",
   propertiesInvalid: 'Voer een geldige waarde in voor deze instelling.',
   propertiesPanelManaged: 'Instellingen die het paneel beheert, bewerk je in Serverinstellingen; ze kunnen bij het starten worden overschreven.',
 };

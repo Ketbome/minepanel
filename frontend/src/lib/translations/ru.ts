@@ -2216,6 +2216,8 @@ export const ru: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Повторяющиеся ключи требуют текстового редактора',
   propertiesNoFields: 'В этом файле нет доступных для изменения настроек.',
   propertiesCustomHelp: 'Пользовательский параметр. Смотрите документацию сервера.',
+  propertiesIgnored: "Эта версия Minecraft не читает этот ключ. Он есть только в файле.",
+  propertiesAddMissing: "Добавить отсутствующее свойство",
   propertiesInvalid: 'Введите допустимое значение для этого параметра.',
   propertiesPanelManaged: 'Параметры, управляемые панелью, меняются в настройках сервера и могут быть перезаписаны при запуске.',
 };
