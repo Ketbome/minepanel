@@ -5,7 +5,7 @@ export class RateLimitedError extends Error {
 export function deliveryFailureReason(error: unknown): string {
   if (error instanceof RateLimitedError) return error.message;
   const message = error instanceof Error ? error.message : '';
-  const known = ['Email notification is not configured', 'Email delivery is not configured', 'Telegram notification is not configured', 'Discord webhook is not configured', 'ntfy notification is not configured', 'Slack notification is not configured'];
+  const known = ['Email notification is not configured', 'Email delivery is not configured', 'Telegram notification is not configured', 'Discord webhook is not configured', 'ntfy notification is not configured', 'ntfy token could not be decrypted', 'Slack notification is not configured'];
   if (known.includes(message) || /^(Telegram|ntfy|Slack) notification rejected \(HTTP \d{3}\)$/.test(message) || /^Discord webhook returned status \d{3}$/.test(message)) return message;
   const code = (error as { code?: string })?.code;
   if (code && ['EAUTH', 'ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'ECONNREFUSED', 'ENOTFOUND', 'EENVELOPE'].includes(code)) return `SMTP failure (${code})`;

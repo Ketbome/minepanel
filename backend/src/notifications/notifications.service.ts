@@ -47,12 +47,20 @@ export class NotificationsService {
     else for (const key of Object.keys(this.outcomes) as NotificationChannel[]) delete this.outcomes[key];
   }
 
+  // Instance-wide alerts reuse the legacy first configured Discord webhook and its language.
+  private firstWebhookSettings(): Promise<Settings | null> {
+    return this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } });
+  }
+
   async isDiscordConfigured(): Promise<boolean> {
-    try { return !!(await this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } }))?.discordWebhook; }
+    try { return !!(await this.firstWebhookSettings())?.discordWebhook; }
     catch { return false; }
   }
 
-  getDeliveryState() { return { discord: this.outcomes.discord ?? null, email: this.outcomes.email ?? null, telegram: this.outcomes.telegram ?? null, ntfy: this.outcomes.ntfy ?? null, slack: this.outcomes.slack ?? null }; }
+  getDeliveryState() {
+    const { discord = null, email = null, telegram = null, ntfy = null, slack = null } = this.outcomes;
+    return { discord, email, telegram, ntfy, slack };
+  }
 
   private async recordAttempt(channel: NotificationChannel, source: 'automatic' | 'test', send: () => Promise<void>): Promise<void> {
     const attemptedAt = new Date().toISOString();
@@ -64,7 +72,9 @@ export class NotificationsService {
       if (generation === this.generation && this.attempts[channel] === attempt) this.outcomes[channel] = { status: 'accepted', attemptedAt, source };
     } catch (error) {
       const reason = deliveryFailureReason(error);
-      if (generation === this.generation && this.attempts[channel] === attempt) this.outcomes[channel] = { status: reason === 'Provider request failed' || reason === 'Request timed out' || ['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'].includes((error as { code?: string })?.code || '') ? 'unknown' : 'failed', attemptedAt, source, reason };
+      // A timeout or dropped connection may still have delivered the message.
+      const ambiguous = reason === 'Provider request failed' || reason === 'Request timed out' || ['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'].includes((error as { code?: string })?.code || '');
+      if (generation === this.generation && this.attempts[channel] === attempt) this.outcomes[channel] = { status: ambiguous ? 'unknown' : 'failed', attemptedAt, source, reason };
       throw error;
     }
   }
@@ -86,10 +96,12 @@ export class NotificationsService {
 
   async sendOperationalAlert(kind: 'disk' | 'backup' | 'recovery' | 'task' | 'game' | 'stale', subject: string, detail: string, incidentSeverity: 'warning' | 'error' = 'warning'): Promise<void> {
     const config = await this.settings.getNotifications();
-    if (!config.alertsEnabled || !({ disk: config.diskAlertEnabled, backup: config.backupFailureEnabled, recovery: config.recoveryEnabled, task: config.taskFailureEnabled, game: config.gameAlertEnabled, stale: config.staleBackupEnabled }[kind])) return;
-    const settings = await this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } });
+    const switches = { disk: config.diskAlertEnabled, backup: config.backupFailureEnabled, recovery: config.recoveryEnabled, task: config.taskFailureEnabled, game: config.gameAlertEnabled, stale: config.staleBackupEnabled };
+    if (!config.alertsEnabled || !switches[kind]) return;
+    const settings = await this.firstWebhookSettings();
     const t = operationalMessages((settings?.language as SupportedLanguage) || 'en');
-    await this.sendCustomMessage(settings?.discordWebhook || '', t[kind], kind === 'recovery' ? t.recovered : t.description, kind === 'backup' || kind === 'task' ? 'error' : kind === 'recovery' ? incidentSeverity : 'warning', [
+    const color = kind === 'backup' || kind === 'task' ? 'error' : kind === 'recovery' ? incidentSeverity : 'warning';
+    await this.sendCustomMessage(settings?.discordWebhook || '', t[kind], kind === 'recovery' ? t.recovered : t.description, color, [
       { name: 'Minepanel', value: subject }, { name: 'Details', value: detail },
     ]);
   }
@@ -123,7 +135,7 @@ export class NotificationsService {
         else if (channel === 'slack') await this.sendSlack(config, 'Notification test', text);
         else if (channel === 'telegram') await this.sendTelegram(config, 'Notification test', text);
         else {
-          const row = await this.userSettings.findOne({ where: { discordWebhook: Not(IsNull()) }, order: { id: 'ASC' } });
+          const row = await this.firstWebhookSettings();
           if (!row?.discordWebhook) throw new Error('Discord webhook is not configured');
           await this.discord.sendCustomMessage(row.discordWebhook, 'Notification test', text);
         }
@@ -142,7 +154,8 @@ export class NotificationsService {
   }
 
   private async sendNtfy(config: NotificationConfig, title: string, text: string): Promise<void> {
-    if (!config.ntfyTopic || config.ntfyTokenUnreadable) throw new Error('ntfy notification is not configured');
+    if (!config.ntfyTopic) throw new Error('ntfy notification is not configured');
+    if (config.ntfyTokenUnreadable) throw new Error('ntfy token could not be decrypted');
     await withRateLimitRetry(async (signal) => {
       const response = await fetch(`${config.ntfyServerUrl.replace(/\/+$/, '')}/`, {
         method: 'POST', redirect: 'error', signal,
@@ -160,10 +173,15 @@ export class NotificationsService {
     if (!config.slackWebhook) throw new Error('Slack notification is not configured');
     await withRateLimitRetry(async (signal) => {
       const plain = Array.from(`${title}\n\n${text}`).slice(0, 3000).join('');
+      const escaped = plain.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const response = await fetch(config.slackWebhook, {
         method: 'POST', redirect: 'error', signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: plain.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), blocks: [{ type: 'section', text: { type: 'plain_text', text: plain, emoji: false } }], unfurl_links: false, unfurl_media: false }),
+        body: JSON.stringify({
+          text: escaped,
+          blocks: [{ type: 'section', text: { type: 'plain_text', text: plain, emoji: false } }],
+          unfurl_links: false, unfurl_media: false,
+        }),
       });
       try {
         if (response.status === 429) throw new RateLimitedError(response.headers.get('retry-after'));

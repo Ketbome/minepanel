@@ -163,7 +163,7 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               <p className="text-sm text-muted-foreground">{t('notificationNtfyHelp')}</p>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" onClick={() => test('ntfy')} disabled={disabled || dirty || !saved.ntfyTopic}>{busy === 'ntfy' ? <Loader2 className="animate-spin" /> : null}{t('test')}</Button>
-                {saved.hasNtfyToken ? <Button type="button" variant="ghost" onClick={() => { setClearNtfy(true); setNtfyToken(''); update('ntfyEnabled', false); }} disabled={clearNtfy}>{t('notificationClearToken')}</Button> : null}
+                {saved.hasNtfyToken ? <Button type="button" variant="ghost" onClick={() => { setClearNtfy(true); setNtfyToken(''); }} disabled={clearNtfy}>{t('notificationClearToken')}</Button> : null}
               </div>
               {channelOutcome('ntfy')}{showFeedback('ntfy')}
             </div>

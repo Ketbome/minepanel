@@ -249,7 +249,7 @@ describe('NotificationsService', () => {
     expect((await service.testChannel('ntfy')).success).toBe(false);
     expect((await service.testChannel('slack')).success).toBe(false);
     config.ntfyTopic = 'private'; config.ntfyTokenUnreadable = true;
-    expect((await service.testChannel('ntfy')).success).toBe(false);
+    expect(await service.testChannel('ntfy')).toEqual({ success: false, message: 'Notification failed: ntfy token could not be decrypted' });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
