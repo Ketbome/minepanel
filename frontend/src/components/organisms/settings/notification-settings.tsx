@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Bell, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,8 +62,9 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
       setClearToken(false);
       setNtfyToken(''); setSlackWebhook(''); setClearNtfy(false); setClearSlack(false);
       mcToast.success(t('settingsSaved'));
-    } catch {
-      setFeedback({ scope: 'save', success: false, key: 'notificationSaveFailed' });
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string | string[] } } }).response?.data?.message;
+      setFeedback({ scope: 'save', success: false, key: 'notificationSaveFailed', detail: Array.isArray(message) ? message.join(', ') : message });
     } finally { setBusy(null); }
   };
 
@@ -99,10 +100,17 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
   );
 
   return (
-    <Card>
+    <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
       <CardHeader>
-        <CardTitle>{t('notificationTitle')}</CardTitle>
-        <CardDescription>{t('notificationDescription')}</CardDescription>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+            <Bell className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <CardTitle className="text-white font-minecraft">{t('notificationTitle')}</CardTitle>
+            <CardDescription className="text-gray-400">{t('notificationDescription')}</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <form onSubmit={save} onReset={reset}>
         <CardContent className="grid gap-8 xl:grid-cols-2">
@@ -188,7 +196,7 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
                   <Label htmlFor={`notification-${key}`} className="text-base">{t(label)}</Label>
                   <p id={`notification-${key}-help`} className="text-sm text-muted-foreground">{t(description)}</p>
                 </div>
-                <Switch id={`notification-${key}`} checked={form[key]} onCheckedChange={(checked) => update(key, checked)} aria-describedby={`notification-${key}-help`} />
+                <Switch id={`notification-${key}`} checked={form[key]} onCheckedChange={(checked) => update(key, checked)} disabled={key !== 'lifecycleEnabled' && key !== 'alertsEnabled' && !form.alertsEnabled} aria-describedby={`notification-${key}-help`} />
               </div>
             ))}
             <div className="grid min-w-0 items-end gap-4 md:grid-cols-2">
@@ -198,15 +206,15 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               </div>
               <div className="min-w-0 flex flex-col gap-2">
                 <Label htmlFor="notification-cooldown">{t('notificationCooldown')}</Label>
-                <Input id="notification-cooldown" type="number" min={1} max={10080} value={form.alertCooldownMinutes} onChange={(e) => update('alertCooldownMinutes', Number(e.target.value))} className="text-base" />
+                <Input id="notification-cooldown" type="number" min={1} max={10080} value={form.alertCooldownMinutes} onChange={(e) => update('alertCooldownMinutes', Number(e.target.value))} disabled={!form.alertsEnabled} className="text-base" />
               </div>
             </div>
             <div className="grid min-w-0 gap-4 md:grid-cols-2">
               {([
-                ['gameFailureSamples', 'notificationGameSamples', 30],
-                ['gameStartupGraceMinutes', 'notificationGameGrace', 1440],
-                ['staleBackupToleranceMinutes', 'notificationStaleTolerance', 10080],
-              ] as const).map(([key, label, max]) => <div key={key} className="min-w-0 flex flex-col gap-2"><Label htmlFor={`notification-${key}`}>{t(label)}</Label><Input id={`notification-${key}`} type="number" min={1} max={max} value={form[key]} onChange={(e) => update(key, Number(e.target.value))} className="text-base" /></div>)}
+                ['gameFailureSamples', 'notificationGameSamples', 30, 'gameAlertEnabled'],
+                ['gameStartupGraceMinutes', 'notificationGameGrace', 1440, 'gameAlertEnabled'],
+                ['staleBackupToleranceMinutes', 'notificationStaleTolerance', 10080, 'staleBackupEnabled'],
+              ] as const).map(([key, label, max, rule]) => <div key={key} className="min-w-0 flex flex-col gap-2"><Label htmlFor={`notification-${key}`}>{t(label)}</Label><Input id={`notification-${key}`} type="number" min={1} max={max} value={form[key]} onChange={(e) => update(key, Number(e.target.value))} disabled={!form[rule] || !form.alertsEnabled} className="text-base" /></div>)}
             </div>
             <p className="text-sm text-muted-foreground">{t('notificationPolicyHelp')}</p>
           </fieldset>

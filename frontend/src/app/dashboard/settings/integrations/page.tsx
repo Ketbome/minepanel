@@ -138,6 +138,11 @@ export default function IntegrationsSettingsPage() {
       setHasCfApiKey(!!res.hasCfApiKey);
       setHasDiscordWebhook(!!res.hasDiscordWebhook);
       if (payload.cfApiKey && edit === cfKeyEdits.current) setCfKeyCheck(res.cfApiKeyCheck ?? null);
+      if (isAdmin && payload.discordWebhook) {
+        // Notifications use the instance-wide webhook; refresh only that flag to keep unsaved SMTP/OIDC edits.
+        const { systemDiscordConfigured } = await getIntegrationSettings();
+        setIntegrations((current) => (current ? { ...current, systemDiscordConfigured } : current));
+      }
       setCfApiKey('');
       setDiscordWebhook('');
       mcToast.success(t('settingsSaved'));
@@ -252,7 +257,6 @@ export default function IntegrationsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={integrations.systemDiscordConfigured ?? hasDiscordWebhook} delivery={integrations.notificationDelivery} /> : null}
       {/* CurseForge + Discord */}
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
@@ -431,6 +435,7 @@ export default function IntegrationsSettingsPage() {
           </Card>
         </>
       )}
+      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={integrations.systemDiscordConfigured ?? hasDiscordWebhook} delivery={integrations.notificationDelivery} /> : null}
     </div>
   );
 }
