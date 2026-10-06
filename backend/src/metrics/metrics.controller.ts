@@ -45,6 +45,14 @@ export class MetricsController {
     return { serverId: id, hours: safeHours, points };
   }
 
+  @Get(':id/uptime')
+  async getUptime(@Request() req, @Param('id') id: string) {
+    const payload = req.user as PayloadToken;
+    const user = await this.usersService.getRequiredUserById(payload.userId);
+    this.accessControlService.assertServerAccess(user, id);
+    return { serverId: id, windows: await this.metricsService.getUptime(id) };
+  }
+
   // Admin only: it runs an arbitrary RCON command, exactly what saving that command allows.
   @Post(':id/tick-test')
   async testTickCommand(

@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { MonitoringService } from './monitoring.service';
 import { MetricsService } from './metrics.service';
 import { MetricSample } from './entities/metric-sample.entity';
+import { UptimeSample } from './entities/uptime-sample.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
@@ -10,6 +11,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
+  let uptimeRepo: { count: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock };
   let alertsService: { evaluate: jest.Mock };
 
@@ -20,6 +22,7 @@ describe('MetricsService', () => {
       save: jest.fn(async (x) => x),
       delete: jest.fn().mockResolvedValue(undefined),
     };
+    uptimeRepo = { count: jest.fn(), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
     serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
 
@@ -27,6 +30,7 @@ describe('MetricsService', () => {
       providers: [
         MetricsService,
         { provide: getRepositoryToken(MetricSample), useValue: sampleRepo },
+        { provide: getRepositoryToken(UptimeSample), useValue: uptimeRepo },
         { provide: ServerManagementService, useValue: serverManagement },
         { provide: AlertsService, useValue: alertsService },
         { provide: MonitoringService, useValue: { getSnapshot: jest.fn().mockResolvedValue({ tps: 19.5, msptMedian: 30, msptP95: 60, playersOnline: 3 }) } },
@@ -75,7 +79,30 @@ describe('MetricsService', () => {
     });
   });
 
+  describe('getUptime', () => {
+    it('should report the running share of observed minutes and null when nothing was observed', async () => {
+      uptimeRepo.count.mockImplementation(async ({ where }) => (where.running ? 90 : where.createdAt ? 100 : 0));
+      const windows = await service.getUptime('srv');
+      expect(windows.map((w) => w.hours)).toEqual([24, 168, 720]);
+      expect(windows[0]).toEqual({ hours: 24, uptimePercent: 90, observedMinutes: 100 });
+
+      uptimeRepo.count.mockResolvedValue(0);
+      expect((await service.getUptime('srv'))[0].uptimePercent).toBeNull();
+    });
+  });
+
   describe('collectSamples', () => {
+    it('should record availability for every known server, running or not', async () => {
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({
+        a: { status: 'running', cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },
+        b: { status: 'stopped' },
+        c: { status: 'not_found' },
+      });
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save.mock.calls[0][0].map((u) => [u.serverId, u.running])).toEqual([['a', true], ['b', false]]);
+      expect(uptimeRepo.delete).toHaveBeenCalled();
+    });
+
     it('should only persist samples for running servers with parseable usage', async () => {
       serverManagement.getAllServersRuntimeStats.mockResolvedValue({
         srvA: { status: 'running', cpuUsage: '10%', memoryUsage: '512MiB', memoryLimit: '1GiB' },

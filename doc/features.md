@@ -40,6 +40,8 @@ flowchart LR
 | --------- | ----------------------------------------- |
 | Dashboard | Home cards show status, players, uptime, CPU and RAM; a running server's header adds the game version |
 | Live logs | Streaming, errors highlighted, searchable |
+| Log presets | Save the search and level filter of the Logs tab as a named preset (kept in your browser) |
+| Availability | Metrics tab shows 24h / 7d / 30d availability; minutes while the panel was offline are not counted |
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |

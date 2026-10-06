@@ -2,11 +2,11 @@ import { MetricsController } from './metrics.controller';
 
 describe('MetricsController', () => {
   const req = { user: { userId: 1 } };
-  let metrics: { getHistory: jest.Mock };
+  let metrics: { getHistory: jest.Mock; getUptime: jest.Mock };
   let controller: MetricsController;
 
   beforeEach(() => {
-    metrics = { getHistory: jest.fn().mockResolvedValue(['p']) };
+    metrics = { getHistory: jest.fn().mockResolvedValue(['p']), getUptime: jest.fn().mockResolvedValue(['w']) };
     controller = new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any, { getSnapshot: jest.fn().mockResolvedValue({ tps: 20 }) } as any, { record: jest.fn() } as any);
   });
 
@@ -22,6 +22,10 @@ describe('MetricsController', () => {
       { getSnapshot } as any, { record: jest.fn() } as any);
     await expect(restricted.getLive(req, 'other-server')).rejects.toThrow('Forbidden');
     expect(getSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('returns uptime windows', async () => {
+    expect(await controller.getUptime(req, 'srv')).toEqual({ serverId: 'srv', windows: ['w'] });
   });
 
   it('clamps the hours window', async () => {

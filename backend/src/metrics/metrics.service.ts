@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, MoreThanOrEqual, Repository } from 'typeorm';
 import { MetricSample } from './entities/metric-sample.entity';
+import { UptimeSample } from './entities/uptime-sample.entity';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
@@ -10,6 +11,8 @@ import { MonitoringService } from './monitoring.service';
 import { TickSource } from './tick-stats';
 const SAMPLE_INTERVAL_MS = 60_000;
 const RETENTION_DAYS = 7;
+const UPTIME_RETENTION_DAYS = 30;
+const UPTIME_WINDOWS_HOURS = [24, 168, 720];
 
 export interface MetricPoint {
   cpuPercent: number;
@@ -24,6 +27,13 @@ export interface MetricPoint {
   timestamp: string;
 }
 
+export interface UptimeWindow {
+  hours: number;
+  // null when no sample falls in the window.
+  uptimePercent: number | null;
+  observedMinutes: number;
+}
+
 @Injectable()
 export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MetricsService.name);
@@ -33,6 +43,8 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @InjectRepository(MetricSample)
     private readonly sampleRepo: Repository<MetricSample>,
+    @InjectRepository(UptimeSample)
+    private readonly uptimeRepo: Repository<UptimeSample>,
     private readonly serverManagement: ServerManagementService,
     private readonly alertsService: AlertsService,
     private readonly monitoring: MonitoringService,
@@ -72,6 +84,17 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     }));
   }
 
+  async getUptime(serverId: string): Promise<UptimeWindow[]> {
+    return Promise.all(
+      UPTIME_WINDOWS_HOURS.map(async (hours) => {
+        const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+        const where = { serverId, createdAt: MoreThanOrEqual(since) };
+        const [observed, running] = await Promise.all([this.uptimeRepo.count({ where }), this.uptimeRepo.count({ where: { ...where, running: true } })]);
+        return { hours, uptimePercent: observed ? Math.round((running / observed) * 1000) / 10 : null, observedMinutes: observed };
+      }),
+    );
+  }
+
   private async collectSamples(): Promise<void> {
     if (this.sampling) {
       return;
@@ -89,6 +112,9 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
       const now = new Date();
       const samples: MetricSample[] = [];
+      const uptime = Object.entries(resources)
+        .filter(([, data]) => data.status !== 'not_found')
+        .map(([serverId, data]) => this.uptimeRepo.create({ serverId, running: data.status === 'running', createdAt: now }));
 
       const entries = Object.entries(resources);
       // Bound RCON concurrency across large installations.
@@ -128,6 +154,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
         await this.sampleRepo.save(samples);
       }
 
+      if (uptime.length > 0) {
+        await this.uptimeRepo.save(uptime);
+      }
+
       await this.pruneOldSamples();
     } catch (error) {
       this.logger.warn(`Failed to collect metric samples: ${(error as Error).message}`);
@@ -139,6 +169,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private async pruneOldSamples(): Promise<void> {
     const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
     await this.sampleRepo.delete({ createdAt: LessThan(cutoff) });
+    await this.uptimeRepo.delete({ createdAt: LessThan(new Date(Date.now() - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000)) });
   }
 
 }

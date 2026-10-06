@@ -28,7 +28,7 @@ backend/src/
 |                           paper-global.yml forwarding on member servers)
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
-|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
+|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler); `uptime_samples` (running or not, 30 days) feeds `GET /metrics/:id/uptime`
 |- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)

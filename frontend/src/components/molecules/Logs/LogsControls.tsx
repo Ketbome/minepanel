@@ -1,8 +1,9 @@
-import { FC, memo } from "react";
+import { FC, memo, useState } from "react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Play, Pause, RefreshCcw } from "lucide-react";
+import { Search, Filter, Play, Pause, RefreshCcw, BookmarkPlus, Trash2 } from "lucide-react";
+import { useLogPresets } from "@/lib/hooks/useLogPresets";
 
 interface LogsControlsProps {
   searchTerm: string;
@@ -21,6 +22,28 @@ interface LogsControlsProps {
 
 const LogsControls: FC<LogsControlsProps> = ({ searchTerm, setSearchTerm, levelFilter, setLevelFilter, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs }) => {
   const { t } = useLanguage();
+  const { presets, save, remove } = useLogPresets();
+  const [selected, setSelected] = useState("");
+
+  const applyPreset = (name: string) => {
+    setSelected(name);
+    const preset = presets.find((p) => p.name === name);
+    if (!preset) return;
+    setSearchTerm(preset.searchTerm);
+    setLevelFilter(preset.levelFilter);
+  };
+
+  const savePreset = () => {
+    const name = window.prompt(t("logPresetPrompt"))?.trim();
+    if (!name) return;
+    save({ name, searchTerm, levelFilter });
+    setSelected(name);
+  };
+
+  const deletePreset = () => {
+    remove(selected);
+    setSelected("");
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
@@ -40,6 +63,14 @@ const LogsControls: FC<LogsControlsProps> = ({ searchTerm, setSearchTerm, levelF
             </select>
             <Filter className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <select aria-label={t("logPresets")} value={selected} onChange={(e) => applyPreset(e.target.value)} className="h-8 appearance-none rounded border border-gray-700/50 bg-gray-800/70 text-gray-200 px-2 text-xs">
+            <option value="">{t("logPresets")}</option>
+            {presets.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
+          </select>
+          <Button type="button" size="sm" variant="outline" onClick={savePreset} title={t("logPresetSave")} aria-label={t("logPresetSave")} className="h-8 bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300"><BookmarkPlus className="h-4 w-4" /></Button>
+          {selected && <Button type="button" size="sm" variant="outline" onClick={deletePreset} title={t("logPresetDelete")} aria-label={t("logPresetDelete")} className="h-8 bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300"><Trash2 className="h-4 w-4" /></Button>}
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-400">
           <label className="flex items-center gap-2 cursor-pointer">
