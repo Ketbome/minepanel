@@ -27,6 +27,8 @@ export function useServerLogs(serverId: string) {
   const [isRealTime, setIsRealTime] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
+  const [regex, setRegex] = useState<boolean>(false);
+  const [sinceMinutes, setSinceMinutes] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
   const lastTimestampRef = useRef<string | null>(null);
@@ -226,12 +228,37 @@ export function useServerLogs(serverId: string) {
   };
 
   const filteredLogEntries = useMemo(() => {
+    let matcher: (content: string) => boolean = () => true;
+    let invalidRegex = false;
+    if (searchTerm !== "") {
+      if (regex) {
+        try {
+          const re = new RegExp(searchTerm, "i");
+          matcher = (content) => re.test(content);
+        } catch {
+          invalidRegex = true;
+        }
+      } else {
+        const needle = searchTerm.toLowerCase();
+        matcher = (content) => content.toLowerCase().includes(needle);
+      }
+    }
+    // Server log lines only carry a time of day: read it, and treat a time ahead of now as yesterday.
+    // Continuation lines (stack traces) inherit the previous line's time; lines before the first stamp stay visible.
+    const now = Date.now();
+    const cutoff = sinceMinutes > 0 ? now - sinceMinutes * 60_000 : 0;
+    let lineTime: number | null = null;
     return logEntries.filter((entry) => {
-      const matchesSearch = searchTerm === "" || entry.content.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
-      return matchesSearch && matchesLevel;
+      const stamp = /\[(\d{2}):(\d{2}):(\d{2})/.exec(entry.content);
+      if (stamp) {
+        const t = new Date(now);
+        t.setHours(Number(stamp[1]), Number(stamp[2]), Number(stamp[3]), 0);
+        lineTime = t.getTime() > now ? t.getTime() - 86_400_000 : t.getTime();
+      }
+      const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
+      return inRange && !invalidRegex && matcher(entry.content) && (levelFilter === "all" || entry.level === levelFilter);
     });
-  }, [logEntries, searchTerm, levelFilter]);
+  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes]);
 
   return {
     logs,
@@ -245,12 +272,16 @@ export function useServerLogs(serverId: string) {
     isRealTime,
     searchTerm,
     levelFilter,
+    regex,
+    sinceMinutes,
     fetchLogs,
     setLogLines,
     clearError,
     toggleRealTime,
     setSearchTerm,
     setLevelFilter,
+    setRegex,
+    setSinceMinutes,
     startRealTimeUpdates,
     stopRealTimeUpdates,
   };

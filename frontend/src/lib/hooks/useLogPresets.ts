@@ -1,40 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
+import { deleteLogPreset, listLogPresets, LogPreset, saveLogPreset } from "@/services/log-presets.service";
 
-export interface LogPreset {
-  name: string;
-  searchTerm: string;
-  levelFilter: string;
-}
+export type { LogPreset };
 
-const KEY = "minepanel:log-presets";
-
-const read = (): LogPreset[] => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(KEY) ?? "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-// ponytail: per browser, shared by every server. Move to the API if presets must follow the user across devices.
-export function useLogPresets() {
+// Per user and per server, stored by the API so presets follow the user across devices.
+export function useLogPresets(serverId: string) {
   const [presets, setPresets] = useState<LogPreset[]>([]);
 
-  // After mount, so the prerendered markup matches.
-  useEffect(() => setPresets(read()), []);
+  useEffect(() => {
+    let active = true;
+    listLogPresets(serverId).then((list) => { if (active) setPresets(list); }).catch(() => { if (active) setPresets([]); });
+    return () => { active = false; };
+  }, [serverId]);
 
-  const persist = useCallback((next: LogPreset[]) => {
-    setPresets(next);
-    try {
-      localStorage.setItem(KEY, JSON.stringify(next));
-    } catch {
-      // Storage blocked: presets last for this session only.
-    }
-  }, []);
+  const save = useCallback(async (preset: LogPreset) => {
+    const saved = await saveLogPreset(serverId, preset);
+    setPresets((current) => [...current.filter((p) => p.name !== saved.name), saved].sort((a, b) => a.name.localeCompare(b.name)));
+  }, [serverId]);
 
-  const save = useCallback((preset: LogPreset) => persist([...presets.filter((p) => p.name !== preset.name), preset]), [presets, persist]);
-  const remove = useCallback((name: string) => persist(presets.filter((p) => p.name !== name)), [presets, persist]);
+  const remove = useCallback(async (name: string) => {
+    await deleteLogPreset(serverId, name);
+    setPresets((current) => current.filter((p) => p.name !== name));
+  }, [serverId]);
 
   return { presets, save, remove };
 }

@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
-import { getServerMetrics, getServerMonitoring, getServerUptime, MetricPoint, MonitoringSnapshot, TickStatus, UptimeWindow } from "@/services/metrics/metrics.service";
+import { getServerMetrics, getServerMonitoring, getServerUptime, MetricPoint, MonitoringSnapshot, TickStatus, UptimeReport } from "@/services/metrics/metrics.service";
 import { MonitoringAlerts } from "../monitoring/monitoring-alerts";
 import { MonitoringChart } from "../monitoring/monitoring-chart";
+import { UptimeCard } from "../monitoring/uptime-card";
 import { TickCommandCard } from "../monitoring/tick-command-card";
 import { LINK_TPS } from "@/lib/providers/constants";
 import { ServerConfig } from "@/lib/types/types";
@@ -48,7 +49,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const [liveError, setLiveError] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [uptime, setUptime] = useState<UptimeWindow[]>([]);
+  const [uptime, setUptime] = useState<UptimeReport | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -88,7 +89,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
 
   useEffect(() => {
     let active = true;
-    getServerUptime(serverId).then((windows) => { if (active) setUptime(windows); }).catch(() => { if (active) setUptime([]); });
+    getServerUptime(serverId).then((report) => { if (active) setUptime(report); }).catch(() => { if (active) setUptime(null); });
     return () => { active = false; };
   }, [serverId, refresh]);
 
@@ -128,18 +129,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
         ))}
       </div>
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="gap-2"><CardTitle className="text-sm">{t("uptimeTitle")}</CardTitle><CardDescription className="text-gray-400">{uptime.some((w) => w.uptimePercent != null) ? t("uptimeHelp") : t("uptimeNoData")}</CardDescription></CardHeader>
-        <CardContent className="grid grid-cols-3 gap-3">
-          {uptime.map((w) => (
-            <div key={w.hours} className="flex flex-col gap-1">
-              <span className="text-xs text-gray-400">{w.hours === 24 ? "24h" : `${w.hours / 24}d`}</span>
-              <span className="font-mono text-2xl tabular-nums">{w.uptimePercent == null ? "—" : `${w.uptimePercent}%`}</span>
-              <span className="text-xs text-gray-500">{Math.round(w.observedMinutes / 60)}h {t("uptimeObserved")}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <UptimeCard report={uptime} />
 
       <Card className="gap-3 py-4">
         <CardHeader className="gap-2"><CardTitle className="text-sm">{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>

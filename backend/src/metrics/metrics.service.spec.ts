@@ -11,7 +11,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
-  let uptimeRepo: { count: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
+  let uptimeRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock };
   let alertsService: { evaluate: jest.Mock };
 
@@ -22,7 +22,7 @@ describe('MetricsService', () => {
       save: jest.fn(async (x) => x),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    uptimeRepo = { count: jest.fn(), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
+    uptimeRepo = { find: jest.fn().mockResolvedValue([]), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
     serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
 
@@ -80,14 +80,12 @@ describe('MetricsService', () => {
   });
 
   describe('getUptime', () => {
-    it('should report the running share of observed minutes and null when nothing was observed', async () => {
-      uptimeRepo.count.mockImplementation(async ({ where }) => (where.running ? 90 : where.createdAt ? 100 : 0));
-      const windows = await service.getUptime('srv');
-      expect(windows.map((w) => w.hours)).toEqual([24, 168, 720]);
-      expect(windows[0]).toEqual({ hours: 24, uptimePercent: 90, observedMinutes: 100 });
-
-      uptimeRepo.count.mockResolvedValue(0);
-      expect((await service.getUptime('srv'))[0].uptimePercent).toBeNull();
+    it('should return windows, 30 daily buckets and incidents', async () => {
+      const result = await service.getUptime('srv');
+      expect(result.windows.map((w) => w.hours)).toEqual([24, 168, 720]);
+      expect(result.windows[0].uptimePercent).toBeNull();
+      expect(result.daily).toHaveLength(30);
+      expect(result.incidents).toEqual([]);
     });
   });
 

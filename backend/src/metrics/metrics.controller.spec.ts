@@ -6,7 +6,7 @@ describe('MetricsController', () => {
   let controller: MetricsController;
 
   beforeEach(() => {
-    metrics = { getHistory: jest.fn().mockResolvedValue(['p']), getUptime: jest.fn().mockResolvedValue(['w']) };
+    metrics = { getHistory: jest.fn().mockResolvedValue(['p']), getUptime: jest.fn().mockResolvedValue({ windows: ['w'] }) };
     controller = new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any, { getSnapshot: jest.fn().mockResolvedValue({ tps: 20 }) } as any, { record: jest.fn() } as any);
   });
 

@@ -43,7 +43,7 @@ interface LogsTabProps {
 
 export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Readonly<LogsTabProps>) {
   const { t } = useLanguage();
-  const { logs, logEntries, filteredLogEntries, loading, lineCount, error, hasErrors, lastUpdate, isRealTime, searchTerm, levelFilter, fetchLogs, setLogLines, clearError, toggleRealTime, setSearchTerm, setLevelFilter } = useServerLogs(serverId);
+  const { logs, logEntries, filteredLogEntries, loading, lineCount, error, hasErrors, lastUpdate, isRealTime, searchTerm, levelFilter, regex, sinceMinutes, fetchLogs, setLogLines, clearError, toggleRealTime, setSearchTerm, setLevelFilter, setRegex, setSinceMinutes } = useServerLogs(serverId);
 
   const logsContainerRef = useRef<HTMLPreElement>(null!);
   const [resources, setResources] = useState<ResourcesData | null>(null);
@@ -187,7 +187,7 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
           {t("downloadLogs")}
         </Button>
       </CardHeader>
-      <LogsControls searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} />
+      <LogsControls serverId={serverId} regex={regex} setRegex={setRegex} sinceMinutes={sinceMinutes} setSinceMinutes={setSinceMinutes} searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} />
       <LogsErrorAlert error={error} resourcesError={resourcesError} />
       <LogsStatusAlert hasErrors={hasErrors} error={error} />
       <LogsLastUpdate lastUpdate={lastUpdate} error={error} />

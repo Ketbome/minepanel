@@ -75,7 +75,25 @@ export interface UptimeWindow {
   observedMinutes: number;
 }
 
-export async function getServerUptime(serverId: string): Promise<UptimeWindow[]> {
+export interface UptimeDay {
+  date: string;
+  uptimePercent: number | null;
+  observedMinutes: number;
+}
+
+export interface UptimeIncident {
+  start: string;
+  end: string | null;
+  minutes: number;
+}
+
+export interface UptimeReport {
+  windows: UptimeWindow[];
+  daily: UptimeDay[];
+  incidents: UptimeIncident[];
+}
+
+export async function getServerUptime(serverId: string): Promise<UptimeReport> {
   const response = await api.get(`/metrics/${serverId}/uptime`);
-  return response.data.windows;
+  return response.data;
 }

@@ -50,7 +50,7 @@ export class MetricsController {
     const payload = req.user as PayloadToken;
     const user = await this.usersService.getRequiredUserById(payload.userId);
     this.accessControlService.assertServerAccess(user, id);
-    return { serverId: id, windows: await this.metricsService.getUptime(id) };
+    return { serverId: id, ...(await this.metricsService.getUptime(id)) };
   }
 
   // Admin only: it runs an arbitrary RCON command, exactly what saving that command allows.

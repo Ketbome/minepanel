@@ -7,6 +7,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { MonitoringService } from './monitoring.service';
+import { computeDaily, computeIncidents, computeWindows } from './uptime.util';
 
 import { TickSource } from './tick-stats';
 const SAMPLE_INTERVAL_MS = 60_000;
@@ -25,13 +26,6 @@ export interface MetricPoint {
   msptP95: number | null;
   playersOnline: number | null;
   timestamp: string;
-}
-
-export interface UptimeWindow {
-  hours: number;
-  // null when no sample falls in the window.
-  uptimePercent: number | null;
-  observedMinutes: number;
 }
 
 @Injectable()
@@ -84,15 +78,18 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     }));
   }
 
-  async getUptime(serverId: string): Promise<UptimeWindow[]> {
-    return Promise.all(
-      UPTIME_WINDOWS_HOURS.map(async (hours) => {
-        const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-        const where = { serverId, createdAt: MoreThanOrEqual(since) };
-        const [observed, running] = await Promise.all([this.uptimeRepo.count({ where }), this.uptimeRepo.count({ where: { ...where, running: true } })]);
-        return { hours, uptimePercent: observed ? Math.round((running / observed) * 1000) / 10 : null, observedMinutes: observed };
-      }),
-    );
+  async getUptime(serverId: string) {
+    const now = Date.now();
+    const rows = await this.uptimeRepo.find({
+      select: { running: true, createdAt: true },
+      where: { serverId, createdAt: MoreThanOrEqual(new Date(now - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000)) },
+      order: { createdAt: 'ASC' },
+    });
+    return {
+      windows: computeWindows(rows, UPTIME_WINDOWS_HOURS, now),
+      daily: computeDaily(rows, UPTIME_RETENTION_DAYS, now),
+      incidents: computeIncidents(rows, now),
+    };
   }
 
   private async collectSamples(): Promise<void> {
