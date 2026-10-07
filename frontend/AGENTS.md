@@ -34,7 +34,7 @@ frontend/src/
 |  |- achievements/             End Portal easter egg advancements (per user)
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
-|  |- store/                    Zustand stores
+|  |- store/                    Zustand stores (favorites-store: per-browser starred servers)
 |  |- translations/             i18n dictionaries
 |  |- hooks/                    Custom hooks
 ```

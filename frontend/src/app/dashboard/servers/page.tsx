@@ -15,6 +15,9 @@ import {
   Coffee,
   Smartphone,
   Copy,
+  Star,
+  Play,
+  Square,
 } from 'lucide-react';
 import {
   fetchServerList,
@@ -22,6 +25,8 @@ import {
   getAllServersStatus,
   deleteServer,
   cloneServer,
+  startServer,
+  stopServer,
 } from '@/services/docker/fetchs';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import {
@@ -59,6 +64,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from '@/lib/utils/server-status';
 import { useServersStore } from '@/lib/store/servers-store';
+import { favoritesFirst, useFavoritesStore } from '@/lib/store/favorites-store';
 import { getTemplatesByEdition, ServerTemplate } from '@/lib/server-templates';
 import { ServerEdition } from '@/lib/types/types';
 import { TranslationKey } from '@/lib/translations';
@@ -91,6 +97,10 @@ export default function Dashboard() {
   const [selectedEdition, setSelectedEdition] = useState<ServerEdition>('JAVA');
   const [canCreateServers, setCanCreateServers] = useState(false);
   const [proxyAddresses, setProxyAddresses] = useState<Record<string, string>>({});
+  const favorites = useFavoritesStore((state) => state.ids);
+  const toggleFavorite = useFavoritesStore((state) => state.toggle);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const availableTemplates = getTemplatesByEdition(selectedEdition);
 
   const form = useForm<{ id: string }>({
@@ -201,6 +211,32 @@ export default function Dashboard() {
   }, [t, processServerStatuses, loadProxyAddresses]);
 
   const refreshGlobalServers = useServersStore((state) => state.refreshAll);
+
+  const toggleSelected = (id: string) =>
+    setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
+
+  // One at a time: each start or stop runs docker compose, and a burst would starve the host.
+  const runBulk = async (action: 'start' | 'stop') => {
+    const targets = servers.filter(
+      (s) =>
+        selected.includes(s.id) &&
+        (action === 'start' ? s.status === 'stopped' : s.status === 'running' || s.status === 'starting'),
+    );
+    if (targets.length === 0) return;
+    setBulkBusy(true);
+    const failed: string[] = [];
+    for (const target of targets) {
+      const result = await (action === 'start' ? startServer : stopServer)(target.id);
+      if (!result.success) failed.push(target.id);
+    }
+    setBulkBusy(false);
+    mcToast[failed.length ? 'error' : 'success'](
+      failed.length ? `${t('bulkFailed')}: ${failed.join(', ')}` : `${t('bulkDone')}: ${targets.length}`,
+    );
+    await fetchServersFromBackend();
+    refreshGlobalServers();
+  };
+
 
   const handleDeleteServer = async (serverId: string) => {
     setIsDeletingServer(serverId);
@@ -573,7 +609,36 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {servers.map((server: ServerInfo, index: number) => (
+            <div className="mc-panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-sm text-gray-300">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-emerald-500"
+                  checked={selected.length > 0 && selected.length === servers.length}
+                  onChange={(e) => setSelected(e.target.checked ? servers.map((s) => s.id) : [])}
+                />
+                {t('bulkSelectAll')}
+              </label>
+              {selected.length > 0 && (
+                <>
+                  <span className="font-minecraft text-xs text-gray-400">
+                    {selected.length} {t('bulkSelected')}
+                  </span>
+                  <button className="mc-btn mc-btn-emerald px-3 py-1 text-xs" disabled={bulkBusy} onClick={() => runBulk('start')}>
+                    {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                    {t('bulkStart')}
+                  </button>
+                  <button className="mc-btn px-3 py-1 text-xs" disabled={bulkBusy} onClick={() => runBulk('stop')}>
+                    <Square className="h-3.5 w-3.5" />
+                    {t('bulkStop')}
+                  </button>
+                  <button className="text-xs text-gray-400 underline hover:text-white" disabled={bulkBusy} onClick={() => setSelected([])}>
+                    {t('bulkClear')}
+                  </button>
+                </>
+              )}
+            </div>
+            {favoritesFirst(servers, favorites).map((server: ServerInfo, index: number) => (
               <div
                 key={server.id}
                 className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
@@ -648,6 +713,22 @@ export default function Dashboard() {
                       </Badge>
 
                       <div className="relative z-20 flex items-center gap-0.5 shrink-0 ml-auto">
+                        <input
+                          type="checkbox"
+                          className="mx-2 size-4 accent-emerald-500"
+                          aria-label={`${t('bulkSelect')} ${server.id}`}
+                          checked={selected.includes(server.id)}
+                          onChange={() => toggleSelected(server.id)}
+                        />
+                        <button
+                          className="mc-iconbtn"
+                          title={favorites.includes(server.id) ? t('favoriteRemove') : t('favoriteAdd')}
+                          aria-label={favorites.includes(server.id) ? t('favoriteRemove') : t('favoriteAdd')}
+                          aria-pressed={favorites.includes(server.id)}
+                          onClick={() => toggleFavorite(server.id)}
+                        >
+                          <Star className={`h-4 w-4 ${favorites.includes(server.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                        </button>
                         {canCreateServers && (
                           <button
                             className="mc-iconbtn"
