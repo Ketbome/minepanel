@@ -41,6 +41,13 @@ describe('log presets', () => {
     await expect(service.save(1, dto('p3'))).resolves.toBeDefined();
   });
 
+  it('keeps the limit when saves arrive at the same time', async () => {
+    for (let i = 0; i < 19; i++) await service.save(1, dto(`p${i}`));
+    const results = await Promise.allSettled([service.save(1, dto('x')), service.save(1, dto('y'))]);
+    expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected']);
+    expect(await service.list(1, 'srv')).toHaveLength(20);
+  });
+
   it('checks server access before touching presets', async () => {
     const svc = { list: jest.fn().mockResolvedValue([]), save: jest.fn().mockResolvedValue({}), remove: jest.fn() };
     const assertServerAccess = jest.fn();

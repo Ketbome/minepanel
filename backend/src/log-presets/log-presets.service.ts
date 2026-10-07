@@ -17,7 +17,17 @@ export class LogPresetsService {
   }
 
   // Saving an existing name overwrites it, so "save current view" doubles as update.
-  async save(userId: number, dto: SaveLogPresetDto) {
+  // Saves run one at a time so the count check and the insert cannot interleave.
+  // ponytail: in-process queue; a second backend replica would need a DB-level limit.
+  save(userId: number, dto: SaveLogPresetDto) {
+    const run = this.saving.then(() => this.saveNow(userId, dto));
+    this.saving = run.catch(() => undefined);
+    return run;
+  }
+
+  private saving: Promise<unknown> = Promise.resolve();
+
+  private async saveNow(userId: number, dto: SaveLogPresetDto) {
     const existing = await this.repo.findOne({ where: { userId, serverId: dto.serverId, name: dto.name } });
     if (!existing && (await this.repo.count({ where: { userId, serverId: dto.serverId } })) >= MAX_PER_SERVER) {
       throw new BadRequestException(`At most ${MAX_PER_SERVER} presets per server`);
