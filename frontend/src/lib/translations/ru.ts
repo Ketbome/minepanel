@@ -106,6 +106,7 @@ export const ru: Record<TranslationKey, string> = {
   bulkStart: 'Запустить выбранные',
   bulkStop: 'Остановить выбранные',
   bulkClear: 'Снять выбор',
+  bulkStopConfirm: "Остановить выбранные серверы? Подключённые игроки будут отключены.",
   bulkDone: 'Готово',
   bulkFailed: 'Не удалось',
   restart: 'Перезапустить',

@@ -104,6 +104,7 @@ export const en = {
   bulkStart: 'Start selected',
   bulkStop: 'Stop selected',
   bulkClear: 'Clear selection',
+  bulkStopConfirm: "Stop the selected servers? Connected players will be disconnected.",
   bulkDone: 'Done',
   bulkFailed: 'Failed',
   restart: 'Restart',

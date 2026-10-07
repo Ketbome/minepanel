@@ -106,6 +106,7 @@ export const es: Record<TranslationKey, string> = {
   bulkStart: 'Iniciar seleccionados',
   bulkStop: 'Detener seleccionados',
   bulkClear: 'Borrar selección',
+  bulkStopConfirm: "¿Detener los servidores seleccionados? Los jugadores conectados serán desconectados.",
   bulkDone: 'Hecho',
   bulkFailed: 'Fallaron',
   restart: 'Reiniciar',

@@ -106,6 +106,7 @@ export const pl: Record<TranslationKey, string> = {
   bulkStart: 'Uruchom zaznaczone',
   bulkStop: 'Zatrzymaj zaznaczone',
   bulkClear: 'Wyczyść zaznaczenie',
+  bulkStopConfirm: "Zatrzymać wybrane serwery? Połączeni gracze zostaną rozłączeni.",
   bulkDone: 'Gotowe',
   bulkFailed: 'Niepowodzenia',
   restart: 'Uruchom ponownie',

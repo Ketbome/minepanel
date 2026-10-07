@@ -106,6 +106,7 @@ export const fr: Record<TranslationKey, string> = {
   bulkStart: 'Démarrer la sélection',
   bulkStop: 'Arrêter la sélection',
   bulkClear: 'Effacer la sélection',
+  bulkStopConfirm: "Arrêter les serveurs sélectionnés ? Les joueurs connectés seront déconnectés.",
   bulkDone: 'Terminé',
   bulkFailed: 'Échecs',
   restart: 'Redémarrer',

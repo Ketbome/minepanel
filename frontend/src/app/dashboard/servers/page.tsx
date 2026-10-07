@@ -198,6 +198,8 @@ export default function Dashboard() {
         containerName: `${server.id}`,
       }));
 
+      const ids = new Set(formattedServers.map((s) => s.id));
+      setSelected((current) => current.filter((id) => ids.has(id)));
       setServers(formattedServers);
       await loadProxyAddresses();
       const updatedServers = await processServerStatuses(formattedServers);
@@ -230,6 +232,7 @@ export default function Dashboard() {
       if (!result.success) failed.push(target.id);
     }
     setBulkBusy(false);
+    setSelected([]);
     mcToast[failed.length ? 'error' : 'success'](
       failed.length ? `${t('bulkFailed')}: ${failed.join(', ')}` : `${t('bulkDone')}: ${targets.length}`,
     );
@@ -628,10 +631,26 @@ export default function Dashboard() {
                     {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
                     {t('bulkStart')}
                   </button>
-                  <button className="mc-btn px-3 py-1 text-xs" disabled={bulkBusy} onClick={() => runBulk('stop')}>
-                    <Square className="h-3.5 w-3.5" />
-                    {t('bulkStop')}
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="mc-btn px-3 py-1 text-xs" disabled={bulkBusy}>
+                        <Square className="h-3.5 w-3.5" />
+                        {t('bulkStop')}
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-gray-900 border-gray-700 text-white">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="font-minecraft">
+                          {t('bulkStop')} ({selected.length})
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400">{t('bulkStopConfirm')}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => runBulk('stop')}>{t('bulkStop')}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   <button className="text-xs text-gray-400 underline hover:text-white" disabled={bulkBusy} onClick={() => setSelected([])}>
                     {t('bulkClear')}
                   </button>

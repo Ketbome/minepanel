@@ -104,6 +104,7 @@ export const tr: Record<TranslationKey, string> = {
   bulkStart: 'Seçilenleri başlat',
   bulkStop: 'Seçilenleri durdur',
   bulkClear: 'Seçimi temizle',
+  bulkStopConfirm: "Seçili sunucular durdurulsun mu? Bağlı oyuncuların bağlantısı kesilecek.",
   bulkDone: 'Tamamlandı',
   bulkFailed: 'Başarısız',
   restart: 'Yeniden başlat',

@@ -6,7 +6,6 @@ interface FavoritesState {
   toggle: (id: string) => void;
 }
 
-// ponytail: per browser. Move to the user's settings if favorites must follow them across devices.
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set) => ({

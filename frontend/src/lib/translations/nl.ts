@@ -106,6 +106,7 @@ export const nl: Record<TranslationKey, string> = {
   bulkStart: 'Selectie starten',
   bulkStop: 'Selectie stoppen',
   bulkClear: 'Selectie wissen',
+  bulkStopConfirm: "De geselecteerde servers stoppen? Verbonden spelers worden losgekoppeld.",
   bulkDone: 'Klaar',
   bulkFailed: 'Mislukt',
   restart: 'Herstarten',

@@ -106,6 +106,7 @@ export const de: Record<TranslationKey, string> = {
   bulkStart: 'Ausgewählte starten',
   bulkStop: 'Ausgewählte stoppen',
   bulkClear: 'Auswahl aufheben',
+  bulkStopConfirm: "Die ausgewählten Server stoppen? Verbundene Spieler werden getrennt.",
   bulkDone: 'Fertig',
   bulkFailed: 'Fehlgeschlagen',
   restart: 'Neustarten',
