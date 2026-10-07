@@ -352,6 +352,10 @@ df -h
 docker compose logs backend | grep -i error
 ```
 
+### Server won't start: "invalid project name"
+
+A `.env` copied from an older `.env.example` has `COMPOSE_PROJECT=   # comment`. Docker Compose reads the comment as the value. Minepanel now ignores an invalid `COMPOSE_PROJECT` and logs a warning, but fix the file: leave the value empty (or a prefix such as `panel`) and put comments on their own line. Check `JWT_SECRET`, `BACKUP_BASE_DIR`, `BASE_PATH` and the `OIDC_*` lines for the same trailing comment.
+
 ### Server Data Goes to the Wrong Host Folder
 
 **Symptoms:** A created server runs, but its files land somewhere other than where you mounted

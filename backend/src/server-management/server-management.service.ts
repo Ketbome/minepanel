@@ -178,7 +178,7 @@ export class ServerManagementService {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
     this.SERVERS_HOST_DIR_IS_A_GUESS = (this.configService.get<string[]>('unresolvedHostPaths') ?? []).includes('/app/servers');
-    this.COMPOSE_PROJECT = this.configService.get<string>('composeProject')?.trim() || undefined;
+    this.COMPOSE_PROJECT = this.readComposeProject();
     fs.ensureDirSync(this.SERVERS_DIR);
     fs.ensureDirSync(this.getGlobalWorldsPath());
   }
@@ -425,6 +425,16 @@ export class ServerManagementService {
 
     worlds.sort((a, b) => a.displayPath.localeCompare(b.displayPath));
     return worlds;
+  }
+
+  // A .env copied from an older .env.example held `COMPOSE_PROJECT=   # comment`, which Compose
+  // passes through as the value. Compose then rejects every start with "invalid project name".
+  private readComposeProject(): string | undefined {
+    const value = this.configService.get<string>('composeProject')?.trim();
+    if (!value) return undefined;
+    if (/^[a-z0-9][a-z0-9_-]*$/i.test(value)) return value;
+    this.logger.warn(`Ignoring COMPOSE_PROJECT: "${value}" is not a valid project name prefix (letters, digits, hyphens and underscores only). Move any comment on its own line in .env.`);
+    return undefined;
   }
 
   private getComposeProjectName(serverId: string): string | undefined {
