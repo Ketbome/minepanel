@@ -13,7 +13,7 @@ describe('MetricsService', () => {
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let uptimeRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock };
-  let alertsService: { evaluate: jest.Mock };
+  let alertsService: { evaluate: jest.Mock; isExpectedStop: jest.Mock };
 
   beforeEach(async () => {
     sampleRepo = {
@@ -24,7 +24,7 @@ describe('MetricsService', () => {
     };
     uptimeRepo = { find: jest.fn().mockResolvedValue([]), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
     serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
-    alertsService = { evaluate: jest.fn().mockResolvedValue(undefined) };
+    alertsService = { evaluate: jest.fn().mockResolvedValue(undefined), isExpectedStop: jest.fn().mockReturnValue(false) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -97,8 +97,21 @@ describe('MetricsService', () => {
         c: { status: 'not_found' },
       });
       await (service as any).collectSamples();
-      expect(uptimeRepo.save.mock.calls[0][0].map((u) => [u.serverId, u.running])).toEqual([['a', true], ['b', false]]);
+      // b was never seen running, so its stop is not counted either.
+      expect(uptimeRepo.save.mock.calls[0][0].map((u) => [u.serverId, u.running])).toEqual([['a', true]]);
       expect(uptimeRepo.delete).toHaveBeenCalled();
+    });
+
+    it('counts an unplanned stop as downtime but not a stop the panel asked for', async () => {
+      const stats = (status: string) => ({ a: { status }, b: { status } });
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue(stats('running'));
+      await (service as any).collectSamples();
+      alertsService.isExpectedStop.mockImplementation((id: string) => id === 'b');
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue(stats('stopped'));
+      uptimeRepo.save.mockClear();
+      await (service as any).collectSamples();
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save.mock.calls.flatMap((c) => c[0]).map((u) => [u.serverId, u.running])).toEqual([['a', false], ['a', false]]);
     });
 
     it('should only persist samples for running servers with parseable usage', async () => {

@@ -78,6 +78,10 @@ export class AlertsService {
     this.getState(serverId).expectedStopUntil = Date.now() + windowMs;
   }
 
+  isExpectedStop(serverId: string): boolean {
+    return Date.now() < this.getState(serverId).expectedStopUntil;
+  }
+
   async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {
     const configs = await this.alertConfigRepo.find();
     if (configs.length === 0) {

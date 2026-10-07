@@ -4,6 +4,7 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 // no row, so they stay unknown instead of counting as downtime.
 @Entity('uptime_samples')
 @Index(['serverId', 'createdAt'])
+@Index(['createdAt'])
 export class UptimeSample {
   @PrimaryGeneratedColumn()
   id: number;

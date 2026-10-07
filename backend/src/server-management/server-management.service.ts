@@ -11,6 +11,8 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { Users } from 'src/users/entities/users.entity';
 import { UserInvitation } from 'src/users/entities/user-invitation.entity';
+import { UptimeSample } from 'src/metrics/entities/uptime-sample.entity';
+import { LogPreset } from 'src/log-presets/entities/log-preset.entity';
 import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
@@ -1151,6 +1153,8 @@ export class ServerManagementService {
           await manager.delete(PlayerSession, { serverId });
           await manager.delete(PlayerTracking, { serverId });
           await manager.delete(ScheduledTask, { serverId });
+          await manager.delete(UptimeSample, { serverId });
+          await manager.delete(LogPreset, { serverId });
           for (const entity of [Users, UserInvitation]) {
             const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
             for (const row of grantees) row.serverAccess = row.serverAccess.filter((id) => id !== serverId);

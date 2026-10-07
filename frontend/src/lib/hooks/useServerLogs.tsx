@@ -13,7 +13,15 @@ interface LogEntry {
   content: string;
   timestamp: Date;
   level: "info" | "warn" | "error" | "debug";
+  // Docker's own timestamp for the line (UTC), when the stream carried one.
+  loggedAt?: number;
 }
+
+const parseDockerTime = (line: string): number | undefined => {
+  const match = /^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)/.exec(line);
+  const time = match ? Date.parse(match[1]) : NaN;
+  return Number.isFinite(time) ? time : undefined;
+};
 
 export function useServerLogs(serverId: string) {
   const { t } = useLanguage();
@@ -74,6 +82,7 @@ export function useServerLogs(serverId: string) {
           content: cleanLogContent(line),
           timestamp: new Date(),
           level: parseLogLevel(line),
+          loggedAt: parseDockerTime(line),
         }));
     },
     [parseLogLevel, cleanLogContent]
@@ -243,18 +252,12 @@ export function useServerLogs(serverId: string) {
         matcher = (content) => content.toLowerCase().includes(needle);
       }
     }
-    // Server log lines only carry a time of day: read it, and treat a time ahead of now as yesterday.
-    // Continuation lines (stack traces) inherit the previous line's time; lines before the first stamp stay visible.
-    const now = Date.now();
-    const cutoff = sinceMinutes > 0 ? now - sinceMinutes * 60_000 : 0;
+    // Docker's timestamp is UTC and independent of the game's log format, so the range holds in any
+    // timezone and on Bedrock. Continuation lines inherit the previous line's time; lines before the first stay visible.
+    const cutoff = sinceMinutes > 0 ? Date.now() - sinceMinutes * 60_000 : 0;
     let lineTime: number | null = null;
     return logEntries.filter((entry) => {
-      const stamp = /\[(\d{2}):(\d{2}):(\d{2})/.exec(entry.content);
-      if (stamp) {
-        const t = new Date(now);
-        t.setHours(Number(stamp[1]), Number(stamp[2]), Number(stamp[3]), 0);
-        lineTime = t.getTime() > now ? t.getTime() - 86_400_000 : t.getTime();
-      }
+      if (entry.loggedAt !== undefined) lineTime = entry.loggedAt;
       const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
       return inRange && !invalidRegex && matcher(entry.content) && (levelFilter === "all" || entry.level === levelFilter);
     });

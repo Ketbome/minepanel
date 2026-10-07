@@ -34,6 +34,9 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private timer: NodeJS.Timeout | null = null;
   private sampling = false;
 
+  // ponytail: in memory, so a crash while the panel itself is off stays unknown. Persist if that matters.
+  private readonly availability = new Map<string, 'up' | 'down' | 'parked'>();
+
   constructor(
     @InjectRepository(MetricSample)
     private readonly sampleRepo: Repository<MetricSample>,
@@ -92,6 +95,23 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
+  // true/false is a sample; null skips it. A stop the panel asked for, and everything after it,
+  // is not downtime, so a server parked for days keeps its percentage. A stop nobody asked for
+  // is downtime until the server runs again.
+  private uptimeState(serverId: string, status: string): boolean | null {
+    const previous = this.availability.get(serverId);
+    if (status === 'running') {
+      this.availability.set(serverId, 'up');
+      return true;
+    }
+    if (status === 'not_found') {
+      this.availability.delete(serverId);
+      return null;
+    }
+    if (previous === 'up') this.availability.set(serverId, this.alertsService.isExpectedStop(serverId) ? 'parked' : 'down');
+    return this.availability.get(serverId) === 'down' ? false : null;
+  }
+
   private async collectSamples(): Promise<void> {
     if (this.sampling) {
       return;
@@ -109,9 +129,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
       const now = new Date();
       const samples: MetricSample[] = [];
-      const uptime = Object.entries(resources)
-        .filter(([, data]) => data.status !== 'not_found')
-        .map(([serverId, data]) => this.uptimeRepo.create({ serverId, running: data.status === 'running', createdAt: now }));
+      const uptime = Object.entries(resources).flatMap(([serverId, data]) => {
+        const running = this.uptimeState(serverId, data.status);
+        return running === null ? [] : [this.uptimeRepo.create({ serverId, running, createdAt: now })];
+      });
 
       const entries = Object.entries(resources);
       // Bound RCON concurrency across large installations.

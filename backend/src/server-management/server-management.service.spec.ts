@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Settings } from '../users/entities/settings.entity';
 import { Users } from '../users/entities/users.entity';
+import { UptimeSample } from '../metrics/entities/uptime-sample.entity';
+import { LogPreset } from '../log-presets/entities/log-preset.entity';
 import { ScheduledTask } from '../scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService } from '../discord/discord.service';
 
@@ -483,7 +485,7 @@ describe('ServerManagementService', () => {
       mockExec.mockResolvedValue({ stdout: '' });
 
       expect(await service.deleteServer('survival')).toBe(true);
-      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }], [ScheduledTask, { serverId: 'survival' }]]);
+      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }], [ScheduledTask, { serverId: 'survival' }], [UptimeSample, { serverId: 'survival' }], [LogPreset, { serverId: 'survival' }]]);
       expect(saved).toEqual([{ id: 1, serverAccess: ['other'] }, { id: 3, serverAccess: [] }]);
       expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('label=com.docker.compose.project=survival'));
     });
