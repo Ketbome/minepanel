@@ -318,6 +318,16 @@ environment:
   - JWT_SECRET=same_secret_as_before
 ```
 
+### Backend won't start: "JWT_SECRET holds an inline .env comment"
+
+A `.env` copied from an older `.env.example` has `JWT_SECRET=   # Generate with: ...`. Docker Compose reads the comment as the value, so the panel was signing sessions with a publicly known secret. Put the comment on its own line and set a real value:
+
+```bash
+openssl rand -base64 32
+```
+
+Everyone has to sign in again, and secrets stored in the panel (SMTP password, OIDC client secret, CurseForge API key) must be re-entered because they are encrypted with a key derived from `JWT_SECRET`.
+
 ## Server Management Issues
 
 ### Can't Create Server
