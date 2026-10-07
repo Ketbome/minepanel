@@ -170,7 +170,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     const lastCheck = this.freshnessChecks.get(serverId);
     if (lastCheck !== undefined && now - lastCheck < 5 * MINUTE_MS) return;
     this.freshnessChecks.set(serverId, now);
-    const result = await runDocker(['exec', backup, 'restic', 'snapshots', '--json', '--host', serverId, '--path', '/data', '--latest', '1']);
+    const result = await runDocker(['exec', backup, 'restic', 'snapshots', '--no-lock', '--json', '--host', serverId, '--path', '/data', '--latest', '1']);
     const snapshots = JSON.parse(result.stdout) as Array<{ time?: string }>;
     if (!Array.isArray(snapshots)) return;
     const times = snapshots.map((snapshot) => Date.parse(snapshot.time || ''));

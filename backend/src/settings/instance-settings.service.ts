@@ -378,6 +378,14 @@ export class InstanceSettingsService implements OnModuleInit {
   }
 
   // Write-only secret handling: undefined keeps, '' clears, other value sets.
+  private ntfyHost(url: string | undefined): string {
+    try {
+      return new URL(url || 'https://ntfy.sh').host.toLowerCase();
+    } catch {
+      return '';
+    }
+  }
+
   private applySecret(current: string | null | undefined, incoming: string | undefined): string | null | undefined {
     if (incoming === undefined) return current;
     if (incoming === '') return null;
@@ -396,7 +404,11 @@ export class InstanceSettingsService implements OnModuleInit {
     if (dto.notifications) {
       const { telegramToken, ntfyToken, slackWebhook, ...preferences } = dto.notifications;
       const provided = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value !== undefined));
+      const previousNtfyHost = this.ntfyHost(row.notifications?.ntfyServerUrl);
       row.notifications = { ...row.notifications, ...provided };
+      // A stored token must never follow a changed server URL to a new host.
+      const ntfyHostChanged = this.ntfyHost(row.notifications?.ntfyServerUrl) !== previousNtfyHost;
+      if (ntfyHostChanged && ntfyToken === undefined) row.ntfyTokenEnc = null;
       row.telegramTokenEnc = this.applySecret(row.telegramTokenEnc, telegramToken);
       row.ntfyTokenEnc = this.applySecret(row.ntfyTokenEnc, ntfyToken);
       row.slackWebhookEnc = this.applySecret(row.slackWebhookEnc, slackWebhook);
@@ -442,7 +454,6 @@ export class InstanceSettingsService implements OnModuleInit {
 
   private notificationDefaults(row: InstanceSettings) {
     const preferences = { ...row.notifications };
-    delete (preferences as Record<string, unknown>).minimumSeverity;
     return {
       ntfyEnabled: false,
       ntfyServerUrl: 'https://ntfy.sh',

@@ -254,6 +254,14 @@ describe('InstanceSettingsService', () => {
     expect(row.ntfyTokenEnc).toBeNull(); expect(row.slackWebhookEnc).toBeNull();
   });
 
+  it('drops the stored ntfy token when the server host changes', async () => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private' } });
+    expect(row.ntfyTokenEnc).not.toBeNull();
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://other.example' } });
+    expect(row.ntfyTokenEnc).toBeNull();
+  });
+
   it('requires new channel destinations while accepting anonymous ntfy', async () => {
     await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true } })).rejects.toThrow('require a topic');
     row.notifications = {};
