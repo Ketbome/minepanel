@@ -32,3 +32,17 @@ export class SaveLogPresetDto {
   @Max(1440)
   sinceMinutes: number;
 }
+
+export class LogPresetServerQueryDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  serverId: string;
+}
+
+export class LogPresetRemoveQueryDto extends LogPresetServerQueryDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(60)
+  name: string;
+}

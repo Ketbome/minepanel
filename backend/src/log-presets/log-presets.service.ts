@@ -22,7 +22,9 @@ export class LogPresetsService {
     if (!existing && (await this.repo.count({ where: { userId, serverId: dto.serverId } })) >= MAX_PER_SERVER) {
       throw new BadRequestException(`At most ${MAX_PER_SERVER} presets per server`);
     }
-    return toView(await this.repo.save(this.repo.create({ ...existing, ...dto, userId })));
+    const { searchTerm, levelFilter, regex, lines, sinceMinutes } = dto;
+    const row = existing ?? this.repo.create({ userId, serverId: dto.serverId, name: dto.name });
+    return toView(await this.repo.save(Object.assign(row, { searchTerm, levelFilter, regex, lines, sinceMinutes })));
   }
 
   async remove(userId: number, serverId: string, name: string) {

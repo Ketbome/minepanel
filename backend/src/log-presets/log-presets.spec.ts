@@ -2,7 +2,10 @@ import { DataSource } from 'typeorm';
 import { Users } from 'src/users/entities/users.entity';
 import { LogPreset } from './entities/log-preset.entity';
 import { LogPresetsService } from './log-presets.service';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { LogPresetsController } from './log-presets.controller';
+import { LogPresetRemoveQueryDto, LogPresetServerQueryDto } from './dto/save-log-preset.dto';
 
 const dto = (name: string, serverId = 'srv') => ({ serverId, name, searchTerm: 'x', levelFilter: 'error', regex: false, lines: 500, sinceMinutes: 0 });
 
@@ -44,13 +47,19 @@ describe('log presets', () => {
     const controller = new LogPresetsController(svc as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 7 }) } as any, { assertServerAccess } as any);
     const req = { user: { userId: 7 } };
 
-    await controller.list(req, 'srv');
+    await controller.list(req, { serverId: 'srv' });
     await controller.save(req, dto('a'));
-    await controller.remove(req, 'srv', 'a');
+    await controller.remove(req, { serverId: 'srv', name: 'a' });
     expect(assertServerAccess).toHaveBeenCalledTimes(3);
     expect(svc.remove).toHaveBeenCalledWith(7, 'srv', 'a');
 
     assertServerAccess.mockImplementation(() => { throw new Error('Forbidden'); });
-    await expect(controller.list(req, 'other')).rejects.toThrow('Forbidden');
+    await expect(controller.list(req, { serverId: 'other' })).rejects.toThrow('Forbidden');
+  });
+
+  it('rejects query strings missing serverId or name, so a delete can never widen', async () => {
+    expect(await validate(plainToInstance(LogPresetServerQueryDto, {}))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv' }))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv', name: 'a' }))).toHaveLength(0);
   });
 });

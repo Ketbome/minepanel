@@ -3,7 +3,7 @@ import { PayloadToken } from 'src/auth/models/token.model';
 import { AccessControlService } from 'src/users/services/access-control.service';
 import { UsersService } from 'src/users/services/users.service';
 import { LogPresetsService } from './log-presets.service';
-import { SaveLogPresetDto } from './dto/save-log-preset.dto';
+import { LogPresetRemoveQueryDto, LogPresetServerQueryDto, SaveLogPresetDto } from './dto/save-log-preset.dto';
 
 @Controller('log-presets')
 export class LogPresetsController {
@@ -20,7 +20,7 @@ export class LogPresetsController {
   }
 
   @Get()
-  async list(@Request() req, @Query('serverId') serverId: string) {
+  async list(@Request() req, @Query() { serverId }: LogPresetServerQueryDto) {
     return this.presets.list(await this.authorize(req, serverId), serverId);
   }
 
@@ -30,7 +30,7 @@ export class LogPresetsController {
   }
 
   @Delete()
-  async remove(@Request() req, @Query('serverId') serverId: string, @Query('name') name: string) {
+  async remove(@Request() req, @Query() { serverId, name }: LogPresetRemoveQueryDto) {
     await this.presets.remove(await this.authorize(req, serverId), serverId, name);
   }
 }
