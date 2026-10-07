@@ -39,12 +39,12 @@ const PROPERTIES: PropertyDef[] = [
   { key: "level-seed", category: "game", type: "string", default: "", description: "Seed used to generate a new world. Empty picks a random one." },
   { key: "level-type", category: "game", type: "string", default: "minecraft:normal", description: "World generation preset, e.g. minecraft:normal, minecraft:flat, minecraft:large_biomes, minecraft:amplified." },
   { key: "generator-settings", category: "game", type: "string", default: "{}", description: "JSON settings for the flat or custom world generator.", since: "1.8" },
-  { key: "max-world-size", category: "game", type: "int", default: "29999984", min: 1, max: 29999984, description: "Maximum world radius in blocks." },
+  { key: "max-world-size", category: "game", type: "int", default: "29999984", min: 1, max: 2147483647, description: "Maximum world radius in blocks. The server clamps values above 29999984." },
   { key: "view-distance", category: "performance", type: "int", default: "10", min: 3, max: 32, description: "Chunks sent to each player around them. Lower it to save CPU and bandwidth." },
   { key: "simulation-distance", category: "performance", type: "int", default: "10", min: 3, max: 32, description: "Distance in chunks around players where entities and blocks tick.", since: "1.18" },
   { key: "entity-broadcast-range-percentage", category: "performance", type: "int", default: "100", min: 10, max: 1000, description: "Percentage of the default distance at which entities are sent to clients.", since: "1.16" },
   { key: "max-tick-time", category: "performance", type: "int", default: "60000", min: -1, max: Number.MAX_SAFE_INTEGER, description: "Milliseconds a single tick may take before the watchdog stops the server. -1 disables it." },
-  { key: "max-chained-neighbor-updates", category: "performance", type: "int", default: "1000000", min: -1, max: 2147483647, description: "Limit on chained neighbour block updates. Negative values disable the limit.", since: "1.19" },
+  { key: "max-chained-neighbor-updates", category: "performance", type: "int", default: "1000000", min: -2147483648, max: 2147483647, description: "Limit on chained neighbour block updates. Negative values disable the limit.", since: "1.19" },
   { key: "network-compression-threshold", category: "performance", type: "int", default: "256", min: -1, max: 2147483647, description: "Packets larger than this many bytes are compressed. -1 disables compression.", since: "1.8" },
   { key: "region-file-compression", category: "performance", type: "enum", default: "deflate", options: ["deflate", "lz4", "none"], description: "Compression used for region files.", since: "1.20.5" },
   { key: "sync-chunk-writes", category: "performance", type: "boolean", default: "true", description: "Write chunks synchronously. Safer against corruption, slightly slower.", since: "1.16" },
@@ -153,7 +153,7 @@ export function isIgnored(def: PropertyDef, version?: string): boolean {
 // Same checks as the server: type, enum and range. Unknown keys are never an error.
 export function isValidValue(def: PropertyDef | undefined, value: string): boolean {
   if (!def) return true;
-  if (def.type === "boolean") return value === "true" || value === "false";
+  if (def.type === "boolean") return /^(true|false)$/i.test(value);
   if (def.type === "enum") return def.options!.includes(value);
   if (def.type === "int") return /^-?\d+$/.test(value) && Number(value) >= def.min! && Number(value) <= def.max!;
   return true;
