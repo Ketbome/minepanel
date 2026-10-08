@@ -11,26 +11,48 @@ homelab and lets you optionally **disable username/password login** so only SSO 
 
 ## How it works
 
-Minepanel acts as a confidential OIDC client (BFF pattern):
+Minepanel acts as a confidential OIDC client (BFF pattern): the browser never sees a
+provider token.
 
-1. The user clicks **Sign in with {provider}** on the login screen.
-2. The backend redirects to your provider with PKCE + state + nonce.
-3. After authenticating, the provider redirects back to the backend callback.
-4. The backend validates the `id_token` and issues its **own** Minepanel session
-   (the same `httpOnly` cookies used by password login).
+```mermaid
+sequenceDiagram
+    actor B as Browser
+    participant API as Minepanel API
+    participant IdP as Provider
+    B->>API: GET /auth/oidc/login
+    API-->>B: Redirect (PKCE, state, nonce)
+    B->>IdP: Sign in
+    IdP-->>B: Redirect to callback
+    B->>API: GET /auth/oidc/callback
+    API->>IdP: Exchange code
+    API->>API: Validate id_token
+    API-->>B: Session cookies
+```
+
+- The button reads **Sign in with {provider}** on the login screen.
+- The session is Minepanel's **own**: the same `httpOnly` cookies used by password login.
+- On success the browser lands on `/dashboard/home`; on any failure on `/?ssoError=1`.
 
 The identity provider only authenticates; **roles and permissions are still managed inside
 Minepanel**.
 
 ## Provisioning
 
-- On the first SSO login a Minepanel user is created, matched by `sub` and then by email.
-- If there are **no users yet**, the first person to sign in via SSO becomes the **admin**
-  with full access (bootstrap).
-- Every subsequent SSO user is created as a regular `USER` with **no permissions** until an
-  admin grants access under **Settings → Access**.
-- To give an SSO account full rights, an admin flips the **Administrator** switch for it under
-  **Settings → Access**. Permissions alone do not unlock admin-only screens such as
+```mermaid
+flowchart TD
+    S{"sub known?"} -->|yes| U["Sign in as that user"]
+    S -->|no| E{"Email matches?"}
+    E -->|yes| K["Link and sign in"]
+    E -->|no| F{"First user?"}
+    F -->|yes| A["New ADMIN"]
+    F -->|no| N["New USER, no access"]
+```
+
+- A matched account that is disabled is rejected.
+- The bootstrap admin gets full access. Every later SSO user is a regular `USER` with **no
+  permissions** until an admin grants access under **Settings → Roles & Access**.
+- To give an SSO account full rights, an admin flips its **Administrator** switch under
+  **Settings → Roles & Access**. Permissions alone do not unlock admin-only screens such as
   **Settings → Integrations**.
 
 ## Configuration
@@ -42,6 +64,8 @@ below still work as a fallback/default; a value set in the panel **overrides** t
 variable. Secrets are write-only in the UI — the client secret is never sent back to the
 browser.
 :::
+
+![OIDC fields in Settings → Integrations](/img/settings-integrations.webp)
 
 SSO can also be configured with environment variables. It is enabled only when `OIDC_ISSUER`,
 `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_REDIRECT_URI` are all set (in the panel or `.env`).
@@ -101,10 +125,16 @@ account is linked to the provider** (that is, an admin has already signed in thr
 least once). Otherwise the panel would be left with admins that can only log in with a
 password that no longer works.
 
+```mermaid
+flowchart LR
+    A["Configure SSO"] --> B["Sign in via SSO"]
+    B --> C["Admin is linked"]
+    C --> D["Disable passwords"]
+```
+
 ::: warning Order matters
-Configure SSO first, sign in through it, make sure an **admin** account is on the SSO side
-(link it by email, or promote the SSO account under **Settings → Access**), and only then
-disable password login.
+Link an **admin** to the provider (sign in with the admin's email, or promote the SSO account
+under **Settings → Roles & Access**) before disabling password login.
 :::
 
 With password login disabled, invitation links cannot be accepted either (accepting one creates
@@ -116,10 +146,8 @@ The setting is stored in the database when saved from the panel, so it **overrid
 
 ## Troubleshooting
 
-- **Button not shown**: confirm all four required `OIDC_*` variables are set and restart the
-  backend. Check `GET /auth/setup-status` returns `sso.enabled: true`.
-- **Redirected back with `?ssoError=1`**: the callback failed (state/nonce mismatch, expired
-  transaction, clock skew, or wrong redirect URI). Verify `OIDC_REDIRECT_URI` matches the
-  provider exactly and that backend and provider clocks are in sync.
-- **`disabled` account**: the matched Minepanel user is inactive; re-enable it under
-  **Settings → Access**.
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| No SSO button | One of the four required values is missing | Set issuer, client ID, secret and redirect URI; if they come from `.env`, recreate the backend (`docker compose up -d`). `GET /auth/setup-status` must return `sso.enabled: true` |
+| Back on login with `?ssoError=1` | Callback failed: state/nonce mismatch, expired transaction, clock skew or wrong redirect URI | `OIDC_REDIRECT_URI` must match the provider exactly; sync backend and provider clocks |
+| `disabled` account | The matched Minepanel user is inactive | Re-enable it under **Settings → Roles & Access** |

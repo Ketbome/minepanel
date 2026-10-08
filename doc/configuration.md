@@ -9,7 +9,24 @@ head:
 
 # Configuration
 
-![Configuration](/img/configuration.webp)
+Minepanel keeps settings in three places:
+
+```mermaid
+flowchart LR
+    E[".env"] --> P["Panel containers"]
+    U["Settings pages"] --> DB["data/minepanel.db"]
+    T["Server tabs"] --> J["servers/id/server.json"]
+    J --> C["Generated compose"]
+```
+
+| Where | What lives there | Changed by |
+| --- | --- | --- |
+| `.env` | Secrets and URLs the panel needs before it starts | Editing the file, then `docker compose up -d` |
+| Database (`data/`) | Instance settings: network, proxy, integrations, Java defaults, users | **Settings** pages |
+| `servers/<id>/server.json` | One server's configuration | The server's tabs |
+
+This page covers `.env`. Each server's `docker-compose.yml` is generated from its
+`server.json`; do not edit it by hand.
 
 ## Environment Variables
 
@@ -51,6 +68,8 @@ SMTP and OIDC can now be managed from **Settings → Integrations** (admin only)
 set in the panel **overrides** the matching variable. Secrets are write-only (never returned
 to the browser).
 :::
+
+![Settings → Integrations with CurseForge key, Discord webhook, SMTP and OIDC](/img/settings-integrations.webp)
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
@@ -124,13 +143,14 @@ Pick a preset and copy it to your `.env` file:
 ## Network Settings
 
 Public IP, LAN IP and everything about the Java proxy are configured through the
-web UI, under **Settings → Network**. Since 1.12 the panel runs mc-router itself,
+web UI, under **Settings → Network**. Since 1.12 the panel runs the proxy itself,
 so none of this lives in `.env` any more:
 
 | Setting | What it does |
 | --- | --- |
+| Proxy type | **mc-router** (one hostname per server) or **Velocity** (lobby network) |
 | Base domain | Wildcard domain servers get hostnames under (`<id>.mc.example.com`) |
-| Enable proxy | Starts or stops the mc-router container |
+| Start / Stop proxy | Starts or stops the proxy container |
 | Router port | Host port the proxy listens on (25565 by default) |
 | Auto-scaling | Stops proxied Java servers while empty, starts them on the first connection |
 | Stop after | Idle time before a server is stopped (`10m` by default) |
@@ -150,6 +170,16 @@ rest, under **Server → Network → Proxy Settings**.
 that holds `servers/` and `data/`. Because each Minecraft server runs through the host Docker
 daemon (via the mounted socket), the generated compose files use host paths built from this
 value, not container paths.
+
+```mermaid
+flowchart LR
+    H["Host /srv/minepanel"] -->|"mount"| B["Backend /app"]
+    B -->|"docker.sock"| D["Docker daemon"]
+    D -->|"host path"| S["Server container"]
+```
+
+The daemon resolves mounts on the host, so a server's volume must be a host path such as
+`/srv/minepanel/servers/<id>/mc-data`, never the backend's `/app/servers/<id>`.
 
 You normally **don't need to set it**: at startup Minepanel asks Docker for the real host source
 of the `/app/servers` mount and uses it, so the path always matches wherever you mounted the
@@ -180,6 +210,13 @@ BACKEND_PORT=8092
 ### Subdirectory Routing
 
 Use these variables when Minepanel is served behind a reverse proxy under subpaths instead of the domain root.
+
+```mermaid
+flowchart LR
+    U["mydomain.com"] --> R["Reverse proxy"]
+    R -->|"/minepanel"| F["Frontend :3000"]
+    R -->|"/api"| B["Backend :8091"]
+```
 
 | Variable | What it affects | Example |
 | --- | --- | --- |

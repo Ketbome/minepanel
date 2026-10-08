@@ -136,6 +136,12 @@ and end with a short Minepanel CTA plus related-guide links.
 - Location: `public/img/`
 - Naming: `{feature}-{description}.webp` (e.g., `server-creation.webp`)
 - Keep file size reasonable (<500KB)
+- Capture from a real stack (current UI). Replace the panel's detected public IP with a documentation address (`203.0.113.x` or `play.example.com`) before capturing.
+
+### Diagrams
+
+- Mermaid, rendered client-side: check them with `pnpm docs:build` + `vitepress preview` (`docs:dev` does not render them).
+- Keep labels short (about 20 characters per line, two lines max) and without emojis: the site font clips the third line.
 
 ### Brand assets
 

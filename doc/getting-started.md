@@ -11,17 +11,15 @@ head:
 
 Get Minepanel running in about 2 minutes.
 
-<img src="/img/dashboard.webp" alt="Minepanel dashboard showing server stats, system status, and quick actions" width="980" height="482">
-
-::: warning
-Remember to change your password after the first login.
-:::
+<img src="/img/minepanel.webp" alt="Minepanel home showing server counts, system health and quick actions" width="1440" height="900">
 
 ## Requirements
 
-- Docker 20.10+ & Docker Compose v2.0+
-- 2GB+ RAM
-- Linux, macOS, or Windows (WSL2)
+| Need     | Minimum                                     |
+| -------- | ------------------------------------------- |
+| Docker   | 20.10+ with Docker Compose v2.0+            |
+| Memory   | 2GB+ RAM (plus what your servers use)       |
+| OS       | Linux, macOS, or Windows (WSL2)             |
 
 ::: tip Verify
 
@@ -35,10 +33,7 @@ docker --version && docker compose version
 
 ```mermaid
 flowchart LR
-    A["1️⃣ Clone"] --> B["2️⃣ Start"] --> C["3️⃣ Access"]
-    style A fill:#1f2937,stroke:#6b7280,color:#fff
-    style B fill:#1e40af,stroke:#3b82f6,color:#fff
-    style C fill:#065f46,stroke:#22c55e,color:#fff
+    A["Clone"] --> B["Set JWT_SECRET"] --> C["Start"] --> D["Create admin"]
 ```
 
 <TerminalSequence
@@ -53,56 +48,74 @@ flowchart LR
       outputs: ['Now in ./minepanel']
     },
     {
+      command: 'echo JWT_SECRET=$(openssl rand -base64 32) > .env',
+      outputs: ['Wrote .env']
+    },
+    {
       command: 'docker compose up -d',
       outputs: [
         '[+] Running 3/3',
-        ' ✔ minepanel-backend   Started',
-        ' ✔ minepanel-frontend  Started',
-        ' ✔ minepanel-db        Started'
+        ' ✔ Network minepanel-network  Created',
+        ' ✔ minepanel-backend          Started',
+        ' ✔ minepanel-frontend         Started'
       ]
     }
   ]"
 />
 
-**Access:** http://localhost:3000
+```bash
+git clone https://github.com/Ketbome/minepanel.git
+cd minepanel
+echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
+docker compose up -d
+```
 
-**Login:** `admin` / `admin`
+`JWT_SECRET` is required: the backend refuses to start without it. Keeping it in `.env`
+means it survives restarts.
 
-::: warning Change password
-Go to Profile → Change Password after first login.
-:::
+**Open** http://localhost:3000. There are no default credentials: the first visit shows a
+setup screen where you create the admin account.
 
 ## Create Your First Server
 
 ```mermaid
 flowchart LR
-    A["New Server"] --> B["Configure"] --> C["Create"] --> D["✅ Play!"]
-    style A fill:#1f2937,stroke:#6b7280,color:#fff
-    style B fill:#1f2937,stroke:#3b82f6,color:#fff
-    style C fill:#1f2937,stroke:#22c55e,color:#fff
-    style D fill:#065f46,stroke:#22c55e,color:#fff
+    A["Create Server"] --> B["Edition + ID"] --> C["Configure tabs"] --> D["Start Server"]
 ```
 
-1. Click **"New Server"**
-2. Fill: Name, Type (Paper/Forge/etc.), Version, Port, Memory
-3. Click **Create**
-4. Wait for download → Play!
+| Step | Where | What |
+| --- | --- | --- |
+| 1 | **Dashboard** | **Create Server** |
+| 2 | Dialog | **Quick Create** (empty server) or **From Template**; pick Java or Bedrock and a Server ID |
+| 3 | Server page | Set type, version, memory... in the tabs, then **Save Changes** |
+| 4 | Server page | **Start Server**. The first start downloads the server; follow it in **Logs** |
+
+![Create New Server dialog with Quick Create, From Template, edition and Server ID](/img/create-server.webp)
+
+Once it is running, the server header shows the address players connect to, with a copy button:
+
+![Server header with type, players, uptime, CPU and the public and LAN addresses](/img/server-connection.webp)
 
 ## Remote Access
 
-To access from outside your network, update `docker-compose.yml`:
-
-```yaml
-environment:
-  - FRONTEND_URL=http://your-ip:3000
-  - NEXT_PUBLIC_BACKEND_URL=http://your-ip:8091
-  - ALLOW_INSECURE_AUTH_COOKIES=true # Only if staying on HTTP (LAN/dev)
+```mermaid
+flowchart LR
+    B["Browser"] -->|"FRONTEND_URL"| F["Frontend :3000"]
+    B -->|"BACKEND_URL"| API["Backend :8091"]
 ```
 
-Then restart:
+The browser talks to both containers, so both URLs must be reachable from it. Add to `.env`:
 
 ```bash
-docker compose restart
+FRONTEND_URL=http://your-ip:3000
+NEXT_PUBLIC_BACKEND_URL=http://your-ip:8091
+ALLOW_INSECURE_AUTH_COOKIES=true # Only if staying on HTTP (LAN/dev)
+```
+
+Then recreate the containers (`restart` does not reload `.env`):
+
+```bash
+docker compose up -d
 ```
 
 **→ Full guide:** [Networking](/networking)
@@ -123,17 +136,10 @@ For production/public access, use HTTPS and keep this variable disabled.
 
 ## Troubleshooting
 
-**Permission errors (Linux):**
-
-```bash
-sudo usermod -aG docker $USER
-# Log out and back in
-```
-
-**Check logs:**
-
-```bash
-docker compose logs -f
-```
+| Problem | Fix |
+| --- | --- |
+| `permission denied` on the Docker socket (Linux) | `sudo usermod -aG docker $USER`, then log out and back in |
+| Backend exits with `JWT_SECRET is not set` | Create `.env` as above, then `docker compose up -d` |
+| Anything else | `docker compose logs -f` |
 
 **→ More help:** [Troubleshooting](/troubleshooting) | [FAQ](/faq)

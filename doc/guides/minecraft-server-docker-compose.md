@@ -17,6 +17,14 @@ keeps its world on disk, and can be updated with one command.
 **You need:** a Linux, macOS or Windows (WSL2) machine with Docker and the Compose plugin
 (`docker compose version` should print v2+), and at least 2 GB of free RAM.
 
+```mermaid
+flowchart LR
+    Y["compose.yaml"] -->|"env vars"| C["mc container"]
+    C -->|"writes"| P["server.properties"]
+    C <-->|"./data:/data"| D["World on disk"]
+    PL["Players"] -->|"TCP 25565"| C
+```
+
 ## 1. Create the compose file
 
 Create a folder for the server and a `compose.yaml` inside it:
@@ -202,9 +210,12 @@ web panel that creates and runs `itzg/minecraft-server` containers: pick the ser
 version and memory in a form, and get the console, logs, file manager, backups and mod
 installer in the browser.
 
+![Create New Server dialog in Minepanel](/img/create-server.webp)
+
 ```bash
 git clone https://github.com/Ketbome/minepanel.git
 cd minepanel
+echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
 docker compose up -d
 ```
 

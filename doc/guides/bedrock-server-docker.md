@@ -16,6 +16,14 @@ which downloads the server, keeps it updated and turns its config into environme
 
 **You need:** a machine with Docker and the Compose plugin, and around 1–2 GB of free RAM.
 
+```mermaid
+flowchart LR
+    W["Windows / console"] -->|"UDP 19132"| R["Router + firewall"]
+    M["Phone / tablet"] -->|"UDP 19132"| R
+    R -->|"UDP 19132"| B["bds container"]
+    B <-->|"./data:/data"| D["World on disk"]
+```
+
 ## 1. Create the compose file
 
 ```bash
@@ -165,6 +173,8 @@ for the second one. Unlike Java, Bedrock can't be routed by hostname on a shared
 [Minepanel](/) is a free, open-source web panel that runs this same Bedrock image, next to
 Java servers, from one UI: create the server from a form, edit permissions and the
 allowlist, import `.mcaddon` / `.mcpack` files, and use the console in the browser.
+
+![Bedrock server type and version in Minepanel](/img/bedrock-type.webp)
 
 → [Install Minepanel](/installation) · [Bedrock in Minepanel](/server-types#bedrock-edition)
 

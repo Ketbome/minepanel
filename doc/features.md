@@ -9,19 +9,19 @@ head:
 
 # Features
 
-![Features](/img/modes.webp)
+![Minepanel home: server counts, system health and quick actions](/img/minepanel.webp)
 
-```mermaid
-flowchart LR
-    MP["🎮 Minepanel"]
-    MP --> SM["⚙️ Servers"]
-    MP --> MM["📦 Mods"]
-    MP --> FM["📁 Files"]
-    MP --> BK["💾 Backups"]
-    style MP fill:#1f2937,stroke:#22c55e,color:#fff
-```
+Every server has one page, with its tabs grouped the same way as the sidebar:
+
+| Group | Tabs |
+| --- | --- |
+| Configuration | Server Type, Game, Worlds, Access, Network, Resources, Lifecycle, Plugins / Mods, Backups, Advanced |
+| Operation | Logs, Commands, Players, Files |
+| Monitoring | Metrics, Activity, Tasks |
 
 ## Server Management
+
+![Server list with status, ports and bulk selection](/img/dashboard.webp)
 
 | Feature          | Description                                                          |
 | ---------------- | -------------------------------------------------------------------- |
@@ -34,7 +34,15 @@ flowchart LR
 | Resource limits  | Set RAM, CPU per server                                              |
 | Clone server     | Duplicate a server's configuration under a new ID (world data and files are not copied) |
 
+![Create New Server dialog: Quick Create or From Template, edition and server ID](/img/create-server.webp)
+
+New Java servers start from the instance-wide defaults in **Settings → Java Defaults**; existing servers are not changed.
+
+![Settings → Java Defaults: players, memory, CPU, view distance, online mode and backups for new Java servers](/img/settings-defaults.webp)
+
 ## Real-time Monitoring
+
+![Server header: type and version, players, uptime, CPU, and the addresses to connect to](/img/server-connection.webp)
 
 | Feature   | Description                               |
 | --------- | ----------------------------------------- |
@@ -48,21 +56,34 @@ flowchart LR
 | Tick performance | Native NeoForge estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
 | Alerts    | Opt-in Discord alerts per server: unexpected server down, crash loops (with an exit code and log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
 
-Runtime stats refresh on their own on the home page and the server page, and only render for
-running servers. Player totals and version come from a game status query that works on both Java
-and Bedrock. If the container is up but the game is not answering yet, those values stay blank
-instead of reporting zero players.
+- Runtime stats refresh on their own on the home page and the server page, and only render for
+  running servers.
+- Player totals and version come from a game status query that works on both Java and Bedrock.
+- If the container is up but the game is not answering yet, those values stay blank instead of
+  reporting zero players.
+
+![Logs tab: live log stream with error detection and container CPU/memory](/img/troubleshooting.webp)
 
 ### TPS and tick time {#tps}
 
-**TPS** (ticks per second) is how many game ticks the server completes each second; 20 is
-full speed and anything lower is lag players can feel. **MSPT** (milliseconds per tick) is
-how long each tick takes; at 20 TPS a tick has a 50 ms budget, so MSPT over 50 is what
-drags TPS down.
+| Value | Meaning | Healthy |
+| ----- | ------- | ------- |
+| **TPS** (ticks per second) | Game ticks the server completes each second | 20 is full speed; lower is lag players can feel |
+| **MSPT** (milliseconds per tick) | How long each tick takes | Under 50 ms: at 20 TPS a tick has a 50 ms budget, so MSPT over 50 drags TPS down |
 
-Open **Monitoring → Metrics**. The panel reads these values over RCON, so the first
-requirement for every Java server is **RCON enabled** in the server's **Access** tab,
-followed by a restart. What else is needed depends on the server type:
+![Metrics tab: TPS, MSPT, CPU, memory, players and the performance history](/img/server-metrics.webp)
+
+Open **Monitoring → Metrics**. The panel reads these values over RCON, so every Java server
+first needs **RCON enabled** in its **Access** tab, followed by a restart. Where the reading
+comes from depends on the server type:
+
+```mermaid
+flowchart TD
+    R["RCON enabled"] --> T{"Server type"}
+    T -->|"NeoForge packs"| N["neoforge tps"]
+    T -->|"plugin/mod loader"| S["spark tps"]
+    T -->|"Vanilla, Bedrock"| X["No tick readings"]
+```
 
 | Server type | Source | What to do |
 | ----------- | ------ | ---------- |
@@ -78,61 +99,63 @@ installed, or no usable response yet (normal for a minute or two after start).
 
 ### CurseForge / NeoForge monitoring
 
-For NeoForge-based modpacks, Minepanel reads `neoforge tps` through the itzg container's
-`rcon-cli`, refreshing about every 10 seconds. Keep the CurseForge server type; there is
-no need to switch to Paper or install an additional monitoring mod.
+| Source | Command | What it reports |
+| ------ | ------- | --------------- |
+| NeoForge (native) | `neoforge tps` through the itzg container's `rcon-cli`, about every 10 seconds | Mean tick duration (MSPT) and **estimated TPS**, calculated by NeoForge from tick time rather than by counting ticks |
+| spark | `spark tps` over RCON | 1-minute TPS and 10-second median/P95 tick duration |
 
-The overall NeoForge report provides mean tick duration (MSPT) and **estimated
-TPS**, calculated by NeoForge from tick time. This is different from directly
-counting ticks. At the default 20 TPS, the tick budget is 50 ms. These reference
-lines do not imply that a deliberately changed tick rate is unhealthy.
-
-On servers with a usable `spark tps` RCON response, Minepanel displays 1-minute
-TPS and 10-second median/P95 tick duration. P95 is the duration below which 95%
-of ticks fall; it is not the mean. Spark often returns an empty RCON reply (see
-[lucko/spark#119](https://github.com/lucko/spark/issues/119)), so installing spark
-alone does not guarantee RCON monitoring works; NeoForge's native command and a
-custom command (below) avoid this.
+- For NeoForge-based modpacks, keep the CurseForge server type; there is no need to switch to
+  Paper or install an additional monitoring mod.
+- At the default 20 TPS, the tick budget is 50 ms. These reference lines do not imply that a
+  deliberately changed tick rate is unhealthy.
+- P95 is the duration below which 95% of ticks fall; it is not the mean.
+- Spark often returns an empty RCON reply (see [lucko/spark#119](https://github.com/lucko/spark/issues/119)),
+  so installing spark alone does not guarantee RCON monitoring works; NeoForge's native command
+  and a custom command (below) avoid this.
 
 ### Custom tick command
 
-Administrators choose how TPS is read from the **Custom tick command** card at the bottom
-of the Metrics tab. The **Tick source** dropdown offers:
+Administrators choose how TPS is read from the **Custom tick command** card at the bottom of
+the Metrics tab. The **Tick source** dropdown offers:
 
-- **Automatic (built-in)**: the NeoForge and spark probes described above.
-- **TabTPS (`tickinfo`)**, **NeoForge (`neoforge tps`)** and **spark (`spark tps`)**: run that
-  one command and read its reply with the built-in reader. TabTPS reports the 1-minute TPS and
-  the 60-second average MSPT.
-- **Custom command…**: any other single-line RCON command (up to 100 characters, not starting
-  with `-`). TabTPS, NeoForge and spark output is still recognized automatically.
+| Tick source | What it runs |
+| ----------- | ------------ |
+| **Automatic (built-in)** | The NeoForge and spark probes described above |
+| **TabTPS (`tickinfo`)** | That one command, read with the built-in reader. TabTPS reports the 1-minute TPS and the 60-second average MSPT |
+| **NeoForge (`neoforge tps`)** / **spark (`spark tps`)** | That one command, read with the built-in reader |
+| **Custom command…** | Any other single-line RCON command (up to 100 characters, not starting with `-`). TabTPS, NeoForge and spark output is still recognized automatically |
 
-The reply must come back over RCON. **Run & test** runs the command once, shows the raw reply
-and what was read from it, without saving, so a command that answers with nothing is visible
-right away.
+- The reply must come back over RCON. **Run & test** runs the command once and shows the raw
+  reply and what was read from it, without saving, so a command that answers with nothing is
+  visible right away.
+- For output nothing recognizes, **Advanced mode** (the Simple/Advanced toggle above the tabs)
+  shows a TPS pattern and an optional MSPT pattern: case-insensitive regular expressions with one
+  capture group around the number, matched against the first 4 KB of the reply. Patterns win
+  over automatic detection and the source is shown as `custom`. Saved patterns stay visible in
+  Simple mode.
+- Values that cannot be read stay blank; the panel never falls back to another probe. Choosing
+  **Automatic** and saving restores the defaults.
+- The command runs on every metrics poll, so only administrators can set it.
 
-For a custom command whose output nothing recognizes, **Advanced mode** (the Simple/Advanced
-toggle above the tabs) shows a TPS pattern and an optional MSPT pattern: regular
-expressions (case-insensitive) with one capture group around the number, matched against the
-first 4 KB of the reply. Patterns win over automatic detection and the source is shown as
-`custom`. Patterns that are already saved stay visible in Simple mode. Values that cannot be
-read stay blank; the panel never falls back to another probe. Choosing **Automatic** and saving
-restores the defaults. The command runs on every metrics poll, so only administrators can set it.
+Safety limits:
 
-Every pattern match is limited to 50 ms, so a badly written pattern (for example
-`(a+)+$`) cannot stall the panel; one that is too slow is rejected when you save or
-test it. A command that keeps returning nothing usable (an empty reply, output nothing
-recognizes, or a pattern that times out) five polls in a row is **paused for 15
-minutes** instead of being polled forever, then retried once. Failing to reach RCON,
-for example while the server starts, does not count. Editing the command or a pattern,
-or a passing **Run & test**, resumes it immediately.
+- Every pattern match is limited to 50 ms, so a badly written pattern (for example `(a+)+$`)
+  cannot stall the panel; one that is too slow is rejected when you save or test it.
+- A command that returns nothing usable (an empty reply, output nothing recognizes, or a pattern
+  that times out) five polls in a row is **paused for 15 minutes**, then retried once. Failing to
+  reach RCON, for example while the server starts, does not count. Editing the command or a
+  pattern, or a passing **Run & test**, resumes it immediately.
 
-Missing readings stay blank, and charts leave gaps for missing samples or server
-downtime. Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB; use the time-range
-selector to change the history window. Older history contains resource data only. CPU uses Docker's scale:
-100% represents one fully used core, so multi-core usage may exceed 100%.
-Memory is container usage, not JVM heap alone. Bedrock retains resource/player
-monitoring but has no tick measurements. Existing Discord alerts cover server
-down and high CPU/RAM; TPS alerting is not included.
+Reading the charts:
+
+- Missing readings stay blank, and charts leave gaps for missing samples or server downtime.
+- Charts show the latest sample value, labelled vertical scales and the minimum/maximum of
+  available samples in the selected window, without sliders. Use the time-range selector to
+  change the history window. Older history contains resource data only.
+- CPU uses Docker's scale: 100% represents one fully used core, so multi-core usage may exceed 100%.
+- Memory charts use GiB and show container usage, not JVM heap alone.
+- Bedrock retains resource/player monitoring but has no tick measurements.
+- Existing Discord alerts cover server down and high CPU/RAM; TPS alerting is not included.
 
 References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/latest/sending-commands/commands/),
 [NeoForge TPS implementation](https://github.com/neoforged/NeoForge/blob/1.21.1/src/main/java/net/neoforged/neoforge/server/command/TPSCommand.java),
@@ -140,13 +163,17 @@ References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/la
 
 ## Server Control
 
+![Commands tab: quick commands, command input and the server's response](/img/server-console.webp)
+
 | Feature        | Description                                               |
 | -------------- | --------------------------------------------------------- |
 | Basic controls | Start, Stop, Restart, Delete                              |
 | Force stop     | Stops now instead of waiting for the shutdown announcement (`STOP_SERVER_ANNOUNCE_DELAY`, 60s by default). Sends `stop` over RCON so the world is still saved, and kills the container after 10s if it does not exit |
-| Console        | RCON (Java) or send-command (Bedrock)                     |
+| Console        | Commands tab over RCON (Java). Bedrock has no Commands tab yet; its commands go through `send-command` |
 | Quick actions  | Save world, toggle whitelist, set time/weather, broadcast |
 | Scheduled tasks | Auto restarts and scheduled console commands, per server in the Tasks tab. Schedule by fixed interval or standard 5-field cron expression (e.g. `0 4 * * *` = daily at 04:00, backend timezone). Rotating announcements: see below |
+
+![Tasks tab: a restart task on a fixed interval](/img/server-tasks.webp)
 
 ### Event commands
 
@@ -169,22 +196,29 @@ themselves, one per line, at five moments:
 - They run through RCON: with RCON turned off (Access tab) nothing is sent. Changes apply after a
   restart.
 - They run as the server console, so changing them, or cloning a server that has them, needs the
-  **console** permission. The
-  `RCON_CMDS_*` variables they map to are admin-only in the custom environment variables.
+  **console** permission. The `RCON_CMDS_*` variables they map to are admin-only in the custom
+  environment variables.
+
+![Lifecycle tab: auto-stop, auto-pause, stop delay, restart policy, timezone and event commands](/img/server-lifecycle.webp)
 
 ### Scheduled announcements
 
-An **Announcements** task in the Tasks tab sends a list of chat messages to all players, one message per run, in order, and starts again after the last one.
+An **Announcements** task in the Tasks tab sends a list of chat messages to all players, one
+message per run, in order, and starts again after the last one.
 
-- Up to 20 messages, one per line, each up to 256 characters.
-- `&` color and format codes work (`&a` green, `&l` bold, `&r` reset).
-- Messages are sent with `tellraw`, so they show without a `[Server]` prefix.
-- If the server is stopped when a message is due, that message is sent on the next run instead of being skipped. Editing the list starts again from the first message.
-- Java servers only: it uses RCON like command tasks, and Bedrock servers skip the task.
+| Rule | Detail |
+| ---- | ------ |
+| Size | Up to 20 messages, one per line, each up to 256 characters |
+| Formatting | `&` color and format codes work (`&a` green, `&l` bold, `&r` reset) |
+| Delivery | Sent with `tellraw`, so they show without a `[Server]` prefix |
+| Server stopped | The due message is sent on the next run instead of being skipped. Editing the list starts again from the first message |
+| Edition | Java only: it uses RCON like command tasks, and Bedrock servers skip the task |
 
 ## Roles and Access Control
 
 This is the first phase of Minepanel roles.
+
+![Settings → Roles & Access: invitations, permissions and server access](/img/administration.webp)
 
 | Feature | Description |
 | ------- | ----------- |
@@ -199,6 +233,16 @@ This is the first phase of Minepanel roles.
 
 ### Authorization model
 
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant A as Backend
+    B->>A: Request + httpOnly cookie
+    A->>A: Resolve current user
+    A->>A: Check permission
+    A-->>B: Data, or 403
+```
+
 - The frontend can hide or show sections for convenience, but the backend is the real permission boundary.
 - Minepanel keeps authentication in `httpOnly` cookies and does not rely on `localStorage` for authorization.
 - The current user/session can be cached briefly **in memory only** to reduce repeated calls such as `/auth/me` or `/users/one`.
@@ -206,21 +250,20 @@ This is the first phase of Minepanel roles.
 
 ### Audit coverage
 
-The current audit phase includes:
+![Audit log filtered by user, action, result, server and date](/img/settings-audit.webp)
 
-- login
-- invitation creation, copy, and acceptance
-- password changes
-- email change request and confirmation
-- user access updates and deletion
-- server configuration saves
-- server start, stop, and restart
-- console command execution
+| Area | Recorded actions |
+| ---- | ---------------- |
+| Account | login, password changes, email change request and confirmation |
+| Users | invitation creation, copy, and acceptance; user access updates and deletion |
+| Servers | configuration saves; start, stop, and restart; console command execution |
 
 ## Player Management
 
 The **Players** tab (Java servers) lists everyone who has joined, with their skin avatar, and works
 while the server is stopped because it reads the world files directly.
+
+![Players tab with a player's profile: health, hunger, stats and last position](/img/player-profiles.webp)
 
 | Feature        | Description                                |
 | -------------- | ------------------------------------------ |
@@ -234,22 +277,28 @@ while the server is stopped because it reads the world files directly.
 | TP Spawn       | Teleports to a per-server default point (`0, 100, 0` until set), shown on the action and in the confirmation toast; settable from the Commands tab's world coordinates alongside "teleport all" |
 | Whitelist      | Add players at runtime, or seed it from **Access** before the first boot |
 
-Minecraft writes player files on autosave and on logout, so data for online players can be a few
-minutes behind. Avatars are loaded by the browser from mc-heads.net by UUID (Mojang and
-Floodgate/Bedrock players), or by name for offline-mode servers and players whose UUID is not
-known yet.
-Both world layouts are read: `players/data`, `players/stats` and `players/advancements` from
-Minecraft 26.1 on, and the top-level `playerdata`, `stats` and `advancements` folders before it.
-
-Item icons are the vanilla textures of the server's game version (read from `level.dat`). The
-backend downloads that version's official client jar from Mojang once and keeps only the item and
-block images under `data/textures/<version>/` (about 6 MB). Until then, and for modded items or
-items without a flat icon, slots fall back to the panel's built-in icons or the item name.
+| Data | Where it comes from |
+| ---- | ------------------- |
+| Player files | Minecraft writes them on autosave and on logout, so data for online players can be a few minutes behind |
+| World layout | `players/data`, `players/stats` and `players/advancements` from Minecraft 26.1 on; the top-level `playerdata`, `stats` and `advancements` folders before it. Both are read |
+| Avatars | Loaded by the browser from mc-heads.net by UUID (Mojang and Floodgate/Bedrock players), or by name for offline-mode servers and players whose UUID is not known yet |
+| Item icons | Vanilla textures of the server's game version (read from `level.dat`). The backend downloads that version's official client jar from Mojang once and keeps only the item and block images under `data/textures/<version>/` (about 6 MB). Until then, and for modded items or items without a flat icon, slots fall back to the panel's built-in icons or the item name |
 
 ### Activity log
 
 Opt-in per server (Java), from the **Activity** tab. When on, the panel reads `logs/latest.log`
-every few seconds and keeps:
+every few seconds:
+
+```mermaid
+flowchart LR
+    L["logs/latest.log"] -->|"every few s"| R["Activity reader"]
+    G["logs/*.log.gz"] -->|"one-off import"| R
+    R --> T["Timeline"]
+    R --> S["Session stats"]
+    R --> I["Inventory snapshots"]
+```
+
+![Activity tab: joins, leaves, chat and advancements on a timeline](/img/server-activity.webp)
 
 | Feature   | Description |
 | --------- | ----------- |
@@ -258,11 +307,15 @@ every few seconds and keeps:
 | History   | One-off import of the archived `logs/*.log.gz` from before tracking was turned on, including the sessions older than the first one the panel recorded |
 | Inventory history | Snapshots of inventory and ender chest on join, leave and every autosave (50 per player), with the changes since the previous one and the last snapshot before each death |
 
+Privacy and retention:
+
 - Off by default: chat is personal data. The timeline needs the **view logs** permission.
-- Everything the activity log stores expires: events and inventory snapshots are deleted after
-  30 days, checked hourly. On top of that each server keeps at most 100,000 events and 50
-  inventory snapshots per player, newest first. Sessions belong to the session history below and
-  stay until the server is deleted.
+- Events and inventory snapshots are deleted after 30 days, checked hourly. On top of that each
+  server keeps at most 100,000 events and 50 inventory snapshots per player, newest first.
+  Sessions belong to the session history below and stay until the server is deleted.
+
+What gets recorded:
+
 - Chat, advancement and death counts only appear for sessions the log was read for; others show
   a dash, never zero.
 - Recording starts when tracking is turned on; earlier lines only carry a time of day and are
@@ -294,45 +347,36 @@ every few seconds and keeps:
 
 ## File Management
 
-Built-in browser for each server under `servers/<id>/mc-data`:
+Built-in browser for each server under `servers/<id>/mc-data`.
 
-- Upload/download files, with a live transfer panel (speed, ETA, cancel). Files over
-  256 MB and folders (as a ZIP that streams while it is compressed) are handed to the
-  browser's own download instead, which writes to disk as bytes arrive rather than holding
-  the whole file in the tab's memory; cancelling a ZIP there stops the compression on the
-  server as well. Uploads stream to disk (`servers/.uploads/`) rather than
-  memory, so large files do not depend on the backend's RAM; an upload only lands in its folder
-  once it is complete, and a cancelled or interrupted one is discarded
-- Files over 8 MB upload in chunks, so no single request carries the whole file: a reverse
-  proxy's body limit (Cloudflare allows 100 MB) or a slow link no longer cuts large worlds
-  and modpacks short. A dropped chunk is retried from where the server stands instead of
-  restarting the file, the free disk space is checked before the first byte, and an upload
-  never replaces a folder of the same name
-- Uploading something that already exists in the folder asks first: overwrite it, or skip
-  what is there (for a folder upload, every file inside that already exists is kept)
-- Select several entries with the checkboxes, Ctrl/Cmd-click or Shift-click, then download
-  them as one ZIP or delete them together
-- Keyboard: arrows (Shift to extend), Enter to open, Backspace to go up, F2 to rename,
-  Delete, Ctrl/Cmd+A, Escape to clear the selection, Ctrl/Cmd+F to search
-- Edit configs (syntax highlighting). Ctrl/Cmd+S saves and keeps the file open; leaving with
-  unsaved changes asks first. Binary formats such as `.nbt` never open in the editor, since
-  saving them back as text would corrupt them
-- Create/delete/rename; every delete asks for confirmation first, and warns when folders
-  (deleted with their contents) are included. Each row has a menu button with the same
-  actions as right-click
-- Drag & drop support
-- Filter the current folder as you type (Ctrl/Cmd+F focuses the box, Esc clears it); the
-  footer counts folders, files and total size, and says how many of them the filter is showing
-- Sort by name, size or modified date from the column headers; folders always stay on top
+![File Manager inside a server's mc-data folder](/img/server-files.webp)
+
+| Area | What it does |
+| ---- | ------------ |
+| Downloads | Live transfer panel (speed, ETA, cancel). Files over 256 MB and folders (as a ZIP that streams while it is compressed) are handed to the browser's own download, which writes to disk as bytes arrive instead of holding the whole file in the tab's memory; cancelling a ZIP there stops the compression on the server as well |
+| Uploads | Stream to disk (`servers/.uploads/`) rather than memory, so large files do not depend on the backend's RAM. An upload only lands in its folder once it is complete; a cancelled or interrupted one is discarded |
+| Large uploads | Files over 8 MB upload in chunks, so a reverse proxy's body limit (Cloudflare allows 100 MB) or a slow link no longer cuts large worlds and modpacks short. A dropped chunk is retried from where the server stands, free disk space is checked before the first byte, and an upload never replaces a folder of the same name |
+| Conflicts | Uploading something that already exists asks first: overwrite it, or skip what is there (for a folder upload, every file inside that already exists is kept) |
+| Selection | Checkboxes, Ctrl/Cmd-click or Shift-click, then download as one ZIP or delete together |
+| Keyboard | Arrows (Shift to extend), Enter to open, Backspace to go up, F2 to rename, Delete, Ctrl/Cmd+A, Escape to clear the selection, Ctrl/Cmd+F to search |
+| Editor | Edit configs with syntax highlighting. Ctrl/Cmd+S saves and keeps the file open; leaving with unsaved changes asks first. Binary formats such as `.nbt` never open in the editor, since saving them back as text would corrupt them |
+| Manage | Create/delete/rename; every delete asks for confirmation first, and warns when folders (deleted with their contents) are included. Each row has a menu button with the same actions as right-click. Drag & drop supported |
+| Filter and sort | Filter the current folder as you type (Ctrl/Cmd+F focuses the box, Esc clears it); the footer counts folders, files and total size, and how many the filter is showing. Sort by name, size or modified date; folders always stay on top |
 
 Common paths:
 
-- Worlds source library for world switching: `servers/<id>/worlds/`
-- Shared World Library for all servers: `servers/.world/worlds/`
-- Active level data: `mc-data/<LEVEL>/`
-- Java mods: `mc-data/mods/`
-- Java plugins (Paper/Spigot/Purpur/etc): `mc-data/plugins/`
-- Core config files: `mc-data/server.properties`, `mc-data/eula.txt`
+```txt
+servers/
+├── .world/worlds/          shared World Library for all servers
+└── <id>/
+    ├── worlds/             this server's world sources
+    └── mc-data/
+        ├── <LEVEL>/        active level data
+        ├── mods/           Java mods
+        ├── plugins/        Java plugins (Paper/Spigot/Purpur/etc)
+        ├── server.properties
+        └── eula.txt
+```
 
 Operational notes:
 
@@ -349,30 +393,37 @@ Operational notes:
 
 ## Backups
 
-Backups run the `itzg/mc-backup` sidecar; the [backup guide](/guides/minecraft-server-backup-docker)
-explains how it works under the hood.
+Backups run the `itzg/mc-backup` sidecar next to the server; the
+[backup guide](/guides/minecraft-server-backup-docker) explains how it works under the hood.
 
-| Feature   | Description           |
-| --------- | --------------------- |
-| Automatic | Schedule daily/weekly |
-| Manual    | One-click backup      |
-| Restore   | Select and restore    |
-| Download  | Get backup files      |
+```mermaid
+flowchart LR
+    MC["Server"] -->|"RCON save-all"| B["mc-backup sidecar"]
+    B -->|"tar / rsync"| H["Host backups dir"]
+    B -->|"restic / rclone"| R["Remote storage"]
+```
 
-Backup configuration is available in **Advanced -> Backup** (Java servers):
+![Backups tab: method, interval, prune days, destination and excludes](/img/server-backups.webp)
 
-- `backupMethod`: `tar`, `rsync`, `restic`, `rclone`
-- `backupInterval`, `backupInitialDelay`
-- `backupPruneDays`, `backupDestDir`, `backupExcludes`
-- `backupHostDir`: host path where backups are physically stored. Empty uses the global `BACKUP_BASE_DIR` or the default `${BASE_DIR}/servers/<id>/backups`
-- `backupOnStartup`
+Configure it in the **Backups** tab (Java servers; the sidecar drives the world save over RCON):
 
-Practical defaults:
+| Field | Variable | Default |
+| ----- | -------- | ------- |
+| Backup method | `BACKUP_METHOD`: `tar`, `rsync`, `restic`, `rclone` | `tar` |
+| Backup name | `BACKUP_NAME` | `world` |
+| Interval / initial delay | `BACKUP_INTERVAL`, `INITIAL_DELAY` | `24h`, `2m` |
+| Prune days | `PRUNE_BACKUPS_DAYS` | `7` |
+| Destination (in the sidecar) | `DEST_DIR` | `/backups` |
+| Host backup directory | `backupHostDir`: where backups are physically stored | empty: `<BACKUP_BASE_DIR>/<id>` when that global is set, else `servers/<id>/backups` |
+| Excludes | `EXCLUDES` | `*.jar,cache,logs,*.tmp` |
+| Tar compression | `TAR_COMPRESS_METHOD`: `gzip`, `bzip2`, `zstd` | `gzip` |
+| Backup on startup | `BACKUP_ON_STARTUP` | on |
+| Pause backups when no players | `PAUSE_IF_NO_PLAYERS` | off |
+| Save all / filesystem sync | `ENABLE_SAVE_ALL`, `ENABLE_SYNC` | on |
 
-- `backupMethod=tar`
-- `backupInterval=24h`
-- `backupPruneDays=7`
-- `backupDestDir=/backups`
+Backups run on the interval; there is no one-click backup or restore button yet. Archives land
+in the host backup directory, which the global **Files** page can browse and download from when
+it is the default `servers/<id>/backups`.
 
 If you only need local compressed backups, start with `tar`. Use `restic` when you want encrypted, deduplicated backups on remote storage.
 
@@ -389,11 +440,11 @@ remote destination. Any S3-compatible provider works:
 | Wasabi       | `s3:https://s3.wasabisys.com/my-bucket`                    |
 | Local path   | `/backups/restic` (stays on the host backups mount)        |
 
-Fields:
-
-- **Repository**: restic repository URL. `s3:` repositories also need the access/secret key fields.
-- **Repository password**: encrypts the repository. Store it somewhere safe — without it snapshots cannot be restored.
-- **Retention policy**: `restic forget` flags applied after each backup (default `--keep-within 7d`, e.g. `--keep-daily 7 --keep-weekly 4`).
+| Field | Notes |
+| ----- | ----- |
+| **Repository** | restic repository URL. `s3:` repositories also need the access/secret key fields |
+| **Repository password** | Encrypts the repository. Store it somewhere safe — without it snapshots cannot be restored |
+| **Retention policy** | `restic forget` flags applied after each backup (default `--keep-within 7d`, e.g. `--keep-daily 7 --keep-weekly 4`) |
 
 The panel lists existing **snapshots** in the same section (the backup sidecar must be running).
 
@@ -427,6 +478,8 @@ docker run --rm \
 
 ## Configuration
 
+![Game tab: name, MOTD, max players, PvP, seed, difficulty and game mode](/img/configuration.webp)
+
 Edit from UI:
 
 - Server name, MOTD
@@ -435,21 +488,16 @@ Edit from UI:
 - Spawn protection radius (Java, `SPAWN_PROTECTION`; `0` disables it)
 - JVM arguments, extra flags
 
-Settings are grouped by the question you are asking, not by where the value is
-stored: **Type**, **Game**, **Worlds**, **Access**, **Network**, **Resources**,
-**Lifecycle**, mods/plugins/addons, **Backups** and **Advanced**. Configuration tabs
-are disabled while the server is running — stop it to change anything there. Logs,
-metrics and scheduled tasks stay available; commands need the server up.
-
-A **Simple / Advanced** toggle above the tabs decides how much is shown. Simple
-hides Network, Lifecycle and Advanced plus the JVM options, unless the server
-already has something set in one of them — a tab you have configured is never
-hidden. The choice is per browser and applies to every server. Ctrl/Cmd+K opens a
-palette that jumps straight to any tab or setting by name (accents optional) and
-scrolls to the field; picking a setting simple mode hides switches to Advanced.
-Tabs locked by the server state show greyed out there too.
+| Concept | How it works |
+| ------- | ------------ |
+| Tabs | Grouped by the question you are asking, not by where the value is stored: **Type**, **Game**, **Worlds**, **Access**, **Network**, **Resources**, **Lifecycle**, mods/plugins/addons, **Backups** and **Advanced** |
+| Locking | Configuration tabs are disabled while the server is running — stop it to change anything there. Logs, metrics and scheduled tasks stay available; commands need the server up |
+| Simple / Advanced | The toggle above the tabs decides how much is shown. Simple hides Network, Lifecycle and Advanced plus the JVM options, unless the server already has something set in one of them — a tab you have configured is never hidden. The choice is per browser and applies to every server |
+| Ctrl/Cmd+K | Palette that jumps straight to any tab or setting by name (accents optional) and scrolls to the field; picking a setting simple mode hides switches to Advanced. Tabs locked by the server state show greyed out there too |
 
 ## Server Resources (Java)
+
+![Resources tab: memory, CPU, Docker reservation, UID/GID and JVM options](/img/server-resources.webp)
 
 In **Resources** tab:
 
@@ -477,7 +525,35 @@ Recommended approach:
 | Velocity network | Lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel |
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
-| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone: craft an iron sword at the camp in a 257×257 Overworld (snowy taiga, desert, swamp and coast around the story, each with one of Ketbome's unfinished servers, a desert temple with a TNT trap, an igloo, a swamp hut and a shipwreck whose note leads to buried treasure) while a ten-minute day turns to night (skeletons come out in the dark and burn at dawn; the camp bed skips the night), light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay an Ender Dragon that perches, takes off, dives at you and enrages at half health, fly an End City elytra and meet the admins on their islet, or read the End Poem, then visit Server #48 (day 1: one block). Ten secret achievements reward the odd routes (keeping Bfuuny's dirt, sparing every enderman and Kevin, reaching the islet without elytra, outlasting The Rake, finding a wither skeleton skull, opening The Sift). The village is named after Minepanel's contributors, and around Halloween and Christmas the run gets the game's carved pumpkins and gift chests. At night zombies, spiders, witches, slimes, drowned and (after two nights without sleep) phantoms come out, and burn at dawn; tame a wolf with a bone, don't hit the village's iron golem, and don't hit one zombified piglin in the Nether (they all answer). Monsters drop loot: rotten flesh and porkchop to eat (cook it on the camp's campfire), string for the bow you now craft yourself, gunpowder from the creepers that come out at night (with sand, it makes TNT you light with flint and steel), gold nuggets that craft into ingots for the piglins and a full set of golden armor, iron from the village golem for a shield, a rare trident from the drowned and a rare wither skeleton skull; the rarest piglin barter is a totem of undying that takes one death for you. Place blocks, barter with piglins, and beware what the ancient city's button lets loose. Play the right tune on the note blocks at the ancient city's frame and a sculk spirit rises to sing it open to The Sift, the new dimension: Singer's Meadow (pink sculk grass, white trees, ponds and friendly Blubs), Lullaby Hills (tall teal hills whose flowers sing as you pass) and the Carapace, a bone desert under a giant ribcage with ichor pools, Sifters, shell-hiding turtles and, in its skull, the diamond sword (an optional trip with its own secret achievement). Once the End is freed, replay in Speedrun (timer, splits and a panel leaderboard where BlasterDaster's 12:00 is the time to beat), Hardcore (one life) or Bfuuny mode (double damage, every death goes on his count); F2 saves a screenshot. The run goes full screen when you press Play, so Ctrl+W (sprint and walk) cannot close the tab in Chrome and Edge. Loads only when you press the button. Rendered with a shader-pack look (sun shadows, ambient occlusion, bloom on lava, torches and portals, foliage in the wind, water with waves, reflections and clear shallows) that steps down on its own on slower devices. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint. Earned advancements are saved to your account and show as a dragon egg trophy in the header, with the ones still missing hidden as `???` |
+| End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone, see below |
+
+### End Portal expedition
+
+A hidden first-person Minecraft-like run in **Settings > Danger Zone**. It loads only when you
+press the button.
+
+```mermaid
+flowchart LR
+    C["Camp: iron sword"] --> P["Ruined portal"]
+    P --> N["Nether fortress"]
+    N --> A["Ancient city"]
+    A --> S["Stronghold"]
+    S --> D["Ender Dragon"]
+    D --> E["End City or poem"]
+```
+
+| Part | What is in it |
+| ---- | ------------- |
+| The route | Craft an iron sword at the camp in a 257×257 Overworld while a ten-minute day turns to night, light a ruined portal, raid a Nether fortress, sneak through an ancient city, find the stronghold, slay an Ender Dragon that perches, takes off, dives at you and enrages at half health, fly an End City elytra and meet the admins on their islet, or read the End Poem, then visit Server #48 (day 1: one block) |
+| The Overworld | Snowy taiga, desert, swamp and coast around the story, each with one of Ketbome's unfinished servers, a desert temple with a TNT trap, an igloo, a swamp hut and a shipwreck whose note leads to buried treasure. The village is named after Minepanel's contributors, and around Halloween and Christmas the run gets the game's carved pumpkins and gift chests |
+| Day and night | Skeletons come out in the dark and burn at dawn; the camp bed skips the night. At night zombies, spiders, witches, slimes, drowned and (after two nights without sleep) phantoms come out, and burn at dawn |
+| Creatures | Tame a wolf with a bone, don't hit the village's iron golem, and don't hit one zombified piglin in the Nether (they all answer). Barter with piglins, and beware what the ancient city's button lets loose |
+| Loot and crafting | Rotten flesh and porkchop to eat (cook it on the camp's campfire), string for the bow you now craft yourself, gunpowder from the creepers that come out at night (with sand, it makes TNT you light with flint and steel), gold nuggets that craft into ingots for the piglins and a full set of golden armor, iron from the village golem for a shield, a rare trident from the drowned and a rare wither skeleton skull; the rarest piglin barter is a totem of undying that takes one death for you. You can place blocks |
+| The Sift | Play the right tune on the note blocks at the ancient city's frame and a sculk spirit rises to sing it open to The Sift, the new dimension: Singer's Meadow (pink sculk grass, white trees, ponds and friendly Blubs), Lullaby Hills (tall teal hills whose flowers sing as you pass) and the Carapace, a bone desert under a giant ribcage with ichor pools, Sifters, shell-hiding turtles and, in its skull, the diamond sword (an optional trip with its own secret achievement) |
+| Achievements | Ten secret achievements reward the odd routes (keeping Bfuuny's dirt, sparing every enderman and Kevin, reaching the islet without elytra, outlasting The Rake, finding a wither skeleton skull, opening The Sift). Earned advancements are saved to your account and show as a dragon egg trophy in the header, with the ones still missing hidden as `???` |
+| Replay modes | Once the End is freed: Speedrun (timer, splits and a panel leaderboard where BlasterDaster's 12:00 is the time to beat), Hardcore (one life) or Bfuuny mode (double damage, every death goes on his count). F2 saves a screenshot |
+| Rendering | A shader-pack look (sun shadows, ambient occlusion, bloom on lava, torches and portals, foliage in the wind, water with waves, reflections and clear shallows) that steps down on its own on slower devices |
+| Devices | The run goes full screen when you press Play, so Ctrl+W (sprint and walk) cannot close the tab in Chrome and Edge. Works on desktop and touch; reduced motion keeps the camera steady, and browsers without WebGL2 get the poem with a hint |
 
 ## Edition Comparison
 
@@ -488,7 +564,7 @@ Recommended approach:
 | Commands      | RCON console                | send-command (via logs) |
 | Proxy Support | Yes (mc-router or Velocity) | No                      |
 | Mods/Plugins  | Full support                | Addons/Behavior Packs   |
-| Backups       | Full support                | Full support            |
+| Backups       | Backups tab                 | No Backups tab          |
 
 ::: tip Bedrock Commands
 Bedrock servers use `send-command` instead of RCON. Command output appears in server logs rather than returning directly.
@@ -496,27 +572,41 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 
 ## File editing
 
-The Files tab opens `server.properties` as searchable settings grouped by category. Changed and invalid fields can be filtered, and a raw text view shares the same unsaved draft. A change summary appears before saving. Each save creates a timestamped backup; the editor can preview and restore those backups. Properties managed by the panel link to Server Settings. Every vanilla key is known to the editor with its type, allowed range or options and a description, and it follows the server's Minecraft version: keys the version does not read are flagged (for example `snooper-enabled` after 1.18), and keys it does read but the file lacks, such as `pause-when-empty-seconds`, can be added from the "Add a missing property" list. A server on `LATEST` or a modpack id counts as the newest release; `SNAPSHOT` also gets the keys of the upcoming version.
+The Files tab opens `server.properties` as searchable settings grouped by category.
+
+- Changed and invalid fields can be filtered, and a raw text view shares the same unsaved draft.
+- A change summary appears before saving.
+- Each save creates a timestamped backup; the editor can preview and restore those backups.
+- Properties managed by the panel link to Server Settings.
+- Every vanilla key is known to the editor with its type, allowed range or options and a description, and it follows the server's Minecraft version: keys the version does not read are flagged (for example `snooper-enabled` after 1.18), and keys it does read but the file lacks, such as `pause-when-empty-seconds`, can be added from the "Add a missing property" list. A server on `LATEST` or a modpack id counts as the newest release; `SNAPSHOT` also gets the keys of the upcoming version.
 
 ## Coming Soon
 
-- Export logs from the log viewer
-- Cron-style scheduling (specific times) for scheduled tasks
-- Bedrock console commands
+- Bedrock console commands in the Commands tab
+- One-click restore from a backup snapshot
+- More flexible backup scheduling (beyond the current interval)
 
 **→ Full roadmap:** [Roadmap](/roadmap)
 
 ## Player profiles and session history
 
-![Player profile and session history with example data](/img/player-profiles.webp)
+Every server records its players' join/leave sessions, with no setting to turn on. Neither
+edition needs RCON or a game plugin.
 
-*Example data shown.*
+```mermaid
+flowchart LR
+    D["Docker logs"] -->|"every 30 s"| S["Session sampler"]
+    S --> Q["SQLite"]
+    Q --> P["Players tab"]
+    A["Activity log"] -.->|"stat deltas"| Q
+```
 
-Every server records its players' join/leave sessions, with no setting to turn on. On Java,
-open **Players → (a player) → Sessions** for recorded playtime, totals, the weekday pattern,
-day streak and paginated sessions; with the [activity log](#activity-log) on, each session also
-gets its stat deltas, chat and advancements. On Bedrock, **Players** lists recorded players
-with first/last observation and their sessions. Neither needs RCON or a game plugin.
+| Edition | Where | What you see |
+| ------- | ----- | ------------ |
+| Java | **Players → (a player) → Sessions** | Recorded playtime, totals, the weekday pattern, day streak and paginated sessions; with the [activity log](#activity-log) on, each session also gets its stat deltas, chat and advancements |
+| Bedrock | **Players** | Recorded players with first/last observation and their sessions |
+
+How sessions are recorded:
 
 - A backend sampler reads Docker join/leave logs every 30 seconds, independently of the browser.
   On first activation it reads up to 24 hours of retained logs. Only observed joins create sessions;
@@ -530,6 +620,9 @@ with first/last observation and their sessions. Neither needs RCON or a game plu
   promise of lifetime playtime; logging changes, rotation and outages may leave gaps. Unsupported
   custom join/leave formats are ignored. Standard Java server INFO messages and Bedrock
   `Player connected/disconnected` messages are recognized; chat is not treated as a session event.
+
+Identity and world totals:
+
 - Java profiles are grouped by case-insensitive name; a renamed Java account starts a separate
   history. Bedrock profiles use XUID. No external player lookup service is called.
 - Java profiles additionally show the current world's saved playtime, deaths, mob/player kills

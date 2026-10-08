@@ -15,9 +15,21 @@ head:
 
 # Troubleshooting
 
-Common issues and how to solve them.
+Common issues and how to solve them. Start from what fails:
 
-![Troubleshooting](/img/troubleshooting.webp)
+```mermaid
+flowchart TD
+    Q{"What fails?"}
+    Q -->|"page won't load"| C["Connection Issues"]
+    Q -->|"can't sign in"| A["Authentication"]
+    Q -->|"server down"| S["Server Management"]
+    Q -->|"mods missing"| M["Mod/Plugin Issues"]
+    Q -->|"can't join"| N["Networking guide"]
+```
+
+[Connection](#connection-issues) · [Authentication](#authentication-issues) ·
+[Server management](#server-management-issues) · [Mods and plugins](#mod-plugin-issues) ·
+[Bedrock](#bedrock-specific-issues) · [Networking](/networking#troubleshooting)
 
 ## Quick Checks
 
@@ -127,12 +139,13 @@ sudo lsof -i :8091
 # Option 1: Stop the conflicting service
 sudo systemctl stop <service-name>
 
-# Option 2: Change Minepanel ports
-# Edit docker-compose.yml or .env
+# Option 2: Change Minepanel ports in .env
 FRONTEND_PORT=3001
 BACKEND_PORT=8092
+# ...and the URLs that contain them
+FRONTEND_URL=http://localhost:3001
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8092
 
-# Restart
 docker compose down
 docker compose up -d
 ```
@@ -143,34 +156,12 @@ docker compose up -d
 
 **Symptoms:** Browser shows "Can't connect" or "Connection refused"
 
-**Solutions:**
-
-1. **Check container is running:**
-
-```bash
-docker compose ps
-# Should show minepanel as "Up"
-```
-
-2. **Check logs:**
-
-```bash
-docker compose logs backend
-```
-
-3. **Verify port:**
-
-```bash
-# Check if port is open
-curl http://localhost:3000
-```
-
-4. **Firewall:**
-
-```bash
-# Allow port through firewall
-sudo ufw allow 3000/tcp
-```
+| Check | Command | Expected |
+| --- | --- | --- |
+| Containers up | `docker compose ps` | `backend` and `frontend` are `Up` |
+| Backend errors | `docker compose logs backend` | No startup error |
+| Port answers | `curl http://localhost:3000` | HTML |
+| Firewall | `sudo ufw allow 3000/tcp` | Port reachable |
 
 ### Blank page or "Application error" while navigating
 
@@ -191,11 +182,11 @@ sudo ufw allow 3000/tcp
 
 **Solutions:**
 
-1. **Update FRONTEND_URL:**
+1. **Use the address you browse to**, not `localhost`, in `.env`:
 
-```yaml
-environment:
-  - FRONTEND_URL=http://YOUR_IP:3000 # Not localhost!
+```bash
+FRONTEND_URL=http://YOUR_IP:3000
+NEXT_PUBLIC_BACKEND_URL=http://YOUR_IP:8091
 ```
 
 2. **Firewall configuration:**
@@ -204,7 +195,6 @@ environment:
 # Ubuntu/Debian
 sudo ufw allow 3000/tcp
 sudo ufw allow 8091/tcp
-sudo ufw allow 8080/tcp
 
 # CentOS/RHEL
 sudo firewall-cmd --permanent --add-port=3000/tcp
@@ -214,10 +204,10 @@ sudo firewall-cmd --reload
 
 3. **Check router port forwarding** (if accessing from internet)
 
-4. **Restart after changes:**
+4. **Apply the change** (`.env` is only read when the container is created):
 
 ```bash
-docker compose restart
+docker compose up -d
 ```
 
 ### CORS Errors
@@ -226,24 +216,15 @@ docker compose restart
 
 **Solution:**
 
-The `FRONTEND_URL` must match EXACTLY how you access the frontend:
+`FRONTEND_URL` must match EXACTLY the address in the browser bar:
 
-```yaml
-# If accessing via http://localhost:3000
-FRONTEND_URL=http://localhost:3000
+| You open the panel at | `FRONTEND_URL` | `NEXT_PUBLIC_BACKEND_URL` |
+| --- | --- | --- |
+| `http://localhost:3000` | `http://localhost:3000` | `http://localhost:8091` |
+| `http://192.168.1.100:3000` | `http://192.168.1.100:3000` | `http://192.168.1.100:8091` |
+| `https://minepanel.yourdomain.com` | `https://minepanel.yourdomain.com` | `https://api.yourdomain.com` |
 
-# If accessing via http://192.168.1.100:3000
-FRONTEND_URL=http://192.168.1.100:3000
-
-# If accessing via domain
-FRONTEND_URL=https://minepanel.yourdomain.com
-```
-
-Always restart after changing:
-
-```bash
-docker compose restart
-```
+Apply with `docker compose up -d` (`restart` keeps the old values).
 
 ## Authentication Issues
 
@@ -251,30 +232,13 @@ docker compose restart
 
 **Error:** "Invalid credentials" with correct password
 
-**Solutions:**
-
-1. **Check if first time login:**
-
-If no user exists yet, Minepanel should show the initial admin registration screen instead of the login form.
-
-2. **Password changed in UI:**
-
-If SMTP is configured and your account has an email, use the login page recovery flow or [Administration](/administration#forgot-your-password).
-
-3. **Database issues:**
-
-```bash
-# Check if database exists
-ls -l data/minepanel.db
-
-# If missing, recreate
-docker compose down
-docker compose up -d
-```
-
-4. **Reset password:**
-
-See [Password Management](/administration#password-management).
+| Situation | What to do |
+| --- | --- |
+| No user exists yet | The panel shows the admin registration form instead of the login form |
+| Forgotten password | [Forgot your password?](/administration#forgot-your-password) |
+| Database missing | `ls -l data/minepanel.db`; if it is gone, `docker compose down && docker compose up -d` creates an empty one |
+| Password login disabled | Only SSO works: [Locked out with SSO only](/administration#locked-out-with-sso-only) |
+| Anything else | [Password Management](/administration#password-management) |
 
 ### Stuck on "Verifying authentication..."
 
@@ -297,10 +261,10 @@ environment:
   - ALLOW_INSECURE_AUTH_COOKIES=true
 ```
 
-Then restart Minepanel:
+Then recreate the containers so the variable is read:
 
 ```bash
-docker compose restart
+docker compose up -d
 ```
 
 ### JWT Token Errors
@@ -452,44 +416,22 @@ it every time the server starts.
 
 **Symptoms:** Server status shows "error" or "exited"
 
-**Solutions:**
+Read the reason first: the server's **Logs** tab (it flags errors in the log), or
+`docker logs <server-container-name>`. When the panel cannot even start the container, the
+reason is in `docker compose logs backend`.
 
-1. **Check server logs:**
+![Logs tab with live logs and error detection](/img/troubleshooting.webp)
 
-```bash
-# Via UI: Go to server → Logs tab
+| Message or symptom | Cause | Fix |
+| --- | --- | --- |
+| `port is already allocated` | Another server or program uses the port | `sudo lsof -i :25565`, then change **Server Port** in the **Network** tab |
+| `Minimum memory limit can not be less than memory reservation limit` | **Maximum Memory (JVM)** (the container limit) is below **Memory Reservation (Docker)** | In **Resources**, lower the reservation or raise the maximum |
+| `OutOfMemoryError`, container killed | Not enough memory for the world or modpack | Raise **Initial/Maximum Memory (JVM)** in **Resources** |
+| EULA error | `EULA=TRUE` missing | Minepanel always writes it; start the server again so its compose file is regenerated |
 
-# Via terminal:
-docker logs <server-container-name>
-```
+If it still fails:
 
-2. **Common issues:**
-
-**Port conflict:**
-
-```bash
-# Find what's using the port
-sudo lsof -i :25565
-
-# Change server port in Minepanel
-```
-
-**Memory limits:**
-
-```yaml
-# Increase memory in server settings
-MAX_MEMORY: 4G
-INIT_MEMORY: 2G
-```
-
-**EULA not accepted:**
-
-```bash
-# Check if EULA=TRUE in server config
-# Recreate server if needed
-```
-
-3. **Restart Docker:**
+1. **Restart Docker:**
 
 ```bash
 sudo systemctl restart docker
@@ -617,10 +559,6 @@ ls -ld servers/your-server/mc-data
 df -h
 ```
 
-```bash
-
-```
-
 ### Can't Edit Files
 
 **Symptoms:** Changes don't save
@@ -637,30 +575,13 @@ df -h
 
 **Solutions:**
 
-1. **Limit server resources:**
+| Fix | Where | Sets |
+| --- | --- | --- |
+| Limit CPU and memory | **Resources**: CPU Limit, Maximum Memory | `deploy.resources.limits` |
+| Aikar's flags | **Resources**: Use Aikar's Flags | `USE_AIKAR_FLAGS=true` |
+| Lower view distance | **Game** tab | `VIEW_DISTANCE`, `SIMULATION_DISTANCE` (e.g. 6 and 4) |
 
-```yaml
-deploy:
-  resources:
-    limits:
-      cpus: '2'
-      memory: 4G
-```
-
-2. **Use Aikar's flags:**
-
-```yaml
-environment:
-  USE_AIKAR_FLAGS: 'true'
-```
-
-3. **Reduce view distance:**
-
-```yaml
-environment:
-  VIEW_DISTANCE: 6
-  SIMULATION_DISTANCE: 4
-```
+The **Metrics** tab shows which servers use the CPU.
 
 ### High Memory Usage
 
@@ -688,13 +609,8 @@ sudo swapon /swapfile
 
 1. **Use SSD** instead of HDD
 2. **Increase server resources**
-3. **Enable auto-pause** for idle servers:
-
-```yaml
-environment:
-  ENABLE_AUTOPAUSE: 'true'
-  AUTOPAUSE_TIMEOUT_EST: 3600
-```
+3. **Enable Auto-Pause** for idle servers in the **Lifecycle** tab (`ENABLE_AUTOPAUSE`,
+   `AUTOPAUSE_TIMEOUT_EST`)
 
 ## Database Issues
 
@@ -752,7 +668,7 @@ docker compose logs --tail 100
 2. **Check for crashes:**
 
 ```bash
-docker inspect minepanel | grep -A 10 "State"
+docker inspect $(docker compose ps -aq backend) | grep -A 10 '"State"'
 ```
 
 3. **Verify environment variables:**
@@ -778,7 +694,8 @@ docker system prune -a
 4. **Manual pull:**
 
 ```bash
-docker pull ketbom/minepanel:latest
+docker pull ketbom/minepanel-backend:latest
+docker pull ketbom/minepanel-frontend:latest
 ```
 
 ## Bedrock-Specific Issues
@@ -803,12 +720,8 @@ sudo ufw status
 
 If accessing from internet, ensure router forwards UDP port.
 
-3. **LAN visibility:**
-
-```yaml
-environment:
-  ENABLE_LAN_VISIBILITY: 'true'
-```
+3. **LAN visibility:** add `ENABLE_LAN_VISIBILITY=true` under **Advanced → Environment
+   Variables** (admin only).
 
 4. **Online mode:**
 
@@ -876,13 +789,9 @@ docker logs <bedrock-server-name>
 
 **Cause:** Restart policy is incompatible with Auto-Stop.
 
-**Solution:**
-
-1. Enable Auto-Stop from the UI.
-2. Confirm restart policy is set to **No restart**.
-3. Save configuration.
-
-Minepanel now enforces this rule automatically on save (`enableAutoStop=true` => `restartPolicy=no`).
+**Solution:** In the **Lifecycle** tab, with Auto-Stop on, the restart policy must be **No
+restart**. Minepanel enforces this on save (`enableAutoStop=true` ⇒ `restartPolicy=no`), so
+saving the server once fixes an older configuration.
 
 ### Command Fails with Strange Characters / Malformed Input
 
@@ -955,7 +864,7 @@ docker compose down -v
 rm -rf data/ servers/
 
 # Remove images
-docker rmi ketbom/minepanel
+docker rmi ketbom/minepanel-backend ketbom/minepanel-frontend
 
 # Start fresh
 docker compose up -d

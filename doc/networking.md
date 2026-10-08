@@ -5,29 +5,20 @@ description: Complete Minepanel networking guide - Remote access, firewall ports
 
 # Networking
 
-![Server Connection](/img/server-connection.webp)
+![Server header with the public and LAN address players connect to](/img/server-connection.webp)
+
+Every server's header shows the address players use (public and LAN, with a copy button).
+The public one comes from **Settings → Network → Public IP / Domain**.
 
 ## Overview
 
 ```mermaid
-flowchart TB
-    subgraph internet["🌍 Internet"]
-        Player["👤 Player"]
-        Admin["👨‍💻 Admin"]
-    end
-
-    subgraph server["🖥️ Your Server"]
-        FE["Frontend :3000"]
-        BE["Backend :8091"]
-        MC["🎮 Minecraft :25565"]
-    end
-
-    Admin -->|"UI :3000"| FE
-    Admin <-->|"API :8091"| BE
-    Player -->|":25565"| MC
-
-    style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
-    style server fill:#1f2937,stroke:#22c55e,color:#fff
+flowchart LR
+    Admin["Admin browser"] -->|":3000"| FE["Frontend"]
+    Admin -->|":8091"| BE["Backend API"]
+    BE -->|"docker.sock"| D["Docker"]
+    D --> MC["Minecraft servers"]
+    Player["Players"] -->|":25565 / :19132"| MC
 ```
 
 ## Remote Access
@@ -80,6 +71,10 @@ hostname -I | awk '{print $1}'
 
 A server's connection settings are split across two tabs: **Network** for how the
 server is reached, **Access** for who is allowed in once they get there.
+
+![Network tab of a server: port, proxy settings and extra ports](/img/server-network.webp)
+
+![Access tab of a server: online mode, whitelist, operators and permissions](/img/server-access.webp)
 
 | Field | Tab | What it affects |
 | --- | --- | --- |
@@ -142,6 +137,8 @@ The panel generates each server's `docker-compose.yml` from `server.json`, so ed
 to that file by hand are overwritten on the next save. For settings the panel has no field
 for (an extra Docker network, `dns`, `extra_hosts`, a sidecar service...), open the server's
 **Advanced** tab and add a **Compose Snippet**.
+
+![Advanced tab: environment variables, Docker volumes, labels and compose snippets](/img/server-advanced.webp)
 
 Each snippet has a placement and some YAML:
 
@@ -299,8 +296,8 @@ Each Java server gets its own hostname on one port. For mc-router on its own, se
 
 ```mermaid
 flowchart LR
-    P1["👤 survival.mc.example.com"] --> Router["mc-router:25565"]
-    P2["👤 creative.mc.example.com"] --> Router
+    P1["survival.mc.example.com"] --> Router["mc-router:25565"]
+    P2["creative.mc.example.com"] --> Router
     Router --> MC1["survival (Java)"]
     Router --> MC2["creative (Java)"]
 ```
@@ -383,10 +380,10 @@ Players join a lobby, move with `/server <name>`, and land on the next lobby if 
 
 ```mermaid
 flowchart LR
-    P["👤 play.example.com"] --> V["Velocity:25565"]
+    P["play.example.com"] --> V["Velocity:25565"]
     V -->|"Lobby order 1"| L["lobby (Paper)"]
     V -.->|"/server survival"| S["survival (Paper)"]
-    V -.->|"/server minigames"| M["minigames (Purpur)"]
+    V -.->|"/server minigames"| M["minigames"]
 ```
 
 ### Setup

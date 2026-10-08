@@ -16,8 +16,8 @@ What's shipped and what's planned for Minepanel. Current stable line: `v1.10.8`.
 
 ```mermaid
 flowchart LR
-    A["🟢 v1.x<br/>Stable<br/>(current)"] --> B["🔵 v2.x<br/>Multi-node<br/>(Swarm)"]
-    B --> C["🟣 v3.x<br/>Ecosystem<br/>(API & plugins)"]
+    A["v1.x current"] --> B["v2.x Swarm"]
+    B --> C["v3.x API, plugins"]
 
     style A fill:#065f46,stroke:#10b981,color:#fff
     style B fill:#1e40af,stroke:#3b82f6,color:#fff
@@ -162,7 +162,7 @@ MinePanel would auto-detect the environment:
 
 ```mermaid
 flowchart LR
-    A["📦 Standalone<br/>Docker Compose<br/>Single VPS"] -.->|"auto-detect"| B["🌐 Swarm<br/>Multi-node<br/>Multiple VPS"]
+    A["One VPS"] -.->|"auto-detect"| B["Swarm, many VPS"]
 
     style A fill:#065f46,stroke:#22c55e,color:#fff
     style B fill:#1e40af,stroke:#3b82f6,color:#fff
