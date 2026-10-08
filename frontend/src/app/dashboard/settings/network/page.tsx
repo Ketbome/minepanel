@@ -183,7 +183,7 @@ export default function NetworkSettingsPage() {
             <Button
               type="button"
               onClick={() => handlePower(!isRunning)}
-              disabled={isPowering || (!isVelocity && !proxyBaseDomain) || isRunning === null || edgeModeChanged || proxyPortChanged}
+              disabled={isPowering || (!isVelocity && !proxyBaseDomain) || isRunning === null || edgeModeChanged || (!isRunning && proxyPortChanged)}
               className={cn('font-minecraft', isRunning ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-emerald-400 hover:bg-emerald-300 text-gray-950')}
             >
               {isPowering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Power className="mr-2 h-4 w-4" />}
@@ -202,7 +202,7 @@ export default function NetworkSettingsPage() {
               <p className="text-xs text-amber-300">{t('edgeModeSavePending')}</p>
             </div>
           ) : null}
-          {proxyPortChanged && !edgeModeChanged ? (
+          {proxyPortChanged && !isRunning && !edgeModeChanged ? (
             <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
               <p className="text-xs text-amber-300">{t('proxyPortSavePending')}</p>

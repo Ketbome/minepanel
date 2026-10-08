@@ -20,6 +20,7 @@ describe('SettingsController', () => {
   let instanceSettings: any;
   let accessControlService: jest.Mocked<AccessControlService>;
   let curseforgeService: { testApiKey: jest.Mock };
+  let auditLogService: jest.Mocked<AuditLogService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -106,6 +107,7 @@ describe('SettingsController', () => {
     usersService = module.get(UsersService);
     accessControlService = module.get(AccessControlService);
     curseforgeService = module.get(CurseforgeService);
+    auditLogService = module.get(AuditLogService);
   });
 
   it('should allow low-risk settings without high-level permission', async () => {
@@ -124,9 +126,7 @@ describe('SettingsController', () => {
       throw new ForbiddenException('forbidden');
     });
 
-    await expect(
-      controller.updateSettings({ user: { userId: 1 } }, { network: { publicIp: '1.1.1.1' } }),
-    ).rejects.toThrow(ForbiddenException);
+    await expect(controller.updateSettings({ user: { userId: 1 } }, { network: { publicIp: '1.1.1.1' } })).rejects.toThrow(ForbiddenException);
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
@@ -138,9 +138,7 @@ describe('SettingsController', () => {
       throw new ForbiddenException('forbidden');
     });
 
-    await expect(
-      controller.updateSettings({ user: { userId: 1 } }, { discordWebhook: 'https://discord.test' }),
-    ).rejects.toThrow(ForbiddenException);
+    await expect(controller.updateSettings({ user: { userId: 1 } }, { discordWebhook: 'https://discord.test' })).rejects.toThrow(ForbiddenException);
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
@@ -151,16 +149,10 @@ describe('SettingsController', () => {
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
     settingsService.updateSettings.mockResolvedValue({} as any);
 
-    await controller.updateSettings(
-      { user: { userId: 1 } },
-      { javaServerDefaults: { maxMemory: '4G' } },
-    );
+    await controller.updateSettings({ user: { userId: 1 } }, { javaServerDefaults: { maxMemory: '4G' } });
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
-    expect(settingsService.updateSettings).toHaveBeenCalledWith(
-      { javaServerDefaults: { maxMemory: '4G' } },
-      1,
-    );
+    expect(settingsService.updateSettings).toHaveBeenCalledWith({ javaServerDefaults: { maxMemory: '4G' } }, 1);
   });
 
   it('should enforce high-level permission for audit retention settings', async () => {
@@ -181,9 +173,7 @@ describe('SettingsController', () => {
     accessControlService.isAdmin.mockReturnValue(false);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
 
-    await expect(
-      controller.updateSettings({ user: { userId: 2, username: 'user' } }, { auditRetentionDays: 15 }),
-    ).rejects.toThrow(ForbiddenException);
+    await expect(controller.updateSettings({ user: { userId: 2, username: 'user' } }, { auditRetentionDays: 15 })).rejects.toThrow(ForbiddenException);
 
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
   });
@@ -314,6 +304,7 @@ describe('SettingsController', () => {
 
       await expect(result).rejects.toBeInstanceOf(ServiceUnavailableException);
       await expect(result).rejects.toThrow('Velocity did not start: Bind for 0.0.0.0:25565 failed: port is already allocated');
+      expect(auditLogService.record).toHaveBeenCalledWith(expect.objectContaining({ action: 'start_proxy', outcome: 'error', summary: 'Velocity did not start: Bind for 0.0.0.0:25565 failed: port is already allocated' }));
     });
 
     it('points to the backend log when the reason is unknown', async () => {

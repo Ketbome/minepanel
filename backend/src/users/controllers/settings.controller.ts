@@ -30,13 +30,7 @@ export class SettingsController {
   @Get()
   async getSettings(@Request() req) {
     const user = req.user as PayloadToken;
-    const [settings, proxy, network, router, auditRetentionDays] = await Promise.all([
-      this.settingsService.getSettings(user.userId),
-      this.settingsService.getProxySettings(),
-      this.settingsService.getNetworkSettings(),
-      this.instanceSettings.getRouterSettings(),
-      this.settingsService.getAuditRetentionDays(),
-    ]);
+    const [settings, proxy, network, router, auditRetentionDays] = await Promise.all([this.settingsService.getSettings(user.userId), this.settingsService.getProxySettings(), this.settingsService.getNetworkSettings(), this.instanceSettings.getRouterSettings(), this.settingsService.getAuditRetentionDays()]);
 
     const { cfApiKey, discordWebhook, ...rest } = settings;
     const { autoScaleToken: _autoScaleToken, ...routerSettings } = router;
@@ -71,19 +65,21 @@ export class SettingsController {
     const proxy = await this.instanceSettings.setProxy({ enabled: body.enabled });
     await this.settingsService.reconcileEdge(proxy.mode);
     const name = proxy.mode === 'velocity' ? 'Velocity' : 'mc-router';
+    const edge = proxy.mode === 'velocity' ? this.velocity : this.proxyRouter;
+    const running = await edge.isRunning();
+    const failure = body.enabled && !running ? `${name} did not start: ${edge.startError ?? 'see the backend log'}` : null;
 
     await this.auditLogService.record({
       actorUserId: user.userId,
       actorUsername: user.username,
       category: 'settings',
       action: body.enabled ? 'start_proxy' : 'stop_proxy',
-      summary: body.enabled ? `Started the ${name} proxy` : `Stopped the ${name} proxy`,
+      outcome: failure ? 'error' : 'success',
+      summary: failure ?? (body.enabled ? `Started the ${name} proxy` : `Stopped the ${name} proxy`),
     });
 
-    const edge = proxy.mode === 'velocity' ? this.velocity : this.proxyRouter;
-    const running = await edge.isRunning();
-    if (body.enabled && !running) {
-      throw new ServiceUnavailableException(`${name} did not start: ${edge.startError ?? 'see the backend log'}`);
+    if (failure) {
+      throw new ServiceUnavailableException(failure);
     }
     return { ...proxy, running };
   }
