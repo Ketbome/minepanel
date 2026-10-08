@@ -522,6 +522,8 @@ docker restart <server-container-name>
 The panel could not start the `mc-router` or `mc-velocity` container. The error toast says
 why; versions up to 1.13.23 only wrote the reason to the backend log.
 
+![Start proxy failing because port 25565 is taken](/img/proxy-start-error.webp)
+
 ```mermaid
 flowchart TD
     A["Start proxy → stopped"] --> B{"What does the toast<br/>or backend log say?"}
