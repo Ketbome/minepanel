@@ -38,6 +38,8 @@ flowchart LR
 
 | Feature   | Description                               |
 | --------- | ----------------------------------------- |
+| Favorites | Star a server to pin it to the top of the Servers page and the home overview (kept in your browser) |
+| Bulk actions | Select several servers on the Servers page and start or stop them one after another |
 | Dashboard | Home cards show status, players, uptime, CPU and RAM; a running server's header adds the game version |
 | Live logs | Streaming, errors highlighted, searchable |
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |

@@ -286,10 +286,10 @@ Velocity networks with Paper-family backends are available (see
 
 - Dark/Light mode toggle
 - Keyboard shortcuts
-- Favorites (frequent servers at top)
+- ~~Favorites (frequent servers at top)~~ ✅ Shipped (star a server; stored in the browser)
 - Global search
 - ~~Copy server (clone configuration)~~ ✅ Shipped
-- Bulk actions (start/stop multiple)
+- ~~Bulk actions (start/stop multiple)~~ ✅ Shipped (select servers on the Servers page, then start or stop them)
 - Server groups/folders
 - Reverse proxy helper (NGINX/Caddy)
 - Config import/export
