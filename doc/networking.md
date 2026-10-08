@@ -291,7 +291,8 @@ If it does not start, see [Proxy issues](/troubleshooting#proxy-issues).
 
 ## MC Proxy Router (Java Only)
 
-Each Java server gets its own hostname on one port. For mc-router on its own, see the
+Each Java server with **Use Proxy** on (the default) gets its own hostname on one port. For
+mc-router on its own, see the
 [mc-router setup guide](/guides/mc-router-setup).
 
 ```mermaid
@@ -312,7 +313,8 @@ flowchart LR
 | 2 | **Settings → Network** | Proxy type **mc-router**, set the **Base Domain**, **Save** |
 | 3 | **Settings → Network** | **Start proxy** |
 
-Every Java server is now reachable at `{server-id}.mc.example.com` (or its custom hostname).
+Every Java server with **Use Proxy** on is now reachable at `{server-id}.mc.example.com` (or its
+custom hostname). Turn it off in **Server → Network → Proxy Settings** to keep direct port access.
 There is no `.env` variable or compose profile to enable.
 
 | Field | Use |
@@ -334,7 +336,7 @@ create, so the old one would keep port 25565.
 
 ```mermaid
 flowchart LR
-    R["Running"] -->|"empty 10m"| A["Asleep"]
+    R["Running"] -->|"Stop after"| A["Asleep"]
     A -->|"player joins"| W["Waking"]
     W -->|"ready"| R
 ```
@@ -343,7 +345,9 @@ Turn on **Auto-scaling** in **Settings → Network**. The router asks the panel 
 stop servers; the shared secret is generated for you.
 
 - Asleep servers show the MOTD `Server is asleep. Join to wake it up!`.
-- Heavy modpacks may miss the 180s wake-up window on the first join; reconnect.
+- **Stop after** is how long a server stays empty before it sleeps (`10m` by default).
+- The panel waits up to 150s for a woken server to accept connections (mc-router's own wake
+  timeout is 180s by default). Heavy modpacks may miss that on the first join; reconnect.
 
 ::: warning This stops running servers
 Any proxied Java server with no players for **Stop after** is stopped, including ones you
@@ -352,8 +356,8 @@ started by hand. Bedrock servers are never touched.
 
 ### Excluding a server
 
-Turn **Auto-scaling** off in **Server → Network → Proxy Settings** to keep that server
-running 24/7 (useful for slow-booting modpacks). The switch shows only when auto-scaling is
+Turn **Auto-scaling** off in **Server → Network → Proxy Settings** so auto-scaling never stops
+that server while it is idle (useful for slow-booting modpacks). The switch shows only when auto-scaling is
 on, and it is on by default.
 
 ::: tip The asleep MOTD is router-side
