@@ -526,10 +526,10 @@ why; versions up to 1.13.23 only wrote the reason to the backend log.
 
 ```mermaid
 flowchart TD
-    A["Start proxy → stopped"] --> B{"What does the toast<br/>or backend log say?"}
-    B -->|"port is already allocated"| C["Something holds the Router port.<br/>Free it or pick another port, Save, Start"]
-    B -->|"Nothing is mounted at /app/data"| D["Add the ./data:/app/data volume<br/>to the backend and recreate it"]
-    B -->|"Started, then stops later"| E["The proxy itself crashes:<br/>read its own log"]
+    A["Start proxy fails"] --> B{"Message"}
+    B -->|"port allocated"| C["Change the port"]
+    B -->|"/app/data"| D["Mount ./data"]
+    B -->|"stops later"| E["Read its log"]
 ```
 
 | Message | Cause | Fix |
