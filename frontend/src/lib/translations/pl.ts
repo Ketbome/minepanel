@@ -1900,6 +1900,7 @@ export const pl: Record<TranslationKey, string> = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'Jedna sieć z lobby, serwerami zapasowymi i przełączaniem przez /server. Dołączyć mogą tylko serwery oparte na Paper.',
   edgeModeSavePending: 'Zapisz zmiany, aby zmienić typ proxy przed jego uruchomieniem.',
+  proxyPortSavePending: 'Zapisz nowy port routera przed uruchomieniem proxy.',
   enableVelocityDesc: 'Gracze łączą się z Velocity, które wysyła ich do pierwszego dostępnego lobby',
   velocityBaseDomainDesc: 'Opcjonalne. Z domeną adres <serwer>.<domena> prowadzi graczy prosto na ten serwer',
   velocityPluginsInfo: 'Pluginy Velocity umieść w data/velocity/server/plugins; załadują się przy następnym restarcie proxy.',

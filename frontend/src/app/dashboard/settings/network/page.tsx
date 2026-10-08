@@ -29,11 +29,14 @@ export default function NetworkSettingsPage() {
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
   const [router, setRouter] = useState<ProxyRouterSettings>({});
+  const [initialProxyPort, setInitialProxyPort] = useState('');
   // null means the state could not be read; the button must not guess.
   const [isRunning, setIsRunning] = useState<boolean | null>(null);
   const [isPowering, setIsPowering] = useState(false);
   // The power button acts on the saved type, so it waits while a switch is unsaved.
   const edgeModeChanged = edgeMode !== initialEdgeMode;
+  // Same for the port: starting would bind the saved one, not the one in the field.
+  const proxyPortChanged = (router.proxyPort ?? '') !== initialProxyPort;
   const proxyToggleChanged = proxySettings.enabled !== initialProxyEnabled || edgeModeChanged;
   const isVelocity = edgeMode === 'velocity';
 
@@ -50,6 +53,7 @@ export default function NetworkSettingsPage() {
         setEdgeMode(nextProxy.edgeMode ?? 'mc-router');
         setInitialEdgeMode(nextProxy.edgeMode ?? 'mc-router');
         setRouter(nextProxy.router || {});
+        setInitialProxyPort(nextProxy.router?.proxyPort ?? '');
         setPublicIp(settings.network?.publicIp || '');
         setLanIp(settings.network?.lanIp || '');
       })
@@ -68,8 +72,10 @@ export default function NetworkSettingsPage() {
       setProxySettings((current) => ({ ...current, enabled: result.enabled }));
       setInitialProxyEnabled(result.enabled);
       mcToast.success(result.running ? t('proxyStarted') : t('proxyStopped'));
-    } catch {
-      mcToast.error(t('proxyPowerFailed'));
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      mcToast.error(err.response?.data?.message || t('proxyPowerFailed'));
+      setIsRunning((await getProxyStatus().catch(() => null))?.running ?? null);
     } finally {
       setIsPowering(false);
     }
@@ -82,6 +88,7 @@ export default function NetworkSettingsPage() {
         proxy: { proxyEnabled: proxySettings.enabled, proxyBaseDomain, edgeMode, router },
         network: { publicIp, lanIp },
       });
+      setInitialProxyPort(router.proxyPort ?? '');
 
       const proxyChanged = proxyToggleChanged || proxyBaseDomain !== initialProxyDomain;
       if (proxyChanged) {
@@ -176,7 +183,7 @@ export default function NetworkSettingsPage() {
             <Button
               type="button"
               onClick={() => handlePower(!isRunning)}
-              disabled={isPowering || (!isVelocity && !proxyBaseDomain) || isRunning === null || edgeModeChanged}
+              disabled={isPowering || (!isVelocity && !proxyBaseDomain) || isRunning === null || edgeModeChanged || proxyPortChanged}
               className={cn('font-minecraft', isRunning ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-emerald-400 hover:bg-emerald-300 text-gray-950')}
             >
               {isPowering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Power className="mr-2 h-4 w-4" />}
@@ -193,6 +200,12 @@ export default function NetworkSettingsPage() {
             <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
               <p className="text-xs text-amber-300">{t('edgeModeSavePending')}</p>
+            </div>
+          ) : null}
+          {proxyPortChanged && !edgeModeChanged ? (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <p className="text-xs text-amber-300">{t('proxyPortSavePending')}</p>
             </div>
           ) : null}
           {!proxyBaseDomain && !isVelocity ? (

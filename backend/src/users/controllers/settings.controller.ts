@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
@@ -80,7 +80,11 @@ export class SettingsController {
       summary: body.enabled ? `Started the ${name} proxy` : `Stopped the ${name} proxy`,
     });
 
-    const running = proxy.mode === 'velocity' ? await this.velocity.isRunning() : await this.proxyRouter.isRunning();
+    const edge = proxy.mode === 'velocity' ? this.velocity : this.proxyRouter;
+    const running = await edge.isRunning();
+    if (body.enabled && !running) {
+      throw new ServiceUnavailableException(`${name} did not start: ${edge.startError ?? 'see the backend log'}`);
+    }
     return { ...proxy, running };
   }
 

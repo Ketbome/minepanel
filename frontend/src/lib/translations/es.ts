@@ -1916,6 +1916,7 @@ export const es: Record<TranslationKey, string> = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'Una sola red con lobby, servidores de respaldo y cambio con /server. Solo pueden unirse servidores basados en Paper.',
   edgeModeSavePending: 'Guarda los cambios para cambiar el tipo de proxy antes de encenderlo.',
+  proxyPortSavePending: 'Guarda el nuevo puerto del router antes de encender el proxy.',
   enableVelocityDesc: 'Los jugadores se conectan a Velocity, que los envía al primer lobby disponible',
   velocityBaseDomainDesc: 'Opcional. Con un dominio, <servidor>.<dominio> lleva a los jugadores directo a ese servidor',
   velocityPluginsInfo: 'Los plugins de Velocity van en data/velocity/server/plugins y se cargan al reiniciar el proxy.',

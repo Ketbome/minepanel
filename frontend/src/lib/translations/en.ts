@@ -1896,6 +1896,7 @@ export const en = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'One network with a lobby, fallback servers and /server switching. Only Paper-based servers can join.',
   edgeModeSavePending: 'Save the changes to switch the proxy type before starting it.',
+  proxyPortSavePending: 'Save the new router port before starting the proxy.',
   enableVelocityDesc: 'Players connect to Velocity, which sends them to the first available lobby',
   velocityBaseDomainDesc: 'Optional. With a domain, <server>.<domain> takes players straight to that server',
   velocityPluginsInfo: 'Velocity plugins go in data/velocity/server/plugins and load on the next proxy restart.',

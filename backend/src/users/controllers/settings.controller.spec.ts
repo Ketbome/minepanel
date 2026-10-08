@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from '../services/settings.service';
 import { DiscordService } from 'src/discord/discord.service';
@@ -302,6 +302,25 @@ describe('SettingsController', () => {
 
       expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: false });
       expect(result.running).toBe(false);
+    });
+
+    // A failed start used to come back as a plain "stopped", with the reason only in the backend log.
+    it('says why the proxy did not start', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: null });
+      velocity.isRunning.mockResolvedValue(false);
+      velocity.startError = 'Bind for 0.0.0.0:25565 failed: port is already allocated';
+
+      const result = controller.setProxyPower({ user: { userId: 1 } }, { enabled: true });
+
+      await expect(result).rejects.toBeInstanceOf(ServiceUnavailableException);
+      await expect(result).rejects.toThrow('Velocity did not start: Bind for 0.0.0.0:25565 failed: port is already allocated');
+    });
+
+    it('points to the backend log when the reason is unknown', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
+      proxyRouter.isRunning.mockResolvedValue(false);
+
+      await expect(controller.setProxyPower({ user: { userId: 1 } }, { enabled: true })).rejects.toThrow('mc-router did not start: see the backend log');
     });
 
     // Binding a host port is host-affecting, so it needs the same permission as

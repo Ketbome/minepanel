@@ -1946,6 +1946,7 @@ export const tr: Record<TranslationKey, string> = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'Lobi, yedek sunucular ve /server ile geçiş içeren tek bir ağ. Yalnızca Paper tabanlı sunucular katılabilir.',
   edgeModeSavePending: 'Proxy türünü değiştirmek için başlatmadan önce değişiklikleri kaydet.',
+  proxyPortSavePending: "Proxy'yi başlatmadan önce yeni yönlendirici portunu kaydet.",
   enableVelocityDesc: 'Oyuncular Velocity\'ye bağlanır ve Velocity onları ilk uygun lobiye gönderir',
   velocityBaseDomainDesc: 'İsteğe bağlı. Bir alan adıyla <sunucu>.<alan> oyuncuları doğrudan o sunucuya götürür',
   velocityPluginsInfo: 'Velocity eklentileri data/velocity/server/plugins klasörüne konur ve proxy bir sonraki yeniden başlatmada yükler.',
