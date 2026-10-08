@@ -520,7 +520,7 @@ docker restart <server-container-name>
 ### Proxy goes back to "stopped" right after Start proxy
 
 The panel could not start the `mc-router` or `mc-velocity` container. The error toast says
-why; versions up to 1.13.23 only wrote the reason to the backend log.
+why; versions up to 1.13.24 only wrote the reason to the backend log.
 
 ![Start proxy failing because port 25565 is taken](/img/proxy-start-error.webp)
 
