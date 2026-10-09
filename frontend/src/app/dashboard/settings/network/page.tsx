@@ -75,7 +75,13 @@ export default function NetworkSettingsPage() {
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       mcToast.error(err.response?.data?.message || t('proxyPowerFailed'));
-      setIsRunning((await getProxyStatus().catch(() => null))?.running ?? null);
+      // A failed start has already saved the proxy as enabled, so the toggle follows the backend.
+      const status = await getProxyStatus();
+      setIsRunning(status.running ?? null);
+      if (status.running !== undefined) {
+        setProxySettings((current) => ({ ...current, enabled: status.enabled }));
+        setInitialProxyEnabled(status.enabled);
+      }
     } finally {
       setIsPowering(false);
     }

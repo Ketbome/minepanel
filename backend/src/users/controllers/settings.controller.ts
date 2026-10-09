@@ -30,7 +30,13 @@ export class SettingsController {
   @Get()
   async getSettings(@Request() req) {
     const user = req.user as PayloadToken;
-    const [settings, proxy, network, router, auditRetentionDays] = await Promise.all([this.settingsService.getSettings(user.userId), this.settingsService.getProxySettings(), this.settingsService.getNetworkSettings(), this.instanceSettings.getRouterSettings(), this.settingsService.getAuditRetentionDays()]);
+    const [settings, proxy, network, router, auditRetentionDays] = await Promise.all([
+      this.settingsService.getSettings(user.userId),
+      this.settingsService.getProxySettings(),
+      this.settingsService.getNetworkSettings(),
+      this.instanceSettings.getRouterSettings(),
+      this.settingsService.getAuditRetentionDays(),
+    ]);
 
     const { cfApiKey, discordWebhook, ...rest } = settings;
     const { autoScaleToken: _autoScaleToken, ...routerSettings } = router;

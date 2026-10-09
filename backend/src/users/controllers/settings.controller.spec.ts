@@ -126,7 +126,9 @@ describe('SettingsController', () => {
       throw new ForbiddenException('forbidden');
     });
 
-    await expect(controller.updateSettings({ user: { userId: 1 } }, { network: { publicIp: '1.1.1.1' } })).rejects.toThrow(ForbiddenException);
+    await expect(
+      controller.updateSettings({ user: { userId: 1 } }, { network: { publicIp: '1.1.1.1' } }),
+    ).rejects.toThrow(ForbiddenException);
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
@@ -138,7 +140,9 @@ describe('SettingsController', () => {
       throw new ForbiddenException('forbidden');
     });
 
-    await expect(controller.updateSettings({ user: { userId: 1 } }, { discordWebhook: 'https://discord.test' })).rejects.toThrow(ForbiddenException);
+    await expect(
+      controller.updateSettings({ user: { userId: 1 } }, { discordWebhook: 'https://discord.test' }),
+    ).rejects.toThrow(ForbiddenException);
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
@@ -149,10 +153,16 @@ describe('SettingsController', () => {
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
     settingsService.updateSettings.mockResolvedValue({} as any);
 
-    await controller.updateSettings({ user: { userId: 1 } }, { javaServerDefaults: { maxMemory: '4G' } });
+    await controller.updateSettings(
+      { user: { userId: 1 } },
+      { javaServerDefaults: { maxMemory: '4G' } },
+    );
 
     expect(accessControlService.assertManageSystemSettings).toHaveBeenCalled();
-    expect(settingsService.updateSettings).toHaveBeenCalledWith({ javaServerDefaults: { maxMemory: '4G' } }, 1);
+    expect(settingsService.updateSettings).toHaveBeenCalledWith(
+      { javaServerDefaults: { maxMemory: '4G' } },
+      1,
+    );
   });
 
   it('should enforce high-level permission for audit retention settings', async () => {
@@ -173,7 +183,9 @@ describe('SettingsController', () => {
     accessControlService.isAdmin.mockReturnValue(false);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
 
-    await expect(controller.updateSettings({ user: { userId: 2, username: 'user' } }, { auditRetentionDays: 15 })).rejects.toThrow(ForbiddenException);
+    await expect(
+      controller.updateSettings({ user: { userId: 2, username: 'user' } }, { auditRetentionDays: 15 }),
+    ).rejects.toThrow(ForbiddenException);
 
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
   });
