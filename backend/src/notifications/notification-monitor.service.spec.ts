@@ -146,13 +146,26 @@ describe('NotificationMonitorService', () => {
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, _args, _opts, callback) => callback(new Error('Error response from daemon: No such object: srv')));
     await service.collect();expect(Logger.prototype.warn).not.toHaveBeenCalled();
   });
+  it('uses the backup sidecar schedule when Minecraft restarts independently', async () => {
+    policy.staleBackupEnabled = true; policy.backupFailureEnabled = false; policy.staleBackupToleranceMinutes = 1;
+    store.readConfig.mockResolvedValue({ enableBackup: true, edition: 'JAVA', backupMethod: 'restic', backupInterval: '1h', backupInitialDelay: '2m' });
+    (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
+      if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'mc-id' : 'backup-id', '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 10 * 60_000).toISOString() }) + '\n' + JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }), '');
+      else callback(null, JSON.stringify([{ time: new Date(now - 30 * 60_000).toISOString() }]), '');
+    });
+    await service.collect();
+    expect(notifications.sendOperationalAlert).not.toHaveBeenCalled();
+    expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['exec', 'backup-id', 'restic', 'snapshots', '--no-lock']), expect.any(Object), expect.any(Function));
+  });
+
   it('detects overdue restic snapshots and recovers only after a valid fresh snapshot', async () => {
     policy.staleBackupEnabled = true;policy.backupFailureEnabled = false;
     store.readConfig.mockResolvedValue({ enableBackup: true, edition: 'JAVA', backupMethod: 'restic', backupInterval: '1h', backupInitialDelay: '0' });
     let snapshots: unknown = [];
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
       if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'mc-id' : 'backup-id', '');
-      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true }), '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }), '');
       else callback(null, JSON.stringify(snapshots), '');
     });
     await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('stale', 'srv', expect.any(String));
@@ -176,7 +189,7 @@ describe('NotificationMonitorService', () => {
     output = '2026-10-01T11:59:50Z 2026-10-01T11:59:50+0000 ERROR Backup failed with exit code 1';
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
       if (args[0] === 'compose') callback(null, args.at(-1) === 'mc' ? 'mc-id' : 'backup-id', '');
-      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true }), '');
+      else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }), '');
       else if (args[0] === 'exec') callback(new Error('private repository credentials'));
       else callback(null, '', output);
     });

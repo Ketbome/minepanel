@@ -559,7 +559,7 @@ Lifecycle notifications cover start, stop, restart, delete and operation errors.
 For unexpected server down, crash loops and sustained high CPU/RAM, enable the appropriate
 per-server alerts in the **Metrics** tab. Their existing thresholds, sustain windows and
 cooldowns still apply. Channels are attempted independently; email, Telegram, Discord, ntfy and Slack
-requests have timeouts. Failed messages are logged without credentials; delivery is awaited and does not use a persistent queue. Explicit Discord/Telegram/ntfy/Slack rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
+requests have timeouts. Failed messages are logged without credentials; lifecycle controls do not wait for provider delivery, and there is no persistent delivery queue. Explicit Discord/Telegram/ntfy/Slack rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
 
 Additional opt-in rules are configured in the Notifications section:
 
@@ -609,6 +609,8 @@ Three additional rules are available, disabled by default:
   Stopped servers, servers configured for no-player pauses, unknown durations and custom compose snippets
   are excluded. Unknown repository reads never mean a missing backup or recovery. A valid
   fresh snapshot can close an existing incident; this does not verify its file contents.
+
+Backup freshness follows the backup sidecar start time; restarting only the game container does not reset its schedule.
 
 The additional rules default to disabled. Monitoring state is held in memory and resets on
 panel restart. Backup log reads are bounded to 500 lines, 512 KiB and at most five minutes

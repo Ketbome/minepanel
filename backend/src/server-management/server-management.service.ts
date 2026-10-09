@@ -943,7 +943,7 @@ export class ServerManagementService {
       return true;
     } catch (error) {
       this.logger.error(`Failed to restart server ${serverId}`, error);
-      if (notifyFailure) await this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
+      if (notifyFailure) void this.sendServerNotification('error', serverId, { reason: 'Failed to restart server' });
       return false;
     }
   }
@@ -1187,12 +1187,12 @@ export class ServerManagementService {
       }
 
       this.logger.log(`Server ${serverId} deleted successfully`);
-      await this.sendServerNotification('deleted', serverId);
+      void this.sendServerNotification('deleted', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to delete server ${serverId}`, error);
-      await this.sendServerNotification('error', serverId, { reason: 'Failed to delete server' });
+      void this.sendServerNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
     }
   }
@@ -1447,15 +1447,15 @@ export class ServerManagementService {
       if (status === 'stopped' || status === 'not_found') return;
 
       const containerId = status === 'running' ? await this.findContainerId(serverId).catch(() => '') : '';
-      const ready = containerId !== '' && (await this.runMinecraftStatusProbe(containerId, edition)) !== null;
+      const ready = containerId !== '' && (await this.runMinecraftStatusProbe(containerId, edition)).status === 'healthy';
       if (!isCurrent()) return;
 
       if (ready) {
-        await this.sendDiscordNotification(type, serverId);
+        await this.sendServerNotification(type, serverId);
         return;
       }
       if (Date.now() >= deadline) {
-        await this.sendDiscordNotification('warning', serverId, { reason: `Server started but not reachable after ${this.READY_TIMEOUT_MS / 60_000} minutes` });
+        await this.sendServerNotification('warning', serverId, { reason: `Server started but not reachable after ${this.READY_TIMEOUT_MS / 60_000} minutes` });
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, this.READY_POLL_INTERVAL_MS));
@@ -2077,7 +2077,7 @@ export class ServerManagementService {
       return true;
     } catch (error) {
       this.logger.error(`Failed to start server ${serverId}`, error);
-      await this.sendServerNotification('error', serverId, { reason: 'Failed to start server' });
+      void this.sendServerNotification('error', serverId, { reason: 'Failed to start server' });
       return false;
     }
   }
@@ -2148,12 +2148,12 @@ export class ServerManagementService {
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(this.FORCE_STOP_GRACE_SECONDS));
 
       this.logger.log(`Server ${serverId} force stopped`);
-      await this.sendServerNotification('stopped', serverId);
+      void this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to force stop server ${serverId}`, error);
-      await this.sendServerNotification('error', serverId, { reason: 'Failed to force stop server' });
+      void this.sendServerNotification('error', serverId, { reason: 'Failed to force stop server' });
       return false;
     }
   }
@@ -2202,12 +2202,12 @@ export class ServerManagementService {
       await this.execComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
-      await this.sendServerNotification('stopped', serverId);
+      void this.sendServerNotification('stopped', serverId);
 
       return true;
     } catch (error) {
       this.logger.error(`Failed to stop server ${serverId}`, error);
-      await this.sendServerNotification('error', serverId, { reason: 'Failed to stop server' });
+      void this.sendServerNotification('error', serverId, { reason: 'Failed to stop server' });
       return false;
     }
   }

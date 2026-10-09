@@ -134,7 +134,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     if (states.length !== 2 || states[0].Running !== true) return;
     if (policy.staleBackupEnabled) {
       if (states[1].Running === true && states[1].Restarting !== true) {
-        try { await this.checkFreshness(serverId, config, policy, backup, states[0].StartedAt); }
+        try { await this.checkFreshness(serverId, config, policy, backup, states[1].StartedAt); }
         catch { this.logger.warn(`Backup freshness probe unavailable for ${serverId}`); }
       }
     } else { this.staleIncidents.delete(serverId); this.staleAlerts.delete(serverId); }

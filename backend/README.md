@@ -62,10 +62,5 @@ Opt-in disk and backup probes run independently every minute, with bounded Docke
 
 `SettingsModule` exports the single shared `AuthMailService` transporter used by account emails and notification delivery. Telegram decryption failures are isolated from other channels. Backup probes use Compose service IDs; empty samples preserve active alert state. Crash log tails are included only in Discord embeds.
 
-Notifications use bounded, single explicit-429 retries and `wait=true` for Discord. Never retry an ambiguous timeout. Per-channel outcomes are transient and fenced on configuration changes. Task failures omit command output and intentional skips; game failure stays distinct from unknown probes; backup freshness is filtered Java/restic metadata, not an integrity check.
-
-ntfy and Slack use the shared notification fan-out and admin-only integration settings.
-Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
-For ntfy, an origin change (scheme, host or port) clears an omitted token; an explicitly supplied replacement is accepted.
-An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
-start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.
+Lifecycle controls return after the server operation completes; notification delivery continues
+in the background. Backup freshness follows the backup sidecar startup time.

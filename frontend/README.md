@@ -73,8 +73,3 @@ from recorded playtime. The tab cancels in-flight requests on navigation and ref
 Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.
 
 Integrations show each channel’s last accepted/failed/unknown attempt and expose opt-in task failures, sustained game-query failures and Java/restic overdue-backup rules.
-
-ntfy and Slack use the shared notification fan-out and admin-only integration settings.
-Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
-An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
-start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.
