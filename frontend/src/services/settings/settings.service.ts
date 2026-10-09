@@ -64,9 +64,18 @@ export interface JavaServerDefaults {
   enableBackup?: boolean;
 }
 
+export type CurseforgeKeyCheckCode = 'not_configured' | 'invalid_credentials' | 'rate_limited' | 'timeout' | 'unreachable' | 'unexpected';
+
+export interface CurseforgeKeyCheck {
+  ok: boolean;
+  code?: CurseforgeKeyCheckCode;
+}
+
 export interface UserSettings {
   // Secrets are write-only: the API returns whether they are set, not the value.
   hasCfApiKey?: boolean;
+  // Only present on a save that set a new CurseForge key.
+  cfApiKeyCheck?: CurseforgeKeyCheck;
   hasDiscordWebhook?: boolean;
   language?: Language;
   proxy?: ProxySettings;
@@ -151,6 +160,7 @@ export const getSettings = async (): Promise<UserSettings> => {
   }
 };
 
+/** Saves user settings; a new `cfApiKey` comes back with its `cfApiKeyCheck`. */
 export const updateSettings = async (settings: UpdateUserSettings): Promise<UserSettings> => {
   try {
     const response = await api.patch('/settings', settings);
@@ -169,6 +179,12 @@ export const testDiscordWebhook = async (): Promise<{ success: boolean; message:
     console.error('Error testing Discord webhook:', error);
     throw error;
   }
+};
+
+/** Tests the typed CurseForge key when given, otherwise the saved one. Nothing is stored. */
+export const testCurseforgeKey = async (cfApiKey?: string): Promise<CurseforgeKeyCheck> => {
+  const response = await api.post<CurseforgeKeyCheck>('/settings/test-curseforge-key', cfApiKey ? { cfApiKey } : {});
+  return response.data;
 };
 
 export const getIntegrationSettings = async (): Promise<IntegrationSettings> => {

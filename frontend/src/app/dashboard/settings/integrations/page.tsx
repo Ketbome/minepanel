@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AlertTriangle, Key, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Key, Loader2, Mail, ShieldCheck, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,9 @@ import {
   getSettings,
   updateSettings,
   testDiscordWebhook,
+  testCurseforgeKey,
+  CurseforgeKeyCheck,
+  CurseforgeKeyCheckCode,
   getIntegrationSettings,
   updateIntegrationSettings,
   testSmtp,
@@ -20,12 +23,23 @@ import {
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getCurrentUser } from '@/services/users/users.service';
+import type { TranslationKey } from '@/lib/translations';
+
+const CF_KEY_CHECK_MESSAGES: Record<CurseforgeKeyCheckCode, TranslationKey> = {
+  not_configured: 'curseforgeKeyNotConfigured',
+  invalid_credentials: 'curseforgeKeyInvalid',
+  rate_limited: 'curseforgeKeyRateLimited',
+  timeout: 'curseforgeKeyTimeout',
+  unreachable: 'curseforgeKeyUnreachable',
+  unexpected: 'curseforgeKeyUnexpected',
+};
 
 function SourceBadge({ label, tone }: { label: string; tone: 'unset' | 'db' | 'env' }) {
   const color = tone === 'unset' ? 'bg-gray-700 text-gray-300' : tone === 'db' ? 'bg-emerald-600/20 text-emerald-300' : 'bg-amber-600/20 text-amber-300';
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${color}`}>{label}</span>;
 }
 
+/** Settings > Integrations: CurseForge key and Discord webhook, plus SMTP and OIDC for admins. */
 export default function IntegrationsSettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +53,12 @@ export default function IntegrationsSettingsPage() {
   const [discordWebhook, setDiscordWebhook] = useState('');
   const [savingBasic, setSavingBasic] = useState(false);
   const [testingWebhook, setTestingWebhook] = useState(false);
+  const [testingCfKey, setTestingCfKey] = useState(false);
+  // Result of the last Test click or key save; cleared as soon as the key is edited.
+  const [cfKeyCheck, setCfKeyCheck] = useState<CurseforgeKeyCheck | null>(null);
+  // Bumped on every key edit, so a check that resolves after one is dropped
+  // instead of being shown under a key it did not test.
+  const cfKeyEdits = useRef(0);
 
   // SMTP + OIDC
   const [integrations, setIntegrations] = useState<IntegrationSettings | null>(null);
@@ -104,8 +124,10 @@ export default function IntegrationsSettingsPage() {
     );
   }
 
+  /** Saves the typed CurseForge key and Discord webhook; blank fields keep what is stored. */
   const saveBasic = async () => {
     setSavingBasic(true);
+    const edit = cfKeyEdits.current;
     try {
       // Write-only: only send fields the user actually typed.
       const payload: { cfApiKey?: string; discordWebhook?: string } = {};
@@ -114,6 +136,7 @@ export default function IntegrationsSettingsPage() {
       const res = await updateSettings(payload);
       setHasCfApiKey(!!res.hasCfApiKey);
       setHasDiscordWebhook(!!res.hasDiscordWebhook);
+      if (payload.cfApiKey && edit === cfKeyEdits.current) setCfKeyCheck(res.cfApiKeyCheck ?? null);
       setCfApiKey('');
       setDiscordWebhook('');
       mcToast.success(t('settingsSaved'));
@@ -123,6 +146,27 @@ export default function IntegrationsSettingsPage() {
     } finally {
       setSavingBasic(false);
     }
+  };
+
+  /** Updates the typed key and clears the previous check, which no longer describes it. */
+  const handleCfApiKeyChange = (value: string) => {
+    cfKeyEdits.current += 1;
+    setCfApiKey(value);
+    setCfKeyCheck(null);
+  };
+
+  /** Tests the typed key (or the saved one) and shows the result unless the key was edited meanwhile. */
+  const handleTestCfKey = async () => {
+    setTestingCfKey(true);
+    const edit = cfKeyEdits.current;
+    let result: CurseforgeKeyCheck;
+    try {
+      result = await testCurseforgeKey(cfApiKey || undefined);
+    } catch {
+      result = { ok: false, code: 'unexpected' };
+    }
+    if (edit === cfKeyEdits.current) setCfKeyCheck(result);
+    setTestingCfKey(false);
   };
 
   const handleTestWebhook = async () => {
@@ -230,7 +274,24 @@ export default function IntegrationsSettingsPage() {
             <>
               <div className="space-y-2">
                 <Label className="text-gray-200">{t('curseforgeApiKey')}</Label>
-                <Input value={cfApiKey} onChange={(e) => setCfApiKey(e.target.value)} type="password" placeholder={secretPlaceholder(hasCfApiKey)} className="bg-gray-800 border-gray-700 text-white" />
+                <div className="flex gap-2">
+                  <Input
+                    value={cfApiKey}
+                    onChange={(e) => handleCfApiKeyChange(e.target.value)}
+                    type="password"
+                    placeholder={secretPlaceholder(hasCfApiKey)}
+                    className="flex-1 bg-gray-800 border-gray-700 text-white"
+                  />
+                  <Button type="button" variant="outline" onClick={handleTestCfKey} disabled={testingCfKey || (!cfApiKey && !hasCfApiKey)} className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
+                    {testingCfKey ? <Loader2 className="h-4 w-4 animate-spin" /> : t('test')}
+                  </Button>
+                </div>
+                {cfKeyCheck ? (
+                  <p className={`flex items-start gap-1.5 text-xs ${cfKeyCheck.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {cfKeyCheck.ok ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" /> : <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+                    {cfKeyCheck.ok ? t('curseforgeKeyValid') : t(CF_KEY_CHECK_MESSAGES[cfKeyCheck.code ?? 'unexpected'])}
+                  </p>
+                ) : null}
                 <p className="text-xs text-gray-400">{t('curseforgeApiKeyDesc')}</p>
               </div>
               <div className="space-y-2">

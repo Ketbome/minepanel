@@ -320,6 +320,13 @@ export const tr: Record<TranslationKey, string> = {
   integrationSourceDb: 'Panel',
   integrationSourceEnv: 'Ortam değişkeni',
   secretConfiguredPlaceholder: 'Yapılandırıldı — mevcut değeri korumak için boş bırakın',
+  curseforgeKeyValid: "Anahtar geçerli: CurseForge kabul etti",
+  curseforgeKeyNotConfigured: "Test edilecek anahtar yok: bir tane girin veya önce kaydedin",
+  curseforgeKeyInvalid: "Geçersiz anahtar: CurseForge reddetti",
+  curseforgeKeyRateLimited: "CurseForge istekleri sınırlıyor, bir dakika sonra tekrar deneyin",
+  curseforgeKeyTimeout: "CurseForge zamanında yanıt vermedi",
+  curseforgeKeyUnreachable: "Panelden CurseForge'a ulaşılamadı: konteynerin giden ağını ve DNS'ini kontrol edin",
+  curseforgeKeyUnexpected: "CurseForge beklenmeyen bir hata döndürdü, daha sonra tekrar deneyin",
   smtpSettingsTitle: 'E-posta (SMTP)',
   smtpSettingsDesc:
     'Parola sıfırlama ve davet e-postalarını gönderir. Buradan veya .env üzerinden yönetilir.',

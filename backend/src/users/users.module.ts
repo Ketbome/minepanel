@@ -17,9 +17,10 @@ import { AuthMailService } from 'src/auth/auth-mail.service';
 import { SettingsModule } from 'src/settings/settings.module';
 import { ProxyModule } from 'src/proxy/proxy.module';
 import { IntegrationSettingsController } from './controllers/integration-settings.controller';
+import { CurseforgeModule } from 'src/curseforge/curseforge.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule, forwardRef(() => ProxyModule)],
+  imports: [TypeOrmModule.forFeature([Users, Settings, UserInvitation, AuditLog, PendingEmailChange]), DiscordModule, SettingsModule, forwardRef(() => ProxyModule), forwardRef(() => CurseforgeModule)],
   controllers: [UsersController, SettingsController, AuditLogController, IntegrationSettingsController],
   providers: [UsersService, SettingsService, AccessControlService, AuditLogService, AuthMailService],
   exports: [UsersService, SettingsService, AccessControlService, AuditLogService],
