@@ -1927,6 +1927,7 @@ export const nl: Record<TranslationKey, string> = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'Eén netwerk met een lobby, uitwijkservers en wisselen met /server. Alleen op Paper gebaseerde servers kunnen meedoen.',
   edgeModeSavePending: 'Sla de wijzigingen op om het proxytype te wisselen voordat je het start.',
+  proxyPortSavePending: 'Sla de nieuwe routerpoort op voordat je de proxy start.',
   enableVelocityDesc: 'Spelers verbinden met Velocity, dat ze naar de eerste beschikbare lobby stuurt',
   velocityBaseDomainDesc: 'Optioneel. Met een domein brengt <server>.<domein> spelers direct naar die server',
   velocityPluginsInfo: 'Velocity-plugins horen in data/velocity/server/plugins en worden geladen bij de volgende herstart van de proxy.',

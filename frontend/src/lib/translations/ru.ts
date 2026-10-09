@@ -1897,6 +1897,7 @@ export const ru: Record<TranslationKey, string> = {
   edgeModeVelocity: 'Velocity',
   edgeModeVelocityDesc: 'Одна сеть с лобби, резервными серверами и переключением через /server. Подключаться могут только серверы на основе Paper.',
   edgeModeSavePending: 'Сохраните изменения, чтобы сменить тип прокси перед запуском.',
+  proxyPortSavePending: 'Сохраните новый порт роутера перед запуском прокси.',
   enableVelocityDesc: 'Игроки подключаются к Velocity, который отправляет их в первое доступное лобби',
   velocityBaseDomainDesc: 'Необязательно. С доменом адрес <сервер>.<домен> ведёт игроков сразу на этот сервер',
   velocityPluginsInfo: 'Плагины Velocity кладите в data/velocity/server/plugins; они загрузятся при следующем перезапуске прокси.',

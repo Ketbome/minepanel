@@ -515,6 +515,43 @@ docker stats
 docker restart <server-container-name>
 ```
 
+## Proxy Issues
+
+### Proxy goes back to "stopped" right after Start proxy
+
+The panel could not start the `mc-router` or `mc-velocity` container. The error toast says
+why; versions up to 1.13.24 only wrote the reason to the backend log.
+
+![Start proxy failing because port 25565 is taken](/img/proxy-start-error.webp)
+
+```mermaid
+flowchart TD
+    A["Start proxy fails"] --> B{"Message"}
+    B -->|"port allocated"| C["Change the port"]
+    B -->|"/app/data"| D["Mount ./data"]
+    B -->|"stops later"| E["Read its log"]
+```
+
+| Message | Cause | Fix |
+| --- | --- | --- |
+| `Bind for 0.0.0.0:25565 failed: port is already allocated` | A server, an old `mc-router` from the 1.x `proxy` profile, or another program uses the port | `docker ps --filter publish=25565`, stop it, or change **Router port** and **Save** before **Start proxy** |
+| `Nothing is mounted at /app/data` | The backend has no `/app/data` volume | Use the volumes from the current [`docker-compose.yml`](/installation) |
+
+Where to look:
+
+```bash
+# Why the panel could not start it
+docker compose logs backend | grep -iE "velocity|mc-router"
+
+# The proxy's own log, once its container exists
+docker logs mc-velocity    # Velocity
+docker logs mc-router      # mc-router
+```
+
+::: tip Router port
+**Start proxy** uses the saved **Router port**. Change the field, press **Save**, then start it.
+:::
+
 ## Mod/Plugin Issues
 
 ### Mods Not Downloading

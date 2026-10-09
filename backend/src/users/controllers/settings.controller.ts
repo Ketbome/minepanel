@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
@@ -71,16 +71,22 @@ export class SettingsController {
     const proxy = await this.instanceSettings.setProxy({ enabled: body.enabled });
     await this.settingsService.reconcileEdge(proxy.mode);
     const name = proxy.mode === 'velocity' ? 'Velocity' : 'mc-router';
+    const edge = proxy.mode === 'velocity' ? this.velocity : this.proxyRouter;
+    const running = await edge.isRunning();
+    const failure = body.enabled && !running ? `${name} did not start: ${edge.startError ?? 'see the backend log'}` : null;
 
     await this.auditLogService.record({
       actorUserId: user.userId,
       actorUsername: user.username,
       category: 'settings',
       action: body.enabled ? 'start_proxy' : 'stop_proxy',
-      summary: body.enabled ? `Started the ${name} proxy` : `Stopped the ${name} proxy`,
+      outcome: failure ? 'error' : 'success',
+      summary: failure ?? (body.enabled ? `Started the ${name} proxy` : `Stopped the ${name} proxy`),
     });
 
-    const running = proxy.mode === 'velocity' ? await this.velocity.isRunning() : await this.proxyRouter.isRunning();
+    if (failure) {
+      throw new ServiceUnavailableException(failure);
+    }
     return { ...proxy, running };
   }
 
