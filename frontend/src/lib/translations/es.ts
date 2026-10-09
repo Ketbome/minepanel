@@ -2260,6 +2260,8 @@ export const es: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Las claves duplicadas requieren el editor de texto',
   propertiesNoFields: 'No hay ajustes editables en este archivo.',
   propertiesCustomHelp: 'Ajuste personalizado. Consulta la documentación del servidor.',
+  propertiesIgnored: "Esta versión de Minecraft no lee esta clave. Solo está en el archivo.",
+  propertiesAddMissing: "Añadir una propiedad que falta",
   propertiesInvalid: 'Introduce un valor válido para este ajuste.',
   propertiesPanelManaged: 'Los ajustes gestionados por el panel se editan en Ajustes del servidor y pueden reescribirse al iniciar.',
 };

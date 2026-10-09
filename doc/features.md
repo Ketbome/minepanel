@@ -496,7 +496,7 @@ Bedrock servers use `send-command` instead of RCON. Command output appears in se
 
 ## File editing
 
-The Files tab opens `server.properties` as searchable settings grouped by category. Changed and invalid fields can be filtered, and a raw text view shares the same unsaved draft. A change summary appears before saving. Each save creates a timestamped backup; the editor can preview and restore those backups. Properties managed by the panel link to Server Settings.
+The Files tab opens `server.properties` as searchable settings grouped by category. Changed and invalid fields can be filtered, and a raw text view shares the same unsaved draft. A change summary appears before saving. Each save creates a timestamped backup; the editor can preview and restore those backups. Properties managed by the panel link to Server Settings. Every vanilla key is known to the editor with its type, allowed range or options and a description, and it follows the server's Minecraft version: keys the version does not read are flagged (for example `snooper-enabled` after 1.18), and keys it does read but the file lacks, such as `pause-when-empty-seconds`, can be added from the "Add a missing property" list. A server on `LATEST` or a modpack id counts as the newest release; `SNAPSHOT` also gets the keys of the upcoming version.
 
 ## Coming Soon
 

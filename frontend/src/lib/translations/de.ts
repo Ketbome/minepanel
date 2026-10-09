@@ -2265,6 +2265,8 @@ export const de: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Doppelte Schlüssel erfordern den Texteditor',
   propertiesNoFields: 'Keine bearbeitbaren Einstellungen in dieser Datei.',
   propertiesCustomHelp: 'Eigene Einstellung. Siehe Serverdokumentation.',
+  propertiesIgnored: "Diese Minecraft-Version liest diesen Schlüssel nicht. Er steht nur in der Datei.",
+  propertiesAddMissing: "Fehlende Eigenschaft hinzufügen",
   propertiesInvalid: 'Gib einen gültigen Wert für diese Einstellung ein.',
   propertiesPanelManaged: 'Vom Panel verwaltete Werte werden in den Servereinstellungen bearbeitet und können beim Start überschrieben werden.',
 };

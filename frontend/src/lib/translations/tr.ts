@@ -2312,6 +2312,8 @@ export const tr: Record<TranslationKey, string> = {
   propertiesDuplicates: 'Yinelenen anahtarlar için metin düzenleyicisini kullanın',
   propertiesNoFields: 'Bu dosyada düzenlenebilir ayar yok.',
   propertiesCustomHelp: 'Özel ayar. Sunucu belgelerine bakın.',
+  propertiesIgnored: "Bu Minecraft sürümü bu anahtarı okumaz. Yalnızca dosyada bulunuyor.",
+  propertiesAddMissing: "Eksik bir özellik ekle",
   propertiesInvalid: 'Bu ayar için geçerli bir değer girin.',
   propertiesPanelManaged: 'Panelin yönettiği ayarlar Sunucu Ayarları bölümünde değiştirilir ve başlatılırken yeniden yazılabilir.',
 };

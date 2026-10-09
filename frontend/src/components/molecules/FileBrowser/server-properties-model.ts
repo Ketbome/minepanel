@@ -33,6 +33,11 @@ export function replacePropertyValue(content: string, index: number, value: stri
   return lines.join(ending);
 }
 
+export function appendProperty(content: string, key: string, value: string): string {
+  const ending = content.includes("\r\n") ? "\r\n" : "\n";
+  return `${content.replace(/(\r?\n)*$/, "")}${content ? ending : ""}${key}=${value}${ending}`;
+}
+
 export function propertyCategory(key: string): PropertyCategory {
   if (/network|compression|rcon|query|port|server-ip|proxy/.test(key)) return "network";
   if (/tick|distance|thread|chunk|entity|performance/.test(key)) return "performance";

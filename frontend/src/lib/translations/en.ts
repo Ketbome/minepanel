@@ -2234,6 +2234,8 @@ export const en = {
   propertiesDuplicates: 'Duplicate keys need the raw editor',
   propertiesNoFields: 'No editable settings in this file.',
   propertiesCustomHelp: 'Custom setting. Check your server documentation.',
+  propertiesIgnored: 'This Minecraft version does not read this key. It is only in the file.',
+  propertiesAddMissing: 'Add a missing property',
   propertiesInvalid: 'Enter a valid value for this setting.',
   propertiesPanelManaged: 'Settings managed by the panel are edited in Server Settings and may be rewritten on start.',
 };
