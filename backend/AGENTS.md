@@ -107,6 +107,11 @@ because `import * as` namespaces are non-configurable and `jest.spyOn` throws on
 - Keep naming consistent: files `kebab-case`, classes `PascalCase`, methods `camelCase`.
 - Keep changes surgical: no unrelated refactors, imports, or formatting churn.
 
+Server deletion uses `ServerManagementService.registerDeletionGuard` to quiesce metric
+sampling and preset writes before database cleanup. Guards release in `finally`, including
+failed deletions. Retain server.json/compose until cleanup commits so failed cleanup cannot
+free the ID; invalidate and drain the current metrics pass before clearing availability.
+
 Path and filesystem patterns (critical):
 
 - `serversDir` is container-side path (`/app/servers`) from `backend/src/config.ts`.

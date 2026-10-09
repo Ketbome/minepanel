@@ -13,14 +13,57 @@ const dto = (name: string, serverId = 'srv') => ({ serverId, name, searchTerm: '
 describe('log presets', () => {
   let db: DataSource;
   let service: LogPresetsService;
+  let management: { registerDeletionGuard: jest.Mock };
+  let store: { readConfig: jest.Mock };
 
   beforeEach(async () => {
     db = await new DataSource({ type: 'sqljs', entities: [LogPreset, Users], synchronize: true }).initialize();
     await db.getRepository(Users).save([{ username: 'ana' }, { username: 'bob' }]);
-    service = new LogPresetsService(db.getRepository(LogPreset));
+    management = { registerDeletionGuard: jest.fn().mockReturnValue(jest.fn()) };
+    store = { readConfig: jest.fn().mockResolvedValue({ id: 'srv' }) };
+    service = new LogPresetsService(db.getRepository(LogPreset), management as any, store as any);
+    service.onModuleInit();
   });
 
-  afterEach(() => db.destroy());
+  afterEach(async () => { service.onModuleDestroy(); await db.destroy(); });
+
+  it('rejects saves during deletion and after the server has gone', async () => {
+    const release = await management.registerDeletionGuard.mock.calls[0][0]('srv');
+    await expect(service.save(1, dto('old'))).rejects.toThrow('deletion is in progress');
+    await expect(service.remove(1, 'srv', 'old')).rejects.toThrow('deletion is in progress');
+    store.readConfig.mockResolvedValue(null);
+    release();
+    await expect(service.save(1, dto('orphan'))).rejects.toThrow('Server not found');
+    store.readConfig.mockResolvedValue({ id: 'srv' });
+    await service.save(1, dto('new'));
+    expect((await service.list(1, 'srv')).map((row) => row.name)).toEqual(['new']);
+  });
+
+  it('drains a pending save and rejects an old queued save before deletion can clean the database', async () => {
+    const repo = db.getRepository(LogPreset);
+    const original = repo.save.bind(repo);
+    let finish!: () => void;
+    const spy = jest.spyOn(repo, 'save').mockImplementationOnce((row: any) => new Promise<LogPreset>((resolve, reject) => {
+      finish = () => { void original(row).then(resolve, reject); };
+    }) as any);
+    const active = service.save(1, dto('active'));
+    for (let i = 0; i < 30 && !finish; i++) await new Promise((resolve) => setImmediate(resolve));
+    expect(finish).toBeDefined();
+    const queued = service.save(1, dto('queued'));
+    const rejected = expect(queued).rejects.toThrow('deletion is in progress');
+    let ready = false;
+    const guarded = management.registerDeletionGuard.mock.calls[0][0]('srv').then((release) => { ready = true; return release; });
+    await Promise.resolve();
+    expect(ready).toBe(false);
+    finish();
+    await active;
+    await rejected;
+    const release = await guarded;
+    await repo.delete({ serverId: 'srv' });
+    release();
+    expect(await service.list(1, 'srv')).toEqual([]);
+    spy.mockRestore();
+  });
 
   it('overwrites a preset with the same name and scopes by user and server', async () => {
     await service.save(1, dto('errors'));

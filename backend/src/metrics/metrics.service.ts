@@ -35,6 +35,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MetricsService.name);
   private timer: NodeJS.Timeout | null = null;
   private sampling = false;
+  private sampleInFlight: Promise<void> | null = null;
+  private sampleGeneration = 0;
+  private readonly deletingServers = new Set<string>();
+  private unregisterDeletionGuard?: () => void;
   private lastPruneAt: number | null = null;
 
   // ponytail: in memory, so a crash while the panel itself is off stays unknown. Persist if that matters.
@@ -52,12 +56,26 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
+    this.unregisterDeletionGuard = this.serverManagement.registerDeletionGuard(async (serverId) => {
+      this.deletingServers.add(serverId);
+      this.sampleGeneration++;
+      // Already-started writes must finish before deletion's database transaction runs.
+      await this.sampleInFlight;
+      this.availability.delete(serverId);
+      return () => {
+        this.availability.delete(serverId);
+        this.deletingServers.delete(serverId);
+        this.sampleGeneration++;
+      };
+    });
     this.timer = setInterval(() => {
       void this.collectSamples();
     }, SAMPLE_INTERVAL_MS);
   }
 
   onModuleDestroy(): void {
+    this.unregisterDeletionGuard?.();
+    this.unregisterDeletionGuard = undefined;
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
@@ -132,26 +150,35 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     return this.availability.get(serverId) === 'down' ? false : null;
   }
 
-  private async collectSamples(): Promise<void> {
-    if (this.sampling) {
-      return;
-    }
+  private collectSamples(): Promise<void> {
+    if (this.sampling) return Promise.resolve();
     this.sampling = true;
+    this.sampleInFlight = this.collectCurrentSamples(this.sampleGeneration).finally(() => {
+      this.sampling = false;
+      this.sampleInFlight = null;
+    });
+    return this.sampleInFlight;
+  }
 
+  private async collectCurrentSamples(generation: number): Promise<void> {
     try {
-      const resources = await this.serverManagement.getAllServersRuntimeStats();
+      const allResources = await this.serverManagement.getAllServersRuntimeStats();
+      if (generation !== this.sampleGeneration) return;
+      const resources = Object.fromEntries(Object.entries(allResources).filter(([serverId]) => !this.deletingServers.has(serverId)));
 
       try {
         await this.alertsService.evaluate(resources, (serverId) => this.serverManagement.getCrashInfo(serverId));
       } catch (error) {
         this.logger.warn(`Failed to evaluate alerts: ${(error as Error).message}`);
       }
+      if (generation !== this.sampleGeneration) return;
 
       const now = new Date();
       const samples: MetricSample[] = [];
       const uptime: UptimeSample[] = [];
       for (const [serverId, data] of Object.entries(resources)) {
         const running = await this.uptimeState(serverId, data.status);
+        if (generation !== this.sampleGeneration) return;
         if (running !== null) uptime.push(this.uptimeRepo.create({ serverId, running, createdAt: now }));
       }
 
@@ -189,10 +216,12 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
         }));
       }
 
+      if (generation !== this.sampleGeneration) return;
       if (samples.length > 0) {
         await this.sampleRepo.save(samples);
       }
 
+      if (generation !== this.sampleGeneration) return;
       if (uptime.length > 0) {
         await this.uptimeRepo.save(uptime);
       }
@@ -200,8 +229,6 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       await this.pruneOldSamples();
     } catch (error) {
       this.logger.warn(`Failed to collect metric samples: ${(error as Error).message}`);
-    } finally {
-      this.sampling = false;
     }
   }
 

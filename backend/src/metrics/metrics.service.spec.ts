@@ -13,7 +13,7 @@ describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let uptimeRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
-  let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock };
+  let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock; registerDeletionGuard: jest.Mock };
   let alertsService: { evaluate: jest.Mock; isExpectedStop: jest.Mock };
   let store: { readConfig: jest.Mock };
 
@@ -25,7 +25,7 @@ describe('MetricsService', () => {
       delete: jest.fn().mockResolvedValue(undefined),
     };
     uptimeRepo = { find: jest.fn().mockResolvedValue([]), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
-    serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
+    serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null), registerDeletionGuard: jest.fn().mockReturnValue(jest.fn()) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined), isExpectedStop: jest.fn().mockReturnValue(false) };
     store = { readConfig: jest.fn().mockResolvedValue({ enableAutoStop: false }) };
 
@@ -42,6 +42,96 @@ describe('MetricsService', () => {
     }).compile();
 
     service = module.get<MetricsService>(MetricsService);
+  });
+
+  afterEach(() => service.onModuleDestroy());
+
+  describe('server deletion', () => {
+    it('continues observing other servers during deletion and fences a pass crossing release', async () => {
+      service.onModuleInit();
+      const guard = serverManagement.registerDeletionGuard.mock.calls[0][0];
+      const release = await guard('srv');
+      const resources = { srv: { status: 'running' }, other: { status: 'running' } };
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue(resources);
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).toHaveBeenCalledWith([expect.objectContaining({ serverId: 'other' })]);
+      uptimeRepo.save.mockClear();
+      let finish!: (value: unknown) => void;
+      serverManagement.getAllServersRuntimeStats.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+      const pending = (service as any).collectSamples();
+      release();
+      finish(resources);
+      await pending;
+      expect(uptimeRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('does not restore stale availability when an asynchronous stop classification finishes', async () => {
+      service.onModuleInit();
+      const guard = serverManagement.registerDeletionGuard.mock.calls[0][0];
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      uptimeRepo.save.mockClear();
+      let finish!: (value: unknown) => void;
+      store.readConfig.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'stopped' } });
+      const pending = (service as any).collectSamples();
+      for (let i = 0; i < 20 && store.readConfig.mock.calls.length === 0; i++) await Promise.resolve();
+      expect(store.readConfig).toHaveBeenCalled();
+      const quiesced = guard('srv');
+      finish({ enableAutoStop: false });
+      const release = await quiesced;
+      await pending;
+      release();
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('discards a pending sample and resets availability before a deleted ID is reused', async () => {
+      service.onModuleInit();
+      expect(serverManagement.registerDeletionGuard).toHaveBeenCalled();
+      const guard = serverManagement.registerDeletionGuard.mock.calls[0][0];
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      uptimeRepo.save.mockClear();
+      let finish!: (value: unknown) => void;
+      serverManagement.getAllServersRuntimeStats.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+      const pending = (service as any).collectSamples();
+      const quiesced = guard('srv');
+      finish({ srv: { status: 'running' } });
+      const release = await quiesced;
+      await pending;
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).not.toHaveBeenCalled();
+      release();
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'stopped' } });
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).not.toHaveBeenCalled();
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).toHaveBeenCalledWith([expect.objectContaining({ running: true })]);
+    });
+
+    it('drains an already-started repository write before allowing deletion cleanup', async () => {
+      service.onModuleInit();
+      expect(serverManagement.registerDeletionGuard).toHaveBeenCalled();
+      const guard = serverManagement.registerDeletionGuard.mock.calls[0][0];
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      let finish!: () => void;
+      uptimeRepo.save.mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve; }));
+      const pending = (service as any).collectSamples();
+      for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+      expect(uptimeRepo.save).toHaveBeenCalledTimes(1);
+      let ready = false;
+      const quiesced = guard('srv').then((release) => { ready = true; return release; });
+      await Promise.resolve();
+      expect(ready).toBe(false);
+      finish();
+      const release = await quiesced;
+      await pending;
+      release();
+      service.onModuleDestroy();
+      expect(serverManagement.registerDeletionGuard.mock.results[0].value).toHaveBeenCalled();
+    });
   });
 
   describe('parseCpuPercent', () => {

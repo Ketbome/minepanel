@@ -53,6 +53,11 @@ Metric and availability retention cleanups run hourly and are attempted independ
 Auto-stop is treated as planned only when enabled and the container exits successfully
 (code 0); crashes still count as downtime. Unknown exit information stays unobserved.
 Saved log presets require permission to view the server logs for listing, saving and deletion.
+Deleting a server waits for pending metric/preset writes before clearing its records and
+files. A database cleanup failure reports failure and keeps the server files and ID reserved
+for retry. The server may already be stopped. Old in-flight samples cannot repopulate a
+replacement server's availability; preset writes are rejected while deletion is in progress
+or the server no longer exists.
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |

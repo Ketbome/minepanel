@@ -31,6 +31,7 @@ import { spawn } from 'node:child_process';
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { MetricsService } from 'src/metrics/metrics.service';
+import { UptimeSample } from 'src/metrics/entities/uptime-sample.entity';
 
 const mockExec = jest.requireMock('node:util').promisify();
 
@@ -77,7 +78,7 @@ describe('ServerManagementService lifecycle', () => {
   let execRoutes: Array<[RegExp, ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)]>;
   let spawnQueue: SpawnResult[];
   let probe: SpawnResult;
-  let settingsRepo: { findOne: jest.Mock };
+  let settingsRepo: { findOne: jest.Mock; manager: { transaction: jest.Mock } };
   let discord: { sendServerNotification: jest.Mock };
   let alerts: { markExpectedStop: jest.Mock; clearState: jest.Mock };
   let store: { removeFromIndex: jest.Mock; readConfig: jest.Mock };
@@ -140,7 +141,7 @@ describe('ServerManagementService lifecycle', () => {
     route(/docker compose ps -aq mc/, { stdout: 'abc123\n' });
     route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'running\n' });
 
-    settingsRepo = { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) };
+    settingsRepo = { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }), manager: { transaction: jest.fn(async (run) => run({ delete: jest.fn(), find: async () => [], save: jest.fn() })) } };
     discord = { sendServerNotification: jest.fn().mockResolvedValue(undefined) };
     alerts = { markExpectedStop: jest.fn(), clearState: jest.fn() };
     store = { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) };
@@ -438,6 +439,40 @@ describe('ServerManagementService lifecycle', () => {
       expect(alerts.clearState.mock.invocationCallOrder[0]).toBeLessThan(store.removeFromIndex.mock.invocationCallOrder[0]);
       expect(execCalls()).toEqual(expect.arrayContaining(['docker volume rm srv_data', 'docker volume rm srv_backups']));
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
+    });
+
+    it('coordinates real metrics guards with deletion before the ID is reused', async () => {
+      let rows: Array<{ running: boolean }> = [];
+      const runtime = jest.spyOn(service, 'getAllServersRuntimeStats').mockResolvedValue({ srv: { status: 'running', cpuUsage: 'N/A' } } as any);
+      const metrics = new MetricsService(
+        { delete: async () => undefined } as any,
+        { create: (row) => row, save: async (batch) => { rows.push(...batch); }, delete: async () => undefined } as any,
+        service,
+        { evaluate: async () => undefined, isExpectedStop: () => false } as any,
+        {} as any,
+        store as any,
+      );
+      settingsRepo.manager.transaction.mockImplementation(async (run) => run({
+        delete: async (entity) => { if (entity === UptimeSample) rows = []; },
+        find: async () => [], save: async () => undefined,
+      }));
+      metrics.onModuleInit();
+      try {
+        await (metrics as any).collectSamples();
+        expect(rows).toHaveLength(1);
+        let finish!: (value: any) => void;
+        runtime.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+        const pending = (metrics as any).collectSamples();
+        const deleting = service.deleteServer('srv');
+        await settle();
+        expect(settingsRepo.manager.transaction).not.toHaveBeenCalled();
+        finish({ srv: { status: 'running', cpuUsage: 'N/A' } });
+        await pending;
+        expect(await deleting).toBe(true);
+        runtime.mockResolvedValue({ srv: { status: 'stopped' } } as any);
+        await (metrics as any).collectSamples();
+        expect(rows).toEqual([]);
+      } finally { metrics.onModuleDestroy(); }
     });
 
     it('deleteServer tolerates stop and volume errors and validates inputs', async () => {
