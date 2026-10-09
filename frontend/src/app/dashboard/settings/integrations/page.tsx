@@ -148,6 +148,13 @@ export default function IntegrationsSettingsPage() {
     }
   };
 
+  /** Updates the typed key and clears the previous check, which no longer describes it. */
+  const handleCfApiKeyChange = (value: string) => {
+    cfKeyEdits.current += 1;
+    setCfApiKey(value);
+    setCfKeyCheck(null);
+  };
+
   /** Tests the typed key (or the saved one) and shows the result unless the key was edited meanwhile. */
   const handleTestCfKey = async () => {
     setTestingCfKey(true);
@@ -270,11 +277,7 @@ export default function IntegrationsSettingsPage() {
                 <div className="flex gap-2">
                   <Input
                     value={cfApiKey}
-                    onChange={(e) => {
-                      cfKeyEdits.current += 1;
-                      setCfApiKey(e.target.value);
-                      setCfKeyCheck(null);
-                    }}
+                    onChange={(e) => handleCfApiKeyChange(e.target.value)}
                     type="password"
                     placeholder={secretPlaceholder(hasCfApiKey)}
                     className="flex-1 bg-gray-800 border-gray-700 text-white"
