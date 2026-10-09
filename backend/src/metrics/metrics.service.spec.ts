@@ -90,6 +90,19 @@ describe('MetricsService', () => {
   });
 
   describe('collectSamples', () => {
+    it.each(['metrics', 'uptime'])('attempts both retention cleanups when %s pruning fails', async (failed) => {
+      const repo = failed === 'metrics' ? sampleRepo : uptimeRepo;
+      repo.delete.mockRejectedValueOnce(new Error('cleanup failed'));
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({});
+      const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+
+      await (service as any).collectSamples();
+
+      expect(sampleRepo.delete).toHaveBeenCalledTimes(1);
+      expect(uptimeRepo.delete).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cleanup failed'));
+    });
+
     it('should record availability for every known server, running or not', async () => {
       serverManagement.getAllServersRuntimeStats.mockResolvedValue({
         a: { status: 'running', cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' },

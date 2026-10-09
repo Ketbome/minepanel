@@ -185,9 +185,14 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async pruneOldSamples(): Promise<void> {
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
-    await this.sampleRepo.delete({ createdAt: LessThan(cutoff) });
-    await this.uptimeRepo.delete({ createdAt: LessThan(new Date(Date.now() - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000)) });
+    // Keep sql.js writes sequential, but a failure in one table must not skip the other.
+    for (const [name, repo, days] of [['metric', this.sampleRepo, RETENTION_DAYS], ['uptime', this.uptimeRepo, UPTIME_RETENTION_DAYS]] as const) {
+      try {
+        await repo.delete({ createdAt: LessThan(new Date(Date.now() - days * 24 * 60 * 60 * 1000)) });
+      } catch (error) {
+        this.logger.warn(`Failed to prune ${name} samples: ${(error as Error).message}`);
+      }
+    }
   }
 
 }

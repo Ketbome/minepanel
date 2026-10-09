@@ -79,6 +79,7 @@ describe('ServerManagementService', () => {
 
     const mockAlertsService = {
       markExpectedStop: jest.fn(),
+      clearState: jest.fn(),
     };
 
     mockDockerComposeService = {

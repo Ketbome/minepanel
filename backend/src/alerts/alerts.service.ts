@@ -9,7 +9,7 @@ import { DockerComposeService } from 'src/docker-compose/docker-compose.service'
 import { parseCpuPercent, parseMemoryToMb } from 'src/metrics/metric-parse.util';
 import { getAlertMessages } from './alerts.translations';
 
-const EXPECTED_STOP_WINDOW_MS = 5 * 60 * 1000;
+export const EXPECTED_STOP_WINDOW_MS = 5 * 60 * 1000;
 
 interface ServerResources {
   status: string;
@@ -79,7 +79,11 @@ export class AlertsService {
   }
 
   isExpectedStop(serverId: string): boolean {
-    return Date.now() < this.getState(serverId).expectedStopUntil;
+    return Date.now() < (this.state.get(serverId)?.expectedStopUntil ?? 0);
+  }
+
+  clearState(serverId: string): void {
+    this.state.delete(serverId);
   }
 
   async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {

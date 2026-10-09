@@ -37,6 +37,7 @@ export function useServerLogs(serverId: string) {
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [regex, setRegex] = useState<boolean>(false);
   const [sinceMinutes, setSinceMinutes] = useState<number>(0);
+  const [filterNow, setFilterNow] = useState(() => Date.now());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
   const lastTimestampRef = useRef<string | null>(null);
@@ -236,6 +237,13 @@ export function useServerLogs(serverId: string) {
     setError(null);
   };
 
+  useEffect(() => {
+    if (sinceMinutes <= 0) return;
+    setFilterNow(Date.now());
+    const timer = setInterval(() => setFilterNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [sinceMinutes]);
+
   const filteredLogEntries = useMemo(() => {
     let matcher: (content: string) => boolean = () => true;
     let invalidRegex = false;
@@ -254,14 +262,14 @@ export function useServerLogs(serverId: string) {
     }
     // Docker's timestamp is UTC and independent of the game's log format, so the range holds in any
     // timezone and on Bedrock. Continuation lines inherit the previous line's time; lines before the first stay visible.
-    const cutoff = sinceMinutes > 0 ? Date.now() - sinceMinutes * 60_000 : 0;
+    const cutoff = sinceMinutes > 0 ? filterNow - sinceMinutes * 60_000 : 0;
     let lineTime: number | null = null;
     return logEntries.filter((entry) => {
       if (entry.loggedAt !== undefined) lineTime = entry.loggedAt;
       const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
       return inRange && !invalidRegex && matcher(entry.content) && (levelFilter === "all" || entry.level === levelFilter);
     });
-  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes]);
+  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes, filterNow]);
 
   return {
     logs,

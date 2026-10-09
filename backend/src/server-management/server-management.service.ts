@@ -17,7 +17,7 @@ import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entit
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
-import { AlertsService } from 'src/alerts/alerts.service';
+import { AlertsService, EXPECTED_STOP_WINDOW_MS } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
@@ -490,7 +490,14 @@ export class ServerManagementService {
   }
 
   private async execComposeDown(serverId: string) {
-    return this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(await this.getStopTimeout(serverId)));
+    const timeout = await this.getStopTimeout(serverId);
+    this.alertsService.markExpectedStop(serverId, timeout * 1000 + EXPECTED_STOP_WINDOW_MS);
+    try {
+      return await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(timeout));
+    } finally {
+      // Leave a fresh observation window after slow shutdowns, even when Compose rejects.
+      this.alertsService.markExpectedStop(serverId);
+    }
   }
 
   private executeProcess(
@@ -1144,6 +1151,7 @@ export class ServerManagementService {
       }
 
       await fs.remove(serverDir);
+      this.alertsService.clearState(serverId);
       await this.store.removeFromIndex(serverId);
 
       // Server IDs are reusable: a new server with this ID must not inherit its player

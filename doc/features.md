@@ -42,6 +42,14 @@ flowchart LR
 | Live logs | Streaming, errors highlighted, searchable |
 | Log presets | Save the Logs tab filters (search, regex, level, lines, time range) as a named preset, per user and server (up to 20); saving a preset does not submit server configuration changes |
 | Availability | Metrics tab shows 24h / 7d / 30d availability, a 30-day daily chart and recent downtime; refreshes every minute and shows fetch errors explicitly. Inspect daily values by hover, keyboard focus or tap (scroll the chart on narrow screens). Minutes while the panel was offline are not counted |
+
+Log time-range filters continue to age out old lines while live updates are paused or the
+server produces no new logs. Selecting all time disables that clock.
+
+Planned shutdowns are excluded from downtime for the configured shutdown grace period
+plus an observation buffer, renewed when the shutdown command completes. Deleting a
+server clears its in-memory alert state so a reused ID does not inherit stop suppression.
+Metric and availability retention cleanups are attempted independently.
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |

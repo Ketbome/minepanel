@@ -29,6 +29,8 @@ import * as fs from 'fs-extra';
 import { assertContained } from 'src/common/fs/contained-path';
 import { spawn } from 'node:child_process';
 import { ServerManagementService } from './server-management.service';
+import { AlertsService } from 'src/alerts/alerts.service';
+import { MetricsService } from 'src/metrics/metrics.service';
 
 const mockExec = jest.requireMock('node:util').promisify();
 
@@ -77,7 +79,7 @@ describe('ServerManagementService lifecycle', () => {
   let probe: SpawnResult;
   let settingsRepo: { findOne: jest.Mock };
   let discord: { sendServerNotification: jest.Mock };
-  let alerts: { markExpectedStop: jest.Mock };
+  let alerts: { markExpectedStop: jest.Mock; clearState: jest.Mock };
   let store: { removeFromIndex: jest.Mock; readConfig: jest.Mock };
   let composeService: { refreshComposeFile: jest.Mock };
   let instanceSettings: { getNetwork: jest.Mock; getProxy: jest.Mock; getComposeEdge: jest.Mock; getRouterSettings: jest.Mock };
@@ -140,7 +142,7 @@ describe('ServerManagementService lifecycle', () => {
 
     settingsRepo = { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) };
     discord = { sendServerNotification: jest.fn().mockResolvedValue(undefined) };
-    alerts = { markExpectedStop: jest.fn() };
+    alerts = { markExpectedStop: jest.fn(), clearState: jest.fn() };
     store = { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) };
     composeService = { refreshComposeFile: jest.fn().mockResolvedValue(undefined) };
     instanceSettings = {
@@ -197,6 +199,43 @@ describe('ServerManagementService lifecycle', () => {
   });
 
   describe('stop, restart and start', () => {
+    it.each(['stopServer', 'restartServer'] as const)('%s keeps a late planned-stop sample out of uptime downtime', async (method) => {
+      let now = Date.now();
+      const clock = jest.spyOn(Date, 'now').mockImplementation(() => now);
+      const tracker = new AlertsService({ find: async () => [] } as any, {} as any, {} as any, {} as any);
+      alerts.markExpectedStop.mockImplementation((id, window) => tracker.markExpectedStop(id, window));
+      let status = 'running';
+      const uptime = { create: (row) => row, save: jest.fn().mockResolvedValue(undefined), delete: jest.fn().mockResolvedValue(undefined) };
+      const metrics = new MetricsService(
+        { delete: jest.fn().mockResolvedValue(undefined) } as any,
+        uptime as any,
+        { getAllServersRuntimeStats: async () => ({ srv: { status, cpuUsage: 'N/A' } }) } as any,
+        tracker,
+        {} as any,
+      );
+      compose = 'services:\n  mc:\n    stop_grace_period: 600s\n';
+      route(/docker compose down/, async () => {
+        now += 6 * 60_000;
+        status = 'stopped';
+        await (metrics as any).collectSamples();
+        now += 4 * 60_000;
+        return { stdout: '' };
+      });
+
+      try {
+        await (metrics as any).collectSamples();
+        expect(await service[method]('srv')).toBe(true);
+        expect(uptime.save.mock.calls.flatMap(([rows]) => rows).map((row) => row.running)).toEqual([true]);
+        now += 4 * 60_000;
+        expect(tracker.isExpectedStop('srv')).toBe(true);
+        now += 2 * 60_000;
+        expect(tracker.isExpectedStop('srv')).toBe(false);
+        await settle();
+      } finally {
+        clock.mockRestore();
+      }
+    });
+
     it('stopServer uses the announce delay plus buffer as compose timeout', async () => {
       expect(await service.stopServer('srv')).toBe(true);
       expect(execCalls()).toContain(`docker compose down --timeout ${30 + SHUTDOWN_BUFFER_SECONDS}`);
@@ -393,6 +432,9 @@ describe('ServerManagementService lifecycle', () => {
       expect(await service.deleteServer('srv')).toBe(true);
       expect(fs.remove).toHaveBeenCalledWith('/app/servers/srv');
       expect(store.removeFromIndex).toHaveBeenCalledWith('srv');
+      expect(alerts.clearState).toHaveBeenCalledWith('srv');
+      expect(alerts.clearState.mock.invocationCallOrder[0]).toBeGreaterThan((fs.remove as unknown as jest.Mock).mock.invocationCallOrder[0]);
+      expect(alerts.clearState.mock.invocationCallOrder[0]).toBeLessThan(store.removeFromIndex.mock.invocationCallOrder[0]);
       expect(execCalls()).toEqual(expect.arrayContaining(['docker volume rm srv_data', 'docker volume rm srv_backups']));
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
     });
@@ -402,12 +444,16 @@ describe('ServerManagementService lifecycle', () => {
       route(/docker volume ls/, () => Promise.reject(new Error('no docker')));
       expect(await service.deleteServer('srv')).toBe(true);
 
+      alerts.clearState.mockClear();
+
       expect(await service.deleteServer('bad id')).toBe(false);
       existing = [];
       expect(await service.deleteServer('srv')).toBe(false);
+      expect(alerts.clearState).not.toHaveBeenCalled();
       existing = ['/app/servers/srv'];
       (fs.remove as unknown as jest.Mock).mockRejectedValueOnce(new Error('busy'));
       expect(await service.deleteServer('srv')).toBe(false);
+      expect(alerts.clearState).not.toHaveBeenCalled();
     });
   });
 
