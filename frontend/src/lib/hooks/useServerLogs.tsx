@@ -13,7 +13,15 @@ interface LogEntry {
   content: string;
   timestamp: Date;
   level: "info" | "warn" | "error" | "debug";
+  // Docker's own timestamp for the line (UTC), when the stream carried one.
+  loggedAt?: number;
 }
+
+const parseDockerTime = (line: string): number | undefined => {
+  const match = /^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)/.exec(line);
+  const time = match ? Date.parse(match[1]) : NaN;
+  return Number.isFinite(time) ? time : undefined;
+};
 
 export function useServerLogs(serverId: string) {
   const { t } = useLanguage();
@@ -27,6 +35,9 @@ export function useServerLogs(serverId: string) {
   const [isRealTime, setIsRealTime] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
+  const [regex, setRegex] = useState<boolean>(false);
+  const [sinceMinutes, setSinceMinutes] = useState<number>(0);
+  const [filterNow, setFilterNow] = useState(() => Date.now());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
   const lastTimestampRef = useRef<string | null>(null);
@@ -72,6 +83,7 @@ export function useServerLogs(serverId: string) {
           content: cleanLogContent(line),
           timestamp: new Date(),
           level: parseLogLevel(line),
+          loggedAt: parseDockerTime(line),
         }));
     },
     [parseLogLevel, cleanLogContent]
@@ -225,13 +237,39 @@ export function useServerLogs(serverId: string) {
     setError(null);
   };
 
+  useEffect(() => {
+    if (sinceMinutes <= 0) return;
+    setFilterNow(Date.now());
+    const timer = setInterval(() => setFilterNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [sinceMinutes]);
+
   const filteredLogEntries = useMemo(() => {
+    let matcher: (content: string) => boolean = () => true;
+    let invalidRegex = false;
+    if (searchTerm !== "") {
+      if (regex) {
+        try {
+          const re = new RegExp(searchTerm, "i");
+          matcher = (content) => re.test(content);
+        } catch {
+          invalidRegex = true;
+        }
+      } else {
+        const needle = searchTerm.toLowerCase();
+        matcher = (content) => content.toLowerCase().includes(needle);
+      }
+    }
+    // Docker's timestamp is UTC and independent of the game's log format, so the range holds in any
+    // timezone and on Bedrock. Continuation lines inherit the previous line's time; lines before the first stay visible.
+    const cutoff = sinceMinutes > 0 ? filterNow - sinceMinutes * 60_000 : 0;
+    let lineTime: number | null = null;
     return logEntries.filter((entry) => {
-      const matchesSearch = searchTerm === "" || entry.content.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesLevel = levelFilter === "all" || entry.level === levelFilter;
-      return matchesSearch && matchesLevel;
+      if (entry.loggedAt !== undefined) lineTime = entry.loggedAt;
+      const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
+      return inRange && !invalidRegex && matcher(entry.content) && (levelFilter === "all" || entry.level === levelFilter);
     });
-  }, [logEntries, searchTerm, levelFilter]);
+  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes, filterNow]);
 
   return {
     logs,
@@ -245,12 +283,16 @@ export function useServerLogs(serverId: string) {
     isRealTime,
     searchTerm,
     levelFilter,
+    regex,
+    sinceMinutes,
     fetchLogs,
     setLogLines,
     clearError,
     toggleRealTime,
     setSearchTerm,
     setLevelFilter,
+    setRegex,
+    setSinceMinutes,
     startRealTimeUpdates,
     stopRealTimeUpdates,
   };

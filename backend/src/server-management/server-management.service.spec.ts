@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Settings } from '../users/entities/settings.entity';
 import { Users } from '../users/entities/users.entity';
+import { UptimeSample } from '../metrics/entities/uptime-sample.entity';
+import { MetricSample } from '../metrics/entities/metric-sample.entity';
+import { LogPreset } from '../log-presets/entities/log-preset.entity';
 import { ScheduledTask } from '../scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService } from '../discord/discord.service';
 
@@ -69,6 +72,7 @@ describe('ServerManagementService', () => {
 
     mockSettingsRepo = {
       findOne: jest.fn().mockResolvedValue(null),
+      manager: { transaction: jest.fn(async (run) => run({ delete: jest.fn(), find: async () => [], save: jest.fn() })) },
     };
 
     const mockDiscordService = {
@@ -77,6 +81,7 @@ describe('ServerManagementService', () => {
 
     const mockAlertsService = {
       markExpectedStop: jest.fn(),
+      clearState: jest.fn(),
     };
 
     mockDockerComposeService = {
@@ -483,17 +488,41 @@ describe('ServerManagementService', () => {
       mockExec.mockResolvedValue({ stdout: '' });
 
       expect(await service.deleteServer('survival')).toBe(true);
-      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }], [ScheduledTask, { serverId: 'survival' }]]);
+      expect(deleted).toEqual([[PlayerSession, { serverId: 'survival' }], [PlayerTracking, { serverId: 'survival' }], [ScheduledTask, { serverId: 'survival' }], [MetricSample, { serverId: 'survival' }], [UptimeSample, { serverId: 'survival' }], [LogPreset, { serverId: 'survival' }]]);
       expect(saved).toEqual([{ id: 1, serverAccess: ['other'] }, { id: 3, serverAccess: [] }]);
       expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('label=com.docker.compose.project=survival'));
     });
 
-    it('still deletes the server when player activity cleanup fails', async () => {
+    it('keeps the server files and ID reserved when database cleanup fails', async () => {
       mockSettingsRepo.manager = { transaction: jest.fn().mockRejectedValue(new Error('db locked')) };
-      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      const files = new Set(['/app/servers/survival', '/app/servers/survival/server.json']);
+      (fs.pathExists as jest.Mock).mockImplementation(async (file) => files.has(file));
       mockExec.mockResolvedValue({ stdout: '' });
 
-      expect(await service.deleteServer('survival')).toBe(true);
+      expect(await service.deleteServer('survival')).toBe(false);
+      expect(fs.remove).not.toHaveBeenCalled();
+      expect(mockStore.removeFromIndex).not.toHaveBeenCalled();
+      const creator = new DockerComposeService({ get: () => '/app/servers' } as any, { getConfigPath: (id) => `/app/servers/${id}/server.json` } as any);
+      await expect(creator.createServer('survival')).rejects.toThrow('ya existe');
+    });
+
+    it('waits for registered writers before cleanup and releases them after a failed deletion', async () => {
+      let resume!: () => void;
+      const release = jest.fn();
+      const guard = jest.fn(() => new Promise<() => void>((resolve) => { resume = () => resolve(release); }));
+      const unregister = service.registerDeletionGuard(guard);
+      const transaction = jest.fn().mockRejectedValue(new Error('db locked'));
+      mockSettingsRepo.manager = { transaction };
+      (fs.pathExists as jest.Mock).mockResolvedValue(false).mockResolvedValueOnce(true);
+      const deleting = service.deleteServer('survival');
+      for (let i = 0; i < 10 && !resume; i++) await Promise.resolve();
+      expect(guard).toHaveBeenCalledWith('survival');
+      expect(transaction).not.toHaveBeenCalled();
+      expect(await service.deleteServer('survival')).toBe(false);
+      resume();
+      expect(await deleting).toBe(false);
+      expect(release).toHaveBeenCalledTimes(1);
+      unregister();
     });
   });
 

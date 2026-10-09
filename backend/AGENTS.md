@@ -28,7 +28,8 @@ backend/src/
 |                           paper-global.yml forwarding on member servers)
 |- modpacks/                Per-server modpack files (.zip/.mrpack) under servers/<id>/modpacks
 |- system-monitoring/       Host metrics
-|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler)
+|- metrics/                 Per-server live resources/ticks and 7-day history (1-min sampler); `uptime_samples` (running/unplanned-down minutes, 30 days, hourly pruning; planned and clean auto-stops excluded) feeds `GET /metrics/:id/uptime`
+|- log-presets/             Saved Logs-tab filters, per user and server (`/log-presets`)
 |- alerts/                  Per-server Discord alerts (down / crash loop / high CPU / high RAM), fed by the metrics sampler
 |- player-activity/         Player sessions from Docker join/leave logs (Java + Bedrock); the only session store
 |- players/                 Read-only player data from Java world files (NBT via prismarine-nbt, stats, advancements)
@@ -105,6 +106,11 @@ because `import * as` namespaces are non-configurable and `jest.spyOn` throws on
 - Use Nest exceptions and `Logger`; do not return ad-hoc error objects.
 - Keep naming consistent: files `kebab-case`, classes `PascalCase`, methods `camelCase`.
 - Keep changes surgical: no unrelated refactors, imports, or formatting churn.
+
+Server deletion uses `ServerManagementService.registerDeletionGuard` to quiesce metric
+sampling and preset writes before database cleanup. Guards release in `finally`, including
+failed deletions. Retain server.json/compose until cleanup commits so failed cleanup cannot
+free the ID; invalidate and drain the current metrics pass before clearing availability.
 
 Path and filesystem patterns (critical):
 

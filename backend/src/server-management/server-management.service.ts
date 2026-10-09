@@ -11,11 +11,14 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { Users } from 'src/users/entities/users.entity';
 import { UserInvitation } from 'src/users/entities/user-invitation.entity';
+import { UptimeSample } from 'src/metrics/entities/uptime-sample.entity';
+import { MetricSample } from 'src/metrics/entities/metric-sample.entity';
+import { LogPreset } from 'src/log-presets/entities/log-preset.entity';
 import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
 import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS } from './dto/server-config.model';
-import { AlertsService } from 'src/alerts/alerts.service';
+import { AlertsService, EXPECTED_STOP_WINDOW_MS } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
@@ -26,6 +29,8 @@ import { assertContained } from 'src/common/fs/contained-path';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
 
 const execAsync = promisify(exec);
+
+export type ServerDeletionGuard = (serverId: string) => Promise<() => void>;
 
 const DOCKER_COMMANDS = {
   COMPOSE_DOWN: (timeout: number) => `docker compose down --timeout ${timeout}`,
@@ -142,6 +147,14 @@ const REGISTRY_GAMERULES = [
 
 @Injectable()
 export class ServerManagementService {
+  private readonly deletionGuards = new Set<ServerDeletionGuard>();
+  private readonly deletingServers = new Set<string>();
+
+  registerDeletionGuard(guard: ServerDeletionGuard): () => void {
+    this.deletionGuards.add(guard);
+    return () => { this.deletionGuards.delete(guard); };
+  }
+
   private readonly logger = new Logger(ServerManagementService.name);
   private readonly SERVERS_DIR: string;
   private readonly SERVERS_HOST_DIR: string;
@@ -498,7 +511,14 @@ export class ServerManagementService {
   }
 
   private async execComposeDown(serverId: string) {
-    return this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(await this.getStopTimeout(serverId)));
+    const timeout = await this.getStopTimeout(serverId);
+    this.alertsService.markExpectedStop(serverId, timeout * 1000 + EXPECTED_STOP_WINDOW_MS);
+    try {
+      return await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(timeout));
+    } finally {
+      // Leave a fresh observation window after slow shutdowns, even when Compose rejects.
+      this.alertsService.markExpectedStop(serverId);
+    }
   }
 
   private executeProcess(
@@ -1127,11 +1147,17 @@ export class ServerManagementService {
   }
 
   async deleteServer(serverId: string): Promise<boolean> {
+    const releases: Array<() => void> = [];
+    let ownsDeletion = false;
     try {
       if (!this.validateServerId(serverId)) {
         this.logger.error(`Invalid server ID: ${serverId}`);
         return false;
       }
+
+      if (this.deletingServers.has(serverId)) return false;
+      this.deletingServers.add(serverId);
+      ownsDeletion = true;
 
       const serverDir = path.join(this.SERVERS_DIR, serverId);
       const dockerComposePath = this.getDockerComposePath(serverId);
@@ -1151,25 +1177,24 @@ export class ServerManagementService {
         }
       }
 
-      await fs.remove(serverDir);
-      await this.store.removeFromIndex(serverId);
+      for (const guard of this.deletionGuards) releases.push(await guard(serverId));
 
       // Server IDs are reusable: a new server with this ID must not inherit its player
       // history, its scheduled tasks or the users that were granted access to it.
-      try {
-        await this.settingsRepo.manager.transaction(async (manager) => {
-          await manager.delete(PlayerSession, { serverId });
-          await manager.delete(PlayerTracking, { serverId });
-          await manager.delete(ScheduledTask, { serverId });
-          for (const entity of [Users, UserInvitation]) {
-            const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
-            for (const row of grantees) row.serverAccess = row.serverAccess.filter((id) => id !== serverId);
-            if (grantees.length) await manager.save(grantees);
-          }
-        });
-      } catch (error) {
-        this.logger.warn(`Could not clean up player activity, tasks and access grants for ${serverId}`, error);
-      }
+      // Keep server.json/compose in place until cleanup commits: createServer treats the ID as taken.
+      await this.settingsRepo.manager.transaction(async (manager) => {
+        await manager.delete(PlayerSession, { serverId });
+        await manager.delete(PlayerTracking, { serverId });
+        await manager.delete(ScheduledTask, { serverId });
+        await manager.delete(MetricSample, { serverId });
+        await manager.delete(UptimeSample, { serverId });
+        await manager.delete(LogPreset, { serverId });
+        for (const entity of [Users, UserInvitation]) {
+          const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
+          for (const row of grantees) row.serverAccess = row.serverAccess.filter((id) => id !== serverId);
+          if (grantees.length) await manager.save(grantees);
+        }
+      });
 
       try {
         const { stdout: volumeList } = await execAsync(DOCKER_COMMANDS.VOLUME_LIST(this.getComposeProjectName(serverId) ?? serverId.toLowerCase()));
@@ -1183,6 +1208,10 @@ export class ServerManagementService {
         this.logger.warn(`Could not clean up docker volumes for ${serverId}`, error);
       }
 
+      await fs.remove(serverDir);
+      this.alertsService.clearState(serverId);
+      await this.store.removeFromIndex(serverId);
+
       this.logger.log(`Server ${serverId} deleted successfully`);
       await this.sendDiscordNotification('deleted', serverId);
 
@@ -1191,6 +1220,9 @@ export class ServerManagementService {
       this.logger.error(`Failed to delete server ${serverId}`, error);
       await this.sendDiscordNotification('error', serverId, { reason: 'Failed to delete server' });
       return false;
+    } finally {
+      for (const release of releases.reverse()) release();
+      if (ownsDeletion) this.deletingServers.delete(serverId);
     }
   }
 

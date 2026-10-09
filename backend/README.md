@@ -56,3 +56,12 @@ Player activity is collected in `src/player-activity/` every 30 seconds from bou
 logs, with sessions and cursors persisted atomically in SQLite. Server-authorized list/detail
 endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
 file-size and realpath boundaries. No game files or RCON settings are changed.
+
+Availability samples exclude planned stops and clean auto-stops. Metric and availability
+retention pruning runs hourly; log presets require the same view-logs permission as logs.
+
+Deletion coordinates with metrics and log presets through registered deletion guards.
+Pending samples are invalidated and started writes finish before database cleanup. Other
+servers remain eligible for sampling; preset writes for the target resume afterwards.
+If cleanup fails, the server files and ID remain
+in place for a retry; preset writes to missing servers are rejected.

@@ -120,7 +120,7 @@ Smaller, high-value items that fit the current single-node architecture.
 
 - ~~Cron-style scheduling at specific times~~ ✅ Shipped (interval or cron expression per task)
 - More flexible backup scheduling (beyond the current `backupInterval`)
-- Historical uptime and availability tracking on top of the metrics history (live uptime already ships)
+- ~~Historical uptime and availability tracking~~ ✅ Shipped (24h / 7d / 30d availability, a 30-day daily bar chart and a recent-downtime list in the Metrics tab; minutes while the panel was offline are not counted)
 
 ### Bedrock console commands
 
@@ -134,7 +134,7 @@ Smaller, high-value items that fit the current single-node architecture.
 ### Log viewer
 
 - ~~Export logs~~ ✅ Shipped (download from the Logs tab)
-- Saved log views / presets
+- ~~Saved log views / presets~~ ✅ Shipped (search, regex, level, line count and time range, saved per user and server)
 
 ### `server.properties` editor
 

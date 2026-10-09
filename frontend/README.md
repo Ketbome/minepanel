@@ -61,6 +61,9 @@ TPS and median/P95 durations. The view identifies disabled RCON, unavailable
 measurements and unsupported Bedrock ticks; resource charts remain available.
 Charts show the latest sample value, labelled vertical scales and the minimum/maximum of available samples in the selected window, without sliders. Memory charts use GiB. Hover or touch a chart to inspect a sample’s date, time and value; keyboard users can focus it and use the arrow keys (Home/End for endpoints, Escape to dismiss). Existing Discord alert
 settings remain below the charts.
+Availability history refreshes every 60 seconds and distinguishes request failures from
+unobserved periods. Its daily bars show dates and percentages on hover, keyboard focus or
+tap; narrow screens can scroll through the days.
 
 **Players** shows persistent player profiles and paginated sessions for both editions,
 including offline players: on Java inside each profile's Sessions tab (`PlayerSessions`), on

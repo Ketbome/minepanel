@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MetricSample } from './entities/metric-sample.entity';
+import { UptimeSample } from './entities/uptime-sample.entity';
 import { MetricsController } from './metrics.controller';
 import { MetricsService } from './metrics.service';
 import { ServerManagementModule } from 'src/server-management/server-management.module';
@@ -10,7 +11,7 @@ import { DockerComposeModule } from 'src/docker-compose/docker-compose.module';
 import { MonitoringService } from './monitoring.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MetricSample]), ServerManagementModule, UsersModule, AlertsModule, DockerComposeModule],
+  imports: [TypeOrmModule.forFeature([MetricSample, UptimeSample]), ServerManagementModule, UsersModule, AlertsModule, DockerComposeModule],
   controllers: [MetricsController],
   providers: [MetricsService, MonitoringService],
 })

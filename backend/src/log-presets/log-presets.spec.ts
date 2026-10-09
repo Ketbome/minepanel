@@ -1,0 +1,130 @@
+import { DataSource } from 'typeorm';
+import { Users } from 'src/users/entities/users.entity';
+import { LogPreset } from './entities/log-preset.entity';
+import { LogPresetsService } from './log-presets.service';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { LogPresetsController } from './log-presets.controller';
+import { LogPresetRemoveQueryDto, LogPresetServerQueryDto } from './dto/save-log-preset.dto';
+import { AccessControlService } from 'src/users/services/access-control.service';
+
+const dto = (name: string, serverId = 'srv') => ({ serverId, name, searchTerm: 'x', levelFilter: 'error', regex: false, lines: 500, sinceMinutes: 0 });
+
+describe('log presets', () => {
+  let db: DataSource;
+  let service: LogPresetsService;
+  let management: { registerDeletionGuard: jest.Mock };
+  let store: { readConfig: jest.Mock };
+
+  beforeEach(async () => {
+    db = await new DataSource({ type: 'sqljs', entities: [LogPreset, Users], synchronize: true }).initialize();
+    await db.getRepository(Users).save([{ username: 'ana' }, { username: 'bob' }]);
+    management = { registerDeletionGuard: jest.fn().mockReturnValue(jest.fn()) };
+    store = { readConfig: jest.fn().mockResolvedValue({ id: 'srv' }) };
+    service = new LogPresetsService(db.getRepository(LogPreset), management as any, store as any);
+    service.onModuleInit();
+  });
+
+  afterEach(async () => { service.onModuleDestroy(); await db.destroy(); });
+
+  it('rejects saves during deletion and after the server has gone', async () => {
+    const release = await management.registerDeletionGuard.mock.calls[0][0]('srv');
+    await expect(service.save(1, dto('old'))).rejects.toThrow('deletion is in progress');
+    await expect(service.remove(1, 'srv', 'old')).rejects.toThrow('deletion is in progress');
+    store.readConfig.mockResolvedValue(null);
+    release();
+    await expect(service.save(1, dto('orphan'))).rejects.toThrow('Server not found');
+    store.readConfig.mockResolvedValue({ id: 'srv' });
+    await service.save(1, dto('new'));
+    expect((await service.list(1, 'srv')).map((row) => row.name)).toEqual(['new']);
+  });
+
+  it('drains a pending save and rejects an old queued save before deletion can clean the database', async () => {
+    const repo = db.getRepository(LogPreset);
+    const original = repo.save.bind(repo);
+    let finish!: () => void;
+    const spy = jest.spyOn(repo, 'save').mockImplementationOnce((row: any) => new Promise<LogPreset>((resolve, reject) => {
+      finish = () => { void original(row).then(resolve, reject); };
+    }) as any);
+    const active = service.save(1, dto('active'));
+    for (let i = 0; i < 30 && !finish; i++) await new Promise((resolve) => setImmediate(resolve));
+    expect(finish).toBeDefined();
+    const queued = service.save(1, dto('queued'));
+    const rejected = expect(queued).rejects.toThrow('deletion is in progress');
+    let ready = false;
+    const guarded = management.registerDeletionGuard.mock.calls[0][0]('srv').then((release) => { ready = true; return release; });
+    await Promise.resolve();
+    expect(ready).toBe(false);
+    finish();
+    await active;
+    await rejected;
+    const release = await guarded;
+    await repo.delete({ serverId: 'srv' });
+    release();
+    expect(await service.list(1, 'srv')).toEqual([]);
+    spy.mockRestore();
+  });
+
+  it('overwrites a preset with the same name and scopes by user and server', async () => {
+    await service.save(1, dto('errors'));
+    await service.save(1, { ...dto('errors'), searchTerm: 'y' });
+    await service.save(1, dto('other', 'srv2'));
+    await service.save(2, dto('errors'));
+
+    expect(await service.list(1, 'srv')).toEqual([{ name: 'errors', searchTerm: 'y', levelFilter: 'error', regex: false, lines: 500, sinceMinutes: 0 }]);
+    expect(await service.list(2, 'srv')).toHaveLength(1);
+  });
+
+  it('removes a preset and caps presets per server', async () => {
+    await service.save(1, dto('a'));
+    await service.remove(1, 'srv', 'a');
+    expect(await service.list(1, 'srv')).toEqual([]);
+
+    for (let i = 0; i < 20; i++) await service.save(1, dto(`p${i}`));
+    await expect(service.save(1, dto('one-too-many'))).rejects.toThrow('At most 20');
+    await expect(service.save(1, dto('p3'))).resolves.toBeDefined();
+  });
+
+  it('keeps the limit when saves arrive at the same time', async () => {
+    for (let i = 0; i < 19; i++) await service.save(1, dto(`p${i}`));
+    const results = await Promise.allSettled([service.save(1, dto('x')), service.save(1, dto('y'))]);
+    expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected']);
+    expect(await service.list(1, 'srv')).toHaveLength(20);
+  });
+
+  it('checks server access before touching presets', async () => {
+    const svc = { list: jest.fn().mockResolvedValue([]), save: jest.fn().mockResolvedValue({}), remove: jest.fn() };
+    const assertViewLogs = jest.fn();
+    const controller = new LogPresetsController(svc as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 7 }) } as any, { assertViewLogs } as any);
+    const req = { user: { userId: 7 } };
+
+    await controller.list(req, { serverId: 'srv' });
+    await controller.save(req, dto('a'));
+    await controller.remove(req, { serverId: 'srv', name: 'a' });
+    expect(assertViewLogs).toHaveBeenCalledTimes(3);
+    expect(svc.remove).toHaveBeenCalledWith(7, 'srv', 'a');
+
+    assertViewLogs.mockImplementation(() => { throw new Error('Forbidden'); });
+    await expect(controller.list(req, { serverId: 'other' })).rejects.toThrow('Forbidden');
+  });
+
+  it('rejects query strings missing serverId or name, so a delete can never widen', async () => {
+    expect(await validate(plainToInstance(LogPresetServerQueryDto, {}))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv' }))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv', name: 'a' }))).toHaveLength(0);
+  });
+
+  it('requires log-view permission for every preset operation, even with server access', async () => {
+    const svc = { list: jest.fn(), save: jest.fn(), remove: jest.fn() };
+    const user = { id: 7, role: 'USER', serverAccess: ['srv'], permissions: { viewLogs: false } };
+    const controller = new LogPresetsController(svc as any, { getRequiredUserById: async () => user } as any, new AccessControlService());
+    const req = { user: { userId: 7 } };
+    await expect(controller.list(req, { serverId: 'srv' })).rejects.toThrow('permission to view logs');
+    await expect(controller.save(req, dto('a'))).rejects.toThrow('permission to view logs');
+    await expect(controller.remove(req, { serverId: 'srv', name: 'a' })).rejects.toThrow('permission to view logs');
+    expect(svc.list).not.toHaveBeenCalled(); expect(svc.save).not.toHaveBeenCalled(); expect(svc.remove).not.toHaveBeenCalled();
+    user.permissions.viewLogs = true;
+    await controller.list(req, { serverId: 'srv' });
+    expect(svc.list).toHaveBeenCalledWith(7, 'srv');
+  });
+});

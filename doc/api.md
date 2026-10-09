@@ -212,9 +212,12 @@ timestamp, a Unix timestamp, or a duration such as `10m` or `1h30m`; anything el
 - `GET /servers/all-resources` — the same keyed by server ID, filtered to visible servers
 - `GET /servers/:id/info` — container details plus the server's config, with secrets removed
 - `DELETE /servers/:id` — stops the server and removes its whole directory (`server.json`,
-  compose file and world data). Its player history and scheduled tasks are deleted and the ID
+  compose file and world data). Its player history, scheduled tasks, metric/uptime history and
+  saved log presets are deleted and the ID
   is removed from every user's and invitation's server access, so a new server reusing the ID
-  starts clean. Cannot be undone
+  starts clean. Pending metric/preset writes are drained before cleanup. If database cleanup
+  fails, the response reports `success: false`; server files and the ID remain reserved for
+  retry (the server may already be stopped). Cannot be undone
 - `POST /servers/:id/clear-data` — stops the server and empties `mc-data` (worlds, configs,
   mods); `server.json` is kept, so the next start rebuilds the server from its config
 - `POST /servers/regenerate-all` — admin only. Rewrites every `docker-compose.yml` from its
@@ -468,6 +471,18 @@ The endpoints require authentication and access to the requested server.
   `memoryMb`, `memoryLimitMb`, `playersOnline`, `tps`, `tickSource`, `msptMean`,
   `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
   Samples are collected every minute and retained for 7 days.
+
+### Saved log views
+
+Log presets require authentication, access to the selected server and the `viewLogs` permission.
+
+- `GET /log-presets?serverId=` — list the current user's presets for that server.
+- `PUT /log-presets` — save a preset with `serverId`, `name`, `searchTerm`, `levelFilter`,
+  `regex`, `lines` and `sinceMinutes`; an existing name is replaced.
+- `DELETE /log-presets?serverId=&name=` — remove one of the current user's presets.
+
+Writes return `409` while that server is being deleted and `404` when its stored configuration
+no longer exists. Pending writes complete or are rejected before deletion clears the presets.
 
 ### Players
 
