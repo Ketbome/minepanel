@@ -24,12 +24,16 @@ export function parseMemoryToMb(value: string): number | null {
   const unit = match[2].toLowerCase();
   const toMb: Record<string, number> = {
     b: 1 / (1024 * 1024),
+    k: 1 / 1024,
     kb: 1 / 1024,
     kib: 1 / 1024,
+    m: 1,
     mb: 1,
     mib: 1,
+    g: 1024,
     gb: 1024,
     gib: 1024,
+    t: 1024 * 1024,
     tb: 1024 * 1024,
     tib: 1024 * 1024,
   };

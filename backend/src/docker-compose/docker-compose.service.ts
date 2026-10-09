@@ -10,6 +10,7 @@ import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
 import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
 import { escapeComposeValues, unescapeComposeValues } from 'src/common/compose/compose-escape';
+import { parseMemoryToMb } from 'src/metrics/metric-parse.util';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
 import type { ComposeEdge } from 'src/settings/instance-settings.service';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
@@ -1287,6 +1288,13 @@ export class DockerComposeService implements OnApplicationBootstrap {
       const reservations = Object.fromEntries(
         Object.entries({ cpus: config.cpuReservation, memory: config.memoryReservation }).filter(([, value]) => value !== undefined && value !== ''),
       );
+      // Docker refuses to create a container that reserves more memory than its limit, and the
+      // 4G default reservation is above any maxMemory under 4G.
+      const limitMb = parseMemoryToMb(limits.memory);
+      const reservedMb = parseMemoryToMb(reservations.memory);
+      if (limitMb !== null && reservedMb !== null && reservedMb > limitMb) {
+        reservations.memory = limits.memory;
+      }
       const resources = Object.fromEntries(
         Object.entries({ limits, reservations }).filter(([, value]) => Object.keys(value).length > 0),
       );
