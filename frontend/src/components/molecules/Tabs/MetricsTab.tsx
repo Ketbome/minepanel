@@ -50,6 +50,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const [historyError, setHistoryError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uptime, setUptime] = useState<UptimeReport | null>(null);
+  const [uptimeError, setUptimeError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,8 +90,19 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
 
   useEffect(() => {
     let active = true;
-    getServerUptime(serverId).then((report) => { if (active) setUptime(report); }).catch(() => { if (active) setUptime(null); });
-    return () => { active = false; };
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const report = await getServerUptime(serverId);
+        if (active) { setUptime(report); setUptimeError(false); }
+      } catch {
+        if (active) { setUptime(null); setUptimeError(true); }
+      } finally {
+        if (active) timer = setTimeout(poll, 60_000);
+      }
+    };
+    void poll();
+    return () => { active = false; clearTimeout(timer); };
   }, [serverId, refresh]);
 
   // Every source except spark reports a mean MSPT; only NeoForge's TPS is an estimate from it.
@@ -129,7 +141,7 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
         ))}
       </div>
 
-      <UptimeCard report={uptime} />
+      <UptimeCard report={uptime} error={uptimeError} />
 
       <Card className="gap-3 py-4">
         <CardHeader className="gap-2"><CardTitle className="text-sm">{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>

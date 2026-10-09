@@ -144,7 +144,7 @@ const LogsControls: FC<LogsControlsProps> = ({ serverId, searchTerm, setSearchTe
       </div>
       <Dialog open={naming} onOpenChange={setNaming}>
         <DialogContent>
-          <form onSubmit={(e) => { e.preventDefault(); void savePreset(); }} className="flex flex-col gap-4">
+          <form onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); void savePreset(); }} className="flex flex-col gap-4">
             <DialogHeader><DialogTitle>{t("logPresetPrompt")}</DialogTitle></DialogHeader>
             <Input autoFocus maxLength={60} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("logPresetPrompt")} />
             <DialogFooter>

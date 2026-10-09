@@ -1,5 +1,6 @@
 "use client";
 
+import { useId, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { UptimeReport } from "@/services/metrics/metrics.service";
@@ -8,15 +9,18 @@ const barColor = (percent: number | null) => percent == null ? "bg-gray-700" : p
 const windowLabel = (hours: number) => hours === 24 ? "24h" : `${hours / 24}d`;
 const duration = (minutes: number) => minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 
-export function UptimeCard({ report }: Readonly<{ report: UptimeReport | null }>) {
+export function UptimeCard({ report, error = false }: Readonly<{ report: UptimeReport | null; error?: boolean }>) {
   const { t, language } = useLanguage();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const detailId = useId();
+  const selectedDay = report?.daily.find((day) => day.date === selectedDate) ?? report?.daily.at(-1);
   const hasData = report?.windows.some((window) => window.uptimePercent != null) ?? false;
 
   return (
     <Card className="gap-3 py-4">
       <CardHeader className="gap-2">
         <CardTitle className="text-sm">{t("uptimeTitle")}</CardTitle>
-        <CardDescription className="text-gray-400">{hasData ? t("uptimeHelp") : t("uptimeNoData")}</CardDescription>
+        <CardDescription role={error ? "alert" : undefined} className={error ? "text-destructive" : "text-gray-400"}>{error ? t("monitoringHistoryError") : report == null ? t("loading") : hasData ? t("uptimeHelp") : t("uptimeNoData")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         <div className="grid grid-cols-3 gap-3">
@@ -32,11 +36,16 @@ export function UptimeCard({ report }: Readonly<{ report: UptimeReport | null }>
         {report && (
           <div className="flex flex-col gap-2">
             <span className="text-xs text-gray-400">{t("uptimeDaily")}</span>
-            <ul className="flex h-10 items-end gap-0.5" aria-label={t("uptimeDaily")}>
+            <ul className="flex h-14 items-end overflow-x-auto pb-2" aria-label={t("uptimeDaily")}>
               {report.daily.map((day) => (
-                <li key={day.date} title={`${day.date} · ${day.uptimePercent == null ? t("uptimeDayNoData") : `${day.uptimePercent}%`}`} aria-label={`${day.date} ${day.uptimePercent ?? t("uptimeDayNoData")}`} className={`min-w-0 flex-1 rounded-sm ${barColor(day.uptimePercent)}`} style={{ height: day.uptimePercent == null ? "30%" : `${Math.max(20, day.uptimePercent)}%` }} />
+                <li key={day.date} className="h-full min-w-6 flex-1">
+                  <button type="button" aria-label={`${day.date} · ${day.uptimePercent == null ? t("uptimeDayNoData") : `${day.uptimePercent}%`}`} aria-describedby={detailId} aria-pressed={selectedDay?.date === day.date} onPointerEnter={() => setSelectedDate(day.date)} onFocus={() => setSelectedDate(day.date)} onClick={() => setSelectedDate(day.date)} className="flex h-full w-full items-end px-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+                    <span aria-hidden="true" className={`w-full rounded-sm ${barColor(day.uptimePercent)}`} style={{ height: day.uptimePercent == null ? "30%" : `${Math.max(20, day.uptimePercent)}%` }} />
+                  </button>
+                </li>
               ))}
             </ul>
+            <p id={detailId} className="text-xs text-gray-300">{selectedDay ? `${selectedDay.date} · ${selectedDay.uptimePercent == null ? t("uptimeDayNoData") : `${selectedDay.uptimePercent}%`}` : t("uptimeDayNoData")}</p>
           </div>
         )}
 

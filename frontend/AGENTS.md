@@ -233,6 +233,7 @@ Tooling / build (Next.js 16):
   whenever saved ones exist, so nothing in effect is hidden.
   Live polls run after completion (10s); history every 60s. Failed live requests clear
   values; history failures are shown without presenting old samples as current.
+  Availability history follows the same 60s polling/error policy; its daily bars expose values on hover, focus and tap.
 - `src/components/molecules/ServerRuntimeChips.tsx` - one-line live stat strip (version, players,
   uptime, CPU, RAM) for a running server's header; also exports the `RuntimeChip` primitive reused
   by `dashboard/ServerQuickView.tsx`. Labels live in `title`/`aria-label` so the strip stays one line.
