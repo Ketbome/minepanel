@@ -212,7 +212,7 @@ message per run, in order, and starts again after the last one.
 | Formatting | `&` color and format codes work (`&a` green, `&l` bold, `&r` reset) |
 | Delivery | Sent with `tellraw`, so they show without a `[Server]` prefix |
 | Server stopped | The due message is sent on the next run instead of being skipped. Editing the list starts again from the first message |
-| Edition | Java only: it uses RCON like command tasks, and Bedrock servers skip the task |
+| Edition | Java only: it uses RCON, as command tasks do; Bedrock servers skip the task |
 
 ## Roles and Access Control
 

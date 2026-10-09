@@ -185,7 +185,7 @@ test server on it, and check the world loads.
 **Backups are huge.** Old worlds, dynmap tiles or log folders are being archived. Add them to
 `EXCLUDES`, e.g. `*.jar,cache,logs,*.tmp,plugins/dynmap/web/tiles`.
 
-## Backups from a button
+## Schedule backups from a form
 
 [Minepanel](/) is a free, open-source web panel that runs this same sidecar for each server:
 turn it on per server, pick tar, rsync, restic (S3 and friends) or rclone, set the schedule,

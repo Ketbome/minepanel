@@ -101,7 +101,7 @@ Once it is running, the server header shows the address players connect to, with
 ```mermaid
 flowchart LR
     B["Browser"] -->|"FRONTEND_URL"| F["Frontend :3000"]
-    B -->|"BACKEND_URL"| API["Backend :8091"]
+    B -->|"NEXT_PUBLIC_BACKEND_URL"| API["Backend :8091"]
 ```
 
 The browser talks to both containers, so both URLs must be reachable from it. Add to `.env`:

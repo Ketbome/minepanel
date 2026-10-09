@@ -56,9 +56,16 @@ To also get password recovery, configure SMTP (see
 docker compose exec backend node -e "console.log(require('bcrypt').hashSync('your_new_password', 12))"
 
 docker compose stop backend
-sqlite3 data/minepanel.db "UPDATE users SET password = 'your_bcrypt_hash_here' WHERE username = 'admin';"
+# Use your admin's username; it is whatever was chosen at first setup.
+# The second statement signs out every session of that account, like a reset from the UI.
+sqlite3 data/minepanel.db "
+  UPDATE users SET password = 'your_bcrypt_hash_here' WHERE username = 'your_admin';
+  UPDATE refresh_tokens SET revoked = 1 WHERE user_id = (SELECT id FROM users WHERE username = 'your_admin');
+"
 docker compose start backend
 ```
+
+`SELECT id, username, role FROM users;` lists the accounts if you do not remember the name.
 
 `data/minepanel.db` is the bind-mount layout; with a named volume use the throwaway container
 shown in [Locked Out With SSO Only](#locked-out-with-sso-only).
@@ -406,7 +413,8 @@ SELECT id, username, role, isActive FROM users;
 ### Reset Database
 
 ::: danger WARNING
-This will delete ALL your servers, users, and configuration!
+This deletes every user, setting, API key and the audit log. Server folders under `servers/`
+are kept and reappear in the dashboard.
 :::
 
 ```bash

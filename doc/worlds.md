@@ -23,7 +23,7 @@ and the server copies it into its data directory on the next start.
 flowchart LR
     G["Shared library"] --> T["Worlds tab"]
     L["Server library"] --> T
-    T -->|"next start"| D["mc-data/level"]
+    T -->|"next start"| D["mc-data/LEVEL"]
     D --> P["World being played"]
 ```
 

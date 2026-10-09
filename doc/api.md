@@ -26,7 +26,7 @@ Minepanel uses JWT sessions stored in `httpOnly` cookies set by `POST /auth/logi
 
 | Cookie | Lifetime | Used for |
 | --- | --- | --- |
-| `access_token` | 15 minutes (JWT) | Every authenticated request |
+| `access_token` | 15 minutes by default (JWT; the deprecated `JWT_EXPIRES_IN` overrides it) | Every authenticated request |
 | `refresh_token` | 7 days | `POST /auth/refresh` only; rotated on every refresh |
 
 ```mermaid

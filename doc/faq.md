@@ -47,7 +47,9 @@ Yes, as many as hardware allows.
 
 **Import existing server?**
 Copy data to `servers/your-server/mc-data/`, then create a server with the ID `your-server`.
-The panel keeps the files (and moves server files left in `servers/your-server/` into `mc-data/`).
+The panel keeps the files and tries to move server files left in `servers/your-server/` into
+`mc-data/`. A file whose name already exists in `mc-data/`, or any file after a failed move,
+stays where it was; check the backend log.
 
 **Add mods?**
 Use Modrinth/CurseForge integration in panel.
