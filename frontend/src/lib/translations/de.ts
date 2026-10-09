@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const de: Record<TranslationKey, string> = {
+  consoleHistory: "Befehlsverlauf",
+  consoleClearHistory: "Verlauf leeren",
+  consoleEmpty: "Deine Konsole ist bereit",
+  consoleEmptyHint: "Gib unten einen Befehl ein oder wähle eine Vorlage. Befehle und Serverantworten erscheinen hier.",
+  consoleReuse: "Bearbeiten und wiederverwenden",
+  consoleReplyReceived: "Antwort empfangen",
+  consoleNoOutput: "Der Server hat keinen Text zurückgegeben.",
+  consoleKeyboardHint: "↑ ↓ wählen Vorschläge; Tab vervollständigt. Enter sendet oder übernimmt den gewählten Vorschlag. Esc schließt Vorschläge; danach blättern ↑ ↓ im Verlauf.",
+  consoleSessionHint: "Die letzten 50 Befehle bleiben nur erhalten, solange diese Ansicht geöffnet ist.",
+  consoleFindPreset: "Befehl finden",
+  consoleSearchHint: "Nach Name oder Befehl suchen…",
+  consolePresetHint: "Wähle eine Vorlage zum Bearbeiten vor dem Senden. Die Verfügbarkeit hängt vom Server und den installierten Mods ab.",
+  consoleNoMatches: "Keine passenden Befehle. Versuche eine andere Suche.",
+
   paTitle: "Spieler",
   paPrevious: "Zurück",
   paNext: "Weiter",

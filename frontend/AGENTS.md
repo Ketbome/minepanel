@@ -453,3 +453,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+Commands: `src/components/molecules/commands/command-workbench.tsx` owns the command
+input, keyboard suggestions, searchable presets and response history presentation.
+`useServerCommands.tsx` bounds history to 50 in-memory entries and guards duplicate
+submissions and stale responses. Preset/history selection only fills the input; it must
+never execute a command. Keep the workbench mounted when switching Commands/World,
+and keyed by server ID so drafts and history cannot cross servers.

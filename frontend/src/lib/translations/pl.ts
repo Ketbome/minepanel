@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const pl: Record<TranslationKey, string> = {
+  consoleHistory: "Historia poleceń",
+  consoleClearHistory: "Wyczyść historię",
+  consoleEmpty: "Konsola jest gotowa",
+  consoleEmptyHint: "Wpisz polecenie poniżej lub wybierz gotowe. Tutaj pojawią się polecenia i odpowiedzi serwera.",
+  consoleReuse: "Edytuj i użyj ponownie",
+  consoleReplyReceived: "Otrzymano odpowiedź",
+  consoleNoOutput: "Serwer nie zwrócił tekstu.",
+  consoleKeyboardHint: "↑ ↓ wybierają podpowiedzi; Tab uzupełnia. Enter wysyła lub akceptuje wybraną podpowiedź. Esc zamyka podpowiedzi; potem ↑ ↓ przeglądają historię.",
+  consoleSessionHint: "Ostatnie 50 poleceń jest przechowywanych tylko, gdy ten ekran jest otwarty.",
+  consoleFindPreset: "Znajdź polecenie",
+  consoleSearchHint: "Szukaj nazwy lub polecenia…",
+  consolePresetHint: "Wybierz gotowe polecenie do edycji przed wysłaniem. Dostępność zależy od serwera i zainstalowanych modów.",
+  consoleNoMatches: "Brak pasujących poleceń. Spróbuj innego wyszukiwania.",
+
   paTitle: "Gracze",
   paPrevious: "Poprzednia",
   paNext: "Następna",

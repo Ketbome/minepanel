@@ -175,6 +175,24 @@ References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/la
 
 ![Tasks tab: a restart task on a fixed interval](/img/server-tasks.webp)
 
+### Command console
+
+![Java command console with command history and searchable presets](/img/command-console.webp)
+
+On Java servers, **Commands** combines a searchable preset library with a command input
+and timestamped server replies. Selecting a preset or the reuse button fills the input
+for editing; **Send** (or Enter) executes it. Preset support depends on the server and
+installed mods. You can also type your own commands, with or without a leading `/`.
+
+- While typing, use ↑/↓ to select a suggestion and Tab to complete it. Enter accepts
+  a selected suggestion; press Enter again to send it. Escape closes suggestions.
+- With suggestions closed, ↑/↓ browse previous commands and return to your draft.
+- The console keeps the last 50 command/reply pairs, including failures and empty replies.
+  **Clear history** clears the display. History is only in memory: leaving the tab,
+  changing servers or refreshing clears it. Switching between Commands and World keeps it.
+- A running server and an RCON port are required. While a command is pending, another
+  cannot be submitted. Bedrock command execution remains in the Logs tab.
+
 ### Event commands
 
 The **Lifecycle** tab has an **Event commands** card (Java): console commands that run by

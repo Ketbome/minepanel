@@ -179,3 +179,8 @@ stat deltas to those sessions, never sessions of its own. It shows in the Player
 Session history comes from bounded Docker join/leave logs and SQLite cursors, not browser
 polling or `server.json`. Unknown intervals must not be counted as playtime; Java saved-world
 statistics are separate from recorded session totals.
+
+The Java Commands tab uses `frontend/src/components/molecules/commands/command-workbench.tsx`
+for presets and keyboard input. `useServerCommands.tsx` retains at most 50 command/reply
+pairs in memory; history is local to the open tab and clears on server changes. Preset
+and history selection only prepare a command; execution requires Send or Enter.
