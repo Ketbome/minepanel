@@ -298,6 +298,20 @@ describe('AlertsService', () => {
     });
   });
   describe('incident recovery', () => {
+    it('retries recovery on the next healthy sample if dispatch rejects', async () => {
+      alertConfigRepo.find.mockResolvedValue([downConfig()]);
+      await service.evaluate({ srv: running });
+      await service.evaluate({ srv: stopped });
+      discordService.sendOperationalAlert.mockRejectedValueOnce(new Error('settings unavailable'));
+
+      await expect(service.evaluate({ srv: running })).rejects.toThrow('settings unavailable');
+      await service.evaluate({ srv: running });
+      await service.evaluate({ srv: running });
+
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(2);
+      expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'down', 'error');
+    });
+
     it('reports recovery exactly once after an unexpected down transition', async () => {
       alertConfigRepo.find.mockResolvedValue([downConfig()]);
       await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });

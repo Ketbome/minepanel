@@ -575,6 +575,9 @@ Recovery closes the same warning/error level as the original incident. The **All
 switch mutes all alert rules and clears incidents, sustained-sample counters and cooldowns
 on the next monitoring evaluation. Re-enabling starts fresh, without recovery messages for
 the muted period. Normal lifecycle messages have their own switch.
+If recovery notification preparation fails (for example, settings cannot be read), the
+incident is retained for another attempt on the next healthy sample. Provider timeouts
+remain subject to the delivery policy above; they do not introduce a persistent retry queue.
 
 If a saved Telegram token cannot be decrypted after rotating `JWT_SECRET`, Telegram is
 unavailable until the token is replaced; Discord and email continue independently. Account

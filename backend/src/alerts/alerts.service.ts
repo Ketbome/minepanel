@@ -265,8 +265,9 @@ export class AlertsService {
   }
 
   private async recover(serverId: string, state: ServerAlertState, type: AlertType): Promise<void> {
-    if (!state.incidents.delete(type)) return;
+    if (!state.incidents.has(type)) return;
     await this.notificationsService.sendOperationalAlert('recovery', serverId, type, type === 'down' || type === 'crash' ? 'error' : 'warning');
+    state.incidents.delete(type);
   }
 
   private isInCooldown(state: ServerAlertState, type: AlertType, cooldownMinutes: number): boolean {
