@@ -225,8 +225,12 @@ export class CurseforgeService {
     });
   }
 
-  // Never throws: the result is reported next to the key field, and a failed
-  // check must not block saving it (CurseForge itself may be the thing down).
+  /**
+   * Checks a CurseForge API key with a cheap authenticated call (the Minecraft game record).
+   *
+   * Never throws: the result is reported next to the key field, and a failed check must not
+   * block saving it (CurseForge itself may be the thing down).
+   */
   async testApiKey(apiKey: string): Promise<CurseforgeKeyCheck> {
     if (!apiKey) {
       return { ok: false, code: 'not_configured' };
@@ -240,6 +244,7 @@ export class CurseforgeService {
     }
   }
 
+  /** Maps a failed key check to the reason shown to the user. */
   private keyCheckFailureCode(error: unknown): CurseforgeKeyCheckCode {
     if (!axios.isAxiosError(error)) {
       return 'unexpected';

@@ -39,6 +39,7 @@ function SourceBadge({ label, tone }: { label: string; tone: 'unset' | 'db' | 'e
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${color}`}>{label}</span>;
 }
 
+/** Settings > Integrations: CurseForge key and Discord webhook, plus SMTP and OIDC for admins. */
 export default function IntegrationsSettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
@@ -123,6 +124,7 @@ export default function IntegrationsSettingsPage() {
     );
   }
 
+  /** Saves the typed CurseForge key and Discord webhook; blank fields keep what is stored. */
   const saveBasic = async () => {
     setSavingBasic(true);
     const edit = cfKeyEdits.current;
@@ -146,6 +148,7 @@ export default function IntegrationsSettingsPage() {
     }
   };
 
+  /** Tests the typed key (or the saved one) and shows the result unless the key was edited meanwhile. */
   const handleTestCfKey = async () => {
     setTestingCfKey(true);
     const edit = cfKeyEdits.current;

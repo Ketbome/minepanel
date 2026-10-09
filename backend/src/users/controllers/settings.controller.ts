@@ -84,6 +84,10 @@ export class SettingsController {
     return { ...proxy, running };
   }
 
+  /**
+   * Saves the caller's settings. Secrets and instance-wide sections need the system settings
+   * permission; a new CurseForge key is also checked, and the result returned as `cfApiKeyCheck`.
+   */
   @Patch()
   async updateSettings(@Request() req, @Body() dto: UpdateSettingsDto) {
     const user = req.user as PayloadToken;
@@ -127,8 +131,10 @@ export class SettingsController {
     };
   }
 
-  // Tests the typed key when one is sent, so it can be checked before saving;
-  // otherwise the saved one.
+  /**
+   * Tests a CurseForge key without storing it: the typed one when sent, so it can be checked
+   * before saving, otherwise the saved one.
+   */
   @Post('test-curseforge-key')
   async testCurseforgeKey(@Request() req, @Body() dto: TestCurseforgeKeyDto) {
     const user = req.user as PayloadToken;
