@@ -10,7 +10,9 @@ import { MonitoringService } from './monitoring.service';
 import { computeDaily, computeIncidents, computeWindows } from './uptime.util';
 
 import { TickSource } from './tick-stats';
+import { ServerStoreService } from 'src/docker-compose/server-store.service';
 const SAMPLE_INTERVAL_MS = 60_000;
+const PRUNE_INTERVAL_MS = 60 * 60_000;
 const RETENTION_DAYS = 7;
 const UPTIME_RETENTION_DAYS = 30;
 const UPTIME_WINDOWS_HOURS = [24, 168, 720];
@@ -33,6 +35,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MetricsService.name);
   private timer: NodeJS.Timeout | null = null;
   private sampling = false;
+  private lastPruneAt: number | null = null;
 
   // ponytail: in memory, so a crash while the panel itself is off stays unknown. Persist if that matters.
   private readonly availability = new Map<string, 'up' | 'down' | 'parked'>();
@@ -45,6 +48,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     private readonly serverManagement: ServerManagementService,
     private readonly alertsService: AlertsService,
     private readonly monitoring: MonitoringService,
+    private readonly store: ServerStoreService,
   ) {}
 
   onModuleInit(): void {
@@ -98,7 +102,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   // true/false is a sample; null skips it. A stop the panel asked for, and everything after it,
   // is not downtime, so a server parked for days keeps its percentage. A stop nobody asked for
   // is downtime until the server runs again.
-  private uptimeState(serverId: string, status: string): boolean | null {
+  private async uptimeState(serverId: string, status: string): Promise<boolean | null> {
     const previous = this.availability.get(serverId);
     if (status === 'running') {
       this.availability.set(serverId, 'up');
@@ -108,7 +112,23 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       this.availability.delete(serverId);
       return null;
     }
-    if (previous === 'up') this.availability.set(serverId, this.alertsService.isExpectedStop(serverId) ? 'parked' : 'down');
+    if (previous === 'up') {
+      let planned = this.alertsService.isExpectedStop(serverId);
+      if (!planned && status === 'stopped') {
+        try {
+          const config = await this.store.readConfig(serverId);
+          if (config?.enableAutoStop) {
+            const exit = await this.serverManagement.getCrashInfo(serverId);
+            if (!exit) return null;
+            planned = exit.exitCode === 0;
+          }
+        } catch {
+          // Retry on the next sample rather than classify an unreadable auto-stop as downtime.
+          return null;
+        }
+      }
+      this.availability.set(serverId, planned ? 'parked' : 'down');
+    }
     return this.availability.get(serverId) === 'down' ? false : null;
   }
 
@@ -129,10 +149,11 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
       const now = new Date();
       const samples: MetricSample[] = [];
-      const uptime = Object.entries(resources).flatMap(([serverId, data]) => {
-        const running = this.uptimeState(serverId, data.status);
-        return running === null ? [] : [this.uptimeRepo.create({ serverId, running, createdAt: now })];
-      });
+      const uptime: UptimeSample[] = [];
+      for (const [serverId, data] of Object.entries(resources)) {
+        const running = await this.uptimeState(serverId, data.status);
+        if (running !== null) uptime.push(this.uptimeRepo.create({ serverId, running, createdAt: now }));
+      }
 
       const entries = Object.entries(resources);
       // Bound RCON concurrency across large installations.
@@ -185,6 +206,9 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async pruneOldSamples(): Promise<void> {
+    const now = Date.now();
+    if (this.lastPruneAt !== null && now - this.lastPruneAt < PRUNE_INTERVAL_MS) return;
+    this.lastPruneAt = now;
     // Keep sql.js writes sequential, but a failure in one table must not skip the other.
     for (const [name, repo, days] of [['metric', this.sampleRepo, RETENTION_DAYS], ['uptime', this.uptimeRepo, UPTIME_RETENTION_DAYS]] as const) {
       try {

@@ -49,7 +49,10 @@ server produces no new logs. Selecting all time disables that clock.
 Planned shutdowns are excluded from downtime for the configured shutdown grace period
 plus an observation buffer, renewed when the shutdown command completes. Deleting a
 server clears its in-memory alert state so a reused ID does not inherit stop suppression.
-Metric and availability retention cleanups are attempted independently.
+Metric and availability retention cleanups run hourly and are attempted independently.
+Auto-stop is treated as planned only when enabled and the container exits successfully
+(code 0); crashes still count as downtime. Unknown exit information stays unobserved.
+Saved log presets require permission to view the server logs for listing, saving and deletion.
 | Log export | Download the last 10,000 log lines as a `.log` file from the Logs tab |
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |

@@ -6,6 +6,7 @@ import { MetricSample } from './entities/metric-sample.entity';
 import { UptimeSample } from './entities/uptime-sample.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
+import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 
 describe('MetricsService', () => {
@@ -14,6 +15,7 @@ describe('MetricsService', () => {
   let uptimeRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock };
   let alertsService: { evaluate: jest.Mock; isExpectedStop: jest.Mock };
+  let store: { readConfig: jest.Mock };
 
   beforeEach(async () => {
     sampleRepo = {
@@ -25,6 +27,7 @@ describe('MetricsService', () => {
     uptimeRepo = { find: jest.fn().mockResolvedValue([]), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
     serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined), isExpectedStop: jest.fn().mockReturnValue(false) };
+    store = { readConfig: jest.fn().mockResolvedValue({ enableAutoStop: false }) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +36,7 @@ describe('MetricsService', () => {
         { provide: getRepositoryToken(UptimeSample), useValue: uptimeRepo },
         { provide: ServerManagementService, useValue: serverManagement },
         { provide: AlertsService, useValue: alertsService },
+        { provide: ServerStoreService, useValue: store },
         { provide: MonitoringService, useValue: { getSnapshot: jest.fn().mockResolvedValue({ tps: 19.5, msptMedian: 30, msptP95: 60, playersOnline: 3 }) } },
       ],
     }).compile();
@@ -90,6 +94,40 @@ describe('MetricsService', () => {
   });
 
   describe('collectSamples', () => {
+    it('prunes on the first sample and then hourly rather than every minute', async () => {
+      const start = Date.now();
+      const clock = jest.spyOn(Date, 'now').mockReturnValue(start);
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({});
+      try {
+        await (service as any).collectSamples();
+        clock.mockReturnValue(start + 60_000);
+        await (service as any).collectSamples();
+        expect(sampleRepo.delete).toHaveBeenCalledTimes(1);
+        expect(uptimeRepo.delete).toHaveBeenCalledTimes(1);
+        clock.mockReturnValue(start + 3_600_000);
+        await (service as any).collectSamples();
+        expect(sampleRepo.delete).toHaveBeenCalledTimes(2);
+        expect(uptimeRepo.delete).toHaveBeenCalledTimes(2);
+      } finally { clock.mockRestore(); }
+    });
+
+    it.each([
+      [true, 0, []], [true, 1, [false]], [true, null, []], [false, 0, [false]],
+    ])('classifies auto-stop=%s with exit=%s without hiding crashes', async (enableAutoStop, exitCode, expected) => {
+      store.readConfig.mockResolvedValue({ enableAutoStop });
+      serverManagement.getCrashInfo.mockResolvedValue(exitCode === null ? null : { exitCode, logTail: '' });
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      uptimeRepo.save.mockClear();
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'stopped' } });
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save.mock.calls.flatMap(([rows]) => rows).map((row) => row.running)).toEqual(expected);
+      if (enableAutoStop && exitCode === 0) {
+        await (service as any).collectSamples();
+        expect(uptimeRepo.save).not.toHaveBeenCalled();
+      }
+    });
+
     it.each(['metrics', 'uptime'])('attempts both retention cleanups when %s pruning fails', async (failed) => {
       const repo = failed === 'metrics' ? sampleRepo : uptimeRepo;
       repo.delete.mockRejectedValueOnce(new Error('cleanup failed'));
@@ -101,6 +139,18 @@ describe('MetricsService', () => {
       expect(sampleRepo.delete).toHaveBeenCalledTimes(1);
       expect(uptimeRepo.delete).toHaveBeenCalledTimes(1);
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('cleanup failed'));
+    });
+
+    it('retries an unknown stop classification after a config read failure', async () => {
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      uptimeRepo.save.mockClear();
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'stopped' } });
+      store.readConfig.mockRejectedValueOnce(new Error('unavailable'));
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).not.toHaveBeenCalled();
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).toHaveBeenCalledWith([expect.objectContaining({ running: false })]);
     });
 
     it('should record availability for every known server, running or not', async () => {

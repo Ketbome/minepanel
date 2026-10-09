@@ -1,7 +1,7 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-// One row per server per sampler tick, running or not. Minutes the backend itself was down have
-// no row, so they stay unknown instead of counting as downtime.
+// One row per observed running or unplanned-down minute. Planned/clean auto-stops and
+// unknown periods have no row. Samples expire after 30 days, with hourly pruning.
 @Entity('uptime_samples')
 @Index(['serverId', 'createdAt'])
 @Index(['createdAt'])

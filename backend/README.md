@@ -56,3 +56,6 @@ Player activity is collected in `src/player-activity/` every 30 seconds from bou
 logs, with sessions and cursors persisted atomically in SQLite. Server-authorized list/detail
 endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
 file-size and realpath boundaries. No game files or RCON settings are changed.
+
+Availability samples exclude planned stops and clean auto-stops. Metric and availability
+retention pruning runs hourly; log presets require the same view-logs permission as logs.

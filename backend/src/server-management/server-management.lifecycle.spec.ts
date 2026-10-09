@@ -212,6 +212,7 @@ describe('ServerManagementService lifecycle', () => {
         { getAllServersRuntimeStats: async () => ({ srv: { status, cpuUsage: 'N/A' } }) } as any,
         tracker,
         {} as any,
+        { readConfig: async () => ({ enableAutoStop: false }) } as any,
       );
       compose = 'services:\n  mc:\n    stop_grace_period: 600s\n';
       route(/docker compose down/, async () => {
