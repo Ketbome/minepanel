@@ -12,79 +12,97 @@ head:
 ## Overview
 
 ```mermaid
-flowchart TB
-    User["👤 User"] --> Browser["🌐 Browser"]
-    Browser --> Frontend["⚛️ Frontend<br/>Next.js :3000"]
-    Frontend <-->|REST API| Backend["🔧 Backend<br/>NestJS :8091"]
-    Backend <-->|Docker Socket| Docker["🐳 Docker Engine"]
-    Backend <-->|SQLite| DB["💾 Database"]
-
-    subgraph servers["Minecraft Servers"]
-        MC1["🎮 Server 1"]
-        MC2["🎮 Server 2"]
-    end
-
-    Docker --> servers
-
-    style Frontend fill:#0f172a,stroke:#3b82f6,color:#fff
-    style Backend fill:#0f172a,stroke:#22c55e,color:#fff
-    style Docker fill:#0f172a,stroke:#0ea5e9,color:#fff
+flowchart LR
+    B["Browser"] --> F["Frontend :3000"]
+    F -->|"REST"| API["Backend :8091"]
+    API --> DB[("SQLite")]
+    API -->|"docker.sock"| D["Docker"]
+    D --> MC["Server containers"]
+    D --> E["Edge proxy"]
 ```
+
+| Piece | Runs as | Notes |
+| --- | --- | --- |
+| Frontend | `frontend` container (Next.js) | Talks only to the backend API |
+| Backend | `backend` container (NestJS) | Owns `servers/` and `data/`, drives Docker through the socket |
+| Database | `data/minepanel.db` (SQLite via sql.js) | Users, settings, audit, metrics, player sessions |
+| Minecraft servers | One compose project per server | `itzg/minecraft-server` or `itzg/minecraft-bedrock-server` |
+| Edge proxy | Its own compose project | mc-router in `data/proxy/` or Velocity in `data/velocity/`, never both |
 
 ## Components
 
 ### Frontend (Next.js)
 
-- **Tech:** Next.js 16, React 19, TypeScript, TailwindCSS, shadcn/ui
+- **Tech:** Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui
 - **Role:** Web interface, API calls, real-time updates
 
 ### Backend (NestJS)
 
-- **Tech:** NestJS, TypeScript, Passport.js, bcrypt
+- **Tech:** NestJS, TypeScript, TypeORM + sql.js (SQLite), Passport.js, bcrypt
 - **Role:** REST API, Docker management, authentication
 
 ### Docker Integration
 
-Backend communicates via `/var/run/docker.sock` to:
+The backend runs the `docker` / `docker compose` CLI against the mounted
+`/var/run/docker.sock` to:
 
-- Create/start/stop containers
-- Read logs
-- Execute commands (RCON)
-- Monitor resources
-- Read container start time (`.State.StartedAt`) for per-server uptime
-- Run the bundled `mc-monitor` probe inside Java and Bedrock containers for player totals and version
+| Task | How |
+| --- | --- |
+| Start / stop / restart | `docker compose up -d` / `down` in the server's folder |
+| Logs | Bounded `docker logs` windows |
+| Console commands | `rcon-cli` inside the container (RCON) |
+| Resources and uptime | `docker stats`, `.State.StartedAt` |
+| Players and version | The bundled `mc-monitor` probe (Java and Bedrock) |
 
 ## Data Flow
 
 ### Creating a Server
 
+Creating a server only writes files; nothing runs until it is started.
+
 ```mermaid
 sequenceDiagram
-    User->>Frontend: Fill form
-    Frontend->>Backend: POST /servers
-    Backend->>Docker: docker compose up
-    Docker-->>Backend: Container ready
-    Backend-->>Frontend: 201 Created
+    participant UI as Frontend
+    participant API as Backend
+    participant FS as servers/id
+    participant D as Docker
+    UI->>API: POST /servers
+    API->>FS: server.json
+    API->>FS: docker-compose.yml
+    API-->>UI: 201 Created
+    UI->>API: POST /servers/id/start
+    API->>FS: Regenerate compose
+    API->>D: docker compose up -d
 ```
+
+`server.json` is the source of truth. `docker-compose.yml` is regenerated from it before
+every start and is never read back.
 
 ### Server Container
 
 Each server uses [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server):
 
 ```yaml
+# Simplified excerpt of a generated servers/survival/docker-compose.yml
 services:
-  my-server:
+  mc:
     image: itzg/minecraft-server:latest
     environment:
+      ID_MANAGER: survival
       EULA: 'TRUE'
-      TYPE: 'PAPER'
-      VERSION: '1.20.1'
-      MEMORY: '2G'
+      TYPE: PAPER
+      VERSION: 1.21.4
+      INIT_MEMORY: 1G
+      MAX_MEMORY: 2G
+      ENABLE_RCON: 'true'
     ports:
       - '25565:25565'
     volumes:
-      - ./mc-data:/data
+      - /home/user/minepanel/servers/survival/mc-data:/data
+      - /home/user/minepanel/servers/survival/modpacks:/modpacks:ro
 ```
+
+Volume sources are absolute **host** paths, see [Host paths](#base-dir-explained).
 
 ## Directory Structure
 
@@ -92,55 +110,73 @@ services:
 minepanel/
 ├── docker-compose.yml
 ├── .env
-├── data/
-│   └── minepanel.db      # SQLite database
-└── servers/
-    ├── servers.json      # Derived index (cache, safe to delete)
-    ├── server-1/
-    │   ├── server.json   # Source of truth for this server
-    │   ├── docker-compose.yml  # Generated from server.json
-    │   ├── mc-data/      # World, plugins, mods
-    │   │   └── worlds/   # World sources (folders, zip, tar)
-    │   └── backups/
-    └── server-2/
+├── data/                       # mounted at /app/data
+│   ├── minepanel.db            # SQLite database
+│   ├── proxy/                  # mc-router compose project + routes.json
+│   └── velocity/               # Velocity compose project + server/
+└── servers/                    # mounted at /app/servers
+    ├── servers.json            # Derived index (cache, safe to delete)
+    ├── .world/worlds/          # World Library (shared by all servers)
+    └── survival/
+        ├── server.json         # Source of truth for this server
+        ├── docker-compose.yml  # Generated from server.json
+        ├── mc-data/            # /data in the container: world, plugins, mods
+        ├── worlds/             # This server's world sources (folders, zip, tar)
+        ├── modpacks/           # Uploaded modpacks, mounted read-only
+        └── backups/            # mc-backup output (default location)
 ```
 
 ## Security
 
 ```mermaid
 sequenceDiagram
-    User->>Frontend: Login
-    Frontend->>Backend: POST /auth/login
-    Backend->>Backend: Validate (bcrypt)
-    Backend->>Frontend: JWT in httpOnly cookie
-    Frontend->>User: ✅ Logged in
+    participant UI as Frontend
+    participant API as Backend
+    UI->>API: POST /auth/login
+    API->>API: bcrypt compare
+    API-->>UI: access + refresh cookies
+    UI->>API: Requests with cookie
+    API-->>UI: 401 when expired
+    UI->>API: POST /auth/refresh
+    API-->>UI: New cookies
 ```
 
-- Passwords: bcrypt (12 rounds)
-- Sessions: JWT in httpOnly cookies
-- CORS: Controlled via `FRONTEND_URL`
+| | |
+| --- | --- |
+| Passwords | bcrypt, 12 rounds |
+| Access token | JWT, 15 minutes, `httpOnly` cookie |
+| Refresh token | Random, 7 days, stored hashed, rotated on every refresh |
+| CORS | Allowed origin is `FRONTEND_URL` |
+
+Details and endpoints: [API Reference](/api#authentication).
 
 ### Docker Socket
 
-⚠️ Docker socket = root access. Only trusted users should access Minepanel.
+::: warning
+Access to the Docker socket is root access to the host. Only give Minepanel accounts to people
+you trust with that.
+:::
 
 Optional: Use [Docker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy) for additional security.
 
 ## BASE_DIR Explained
 
-When Minepanel (in a container) creates Minecraft containers, volume paths are interpreted **from the host**:
+The backend writes files through its own mounts (`/app/servers`, `/app/data`), but the compose
+files it generates are run by the Docker daemon **on the host**, so their volume sources must be
+host paths:
 
-```yaml
-# Without BASE_DIR (fails)
-volumes:
-  - ./mc-data:/data  # Docker looks on HOST, not inside Minepanel container
-
-# With BASE_DIR (works)
-environment:
-  - BASE_DIR=/home/user/minepanel
-volumes:
-  - /home/user/minepanel/servers/my-server/mc-data:/data
+```mermaid
+flowchart LR
+    H["Host: .../servers"] -->|"mounted at"| C["Backend: /app/servers"]
+    C -->|"writes"| Y["docker-compose.yml"]
+    Y -->|"host path"| D["Docker daemon"]
+    D -->|"mounts"| S["Server: /data"]
 ```
+
+At startup the backend inspects its own container and reads the host `Source` of the
+`/app/servers` and `/app/data` mounts (`backend/src/config.ts`). `BASE_DIR` is only the
+fallback when that is not possible (local development without Docker). See
+[Storage & Scaling](/storage-scaling) for named volumes and network filesystems.
 
 This is the same pattern used by Portainer, Yacht, and other Docker management panels.
 
@@ -150,7 +186,7 @@ This is the same pattern used by Portainer, Yacht, and other Docker management p
 | ---------- | --------------------- | ----------------------------- |
 | Frontend   | Next.js               | SSR, great DX                 |
 | Backend    | NestJS                | TypeScript native, modular    |
-| Database   | SQLite                | Simple, no setup              |
+| Database   | SQLite (sql.js)       | Simple, no setup              |
 | Containers | Docker                | Isolation, portability        |
 | MC Images  | itzg/minecraft-server | Most popular, well maintained |
 

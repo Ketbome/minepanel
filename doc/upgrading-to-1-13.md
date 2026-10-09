@@ -21,6 +21,10 @@ the panel writes every `$` from a server's settings as `$$`, Compose's literal d
 so the value reaches the container exactly as typed. The change applies to each server
 the next time it starts, when its compose file is rebuilt from `server.json`.
 
+| You type | Generated compose file | The server receives |
+| --- | --- | --- |
+| `Cost $5` | `Cost $$5` | `Cost $5` |
+
 Check the environment variables, volumes, labels and text fields (MOTD, server name)
 of your servers for two cases:
 

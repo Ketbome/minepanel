@@ -31,31 +31,34 @@ cd minepanel
 
 ```
 minepanel/
-├── backend/          # NestJS API
+├── backend/                  # NestJS API (read backend/AGENTS.md first)
 │   ├── src/
-│   │   ├── auth/
-│   │   ├── server-management/
-│   │   ├── discord/
-│   │   ├── system-monitoring/
-│   │   ├── docker-compose/
+│   │   ├── auth/             # JWT cookies, OIDC SSO
+│   │   ├── server-management/ # start/stop, logs, commands
+│   │   ├── docker-compose/   # server.json -> docker-compose.yml
+│   │   ├── proxy/            # mc-router and Velocity
+│   │   ├── files/  metrics/  players/  activity/  ...
 │   │   ├── settings/
 │   │   └── users/
 │   └── test/
-├── frontend/         # Next.js UI
-│   ├── src/
-│   │   ├── app/
-│   │   ├── components/
-│   │   ├── lib/
-│   │   └── services/
-│   └── public/
-└── doc/             # VitePress docs
+├── frontend/                 # Next.js UI (read frontend/AGENTS.md first)
+│   └── src/  app/  components/  lib/  services/
+└── doc/                      # VitePress docs
 ```
 
 ## Run locally
 
-The repo is a pnpm workspace (`backend` + `frontend`). Requirements: Node 24+ and
-pnpm 10 (`corepack enable`). `pnpm install` at the root installs both apps and the
-git hooks.
+The repo is a pnpm workspace (`backend`, `frontend`, `doc`). `pnpm install` at the root
+installs everything and the git hooks.
+
+```mermaid
+flowchart LR
+    B["Browser"] --> F["Frontend :3000"]
+    F -->|"REST"| API["Backend :8091"]
+    API -->|"docker CLI"| D["Local Docker"]
+```
+
+The backend needs a working `docker` CLI on the machine: it starts real server containers.
 
 ### Backend
 
@@ -77,30 +80,37 @@ Runs on `http://localhost:3000`
 
 ### Environment files
 
+Start from `backend/.env.example` and `frontend/.env.example`. Keep comments on their own
+line: a trailing `# comment` after a value can become part of the value.
+
 **backend/.env:**
 
 ```bash
-FRONTEND_URL= 'http://localhost:3000' # URL of the frontend application
+FRONTEND_URL='http://localhost:3000'
 # Generate a strong random secret: openssl rand -base64 32
-JWT_SECRET= # Example: your-super-secret-jwt-key-change-this-in-production
-# JWT_EXPIRES_IN=20s # Deprecated override of the 15m access token TTL; only useful to test the refresh flow
-SMTP_HOST= # Optional: SMTP host for password recovery
+JWT_SECRET=
+# Deprecated override of the 15m access token TTL; only useful to test the refresh flow
+# JWT_EXPIRES_IN=20s
+# Optional: SMTP for password recovery
+SMTP_HOST=
 SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM='Minepanel <no-reply@example.com>'
 PASSWORD_RESET_TOKEN_EXPIRES_IN_MINUTES=60
-DB_PATH=./data/minepanel.db
 BASE_DIR=.
-
 ```
+
+The SQLite database path is fixed at `/app/data/minepanel.db` (`backend/src/config.ts`).
 
 **frontend/.env:**
 
 ```bash
-NEXT_PUBLIC_BACKEND_URL='http://localhost:8091' # URL of the backend API, it's important start with http:// or https://
-NEXT_PUBLIC_DEFAULT_LANGUAGE=en # en, es, nl, de, pl, fr, ru, pt, tr
+# URL of the backend API, must start with http:// or https://
+NEXT_PUBLIC_BACKEND_URL='http://localhost:8091'
+# en, es, nl, de, pl, fr, ru, pt, tr
+NEXT_PUBLIC_DEFAULT_LANGUAGE=en
 ```
 
 ## Tech stack
@@ -121,13 +131,16 @@ NEXT_PUBLIC_DEFAULT_LANGUAGE=en # en, es, nl, de, pl, fr, ru, pt, tr
 
 ## Build for production
 
-```bash
-# Build image
-docker build -t minepanel:local .
+Images build from the repo root, where the pnpm lockfile lives:
 
-# Run it
-docker compose up -d
-```
+| Image | Command |
+| --- | --- |
+| All-in-one (backend + frontend) | `docker build -t minepanel:local .` |
+| Backend | `docker build -f backend/Dockerfile -t minepanel-backend:local .` |
+| Frontend | `docker build -f frontend/Dockerfile -t minepanel-frontend:local .` |
+
+The root `docker-compose.yml` pulls the published images; point its `image:` lines at your
+local tags to run what you built, or use `docker compose -f docker-compose.development.yml up --build`.
 
 ## Contributing
 
@@ -138,9 +151,9 @@ Check [CONTRIBUTING.md](https://github.com/Ketbome/minepanel/blob/main/CONTRIBUT
 1. Fork the repo
 2. Create a branch: `git checkout -b feature/thing`
 3. Make changes
-4. Test: `pnpm test`
-5. Lint: `pnpm lint` (or `pnpm verify` for the full pre-push gate)
-6. Push and open PR
+4. Run `pnpm verify` (lint + typecheck + tests). The pre-push hook runs it; CI runs the
+   same checks as separate steps and also builds the backend and frontend
+5. Push and open PR
 
 ### Commit format
 
@@ -209,7 +222,7 @@ pnpm --filter ./backend start:debug
 **Logs:**
 
 ```bash
-docker compose logs -f minepanel
+docker compose logs -f backend
 ```
 
 ## Troubleshooting
@@ -237,11 +250,21 @@ pnpm install
 Releases are cut by CI on merge to `main`; there is no manual tagging and no
 CHANGELOG file.
 
+```mermaid
+flowchart LR
+    M["Merge to main"] --> CI["CI: checks<br/>+ builds"]
+    CI -->|"green"| P["docker-publish"]
+    P --> I["3 images<br/>amd64 + arm64"]
+    I --> T["Tag v1.x.y"]
+```
+
 1. `config.json` holds the `major.minor` version. Bump it only for a feature or
    breaking release.
-2. On merge to `main`, `.github/workflows/docker-publish.yml` derives the patch
-   number from the existing `v<major>.<minor>.*` tags, creates the tag, and pushes
-   the images to Docker Hub with `APP_VERSION` baked in.
+2. After CI passes on a push to `main` that changes the apps (or on a manual run),
+   `.github/workflows/docker-publish.yml` derives the patch number from the existing
+   `v<major>.<minor>.*` tags, builds and pushes the three images (`minepanel`,
+   `minepanel-backend`, `minepanel-frontend`) to Docker Hub, and creates the tag once all
+   three are pushed. `APP_VERSION` is baked into `minepanel` and `minepanel-backend`.
 3. Release notes are generated by GitHub from PR labels, configured in
    `.github/release.yml`.
 

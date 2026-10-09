@@ -19,6 +19,14 @@ Minepanel keeps the worlds you *can* run separate from the world a server *is*
 running. You drop worlds into a library, pick one from the server's **Worlds** tab,
 and the server copies it into its data directory on the next start.
 
+```mermaid
+flowchart LR
+    G["Shared library"] --> T["Worlds tab"]
+    L["Server library"] --> T
+    T -->|"next start"| D["mc-data/LEVEL"]
+    D --> P["World being played"]
+```
+
 ::: warning Java Edition only
 World switching uses `WORLD`, `LEVEL` and `FORCE_WORLD_COPY` from
 `itzg/docker-minecraft-server`, which Bedrock does not support. Bedrock servers have
@@ -52,6 +60,8 @@ does not turn into a broken entry.
 
 ## Picking a world
 
+![Worlds tab: local and World Library sources, level name and force world copy](/img/server-worlds.webp)
+
 The server's **Worlds** tab lists both libraries, with a search across them and a
 badge saying whether that world has already been copied into the server.
 
@@ -62,16 +72,27 @@ still holding files it is about to lose. Stop the server, pick the world, start 
 again.
 :::
 
-1. Stop the server.
-2. Open **Worlds** and pick a world. The **level name** is filled in from the
-   world's own name — that is the folder it will live in under `mc-data/`, and what
-   `level-name` in `server.properties` points at.
-3. Apply, then start the server. The copy happens on that start.
+| Step | Action | Result |
+| ---- | ------ | ------ |
+| 1 | Stop the server | Configuration tabs unlock |
+| 2 | Open **Worlds** and pick a world | The **level name** is filled in from the world's own name — that is the folder it will live in under `mc-data/`, and what `level-name` in `server.properties` points at |
+| 3 | Apply, then start the server | The copy happens on that start |
 
 **Already copied** on a world means `mc-data/<level-name>/level.dat` exists. From
 then on the server plays that copy; the library still holds the pristine original.
 
 ### Force world copy
+
+What happens on each start:
+
+```mermaid
+flowchart TD
+    S["Server starts"] --> F{"Force copy on?"}
+    F -->|"yes"| C["Copy the world"]
+    F -->|"no"| E{"level.dat exists?"}
+    E -->|"no"| C
+    E -->|"yes"| K["Keep the copy"]
+```
 
 Off by default. When on, the world is copied over the target level **on every
 start**, so any progress made since the last start is gone.
@@ -82,6 +103,8 @@ Leave it off for anything anyone is meant to keep playing.
 ## Filling the library
 
 ### From the panel
+
+![World Library page: saved worlds and Discover Worlds](/img/world-library.webp)
 
 **World Library** in the sidebar lists what you already have as searchable cards,
 filtered by name or by the folder an import landed in. The file browser is still
@@ -127,6 +150,8 @@ create a new world. You can check what a running world uses with the console com
 
 ### Vanilla Tweaks datapacks (Java)
 
+![Game tab: world settings with the Vanilla Tweaks share code field](/img/configuration.webp)
+
 The world settings in the **Game** tab have a **Vanilla Tweaks** section. Pick datapacks or
 crafting tweaks on [vanillatweaks.net](https://vanillatweaks.net/picker/datapacks/), press
 **Share**, and paste the link or code. The panel shows what each code installs and warns when
@@ -159,17 +184,11 @@ servers/
 
 ## Troubleshooting
 
-**The world I picked is not the one that loaded.** The copy only happens when the
-target level does not exist yet. If `mc-data/<level-name>/` is already there, the
-server keeps playing it. Either pick a different level name or turn on force world
-copy.
-
-**My world is not in the list.** A folder needs a `level.dat` directly inside it —
-if your archive unpacked into `MyWorld/MyWorld/level.dat`, point at the inner
-folder or re-zip it. Archives must be one of the four supported extensions.
-
-**I lost progress after a restart.** Force world copy overwrites the level on every
-start. Turn it off; the copy under `mc-data/` is what holds the progress.
+| Symptom | Cause | Fix |
+| ------- | ----- | --- |
+| The world I picked is not the one that loaded | The copy only happens when the target level does not exist yet. If `mc-data/<level-name>/` is already there, the server keeps playing it | Pick a different level name or turn on force world copy |
+| My world is not in the list | A folder needs a `level.dat` directly inside it (an archive that unpacked into `MyWorld/MyWorld/level.dat` is one level too deep), or the archive has an unsupported extension | Point at the inner folder or re-zip it; use one of the four supported extensions |
+| I lost progress after a restart | Force world copy overwrites the level on every start | Turn it off; the copy under `mc-data/` is what holds the progress |
 
 ## Next Steps
 

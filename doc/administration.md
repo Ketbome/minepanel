@@ -12,9 +12,16 @@ head:
 
 # Administration
 
-Manage passwords, database, backups, updates, and system maintenance.
+Manage passwords, users, the database, backups and updates.
 
-![Minepanel administration panel with password and backup management](/img/administration.webp)
+| Task | Where |
+| --- | --- |
+| Change your password or email | **Settings → Account** |
+| Invite users, set permissions | **Settings → Roles & Access** |
+| Review who did what | **Settings → Audit** |
+| SMTP, OIDC, CurseForge key, Discord | **Settings → Integrations** (admin only) |
+| Audit retention | **Settings → Preferences** (admin only) |
+| Update Minepanel | Version badge at the bottom of the sidebar |
 
 ## Password Management
 
@@ -22,53 +29,52 @@ Manage passwords, database, backups, updates, and system maintenance.
 
 #### From UI
 
-1. Click on your profile (admin) in the top right
-2. Select "Change Password"
-3. Enter current password
-4. Enter new password
-5. Confirm new password
-6. Click "Save"
+**Settings → Account → Security**: enter the current password, the new one twice, and press
+**Update Password**. Passwords are hashed with bcrypt. Changing it signs out every other
+session of the account.
 
-The password is hashed with bcrypt and stored securely in the database.
+#### First admin
 
-#### From Environment Variable
+There is no default password and no environment variable for it: on a fresh install the panel
+shows a registration form, and the first account created there is the admin.
 
-::: warning
-This method only works for the FIRST login. After that, use the UI method above.
-:::
-
-Open the panel and complete the initial admin registration form.
-
-If you also want password recovery, configure SMTP in `docker-compose.yml` or `.env` before starting the stack:
-
-```yaml
-environment:
-  - SMTP_HOST=smtp.example.com
-  - SMTP_PORT=587
-  - SMTP_SECURE=false
-  - SMTP_USER=your_smtp_user
-  - SMTP_PASS=your_smtp_password
-  - SMTP_FROM=Minepanel <no-reply@example.com>
-```
-
-Restart:
-
-```bash
-docker compose restart
-```
+To also get password recovery, configure SMTP (see
+[SMTP for Invitations and Password Recovery](#smtp-for-invitations-and-password-recovery)).
 
 ### Forgot Your Password?
 
-If you've forgotten your password and can't access the UI:
+| Option | Keeps servers and users | When |
+| --- | --- | --- |
+| 1. **Forgot your password?** on the login screen | Yes | SMTP is configured and the account has an email |
+| 2. Set a new hash with SQL | Yes | You have shell access |
+| 3. Delete the database | Servers yes, users and settings no | Nothing else works |
 
-**Option 1: Use the password reset email**
+**Option 2: Manual database update**
 
-If SMTP is configured and your account has an email address, use **Forgot your password?** on the login screen.
+```bash
+# Generate a bcrypt hash with the backend's own bcrypt (while it is running)
+docker compose exec backend node -e "console.log(require('bcrypt').hashSync('your_new_password', 12))"
 
-**Option 2: Reset the database**
+docker compose stop backend
+# Use your admin's username; it is whatever was chosen at first setup.
+# The second statement signs out every session of that account, like a reset from the UI.
+sqlite3 data/minepanel.db "
+  UPDATE users SET password = 'your_bcrypt_hash_here' WHERE username = 'your_admin';
+  UPDATE refresh_tokens SET revoked = 1 WHERE user_id = (SELECT id FROM users WHERE username = 'your_admin');
+"
+docker compose start backend
+```
+
+`SELECT id, username, role FROM users;` lists the accounts if you do not remember the name.
+
+`data/minepanel.db` is the bind-mount layout; with a named volume use the throwaway container
+shown in [Locked Out With SSO Only](#locked-out-with-sso-only).
+
+**Option 3: Reset the database**
 
 ::: danger WARNING
-This will delete ALL your servers and configuration!
+This deletes every user, setting, API key and the audit log. Server folders under `servers/`
+stay and reappear in the dashboard; every other user has to be invited again.
 :::
 
 ```bash
@@ -77,41 +83,7 @@ rm -f data/minepanel.db
 docker compose up -d
 ```
 
-After that, Minepanel will show the initial setup screen again so you can register a new admin account.
-
-**Option 3: Manual database update (Advanced)**
-
-If you know SQL and want to keep your servers:
-
-```bash
-# Stop the panel backend
-docker compose stop backend
-
-# Install sqlite3 if needed
-sudo apt install sqlite3
-
-# Connect to database
-sqlite3 data/minepanel.db
-
-# Generate new password hash (use bcrypt online tool or Node.js)
-# Then update:
-UPDATE users SET password = 'your_bcrypt_hash_here' WHERE username = 'admin';
-
-# Exit sqlite
-.exit
-
-# Start the panel backend
-docker compose start backend
-```
-
-To generate a bcrypt hash:
-
-```javascript
-// Using Node.js
-const bcrypt = require('bcrypt');
-const hash = bcrypt.hashSync('your_new_password', 10);
-console.log(hash);
-```
+Minepanel then shows the initial setup screen so you can register a new admin.
 
 ### Locked Out With SSO Only
 
@@ -148,16 +120,25 @@ environment.
 
 ## Roles and User Access
 
-Minepanel now includes the **first phase** of user roles and access control.
+![Roles & Access: invitations, permission switches and server access](/img/administration.webp)
+
+```mermaid
+flowchart LR
+    A["ADMIN"] -->|"everything"| P["Panel + all servers"]
+    O["USER + manageUsers"] -->|"invite, audit"| R["Roles & Access"]
+    U["USER"] -->|"what is granted"| S["Assigned servers"]
+```
 
 ### Roles
 
-- `ADMIN` has full access to the panel and is not restricted by user permissions.
-- `USER` can only access the features and servers explicitly assigned to them.
+| Role | Access |
+| --- | --- |
+| `ADMIN` | Full access to the panel; not restricted by user permissions |
+| `USER` | Only the features and servers explicitly assigned |
 
 ### Promoting an account to admin
 
-An `ADMIN` can turn any account into an admin (and back) from **Settings -> Access**, with the
+An `ADMIN` can turn any account into an admin (and back) from **Settings → Roles & Access**, with the
 **Administrator** switch on each user. This is the supported way to hand admin rights to an
 account created through SSO.
 
@@ -170,30 +151,29 @@ account created through SSO.
 
 ### Delegated user management
 
-Minepanel also supports delegated operators through the `manageUsers` permission.
+The `manageUsers` permission makes a `USER` a delegated operator, not an administrator.
 
-- They can open **Roles & Access**
-- They can create and manage invitation links
-- They can open the audit page
-- They do not become full administrators
-- They cannot edit `ADMIN` accounts (username, email or any other field), since changing an
-  admin's email and then requesting a password reset would hand over the account
-- They cannot copy the link of an invitation that grants an admin-only permission
-- Audit retention and other high-risk settings remain restricted to `ADMIN`
+| Can | Cannot |
+| --- | --- |
+| Open **Roles & Access** | Edit `ADMIN` accounts (username, email or any field): changing an admin's email and then requesting a password reset would hand over the account |
+| Create and manage invitation links | Copy the link of an invitation that grants an admin-only permission |
+| Open the audit page | Change audit retention or other high-risk settings |
 
 ### User Access Controls
 
-For `USER` accounts, Minepanel can now control:
+Each switch in **Settings → Roles & Access** maps to one permission:
 
-- Access to all servers
-- Access to specific servers when global server access is disabled
-- Log viewing
-- Console usage
-- Global file browser access
-- Global file management
-- Server file access
-- Server file management
-- Server version changes
+| Switch | Permission | Allows | Granted by |
+| --- | --- | --- | --- |
+| Manage users | `manageUsers` | Delegated user management (above) | Admin or `manageUsers` |
+| Access all servers | `accessAllServers` | Every server; otherwise only those ticked under **Server access** | Admin or `manageUsers` |
+| View logs | `viewLogs` | Read server logs | Admin or `manageUsers` |
+| Use console | `useConsole` | Run commands, including command-type scheduled tasks | Admin or `manageUsers` |
+| View global files | `viewGlobalFiles` | Browse the global file manager | Admin or `manageUsers` |
+| Manage global files | `useGlobalFiles` | Write through the global file manager, import worlds into the library | **Admin only** |
+| View server files | `viewServerFiles` | Browse a server's files | Admin or `manageUsers` |
+| Manage server files | `useServerFiles` | Edit a server's files | Admin or `manageUsers` |
+| Change server version | `changeServerVersion` | Change the Minecraft version and official image tag | **Admin only** |
 
 If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands. Scheduled tasks of type **command** count as console usage: creating, editing, enabling or running one requires the console permission.
 
@@ -272,96 +252,96 @@ for it, so a new server created later with the same ID starts with no inherited 
 
 ### Invitations
 
-New users are created through invitation links.
+New users are created through invitation links, by an `ADMIN` or a `manageUsers` operator.
 
-1. Open **Settings** as an `ADMIN`
-2. Go to the **User invitations** section
-3. Choose the new user's permissions and server access
-4. Create the invitation link
+```mermaid
+flowchart LR
+    A["Roles & Access"] --> B["Pick permissions"]
+    B --> C["Create invitation"]
+    C -->|"SMTP + email"| D["Sent by email"]
+    C -->|"Copy link"| E["Share it yourself"]
+    D --> F["User signs up"]
+    E --> F
+```
 
-If SMTP is configured and you provide an email address, Minepanel can also send the invitation by email.
-
-Invitation management now behaves like this:
-
-- the UI no longer exposes the raw invitation URL by default
-- pending invitations provide a **Copy link** action instead
-- copying the link reissues a fresh token server-side and returns a new URL
-- used, expired, or already-resolved invitations are removed from the pending list
+- With SMTP configured and an email address entered, Minepanel sends the invitation itself.
+- The raw URL is not shown. **Copy link** on a pending invitation reissues a fresh token
+  server-side and returns a new URL.
+- Used, expired or already-resolved invitations leave the pending list.
+- With [SSO-only mode](/sso#sso-only-mode) on, invitations cannot be accepted (accepting one
+  creates a password account).
 
 ### SMTP for Invitations and Password Recovery
 
-Minepanel uses the same SMTP configuration for both password recovery and user invitations:
+One SMTP setup serves password recovery, invitations and email-change confirmation.
 
-```yaml
-environment:
-  - SMTP_HOST=smtp.example.com
-  - SMTP_PORT=587
-  - SMTP_SECURE=false
-  - SMTP_USER=your_smtp_user
-  - SMTP_PASS=your_smtp_password
-  - SMTP_FROM=Minepanel <no-reply@example.com>
-```
-
-After updating SMTP settings:
+- **From the panel (recommended):** **Settings → Integrations → Email (SMTP)**, admin only.
+  Stored encrypted, applied without a restart, and overrides `.env`.
+- **From `.env`:**
 
 ```bash
-docker compose restart
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false        # true for SMTPS/465
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_password
+SMTP_FROM=Minepanel <no-reply@example.com>
 ```
+
+`.env` is read when the container is created, so apply it with `docker compose up -d`
+(`docker compose restart` keeps the old values).
 
 ### Email change confirmation
 
-The same SMTP setup is now used for account email changes.
-
-When SMTP is configured:
-
-1. Open **Settings -> Account**
-2. Enter the new email address
-3. Minepanel sends a confirmation code to the new address
-4. Enter the code in the panel to complete the change
-
-If SMTP is not configured, the email change is applied immediately.
+| SMTP | Who can change their email | How |
+| --- | --- | --- |
+| Configured | Everyone | **Settings → Account**: enter the new address, then the code sent to it (valid 15 minutes) |
+| Not configured | Admins only, applied immediately | Other accounts ask an admin or a `manageUsers` operator |
 
 ## Audit Log
 
-Minepanel now records a first audit trail for important account and server actions.
+**Settings → Audit** records important account and server actions, filterable by user, action,
+result, server and date.
+
+![Audit log with filters](/img/settings-audit.webp)
 
 ### What is tracked
 
-- login
-- invitation creation, copy, and acceptance
-- password changes
-- email change request and confirmation
-- user access updates and user deletion
-- server configuration saves
-- server start, stop, and restart
-- server console commands
+| Area | Actions |
+| --- | --- |
+| Accounts | Login, password changes, email change request and confirmation |
+| Users | Invitation creation, copy and acceptance; access updates; deletion |
+| Servers | Configuration saves; start, stop, restart; console commands |
+| Panel | Settings saves; proxy start and stop |
 
 ### Access
 
-- `ADMIN` can view the audit page
-- `USER` accounts with `manageUsers` can also view the audit page
+`ADMIN` and `USER` accounts with `manageUsers`.
 
 ### Retention
 
-- default retention is 15 days
-- admins can change the retention from **Settings -> Preferences**
-- old audit records are cleaned automatically
+15 days by default; admins change it in **Settings → Preferences**. Older records are deleted
+automatically.
 
 ## Database Management
 
 ### Database Location
 
-Minepanel uses SQLite and stores its database at:
+Minepanel uses SQLite at `./data/minepanel.db` (inside the container: `/app/data/minepanel.db`).
 
-```
-./data/minepanel.db
+```mermaid
+flowchart LR
+    DB["data/minepanel.db"] --- U["Users, invitations"]
+    DB --- S["Settings, secrets"]
+    DB --- H["Audit, sessions, metrics"]
+    J["servers/ID/server.json"] --- C["Server config"]
 ```
 
-This file contains:
-- User credentials
-- Server configurations
-- Settings
-- API keys
+| In the database | Not in the database |
+| --- | --- |
+| Users, invitations, permissions | Server configuration: `servers/<id>/server.json` |
+| Panel and instance settings, encrypted secrets (SMTP, OIDC, CurseForge) | Worlds and server files: `servers/<id>/mc-data` |
+| Audit log, player sessions, activity, metrics history, scheduled tasks | Proxy files: `data/proxy`, `data/velocity` |
 
 ### Backup Database
 
@@ -424,10 +404,7 @@ sqlite3 data/minepanel.db
 .tables
 
 # View users
-SELECT * FROM users;
-
-# View servers
-SELECT id, serverName, serverType, port, active FROM servers;
+SELECT id, username, role, isActive FROM users;
 
 # Exit
 .exit
@@ -436,7 +413,8 @@ SELECT id, serverName, serverType, port, active FROM servers;
 ### Reset Database
 
 ::: danger WARNING
-This will delete ALL your servers, users, and configuration!
+This deletes every user, setting, API key and the audit log. Server folders under `servers/`
+are kept and reappear in the dashboard.
 :::
 
 ```bash
@@ -469,6 +447,11 @@ server up to `n` times in a row and then leaves it stopped. Empty keeps the old 
 If the server's **down alert** is on (Metrics tab), running out of retries sends one Discord
 "crash loop" message with the exit code and the last 20 log lines instead of the generic
 down alert. Stops requested from the panel never trigger it.
+
+| | Java | Bedrock |
+| --- | --- | --- |
+| Transport | RCON | `send-command` inside the container |
+| Response in the console | Yes | No: read the **Logs** tab |
 
 ### Java Edition (RCON)
 
@@ -521,7 +504,7 @@ Unlike RCON, Bedrock commands don't return output directly. Check the Logs tab t
 
 - `gamerule` quick actions are compatible with both naming styles (`keepInventory` for older versions and `keep_inventory` for 1.21+)
 - PvP toggle uses the server command `pvp true|false` (not `gamerule pvp`)
-- **All gamerules** (Java only, World section) lists every rule the running server reports via `help gamerule`, including modded ones, with its current value. From 1.21.11 game rules are a registry and `help` no longer lists them; those servers show the vanilla rules only, with a note that modded rules may be missing. Boolean rules are switches, numeric rules are number fields; changes are sent with `gamerule <rule> <value>`. Backed by `GET /api/servers/:id/gamerules` (requires console permission).
+- **All gamerules** (Java only, World section) lists every rule the running server reports via `help gamerule`, including modded ones, with its current value. From 1.21.11 game rules are a registry and `help` no longer lists them; those servers show the vanilla rules only, with a note that modded rules may be missing. Boolean rules are switches, numeric rules are number fields; changes are sent with `gamerule <rule> <value>`. Backed by `GET /servers/:id/gamerules` (requires console permission).
 
 ---
 
@@ -529,15 +512,19 @@ Unlike RCON, Bedrock commands don't return output directly. Check the Logs tab t
 
 ### Automatic Backups
 
-Minepanel supports automatic backups for individual Minecraft servers. Configure in the server settings:
+Turn on **Enable Backups** in a server's **Backups** tab. Minepanel adds an `itzg/mc-backup`
+sidecar to that server's compose project.
 
-**Backup Methods:**
-- `tar` - Traditional tar archives (default)
-- `rsync` - Incremental backups
-- `restic` - Encrypted, deduplicated backups
-- `rclone` - Cloud storage backups
+![Backups tab](/img/server-backups.webp)
 
-**Example configuration:**
+| Method | Use |
+| --- | --- |
+| `tar` (default) | Compressed archives |
+| `rsync` | Incremental copies |
+| `restic` | Encrypted, deduplicated repository |
+| `rclone` | Cloud storage |
+
+The generated sidecar looks like this:
 
 ```yaml
 services:
@@ -568,13 +555,9 @@ When the server runs behind the proxy, Minepanel sets `RCON_HOST` to the server 
 
 ### Manual Backup
 
-From the Minepanel UI:
-1. Go to server details
-2. Click "Backup Now"
-3. Wait for completion
-4. Download from the Files tab
-
-Or manually:
+There is no "back up now" button: the sidecar runs on **Backup Interval** (and at start with
+**Backup on Startup**). Archives land in `servers/<id>/backups` (or the **Host Backup
+Directory**), which the global **Files** page can browse and download. For a one-off copy:
 
 ```bash
 # Backup a specific server
@@ -610,9 +593,24 @@ before the update rather than after it.
 
 **From the panel:** admins get an **Update now** button at the bottom of that
 dialog, under the update instructions. Minepanel does not recreate itself — that
-would kill the command halfway through. It starts a throwaway container that
-records the images you are running, pulls the new ones, recreates the stack, waits
-for the panel to answer again, and puts the old images back if it never does.
+would kill the command halfway through — it hands the job to a throwaway container:
+
+```mermaid
+sequenceDiagram
+    participant P as Panel
+    participant U as Updater
+    participant D as Docker
+    P->>U: Start updater
+    U->>D: Record current images
+    U->>D: Pull new images
+    U->>D: Recreate the stack
+    U->>P: Wait for an answer
+    alt Panel answers
+        U-->>P: Done
+    else Never answers
+        U->>D: Restore old images
+    end
+```
 
 The panel is unreachable for a moment and returns on its own: the dialog keeps
 asking `GET /version/update-status` while that happens, ignores the requests that
@@ -693,24 +691,28 @@ each update yourself.
 
 ### Update Minecraft Server
 
-Minecraft servers auto-update when restarted (unless you specified a specific version).
-
-To update manually:
-1. Stop server
-2. Change VERSION environment variable
-3. Restart server
+A server set to `LATEST` picks up the newest release when it restarts. A pinned version
+changes only when you change it: stop the server, pick the version in the **Server Type** tab
+(needs the `changeServerVersion` permission), save and start it.
 
 ### Rollback
 
-If an update causes issues:
+Images are tagged with the release number (`1.13.23`, no `v`). Pin both images to the previous
+release in `docker-compose.yml`:
+
+```yaml
+services:
+  backend:
+    image: ketbom/minepanel-backend:1.13.23
+  frontend:
+    image: ketbom/minepanel-frontend:1.13.23
+```
 
 ```bash
-# Use specific version
-docker compose down
-docker tag ketbom/minepanel:latest ketbom/minepanel:backup
-docker pull ketbom/minepanel:v1.0.0  # previous version
 docker compose up -d
 ```
+
+The all-in-one image (`ketbom/minepanel`) uses the same tags.
 
 ## Resource Management
 
@@ -720,8 +722,8 @@ docker compose up -d
 # View container stats
 docker stats
 
-# View specific container
-docker stats minepanel
+# Only this stack
+docker stats $(docker compose ps -q)
 
 # Check disk usage
 docker system df
@@ -764,7 +766,7 @@ Add to `docker-compose.yml`:
 
 ```yaml
 services:
-  minepanel:
+  backend:
     logging:
       driver: "json-file"
       options:
@@ -835,8 +837,8 @@ docker compose start backend frontend
 # Check container status
 docker compose ps
 
-# Inspect container
-docker inspect minepanel
+# Inspect the backend container
+docker inspect $(docker compose ps -q backend)
 
 # Check logs for errors
 docker compose logs backend | grep -i error

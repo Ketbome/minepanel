@@ -22,18 +22,35 @@ If the frontend is also served under a subpath, that is controlled separately by
 
 ## Authentication
 
-Minepanel uses JWT sessions stored in `httpOnly` cookies:
+Minepanel uses JWT sessions stored in `httpOnly` cookies set by `POST /auth/login`:
 
-- `access_token` for authenticated requests
-- `refresh_token` for session renewal
+| Cookie | Lifetime | Used for |
+| --- | --- | --- |
+| `access_token` | 15 minutes by default (JWT; the deprecated `JWT_EXPIRES_IN` overrides it) | Every authenticated request |
+| `refresh_token` | 7 days | `POST /auth/refresh` only; rotated on every refresh |
 
-Primary authentication mechanism:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant API as Backend
+    C->>API: POST /auth/login
+    API-->>C: Set-Cookie access + refresh
+    C->>API: GET /servers (cookie)
+    API-->>C: 200
+    Note over C,API: 15 min later
+    C->>API: GET /servers
+    API-->>C: 401
+    C->>API: POST /auth/refresh
+    API-->>C: New cookies
+    C->>API: Retry request
+```
 
-1. Browser session cookies set by `POST /auth/login`
+The dashboard does this retry automatically. A rotated refresh token stays valid for 60 seconds
+so two tabs refreshing at once don't sign each other out.
 
-JWT tokens are not accepted in query strings.
-
-The backend also accepts `Authorization: Bearer <token>` on protected routes, but the standard login flow issues cookies and does not return raw JWTs in the response body.
+- The access token is read from the cookie first, then from `Authorization: Bearer <token>`.
+  The login flow never returns raw JWTs in the response body.
+- JWT tokens are not accepted in query strings.
 
 ## Public Endpoints
 
@@ -57,6 +74,19 @@ These routes do not require an authenticated session:
 | `GET` | `/item-textures/:version/:item` | Cached vanilla item PNG, so `<img>` tags load without credentials; never starts a download |
 
 All other endpoints require JWT authentication. See [Single Sign-On](/sso) for SSO setup.
+
+```mermaid
+flowchart LR
+    R["Request"] --> G{"JWT guard"}
+    G -->|"public route"| H["Handler"]
+    G -->|"valid token"| P{"Permission"}
+    G -->|"no token"| U["401"]
+    P -->|"allowed"| H
+    P -->|"denied"| F["403"]
+```
+
+The JWT guard is global; per-server routes then check the user's server access and
+permissions (for example **use console** or **view logs**).
 
 ## Login Flow
 

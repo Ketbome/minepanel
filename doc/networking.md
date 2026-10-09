@@ -5,29 +5,20 @@ description: Complete Minepanel networking guide - Remote access, firewall ports
 
 # Networking
 
-![Server Connection](/img/server-connection.webp)
+![Server header with the public and LAN address players connect to](/img/server-connection.webp)
+
+Every server's header shows the address players use (public and LAN, with a copy button).
+The public one comes from **Settings → Network → Public IP / Domain**.
 
 ## Overview
 
 ```mermaid
-flowchart TB
-    subgraph internet["🌍 Internet"]
-        Player["👤 Player"]
-        Admin["👨‍💻 Admin"]
-    end
-
-    subgraph server["🖥️ Your Server"]
-        FE["Frontend :3000"]
-        BE["Backend :8091"]
-        MC["🎮 Minecraft :25565"]
-    end
-
-    Admin -->|"UI :3000"| FE
-    Admin <-->|"API :8091"| BE
-    Player -->|":25565"| MC
-
-    style internet fill:#1e3a5f,stroke:#3b82f6,color:#fff
-    style server fill:#1f2937,stroke:#22c55e,color:#fff
+flowchart LR
+    Admin["Admin browser"] -->|":3000"| FE["Frontend"]
+    Admin -->|":8091"| BE["Backend API"]
+    BE -->|"docker.sock"| D["Docker"]
+    D --> MC["Minecraft servers"]
+    Player["Players"] -->|":25565 / :19132"| MC
 ```
 
 ## Remote Access
@@ -80,6 +71,10 @@ hostname -I | awk '{print $1}'
 
 A server's connection settings are split across two tabs: **Network** for how the
 server is reached, **Access** for who is allowed in once they get there.
+
+![Network tab of a server: port, proxy settings and extra ports](/img/server-network.webp)
+
+![Access tab of a server: online mode, whitelist, operators and permissions](/img/server-access.webp)
 
 | Field | Tab | What it affects |
 | --- | --- | --- |
@@ -142,6 +137,8 @@ The panel generates each server's `docker-compose.yml` from `server.json`, so ed
 to that file by hand are overwritten on the next save. For settings the panel has no field
 for (an extra Docker network, `dns`, `extra_hosts`, a sidecar service...), open the server's
 **Advanced** tab and add a **Compose Snippet**.
+
+![Advanced tab: environment variables, Docker volumes, labels and compose snippets](/img/server-advanced.webp)
 
 Each snippet has a placement and some YAML:
 
@@ -249,104 +246,132 @@ api.yourdomain.com {
 }
 ```
 
+## Choosing a proxy
+
+A proxy puts every Java server behind one public port. Minepanel runs it for you as its own
+container; pick the type in **Settings → Network**.
+
+```mermaid
+flowchart TD
+    Q{"Players join..."}
+    Q -->|"by subdomain"| R["mc-router"]
+    Q -->|"through a lobby"| V["Velocity"]
+    Q -->|"on Bedrock"| D["Direct ports"]
+```
+
+|                              | mc-router                      | Velocity                               |
+| ---------------------------- | ------------------------------ | -------------------------------------- |
+| Players join with            | `{server}.mc.example.com`      | One address, then `/server <name>`     |
+| Base domain + wildcard DNS   | Required                       | Optional (adds forced hosts)           |
+| Server types                 | Any Java server                | Paper, Purpur, Leaf, Folia, Pufferfish 1.19+ |
+| Fallback lobby               | No                             | Yes                                    |
+| Sleep idle servers           | Yes (auto-scaling)             | No                                     |
+| Container                    | `mc-router`                    | `mc-velocity`                          |
+
+Only one runs at a time: both listen on the **Router port** (25565 by default).
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant Panel as Minepanel
+    participant Docker
+    You->>Panel: Start proxy
+    Panel->>Panel: Write data/proxy or data/velocity files
+    Panel->>Docker: docker compose up -d
+    alt Port free
+        Docker-->>Panel: mc-router / mc-velocity running
+        Panel-->>You: Proxy running
+    else Port taken, or no /app/data mount
+        Docker-->>Panel: error
+        Panel-->>You: Error toast with the reason
+    end
+```
+
+If it does not start, see [Proxy issues](/troubleshooting#proxy-issues).
+
 ## MC Proxy Router (Java Only)
 
-Single port (25565) for all Java servers via hostname routing. For how mc-router works on its
-own, see the [mc-router setup guide](/guides/mc-router-setup).
-
-::: warning Java Edition Only
-mc-router only works with Java Edition (TCP protocol). Bedrock servers use UDP and cannot be proxied this way. Each Bedrock server needs its own port.
-:::
+Each Java server with **Use Proxy** on (the default) gets its own hostname on one port. For
+mc-router on its own, see the
+[mc-router setup guide](/guides/mc-router-setup).
 
 ```mermaid
 flowchart LR
-    P1["👤 survival.mc.example.com"] --> Router["mc-router:25565"]
-    P2["👤 creative.mc.example.com"] --> Router
+    P1["survival.mc.example.com"] --> Router["mc-router:25565"]
+    P2["creative.mc.example.com"] --> Router
     Router --> MC1["survival (Java)"]
     Router --> MC2["creative (Java)"]
 ```
 
 ### Setup
 
-1. **DNS:** Create wildcard record `*.mc.example.com → your-ip`
+![mc-router selected in Settings → Network](/img/proxy-mc-router-settings.webp)
 
-2. **Settings:** Set the base domain in **Settings → Network** and turn the proxy on.
+| Step | Where | What |
+| --- | --- | --- |
+| 1 | Your DNS provider | Wildcard record `*.mc.example.com → your-ip` |
+| 2 | **Settings → Network** | Proxy type **mc-router**, set the **Base Domain**, **Save** |
+| 3 | **Settings → Network** | **Start proxy** |
 
-That is the whole setup. Minepanel generates the router's compose file and starts
-the container itself, the same way it does for servers; there is no profile to
-enable and nothing to add to `.env`.
+Every Java server with **Use Proxy** on is now reachable at `{server-id}.mc.example.com` (or its
+custom hostname). Turn it off in **Server → Network → Proxy Settings** to keep direct port access.
+There is no `.env` variable or compose profile to enable.
 
-Java servers auto-get hostnames: `{server-id}.mc.example.com`
+| Field | Use |
+| --- | --- |
+| **Router port** | Host port players connect to. Save before **Start proxy**. |
+| **Auto-scaling** | Sleep idle servers, see below. |
+| **Extra Docker networks** | Only if you route traffic through another stack. |
+
+**Start proxy / Stop proxy** applies immediately, without a save. Stopping frees the port,
+which also tells you whether the router is what breaks a connection.
 
 ::: tip Upgrading from 1.x
-Earlier versions shipped mc-router inside the panel's own `docker-compose.yml`
-behind a `proxy` profile. That service is gone in 1.12. Run
-`docker compose --profile proxy down` once to remove the old container; the panel
-will not stop a router it did not create, so until you do, both would fight over
-port 25565.
+1.x shipped mc-router in the panel's own `docker-compose.yml` behind a `proxy` profile.
+Run `docker compose --profile proxy down` once: the panel never stops a router it did not
+create, so the old one would keep port 25565.
 :::
-
-The router listens on **Router port** (25565 by default). If you route traffic
-through another stack, list its networks under **Extra Docker networks** so they
-survive when the file is regenerated.
-
-**Settings → Network** shows whether the router container is actually up, and has a
-button to start or stop it there and then. It flips the same **proxy enabled**
-setting the form saves and reconciles the container immediately, so there is no save
-step in between. Stopping it frees port 25565 — useful when something else needs the
-port, or to find out whether the router is what is breaking a connection.
-
-The panel never touches a router container it did not create; if it finds an
-unmanaged one it leaves it running and says so in the backend log.
 
 ### Auto-scaling (sleep when idle)
 
-mc-router can keep idle servers stopped and start them again on the first
-connection. The router does not talk to Docker: it calls the panel, which starts
-and stops the server the same way the UI does.
+```mermaid
+flowchart LR
+    R["Running"] -->|"Stop after"| A["Asleep"]
+    A -->|"player joins"| W["Waking"]
+    W -->|"ready"| R
+```
 
-Turn on **Auto-scaling** in **Settings → Network**. The panel generates the shared
-secret the router authenticates with, so there is nothing to copy anywhere.
+Turn on **Auto-scaling** in **Settings → Network**. The router asks the panel to start and
+stop servers; the shared secret is generated for you.
 
-**Stop after** controls how long a server stays empty before it is stopped
-(`10m` by default).
-
-While a server is asleep, its MOTD shows `Server is asleep. Join to wake it up!`.
-Joining triggers the wake-up; the router waits up to 180s for the server to accept
-connections, so the first join on a heavy modpack may time out. Reconnect and it
-will be ready.
+- Asleep servers show the MOTD `Server is asleep. Join to wake it up!`.
+- **Stop after** is how long a server stays empty before it sleeps (`10m` by default).
+- The panel waits up to 150s for a woken server to accept connections (mc-router's own wake
+  timeout is 180s by default). Heavy modpacks may miss that on the first join; reconnect.
 
 ::: warning This stops running servers
-With auto-scaling on, any proxied Java server with no players for the configured
-time is stopped, including ones you started manually. Bedrock servers are never
-touched.
+Any proxied Java server with no players for **Stop after** is stopped, including ones you
+started by hand. Bedrock servers are never touched.
 :::
 
 ### Excluding a server
 
-Heavy modpacks take minutes to boot, which makes sleeping them a poor trade. Turn
-**Auto-scaling** off under **Server → Network → Proxy Settings** to
-leave that server out: the panel then ignores both wake-up and sleep requests for
-it, so it keeps running 24/7 while the rest still sleep. The switch only appears
-once auto-scaling is on, and it is on by default, so nothing changes for servers
-you never touch.
+Turn **Auto-scaling** off in **Server → Network → Proxy Settings** so auto-scaling never stops
+that server while it is idle (useful for slow-booting modpacks). The switch shows only when auto-scaling is
+on, and it is on by default.
 
 ::: tip The asleep MOTD is router-side
-mc-router prints `Server is asleep. Join to wake it up!` for any route whose
-backend is down, and it cannot be configured per route. An excluded server that
-you stopped yourself still shows that MOTD, but joining will not start it — start
-it from the panel.
+mc-router shows the asleep MOTD for any route whose server is down. An excluded server you
+stopped yourself still shows it, but joining will not start it.
 :::
 
-The panel exposes `POST /servers/autoscale` for this. It is the only
-unauthenticated endpoint that controls servers, it is rejected unless the
-auto-scale token matches, and it only accepts servers that are currently in the
-proxy routes. A sleep request for a server that is already stopped, or that still
-has players online, is ignored.
+The router calls `POST /servers/autoscale`. It is rejected unless the auto-scale token
+matches, only accepts servers in the proxy routes, and ignores sleep requests for servers
+that are stopped or still have players.
 
 ### Bedrock Connection
 
-Bedrock servers connect directly via IP and port:
+Bedrock uses UDP and cannot go through mc-router. Players connect to each server directly:
 
 ```
 Server Address: your-ip
@@ -355,73 +380,78 @@ Port: 19132 (or assigned port)
 
 ## Velocity Network (Java Only)
 
-A lobby and game servers behind one address: players join the lobby, move with
-`/server <name>`, and land on the next lobby when one goes down. Velocity replaces
-mc-router as the proxy on the public port; the two never run together.
+Players join a lobby, move with `/server <name>`, and land on the next lobby if one goes down.
 
 ```mermaid
 flowchart LR
-    P["👤 play.example.com"] --> V["Velocity:25565"]
-    V --> L["lobby (Paper)"]
-    V --> S["survival (Paper)"]
-    V --> M["minigames (Purpur)"]
+    P["play.example.com"] --> V["Velocity:25565"]
+    V -->|"Lobby order 1"| L["lobby (Paper)"]
+    V -.->|"/server survival"| S["survival (Paper)"]
+    V -.->|"/server minigames"| M["minigames"]
 ```
 
 ### Setup
 
-1. **Settings → Network:** pick **Velocity** as the proxy type and save.
-2. Press **Start proxy**. The panel generates the proxy's compose file, `velocity.toml`
-   and the forwarding secret, and starts the `mc-velocity` container on the
-   **Router port**.
-3. **Server → Network → Velocity network:** turn on **Join the Velocity network** for
-   each server, and give the lobbies a **Lobby order** (lowest first).
-4. Restart the servers you changed.
+**1. Start the proxy** in **Settings → Network**: pick **Velocity**, **Save**, then **Start proxy**.
 
-The base domain is optional. With one, each member also gets a forced host
-(`{server-id}.mc.example.com`, or its custom hostname) that takes players straight to
-it; without one, everyone enters through the lobby. Hostnames take letters, numbers,
-`-`, `_` and dots. If two members end up with the same forced host (for example, names
-set before the base domain), only the first one keeps it and the panel logs a warning.
+![Velocity selected and running in Settings → Network](/img/proxy-velocity-settings.webp)
+
+**2. Add servers** in **Server → Advanced → Network → Velocity network**: turn on
+**Join the Velocity network** and give lobbies a **Lobby order** (lowest first).
+
+![Velocity network card in a server's Network tab](/img/velocity-server-network.webp)
+
+**3. Restart** each server you changed.
+
+The **Base Domain** is optional. With one, each member also gets a forced host
+(`{server-id}.mc.example.com` or its custom hostname) that skips the lobby. If two members
+end up with the same host, only the first keeps it and the backend logs a warning.
 
 ### What joining changes
 
-- **Supported servers:** Paper, Purpur, Leaf, Folia and Pufferfish on Minecraft 1.19 or
-  newer (they read forwarding from `config/paper-global.yml`). The switch is disabled for
-  anything else. While mc-router is the edge, changing a member to another type or an older
-  version takes it out of the network.
-- **No host port:** the server is reachable only by Velocity, over `minepanel-network`.
-- **Offline mode:** Velocity checks each account and passes the player on with a shared
-  secret (modern forwarding), so the server itself runs with `online-mode=false`. Players
-  keep their real UUIDs and skins. Leaving the network restores the server's own setting.
-- **Forwarding:** before each start the panel writes only `proxies.velocity` in the
-  server's `paper-global.yml`. Everything else in that file is yours.
+```mermaid
+flowchart LR
+    P["Player"] -->|"login"| V["Velocity"]
+    V -->|"secret"| S["Member"]
+    O["Direct join"] -.-x|"no port"| S
+```
+
+| | Inside the network |
+| --- | --- |
+| Supported | Paper, Purpur, Leaf, Folia, Pufferfish on 1.19+. The switch is disabled for anything else. |
+| Host port | None: only Velocity reaches it, over `minepanel-network` |
+| Online mode | `online-mode=false` on the server; Velocity checks accounts and keeps real UUIDs and skins. Leaving restores your setting. |
+| `paper-global.yml` | Before each start the panel writes only `proxies.velocity`; the rest is yours |
+| Changes | Adding, removing or reordering members uses `velocity reload`; nobody is kicked |
+
+While mc-router is the edge, changing a member to another type or an older version takes it
+out of the network.
 
 ::: warning Keep members unreachable from outside
-A member accepts players only through Velocity because Paper rejects connections without
-the secret. Do not publish its game port yourself (extra ports or a compose snippet), and
-do not turn Velocity forwarding off in its `paper-global.yml`.
+Do not publish a member's game port (extra ports or a compose snippet) and do not turn off
+Velocity forwarding in its `paper-global.yml`.
 :::
 
 ::: danger Only admins add servers to the network
-Every member holds the network's forwarding secret in its `paper-global.yml`, and whoever
-has it can join any member as any player, ops included. That is why only admins can turn
-membership or the lobby order on or off, and a cloned server never inherits them. Treat
-everyone with file or plugin access to a member as trusted with the whole network.
+Every member holds the forwarding secret, and whoever has it can join any member as any
+player, ops included. Only admins can change membership or lobby order, and clones never
+inherit them. Anyone with file or plugin access to a member is trusted with the whole network.
 :::
 
-Adding, removing or reordering members is applied with `velocity reload`, so players
-already connected stay connected.
-
-The forwarding secret is stored encrypted with a key derived from `JWT_SECRET`. If you
-change `JWT_SECRET`, the panel keeps the secret from `data/velocity/server/forwarding.secret`,
-so members keep working. Without that file it mints a new one, and every member needs a
-restart.
+The forwarding secret is stored encrypted with a key derived from `JWT_SECRET`. If you change
+`JWT_SECRET`, the panel keeps the secret from `data/velocity/server/forwarding.secret`; without
+that file it mints a new one and every member needs a restart.
 
 ### Proxy plugins
 
-Velocity plugins go in `data/velocity/server/plugins` and load on the next proxy restart.
-The panel only owns `velocity.toml` and `forwarding.secret` in that folder; the rest is
-yours.
+```txt
+data/velocity/
+|- docker-compose.yml     generated by the panel
+|- server/
+   |- velocity.toml       owned by the panel (overwritten)
+   |- forwarding.secret   owned by the panel
+   |- plugins/            yours: loaded on the next proxy restart
+```
 
 ### Not supported yet
 
@@ -435,5 +465,6 @@ before 1.19, auto-scaling, and Bedrock. See the [roadmap](/roadmap).
 | CORS errors           | `FRONTEND_URL` must match browser URL exactly |
 | Can't access remotely | Check firewall, update FRONTEND_URL           |
 | Connection refused    | `docker ps` to check containers running       |
+| Start proxy goes back to stopped | [Proxy issues](/troubleshooting#proxy-issues) |
 
 **→ More:** [Troubleshooting](/troubleshooting)

@@ -22,6 +22,23 @@ Today every server's data lives under `<serversHostDir>/<id>/...` on the host �
 in the recommended setup — and Docker is controlled through the **local socket**
 (`/var/run/docker.sock`).
 
+```mermaid
+flowchart LR
+    subgraph Host
+        HS["servers/"]
+        HD["data/"]
+        SOCK["docker.sock"]
+    end
+    HS -->|"/app/servers"| B["Backend"]
+    HD -->|"/app/data"| B
+    SOCK --> B
+    B -->|"compose up"| MC["Server container"]
+    HS -->|"host path"| MC
+```
+
+The backend edits files through its mounts; each server container mounts the **same host
+folders** directly, using the host paths the backend wrote into its compose file.
+
 Two path concepts drive the whole model (`backend/src/config.ts`):
 
 - `serversDir` (`/app/servers`) — container-side path the backend reads/writes.
@@ -74,8 +91,9 @@ A common instinct is to "move to named Docker volumes." For Minepanel this is a 
   so the **file manager stops working** — there is no clean host path the backend can read with
   `fs`.
 - **Server discovery breaks too.** The backend enumerates servers by reading `/app/servers` with
-  `fs.readdir` and checking each directory for a `docker-compose.yml`
-  (`backend/src/server-management/server-management.service.ts`). With named volumes there is no
+  `fs.readdir` and checking each directory for a `server.json` (or a legacy
+  `docker-compose.yml`), which it caches in `servers.json`
+  (`backend/src/docker-compose/server-store.service.ts`). With named volumes there is no
   per-server directory to iterate — the panel would not even know which servers exist. The same
   applies to the `mc-data` migration, world discovery, and the backup sidecar, which all mount or
   read host paths under `${BASE_DIR}/servers/<id>/...`.
@@ -91,6 +109,13 @@ that needs to browse and edit files. Named volumes are therefore **not recommend
 mechanism**.
 
 ## Options considered
+
+```mermaid
+flowchart TD
+    Q{"Multi-machine?"} -->|"no"| C["C: single host"]
+    Q -->|"low effort"| A["A: shared FS"]
+    Q -.->|"big rewrite"| B["B: per-node agent"]
+```
 
 | Option | What it is | Pros | Cons | Effort |
 | --- | --- | --- | --- | --- |
@@ -126,6 +151,12 @@ New drivers are opt-in. **This is the next code phase, not part of this document
 
 ## Phased roadmap
 
+```mermaid
+flowchart LR
+    P0["Phase 0<br/>shared FS"] --> P1["Phase 1<br/>drivers"]
+    P1 --> P2["Phase 2<br/>remote Docker"]
+```
+
 - **Phase 0 — Shared-FS deployment (possible today).** Mount NFS/Gluster at `${BASE_DIR}` with the
   same path on every node. No code change required; bind mounts and the file manager keep working.
 - **Phase 1 — Driver abstractions.** Introduce `NodeDriver` / `StorageDriver` with the local
@@ -152,7 +183,7 @@ New drivers are opt-in. **This is the next code phase, not part of this document
 - **Swarm compose mismatch** — `docker stack deploy` does **not** consume the current per-server
   compose files as-is (different volume model, overlay network, placement constraints). This is a
   main reason Phase 2 prefers `DOCKER_HOST`/contexts over Swarm.
-- **mc-router across nodes** — the proxy relies on the `minepanel-network` **bridge** network,
+- **Edge proxy across nodes** — mc-router and Velocity both rely on the `minepanel-network` **bridge** network,
   which is per-host. A server placed on another node is unreachable by container name; routes
   would need to target `nodeIP:publishedPort` (or an overlay network) in the multi-node phase.
 - **SQLite must stay off the network FS** — the backend database (`/app/data/minepanel.db`) must
@@ -175,7 +206,16 @@ levers are:
 **A network of servers DOES scale.** The real "Minecraft at scale" model is **proxy + N
 independent servers** (Velocity / BungeeCord): one entry point in front of many small/medium
 instances (lobby, survival, minigames, regions). Minepanel already has the seed of this with
-mc-router (`backend/src/proxy/proxy.service.ts`).
+mc-router (`backend/src/proxy/proxy.service.ts`) and the Velocity network
+(`backend/src/proxy/velocity-runtime.service.ts`).
+
+```mermaid
+flowchart LR
+    P["Players"] --> X["Proxy"]
+    X --> L["lobby"]
+    X --> S["survival"]
+    X --> M["minigames"]
+```
 
 **Recommended positioning:** Minepanel is a **fleet manager for small/medium servers** spread
 across nodes — which is exactly what Swarm + a shared filesystem enables — **not** a system for
