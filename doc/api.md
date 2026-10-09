@@ -319,8 +319,13 @@ Per-user panel settings and integration configuration.
 Examples:
 
 - `GET /settings`
-- `PATCH /settings`
+- `PATCH /settings` — when the body sets a new `cfApiKey`, the key is saved and the
+  response also carries `cfApiKeyCheck` (same shape as below). A failed check never fails the save.
 - `POST /settings/test-discord-webhook`
+- `POST /settings/test-curseforge-key` — body `{ "cfApiKey"?: string }`. Tests that key, or the
+  saved one when omitted, against CurseForge and stores nothing. Returns `{ ok: true }` or
+  `{ ok: false, code }` with `code` one of `not_configured`, `invalid_credentials`,
+  `rate_limited`, `timeout`, `unreachable`, `unexpected`. Needs the system settings permission.
 - `POST /settings/proxy/power` — body `{ "enabled": true | false }`. Starts or stops
   the mc-router container right away instead of waiting for a settings save
 - `GET /settings/integrations` — masked SMTP/OIDC config (admin only; secrets are

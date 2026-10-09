@@ -159,6 +159,13 @@ export interface NormalizedModVersion {
 type ModLoaderName = 'forge' | 'neoforge' | 'fabric' | 'quilt';
 type ModSortField = 'relevance' | 'downloads' | 'updated';
 
+export type CurseforgeKeyCheckCode = 'not_configured' | 'invalid_credentials' | 'rate_limited' | 'timeout' | 'unreachable' | 'unexpected';
+
+export interface CurseforgeKeyCheck {
+  ok: boolean;
+  code?: CurseforgeKeyCheckCode;
+}
+
 @Injectable()
 export class CurseforgeService {
   private readonly logger = new Logger(CurseforgeService.name);
@@ -169,6 +176,8 @@ export class CurseforgeService {
   private readonly MODPACK_CLASS_ID = 4471;
   private readonly MAX_RESOLVE_REFS = 50;
   private readonly CATEGORIES_TTL_MS = 24 * 60 * 60 * 1000;
+  // Shorter than the client default: a settings save waits on this check.
+  private readonly KEY_CHECK_TIMEOUT_MS = 5000;
 
   // 2 = Popularity, 3 = LastUpdated, 6 = TotalDownloads. CurseForge has no
   // relevance sort, so popularity stands in for it.
@@ -214,6 +223,34 @@ export class CurseforgeService {
         'Accept': 'application/json',
       },
     });
+  }
+
+  // Never throws: the result is reported next to the key field, and a failed
+  // check must not block saving it (CurseForge itself may be the thing down).
+  async testApiKey(apiKey: string): Promise<CurseforgeKeyCheck> {
+    if (!apiKey) {
+      return { ok: false, code: 'not_configured' };
+    }
+
+    try {
+      await this.getApiClient(apiKey).get(`/games/${this.MINECRAFT_GAME_ID}`, { timeout: this.KEY_CHECK_TIMEOUT_MS });
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, code: this.keyCheckFailureCode(error) };
+    }
+  }
+
+  private keyCheckFailureCode(error: unknown): CurseforgeKeyCheckCode {
+    if (!axios.isAxiosError(error)) {
+      return 'unexpected';
+    }
+
+    const status = error.response?.status;
+    if (status === 401 || status === 403) return 'invalid_credentials';
+    if (status === 429) return 'rate_limited';
+    if (status) return 'unexpected';
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return 'timeout';
+    return 'unreachable';
   }
 
   async searchModpacks(

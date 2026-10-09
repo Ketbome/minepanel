@@ -147,6 +147,13 @@ you do it. Editing the generated `docker-compose.yml` does not: it is rebuilt fr
 The key is read from **Settings -> Integrations** and injected into the generated compose
 on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no key at all.
 
+**Test** next to the key field checks it against CurseForge without saving anything: it
+tests the key you typed, or the saved one if the field is empty. Saving a new key runs the
+same check. A failed check never blocks the save (CurseForge itself may be down), but the
+line under the field says why it failed: the key was rejected, CurseForge is rate limiting,
+it timed out, or the panel could not reach it at all (usually the backend container's
+outbound network or DNS).
+
 ## Mod Watch tab
 
 For Java servers with mod pinning available (Forge/Neoforge/Fabric/AUTO_CURSEFORGE/CurseForge/Modrinth/GTNH/FTBA),

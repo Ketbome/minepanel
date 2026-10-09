@@ -17,6 +17,47 @@ describe('CurseforgeService', () => {
     service = new CurseforgeService();
   });
 
+  describe('testApiKey', () => {
+    const axiosError = (fields: Record<string, unknown>) => Object.assign(new Error('http'), { isAxiosError: true, ...fields });
+
+    beforeEach(() => {
+      (axios.isAxiosError as unknown as jest.Mock).mockImplementation((error) => !!error?.isAxiosError);
+    });
+
+    it('reports a key CurseForge accepts as valid, using a short timeout', async () => {
+      mockClient.get.mockResolvedValue({ data: { data: { id: 432 } } });
+
+      await expect(service.testApiKey('good-key')).resolves.toEqual({ ok: true });
+      expect(axios.create).toHaveBeenCalledWith(expect.objectContaining({ headers: expect.objectContaining({ 'x-api-key': 'good-key' }) }));
+      expect(mockClient.get).toHaveBeenCalledWith('/games/432', { timeout: 5000 });
+    });
+
+    it('does not call CurseForge without a key', async () => {
+      await expect(service.testApiKey('')).resolves.toEqual({ ok: false, code: 'not_configured' });
+      expect(mockClient.get).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [{ response: { status: 403 } }, 'invalid_credentials'],
+      [{ response: { status: 401 } }, 'invalid_credentials'],
+      [{ response: { status: 429 } }, 'rate_limited'],
+      [{ response: { status: 503 } }, 'unexpected'],
+      [{ code: 'ECONNABORTED' }, 'timeout'],
+      [{ code: 'ETIMEDOUT' }, 'timeout'],
+      [{ code: 'ENOTFOUND' }, 'unreachable'],
+    ])('maps %j to %s', async (fields, code) => {
+      mockClient.get.mockRejectedValue(axiosError(fields));
+
+      await expect(service.testApiKey('key')).resolves.toEqual({ ok: false, code });
+    });
+
+    it('reports a non-HTTP failure as unexpected', async () => {
+      mockClient.get.mockRejectedValue(new Error('boom'));
+
+      await expect(service.testApiKey('key')).resolves.toEqual({ ok: false, code: 'unexpected' });
+    });
+  });
+
   it('searchMods should return normalized compatible results', async () => {
     mockClient.get.mockResolvedValue({
       data: {

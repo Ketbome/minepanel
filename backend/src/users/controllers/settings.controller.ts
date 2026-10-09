@@ -3,13 +3,14 @@ import { SettingsService } from '../services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
-import { ProxyPowerDto, UpdateSettingsDto } from '../dtos/settings.dto';
+import { ProxyPowerDto, TestCurseforgeKeyDto, UpdateSettingsDto } from '../dtos/settings.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { DiscordService, SupportedLanguage } from 'src/discord/discord.service';
 import { UsersService } from '../services/users.service';
 import { AccessControlService } from '../services/access-control.service';
 import { AuditLogService } from '../services/audit-log.service';
+import { CurseforgeService } from 'src/curseforge/curseforge.service';
 
 @Controller('settings')
 @UseGuards(JwtAuthGuard)
@@ -23,6 +24,7 @@ export class SettingsController {
     private readonly instanceSettings: InstanceSettingsService,
     private readonly proxyRouter: ProxyRouterService,
     private readonly velocity: VelocityRuntimeService,
+    private readonly curseforgeService: CurseforgeService,
   ) {}
 
   @Get()
@@ -97,6 +99,8 @@ export class SettingsController {
       throw new ForbiddenException('Only admins can manage audit retention');
     }
 
+    // updateSettings strips cfApiKey from the dto once it has encrypted it.
+    const newCfApiKey = dto.cfApiKey;
     const updatedSettings = await this.settingsService.updateSettings(dto, user.userId);
     const auditRetentionDays = await this.settingsService.getAuditRetentionDays();
 
@@ -108,6 +112,10 @@ export class SettingsController {
       summary: 'Updated panel settings',
     });
 
+    // The key is saved whatever the check says: an outage on CurseForge's side
+    // must not stop someone from storing a key that is in fact valid.
+    const cfApiKeyCheck = newCfApiKey ? await this.curseforgeService.testApiKey(newCfApiKey) : undefined;
+
     const { cfApiKey, discordWebhook, ...rest } = updatedSettings;
 
     return {
@@ -115,7 +123,20 @@ export class SettingsController {
       hasCfApiKey: !!cfApiKey,
       hasDiscordWebhook: !!discordWebhook,
       auditRetentionDays,
+      ...(cfApiKeyCheck ? { cfApiKeyCheck } : {}),
     };
+  }
+
+  // Tests the typed key when one is sent, so it can be checked before saving;
+  // otherwise the saved one.
+  @Post('test-curseforge-key')
+  async testCurseforgeKey(@Request() req, @Body() dto: TestCurseforgeKeyDto) {
+    const user = req.user as PayloadToken;
+    const currentUser = await this.usersService.getRequiredUserById(user.userId);
+    this.accessControlService.assertManageSystemSettings(currentUser);
+
+    const apiKey = dto?.cfApiKey || (await this.settingsService.getCfApiKey(user.userId));
+    return this.curseforgeService.testApiKey(apiKey);
   }
 
   @Post('test-discord-webhook')
