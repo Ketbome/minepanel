@@ -66,6 +66,11 @@ export function CommandWorkbench({ serverId, rconPort, rconPassword, isServerRun
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    // Some IMEs clear isComposing before their confirmation Enter.
+    if (event.nativeEvent.keyCode === 229) {
+      event.preventDefault();
+      return;
+    }
     if (executing || event.nativeEvent.isComposing) return;
     if (event.key === "Escape") {
       setSuggesting(false);
