@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Key, Loader2, Mail, ShieldCheck, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,9 @@ export default function IntegrationsSettingsPage() {
   const [testingCfKey, setTestingCfKey] = useState(false);
   // Result of the last Test click or key save; cleared as soon as the key is edited.
   const [cfKeyCheck, setCfKeyCheck] = useState<CurseforgeKeyCheck | null>(null);
+  // Bumped on every key edit, so a check that resolves after one is dropped
+  // instead of being shown under a key it did not test.
+  const cfKeyEdits = useRef(0);
 
   // SMTP + OIDC
   const [integrations, setIntegrations] = useState<IntegrationSettings | null>(null);
@@ -122,6 +125,7 @@ export default function IntegrationsSettingsPage() {
 
   const saveBasic = async () => {
     setSavingBasic(true);
+    const edit = cfKeyEdits.current;
     try {
       // Write-only: only send fields the user actually typed.
       const payload: { cfApiKey?: string; discordWebhook?: string } = {};
@@ -130,7 +134,7 @@ export default function IntegrationsSettingsPage() {
       const res = await updateSettings(payload);
       setHasCfApiKey(!!res.hasCfApiKey);
       setHasDiscordWebhook(!!res.hasDiscordWebhook);
-      if (payload.cfApiKey) setCfKeyCheck(res.cfApiKeyCheck ?? null);
+      if (payload.cfApiKey && edit === cfKeyEdits.current) setCfKeyCheck(res.cfApiKeyCheck ?? null);
       setCfApiKey('');
       setDiscordWebhook('');
       mcToast.success(t('settingsSaved'));
@@ -144,13 +148,15 @@ export default function IntegrationsSettingsPage() {
 
   const handleTestCfKey = async () => {
     setTestingCfKey(true);
+    const edit = cfKeyEdits.current;
+    let result: CurseforgeKeyCheck;
     try {
-      setCfKeyCheck(await testCurseforgeKey(cfApiKey || undefined));
+      result = await testCurseforgeKey(cfApiKey || undefined);
     } catch {
-      setCfKeyCheck({ ok: false, code: 'unexpected' });
-    } finally {
-      setTestingCfKey(false);
+      result = { ok: false, code: 'unexpected' };
     }
+    if (edit === cfKeyEdits.current) setCfKeyCheck(result);
+    setTestingCfKey(false);
   };
 
   const handleTestWebhook = async () => {
@@ -262,6 +268,7 @@ export default function IntegrationsSettingsPage() {
                   <Input
                     value={cfApiKey}
                     onChange={(e) => {
+                      cfKeyEdits.current += 1;
                       setCfApiKey(e.target.value);
                       setCfKeyCheck(null);
                     }}
