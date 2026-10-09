@@ -54,7 +54,7 @@ New Java servers start from the instance-wide defaults in **Settings → Java De
 | Stats     | CPU%, RAM%, player count, uptime, game version |
 | History   | TPS, tick duration, CPU/RAM and player graphs (1h–168h) in the Metrics tab, sampled every minute with 7-day retention |
 | Tick performance | Native NeoForge estimated TPS and mean MSPT; compatible spark servers provide measured TPS and median/P95 MSPT |
-| Alerts    | Opt-in Discord alerts per server: unexpected server down, crash loops (with an exit code and log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; requires the Discord webhook from Settings > Integrations) |
+| Alerts    | Opt-in alerts per server via Discord, email, Telegram, ntfy or Slack: unexpected server down, crash loops (with an exit code and a Discord-only log tail) when a restart retry limit runs out, and sustained high CPU/RAM above configurable thresholds (Metrics tab; configure channels in Settings > Integrations) |
 
 - Runtime stats refresh on their own on the home page and the server page, and only render for
   running servers.
@@ -155,7 +155,7 @@ Reading the charts:
 - CPU uses Docker's scale: 100% represents one fully used core, so multi-core usage may exceed 100%.
 - Memory charts use GiB and show container usage, not JVM heap alone.
 - Bedrock retains resource/player monitoring but has no tick measurements.
-- Existing Discord alerts cover server down and high CPU/RAM; TPS alerting is not included.
+- Existing notification alerts cover server down and high CPU/RAM; TPS alerting is not included.
 
 References: [itzg commands](https://docker-minecraft-server.readthedocs.io/en/latest/sending-commands/commands/),
 [NeoForge TPS implementation](https://github.com/neoforged/NeoForge/blob/1.21.1/src/main/java/net/neoforged/neoforge/server/command/TPSCommand.java),
@@ -513,13 +513,122 @@ Recommended approach:
 2. Enable Aikar flags if you do not have a custom JVM tuning profile.
 3. Change `JVM_XX_OPTS` only when you have measured a performance issue.
 
+## Notifications
+
+![Notification channels in Settings > Integrations](/img/notifications-settings.webp)
+
+Admins configure channels under **Settings > Integrations > Notifications**.
+These are instance-wide destinations: they receive events from **all servers**, including
+Java and Bedrock. Channel switches and the **Server lifecycle events** / **Server alerts**
+switches control automatic delivery. Existing Discord webhooks remain enabled by default;
+email, Telegram, ntfy and Slack start disabled. The page separates delivery channels from alert rules,
+shows saved configuration status, keeps tests beside each channel and offers **Discard changes**.
+
+- **Discord:** uses the existing webhook field on the Integrations page. The
+  existing selection rule is preserved: automatic events use the first user settings row
+  with a webhook; this is not a separate per-user subscription system.
+- **Email:** configure SMTP in the same page, then enter one recipient address and enable
+  email notifications. Notifications reuse the instance SMTP configuration.
+- **ntfy:** enter the server URL (default `https://ntfy.sh`) and topic, then subscribe to
+  that topic in the ntfy app. Self-hosted HTTP/HTTPS servers and URL path prefixes are
+  supported. An access token is optional for public topics; for private alerts use an
+  access-controlled topic and a token permitted to publish. Public topics are readable
+  by anyone who knows the name. Tokens are encrypted and write-only. Clear a saved token
+  after disabling the channel; an unreadable saved token never falls back to anonymous delivery.
+  Changing the server URL's scheme, host or port clears the saved token unless you explicitly
+  supply a replacement. A path-only change on the same origin preserves it.
+- **Slack:** create an [incoming webhook](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)
+  for the destination channel and save it here. Slack and GovSlack webhook URLs are
+  supported. The whole webhook URL is encrypted and write-only; omit to retain it, or
+  disable the channel and clear it. Messages use plain text without mentions or crash logs.
+- **Telegram:** create a bot with [@BotFather](https://t.me/BotFather), start a private chat
+  with the bot or add it to the target group, and enter its token and the chat ID. For a
+  channel, add the bot with permission to post and use its `@channel_username` or numeric ID.
+  For a new bot, send `/start` in the target chat and use the Bot API
+  [getUpdates](https://core.telegram.org/bots/api#getupdates) response’s `message.chat.id`
+  as the numeric ID. Bots already using a webhook cannot use `getUpdates`; obtain the ID
+  through that bot’s existing integration instead.
+  Tokens are encrypted at rest and never returned by the API. You can replace or clear a
+  saved token; disable Telegram before clearing the token.
+
+**Save changes before testing.** Every channel's test button (email, Telegram, Discord, ntfy and Slack) uses the saved
+destination and works even when automatic delivery is disabled.
+No live notification is sent merely by saving settings.
+
+Lifecycle notifications cover start, stop, restart, delete and operation errors.
+For unexpected server down, crash loops and sustained high CPU/RAM, enable the appropriate
+per-server alerts in the **Metrics** tab. Their existing thresholds, sustain windows and
+cooldowns still apply. Channels are attempted independently; email, Telegram, Discord, ntfy and Slack
+requests have timeouts. Failed messages are logged without credentials; lifecycle controls do not wait for provider delivery, and there is no persistent delivery queue. Explicit Discord/Telegram/ntfy/Slack rate-limit rejections may be retried once within a 12-second HTTP budget, with at most two seconds of provider-requested waiting. Other failures, including timeouts, are not retried.
+
+Additional opt-in rules are configured in the Notifications section:
+
+| Rule | Behavior |
+| --- | --- |
+| Low disk space | Checks the filesystem mounted at the backend’s server-data directory every minute. Warns when available space is at or below the configured percentage (1–50%, default 10%). Recovery requires more than two percentage points above the threshold to prevent flapping. |
+| Backup failures | For servers with backups enabled and the game container running, resolves the Compose `mc` and `backup` service IDs and checks the backup sidecar for a nonzero exit/restart or the explicit `Backup failed with exit code` log marker. Clean exits and SIGTERM (143) do not trigger an alert. Probe failures stay unknown. |
+| Incident recovery | Sends one informational notification when an observed down/crash, CPU/RAM or disk incident clears. Unknown readings do not count as recovery. This does not infer backup success from missing error logs. |
+
+Disk and backup rules use a configurable **Repeat interval** (1–10080 minutes, default 60).
+CPU/RAM/down/crash cooldowns remain per-server. Per-type switches control delivery.
+Recovery closes the same warning/error level as the original incident. The **All alerts**
+switch mutes all alert rules and clears incidents, sustained-sample counters and cooldowns
+on the next monitoring evaluation. Re-enabling starts fresh, without recovery messages for
+the muted period. Normal lifecycle messages have their own switch.
+If recovery notification preparation fails (for example, settings cannot be read), the
+incident is retained for another attempt on the next healthy sample. Provider timeouts
+remain subject to the delivery policy above; they do not introduce a persistent retry queue.
+
+If a saved Telegram token cannot be decrypted after rotating `JWT_SECRET`, Telegram is
+unavailable until the token is replaced; Discord and email continue independently. Account
+emails and notification emails share the existing SMTP transporter. Test failures expose and
+log only sanitized reason codes or HTTP statuses. Crash notifications include the server log
+tail only in Discord; email and Telegram receive a summary without the log or Discord markup.
+
+The Integrations page shows the last attempt for each channel: **provider accepted**, **failed**
+or **outcome unknown**, with time, automatic/test source and a sanitized reason. This state
+is in memory and resets on panel restart or integration changes. SMTP acceptance does not
+mean inbox delivery; timeout/connection loss may leave the result unknown. Discord sends
+with `wait=true` and reports failures to the shared fan-out. Saved-destination tests also
+support Discord and use the same first configured webhook as automatic delivery.
+
+Three additional rules are available, disabled by default:
+
+- **Scheduled task failures:** restart/command/announcement execution failures, excluding
+  supported intentional skips. Messages contain only task ID/type, never raw command output.
+  Failed scheduled restarts suppress the separate lifecycle error when this rule is enabled;
+  repeats use the global cooldown.
+- **Game query failures:** Java and Bedrock. Requires consecutive measured query failures
+  after a configurable startup grace period (default three one-minute samples / five minutes).
+  Missing binaries, Docker errors and unreadable probes stay unknown; they do not count as
+  failed samples or recovery. Configured auto-pause/auto-stop suppresses this rule. It checks
+  the container-local game endpoint, not external port/DNS reachability.
+- **Overdue backups:** Java/restic only, checked at most every five minutes. Snapshot queries
+  are filtered by server hostname and `/data`; grace follows `backupInitialDelay`,
+  `backupOnStartup`, `backupInterval` and a configurable tolerance (default 60 minutes).
+  Stopped servers, servers configured for no-player pauses, unknown durations and custom compose snippets
+  are excluded. Unknown repository reads never mean a missing backup or recovery. A valid
+  fresh snapshot can close an existing incident; this does not verify its file contents.
+
+Backup freshness follows the backup sidecar start time; restarting only the game container does not reset its schedule.
+
+The additional rules default to disabled. Monitoring state is held in memory and resets on
+panel restart. Backup log reads are bounded to 500 lines, 512 KiB and at most five minutes
+(one minute on first observation); missing or truncated logs cannot prove backup success.
+Raw backup logs are never included in notifications because they may contain repository
+credentials. Failure detection follows the current
+[itzg backup sidecar’s explicit log marker](https://github.com/itzg/docker-mc-backup/blob/master/scripts/opt/backup-loop.sh).
+
+Telegram delivery uses the official [Bot API sendMessage method](https://core.telegram.org/bots/api#sendmessage).
+This integration sends notifications; it does not receive chat commands.
+
 ## Other
 
 | Feature          | Description                               |
 | ---------------- | ----------------------------------------- |
 | Multi-language   | EN, ES, NL, DE, FR, PL, RU, PT, TR        |
 | Multi-arch       | x86_64, ARM64 (Pi, Apple Silicon)         |
-| Discord webhooks | Server event notifications with address, version and modpack. "Started"/"restarted" is sent once the server answers a status ping (not when the container starts); after 20 minutes without an answer a warning is sent instead |
+| Notifications | Discord webhooks, SMTP email, Telegram, ntfy and Slack for server events and alerts with address, version and modpack. "Started"/"restarted" is sent once the server answers a status ping (not when the container starts); after 20 minutes without an answer a warning is sent instead |
 | MC Proxy Router  | Single port for Java servers via hostname; started and configured by the panel |
 | Proxy auto-scaling | Stop proxied Java servers while empty, wake them on the first connection, with a per-server opt-out |
 | Velocity network | Lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel |

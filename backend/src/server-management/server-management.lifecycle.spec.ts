@@ -197,10 +197,36 @@ describe('ServerManagementService lifecycle', () => {
   });
 
   describe('stop, restart and start', () => {
+    it.each([
+      ['stopServer', false], ['forceStopServer', false], ['deleteServer', false],
+      ['stopServer', true], ['forceStopServer', true], ['deleteServer', true],
+      ['startServer', true], ['restartServer', true],
+    ] as const)('%s returns without waiting for notification delivery (failure=%s)', async (method, failure) => {
+      if (method === 'forceStopServer') jest.spyOn(service as any, 'requestRconStop').mockResolvedValue(true);
+      let release!: () => void;
+      discord.sendServerNotification.mockReturnValue(new Promise<void>((resolve) => { release = resolve; }));
+      if (failure) {
+        route(/docker compose (down|up)/, () => Promise.reject(new Error('compose unavailable')));
+        if (method === 'deleteServer') (fs.remove as unknown as jest.Mock).mockRejectedValueOnce(new Error('busy'));
+      }
+      let completed = false;
+      const operation = service[method]('srv').then((result) => { completed = true; return result; });
+      try {
+        await settle();
+        await settle();
+      expect(discord.sendServerNotification).toHaveBeenCalled();
+        expect(completed).toBe(true);
+      } finally {
+        release();
+        await operation;
+      }
+    });
+
     it('stopServer uses the announce delay plus buffer as compose timeout', async () => {
       expect(await service.stopServer('srv')).toBe(true);
       expect(execCalls()).toContain(`docker compose down --timeout ${30 + SHUTDOWN_BUFFER_SECONDS}`);
       expect(alerts.markExpectedStop).toHaveBeenCalledWith('srv');
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ port: '25565', ip: '1.2.3.4', lanIp: '10.0.0.2' }));
     });
 
@@ -225,6 +251,7 @@ describe('ServerManagementService lifecycle', () => {
       existing.push('/app/servers/srv/docker-compose.yml');
       route(/docker compose down/, () => Promise.reject(new Error('compose failed')));
       expect(await service.stopServer('srv')).toBe(false);
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'error', 'srv', 'en', expect.objectContaining({ reason: 'Failed to stop server' }));
     });
 
@@ -262,6 +289,7 @@ describe('ServerManagementService lifecycle', () => {
       const chown = (spawn as jest.Mock).mock.calls.find((call) => call[1][0] === 'run');
       expect(chown[1]).toEqual(['run', '--rm', '-v', '/srv/servers/srv/mc-data:/data', 'alpine', 'chown', '-R', '1001:1000', '/data']);
       expect(execCalls()).toEqual(expect.arrayContaining([expect.stringMatching(/docker compose down/), 'docker compose up -d']));
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'srv', 'en', expect.objectContaining({ port: '19132' }));
     });
 
@@ -272,6 +300,7 @@ describe('ServerManagementService lifecycle', () => {
       existing.push('/app/servers/srv/docker-compose.yml');
       route(/docker compose up/, () => Promise.reject(new Error('up failed')));
       expect(await service.startServer('srv')).toBe(false);
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'error', 'srv', 'en', expect.objectContaining({ reason: 'Failed to start server' }));
     });
 
@@ -401,6 +430,7 @@ describe('ServerManagementService lifecycle', () => {
       expect(fs.remove).toHaveBeenCalledWith('/app/servers/srv');
       expect(store.removeFromIndex).toHaveBeenCalledWith('srv');
       expect(execCalls()).toEqual(expect.arrayContaining(['docker volume rm srv_data', 'docker volume rm srv_backups']));
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
     });
 
@@ -661,15 +691,18 @@ describe('ServerManagementService lifecycle', () => {
     it('uses the proxy hostname for Java servers when the proxy is on', async () => {
       instanceSettings.getProxy.mockResolvedValue({ enabled: true, baseDomain: 'mc.example.com' });
       await service.stopServer('srv');
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'stopped', 'srv', 'en', { ip: 'play.example.com', port: undefined, lanIp: undefined });
 
       // A server that opted out of the proxy gets no hostname, and the IPs only apply when the proxy is off.
       compose = 'services:\n  mc:\n    image: itzg/minecraft-server\n    labels:\n      minepanel.proxy.enabled: "false"\n';
       await service.stopServer('srv');
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', { port: undefined });
 
       compose = 'services:\n  mc:\n    image: itzg/minecraft-server\n';
       await service.stopServer('srv');
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ ip: 'srv.mc.example.com' }));
     });
 
@@ -690,6 +723,7 @@ describe('ServerManagementService lifecycle', () => {
       for (const [config, modpack] of cases) {
         store.readConfig.mockResolvedValue({ edition: 'JAVA', minecraftVersion: '1.20.1', ...config });
         await service.stopServer('srv');
+        await settle();
         const details = discord.sendServerNotification.mock.lastCall[4];
         expect(details.version).toBe('1.20.1');
         expect(details.modpack).toBe(modpack);
@@ -698,6 +732,7 @@ describe('ServerManagementService lifecycle', () => {
       // Deleted servers have no server.json left to read.
       store.readConfig.mockRejectedValue(new Error('gone'));
       await service.stopServer('srv');
+      await settle();
       expect(discord.sendServerNotification.mock.lastCall[4]).not.toHaveProperty('version');
     });
 
@@ -708,17 +743,20 @@ describe('ServerManagementService lifecycle', () => {
 
       await service.stopServer('srv');
 
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenLastCalledWith('https://hook', 'stopped', 'srv', 'en', expect.objectContaining({ ip: '1.2.3.4', port: '25577' }));
     });
 
-    it('skips notifications without a webhook and survives settings errors', async () => {
+    it('dispatches other channels without a webhook and survives settings errors', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       await service.stopServer('srv');
-      expect(discord.sendServerNotification).not.toHaveBeenCalled();
+      await settle();
+      expect(discord.sendServerNotification).toHaveBeenLastCalledWith('', 'stopped', 'srv', 'es', expect.any(Object));
 
       settingsRepo.findOne.mockRejectedValue(new Error('db'));
       await service.stopServer('srv');
-      expect(discord.sendServerNotification).not.toHaveBeenCalled();
+      await settle();
+      expect(discord.sendServerNotification).toHaveBeenLastCalledWith('', 'stopped', 'srv', 'es', expect.any(Object));
 
       settingsRepo.findOne.mockResolvedValue({ discordWebhook: 'https://hook' });
       discord.sendServerNotification.mockRejectedValueOnce(new Error('discord down'));
@@ -728,6 +766,7 @@ describe('ServerManagementService lifecycle', () => {
     it('falls back when the compose file cannot be parsed', async () => {
       (fs.readFile as unknown as jest.Mock).mockRejectedValue(new Error('io'));
       await service.stopServer('srv');
+      await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'stopped', 'srv', 'en', { port: undefined, ip: '1.2.3.4', lanIp: '10.0.0.2' });
     });
   });

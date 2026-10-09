@@ -5,6 +5,8 @@ import { InstanceSettingsService } from './instance-settings.service';
 import { InstanceSettings } from './entities/instance-settings.entity';
 import { Settings } from '../users/entities/settings.entity';
 import { decryptSecret, encryptSecret, isEncrypted } from '../common/crypto/secret-cipher';
+import { plainToInstance } from 'class-transformer';
+import { UpdateIntegrationSettingsDto } from './dto/update-integration-settings.dto';
 
 describe('InstanceSettingsService', () => {
   const originalSecret = process.env.JWT_SECRET;
@@ -200,4 +202,95 @@ describe('InstanceSettingsService', () => {
       expect(row.proxyBaseDomain).toBeNull();
     });
   });
+  it('returns notification defaults for existing installations', async () => {
+    expect((await service.getPublic()).notifications).toEqual({ ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', slackEnabled: false, hasNtfyToken: false, hasSlackWebhook: false, discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
+    expect((await service.getNotifications()).telegramToken).toBe('');
+  });
+
+  it('stores Telegram credentials encrypted and exposes only a presence flag', async () => {
+    const result = await service.updateIntegrations({ notifications: { telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', emailEnabled: true, emailTo: 'admin@example.com' } });
+    expect(isEncrypted(row.telegramTokenEnc)).toBe(true);
+    expect(JSON.stringify(row.notifications)).not.toContain('secret');
+    expect(result.notifications.hasTelegramToken).toBe(true);
+    expect(result.notifications).not.toHaveProperty('telegramToken');
+    expect((await service.getNotifications()).telegramToken).toBe('123:secret');
+    await service.updateIntegrations({ notifications: { alertsEnabled: false } });
+    expect((await service.getNotifications()).telegramToken).toBe('123:secret');
+    await service.updateIntegrations({ notifications: { telegramEnabled: false, telegramToken: '' } });
+    expect(row.telegramTokenEnc).toBeNull();
+  });
+
+  it('rejects enabled channels with missing destinations', async () => {
+    await expect(service.updateIntegrations({ notifications: { emailEnabled: true } })).rejects.toThrow('require a recipient');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { telegramEnabled: true } })).rejects.toThrow('require a bot token');
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it('preserves omitted settings after DTO transformation for a partial patch', async () => {
+    await service.updateIntegrations({ notifications: { emailEnabled: true, emailTo: 'admin@example.com', discordEnabled: false } });
+    const dto = plainToInstance(UpdateIntegrationSettingsDto, { notifications: { alertsEnabled: false } });
+    await service.updateIntegrations(dto);
+    expect((await service.getPublic()).notifications).toMatchObject({ emailEnabled: true, emailTo: 'admin@example.com', discordEnabled: false, alertsEnabled: false });
+  });
+  it('isolates a Telegram decryption failure after JWT_SECRET rotation', async () => {
+    row.telegramTokenEnc = encryptSecret('123:private-token');
+    const current = process.env.JWT_SECRET;
+    process.env.JWT_SECRET = 'rotated-test-secret';
+    try {
+      await expect(service.getNotifications()).resolves.toMatchObject({ discordEnabled: true, telegramToken: '' });
+    } finally { process.env.JWT_SECRET = current; }
+  });
+  it('encrypts new provider secrets, masks responses and preserves omitted secrets', async () => {
+    const webhook = 'https://hooks.slack.com/services/T/B/private';
+    await service.updateIntegrations({ notifications: { ntfyEnabled: true, ntfyTopic: 'private', ntfyToken: 'tk_private', slackEnabled: true, slackWebhook: webhook } });
+    expect(isEncrypted(row.ntfyTokenEnc)).toBe(true); expect(isEncrypted(row.slackWebhookEnc)).toBe(true);
+    expect(JSON.stringify(row.notifications)).not.toContain('tk_private'); expect(JSON.stringify(row.notifications)).not.toContain(webhook);
+    expect((await service.getPublic()).notifications).toMatchObject({ hasNtfyToken: true, hasSlackWebhook: true });
+    expect(JSON.stringify(await service.getPublic())).not.toContain(webhook);
+    await service.updateIntegrations({ notifications: { alertsEnabled: false } });
+    expect(await service.getNotifications()).toMatchObject({ ntfyToken: 'tk_private', slackWebhook: webhook });
+    await service.updateIntegrations({ notifications: { ntfyEnabled: false, slackEnabled: false, ntfyToken: '', slackWebhook: '' } });
+    expect(row.ntfyTokenEnc).toBeNull(); expect(row.slackWebhookEnc).toBeNull();
+  });
+
+  it('drops the stored ntfy token when the server host changes', async () => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private' } });
+    expect(row.ntfyTokenEnc).not.toBeNull();
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://other.example' } });
+    expect(row.ntfyTokenEnc).toBeNull();
+  });
+
+  it.each(['http://ntfy.sh', 'https://ntfy.sh:8443'])('drops the stored ntfy token when the origin changes to %s', async (ntfyServerUrl) => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyServerUrl } });
+    expect(row.ntfyTokenEnc).toBeNull();
+    expect((await service.getNotifications()).ntfyToken).toBe('');
+  });
+
+  it('preserves the ntfy token for the same origin and accepts an explicit replacement for a new origin', async () => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://NTFY.sh:443/prefix/' } });
+    expect((await service.getNotifications()).ntfyToken).toBe('tk_private');
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://other.example', ntfyToken: 'tk_replacement' } });
+    expect((await service.getNotifications()).ntfyToken).toBe('tk_replacement');
+  });
+
+  it('requires new channel destinations while accepting anonymous ntfy', async () => {
+    await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true } })).rejects.toThrow('require a topic');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { slackEnabled: true } })).rejects.toThrow('require a webhook');
+    row.notifications = {};
+    await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true, ntfyTopic: 'public' } })).resolves.toBeDefined();
+  });
+
+  it('isolates unreadable new secrets without downgrading ntfy to anonymous', async () => {
+    row.ntfyTokenEnc = encryptSecret('tk_private'); row.slackWebhookEnc = encryptSecret('https://hooks.slack.com/services/T/B/private');
+    const current = process.env.JWT_SECRET; process.env.JWT_SECRET = 'new-secret';
+    try {
+      expect(await service.getNotifications()).toMatchObject({ discordEnabled: true, ntfyToken: '', ntfyTokenUnreadable: true, slackWebhook: '' });
+    } finally { process.env.JWT_SECRET = current; }
+  });
+
 });
