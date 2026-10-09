@@ -84,8 +84,21 @@ export class AlertsService {
   }
 
   async evaluate(resources: Record<string, ServerResources>, readCrashInfo?: CrashInfoReader): Promise<void> {
-    if (Object.keys(resources).length === 0) return;
     const gameRule = await this.notificationsService.getAlertRules();
+    if (!gameRule.enabled) {
+      for (const state of this.state.values()) {
+        state.incidents.clear();
+        state.lastAlertAt = {};
+        state.highCpuCount = 0;
+        state.highMemoryCount = 0;
+        state.gameFailureCount = 0;
+        state.lastStatus = null;
+      }
+      // Keep expected-stop windows, but never carry alerts or unknown transitions through a mute.
+      this.primeState(resources);
+      return;
+    }
+    if (Object.keys(resources).length === 0) return;
     const configs = await this.alertConfigRepo.find();
     if (configs.length === 0 && !(gameRule.enabled && gameRule.gameAlertEnabled)) {
       this.primeState(resources);

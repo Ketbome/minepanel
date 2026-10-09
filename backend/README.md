@@ -66,5 +66,6 @@ Notifications use bounded, single explicit-429 retries and `wait=true` for Disco
 
 ntfy and Slack use the shared notification fan-out and admin-only integration settings.
 Keep ntfy tokens and Slack webhook URLs encrypted and write-only; preserve omitted secrets.
+For ntfy, an origin change (scheme, host or port) clears an omitted token; an explicitly supplied replacement is accepted.
 An unreadable ntfy token must fail the channel rather than publish anonymously. Both channels
 start disabled, reject HTTP redirects and reuse bounded explicit-429 retry and delivery outcomes.

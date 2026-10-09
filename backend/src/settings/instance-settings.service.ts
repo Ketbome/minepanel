@@ -378,9 +378,9 @@ export class InstanceSettingsService implements OnModuleInit {
   }
 
   // Write-only secret handling: undefined keeps, '' clears, other value sets.
-  private ntfyHost(url: string | undefined): string {
+  private ntfyOrigin(url: string | undefined): string {
     try {
-      return new URL(url || 'https://ntfy.sh').host.toLowerCase();
+      return new URL(url || 'https://ntfy.sh').origin;
     } catch {
       return '';
     }
@@ -404,11 +404,11 @@ export class InstanceSettingsService implements OnModuleInit {
     if (dto.notifications) {
       const { telegramToken, ntfyToken, slackWebhook, ...preferences } = dto.notifications;
       const provided = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value !== undefined));
-      const previousNtfyHost = this.ntfyHost(row.notifications?.ntfyServerUrl);
+      const previousNtfyOrigin = this.ntfyOrigin(row.notifications?.ntfyServerUrl);
       row.notifications = { ...row.notifications, ...provided };
-      // A stored token must never follow a changed server URL to a new host.
-      const ntfyHostChanged = this.ntfyHost(row.notifications?.ntfyServerUrl) !== previousNtfyHost;
-      if (ntfyHostChanged && ntfyToken === undefined) row.ntfyTokenEnc = null;
+      // Include the scheme so an HTTPS-to-HTTP change cannot silently expose a saved token.
+      const ntfyOriginChanged = this.ntfyOrigin(row.notifications?.ntfyServerUrl) !== previousNtfyOrigin;
+      if (ntfyOriginChanged && ntfyToken === undefined) row.ntfyTokenEnc = null;
       row.telegramTokenEnc = this.applySecret(row.telegramTokenEnc, telegramToken);
       row.ntfyTokenEnc = this.applySecret(row.ntfyTokenEnc, ntfyToken);
       row.slackWebhookEnc = this.applySecret(row.slackWebhookEnc, slackWebhook);

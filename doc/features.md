@@ -535,6 +535,8 @@ shows saved configuration status, keeps tests beside each channel and offers **D
   access-controlled topic and a token permitted to publish. Public topics are readable
   by anyone who knows the name. Tokens are encrypted and write-only. Clear a saved token
   after disabling the channel; an unreadable saved token never falls back to anonymous delivery.
+  Changing the server URL's scheme, host or port clears the saved token unless you explicitly
+  supply a replacement. A path-only change on the same origin preserves it.
 - **Slack:** create an [incoming webhook](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)
   for the destination channel and save it here. Slack and GovSlack webhook URLs are
   supported. The whole webhook URL is encrypted and write-only; omit to retain it, or
@@ -570,7 +572,9 @@ Additional opt-in rules are configured in the Notifications section:
 Disk and backup rules use a configurable **Repeat interval** (1–10080 minutes, default 60).
 CPU/RAM/down/crash cooldowns remain per-server. Per-type switches control delivery.
 Recovery closes the same warning/error level as the original incident. The **All alerts**
-switch mutes all alert rules; normal lifecycle messages have their own switch.
+switch mutes all alert rules and clears incidents, sustained-sample counters and cooldowns
+on the next monitoring evaluation. Re-enabling starts fresh, without recovery messages for
+the muted period. Normal lifecycle messages have their own switch.
 
 If a saved Telegram token cannot be decrypted after rotating `JWT_SECRET`, Telegram is
 unavailable until the token is replaced; Discord and email continue independently. Account

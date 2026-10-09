@@ -336,6 +336,47 @@ describe('AlertsService', () => {
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
     });
   });
+  it('does not create incidents or consume cooldowns while all alerts are disabled', async () => {
+    alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 1 })]);
+    discordService.getAlertRules.mockResolvedValue({ enabled: false });
+    await service.evaluate({ srv: running });
+    await service.evaluate({ srv: { ...running, cpuUsage: '95%', memoryUsage: '950MiB' } });
+    await service.evaluate({ srv: stopped });
+    expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+    discordService.getAlertRules.mockResolvedValue({ enabled: true });
+    await service.evaluate({ srv: running });
+    expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+    await service.evaluate({ srv: { ...running, cpuUsage: '95%', memoryUsage: '950MiB' } });
+    expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it('forgets incidents and cooldowns when globally disabled, even with no resource sample', async () => {
+    alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 1 })]);
+    await service.evaluate({ srv: { ...running, cpuUsage: '95%' } });
+    discordService.getAlertRules.mockResolvedValue({ enabled: false });
+    await service.evaluate({});
+    discordService.getAlertRules.mockResolvedValue({ enabled: true });
+    await service.evaluate({ srv: running });
+    expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
+    await service.evaluate({ srv: { ...running, cpuUsage: '95%' } });
+    expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it('resets sustained samples while disabled but preserves expected panel stops', async () => {
+    alertConfigRepo.find.mockResolvedValue([downConfig({ resourceAlertEnabled: true, sustainedMinutes: 2 })]);
+    const busy = { ...running, cpuUsage: '95%' };
+    await service.evaluate({ srv: busy });
+    service.markExpectedStop('srv');
+    discordService.getAlertRules.mockResolvedValue({ enabled: false });
+    await service.evaluate({ srv: busy });
+    discordService.getAlertRules.mockResolvedValue({ enabled: true });
+    await service.evaluate({ srv: stopped });
+    await service.evaluate({ srv: busy });
+    expect(discordService.sendCustomMessage).not.toHaveBeenCalled();
+    await service.evaluate({ srv: busy });
+    expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+  });
+
   it('retains an open incident through an empty failed sample', async () => {
     alertConfigRepo.find.mockResolvedValue([downConfig()]);
     await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });

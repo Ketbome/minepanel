@@ -262,6 +262,21 @@ describe('InstanceSettingsService', () => {
     expect(row.ntfyTokenEnc).toBeNull();
   });
 
+  it.each(['http://ntfy.sh', 'https://ntfy.sh:8443'])('drops the stored ntfy token when the origin changes to %s', async (ntfyServerUrl) => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyServerUrl } });
+    expect(row.ntfyTokenEnc).toBeNull();
+    expect((await service.getNotifications()).ntfyToken).toBe('');
+  });
+
+  it('preserves the ntfy token for the same origin and accepts an explicit replacement for a new origin', async () => {
+    await service.updateIntegrations({ notifications: { ntfyTopic: 'private', ntfyToken: 'tk_private' } });
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://NTFY.sh:443/prefix/' } });
+    expect((await service.getNotifications()).ntfyToken).toBe('tk_private');
+    await service.updateIntegrations({ notifications: { ntfyServerUrl: 'https://other.example', ntfyToken: 'tk_replacement' } });
+    expect((await service.getNotifications()).ntfyToken).toBe('tk_replacement');
+  });
+
   it('requires new channel destinations while accepting anonymous ntfy', async () => {
     await expect(service.updateIntegrations({ notifications: { ntfyEnabled: true } })).rejects.toThrow('require a topic');
     row.notifications = {};
