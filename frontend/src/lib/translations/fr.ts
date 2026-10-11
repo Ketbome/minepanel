@@ -82,7 +82,7 @@ export const fr: Record<TranslationKey, string> = {
   dashboard: 'Tableau de bord',
   servers: 'Serveurs',
   settings: 'Paramètres',
-  home: 'Acceuil',
+  home: 'Accueil',
   navigation: 'Navigation',
 
   // ===========================
