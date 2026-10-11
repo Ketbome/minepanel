@@ -73,3 +73,11 @@ from recorded playtime. The tab cancels in-flight requests on navigation and ref
 Notification settings group channels beside their test controls and alert rules beside thresholds. Admins can opt into low disk space, failed backups and incident recovery, and discard unsaved changes. Existing per-server CPU/RAM thresholds stay in Metrics.
 
 Integrations show each channel’s last accepted/failed/unknown attempt and expose opt-in task failures, sustained game-query failures and Java/restic overdue-backup rules.
+## Command console
+
+The Java Commands tab uses `components/molecules/commands/command-workbench.tsx` for
+searchable presets, keyboard suggestions and a timestamped command/response history.
+Selecting a preset or reusing a history entry fills the input; sending is explicit.
+`useServerCommands` keeps at most 50 entries in memory, prevents concurrent submissions,
+and discards late replies after changing servers. History survives the Commands/World
+switch within the tab, but clears when leaving the tab, refreshing or changing servers.

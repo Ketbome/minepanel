@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const nl: Record<TranslationKey, string> = {
+  consoleHistory: "Opdrachtgeschiedenis",
+  consoleClearHistory: "Geschiedenis wissen",
+  consoleEmpty: "Je console is klaar",
+  consoleEmptyHint: "Typ hieronder een opdracht of kies een voorbeeld. Opdrachten en serverantwoorden verschijnen hier.",
+  consoleReuse: "Bewerken en hergebruiken",
+  consoleReplyReceived: "Antwoord ontvangen",
+  consoleNoOutput: "De server heeft geen tekst teruggestuurd.",
+  consoleKeyboardHint: "↑ ↓ selecteren suggesties; Tab vult aan. Enter verstuurt of kiest de geselecteerde suggestie. Esc sluit suggesties; daarna bladeren ↑ ↓ door de geschiedenis.",
+  consoleSessionHint: "De laatste 50 opdrachten worden alleen bewaard zolang dit scherm open is.",
+  consoleFindPreset: "Opdracht zoeken",
+  consoleSearchHint: "Zoek op naam of opdracht…",
+  consolePresetHint: "Kies een voorbeeld om voor het versturen te bewerken. Beschikbaarheid hangt af van je server en geïnstalleerde mods.",
+  consoleNoMatches: "Geen passende opdrachten. Probeer een andere zoekopdracht.",
+
   paTitle: "Spelers",
   paPrevious: "Vorige",
   paNext: "Volgende",

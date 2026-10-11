@@ -1,10 +1,10 @@
-import { FC, useState, useRef, useEffect, useMemo } from "react";
+import { FC, useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Send, Trash, Terminal, AlertTriangle, Shield, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
-import { useServerCommands } from "@/lib/hooks/useServerCommands";
+import { Terminal, AlertTriangle, Shield, MapPin, Heart, Diamond, MessageSquare, Save, ShieldCheck, ShieldOff, Sun, Moon, CloudRain, Globe, Skull, Package, Sparkles, Zap, Target, Swords, Bug, Flame, Eye, EyeOff, Sunrise, Mountain, Wind, Bomb, Gift, Eraser, Navigation } from "lucide-react";
+import { CommandWorkbench } from "../commands/command-workbench";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { executeServerCommand, updateSpawnPoint } from "@/services/docker/fetchs";
 import { mcToast } from "@/lib/utils/minecraft-toast";
@@ -24,12 +24,6 @@ interface CommandsTabProps {
 
 export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rconPort, rconPassword, config, updateConfig }) => {
   const { t } = useLanguage();
-  const { command, response, executing, executeCommand, setCommand, clearResponse } = useServerCommands(serverId, rconPort, rconPassword);
-
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredCommands, setFilteredCommands] = useState<Array<{ label: string; command: string }>>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const [activeSection, setActiveSection] = useState<"commands" | "world">("commands");
   const spawnPoint = resolveSpawnPoint(config);
   const [tpCoords, setTpCoords] = useState({ x: String(spawnPoint.x), y: String(spawnPoint.y), z: String(spawnPoint.z) });
@@ -161,40 +155,6 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
     [t]
   );
 
-  const commonCommands = allCommands.slice(0, 7);
-
-  useEffect(() => {
-    if (command) {
-      const filtered = allCommands.filter((cmd) => cmd.command.toLowerCase().includes(command.toLowerCase()) || cmd.label.toLowerCase().includes(command.toLowerCase()));
-      setFilteredCommands(filtered.slice(0, 5));
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [command, allCommands]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      executeCommand();
-      setShowSuggestions(false);
-    } else if (e.key === "Tab" && showSuggestions && filteredCommands.length > 0) {
-      e.preventDefault();
-      setCommand(filteredCommands[0].command);
-      setShowSuggestions(false);
-    } else if (e.key === "Escape") {
-      setShowSuggestions(false);
-    } else if (e.key === "ArrowDown" && showSuggestions) {
-      e.preventDefault();
-    }
-  };
-
-  const handleSuggestionClick = (suggestedCommand: string) => {
-    setCommand(suggestedCommand);
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-  };
-
   return (
     <Card className="bg-gray-900/60 border-gray-700/50 shadow-lg">
       <CardHeader className="pb-3">
@@ -217,87 +177,19 @@ export const CommandsTab: FC<CommandsTabProps> = ({ serverId, serverStatus, rcon
         )}
 
         <div className="flex gap-2 border-b border-gray-700/50 pb-2">
-          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
+          <Button type="button" variant={activeSection === "commands" ? "default" : "ghost"} size="sm" aria-pressed={activeSection === "commands"} onClick={() => setActiveSection("commands")} className={activeSection === "commands" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Terminal className="h-4 w-4 mr-1" />
             {t("commands")}
           </Button>
-          <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
+          <Button type="button" variant={activeSection === "world" ? "default" : "ghost"} size="sm" aria-pressed={activeSection === "world"} onClick={() => setActiveSection("world")} disabled={!isServerRunning} className={activeSection === "world" ? "bg-[var(--mc-emerald)]/15 text-[var(--mc-emerald)] hover:bg-[var(--mc-emerald)]/20" : "text-gray-400 hover:text-white hover:bg-gray-700/50"}>
             <Globe className="h-4 w-4 mr-1" />
             {t("world")}
           </Button>
         </div>
 
-        {activeSection === "commands" && (
-          <>
-            <div className="space-y-2">
-              <div className="text-gray-300 font-minecraft text-sm mb-1 flex items-center gap-2">
-                <Image src="/images/experience-bottle.webp" alt="Comandos" width={16} height={16} className="opacity-90" />
-                {t("quickCommands")}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {commonCommands.map((cmd, idx) => (
-                  <Button key={idx} type="button" variant="outline" size="sm" onClick={() => setCommand(cmd.command)} disabled={!isServerRunning} className="text-xs bg-gray-800/60 border-gray-700/50 text-gray-200 hover:bg-gray-700/40 hover:text-emerald-400 font-minecraft">
-                    {cmd.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-gray-300 font-minecraft text-sm mb-1 flex items-center gap-2">
-                <Image src="/images/book.webp" alt="Comandos" width={16} height={16} className="opacity-90" />
-                {t("sendCommand")}
-              </div>
-              <div className="relative">
-                <div className="flex space-x-2">
-                  <Input ref={inputRef} value={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => command && setShowSuggestions(filteredCommands.length > 0)} onBlur={() => setTimeout(() => setShowSuggestions(false), 100)} placeholder={t("enterMinecraftCommand")} disabled={!isServerRunning || executing} className="flex-1 bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/30 font-mono" />
-                  <Button type="button" onClick={() => executeCommand()} disabled={!isServerRunning || !command.trim() || executing} className="gap-2 bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
-                    {executing ? (
-                      <>
-                        <Send className="h-4 w-4 animate-pulse" />
-                        {t("sending")}
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        {t("send")}
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {showSuggestions && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-gray-800 border border-gray-700 rounded-md mt-1 shadow-lg max-h-48 overflow-auto">
-                    {filteredCommands.map((suggestion, idx) => (
-                      <div key={idx} onClick={() => handleSuggestionClick(suggestion.command)} className="p-2 hover:bg-gray-700 cursor-pointer flex justify-between border-b border-gray-700/50">
-                        <span className="font-mono text-emerald-400">{suggestion.command}</span>
-                        <span className="text-xs text-gray-400">{suggestion.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 pl-1">{t("pressTabToAutocomplete")}</p>
-            </div>
-
-            {response && (
-              <div className="space-y-2">
-                <div className="text-gray-300 font-minecraft text-sm mb-1 flex items-center gap-2">
-                  <Image src="/images/redstone.webp" alt="Respuesta" width={16} height={16} className="opacity-90" />
-                  {t("serverResponse")}
-                </div>
-                <div className="relative mt-1">
-                  <div className="absolute top-2 right-2">
-                    <Button type="button" variant="ghost" size="icon" onClick={clearResponse} className="h-6 w-6 text-gray-400 hover:text-white hover:bg-gray-700/50">
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="p-4 bg-gray-950/80 text-emerald-400 border border-gray-700/50 rounded-md min-h-[200px] max-h-[400px] overflow-auto font-mono text-sm whitespace-pre-wrap">{response}</div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
+        <div hidden={activeSection !== "commands"}>
+          <CommandWorkbench key={serverId} serverId={serverId} rconPort={rconPort} rconPassword={rconPassword} isServerRunning={isServerRunning} commands={allCommands} />
+        </div>
 
         {activeSection === "world" && (
           <div className="space-y-4">

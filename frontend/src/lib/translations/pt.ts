@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const pt: Record<TranslationKey, string> = {
+  consoleHistory: "Histórico de comandos",
+  consoleClearHistory: "Limpar histórico",
+  consoleEmpty: "Seu console está pronto",
+  consoleEmptyHint: "Digite um comando abaixo ou escolha um modelo. Comandos e respostas do servidor aparecerão aqui.",
+  consoleReuse: "Editar e reutilizar",
+  consoleReplyReceived: "Resposta recebida",
+  consoleNoOutput: "O servidor não retornou texto.",
+  consoleKeyboardHint: "↑ ↓ selecionam sugestões; Tab completa. Enter envia ou aceita a sugestão selecionada. Esc fecha as sugestões; depois ↑ ↓ percorrem o histórico.",
+  consoleSessionHint: "Os últimos 50 comandos são mantidos apenas enquanto esta tela estiver aberta.",
+  consoleFindPreset: "Encontrar um comando",
+  consoleSearchHint: "Buscar por nome ou comando…",
+  consolePresetHint: "Escolha um modelo para editar antes de enviar. A disponibilidade depende do servidor e dos mods instalados.",
+  consoleNoMatches: "Nenhum comando correspondente. Tente outra busca.",
+
   paTitle: "Jogadores",
   paPrevious: "Anterior",
   paNext: "Próxima",
