@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const ru: Record<TranslationKey, string> = {
+  consoleHistory: "История команд",
+  consoleClearHistory: "Очистить историю",
+  consoleEmpty: "Консоль готова",
+  consoleEmptyHint: "Введите команду ниже или выберите шаблон. Здесь появятся команды и ответы сервера.",
+  consoleReuse: "Изменить и повторить",
+  consoleReplyReceived: "Ответ получен",
+  consoleNoOutput: "Сервер не вернул текст.",
+  consoleKeyboardHint: "↑ ↓ выбирают подсказки; Tab дополняет. Enter отправляет или принимает выбранную подсказку. Esc закрывает подсказки; затем ↑ ↓ листают историю.",
+  consoleSessionHint: "Последние 50 команд хранятся только пока этот экран открыт.",
+  consoleFindPreset: "Найти команду",
+  consoleSearchHint: "Поиск по названию или команде…",
+  consolePresetHint: "Выберите шаблон для редактирования перед отправкой. Доступность зависит от сервера и установленных модов.",
+  consoleNoMatches: "Подходящих команд нет. Попробуйте другой запрос.",
+
   paTitle: "Игроки",
   paPrevious: "Назад",
   paNext: "Далее",

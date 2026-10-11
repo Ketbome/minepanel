@@ -1,6 +1,20 @@
 import type { TranslationKey } from './en';
 
 export const tr: Record<TranslationKey, string> = {
+  consoleHistory: "Komut geçmişi",
+  consoleClearHistory: "Geçmişi temizle",
+  consoleEmpty: "Konsolun hazır",
+  consoleEmptyHint: "Aşağıya bir komut yaz veya hazır komut seç. Komutlar ve sunucu yanıtları burada görünecek.",
+  consoleReuse: "Düzenle ve tekrar kullan",
+  consoleReplyReceived: "Yanıt alındı",
+  consoleNoOutput: "Sunucu metin döndürmedi.",
+  consoleKeyboardHint: "↑ ↓ öneri seçer; Tab tamamlar. Enter gönderir veya seçili öneriyi kabul eder. Esc önerileri kapatır; ardından ↑ ↓ geçmişte gezinir.",
+  consoleSessionHint: "Son 50 komut yalnızca bu ekran açıkken tutulur.",
+  consoleFindPreset: "Komut bul",
+  consoleSearchHint: "Ada veya komuta göre ara…",
+  consolePresetHint: "Göndermeden önce düzenlemek için bir komut seç. Kullanılabilirlik sunucuna ve yüklü modlara bağlıdır.",
+  consoleNoMatches: "Eşleşen komut yok. Başka bir arama dene.",
+
   paTitle: "Oyuncular",
   paPrevious: "Önceki",
   paNext: "Sonraki",

@@ -1,4 +1,18 @@
 export const en = {
+  consoleHistory: "Command history",
+  consoleClearHistory: "Clear history",
+  consoleEmpty: "Your console is ready",
+  consoleEmptyHint: "Type a command below or choose a preset. Commands and server replies will appear here.",
+  consoleReuse: "Edit and reuse",
+  consoleReplyReceived: "Reply received",
+  consoleNoOutput: "The server returned no text.",
+  consoleKeyboardHint: "↑ ↓ select suggestions; Tab completes. Enter sends, or accepts a selected suggestion. Esc closes suggestions; ↑ ↓ then browse history.",
+  consoleSessionHint: "Last 50 commands, kept only while this screen is open.",
+  consoleFindPreset: "Find a command",
+  consoleSearchHint: "Search name or command…",
+  consolePresetHint: "Choose a preset to edit before sending. Availability depends on your server and installed mods.",
+  consoleNoMatches: "No matching commands. Try another search.",
+
   paTitle: "Players",
   paPrevious: "Previous",
   paNext: "Next",

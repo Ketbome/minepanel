@@ -67,3 +67,12 @@ including offline players: on Java inside each profile's Sessions tab (`PlayerSe
 Bedrock as the session list itself (`player-activity.tsx`). Saved Java world statistics are shown separately
 from recorded playtime. The tab cancels in-flight requests on navigation and refreshes every
 30 seconds after completion; unknown presence is explicitly labeled.
+
+## Command console
+
+The Java Commands tab uses `components/molecules/commands/command-workbench.tsx` for
+searchable presets, keyboard suggestions and a timestamped command/response history.
+Selecting a preset or reusing a history entry fills the input; sending is explicit.
+`useServerCommands` keeps at most 50 entries in memory, prevents concurrent submissions,
+and discards late replies after changing servers. History survives the Commands/World
+switch within the tab, but clears when leaving the tab, refreshing or changing servers.
