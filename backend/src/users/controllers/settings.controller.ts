@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { Controller, Get, Patch, Post, Body, UseGuards, Request, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
@@ -25,6 +26,7 @@ export class SettingsController {
     private readonly proxyRouter: ProxyRouterService,
     private readonly velocity: VelocityRuntimeService,
     private readonly curseforgeService: CurseforgeService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   @Get()
@@ -112,6 +114,7 @@ export class SettingsController {
     // updateSettings strips cfApiKey from the dto once it has encrypted it.
     const newCfApiKey = dto.cfApiKey;
     const updatedSettings = await this.settingsService.updateSettings(dto, user.userId);
+    if (dto.discordWebhook !== undefined) this.notifications.resetDeliveryState('discord');
     const auditRetentionDays = await this.settingsService.getAuditRetentionDays();
 
     await this.auditLogService.record({

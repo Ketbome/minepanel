@@ -13,7 +13,6 @@ import { JwtAuthGuard } from './guards/auth.guard';
 import { UsersModule } from 'src/users/users.module';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
-import { AuthMailService } from './auth-mail.service';
 import { SettingsModule } from 'src/settings/settings.module';
 @Module({
   imports: [
@@ -36,7 +35,7 @@ import { SettingsModule } from 'src/settings/settings.module';
       },
     }),
   ],
-  providers: [AuthService, AuthMailService, OidcService, LocalStrategy, JwtStrategy, JwtAuthGuard],
+  providers: [AuthService, OidcService, LocalStrategy, JwtStrategy, JwtAuthGuard],
   controllers: [AuthController, OidcController],
   exports: [AuthService, JwtAuthGuard],
 })

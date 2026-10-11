@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
@@ -26,6 +27,7 @@ describe('SettingsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SettingsController],
       providers: [
+        { provide: NotificationsService, useValue: { resetDeliveryState: jest.fn() } },
         {
           provide: InstanceSettingsService,
           useValue: {

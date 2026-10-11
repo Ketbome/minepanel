@@ -197,15 +197,19 @@ Still planned:
 
 ### Alerts
 
-Shipped so far: per-server Discord alerts for unexpected server down, crash
+Shipped so far: per-server Discord, email, Telegram, ntfy and Slack alerts for unexpected server down, crash
 loops (restart retry limit ran out, with exit code and log tail) and sustained
 high CPU/RAM (configurable thresholds, sustain window and cooldown, in the
-Metrics tab).
+Metrics tab), plus admin-managed notification channels, lifecycle/alert switches and
+saved-destination tests under Settings > Integrations. Email uses the instance SMTP settings;
+Telegram/ntfy tokens and Slack webhook URLs are encrypted and write-only. Opt-in low disk space, failed backup and incident
+recovery alerts also ship, with repeat intervals. Opt-in scheduled task failures, sustained
+game-query failures and Java/restic overdue-backup alerts join per-channel attempt outcomes
+and bounded explicit rate-limit retry.
 
 Still planned:
 
 - Log-error alerts
-- Email notifications
 - Discord bot (see [Player insights](#player-insights)): answer `/status` and
   `/players`, and `/console` for linked admins, next to the existing webhooks
 

@@ -454,6 +454,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+Notification settings: `src/components/organisms/settings/notification-settings.tsx` is
+admin-only under Settings > Integrations. Destinations cover all servers. Keep the Telegram
+token input write-only; test buttons use saved settings and stay disabled while changes
+are unsaved. API calls live in `src/services/settings/settings.service.ts`.
+
+The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.
+
+Notification delivery outcomes are transient provider results, not inbox/read receipts. Keep unknown outcomes distinct, show source/time and only sanitized reasons. Task/game/freshness rules and thresholds are opt-in global settings.
 Commands: `src/components/molecules/commands/command-workbench.tsx` owns the command
 input, keyboard suggestions, searchable presets and response history presentation.
 `useServerCommands.tsx` bounds history to 50 in-memory entries and guards duplicate

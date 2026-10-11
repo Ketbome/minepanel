@@ -1,3 +1,4 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -7,12 +8,14 @@ import { ServerManagementService } from 'src/server-management/server-management
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 
 describe('ScheduledTasksService', () => {
+  let notifications: { getAlertRules: jest.Mock; sendOperationalAlert: jest.Mock };
   let service: ScheduledTasksService;
   let taskRepo: { create: jest.Mock; save: jest.Mock; findOne: jest.Mock; find: jest.Mock; remove: jest.Mock };
   let serverManagement: { restartServer: jest.Mock; executeCommand: jest.Mock };
   let dockerCompose: { getServerConfig: jest.Mock };
 
   beforeEach(async () => {
+    notifications = { getAlertRules: jest.fn().mockResolvedValue({ enabled: true, taskFailureEnabled: false }), sendOperationalAlert: jest.fn().mockResolvedValue(undefined) };
     taskRepo = {
       create: jest.fn((x) => x),
       save: jest.fn(async (x) => x),
@@ -26,6 +29,7 @@ describe('ScheduledTasksService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ScheduledTasksService,
+        { provide: NotificationsService, useValue: notifications },
         { provide: getRepositoryToken(ScheduledTask), useValue: taskRepo },
         { provide: ServerManagementService, useValue: serverManagement },
         { provide: DockerComposeService, useValue: dockerCompose },
@@ -401,5 +405,25 @@ describe('ScheduledTasksService', () => {
       await service.update('srv', 7, { type: 'announce' } as any);
       expect(retyped.announcementIndex).toBe(0);
     });
+  });
+  it('sends one sanitized task failure, mutes duplicate restart errors and honors cooldown', async () => {
+    notifications.getAlertRules.mockResolvedValue({ enabled: true, taskFailureEnabled: true, cooldownMinutes: 60 });
+    taskRepo.findOne.mockResolvedValue({ id: 12, serverId: 'srv', type: 'restart', intervalMinutes: 5 });
+    serverManagement.restartServer.mockResolvedValue(false);
+    await service.runNow('srv', 12);await service.runNow('srv', 12);
+    expect(serverManagement.restartServer).toHaveBeenCalledWith('srv', false);
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #12 (restart) failed');
+  });
+
+  it('does not mistake skipped commands or successful command output for a task failure', async () => {
+    notifications.getAlertRules.mockResolvedValue({ enabled: true, taskFailureEnabled: true, cooldownMinutes: 60 });
+    taskRepo.findOne.mockResolvedValue({ id: 2, serverId: 'srv', type: 'command', command: 'say hello', intervalMinutes: 5 });
+    dockerCompose.getServerConfig.mockResolvedValue({});await service.runNow('srv', 2);
+    dockerCompose.getServerConfig.mockResolvedValue({ rconPort: '25575' });
+    serverManagement.executeCommand.mockResolvedValue({ success: true, output: 'Command failed: text printed by command' });
+    await service.runNow('srv', 2);expect(notifications.sendOperationalAlert).not.toHaveBeenCalled();
+    serverManagement.executeCommand.mockResolvedValue({ success: false, output: 'private token' });
+    await service.runNow('srv', 2);expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #2 (command) failed');
   });
 });

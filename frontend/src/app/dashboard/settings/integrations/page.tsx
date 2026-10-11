@@ -22,6 +22,7 @@ import {
 } from '@/services/settings/settings.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { NotificationSettingsCard } from '@/components/organisms/settings/notification-settings';
 import { getCurrentUser } from '@/services/users/users.service';
 import type { TranslationKey } from '@/lib/translations';
 
@@ -137,6 +138,11 @@ export default function IntegrationsSettingsPage() {
       setHasCfApiKey(!!res.hasCfApiKey);
       setHasDiscordWebhook(!!res.hasDiscordWebhook);
       if (payload.cfApiKey && edit === cfKeyEdits.current) setCfKeyCheck(res.cfApiKeyCheck ?? null);
+      if (isAdmin && payload.discordWebhook) {
+        // Notifications use the instance-wide webhook; refresh only that flag to keep unsaved SMTP/OIDC edits.
+        const { systemDiscordConfigured } = await getIntegrationSettings();
+        setIntegrations((current) => (current ? { ...current, systemDiscordConfigured } : current));
+      }
       setCfApiKey('');
       setDiscordWebhook('');
       mcToast.success(t('settingsSaved'));
@@ -297,7 +303,7 @@ export default function IntegrationsSettingsPage() {
               <div className="space-y-2">
                 <Label className="text-gray-200">{t('discordWebhook')}</Label>
                 <div className="flex gap-2">
-                  <Input value={discordWebhook} onChange={(e) => setDiscordWebhook(e.target.value)} type="password" placeholder={secretPlaceholder(hasDiscordWebhook)} className="flex-1 bg-gray-800 border-gray-700 text-white" />
+                  <Input id="integration-discord-webhook" value={discordWebhook} onChange={(e) => setDiscordWebhook(e.target.value)} type="password" placeholder={secretPlaceholder(hasDiscordWebhook)} className="flex-1 bg-gray-800 border-gray-700 text-white" />
                   <Button type="button" variant="outline" onClick={handleTestWebhook} disabled={testingWebhook || !hasDiscordWebhook} className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
                     {testingWebhook ? <Loader2 className="h-4 w-4 animate-spin" /> : t('test')}
                   </Button>
@@ -312,6 +318,7 @@ export default function IntegrationsSettingsPage() {
           )}
         </CardContent>
       </Card>
+
 
       {/* SMTP + OIDC (admin only) */}
       {!isLoading && isAdmin && integrations && (
@@ -428,6 +435,7 @@ export default function IntegrationsSettingsPage() {
           </Card>
         </>
       )}
+      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={integrations.systemDiscordConfigured ?? hasDiscordWebhook} delivery={integrations.notificationDelivery} /> : null}
     </div>
   );
 }
