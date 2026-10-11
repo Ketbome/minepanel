@@ -19,6 +19,15 @@ If you have never run the image before, start with the
 
 ## Pick your loader
 
+```mermaid
+flowchart TD
+    Q{"What do you have?"} -->|"a modpack"| MP["CF or Modrinth pack"]
+    Q -->|"a mod list"| L["Pick a loader"]
+    L --> FA["FABRIC"]
+    L --> FO["FORGE"]
+    L --> NF["NEOFORGE"]
+```
+
 | Loader | `TYPE` | Version variable | Good for |
 | --- | --- | --- | --- |
 | Fabric | `FABRIC` | `FABRIC_LOADER_VERSION` (optional) | Lightweight mods, performance mods, fast updates |
@@ -192,6 +201,8 @@ world. Follow `docker compose logs -f mc`; 5–10 minutes is normal the first ti
 [Minepanel](/) is a free, open-source web panel built on this same image. Pick Forge, NeoForge
 or Fabric from a form, search CurseForge and Modrinth from the **Mods** tab, deploy modpacks,
 and upload your own jars, all from the browser.
+
+![Mods tab of a Modrinth modpack server in Minepanel](/img/mods-tab.webp)
 
 → [Install Minepanel](/installation) · [Mods & modpacks in Minepanel](/mods-plugins)
 

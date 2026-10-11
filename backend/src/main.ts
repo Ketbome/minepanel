@@ -8,6 +8,15 @@ async function bootstrap() {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not set. Generate one with: openssl rand -base64 32');
   }
+  // Compose reads `JWT_SECRET=   # comment` (older .env.example) as the comment text: a publicly known secret.
+  if (process.env.JWT_SECRET.trimStart().startsWith('#')) {
+    throw new Error(
+      'JWT_SECRET holds an inline .env comment, not a secret. Put the comment on its own line and set a real value (openssl rand -base64 32). Every session ends and stored integration secrets must be re-entered.',
+    );
+  }
+  if (process.env.JWT_SECRET.length < 32) {
+    new Logger('Bootstrap').warn('JWT_SECRET is shorter than 32 characters. Generate a stronger one with: openssl rand -base64 32');
+  }
   if (process.env.JWT_EXPIRES_IN) {
     new Logger('Bootstrap').warn(
       `JWT_EXPIRES_IN is deprecated and will be removed; the built-in 15m access token is kept alive by the refresh token. Unset it unless you have a reason (current: ${process.env.JWT_EXPIRES_IN}).`,

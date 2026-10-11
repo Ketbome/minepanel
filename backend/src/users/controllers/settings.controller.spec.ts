@@ -1,14 +1,16 @@
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProxyRouterService } from 'src/proxy/proxy-router.service';
 import { VelocityRuntimeService } from 'src/proxy/velocity-runtime.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from '../services/settings.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from '../services/users.service';
 import { AccessControlService } from '../services/access-control.service';
 import { AuditLogService } from '../services/audit-log.service';
+import { CurseforgeService } from 'src/curseforge/curseforge.service';
 
 describe('SettingsController', () => {
   let controller: SettingsController;
@@ -18,11 +20,14 @@ describe('SettingsController', () => {
   let velocity: any;
   let instanceSettings: any;
   let accessControlService: jest.Mocked<AccessControlService>;
+  let curseforgeService: { testApiKey: jest.Mock };
+  let auditLogService: jest.Mocked<AuditLogService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SettingsController],
       providers: [
+        { provide: NotificationsService, useValue: { resetDeliveryState: jest.fn() } },
         {
           provide: InstanceSettingsService,
           useValue: {
@@ -52,6 +57,7 @@ describe('SettingsController', () => {
             getProxySettings: jest.fn(),
             getNetworkSettings: jest.fn(),
             getAuditRetentionDays: jest.fn(),
+            getCfApiKey: jest.fn(),
             reconcileEdge: jest.fn().mockResolvedValue(undefined),
           },
         },
@@ -88,6 +94,10 @@ describe('SettingsController', () => {
             record: jest.fn(),
           },
         },
+        {
+          provide: CurseforgeService,
+          useValue: { testApiKey: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -98,6 +108,8 @@ describe('SettingsController', () => {
     settingsService = module.get(SettingsService);
     usersService = module.get(UsersService);
     accessControlService = module.get(AccessControlService);
+    curseforgeService = module.get(CurseforgeService);
+    auditLogService = module.get(AuditLogService);
   });
 
   it('should allow low-risk settings without high-level permission', async () => {
@@ -180,6 +192,64 @@ describe('SettingsController', () => {
     expect(settingsService.updateSettings).not.toHaveBeenCalled();
   });
 
+  describe('checking the CurseForge key', () => {
+    beforeEach(() => {
+      usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+      accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
+    });
+
+    it('tests a newly saved key and still saves it when the check fails', async () => {
+      // Mirrors the real service, which strips the key from the dto once encrypted.
+      settingsService.updateSettings.mockImplementation(async (dto: any) => {
+        delete dto.cfApiKey;
+        return { cfApiKey: 'encrypted' } as any;
+      });
+      curseforgeService.testApiKey.mockResolvedValue({ ok: false, code: 'invalid_credentials' });
+
+      const result = await controller.updateSettings({ user: { userId: 1 } }, { cfApiKey: 'typed-key' });
+
+      expect(curseforgeService.testApiKey).toHaveBeenCalledWith('typed-key');
+      expect(result).toMatchObject({ hasCfApiKey: true, cfApiKeyCheck: { ok: false, code: 'invalid_credentials' } });
+    });
+
+    it('does not test when the key is being cleared', async () => {
+      settingsService.updateSettings.mockResolvedValue({} as any);
+
+      const result = await controller.updateSettings({ user: { userId: 1 } }, { cfApiKey: '' });
+
+      expect(curseforgeService.testApiKey).not.toHaveBeenCalled();
+      expect(result).not.toHaveProperty('cfApiKeyCheck');
+    });
+
+    it('tests the typed key before it is saved', async () => {
+      curseforgeService.testApiKey.mockResolvedValue({ ok: true });
+
+      await expect(controller.testCurseforgeKey({ user: { userId: 1 } }, { cfApiKey: 'typed-key' })).resolves.toEqual({ ok: true });
+
+      expect(curseforgeService.testApiKey).toHaveBeenCalledWith('typed-key');
+      expect(settingsService.getCfApiKey).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the saved key when nothing is typed', async () => {
+      settingsService.getCfApiKey.mockResolvedValue('saved-key');
+      curseforgeService.testApiKey.mockResolvedValue({ ok: true });
+
+      await controller.testCurseforgeKey({ user: { userId: 1 } }, {});
+
+      expect(settingsService.getCfApiKey).toHaveBeenCalledWith(1);
+      expect(curseforgeService.testApiKey).toHaveBeenCalledWith('saved-key');
+    });
+
+    it('refuses without the system settings permission', async () => {
+      accessControlService.assertManageSystemSettings.mockImplementation(() => {
+        throw new ForbiddenException('forbidden');
+      });
+
+      await expect(controller.testCurseforgeKey({ user: { userId: 1 } }, { cfApiKey: 'typed-key' })).rejects.toThrow(ForbiddenException);
+      expect(curseforgeService.testApiKey).not.toHaveBeenCalled();
+    });
+  });
+
   describe('the settings it hands back', () => {
     const readSettings = async () => {
       settingsService.getSettings.mockResolvedValue({ language: 'en' } as any);
@@ -236,6 +306,26 @@ describe('SettingsController', () => {
 
       expect(instanceSettings.setProxy).toHaveBeenCalledWith({ enabled: false });
       expect(result.running).toBe(false);
+    });
+
+    // A failed start used to come back as a plain "stopped", with the reason only in the backend log.
+    it('says why the proxy did not start', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: null });
+      velocity.isRunning.mockResolvedValue(false);
+      velocity.startError = 'Bind for 0.0.0.0:25565 failed: port is already allocated';
+
+      const result = controller.setProxyPower({ user: { userId: 1 } }, { enabled: true });
+
+      await expect(result).rejects.toBeInstanceOf(ServiceUnavailableException);
+      await expect(result).rejects.toThrow('Velocity did not start: Bind for 0.0.0.0:25565 failed: port is already allocated');
+      expect(auditLogService.record).toHaveBeenCalledWith(expect.objectContaining({ action: 'start_proxy', outcome: 'error', summary: 'Velocity did not start: Bind for 0.0.0.0:25565 failed: port is already allocated' }));
+    });
+
+    it('points to the backend log when the reason is unknown', async () => {
+      instanceSettings.setProxy.mockResolvedValue({ enabled: true, mode: 'mc-router', baseDomain: 'mc.example.com' });
+      proxyRouter.isRunning.mockResolvedValue(false);
+
+      await expect(controller.setProxyPower({ user: { userId: 1 } }, { enabled: true })).rejects.toThrow('mc-router did not start: see the backend log');
     });
 
     // Binding a host port is host-affecting, so it needs the same permission as

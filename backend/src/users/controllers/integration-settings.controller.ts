@@ -7,6 +7,13 @@ import { AuthMailService } from 'src/auth/auth-mail.service';
 import { UsersService } from '../services/users.service';
 import { AccessControlService } from '../services/access-control.service';
 import { AuditLogService } from '../services/audit-log.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { IsIn } from 'class-validator';
+
+export class TestNotificationDto {
+  @IsIn(['discord', 'email', 'telegram', 'ntfy', 'slack'])
+  channel: 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
+}
 
 @Controller('settings/integrations')
 @UseGuards(JwtAuthGuard)
@@ -17,6 +24,7 @@ export class IntegrationSettingsController {
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
     private readonly authMailService: AuthMailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async requireAdmin(user: PayloadToken) {
@@ -48,7 +56,7 @@ export class IntegrationSettingsController {
   @Get()
   async getIntegrations(@Request() req) {
     await this.requireAdmin(req.user as PayloadToken);
-    return this.instanceSettings.getPublic();
+    return { ...await this.instanceSettings.getPublic(), notificationDelivery: this.notificationsService.getDeliveryState(), systemDiscordConfigured: await this.notificationsService.isDiscordConfigured() };
   }
 
   @Patch()
@@ -64,10 +72,10 @@ export class IntegrationSettingsController {
       actorUsername: user.username,
       category: 'settings',
       action: 'update_integrations',
-      summary: 'Updated integration settings (SMTP/OIDC)',
+      summary: 'Updated integration settings (SMTP/OIDC/notifications)',
     });
 
-    return result;
+    return { ...result, notificationDelivery: this.notificationsService.getDeliveryState(), systemDiscordConfigured: await this.notificationsService.isDiscordConfigured() };
   }
 
   @Post('smtp/test')
@@ -83,5 +91,11 @@ export class IntegrationSettingsController {
     } catch (error) {
       return { success: false, message: error?.message ?? 'Failed to send test email' };
     }
+  }
+
+  @Post('notifications/test')
+  async testNotification(@Request() req, @Body() dto: TestNotificationDto) {
+    await this.requireAdmin(req.user as PayloadToken);
+    return this.notificationsService.testChannel(dto.channel);
   }
 }

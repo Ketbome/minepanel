@@ -183,6 +183,12 @@ export class UpdateSettingsDto {
   javaServerDefaults?: JavaServerDefaultsDto;
 }
 
+export class TestCurseforgeKeyDto {
+  @IsOptional()
+  @IsString()
+  cfApiKey?: string;
+}
+
 export class SettingsResponseDto {
   hasCfApiKey?: boolean;
   hasDiscordWebhook?: boolean;

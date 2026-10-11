@@ -20,6 +20,17 @@ mc-backup coordinates saves over RCON, which Bedrock doesn't have. For a
 [Bedrock server](/guides/bedrock-server-docker), stop the container before copying `./data`.
 :::
 
+```mermaid
+sequenceDiagram
+    participant B as mc-backup
+    participant S as Minecraft
+    participant D as ./backups
+    B->>S: save-off + save-all
+    B->>D: world-date.tgz
+    B->>S: save-on
+    B->>D: prune old archives
+```
+
 ## 1. Add the backup sidecar
 
 ```yaml
@@ -174,11 +185,14 @@ test server on it, and check the world loads.
 **Backups are huge.** Old worlds, dynmap tiles or log folders are being archived. Add them to
 `EXCLUDES`, e.g. `*.jar,cache,logs,*.tmp,plugins/dynmap/web/tiles`.
 
-## Backups from a button
+## Schedule backups from a form
 
 [Minepanel](/) is a free, open-source web panel that runs this same sidecar for each server:
-schedule, tar or restic to S3, one-click backup and restore, and download archives from the
-browser.
+turn it on per server, pick tar, rsync, restic (S3 and friends) or rclone, set the schedule,
+retention and excludes from a form, list restic snapshots, and download archives from the
+file manager when they're kept in the default `servers/<id>/backups` folder.
+
+![Backups tab in Minepanel](/img/server-backups.webp)
 
 → [Install Minepanel](/installation) · [Backups in Minepanel](/features#backups)
 

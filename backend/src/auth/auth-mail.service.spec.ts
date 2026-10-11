@@ -13,7 +13,7 @@ describe('AuthMailService', () => {
 
   beforeEach(() => {
     sendMail = jest.fn().mockResolvedValue(undefined);
-    (nodemailer.createTransport as jest.Mock).mockReset().mockReturnValue({ sendMail });
+    (nodemailer.createTransport as jest.Mock).mockReset().mockReturnValue({ sendMail, close: jest.fn() });
     instanceSettings = {
       getSmtp: jest.fn().mockResolvedValue(smtp),
       registerResetHandler: jest.fn((handler) => {
@@ -44,7 +44,7 @@ describe('AuthMailService', () => {
     await service.sendTestEmail('d@x.com');
 
     expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
-    expect(nodemailer.createTransport).toHaveBeenCalledWith({ host: 'smtp.example.com', port: 587, secure: false, auth: { user: 'u', pass: 'p' } });
+    expect(nodemailer.createTransport).toHaveBeenCalledWith(expect.objectContaining({ host: 'smtp.example.com', port: 587, secure: false, auth: { user: 'u', pass: 'p' } }));
     expect(sendMail).toHaveBeenCalledTimes(4);
     expect(sendMail.mock.calls[0][0]).toMatchObject({ from: smtp.from, to: 'a@x.com', subject: 'Minepanel | Password reset' });
     expect(sendMail.mock.calls[0][0].html).toContain('&lt;alice&gt;');

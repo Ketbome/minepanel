@@ -17,13 +17,23 @@ head:
 
 Minepanel supports both **Java Edition** and **Bedrock Edition** servers.
 
-![Server Types](/img/modes.webp)
+```mermaid
+flowchart TD
+    Q{"Players use"} -->|"console, mobile"| B["Bedrock"]
+    Q -->|"PC (Java)"| J{"Extras"}
+    J -->|"none"| V["Vanilla"]
+    J -->|"plugins"| P["Paper family"]
+    J -->|"mods"| M["Mod loaders"]
+    J -->|"whole pack"| K["Modpack types"]
+```
+
+![Server Type tab: edition, Minecraft version, Docker image and the server type list](/img/modes.webp)
 
 ## Server Editions
 
 | Edition | Image                           | Default Port | Protocol | Proxy Support   |
 | ------- | ------------------------------- | ------------ | -------- | --------------- |
-| Java    | `itzg/minecraft-server`         | 25565        | TCP      | Yes (mc-router) |
+| Java    | `itzg/minecraft-server`         | 25565        | TCP      | Yes (mc-router, or Velocity for Paper-family) |
 | Bedrock | `itzg/minecraft-bedrock-server` | 19132        | UDP      | No              |
 
 ## How It Works
@@ -32,14 +42,10 @@ Minepanel uses Docker images from itzg. When you create a server, it generates t
 
 ```mermaid
 flowchart LR
-    A["🎮 Minepanel UI"] -->|"generates"| B["📄 docker-compose.yml"]
-    B -->|"runs"| C["🐳 Docker Image"]
-    C -->|"creates"| D["⛏️ Minecraft Server"]
-
-    style A fill:#065f46,stroke:#22c55e,color:#fff
-    style B fill:#1f2937,stroke:#6b7280,color:#fff
-    style C fill:#1e40af,stroke:#3b82f6,color:#fff
-    style D fill:#7c2d12,stroke:#f97316,color:#fff
+    A["Minepanel UI"] -->|"saves"| S["server.json"]
+    S -->|"generates"| B["docker-compose.yml"]
+    B -->|"runs"| C["itzg image"]
+    C --> D["Minecraft server"]
 ```
 
 ::: tip Documentation
@@ -57,9 +63,13 @@ For the underlying image without the panel, see [Bedrock server with Docker](/gu
 
 ### Basic Setup
 
-1. Select **Bedrock** as server edition
-2. Choose version (LATEST, PREVIEW, or specific)
-3. Configure settings
+![Bedrock server type: version LATEST with auto update](/img/bedrock-type.webp)
+
+| Step | Where | What |
+| ---- | ----- | ---- |
+| 1 | **Create Server** | Select **Bedrock** as server edition |
+| 2 | **Server Type** tab | Choose version (LATEST, PREVIEW, or specific) |
+| 3 | **Game**, **Access**... | Configure settings |
 
 ### Configuration Options
 
@@ -92,6 +102,12 @@ environment:
 ### Permissions (XUIDs)
 
 Bedrock uses Xbox User IDs (XUIDs) for permissions:
+
+| Variable | Role |
+| -------- | ---- |
+| `OPS` | Operators |
+| `MEMBERS` | Members |
+| `VISITORS` | Visitors |
 
 ```bash
 # Operators
@@ -136,6 +152,8 @@ Command output appears in server logs, not as a direct response. Check the Logs 
 
 Minepanel includes world source management in the **Worlds** tab for Java servers. It uses `WORLD`, `LEVEL`, and `FORCE_WORLD_COPY` from `itzg/docker-minecraft-server`.
 
+![Worlds tab: local and World Library sources, level name and force world copy](/img/server-worlds.webp)
+
 - Local world sources per server: `servers/<server-id>/worlds/`
 - Global world library shared by all servers: `servers/.world/worlds/`
 - Supported sources:
@@ -157,6 +175,8 @@ World Library also includes a **Discover Worlds** panel:
 - Imported files are stored under `servers/.world/worlds/curseforge/` or `servers/.world/worlds/url/`
 
 ### World Type (level-type)
+
+![Game tab with the world settings](/img/configuration.webp)
 
 The world type is set in the **Game** tab via `LEVEL_TYPE`. Besides the standard
 presets (default, flat, large biomes, amplified, single biome surface), Java servers
@@ -370,7 +390,7 @@ environment:
   MODRINTH_MODPACK: https://modrinth.com/modpack/surface-living
 ```
 
-**2. URL (with version locking):**
+**3. URL (with version locking):**
 
 ```yaml
 environment:
@@ -417,6 +437,12 @@ You need a CurseForge API key. Get one from [CurseForge for Studios](https://con
 :::
 
 ### Installation Methods
+
+| Method | Variables | Updates |
+| ------ | --------- | ------- |
+| URL (easiest) | `CF_PAGE_URL` | Follows the URL you give |
+| Slug + File ID | `CF_SLUG`, `CF_FILE_ID` | Locked to that file |
+| Auto-select latest | `CF_SLUG` only | Latest file |
 
 **1. URL Method (easiest):**
 
@@ -496,27 +522,15 @@ environment:
 
 ## Server Type Categories
 
-```mermaid
-flowchart LR
-    B["🟡 Bedrock"] ~~~ V["🟢 Vanilla"]
-    V ~~~ M["🔵 Mods<br/>Forge, Neoforge, Fabric"]
-    M ~~~ P["🟣 Plugins<br/>Paper, Spigot"]
-    P ~~~ MP["🟠 Modpacks<br/>CurseForge"]
+| Category           | Types                                    | Use Case                                         |
+| ------------------ | ---------------------------------------- | ------------------------------------------------ |
+| **Bedrock**        | BEDROCK                                  | Cross-platform (consoles, mobile, Windows 10/11) |
+| **Vanilla**        | VANILLA                                  | Pure Minecraft Java, no modifications            |
+| **Mod Loaders**    | Forge, Neoforge, Fabric                  | Client-side mods required                        |
+| **Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
+| **Modpacks**       | AUTO_CURSEFORGE, Modrinth, GTNH, FTBA    | Pre-configured mod collections                   |
 
-    style B fill:#d97706,stroke:#fbbf24,color:#fff
-    style V fill:#065f46,stroke:#22c55e,color:#fff
-    style M fill:#1e40af,stroke:#3b82f6,color:#fff
-    style P fill:#581c87,stroke:#a855f7,color:#fff
-    style MP fill:#7c2d12,stroke:#f97316,color:#fff
-```
-
-| Category              | Types                                    | Use Case                                         |
-| --------------------- | ---------------------------------------- | ------------------------------------------------ |
-| **🟡 Bedrock**        | BEDROCK                                  | Cross-platform (consoles, mobile, Windows 10/11) |
-| **🟢 Vanilla**        | VANILLA                                  | Pure Minecraft Java, no modifications            |
-| **🔵 Mod Loaders**    | Forge, Neoforge, Fabric                  | Client-side mods required                        |
-| **🟣 Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
-| **🟠 Modpacks**       | AUTO_CURSEFORGE, Modrinth, GTNH, FTBA    | Pre-configured mod collections                   |
+The diagram at the [top of the page](#server-types) picks a category from what your players need.
 
 ---
 

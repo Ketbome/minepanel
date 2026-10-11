@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import * as fs from 'fs-extra';
@@ -341,6 +341,12 @@ export class InstanceSettingsService implements OnModuleInit {
     const [smtp, oidc] = await Promise.all([this.getSmtp(), this.getOidc()]);
 
     return {
+      notifications: {
+        ...this.notificationDefaults(row),
+        hasTelegramToken: !!row.telegramTokenEnc,
+        hasNtfyToken: !!row.ntfyTokenEnc,
+        hasSlackWebhook: !!row.slackWebhookEnc,
+      },
       smtp: {
         host: smtp.host ?? '',
         port: smtp.port ?? null,
@@ -372,6 +378,14 @@ export class InstanceSettingsService implements OnModuleInit {
   }
 
   // Write-only secret handling: undefined keeps, '' clears, other value sets.
+  private ntfyOrigin(url: string | undefined): string {
+    try {
+      return new URL(url || 'https://ntfy.sh').origin;
+    } catch {
+      return '';
+    }
+  }
+
   private applySecret(current: string | null | undefined, incoming: string | undefined): string | null | undefined {
     if (incoming === undefined) return current;
     if (incoming === '') return null;
@@ -386,6 +400,31 @@ export class InstanceSettingsService implements OnModuleInit {
 
   async updateIntegrations(dto: UpdateIntegrationSettingsDto) {
     const row = await this.getRow();
+
+    if (dto.notifications) {
+      const { telegramToken, ntfyToken, slackWebhook, ...preferences } = dto.notifications;
+      const provided = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value !== undefined));
+      const previousNtfyOrigin = this.ntfyOrigin(row.notifications?.ntfyServerUrl);
+      row.notifications = { ...row.notifications, ...provided };
+      // Include the scheme so an HTTPS-to-HTTP change cannot silently expose a saved token.
+      const ntfyOriginChanged = this.ntfyOrigin(row.notifications?.ntfyServerUrl) !== previousNtfyOrigin;
+      if (ntfyOriginChanged && ntfyToken === undefined) row.ntfyTokenEnc = null;
+      row.telegramTokenEnc = this.applySecret(row.telegramTokenEnc, telegramToken);
+      row.ntfyTokenEnc = this.applySecret(row.ntfyTokenEnc, ntfyToken);
+      row.slackWebhookEnc = this.applySecret(row.slackWebhookEnc, slackWebhook);
+      if (row.notifications.ntfyEnabled && !row.notifications.ntfyTopic) {
+        throw new BadRequestException('ntfy notifications require a topic');
+      }
+      if (row.notifications.slackEnabled && !row.slackWebhookEnc) {
+        throw new BadRequestException('Slack notifications require a webhook');
+      }
+      if (row.notifications.emailEnabled && !row.notifications.emailTo) {
+        throw new BadRequestException('Email notifications require a recipient');
+      }
+      if (row.notifications.telegramEnabled && (!row.notifications.telegramChatId || !row.telegramTokenEnc)) {
+        throw new BadRequestException('Telegram notifications require a bot token and chat ID');
+      }
+    }
 
     if (dto.smtp) {
       const s = dto.smtp;
@@ -411,5 +450,53 @@ export class InstanceSettingsService implements OnModuleInit {
     await this.repo.save(row);
     this.notifyChanged();
     return this.getPublic();
+  }
+
+  private notificationDefaults(row: InstanceSettings) {
+    const preferences = { ...row.notifications };
+    return {
+      ntfyEnabled: false,
+      ntfyServerUrl: 'https://ntfy.sh',
+      ntfyTopic: '',
+      slackEnabled: false,
+      discordEnabled: true,
+      emailEnabled: false,
+      emailTo: '',
+      telegramEnabled: false,
+      telegramChatId: '',
+      lifecycleEnabled: true,
+      alertsEnabled: true,
+      diskAlertEnabled: false,
+      backupFailureEnabled: false,
+      recoveryEnabled: false,
+      taskFailureEnabled: false,
+      gameAlertEnabled: false,
+      staleBackupEnabled: false,
+      gameFailureSamples: 3,
+      gameStartupGraceMinutes: 5,
+      staleBackupToleranceMinutes: 60,
+      diskFreeThresholdPercent: 10,
+      alertCooldownMinutes: 60,
+      ...preferences,
+    };
+  }
+
+  async getNotifications() {
+    const row = await this.getRow();
+    const readSecret = (encrypted: string | null | undefined, channel: string): string => {
+      try { return encrypted ? decryptSecret(encrypted) : ''; }
+      catch {
+        this.logger.warn(`${channel} credentials could not be decrypted; reconfigure the channel`);
+        return '';
+      }
+    };
+    const ntfyToken = readSecret(row.ntfyTokenEnc, 'ntfy');
+    return {
+      ...this.notificationDefaults(row),
+      telegramToken: readSecret(row.telegramTokenEnc, 'Telegram'),
+      ntfyToken,
+      ntfyTokenUnreadable: !!row.ntfyTokenEnc && !ntfyToken,
+      slackWebhook: readSecret(row.slackWebhookEnc, 'Slack'),
+    };
   }
 }

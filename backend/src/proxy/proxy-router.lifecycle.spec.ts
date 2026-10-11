@@ -67,8 +67,11 @@ describe('ProxyRouterService lifecycle', () => {
 
     mockExec.mockRejectedValueOnce(new Error('compose failed'));
     expect(await service.start()).toBe(false);
+    expect(service.startError).toBe('compose failed');
 
-    expect(await build(['/app/data']).start()).toBe(false);
+    const unmounted = build(['/app/data']);
+    expect(await unmounted.start()).toBe(false);
+    expect(unmounted.startError).toContain('Nothing is mounted at /app/data');
   });
 
   it('writes routes.json from the server index before starting', async () => {

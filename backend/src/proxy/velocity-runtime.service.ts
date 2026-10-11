@@ -9,6 +9,7 @@ import { escapeComposeValues } from 'src/common/compose/compose-escape';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { isValidHostname, ProxyService } from './proxy.service';
+import { describeCommandFailure } from './command-failure';
 import { isVelocityBackend } from './velocity-backend';
 
 const execAsync = promisify(exec);
@@ -40,6 +41,8 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
   private readonly DATA_HOST_DIR: string;
   private readonly DATA_HOST_DIR_IS_A_GUESS: boolean;
   private readonly PROJECT_DIR = '/app/data/velocity';
+  // Why the last start failed, so the UI can say it instead of only showing "stopped".
+  startError: string | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -191,7 +194,8 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
     // velocity.toml lives on a bind mount, so an unknown host path would start a
     // proxy with no servers at all.
     if (this.DATA_HOST_DIR_IS_A_GUESS) {
-      this.logger.error('Refusing to start Velocity: nothing is mounted at /app/data. Mount a host directory or a named volume at /app/data.');
+      this.startError = 'Nothing is mounted at /app/data. Mount a host directory or a named volume at /app/data.';
+      this.logger.error(`Refusing to start Velocity: ${this.startError}`);
       return false;
     }
 
@@ -199,9 +203,11 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
       await this.writeConfig();
       await this.generateComposeFile();
       await execAsync('docker compose up -d', { cwd: this.PROJECT_DIR });
+      this.startError = null;
       this.logger.log('Velocity is up');
       return true;
     } catch (error) {
+      this.startError = describeCommandFailure(error);
       this.logger.error('Failed to start Velocity', error);
       return false;
     }

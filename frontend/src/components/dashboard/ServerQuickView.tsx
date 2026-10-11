@@ -8,6 +8,7 @@ import { getAllServersRuntimeStats, ServerRuntimeStats } from "@/services/docker
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { RuntimeChip } from "@/components/molecules/ServerRuntimeChips";
 import { formatPlayers, getCpuPercent, getMemoryPercent, getUsageColor } from "@/lib/utils/server-runtime-stats";
+import { favoritesFirst, useFavoritesStore } from "@/lib/store/favorites-store";
 import { formatUptime } from "@/services/system/system.service";
 
 interface ServerQuickViewProps {
@@ -27,6 +28,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
   const { t } = useLanguage();
   const [serversData, setServersData] = useState<ServerWithResources[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const favorites = useFavoritesStore((state) => state.ids);
 
   const fetchResources = useCallback(async () => {
     if (servers.length === 0) {
@@ -113,7 +115,7 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {serversData.map((server) => (
+            {favoritesFirst(serversData, favorites).map((server) => (
               <Link key={server.id} href={`/dashboard/servers/${server.id}`} className="block group">
                 <div className="mc-slot p-3 transition-transform group-hover:translate-x-0.5">
                   <div className="flex items-center justify-between gap-3 mb-2">

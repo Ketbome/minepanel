@@ -16,6 +16,20 @@ docker compose up -d
 
 ## What happens on first start
 
+```mermaid
+flowchart LR
+    C["Old compose file"] -->|"parsed once"| J["server.json"]
+    J -->|"every start"| G["Generated compose"]
+    U["User preferences"] -->|"moved once"| I["Instance settings"]
+```
+
+| | Before 1.12 | From 1.12 |
+| --- | --- | --- |
+| Server config | Parsed from `docker-compose.yml` on every read | `servers/<id>/server.json` |
+| Server list | Opened every server | `servers/servers.json` index |
+| Proxy, network, Java defaults | One user's preferences | Instance settings |
+| mc-router | Service in the panel's compose (`proxy` profile) | Compose project run by the panel |
+
 **Each server gets a `server.json`.** Until now a server's configuration was
 re-derived by parsing its `docker-compose.yml` on every read. On the first start,
 1.12 parses every server's compose file once, writes the result to
@@ -76,6 +90,13 @@ If you edited the router's compose to attach an extra network, add it under
 overwrites hand edits.
 
 ## Editing compose files by hand is no longer supported
+
+```mermaid
+flowchart LR
+    T["Server tabs"] --> J["server.json"]
+    E["Your edits"] --> J
+    J -->|"start / restart"| C["docker-compose.yml"]
+```
 
 `servers/<id>/docker-compose.yml` is now generated output and carries a header
 saying so. It is rebuilt from `server.json` every time a server starts or

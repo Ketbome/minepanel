@@ -8,6 +8,7 @@ import {
   updateServerConfig,
 } from '@/services/docker/fetchs';
 import { mcToast } from '@/lib/utils/minecraft-toast';
+import { getSuggestedJavaImage } from '@/lib/utils/java-image';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 const defaultConfig: ServerConfig = {
@@ -154,6 +155,24 @@ function normalizeAutoStopRestartPolicy(config: ServerConfig): ServerConfig {
   };
 }
 
+const MODPACK_TYPES = ['AUTO_CURSEFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH'];
+
+// The Server Type tab swaps an unpinned Java image ('latest' or empty) for the one suggested by the
+// version as soon as it mounts. Doing it on load keeps that swap from showing as an unsaved change.
+function normalizeAutoDockerImage(config: ServerConfig): ServerConfig {
+  if (config.edition === 'BEDROCK' || MODPACK_TYPES.includes(config.serverType)) {
+    return config;
+  }
+  if (config.dockerImage && config.dockerImage !== 'latest') {
+    return config;
+  }
+
+  return {
+    ...config,
+    dockerImage: getSuggestedJavaImage(config.minecraftVersion),
+  };
+}
+
 export function useServerConfig(serverId: string) {
   const { t } = useLanguage();
   const [config, setConfig] = useState<ServerConfig>(defaultConfig);
@@ -182,10 +201,10 @@ export function useServerConfig(serverId: string) {
           }
         }
 
-        setConfig(normalizeAutoStopRestartPolicy({
+        setConfig(normalizeAutoDockerImage(normalizeAutoStopRestartPolicy({
           ...defaultConfig,
           ...serverConfig,
-        }));
+        })));
       } catch (error) {
         console.error('Error loading server config:', error);
         mcToast.error(t('loadConfigError'));

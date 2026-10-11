@@ -17,7 +17,7 @@ head:
 
 Manage mods for Java Edition and addons for Bedrock Edition from the same Minepanel workflow.
 
-![Mods Tab](/img/mods-tab.webp)
+![Mods tab of a Modrinth modpack server: modpack, upload, and additional CurseForge and Modrinth mods](/img/mods-tab.webp)
 
 ## Overview
 
@@ -26,25 +26,16 @@ Manage mods for Java Edition and addons for Bedrock Edition from the same Minepa
 | **Java**    | Modrinth, CurseForge, Spiget           | ✅ Automatic                                |
 | **Bedrock** | Upload `.mcaddon` / `.mcpack` / `.zip`, CurseForge | ✅ Import, enable/disable, sync to world |
 
+Where to add them depends on the server type:
+
 ```mermaid
-flowchart LR
-    subgraph Java["Java Edition"]
-        MR["🟢 Modrinth"]
-        CF["🟠 CurseForge"]
-        SP["🔵 Spiget"]
-    end
-
-    subgraph Bedrock["Bedrock Edition"]
-        BP["📦 Behavior Packs"]
-        RP["🎨 Resource Packs"]
-    end
-
-    MP["🎮 Minepanel"] --> Java
-    MP --> Bedrock
-
-    style MP fill:#1f2937,stroke:#22c55e,color:#fff
-    style Java fill:#065f46,stroke:#22c55e,color:#fff
-    style Bedrock fill:#d97706,stroke:#fbbf24,color:#fff
+flowchart TD
+    Q{"Server type"} -->|"mod loader"| M["Mods tab"]
+    Q -->|"modpack"| M
+    Q -->|"Paper family"| P["Plugins tab"]
+    Q -->|"Bedrock"| A["Addons tab"]
+    M --- S1["Modrinth, CurseForge"]
+    P --- S2["Spiget"]
 ```
 
 ---
@@ -144,8 +135,17 @@ you do it. Editing the generated `docker-compose.yml` does not: it is rebuilt fr
 
 ### CurseForge API key
 
+![Settings → Integrations: CurseForge API key, Discord webhook, SMTP and OIDC](/img/settings-integrations.webp)
+
 The key is read from **Settings -> Integrations** and injected into the generated compose
 on save, so the Mods tab no longer asks for a per-server key. Modrinth needs no key at all.
+
+**Test** next to the key field checks it against CurseForge without saving anything: it
+tests the key you typed, or the saved one if the field is empty. Saving a new key runs the
+same check. A failed check never blocks the save (CurseForge itself may be down), but the
+line under the field says why it failed: the key was rejected, CurseForge is rate limiting,
+it timed out, or the panel could not reach it at all (usually the backend container's
+outbound network or DNS).
 
 ## Mod Watch tab
 
@@ -349,13 +349,13 @@ When creating/editing a server with type **MODRINTH_MODPACK**, there is one meth
 | --------------------- | ------------- | ----------------------------------------- |
 | **Slug**              | ✅ Yes         | Always gets the latest compatible version |
 | **URL**               | ✅ Yes         | Always gets the latest compatible version |
-| **URL with verison**  | ✅ No          | Locks to the specified version            |
+| **URL with version**  | ❌ No          | Locks to the specified version            |
 | **Uploaded .mrpack**  | ❌ No          | Install a modpack that is not published   |
 
 **Slug**
 
 1. Enter the modpack project slug (e.g., `surface-living`) into the Modrinth Modpack field
-3. On each server start, it downloads the **latest compatible version**
+2. On each server start, it downloads the **latest compatible version**
 
 **Url**
 
@@ -384,6 +384,10 @@ Install complete modpacks from [CurseForge](https://www.curseforge.com) using th
 ::: warning API Key Required
 You need a CurseForge API key. Get one from [CurseForge for Studios](https://console.curseforge.com/).
 :::
+
+Without a key, the **Templates** page says so and lists the steps:
+
+![Templates page asking for a CurseForge API key](/img/templates.webp)
 
 ### Installation Methods in Minepanel
 
@@ -450,7 +454,17 @@ in the manifest are downloaded from CurseForge.
 ### What the panel reads out of the zip {#modpack-zip-inspection}
 
 Selecting an uploaded archive makes the panel open it and report what it actually is, because
-`AUTO_CURSEFORGE` only accepts one of the four shapes below. The file row shows the kind, the
+`AUTO_CURSEFORGE` only accepts one of the four shapes below.
+
+```mermaid
+flowchart TD
+    Z["Uploaded .zip"] --> Q{"Contains"}
+    Q -->|"manifest.json"| A["AUTO_CURSEFORGE"]
+    Q -->|"installer/script"| S["CURSEFORGE"]
+    Q -->|"modrinth.index"| M["MODRINTH"]
+    Q -->|"only mods/config"| G["GENERIC_PACK"]
+```
+ The file row shows the kind, the
 loader and the Minecraft version it declares, and a card underneath says what to do next.
 
 | Detected | What it is | How the panel installs it |
@@ -742,6 +756,8 @@ Always ensure mods from both sources are compatible with your Minecraft version 
 
 ## Plugin Management (Spigot/Paper/etc)
 
+![Plugins tab of a Paper server: Paper build and Spiget resources](/img/server-plugins.webp)
+
 For plugin-based servers (Spigot, Paper, Bukkit, etc.), you can use Spiget:
 
 ```yaml
@@ -771,6 +787,14 @@ When you enable an addon, Minepanel also updates:
 
 - `worlds/<level-name>/world_behavior_packs.json`
 - `worlds/<level-name>/world_resource_packs.json`
+
+```mermaid
+flowchart LR
+    U["Upload or<br/>CurseForge"] --> S["addons/"]
+    S -->|"Enable"| P["behavior_packs/<br/>resource_packs/"]
+    P --> W["World pack JSON"]
+    W -->|"Restart"| G["In game"]
+```
 
 ### Understanding Bedrock Addons
 

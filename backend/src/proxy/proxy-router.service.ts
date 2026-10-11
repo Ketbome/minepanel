@@ -10,6 +10,7 @@ import { escapeComposeValues } from 'src/common/compose/compose-escape';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { ProxyService } from './proxy.service';
+import { describeCommandFailure } from './command-failure';
 
 const execAsync = promisify(exec);
 
@@ -37,6 +38,8 @@ export class ProxyRouterService implements OnApplicationBootstrap {
   private readonly DATA_HOST_DIR: string;
   private readonly DATA_HOST_DIR_IS_A_GUESS: boolean;
   private readonly PROJECT_DIR = '/app/data/proxy';
+  // Why the last start failed, so the UI can say it instead of only showing "stopped".
+  startError: string | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -176,6 +179,7 @@ export class ProxyRouterService implements OnApplicationBootstrap {
     // The router reads routes.json off a bind mount, so an unknown host path would put it
     // in a crash loop against an empty directory. Failing here at least says why.
     if (this.DATA_HOST_DIR_IS_A_GUESS) {
+      this.startError = 'Nothing is mounted at /app/data. Mount a host directory or a named volume at /app/data.';
       this.logger.error(
         `Refusing to start mc-router: nothing is mounted at /app/data, so "${this.getHostDataDir()}" is a guess and the router would find no routes.json. ` +
           'Mount a host directory or a named volume at /app/data.',
@@ -189,9 +193,11 @@ export class ProxyRouterService implements OnApplicationBootstrap {
       await this.syncRoutes();
       await this.generateComposeFile();
       await execAsync('docker compose up -d', { cwd: this.PROJECT_DIR });
+      this.startError = null;
       this.logger.log('mc-router is up');
       return true;
     } catch (error) {
+      this.startError = describeCommandFailure(error);
       this.logger.error('Failed to start mc-router', error);
       return false;
     }

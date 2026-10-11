@@ -445,7 +445,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               </TabsContent>
 
               <TabsContent value="files" className="space-y-4 mt-0">
-                <FilesTab serverId={serverId} />
+                <FilesTab serverId={serverId} minecraftVersion={isJava ? config.minecraftVersion : undefined} bedrock={isBedrock} />
               </TabsContent>
 
               <TabsContent value="metrics" className="space-y-4 mt-0">

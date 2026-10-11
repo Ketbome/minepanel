@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 interface FileBrowserProps {
   serverId: string;
+  minecraftVersion?: string;
+  bedrock?: boolean;
 }
 
 // An upload whose top-level names are already in the folder waits for the user's
@@ -48,7 +50,7 @@ const isCancel = (error: unknown) => (error as Error).name === "CanceledError" |
 // inside a box with half the window free below it.
 const PANEL_HEIGHT = "h-[70vh] min-h-[480px]";
 
-export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
+export const FileBrowser: FC<FileBrowserProps> = ({ serverId, minecraftVersion, bedrock }) => {
   const { t } = useLanguage();
   const [currentPath, setCurrentPath] = useState("");
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -638,7 +640,7 @@ export const FileBrowser: FC<FileBrowserProps> = ({ serverId }) => {
 
   if (editingFile) {
     if (editingFile.path.split("/").pop() === "server.properties" && serverId !== "_root" && serverId !== ".world") {
-      return <ServerPropertiesEditor serverId={serverId} path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} />;
+      return <ServerPropertiesEditor serverId={serverId} path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} bedrock={bedrock} version={minecraftVersion} />;
     }
     return <FileEditor path={editingFile.path} content={editingFile.content} onSave={handleSaveFile} onClose={() => setEditingFile(null)} />;
   }

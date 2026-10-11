@@ -160,13 +160,26 @@ describe('VelocityRuntimeService', () => {
       expect(execMock).toHaveBeenLastCalledWith('docker compose up -d', { cwd: '/app/data/velocity' });
     });
 
-    it('reports a failed start', async () => {
-      execMock.mockRejectedValueOnce(new Error('port taken'));
+    it('reports a failed start with the last line compose printed', async () => {
+      execMock.mockRejectedValueOnce(
+        Object.assign(new Error('Command failed'), {
+          stderr:
+            ' Container mc-velocity Starting \nError response from daemon: failed programming external connectivity on endpoint mc-velocity (' +
+            'a'.repeat(64) +
+            '): Bind for 0.0.0.0:25565 failed: port is already allocated\n',
+        }),
+      );
       expect(await service.start()).toBe(false);
+      expect(service.startError).toBe('failed programming external connectivity on endpoint mc-velocity: Bind for 0.0.0.0:25565 failed: port is already allocated');
+
+      expect(await service.start()).toBe(true);
+      expect(service.startError).toBeNull();
     });
 
     it('refuses to start against a guessed host path', async () => {
-      expect(await build(['/app/data']).start()).toBe(false);
+      const unmounted = build(['/app/data']);
+      expect(await unmounted.start()).toBe(false);
+      expect(unmounted.startError).toContain('Nothing is mounted at /app/data');
       expect(execMock).not.toHaveBeenCalled();
     });
 

@@ -64,9 +64,18 @@ export interface JavaServerDefaults {
   enableBackup?: boolean;
 }
 
+export type CurseforgeKeyCheckCode = 'not_configured' | 'invalid_credentials' | 'rate_limited' | 'timeout' | 'unreachable' | 'unexpected';
+
+export interface CurseforgeKeyCheck {
+  ok: boolean;
+  code?: CurseforgeKeyCheckCode;
+}
+
 export interface UserSettings {
   // Secrets are write-only: the API returns whether they are set, not the value.
   hasCfApiKey?: boolean;
+  // Only present on a save that set a new CurseForge key.
+  cfApiKeyCheck?: CurseforgeKeyCheck;
   hasDiscordWebhook?: boolean;
   language?: Language;
   proxy?: ProxySettings;
@@ -98,12 +107,48 @@ export interface OidcIntegration {
   source: 'db' | 'env' | 'unset';
 }
 
+export type NotificationChannel = 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
+
+export interface NotificationDelivery { status: 'accepted' | 'failed' | 'unknown'; attemptedAt: string; source: 'automatic' | 'test'; reason?: string }
+
 export interface IntegrationSettings {
+  systemDiscordConfigured?: boolean;
+  notificationDelivery?: Record<NotificationChannel, NotificationDelivery | null>;
   smtp: SmtpIntegration;
   oidc: OidcIntegration;
+  notifications: NotificationSettings;
+}
+
+export interface NotificationSettings {
+  discordEnabled: boolean;
+  emailEnabled: boolean;
+  emailTo: string;
+  ntfyEnabled: boolean;
+  ntfyServerUrl: string;
+  ntfyTopic: string;
+  hasNtfyToken: boolean;
+  slackEnabled: boolean;
+  hasSlackWebhook: boolean;
+  telegramEnabled: boolean;
+  telegramChatId: string;
+  hasTelegramToken: boolean;
+  lifecycleEnabled: boolean;
+  alertsEnabled: boolean;
+  diskAlertEnabled: boolean;
+  backupFailureEnabled: boolean;
+  recoveryEnabled: boolean;
+  taskFailureEnabled: boolean;
+  gameAlertEnabled: boolean;
+  staleBackupEnabled: boolean;
+  gameFailureSamples: number;
+  gameStartupGraceMinutes: number;
+  staleBackupToleranceMinutes: number;
+  diskFreeThresholdPercent: number;
+  alertCooldownMinutes: number;
 }
 
 export interface UpdateIntegrationSettings {
+  notifications?: Partial<Omit<NotificationSettings, 'hasTelegramToken' | 'hasNtfyToken' | 'hasSlackWebhook'>> & { telegramToken?: string; ntfyToken?: string; slackWebhook?: string };
   smtp?: {
     host?: string;
     port?: number;
@@ -151,6 +196,7 @@ export const getSettings = async (): Promise<UserSettings> => {
   }
 };
 
+/** Saves user settings; a new `cfApiKey` comes back with its `cfApiKeyCheck`. */
 export const updateSettings = async (settings: UpdateUserSettings): Promise<UserSettings> => {
   try {
     const response = await api.patch('/settings', settings);
@@ -171,6 +217,12 @@ export const testDiscordWebhook = async (): Promise<{ success: boolean; message:
   }
 };
 
+/** Tests the typed CurseForge key when given, otherwise the saved one. Nothing is stored. */
+export const testCurseforgeKey = async (cfApiKey?: string): Promise<CurseforgeKeyCheck> => {
+  const response = await api.post<CurseforgeKeyCheck>('/settings/test-curseforge-key', cfApiKey ? { cfApiKey } : {});
+  return response.data;
+};
+
 export const getIntegrationSettings = async (): Promise<IntegrationSettings> => {
   const response = await api.get('/settings/integrations');
   return response.data;
@@ -183,5 +235,10 @@ export const updateIntegrationSettings = async (settings: UpdateIntegrationSetti
 
 export const testSmtp = async (): Promise<{ success: boolean; message: string }> => {
   const response = await api.post('/settings/integrations/smtp/test');
+  return response.data;
+};
+
+export const testNotification = async (channel: NotificationChannel): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post('/settings/integrations/notifications/test', { channel });
   return response.data;
 };

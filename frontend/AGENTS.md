@@ -34,7 +34,7 @@ frontend/src/
 |  |- achievements/             End Portal easter egg advancements (per user)
 |  |- modpacks/                 Per-server modpack file upload/list/delete
 |- lib/
-|  |- store/                    Zustand stores
+|  |- store/                    Zustand stores (favorites-store: per-browser starred servers)
 |  |- translations/             i18n dictionaries
 |  |- hooks/                    Custom hooks
 ```
@@ -436,7 +436,7 @@ Every frontend AGENTS update must include:
 
 The agent must keep `frontend/AGENTS.md` and `frontend/README.md` updated whenever frontend workflow, architecture, commands, or conventions change.
 
-The Files tab opens `server.properties` in `src/components/molecules/FileBrowser/ServerPropertiesEditor.tsx`. It edits existing properties only, preserves comments and unknown lines, and leaves properties backed by `server.json` to Server Settings. `server-properties-model.ts` owns parsing, line replacement and the save/restore change summary. Guided and raw views share one draft; switching must preserve unsaved text. Backups are listed through the files service from the same folder, and restoring one uses the ordinary file write so the current file is backed up first.
+The Files tab opens `server.properties` in `src/components/molecules/FileBrowser/ServerPropertiesEditor.tsx`. It edits the properties in the file, preserves comments and unknown lines, and offers the keys the server's Minecraft version reads but the file lacks (`appendProperty`), and leaves properties backed by `server.json` to Server Settings. `server-properties-model.ts` owns parsing, line replacement and the save/restore change summary; `server-properties-schema.ts` is the list of every vanilla key (type, range, options, English description, `since`/`until` versions from the Minecraft Wiki history) and decides what a version reads. A new Minecraft release means a new `SINCE`/`UNTIL` entry there. Guided and raw views share one draft; switching must preserve unsaved text. Backups are listed through the files service from the same folder, and restoring one uses the ordinary file write so the current file is backed up first.
 
 
 Player profiles: the Players tab renders `PlayersTab` on Java (sessions live in the profile's
@@ -454,3 +454,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+Notification settings: `src/components/organisms/settings/notification-settings.tsx` is
+admin-only under Settings > Integrations. Destinations cover all servers. Keep the Telegram
+token input write-only; test buttons use saved settings and stay disabled while changes
+are unsaved. API calls live in `src/services/settings/settings.service.ts`.
+
+The notification form separates channels and alert rules, keeps test feedback beside the channel, exposes disk threshold/repeat policy and supports discarding unsaved changes. Clearing the saved Telegram token disables that channel in the draft. Keep 320px reflow and native input validation.
+
+Notification delivery outcomes are transient provider results, not inbox/read receipts. Keep unknown outcomes distinct, show source/time and only sanitized reasons. Task/game/freshness rules and thresholds are opt-in global settings.
+Commands: `src/components/molecules/commands/command-workbench.tsx` owns the command
+input, keyboard suggestions, searchable presets and response history presentation.
+`useServerCommands.tsx` bounds history to 50 in-memory entries and guards duplicate
+submissions and stale responses. Preset/history selection only fills the input; it must
+never execute a command. Keep the workbench mounted when switching Commands/World,
+and keyed by server ID so drafts and history cannot cross servers.

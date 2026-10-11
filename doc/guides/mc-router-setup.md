@@ -14,11 +14,14 @@ means a second port (`play.example.com:25566`) that players have to remember.
 [`itzg/mc-router`](https://github.com/itzg/mc-router) fixes that: it listens on `25565`,
 reads the hostname the player typed, and forwards the connection to the matching server.
 
-```txt
-survival.example.com ─┐
-creative.example.com ─┼─▶ mc-router :25565 ─┬─▶ survival container
-modded.example.com  ──┘                     ├─▶ creative container
-                                            └─▶ modded container
+```mermaid
+flowchart LR
+    A["survival.example.com"] --> R["mc-router :25565"]
+    B["creative.example.com"] --> R
+    C["modded.example.com"] --> R
+    R --> S1["survival"]
+    R --> S2["creative"]
+    R --> S3["modded"]
 ```
 
 ::: warning Java Edition only
@@ -145,6 +148,13 @@ does not change that. If that matters to you, put a socket proxy in between.
 
 ## 4. Sleep idle servers and wake them on join
 
+```mermaid
+flowchart LR
+    R["Running"] -->|"empty 10m"| A["Stopped"]
+    A -->|"player joins"| W["Starting"]
+    W -->|"reachable"| R
+```
+
 With label discovery on, mc-router can stop servers nobody is playing on and start them
 again when someone connects, which frees RAM when you host many worlds:
 
@@ -186,6 +196,8 @@ same network as the servers.
 [Minepanel](/) runs mc-router for you: set a base domain in **Settings → Network**, turn the
 proxy on, and every Java server gets `{server}.mc.example.com` automatically, with per-server
 sleep-when-idle and custom hostnames from the UI.
+
+![mc-router settings in Minepanel](/img/proxy-mc-router-settings.webp)
 
 → [Install Minepanel](/installation) · [Proxy setup in Minepanel](/networking#mc-proxy-router-java-only)
 

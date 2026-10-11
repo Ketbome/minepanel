@@ -584,6 +584,35 @@ describe('DockerComposeService', () => {
       expect(config.port).toBe('25565');
     });
 
+    it('should keep the memory reservation within the memory limit', async () => {
+      const config = (service as any).createDefaultConfig('small');
+      config.maxMemory = '2G';
+      config.memoryReservation = '4G';
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.deploy.resources.limits.memory).toBe('2G');
+      expect(parsed.services.mc.deploy.resources.reservations.memory).toBe('2G');
+    });
+
+    it('should leave a memory reservation below the limit alone', async () => {
+      const config = (service as any).createDefaultConfig('big');
+      config.maxMemory = '8G';
+      config.memoryReservation = '1024M';
+
+      await service.generateDockerComposeFile(config, false);
+
+      const writeFileMock = fs.writeFile as unknown as jest.Mock;
+      const [, yamlContent] = writeFileMock.mock.calls[0];
+      const parsed = yaml.load(yamlContent as string) as any;
+
+      expect(parsed.services.mc.deploy.resources.reservations.memory).toBe('1024M');
+    });
+
     it('should generate mc service without container_name', async () => {
       const config = (service as any).createDefaultConfig('survival');
 

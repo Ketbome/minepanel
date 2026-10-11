@@ -8,6 +8,41 @@ export class InstanceSettings {
   @PrimaryColumn({ type: 'int', default: 1 })
   id: number;
 
+  @Column({ type: 'json', nullable: true, name: 'notifications' })
+  notifications?: {
+    discordEnabled?: boolean;
+    emailEnabled?: boolean;
+    emailTo?: string;
+    ntfyEnabled?: boolean;
+    ntfyServerUrl?: string;
+    ntfyTopic?: string;
+    slackEnabled?: boolean;
+    telegramEnabled?: boolean;
+    telegramChatId?: string;
+    lifecycleEnabled?: boolean;
+    alertsEnabled?: boolean;
+    diskAlertEnabled?: boolean;
+    backupFailureEnabled?: boolean;
+    recoveryEnabled?: boolean;
+    taskFailureEnabled?: boolean;
+    gameAlertEnabled?: boolean;
+    staleBackupEnabled?: boolean;
+    gameFailureSamples?: number;
+    gameStartupGraceMinutes?: number;
+    staleBackupToleranceMinutes?: number;
+    diskFreeThresholdPercent?: number;
+    alertCooldownMinutes?: number;
+  } | null;
+
+  @Column({ type: 'text', nullable: true, name: 'telegram_token_enc' })
+  telegramTokenEnc?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'ntfy_token_enc' })
+  ntfyTokenEnc?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'slack_webhook_enc' })
+  slackWebhookEnc?: string | null;
+
   // SMTP
   @Column({ type: 'text', nullable: true, name: 'smtp_host' })
   smtpHost?: string | null;

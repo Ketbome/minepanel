@@ -16,8 +16,8 @@ What's shipped and what's planned for Minepanel. Current stable line: `v1.10.8`.
 
 ```mermaid
 flowchart LR
-    A["🟢 v1.x<br/>Stable<br/>(current)"] --> B["🔵 v2.x<br/>Multi-node<br/>(Swarm)"]
-    B --> C["🟣 v3.x<br/>Ecosystem<br/>(API & plugins)"]
+    A["v1.x current"] --> B["v2.x Swarm"]
+    B --> C["v3.x API, plugins"]
 
     style A fill:#065f46,stroke:#10b981,color:#fff
     style B fill:#1e40af,stroke:#3b82f6,color:#fff
@@ -162,7 +162,7 @@ MinePanel would auto-detect the environment:
 
 ```mermaid
 flowchart LR
-    A["📦 Standalone<br/>Docker Compose<br/>Single VPS"] -.->|"auto-detect"| B["🌐 Swarm<br/>Multi-node<br/>Multiple VPS"]
+    A["One VPS"] -.->|"auto-detect"| B["Swarm, many VPS"]
 
     style A fill:#065f46,stroke:#22c55e,color:#fff
     style B fill:#1e40af,stroke:#3b82f6,color:#fff
@@ -197,15 +197,19 @@ Still planned:
 
 ### Alerts
 
-Shipped so far: per-server Discord alerts for unexpected server down, crash
+Shipped so far: per-server Discord, email, Telegram, ntfy and Slack alerts for unexpected server down, crash
 loops (restart retry limit ran out, with exit code and log tail) and sustained
 high CPU/RAM (configurable thresholds, sustain window and cooldown, in the
-Metrics tab).
+Metrics tab), plus admin-managed notification channels, lifecycle/alert switches and
+saved-destination tests under Settings > Integrations. Email uses the instance SMTP settings;
+Telegram/ntfy tokens and Slack webhook URLs are encrypted and write-only. Opt-in low disk space, failed backup and incident
+recovery alerts also ship, with repeat intervals. Opt-in scheduled task failures, sustained
+game-query failures and Java/restic overdue-backup alerts join per-channel attempt outcomes
+and bounded explicit rate-limit retry.
 
 Still planned:
 
 - Log-error alerts
-- Email notifications
 - Discord bot (see [Player insights](#player-insights)): answer `/status` and
   `/players`, and `/console` for linked admins, next to the existing webhooks
 
@@ -286,10 +290,10 @@ Velocity networks with Paper-family backends are available (see
 
 - Dark/Light mode toggle
 - Keyboard shortcuts
-- Favorites (frequent servers at top)
+- ~~Favorites (frequent servers at top)~~ ✅ Shipped (star a server; stored in the browser)
 - Global search
 - ~~Copy server (clone configuration)~~ ✅ Shipped
-- Bulk actions (start/stop multiple)
+- ~~Bulk actions (start/stop multiple)~~ ✅ Shipped (select servers on the Servers page, then start or stop them)
 - Server groups/folders
 - Reverse proxy helper (NGINX/Caddy)
 - Config import/export
