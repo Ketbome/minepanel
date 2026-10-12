@@ -31,7 +31,7 @@ import { spawn } from 'node:child_process';
 import { ServerManagementService } from './server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { MetricsService } from 'src/metrics/metrics.service';
-import { UptimeSample } from 'src/metrics/entities/uptime-sample.entity';
+import { UptimeInterval } from 'src/metrics/entities/uptime-interval.entity';
 
 const mockExec = jest.requireMock('node:util').promisify();
 
@@ -206,7 +206,7 @@ describe('ServerManagementService lifecycle', () => {
       const tracker = new AlertsService({ find: async () => [] } as any, {} as any, {} as any, {} as any);
       alerts.markExpectedStop.mockImplementation((id, window) => tracker.markExpectedStop(id, window));
       let status = 'running';
-      const uptime = { create: (row) => row, save: jest.fn().mockResolvedValue(undefined), delete: jest.fn().mockResolvedValue(undefined) };
+      const uptime = { create: (row) => row, findOne: async () => null, save: jest.fn().mockResolvedValue(undefined), delete: jest.fn().mockResolvedValue(undefined) };
       const metrics = new MetricsService(
         { delete: jest.fn().mockResolvedValue(undefined) } as any,
         uptime as any,
@@ -332,6 +332,13 @@ describe('ServerManagementService lifecycle', () => {
       expect(execCalls()).toEqual(expect.arrayContaining([expect.stringMatching(/docker compose down/), 'docker compose up -d']));
       await settle();
       expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'srv', 'en', expect.objectContaining({ port: '19132' }));
+    });
+
+    it('startServer recreating a stale container does not hide a crash during boot', async () => {
+      expect(await service.startServer('srv')).toBe(true);
+      expect(execCalls()).toEqual(expect.arrayContaining([expect.stringMatching(/docker compose down/), 'docker compose up -d']));
+      expect(alerts.markExpectedStop).not.toHaveBeenCalled();
+      await settle();
     });
 
     it('startServer validates inputs and reports failures', async () => {
@@ -483,14 +490,14 @@ describe('ServerManagementService lifecycle', () => {
       const runtime = jest.spyOn(service, 'getAllServersRuntimeStats').mockResolvedValue({ srv: { status: 'running', cpuUsage: 'N/A' } } as any);
       const metrics = new MetricsService(
         { delete: async () => undefined } as any,
-        { create: (row) => row, save: async (batch) => { rows.push(...batch); }, delete: async () => undefined } as any,
+        { create: (row) => row, findOne: async () => null, save: async (batch) => { rows.push(...batch); }, delete: async () => undefined } as any,
         service,
         { evaluate: async () => undefined, isExpectedStop: () => false } as any,
         {} as any,
         store as any,
       );
       settingsRepo.manager.transaction.mockImplementation(async (run) => run({
-        delete: async (entity) => { if (entity === UptimeSample) rows = []; },
+        delete: async (entity) => { if (entity === UptimeInterval) rows = []; },
         find: async () => [], save: async () => undefined,
       }));
       metrics.onModuleInit();

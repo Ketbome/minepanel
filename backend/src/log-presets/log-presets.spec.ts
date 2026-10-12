@@ -5,7 +5,7 @@ import { LogPresetsService } from './log-presets.service';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { LogPresetsController } from './log-presets.controller';
-import { LogPresetRemoveQueryDto, LogPresetServerQueryDto } from './dto/save-log-preset.dto';
+import { LogPresetRemoveQueryDto, LogPresetServerQueryDto, SaveLogPresetDto } from './dto/save-log-preset.dto';
 import { AccessControlService } from 'src/users/services/access-control.service';
 
 const dto = (name: string, serverId = 'srv') => ({ serverId, name, searchTerm: 'x', levelFilter: 'error', regex: false, lines: 500, sinceMinutes: 0 });
@@ -112,6 +112,12 @@ describe('log presets', () => {
     expect(await validate(plainToInstance(LogPresetServerQueryDto, {}))).not.toHaveLength(0);
     expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv' }))).not.toHaveLength(0);
     expect(await validate(plainToInstance(LogPresetRemoveQueryDto, { serverId: 'srv', name: 'a' }))).toHaveLength(0);
+  });
+
+  it.each(['../srv', 'a/b', 'srv\\x', '.', 'srv id'])('rejects the server ID %j that is not a valid server name', async (serverId) => {
+    expect(await validate(plainToInstance(LogPresetServerQueryDto, { serverId }))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(SaveLogPresetDto, dto('a', serverId)))).not.toHaveLength(0);
+    expect(await validate(plainToInstance(SaveLogPresetDto, dto('a', 'my_server-1')))).toHaveLength(0);
   });
 
   it('requires log-view permission for every preset operation, even with server access', async () => {

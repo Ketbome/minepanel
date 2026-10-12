@@ -2,12 +2,12 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, MoreThanOrEqual, Repository } from 'typeorm';
 import { MetricSample } from './entities/metric-sample.entity';
-import { UptimeSample } from './entities/uptime-sample.entity';
+import { UptimeInterval } from './entities/uptime-interval.entity';
 import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { MonitoringService } from './monitoring.service';
-import { computeDaily, computeIncidents, computeWindows } from './uptime.util';
+import { computeDaily, computeIncidents, computeWindows, MAX_GAP_MS } from './uptime.util';
 
 import { TickSource } from './tick-stats';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
@@ -43,12 +43,14 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
   // ponytail: in memory, so a crash while the panel itself is off stays unknown. Persist if that matters.
   private readonly availability = new Map<string, 'up' | 'down' | 'parked'>();
+  // The interval each server's next sample may extend; null when the latest one was looked up and none exists.
+  private readonly openIntervals = new Map<string, UptimeInterval | null>();
 
   constructor(
     @InjectRepository(MetricSample)
     private readonly sampleRepo: Repository<MetricSample>,
-    @InjectRepository(UptimeSample)
-    private readonly uptimeRepo: Repository<UptimeSample>,
+    @InjectRepository(UptimeInterval)
+    private readonly uptimeRepo: Repository<UptimeInterval>,
     private readonly serverManagement: ServerManagementService,
     private readonly alertsService: AlertsService,
     private readonly monitoring: MonitoringService,
@@ -62,8 +64,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       // Already-started writes must finish before deletion's database transaction runs.
       await this.sampleInFlight;
       this.availability.delete(serverId);
+      this.openIntervals.delete(serverId);
       return () => {
         this.availability.delete(serverId);
+        this.openIntervals.delete(serverId);
         this.deletingServers.delete(serverId);
         this.sampleGeneration++;
       };
@@ -105,10 +109,11 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
   async getUptime(serverId: string) {
     const now = Date.now();
+    // A few rows per state change, not one per minute, so 30 days stays small.
     const rows = await this.uptimeRepo.find({
-      select: { running: true, createdAt: true },
-      where: { serverId, createdAt: MoreThanOrEqual(new Date(now - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000)) },
-      order: { createdAt: 'ASC' },
+      select: { running: true, startedAt: true, endedAt: true },
+      where: { serverId, endedAt: MoreThanOrEqual(new Date(now - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000)) },
+      order: { startedAt: 'ASC' },
     });
     return {
       windows: computeWindows(rows, UPTIME_WINDOWS_HOURS, now),
@@ -150,6 +155,20 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     return this.availability.get(serverId) === 'down' ? false : null;
   }
 
+  // Each sample stands for the minute ending at it. The same state seen again within the gap
+  // extends the open interval; a change or a gap (panel off) starts a new one.
+  private async extendInterval(serverId: string, running: boolean, now: Date): Promise<UptimeInterval> {
+    if (!this.openIntervals.has(serverId)) {
+      // After a panel restart, pick up where the last interval left off.
+      this.openIntervals.set(serverId, await this.uptimeRepo.findOne({ where: { serverId }, order: { endedAt: 'DESC' } }));
+    }
+    const open = this.openIntervals.get(serverId);
+    if (open && open.running === running && now.getTime() - open.endedAt.getTime() <= MAX_GAP_MS) {
+      return this.uptimeRepo.create({ ...open, endedAt: now });
+    }
+    return this.uptimeRepo.create({ serverId, running, startedAt: new Date(now.getTime() - SAMPLE_INTERVAL_MS), endedAt: now });
+  }
+
   private collectSamples(): Promise<void> {
     if (this.sampling) return Promise.resolve();
     this.sampling = true;
@@ -175,11 +194,12 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
       const now = new Date();
       const samples: MetricSample[] = [];
-      const uptime: UptimeSample[] = [];
+      const uptime: UptimeInterval[] = [];
       for (const [serverId, data] of Object.entries(resources)) {
         const running = await this.uptimeState(serverId, data.status);
         if (generation !== this.sampleGeneration) return;
-        if (running !== null) uptime.push(this.uptimeRepo.create({ serverId, running, createdAt: now }));
+        if (running !== null) uptime.push(await this.extendInterval(serverId, running, now));
+        if (generation !== this.sampleGeneration) return;
       }
 
       const entries = Object.entries(resources);
@@ -224,6 +244,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       if (generation !== this.sampleGeneration) return;
       if (uptime.length > 0) {
         await this.uptimeRepo.save(uptime);
+        for (const interval of uptime) this.openIntervals.set(interval.serverId, interval);
       }
 
       await this.pruneOldSamples();
@@ -236,10 +257,15 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     const now = Date.now();
     if (this.lastPruneAt !== null && now - this.lastPruneAt < PRUNE_INTERVAL_MS) return;
     this.lastPruneAt = now;
+    const cutoff = (days: number) => new Date(now - days * 24 * 60 * 60 * 1000);
+    const prunes = [
+      ['metric', () => this.sampleRepo.delete({ createdAt: LessThan(cutoff(RETENTION_DAYS)) })],
+      ['uptime', () => this.uptimeRepo.delete({ endedAt: LessThan(cutoff(UPTIME_RETENTION_DAYS)) })],
+    ] as const;
     // Keep sql.js writes sequential, but a failure in one table must not skip the other.
-    for (const [name, repo, days] of [['metric', this.sampleRepo, RETENTION_DAYS], ['uptime', this.uptimeRepo, UPTIME_RETENTION_DAYS]] as const) {
+    for (const [name, prune] of prunes) {
       try {
-        await repo.delete({ createdAt: LessThan(new Date(Date.now() - days * 24 * 60 * 60 * 1000)) });
+        await prune();
       } catch (error) {
         this.logger.warn(`Failed to prune ${name} samples: ${(error as Error).message}`);
       }

@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { MonitoringService } from './monitoring.service';
 import { MetricsService } from './metrics.service';
 import { MetricSample } from './entities/metric-sample.entity';
-import { UptimeSample } from './entities/uptime-sample.entity';
+import { UptimeInterval } from './entities/uptime-interval.entity';
 import { ServerManagementService } from 'src/server-management/server-management.service';
 import { AlertsService } from 'src/alerts/alerts.service';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
@@ -12,7 +12,7 @@ import { parseCpuPercent, parseMemoryToMb } from './metric-parse.util';
 describe('MetricsService', () => {
   let service: MetricsService;
   let sampleRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
-  let uptimeRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
+  let uptimeRepo: { find: jest.Mock; findOne: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
   let serverManagement: { getAllServersRuntimeStats: jest.Mock; getCrashInfo: jest.Mock; registerDeletionGuard: jest.Mock };
   let alertsService: { evaluate: jest.Mock; isExpectedStop: jest.Mock };
   let store: { readConfig: jest.Mock };
@@ -24,7 +24,7 @@ describe('MetricsService', () => {
       save: jest.fn(async (x) => x),
       delete: jest.fn().mockResolvedValue(undefined),
     };
-    uptimeRepo = { find: jest.fn().mockResolvedValue([]), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
+    uptimeRepo = { find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null), create: jest.fn((x) => x), save: jest.fn(async (x) => x), delete: jest.fn().mockResolvedValue(undefined) };
     serverManagement = { getAllServersRuntimeStats: jest.fn(), getCrashInfo: jest.fn().mockResolvedValue(null), registerDeletionGuard: jest.fn().mockReturnValue(jest.fn()) };
     alertsService = { evaluate: jest.fn().mockResolvedValue(undefined), isExpectedStop: jest.fn().mockReturnValue(false) };
     store = { readConfig: jest.fn().mockResolvedValue({ enableAutoStop: false }) };
@@ -33,7 +33,7 @@ describe('MetricsService', () => {
       providers: [
         MetricsService,
         { provide: getRepositoryToken(MetricSample), useValue: sampleRepo },
-        { provide: getRepositoryToken(UptimeSample), useValue: uptimeRepo },
+        { provide: getRepositoryToken(UptimeInterval), useValue: uptimeRepo },
         { provide: ServerManagementService, useValue: serverManagement },
         { provide: AlertsService, useValue: alertsService },
         { provide: ServerStoreService, useValue: store },
@@ -184,6 +184,40 @@ describe('MetricsService', () => {
   });
 
   describe('collectSamples', () => {
+    it('extends one interval per state instead of writing a row every minute', async () => {
+      let now = Date.parse('2026-10-06T12:00:00Z');
+      jest.useFakeTimers({ now, doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+      let id = 0;
+      uptimeRepo.save.mockImplementation(async (rows) => rows.map((row) => Object.assign(row, { id: row.id ?? ++id })));
+      const pass = async (status: string) => {
+        serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status } });
+        await (service as any).collectSamples();
+        now += 60_000;
+        jest.setSystemTime(now);
+      };
+      try {
+        await pass('running');
+        await pass('running');
+        await pass('running');
+        await pass('stopped');
+        await pass('stopped');
+        jest.setSystemTime((now += 10 * 60_000));
+        await pass('stopped');
+        const saved = uptimeRepo.save.mock.calls.map(([[row]]) => [row.id, row.running, (row.endedAt - row.startedAt) / 60_000]);
+        // running x3 -> one interval; then down; then a new down interval after the panel gap
+        expect(saved).toEqual([[1, true, 1], [1, true, 2], [1, true, 3], [2, false, 1], [2, false, 2], [3, false, 1]]);
+        expect(uptimeRepo.findOne).toHaveBeenCalledTimes(1);
+      } finally { jest.useRealTimers(); }
+    });
+
+    it('continues the latest stored interval after a quick panel restart', async () => {
+      const now = Date.now();
+      uptimeRepo.findOne.mockResolvedValue({ id: 7, serverId: 'srv', running: true, startedAt: new Date(now - 3_600_000), endedAt: new Date(now - 90_000) });
+      serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status: 'running' } });
+      await (service as any).collectSamples();
+      expect(uptimeRepo.save).toHaveBeenCalledWith([expect.objectContaining({ id: 7, running: true, startedAt: new Date(now - 3_600_000) })]);
+    });
+
     it('prunes on the first sample and then hourly rather than every minute', async () => {
       const start = Date.now();
       const clock = jest.spyOn(Date, 'now').mockReturnValue(start);

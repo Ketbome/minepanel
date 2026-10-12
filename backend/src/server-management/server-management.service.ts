@@ -12,7 +12,7 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { Settings } from 'src/users/entities/settings.entity';
 import { Users } from 'src/users/entities/users.entity';
 import { UserInvitation } from 'src/users/entities/user-invitation.entity';
-import { UptimeSample } from 'src/metrics/entities/uptime-sample.entity';
+import { UptimeInterval } from 'src/metrics/entities/uptime-interval.entity';
 import { MetricSample } from 'src/metrics/entities/metric-sample.entity';
 import { LogPreset } from 'src/log-presets/entities/log-preset.entity';
 import { ScheduledTask } from 'src/scheduled-tasks/entities/scheduled-task.entity';
@@ -515,6 +515,12 @@ export class ServerManagementService {
   }
 
   private async execComposeDown(serverId: string) {
+    return this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_DOWN(await this.getStopTimeout(serverId)));
+  }
+
+  // Only for stops someone asked for (stop, restart, clear, delete). Start also runs `down` to
+  // recreate the container, but must not hide a crash during boot from alerts and uptime.
+  private async execPlannedComposeDown(serverId: string) {
     const timeout = await this.getStopTimeout(serverId);
     this.alertsService.markExpectedStop(serverId, timeout * 1000 + EXPECTED_STOP_WINDOW_MS);
     try {
@@ -954,7 +960,7 @@ export class ServerManagementService {
       await this.refreshComposeFile(serverId);
 
       this.alertsService.markExpectedStop(serverId);
-      await this.execComposeDown(serverId);
+      await this.execPlannedComposeDown(serverId);
       await this.execComposeCommand(serverId, DOCKER_COMMANDS.COMPOSE_UP);
 
       this.logger.log(`Server ${serverId} restarted successfully`);
@@ -981,7 +987,7 @@ export class ServerManagementService {
       if (await fs.pathExists(dockerComposePath)) {
         this.alertsService.markExpectedStop(serverId);
         this.cancelReadyWatch(serverId);
-        await this.execComposeDown(serverId);
+        await this.execPlannedComposeDown(serverId);
       }
 
       if (await fs.pathExists(serverDataDir)) {
@@ -1174,7 +1180,7 @@ export class ServerManagementService {
         try {
           this.alertsService.markExpectedStop(serverId);
           this.cancelReadyWatch(serverId);
-          await this.execComposeDown(serverId);
+          await this.execPlannedComposeDown(serverId);
         } catch (error) {
           this.logger.warn(`Could not stop server ${serverId} before deletion`, error);
         }
@@ -1190,7 +1196,7 @@ export class ServerManagementService {
         await manager.delete(PlayerTracking, { serverId });
         await manager.delete(ScheduledTask, { serverId });
         await manager.delete(MetricSample, { serverId });
-        await manager.delete(UptimeSample, { serverId });
+        await manager.delete(UptimeInterval, { serverId });
         await manager.delete(LogPreset, { serverId });
         for (const entity of [Users, UserInvitation]) {
           const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
@@ -2231,7 +2237,7 @@ export class ServerManagementService {
 
       this.alertsService.markExpectedStop(serverId);
       this.cancelReadyWatch(serverId);
-      await this.execComposeDown(serverId);
+      await this.execPlannedComposeDown(serverId);
 
       this.logger.log(`Server ${serverId} stopped successfully`);
       void this.sendServerNotification('stopped', serverId);
