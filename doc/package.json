@@ -18,7 +18,7 @@
   "author": "Ketbome",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "mermaid": "12.0.0",
+    "mermaid": "12.1.0",
     "terser": "^5.46.0",
     "vitepress": "1.6.4",
     "vitepress-plugin-llms": "^1.14.0",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "gsap": "^3.15.0",
-    "vue-router": "^5.3.1"
+    "vue-router": "^5.4.0"
   },
   "overrides": {
     "vite": "6.4.3",
