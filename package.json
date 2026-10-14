@@ -34,7 +34,9 @@
       "vite": "6.4.3",
       "multer": "2.4.0",
       "lodash-es": "4.18.1",
-      "brace-expansion@<1.1.21": "1.1.21"
+      "brace-expansion@<1.1.21": "1.1.21",
+      "handlebars": "4.7.10",
+      "source-map-js": "1.2.2"
     }
   }
 }
