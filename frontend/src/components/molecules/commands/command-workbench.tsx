@@ -128,7 +128,8 @@ export function CommandWorkbench({ serverId, rconPort, rconPassword, isServerRun
           {executing && <p className="mt-4 flex items-center gap-2 text-sm text-gray-400"><LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />{t("sending")}</p>}
         </div>
         <p className="sr-only" role="status">{executing ? t("sending") : history.length ? `${history.at(-1)?.command}: ${history.at(-1)?.output || t("consoleNoOutput")}` : ""}</p>
-        <form className="flex flex-col gap-2" onSubmit={(event) => { event.preventDefault(); void send(); }}>
+        {/* Nested in the server config form: without stopPropagation, sending also saves the whole config. */}
+        <form className="flex flex-col gap-2" onSubmit={(event) => { event.preventDefault(); event.stopPropagation(); void send(); }}>
           <Label htmlFor={`${id}-input`}>{t("sendCommand")}</Label>
           <div className="relative">
             <div className="flex flex-col gap-2 sm:flex-row">
