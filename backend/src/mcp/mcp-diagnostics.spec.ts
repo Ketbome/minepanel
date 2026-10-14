@@ -31,8 +31,19 @@ describe('findProblems', () => {
 
     const problems = findProblems(log);
     expect(problems.map((problem) => problem.kind)).toEqual(['missing_dependency', 'mixin_failure']);
-    expect(problems[0].mods).toEqual(expect.arrayContaining(['sodium-extra']));
+    expect(problems[0].mods).toEqual(expect.arrayContaining(['sodium-extra', 'sodium']));
     expect(problems[1].mods).toEqual(['iris']);
+  });
+
+  it('names both the mod and the dependency it lacks', () => {
+    const log = [
+      '[main/ERROR]: Incompatible mods found!',
+      " - Mod 'Chunky' (chunky) 1.4.23 requires any version of fabric-api, which is missing!",
+      'A potential solution has been determined, this may resolve your problem:',
+      '\t - Install fabric-api, any version.',
+    ].join('\n');
+
+    expect(findProblems(log)[0].mods).toEqual(['chunky', 'fabric-api']);
   });
 
   it.each([

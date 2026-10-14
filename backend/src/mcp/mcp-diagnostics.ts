@@ -61,6 +61,8 @@ const MOD_NAME_PATTERNS = [
   /Failed to create mod instance\. ModID: (\S+)/i,
   /ModID: ([\w-]+)/,
   /Mod '([^']+)' \(([\w-]+)\)/,
+  /requires (?:any version|version \S+) of ([\w-]+)/i,
+  /Install ([\w-]+), /,
   /from mod ([\w-]+)/i,
   /mods[/\\]([^/\\\s]+\.jar)/i,
   /provided by '([\w-]+)'/i,
