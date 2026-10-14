@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
-import { getServerMetrics, getServerMonitoring, MetricPoint, MonitoringSnapshot, TickStatus } from "@/services/metrics/metrics.service";
+import { getServerMetrics, getServerMonitoring, getServerUptime, MetricPoint, MonitoringSnapshot, TickStatus, UptimeReport } from "@/services/metrics/metrics.service";
 import { MonitoringAlerts } from "../monitoring/monitoring-alerts";
 import { MonitoringChart } from "../monitoring/monitoring-chart";
+import { UptimeCard } from "../monitoring/uptime-card";
 import { TickCommandCard } from "../monitoring/tick-command-card";
 import { LINK_TPS } from "@/lib/providers/constants";
 import { ServerConfig } from "@/lib/types/types";
@@ -48,6 +49,8 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
   const [liveError, setLiveError] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uptime, setUptime] = useState<UptimeReport | null>(null);
+  const [uptimeError, setUptimeError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -85,6 +88,23 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
     return () => { active = false; clearTimeout(timer); };
   }, [serverId, hours, refresh]);
 
+  useEffect(() => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const report = await getServerUptime(serverId);
+        if (active) { setUptime(report); setUptimeError(false); }
+      } catch {
+        if (active) { setUptime(null); setUptimeError(true); }
+      } finally {
+        if (active) timer = setTimeout(poll, 60_000);
+      }
+    };
+    void poll();
+    return () => { active = false; clearTimeout(timer); };
+  }, [serverId, refresh]);
+
   // Every source except spark reports a mean MSPT; only NeoForge's TPS is an estimate from it.
   const meanBased = live?.tickSource != null && live.tickSource !== "spark";
   const native = live?.tickSource === "neoforge";
@@ -120,6 +140,8 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
           </Card>
         ))}
       </div>
+
+      <UptimeCard report={uptime} error={uptimeError} />
 
       <Card className="gap-3 py-4">
         <CardHeader className="gap-2"><CardTitle className="text-sm">{t("monitoringSource")}{live?.tickSource ? ` · ${live.tickSource}` : ""}</CardTitle><CardDescription role="status" className="text-gray-400">{liveError ? t("monitoringFetchError") : live ? t(STATUS_KEYS[live.tickStatus]) : t("loading")}</CardDescription></CardHeader>

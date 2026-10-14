@@ -63,6 +63,9 @@ Charts show the latest sample value, labelled vertical scales and the minimum/ma
 settings remain below the charts. Admins choose Discord, SMTP email, Telegram, ntfy and Slack delivery
 under Settings > Integrations, with event switches and saved-destination tests. Telegram
 tokens are write-only; unsaved changes disable notification tests.
+Availability history refreshes every 60 seconds and distinguishes request failures from
+unobserved periods. Its daily bars show dates and percentages on hover, keyboard focus or
+tap; narrow screens can scroll through the days.
 
 **Players** shows persistent player profiles and paginated sessions for both editions,
 including offline players: on Java inside each profile's Sessions tab (`PlayerSessions`), on

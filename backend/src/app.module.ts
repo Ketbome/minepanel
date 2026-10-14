@@ -27,6 +27,7 @@ import { AlertsModule } from './alerts/alerts.module';
 import { PlayersModule } from './players/players.module';
 import { ActivityModule } from './activity/activity.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { LogPresetsModule } from './log-presets/log-presets.module';
 import { EndRunsModule } from './end-runs/end-runs.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
@@ -57,6 +58,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     PlayersModule,
     ActivityModule,
     AchievementsModule,
+    LogPresetsModule,
     EndRunsModule,
     FilesModule,
     ProxyModule,

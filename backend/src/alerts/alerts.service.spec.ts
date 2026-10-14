@@ -56,6 +56,22 @@ describe('AlertsService', () => {
     service = module.get<AlertsService>(AlertsService);
   });
 
+  it('does not allocate state when checking an unknown server', () => {
+    expect(service.isExpectedStop('missing')).toBe(false);
+    expect((service as any).state.size).toBe(0);
+  });
+
+  it('clears a deleted server stop window before its ID is reused', async () => {
+    service.markExpectedStop('srv');
+    expect(service.isExpectedStop('srv')).toBe(true);
+    service.clearState('srv');
+    expect(service.isExpectedStop('srv')).toBe(false);
+    alertConfigRepo.find.mockResolvedValue([downConfig()]);
+    await service.evaluate({ srv: running });
+    await service.evaluate({ srv: stopped });
+    expect(discordService.sendCustomMessage).toHaveBeenCalledTimes(1);
+  });
+
   describe('crash alerts', () => {
     const starting = { ...stopped, status: 'starting' };
     const crashConfig = { restartPolicy: 'on-failure', restartMaxRetries: 3 };

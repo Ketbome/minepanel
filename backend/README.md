@@ -58,6 +58,15 @@ logs, with sessions and cursors persisted atomically in SQLite. Server-authorize
 endpoints live at `/servers/:id/player-activity`. Saved Java counters are read on demand with
 file-size and realpath boundaries. No game files or RCON settings are changed.
 
+Availability samples exclude planned stops and clean auto-stops. Metric and availability
+retention pruning runs hourly; log presets require the same view-logs permission as logs.
+
+Deletion coordinates with metrics and log presets through registered deletion guards.
+Pending samples are invalidated and started writes finish before database cleanup. Other
+servers remain eligible for sampling; preset writes for the target resume afterwards.
+If cleanup fails, the server files and ID remain
+in place for a retry; preset writes to missing servers are rejected.
+
 Opt-in disk and backup probes run independently every minute, with bounded Docker commands and no raw log forwarding. Recovery notifications require an observed incident followed by valid healthy state. Disk/backup repeats are configurable independently of per-server CPU/RAM rules.
 
 `SettingsModule` exports the single shared `AuthMailService` transporter used by account emails and notification delivery. Telegram decryption failures are isolated from other channels. Backup probes use Compose service IDs; empty samples preserve active alert state. Crash log tails are included only in Discord embeds.

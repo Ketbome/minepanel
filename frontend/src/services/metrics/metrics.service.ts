@@ -68,3 +68,32 @@ export async function testTickCommand(
   const response = await api.post(`/metrics/${serverId}/tick-test`, body);
   return response.data;
 }
+
+export interface UptimeWindow {
+  hours: number;
+  uptimePercent: number | null;
+  observedMinutes: number;
+}
+
+export interface UptimeDay {
+  date: string;
+  uptimePercent: number | null;
+  observedMinutes: number;
+}
+
+export interface UptimeIncident {
+  start: string;
+  end: string | null;
+  minutes: number;
+}
+
+export interface UptimeReport {
+  windows: UptimeWindow[];
+  daily: UptimeDay[];
+  incidents: UptimeIncident[];
+}
+
+export async function getServerUptime(serverId: string): Promise<UptimeReport> {
+  const response = await api.get(`/metrics/${serverId}/uptime`);
+  return response.data;
+}
