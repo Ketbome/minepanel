@@ -218,6 +218,30 @@ describe('MetricsService', () => {
       expect(uptimeRepo.save).toHaveBeenCalledWith([expect.objectContaining({ id: 7, running: true, startedAt: new Date(now - 3_600_000) })]);
     });
 
+    it('starts a new interval after a planned restart instead of counting it as running', async () => {
+      let now = Date.parse('2026-10-06T12:00:00Z');
+      jest.useFakeTimers({ now, doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+      let id = 0;
+      uptimeRepo.save.mockImplementation(async (rows) => rows.map((row) => Object.assign(row, { id: row.id ?? ++id })));
+      const pass = async (status: string) => {
+        serverManagement.getAllServersRuntimeStats.mockResolvedValue({ srv: { status } });
+        await (service as any).collectSamples();
+        now += 60_000;
+        jest.setSystemTime(now);
+      };
+      try {
+        await pass('running');
+        alertsService.isExpectedStop.mockReturnValue(true);
+        await pass('stopped');
+        await pass('not_found');
+        alertsService.isExpectedStop.mockReturnValue(false);
+        await pass('running');
+        const saved = uptimeRepo.save.mock.calls.map(([[row]]) => [row.id, row.running, (row.endedAt - row.startedAt) / 60_000]);
+        expect(saved).toEqual([[1, true, 1], [2, true, 1]]);
+        expect(uptimeRepo.findOne).toHaveBeenCalledTimes(1);
+      } finally { jest.useRealTimers(); }
+    });
+
     it('prunes on the first sample and then hourly rather than every minute', async () => {
       const start = Date.now();
       const clock = jest.spyOn(Date, 'now').mockReturnValue(start);

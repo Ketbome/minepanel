@@ -199,6 +199,9 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
         const running = await this.uptimeState(serverId, data.status);
         if (generation !== this.sampleGeneration) return;
         if (running !== null) uptime.push(await this.extendInterval(serverId, running, now));
+        // A skipped sample (planned stop, missing container) closes the open interval, so a quick
+        // restart is a gap rather than running time.
+        else this.openIntervals.set(serverId, null);
         if (generation !== this.sampleGeneration) return;
       }
 
