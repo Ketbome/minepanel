@@ -727,8 +727,9 @@ The Files tab opens `server.properties` as searchable settings grouped by catego
 
 ## Coming Soon
 
+- API tokens and an MCP server for automations and AI agents (in development)
 - Bedrock console commands in the Commands tab
-- One-click restore from a backup snapshot
+- One-click backup and restore from a backup snapshot
 - More flexible backup scheduling (beyond the current interval)
 
 **→ Full roadmap:** [Roadmap](/roadmap)

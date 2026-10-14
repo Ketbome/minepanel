@@ -1,22 +1,22 @@
 ---
 title: Roadmap - Minepanel
-description: Minepanel development roadmap. What's shipped (roles, world library, multi-language, mods) and what's planned (scheduled tasks, historical metrics, multi-node Swarm, cloud backups, public API).
+description: Minepanel development roadmap. What's shipped (Velocity networks, multi-channel alerts, player insights, mod tracking, roles and SSO) and what's planned (API tokens and MCP server, backup restore, multi-node, public API).
 head:
   - - meta
     - property: og:title
       content: Minepanel Roadmap
   - - meta
     - property: og:description
-      content: What's shipped and what's next for Minepanel. Scheduled tasks, historical metrics, multi-node Swarm, cloud backups, and a public API.
+      content: What's shipped and what's next for Minepanel. API tokens and an MCP server, one-click backup restore, multi-node servers, and a public API.
 ---
 
 # Roadmap
 
-What's shipped and what's planned for Minepanel. Current stable line: `v1.10.8`.
+What's shipped and what's planned for Minepanel. Current stable line: `v1.13.x`.
 
 ```mermaid
 flowchart LR
-    A["v1.x current"] --> B["v2.x Swarm"]
+    A["v1.x current"] --> B["v2.x multi-node"]
     B --> C["v3.x API, plugins"]
 
     style A fill:#065f46,stroke:#10b981,color:#fff
@@ -37,25 +37,33 @@ Already available in the current stable line.
 
 - `ADMIN` and `USER` roles
 - Per-user permissions: server access, logs vs console, global vs per-server files
-- `manageUsers` delegated permission
+- `manageUsers` delegated permission; `changeServerVersion` and `useGlobalFiles` can only be granted by an admin
 - Invitation links with optional SMTP delivery
 - Filterable audit log (logins, invitations, password/email changes, server actions, console commands)
+- Single sign-on with any OpenID Connect provider, with optional password-login disable (see [SSO](/sso))
 
 ### ✅ World Library & Discover Worlds
 
 - Per-server world source library and a shared library for all servers
 - World switching from folders (`level.dat`) and archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`)
 - **Discover Worlds**: search CurseForge worlds and import remote ZIP/TAR URLs
+- Browsable library page and a per-server **Worlds** tab
+- Experimental feature packs for new Java worlds and Vanilla Tweaks datapacks by share code
 
 ### ✅ Multi-language
 
-- 8 languages: English, Spanish, French, German, Dutch, Polish, Russian, Portuguese
+- 9 languages: English, Spanish, French, German, Dutch, Polish, Russian, Portuguese, Turkish
 
 ### ✅ Mods & plugins
 
-- In-panel search and install for Modrinth and CurseForge (mods, plugins, modpacks)
+- In-panel search and install for Modrinth and CurseForge (mods, plugins, datapacks, modpacks)
 - Modrinth dependency resolution (required/optional)
 - CurseForge individual files alongside Modrinth
+- Mod list with pinned versions; unpinned mods track the newest compatible build
+- Modpack version picker, pinned modpack file and newer-release flag
+- Upload `.zip`/`.mrpack` modpacks (in chunks), with a review that strips client-only mods
+- **Mod Watch** tab: notes per mod, compatibility against a target Minecraft version and changelog history
+- CurseForge API key test without saving
 - Fabric support (loader/launcher version config)
 - Cross-play Paper template (Geyser, Floodgate, ViaVersion, UDP 19132)
 
@@ -69,25 +77,36 @@ Already available in the current stable line.
 
 - Integrated text editor with syntax highlighting
 - Folder uploads and drag & drop
-- `server.properties` editing from the UI
+- Chunked, resumable uploads for files over 8 MB; native browser downloads for large files and folder ZIPs
+- Multi-select, keyboard navigation, filter and sort
+- Guided `server.properties` editor: version-aware keys, validation, change review, and timestamped backups with restore
 
-### ✅ Dashboard & monitoring (live)
+### ✅ Dashboard & monitoring
 
 - Status cards: status, players, uptime and CPU/RAM at a glance
+- Favorites and bulk start/stop on the Servers page
 - Visual alerts for high CPU/RAM
 - Real-time sidebar sync
-- Log viewer with search, filtering, error highlighting, live stats
+- Log viewer with search, filtering, error highlighting, live stats, export and saved presets
+- Availability history (24h / 7d / 30d) with recent downtime
 
 ### ✅ Historical metrics
 
-- Per-server CPU and memory samples collected every minute
-- Usage graphs with 1h / 6h / 24h / 72h ranges (Metrics tab)
-- 7-day retention with automatic pruning
+- Per-server TPS, tick time, CPU, memory and player samples collected every minute
+- Usage graphs from 1h to 7 days (Metrics tab), with 7-day retention
+- Native NeoForge tick estimates, spark measurements, and a custom tick command (e.g. TabTPS) with a live test
+
+### ✅ Server control & commands
+
+- Start, stop, force stop, restart, delete and clone
+- Commands tab with searchable presets, suggestions and session history (Java)
+- Gamerule editor with live values (Java)
+- Event commands on server start, player join and player leave (Java)
 
 ### ✅ Scheduled tasks
 
-- Auto restarts at configurable intervals
-- Scheduled console commands (Java RCON)
+- Auto restarts and scheduled console commands (Java RCON)
+- Fixed interval or cron expression per task
 - Rotating chat announcements (Java)
 - Enable/disable, run-now, and per-server management (Tasks tab)
 
@@ -96,87 +115,76 @@ Already available in the current stable line.
 - Quick-create wizard
 - Built-in templates (Survival, Creative, SkyBlock, PvP, Bedrock presets, Paper cross-play)
 - Server types: Vanilla, Paper, Forge, NeoForge, Fabric, Purpur, GTNH, CurseForge, Modrinth & Feed The Beast (FTB) modpacks
+- Instance-wide Java defaults for new servers
+- Simple / Advanced mode and a Ctrl/Cmd+K settings palette in the server editor
+- Admin-only custom compose snippets
 
 ### ✅ Player management
 
 - Online players, whitelist, ops, ban/kick
 - Quick actions: gamemode, teleport, heal, give
 - Admin actions: save, whitelist toggle, time/weather, broadcast
-- Players tab, activity log and inventory history: see [Player insights](#player-insights)
+- Player sessions from join/leave logs, Players tab, activity log and inventory history: see [Player insights](#player-insights)
 
 ### ✅ Integrations & networking
 
-- Discord webhooks (start/stop notifications)
-- mc-router proxy: single port for multiple Java servers by hostname
+- Notifications through Discord, email, Telegram, ntfy and Slack: see [Alerts](#alerts)
+- mc-router managed by the panel: single port for many Java servers by hostname, power on/off,
+  auto-scaling (sleep idle servers) with a per-server opt-out
+- Velocity networks for Paper-family 1.19+ servers: lobby, fallback and `/server` switching with
+  modern forwarding set up by the panel (see [Networking](/networking#velocity-network-java-only))
+- Update notices with release notes, and one-click update with rollback for admins
+- Panel data on bind mounts or named volumes, host paths auto-detected (see [Storage & Scaling](/storage-scaling))
 - Multi-arch images (x86_64, ARM64)
 
 ---
 
-## In progress / next (v1.11+)
+## In progress / next (v1.14+)
 
 Smaller, high-value items that fit the current single-node architecture.
 
-### More scheduling options
+### API tokens and MCP server (in development)
 
-- ~~Cron-style scheduling at specific times~~ ✅ Shipped (interval or cron expression per task)
-- More flexible backup scheduling (beyond the current `backupInterval`)
-- ~~Historical uptime and availability tracking~~ ✅ Shipped (24h / 7d / 30d availability, a 30-day daily bar chart and a recent-downtime list in the Metrics tab; minutes while the panel was offline are not counted)
+- Personal, scoped and revocable API tokens, so scripts and automations can call the panel
+- An MCP endpoint so AI agents can operate the panel with exactly a token's permissions
+- Details in [Public API](#public-api)
 
 ### Bedrock console commands
 
-- Re-enable command execution for Bedrock servers (currently disabled due to
-  TTY/permission issues with `send-command`)
+- Bring Bedrock into the Commands tab. Today its commands go through `send-command` from the
+  Logs tab, and the output only shows in the server logs
 
-### File manager
+### Backups
 
-- ~~Large file uploads (chunked)~~ ✅ Shipped (files over 8 MB upload in resumable chunks)
-
-### Log viewer
-
-- ~~Export logs~~ ✅ Shipped (download from the Logs tab)
-- ~~Saved log views / presets~~ ✅ Shipped (search, regex, level, line count and time range, saved per user and server)
-
-### `server.properties` editor
-
-- ~~Field validation and per-setting tooltips~~ ✅ Shipped for detected fields; panel-managed settings remain in Server Settings
-- ~~Backup before save~~ ✅ Shipped for file editor saves
-
-> The Files tab opens a guided editor for existing `server.properties` keys, with category and changed/error filters, a raw text view that shares the draft, and a change review before saving. Timestamped `.bak` copies can be previewed and restored from the editor; restoring backs up the current file first. Panel-managed keys link to Server Settings.
-
-### Docker named volumes (under evaluation)
-
-- Optional Docker named volumes instead of host directory paths
-- Volume lifecycle management (create, list, inspect, prune)
-
-**Why not now?** The file manager reads host paths (`BASE_DIR/servers/*/mc-data`)
-for direct access. Named volumes would require reading data through the Docker
-API or mount points — a filebrowser refactor with a migration path.
+- One-click backup and one-click restore (see [Cloud backups](#cloud-backups))
+- More flexible backup scheduling (beyond the current `backupInterval`)
 
 ---
 
-## Phase 2: Multi-node with Docker Swarm (v2.x)
+## Phase 2: Multi-node (v2.x)
 
-> Connect multiple VPS from a single panel.
-
-MinePanel would auto-detect the environment:
+> Run servers on more than one machine from a single panel.
 
 ```mermaid
 flowchart LR
-    A["One VPS"] -.->|"auto-detect"| B["Swarm, many VPS"]
+    A["One host"] -.->|"opt-in"| B["Many nodes"]
 
     style A fill:#065f46,stroke:#22c55e,color:#fff
     style B fill:#1e40af,stroke:#3b82f6,color:#fff
 ```
 
-| Mode           | Description                   | Use case                         |
-| -------------- | ----------------------------- | -------------------------------- |
-| **Standalone** | Docker Compose, single server | Current setup, no changes needed |
-| **Swarm**      | Multi-node cluster            | Multiple VPS, auto balancing     |
+| Mode           | Description                         | Use case                         |
+| -------------- | ----------------------------------- | -------------------------------- |
+| **Standalone** | Docker Compose, single host         | Current setup, no changes needed |
+| **Multi-node** | Same compose files on other daemons | Multiple VPS from one panel      |
 
-- Node management: view connected nodes, status/resources, labels, join instructions
-- Server-to-node assignment: automatic, specific node, or by label
-- Technical groundwork: an `IOrchestrator` abstraction with `LocalOrchestrator`
-  (current Docker Compose) and a new `SwarmOrchestrator`, chosen by a factory
+The direction is in [Storage & Scaling](/storage-scaling#phased-roadmap):
+
+- **Shared filesystem** (possible today): NFS/Gluster mounted at the same path on every node
+- **Driver abstractions**: `NodeDriver` / `StorageDriver`, with the current local behavior as default
+- **Remote Docker per server** (`DOCKER_HOST` / Docker contexts), so the compose-per-server model
+  survives. Swarm `stack deploy` is not the target: it would mean rewriting compose generation
+- Node management UI: connected nodes, status/resources, and server-to-node assignment
 
 > This is the largest planned effort. It starts with a design spike, not code.
 
@@ -272,9 +280,13 @@ Velocity networks with Paper-family backends are available (see
 
 ### Public API
 
-- Token / API-key authentication for automation and third parties
+- 🚧 In development: token / API-key authentication for automation and third parties
+  (personal, scoped to the user's permissions and servers, read-only option, expiry, revocable)
+- 🚧 In development: MCP server, so AI agents (Claude, Cursor, VS Code…) can operate the panel
+  with exactly the permissions of the token they use
 - Reference docs and SDKs (JS, Python)
-- Outbound webhooks beyond Discord
+- Generic outbound webhooks (custom HTTP endpoints) next to the Discord, email, Telegram, ntfy
+  and Slack notifications
 
 ### Template marketplace
 
@@ -289,9 +301,10 @@ Velocity networks with Paper-family backends are available (see
 ## Quick wins (anytime)
 
 - Dark/Light mode toggle
-- Keyboard shortcuts
+- Keyboard shortcuts: shipped for the file manager, the Commands tab and the server editor
+  palette (Ctrl/Cmd+K); still planned panel-wide
 - ~~Favorites (frequent servers at top)~~ ✅ Shipped (star a server; stored in the browser)
-- Global search
+- Global search (across servers, players and files; the Ctrl/Cmd+K palette covers one server's settings)
 - ~~Copy server (clone configuration)~~ ✅ Shipped
 - ~~Bulk actions (start/stop multiple)~~ ✅ Shipped (select servers on the Servers page, then start or stop them)
 - Server groups/folders
@@ -304,7 +317,7 @@ Velocity networks with Paper-family backends are available (see
 
 - Native mobile app (iOS/Android)
 - Server performance comparison
-- RCON console with autocomplete
+- ~~RCON console with autocomplete~~ ✅ Shipped (Commands tab suggestions and searchable presets)
 
 ---
 
@@ -312,28 +325,33 @@ Velocity networks with Paper-family backends are available (see
 
 ```mermaid
 gantt
-    title MinePanel Roadmap 2026
+    title MinePanel Roadmap 2026-2027
     dateFormat YYYY-MM-DD
 
     section Stable
-    v1.7-1.10 Dashboard, Roles, World Library :done, a1, 2026-01-01, 150d
-    v1.11 Scheduler & metrics                 :a1b, 2026-06-01, 90d
+    v1.7-1.10 Roles, worlds   :done, a1, 2026-01-01, 150d
+    v1.11-1.13 Ops, networks  :done, a2, 2026-06-01, 136d
+
+    section Next
+    API tokens, MCP           :active, a3, 2026-10-15, 75d
+    Backups, Bedrock commands :a4, 2026-12-01, 90d
 
     section Scale
-    v2.x Multi-node Swarm                     :a2, 2026-09-01, 120d
+    v2.x Multi-node           :a5, 2027-03-01, 120d
 
     section Ecosystem
-    v3.0+ Cloud backups, API, marketplace     :a4, 2027-01-01, 120d
+    v3.0+ API, marketplace    :a6, 2027-07-01, 120d
 ```
 
 **Milestones:**
 
-| Period      | Version | Focus       | Key features                                                        |
-| ----------- | ------- | ----------- | ------------------------------------------------------------------ |
-| Q1–Q2 2026  | v1.7–1.10 | **Stable** ✅ | Dashboard, roles & audit, World Library, multi-language, Bedrock addons, mods search |
-| Q3 2026     | v1.11   | **Stable**  | Bedrock console commands, guided server.properties editor, cron-style scheduling |
-| Q4 2026     | v2.x    | **Scale**   | Swarm mode, multi-node, node UI                                    |
-| 2027+       | v3.0+   | **Ecosystem** | Cloud backup UI, alerts, public API, marketplace                |
+| Period      | Version     | Focus         | Key features                                                        |
+| ----------- | ----------- | ------------- | ------------------------------------------------------------------- |
+| Q1–Q2 2026  | v1.7–1.10   | **Stable** ✅ | Dashboard, roles & audit, World Library, multi-language, Bedrock addons, mods search |
+| Q2–Q4 2026  | v1.11–1.13  | **Stable** ✅ | Scheduler & metrics history, player insights, Velocity, multi-channel alerts, Mod Watch, guided server.properties editor, SSO |
+| Q4 2026     | v1.14+      | **Next**      | API tokens, MCP server, backup restore, Bedrock console commands    |
+| 2027        | v2.x        | **Scale**     | Multi-node (remote Docker per server), node UI                      |
+| 2027+       | v3.0+       | **Ecosystem** | Public API docs & SDKs, outbound webhooks, marketplace, plugins     |
 
 ---
 
