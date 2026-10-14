@@ -153,6 +153,8 @@ Smaller, high-value items that fit the current single-node architecture.
 
 - Bring Bedrock into the Commands tab. Today its commands go through `send-command` from the
   Logs tab, and the output only shows in the server logs
+- NetherNet transport ([#324](https://github.com/Ketbome/minepanel/issues/324)): Bedrock servers
+  run on RakNet today; switch once Mojang drops it (TCP signaling port plus a UDP range per server)
 
 ### Backups
 
@@ -328,30 +330,38 @@ gantt
     title MinePanel Roadmap 2026-2027
     dateFormat YYYY-MM-DD
 
-    section Stable
-    v1.7-1.10 Roles, worlds   :done, a1, 2026-01-01, 150d
-    v1.11-1.13 Ops, networks  :done, a2, 2026-06-01, 136d
+    section Shipped
+    v1.7-1.10 Dashboard, worlds, i18n      :done, a1, 2026-01-14, 2026-06-13
+    v1.11 Roles, audit, tasks, metrics     :done, a2, 2026-06-14, 2026-08-19
+    v1.12 server.json, mods, mc-router     :done, a3, 2026-08-20, 2026-09-26
+    v1.13 Insights, Velocity, alerts       :done, a4, 2026-09-27, 2026-10-14
 
     section Next
-    API tokens, MCP           :active, a3, 2026-10-15, 75d
-    Backups, Bedrock commands :a4, 2026-12-01, 90d
+    v1.14 API tokens, MCP                  :active, a5, 2026-10-15, 2026-11-30
+    v1.15 Backups, Bedrock commands        :a6, 2026-12-01, 2027-02-28
 
-    section Scale
-    v2.x Multi-node           :a5, 2027-03-01, 120d
-
-    section Ecosystem
-    v3.0+ API, marketplace    :a6, 2027-07-01, 120d
+    section Later
+    Public API docs, SDKs, webhooks        :a7, 2027-03-01, 2027-05-31
+    Multi-node design spike                :a8, 2027-06-01, 2027-06-30
 ```
 
 **Milestones:**
 
-| Period      | Version     | Focus         | Key features                                                        |
-| ----------- | ----------- | ------------- | ------------------------------------------------------------------- |
-| Q1–Q2 2026  | v1.7–1.10   | **Stable** ✅ | Dashboard, roles & audit, World Library, multi-language, Bedrock addons, mods search |
-| Q2–Q4 2026  | v1.11–1.13  | **Stable** ✅ | Scheduler & metrics history, player insights, Velocity, multi-channel alerts, Mod Watch, guided server.properties editor, SSO |
-| Q4 2026     | v1.14+      | **Next**      | API tokens, MCP server, backup restore, Bedrock console commands    |
-| 2027        | v2.x        | **Scale**     | Multi-node (remote Docker per server), node UI                      |
-| 2027+       | v3.0+       | **Ecosystem** | Public API docs & SDKs, outbound webhooks, marketplace, plugins     |
+| Period          | Version     | Focus          | Key features                                                        |
+| --------------- | ----------- | -------------- | ------------------------------------------------------------------- |
+| Jan–Jun 2026    | v1.7–1.10   | **Shipped** ✅ | Dashboard, World Library, multi-language, Bedrock addons, mods search |
+| Jun–Aug 2026    | v1.11       | **Shipped** ✅ | Roles & audit log, invitations, scheduled tasks, metrics history, command palette |
+| Aug–Sep 2026    | v1.12       | **Shipped** ✅ | `server.json` as source of truth, pinned mods, panel-managed mc-router, in-panel updates |
+| Sep–Oct 2026    | v1.13       | **Shipped** ✅ | Player insights, Mod Watch, Velocity, multi-channel alerts, guided server.properties editor |
+| Oct–Nov 2026    | v1.14       | **Next**       | API tokens, MCP server                                              |
+| Dec 2026–Feb 2027 | v1.15     | **Next**       | One-click backup and restore, flexible backup scheduling, Bedrock console commands |
+| Mar–May 2027    | v1.16+      | **Later**      | Public API reference docs and SDKs, generic outbound webhooks       |
+| Jun 2027        | —           | **Spike**      | Multi-node design spike: decides whether v2.x is built at all       |
+
+Bedrock's NetherNet transport ([#324](https://github.com/Ketbome/minepanel/issues/324)) has no
+date on purpose: it is done as soon as Mojang drops RakNet from a preview or fixes the iOS
+handshake, ahead of anything above, because without it Bedrock players can no longer join.
+The marketplace and panel plugins (Phase 4) have no date.
 
 ---
 
