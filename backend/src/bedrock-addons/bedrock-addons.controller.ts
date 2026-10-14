@@ -34,7 +34,7 @@ export class BedrockAddonsController {
   ) {}
 
   private async assertServerAccess(req, serverId: string) {
-    const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
+    const user = await this.usersService.getRequestUser(req.user as PayloadToken);
     this.accessControlService.assertServerAccess(user, serverId);
   }
 

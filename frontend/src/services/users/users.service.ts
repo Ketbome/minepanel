@@ -16,6 +16,7 @@ export interface UserPermissions {
   viewServerFiles: boolean;
   useServerFiles: boolean;
   changeServerVersion: boolean;
+  useApiTokens: boolean;
 }
 
 export interface UserAccessState {

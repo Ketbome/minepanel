@@ -13,13 +13,16 @@ import { JwtAuthGuard } from './guards/auth.guard';
 import { UsersModule } from 'src/users/users.module';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { ApiToken } from './entities/api-token.entity';
+import { ApiTokensService } from './api-tokens.service';
+import { ApiTokensController } from './api-tokens.controller';
 import { SettingsModule } from 'src/settings/settings.module';
 @Module({
   imports: [
     UsersModule,
     SettingsModule,
     PassportModule,
-    TypeOrmModule.forFeature([RefreshToken, PasswordResetToken]),
+    TypeOrmModule.forFeature([RefreshToken, PasswordResetToken, ApiToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -35,8 +38,8 @@ import { SettingsModule } from 'src/settings/settings.module';
       },
     }),
   ],
-  providers: [AuthService, OidcService, LocalStrategy, JwtStrategy, JwtAuthGuard],
-  controllers: [AuthController, OidcController],
-  exports: [AuthService, JwtAuthGuard],
+  providers: [AuthService, ApiTokensService, OidcService, LocalStrategy, JwtStrategy, JwtAuthGuard],
+  controllers: [AuthController, OidcController, ApiTokensController],
+  exports: [AuthService, ApiTokensService, JwtAuthGuard],
 })
 export class AuthModule {}

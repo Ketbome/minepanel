@@ -27,6 +27,12 @@ importers:
 
   backend:
     dependencies:
+      '@modelcontextprotocol/node':
+        specifier: 2.1.1
+        version: 2.1.1(@modelcontextprotocol/server@2.3.1)
+      '@modelcontextprotocol/server':
+        specifier: 2.3.1
+        version: 2.3.1
       '@nestjs/common':
         specifier: 12.1.2
         version: 12.1.2(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -120,6 +126,9 @@ importers:
       typeorm:
         specifier: 1.1.2
         version: 1.1.2(sql.js@1.14.2)(ts-node@10.9.2(@types/node@24.13.4)(typescript@6.0.3))
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
@@ -986,6 +995,12 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
+  '@hono/node-server@1.19.17':
+    resolution: {integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
   '@hookform/resolvers@5.9.1':
     resolution: {integrity: sha512-7b7vsbraJxKgjVSA1Nur9tLwj539WGJUBLA7QNvXnFoT2pM5Z7G+6rlukk4B2/QrTZy6huRtH6wKeESPKuIr6w==}
     peerDependencies:
@@ -1551,6 +1566,20 @@ packages:
   '@mermaid-js/parser@2.0.1':
     resolution: {integrity: sha512-j37dj/h6p6pots1L7pLPPNuABEEu9WP4OYg9pW1g+nYG331j0+3canE9OagtYdytYvdSAMG+2fKU5cxep6LgjA==}
     engines: {node: '>=22.12.0'}
+
+  '@modelcontextprotocol/core@2.3.1':
+    resolution: {integrity: sha512-laVmIhPGpWi7rG9q+0UigblRN0Hws/Yjlb6qLFtVqryXVLkc4h+yN8z731POD2LnAGQlFe7/tXhUm7Bi0YB91g==}
+    engines: {node: '>=20'}
+
+  '@modelcontextprotocol/node@2.1.1':
+    resolution: {integrity: sha512-EY92OAXN2xYL7tNS/MVsWJW1v8VHAPwl9B4Ca3pCrjmvqyC+S1C/6UHsMxF2GoFPraS5Yyg56vFz9brVpFojMA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@modelcontextprotocol/server': ^2.3.0
+
+  '@modelcontextprotocol/server@2.3.1':
+    resolution: {integrity: sha512-e59MfWuSssj6DoQ96JCTqdW1AXT5/XtnTl0WWd6MU1Ka434fFUGGosCLJbGNySDhHGvxQWoRWK137FXYFkYNWw==}
+    engines: {node: '>=20'}
 
   '@monaco-editor/loader@1.7.0':
     resolution: {integrity: sha512-gIwR1HrJrrx+vfyOhYmCZ0/JcWqG5kbfG7+d3f/C1LXk2EvzAbHSg3MQ5lO2sMlo9izoAZ04shohfKLVT6crVA==}
@@ -4898,6 +4927,10 @@ packages:
   hls.js@1.7.3:
     resolution: {integrity: sha512-MsPlx6yVW4Qv4C7mEVou4/gk/5cN2dVxOTnrNjPSmyH2f0Ln+/UkG10Ax1PE6OvrmTVPKgQYozTtBaPOuCzq7A==}
 
+  hono@4.13.13:
+    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+    engines: {node: '>=16.9.0'}
+
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
@@ -8200,6 +8233,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
+  '@hono/node-server@1.19.17(hono@4.13.13)':
+    dependencies:
+      hono: 4.13.13
+
   '@hookform/resolvers@5.9.1(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(class-transformer@0.5.1)(class-validator@0.15.1)(react-hook-form@7.89.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.5)':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -8747,6 +8784,21 @@ snapshots:
   '@mermaid-js/parser@2.0.1':
     dependencies:
       '@chevrotain/types': 13.2.0
+
+  '@modelcontextprotocol/core@2.3.1':
+    dependencies:
+      zod: 4.6.5
+
+  '@modelcontextprotocol/node@2.1.1(@modelcontextprotocol/server@2.3.1)':
+    dependencies:
+      '@hono/node-server': 1.19.17(hono@4.13.13)
+      '@modelcontextprotocol/server': 2.3.1
+      hono: 4.13.13
+
+  '@modelcontextprotocol/server@2.3.1':
+    dependencies:
+      '@modelcontextprotocol/core': 2.3.1
+      zod: 4.6.5
 
   '@monaco-editor/loader@1.7.0':
     dependencies:
@@ -12449,6 +12501,8 @@ snapshots:
       hermes-estree: 0.25.1
 
   hls.js@1.7.3: {}
+
+  hono@4.13.13: {}
 
   hookable@5.5.3: {}
 

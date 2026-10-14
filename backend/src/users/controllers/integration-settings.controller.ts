@@ -9,6 +9,7 @@ import { AccessControlService } from '../services/access-control.service';
 import { AuditLogService } from '../services/audit-log.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { IsIn } from 'class-validator';
+import { SessionOnly } from 'src/auth/decorators/session-only.decorator';
 
 export class TestNotificationDto {
   @IsIn(['discord', 'email', 'telegram', 'ntfy', 'slack'])
@@ -28,7 +29,7 @@ export class IntegrationSettingsController {
   ) {}
 
   private async requireAdmin(user: PayloadToken) {
-    const current = await this.usersService.getRequiredUserById(user.userId);
+    const current = await this.usersService.getRequestUser(user);
     this.accessControlService.assertIsAdmin(current);
     return current;
   }
@@ -59,6 +60,7 @@ export class IntegrationSettingsController {
     return { ...await this.instanceSettings.getPublic(), notificationDelivery: this.notificationsService.getDeliveryState(), systemDiscordConfigured: await this.notificationsService.isDiscordConfigured() };
   }
 
+  @SessionOnly()
   @Patch()
   async updateIntegrations(@Request() req, @Body() dto: UpdateIntegrationSettingsDto) {
     const user = req.user as PayloadToken;

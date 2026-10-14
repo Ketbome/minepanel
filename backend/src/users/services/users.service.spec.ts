@@ -100,6 +100,50 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getRequestUser', () => {
+    const { useApiTokens: _omit, ...noTokenPermissions } = DEFAULT_USER_PERMISSIONS;
+    const scope = (overrides = {}) => ({ id: 1, admin: false, readOnly: false, permissions: { ...noTokenPermissions }, serverAccess: [], ...overrides });
+    const payload = (apiToken?: ReturnType<typeof scope>) => ({ userId: 1, username: 'alice', role: 'USER', apiToken });
+
+    it('returns the stored user for sessions and admin tokens of admins', async () => {
+      const stored = user();
+      usersRepo.findOne.mockResolvedValue(stored);
+      expect(await service.getRequestUser(payload())).toBe(stored);
+
+      const admin = user({ role: 'ADMIN' });
+      usersRepo.findOne.mockResolvedValue(admin);
+      expect(await service.getRequestUser(payload(scope({ admin: true })))).toBe(admin);
+    });
+
+    it('intersects token permissions and servers with the user', async () => {
+      const stored = user({ permissions: { ...DEFAULT_USER_PERMISSIONS, viewLogs: true, useConsole: true }, serverAccess: ['a', 'b'] });
+      usersRepo.findOne.mockResolvedValue(stored);
+
+      const narrowed = await service.getRequestUser(payload(scope({ permissions: { ...noTokenPermissions, viewLogs: true, manageUsers: true }, serverAccess: ['a', 'c'] })));
+
+      expect(narrowed).not.toBe(stored);
+      expect(narrowed).toBeInstanceOf(Users);
+      expect(narrowed.permissions).toEqual({ ...DEFAULT_USER_PERMISSIONS, viewLogs: true });
+      expect(narrowed.serverAccess).toEqual(['a']);
+      expect(stored.permissions.useConsole).toBe(true);
+    });
+
+    it('downgrades admins using a non-admin token', async () => {
+      usersRepo.findOne.mockResolvedValue(user({ role: 'ADMIN', permissions: null, serverAccess: null }));
+
+      const narrowed = await service.getRequestUser(payload(scope({ permissions: { ...noTokenPermissions, useConsole: true }, serverAccess: ['z'] })));
+
+      expect(narrowed.role).toBe('USER');
+      expect(narrowed.permissions).toEqual({ ...DEFAULT_USER_PERMISSIONS, useConsole: true });
+      expect(narrowed.serverAccess).toEqual(['z']);
+    });
+
+    it('keeps token servers for users with access to all servers', async () => {
+      usersRepo.findOne.mockResolvedValue(user({ permissions: { ...DEFAULT_USER_PERMISSIONS, accessAllServers: true } }));
+      expect((await service.getRequestUser(payload(scope({ serverAccess: ['x'] })))).serverAccess).toEqual(['x']);
+    });
+  });
+
   describe('createUser', () => {
     it('hashes the password, normalizes fields and creates settings', async () => {
       const created = await service.createUser({ username: ' bob ', email: 'Bob@Example.com', password: 'secret12' });

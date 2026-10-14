@@ -60,6 +60,7 @@ If you access Minepanel over plain HTTP by local IP and login gets stuck on "Ver
 - **Velocity network** — lobby, fallback and `/server` switching for Paper-family servers, with modern forwarding set up by the panel · [Velocity](https://minepanel.ketbome.com/networking#velocity-network-java-only)
 - **Networking** — Port mappings, per-server network settings and admin-only custom compose snippets · [Networking](https://minepanel.ketbome.com/networking)
 - **Users & access** — Admin and user roles, per-server permissions, invitations and an audit log · [Access control](https://minepanel.ketbome.com/features#roles-and-access-control)
+- **API tokens & AI agents** — Scoped, revocable API tokens and an MCP endpoint so Claude, Cursor or VS Code can create servers, install mods, diagnose crashes and remove client-only mods, with exactly the token's permissions · [MCP](https://minepanel.ketbome.com/mcp)
 - **Single Sign-On** — OIDC login (Authentik, Google, …), with an SSO-only mode · [SSO](https://minepanel.ketbome.com/sso)
 - **Notifications** — Discord webhooks, email, Telegram, ntfy and Slack for server events and alerts (down, crash loop, high CPU/RAM, low disk space, failed/overdue backups, scheduled task failures, game query failures and incident recovery), with admin-managed channel switches and test delivery · [Notifications](https://minepanel.ketbome.com/features#notifications)
 - **Updates** — Release notes in the panel for every version between yours and the newest, and a one-click update for admins

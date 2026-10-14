@@ -33,6 +33,7 @@ frontend/src/
 |  |- scheduler/                Scheduled tasks CRUD endpoints
 |  |- achievements/             End Portal easter egg advancements (per user)
 |  |- modpacks/                 Per-server modpack file upload/list/delete
+|  |- api-tokens/               Personal API tokens (MCP clients): list/create/revoke + MCP URL
 |- lib/
 |  |- store/                    Zustand stores (favorites-store: per-browser starred servers)
 |  |- translations/             i18n dictionaries

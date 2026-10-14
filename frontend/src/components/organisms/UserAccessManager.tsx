@@ -38,6 +38,7 @@ const emptyPermissions: UserPermissions = {
   viewServerFiles: false,
   useServerFiles: false,
   changeServerVersion: false,
+  useApiTokens: false,
 };
 
 const fullPermissions: UserPermissions = {
@@ -50,6 +51,7 @@ const fullPermissions: UserPermissions = {
   viewServerFiles: true,
   useServerFiles: true,
   changeServerVersion: true,
+  useApiTokens: true,
 };
 
 // Shown while the switch is on, for permissions that reach further than their
@@ -64,6 +66,7 @@ const permissionLabels: Array<{ key: keyof UserPermissions; label: string; admin
   { key: 'viewServerFiles', label: 'viewServerFilesPermission' },
   { key: 'useServerFiles', label: 'manageServerFilesPermission' },
   { key: 'changeServerVersion', label: 'changeServerVersionPermission', adminOnly: true },
+  { key: 'useApiTokens', label: 'useApiTokensPermission', adminOnly: true },
 ];
 
 type EditableUser = User & {

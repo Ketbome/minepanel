@@ -11,7 +11,8 @@ describe('UsersController', () => {
 
   beforeEach(() => {
     usersService = {
-      getRequiredUserById: jest.fn().mockResolvedValue(me),
+      getRequestUser: jest.fn().mockResolvedValue(me),
+      getRequiredUserById: jest.fn().mockResolvedValue({ id: 2, username: 'bob' }),
       getUsers: jest.fn().mockResolvedValue([me]),
       serializeUser: jest.fn((user) => ({ ...user, access: 'state' })),
       requestEmailChange: jest.fn(),
@@ -69,7 +70,6 @@ describe('UsersController', () => {
     expect(usersService.updateUserAccess).toHaveBeenCalledWith(2, { isActive: true }, true);
     expect(audit.record).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'update_user_access' }));
 
-    usersService.getRequiredUserById.mockResolvedValueOnce(me).mockResolvedValueOnce({ id: 2, username: 'bob' });
     expect(await controller.deleteUser(req, 2)).toEqual({ success: true, message: 'User deleted successfully' });
     expect(usersService.deleteUser).toHaveBeenCalledWith(2);
     expect(audit.record).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'delete_user', metadata: { targetUserId: 2, targetUsername: 'bob' } }));

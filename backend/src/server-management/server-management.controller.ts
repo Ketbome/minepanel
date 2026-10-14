@@ -250,7 +250,7 @@ export class ServerManagementController {
 
   private async getCurrentUser(req): Promise<Users> {
     const user = req.user as PayloadToken;
-    return this.usersService.getRequiredUserById(user.userId);
+    return this.usersService.getRequestUser(user);
   }
 
   private async requireAdmin(req): Promise<Users> {

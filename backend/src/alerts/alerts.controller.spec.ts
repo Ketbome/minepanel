@@ -4,7 +4,7 @@ describe('AlertsController', () => {
   it('reads and updates per-server alert config behind server access', async () => {
     const alerts = { getConfig: jest.fn().mockResolvedValue({ enabled: true }), updateConfig: jest.fn().mockResolvedValue({ enabled: false }) };
     const accessControl = { assertServerAccess: jest.fn() };
-    const controller = new AlertsController(alerts as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
+    const controller = new AlertsController(alerts as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
     const req = { user: { userId: 1 } };
 
     expect(await controller.getConfig(req, 'srv')).toEqual({ enabled: true });

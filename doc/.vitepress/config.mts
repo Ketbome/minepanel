@@ -231,6 +231,7 @@ export default defineConfig({
         items: [
           { text: 'Features', link: '/features' },
           { text: 'API Reference', link: '/api' },
+          { text: 'MCP Server (AI agents)', link: '/mcp' },
           { text: 'Roadmap', link: '/roadmap' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Development', link: '/development' },
@@ -305,6 +306,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { text: 'API Reference', link: '/api' },
+          { text: 'MCP Server (AI agents)', link: '/mcp' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Storage & Scaling', link: '/storage-scaling' },
           { text: 'Development', link: '/development' },

@@ -28,7 +28,7 @@ describe('ProxyController', () => {
       instanceSettings as any,
       { isRunning: jest.fn().mockResolvedValue(true) } as any,
       velocity as any,
-      { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any,
+      { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any,
       accessControl as any,
     );
   });

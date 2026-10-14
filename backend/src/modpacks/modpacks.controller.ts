@@ -84,7 +84,7 @@ export class ModpacksController {
   }
 
   private async assertAccess(req, serverId: string, write: boolean) {
-    const user = await this.usersService.getRequiredUserById(req.user.userId);
+    const user = await this.usersService.getRequestUser(req.user);
     this.accessControlService.assertServerFiles(user, serverId, write);
   }
 }

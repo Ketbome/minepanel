@@ -44,7 +44,7 @@ describe('AuthService tokens, recovery and invitations', () => {
     audit = { record: jest.fn().mockResolvedValue(undefined) };
     instanceSettings = { getOidc: jest.fn().mockResolvedValue({ enabled: true, providerName: 'Authentik', disablePasswordLogin: true }) };
     refreshRepo = { delete: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null), update: jest.fn().mockResolvedValue(undefined) };
-    resetRepo = { update: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), findOne: jest.fn(), manager: { save: jest.fn().mockResolvedValue(undefined) } };
+    resetRepo = { update: jest.fn().mockResolvedValue(undefined), save: jest.fn().mockResolvedValue(undefined), findOne: jest.fn(), manager: { save: jest.fn().mockResolvedValue(undefined), delete: jest.fn().mockResolvedValue(undefined) } };
 
     service = new AuthService(jwtService as any, usersService as any, configService as any, authMail as any, audit as any, instanceSettings as any, refreshRepo as any, resetRepo as any);
   });

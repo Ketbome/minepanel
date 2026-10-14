@@ -8,6 +8,7 @@ import { Request as ExpressRequest } from 'express';
 import { AuditLogService } from '../services/audit-log.service';
 import { BadRequestException } from '@nestjs/common';
 import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
+import { SessionOnly } from 'src/auth/decorators/session-only.decorator';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -19,7 +20,7 @@ export class UsersController {
   ) {}
 
   private async getCurrentUser(req: ExpressRequest & { user: PayloadToken }) {
-    return this.usersService.getRequiredUserById(req.user.userId);
+    return this.usersService.getRequestUser(req.user);
   }
 
   @Get()
@@ -37,6 +38,7 @@ export class UsersController {
     };
   }
 
+  @SessionOnly()
   @Patch('profile')
   async updateProfile(@Request() req, @Body(new ValidationPipe()) dto: UpdateProfileDto) {
     const user = req.user as PayloadToken;
@@ -69,6 +71,7 @@ export class UsersController {
   }
 
   // The code is six digits, so guessing has to be rate limited.
+  @SessionOnly()
   @Post('profile/confirm-email')
   @Throttle({ default: { limit: 10, ttl: seconds(300) } })
   @UseGuards(ThrottlerGuard)
@@ -105,6 +108,7 @@ export class UsersController {
     }
   }
 
+  @SessionOnly()
   @Post()
   async createUser(@Request() req, @Body(new ValidationPipe()) dto: CreateUsersDto) {
     const currentUser = await this.getCurrentUser(req);
@@ -123,6 +127,7 @@ export class UsersController {
     return this.usersService.serializeUser(user);
   }
 
+  @SessionOnly()
   @Put('/username/:username')
   async updateUserByUsername(@Request() req, @Param('username') username: string, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
     const currentUser = await this.getCurrentUser(req);
@@ -130,6 +135,7 @@ export class UsersController {
     return this.usersService.updateUserByUsername(username, dto, this.accessControlService.isAdmin(currentUser)).then((user) => this.usersService.serializeUser(user));
   }
 
+  @SessionOnly()
   @Patch(':id')
   async updateUser(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUsersDto) {
     const currentUser = await this.getCurrentUser(req);
@@ -139,6 +145,7 @@ export class UsersController {
 
   // Role changes are admin-only on purpose: `manageUsers` is delegated, and a
   // delegate able to hand out ADMIN could escalate itself past every check.
+  @SessionOnly()
   @Patch(':id/role')
   async updateUserRole(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUserRoleDto) {
     const currentUser = await this.getCurrentUser(req);
@@ -157,6 +164,7 @@ export class UsersController {
     return this.usersService.serializeUser(user);
   }
 
+  @SessionOnly()
   @Patch(':id/access')
   async updateUserAccess(@Request() req, @Param('id') id: number, @Body(new ValidationPipe()) dto: UpdateUserAccessDto) {
     const currentUser = await this.getCurrentUser(req);
@@ -175,6 +183,7 @@ export class UsersController {
     return this.usersService.serializeUser(user);
   }
 
+  @SessionOnly()
   @Delete(':id')
   async deleteUser(@Request() req, @Param('id') id: number) {
     const currentUser = await this.getCurrentUser(req);
@@ -197,6 +206,7 @@ export class UsersController {
     };
   }
 
+  @SessionOnly()
   @Post('change-password')
   async changePassword(@Request() req, @Body(new ValidationPipe()) dto: ChangePasswordDto) {
     const user = req.user as PayloadToken;

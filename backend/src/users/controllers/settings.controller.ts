@@ -67,7 +67,7 @@ export class SettingsController {
   @Post('proxy/power')
   async setProxyPower(@Request() req, @Body() body: ProxyPowerDto) {
     const user = req.user as PayloadToken;
-    const currentUser = await this.usersService.getRequiredUserById(user.userId);
+    const currentUser = await this.usersService.getRequestUser(user);
     this.accessControlService.assertManageSystemSettings(currentUser);
 
     const proxy = await this.instanceSettings.setProxy({ enabled: body.enabled });
@@ -103,7 +103,7 @@ export class SettingsController {
     let currentUser;
 
     if (dto.cfApiKey !== undefined || dto.discordWebhook !== undefined || dto.proxy || dto.network || dto.javaServerDefaults || dto.auditRetentionDays !== undefined) {
-      currentUser = await this.usersService.getRequiredUserById(user.userId);
+      currentUser = await this.usersService.getRequestUser(user);
       this.accessControlService.assertManageSystemSettings(currentUser);
     }
 
@@ -147,7 +147,7 @@ export class SettingsController {
   @Post('test-curseforge-key')
   async testCurseforgeKey(@Request() req, @Body() dto: TestCurseforgeKeyDto) {
     const user = req.user as PayloadToken;
-    const currentUser = await this.usersService.getRequiredUserById(user.userId);
+    const currentUser = await this.usersService.getRequestUser(user);
     this.accessControlService.assertManageSystemSettings(currentUser);
 
     const apiKey = dto?.cfApiKey || (await this.settingsService.getCfApiKey(user.userId));

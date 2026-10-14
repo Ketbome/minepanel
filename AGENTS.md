@@ -36,6 +36,10 @@ file: mc-router in `data/proxy/` or Velocity in `data/velocity/` (never both; th
 public port). Velocity members opt in per server and must be Paper-family 1.19+
 (`backend/src/proxy/velocity-backend.ts`, duplicated in the frontend).
 
+API tokens (`mp_…`, `backend/src/auth/api-tokens.service.ts`) let scripts and the MCP endpoint
+(`POST /mcp`, `backend/src/mcp/`) act as a user, narrowed to the token's scope on every request.
+Creating them needs the admin-granted `useApiTokens` permission. See `backend/AGENTS.md`.
+
 ## Key Commands
 
 The repo is a pnpm workspace (`pnpm-workspace.yaml`: `backend`, `frontend`, `doc`). `doc/`

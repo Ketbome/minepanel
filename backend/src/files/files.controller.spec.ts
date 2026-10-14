@@ -33,7 +33,7 @@ describe('FilesController', () => {
       deleteFile: jest.fn().mockResolvedValue(undefined),
     };
     accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
-    const usersService = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
+    const usersService = { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) };
     uploadSessions = {
       create: jest.fn().mockResolvedValue({ id: 'u1', offset: 0 }),
       getOffset: jest.fn().mockResolvedValue({ offset: 5 }),

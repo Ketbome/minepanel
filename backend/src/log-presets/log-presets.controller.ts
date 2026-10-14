@@ -14,9 +14,9 @@ export class LogPresetsController {
   ) {}
 
   private async authorize(req, serverId: string): Promise<number> {
-    const { userId } = req.user as PayloadToken;
-    this.accessControlService.assertViewLogs(await this.usersService.getRequiredUserById(userId), serverId);
-    return userId;
+    const payload = req.user as PayloadToken;
+    this.accessControlService.assertViewLogs(await this.usersService.getRequestUser(payload), serverId);
+    return payload.userId;
   }
 
   @Get()

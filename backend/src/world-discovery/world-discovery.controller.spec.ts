@@ -16,7 +16,7 @@ describe('WorldDiscoveryController', () => {
       getCurseForgeWorldDetails: jest.fn().mockResolvedValue('details'),
     };
     accessControl = { assertGlobalFiles: jest.fn() };
-    controller = new WorldDiscoveryController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 7 }) } as any, accessControl as any);
+    controller = new WorldDiscoveryController(service as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 7 }) } as any, accessControl as any);
   });
 
   it('lists the library and searches CurseForge only', async () => {

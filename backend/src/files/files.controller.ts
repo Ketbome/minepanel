@@ -35,7 +35,7 @@ export class FilesController {
 
   // Returns whether the caller is an admin, which lifts the global write restriction.
   private async assertFilesAccess(req, serverId: string, write: boolean): Promise<boolean> {
-    const user = await this.usersService.getRequiredUserById(req.user.userId);
+    const user = await this.usersService.getRequestUser(req.user);
 
     if (serverId === '_root' || serverId === '.world') {
       this.accessControlService.assertGlobalFiles(user, write);

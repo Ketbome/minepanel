@@ -9,6 +9,7 @@ import { PayloadToken } from './models/token.model';
 import { UsersService } from 'src/users/services/users.service';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { ApiToken } from './entities/api-token.entity';
 import { SetupAdminDto } from './dtos/auth.dto';
 import { AuthMailService } from './auth-mail.service';
 import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
@@ -267,6 +268,7 @@ export class AuthService {
     const usedAt = new Date();
     await this.passwordResetTokenRepo.update({ userId: passwordResetToken.userId, usedAt: IsNull() }, { usedAt });
     await this.refreshTokenRepo.update({ userId: passwordResetToken.userId, revoked: false }, { revoked: true });
+    await this.passwordResetTokenRepo.manager.delete(ApiToken, { userId: passwordResetToken.userId });
   }
 
   async createInvitation(dto: CreateUserInvitationDto, actor: PayloadToken, actorIsAdmin: boolean = false) {

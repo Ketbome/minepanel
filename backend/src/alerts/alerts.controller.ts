@@ -18,7 +18,7 @@ export class AlertsController {
 
   private async requireServerAccess(req, serverId: string): Promise<Users> {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     this.accessControlService.assertServerAccess(user, serverId);
     return user;
   }

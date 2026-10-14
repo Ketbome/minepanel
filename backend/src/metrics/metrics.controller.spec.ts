@@ -7,7 +7,7 @@ describe('MetricsController', () => {
 
   beforeEach(() => {
     metrics = { getHistory: jest.fn().mockResolvedValue(['p']), getUptime: jest.fn().mockResolvedValue({ windows: ['w'] }) };
-    controller = new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any, { getSnapshot: jest.fn().mockResolvedValue({ tps: 20 }) } as any, { record: jest.fn() } as any);
+    controller = new MetricsController(metrics as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, { assertServerAccess: jest.fn() } as any, { getSnapshot: jest.fn().mockResolvedValue({ tps: 20 }) } as any, { record: jest.fn() } as any);
   });
 
   it('returns live monitoring', async () => {
@@ -17,7 +17,7 @@ describe('MetricsController', () => {
   it('denies live monitoring before collecting another user’s server data', async () => {
     const getSnapshot = jest.fn();
     const restricted = new MetricsController(metrics as any,
-      { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any,
+      { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any,
       { assertServerAccess: jest.fn(() => { throw new Error('Forbidden'); }) } as any,
       { getSnapshot } as any, { record: jest.fn() } as any);
     await expect(restricted.getLive(req, 'other-server')).rejects.toThrow('Forbidden');
@@ -39,7 +39,7 @@ describe('MetricsController', () => {
   describe('testTickCommand', () => {
     const testTick = jest.fn().mockResolvedValue({ success: true, output: 'x', parsed: null });
     const record = jest.fn();
-    const build = (admin: boolean) => new MetricsController(metrics as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1, username: 'root' }) } as any, { isAdmin: jest.fn(() => admin) } as any, { testTickCommand: testTick } as any, { record } as any);
+    const build = (admin: boolean) => new MetricsController(metrics as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1, username: 'root' }) } as any, { isAdmin: jest.fn(() => admin) } as any, { testTickCommand: testTick } as any, { record } as any);
 
     beforeEach(() => {
       record.mockClear();

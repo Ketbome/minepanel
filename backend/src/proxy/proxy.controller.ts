@@ -24,7 +24,7 @@ export class ProxyController {
   }
 
   private async assertServerAccess(req, serverId: string) {
-    const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
+    const user = await this.usersService.getRequestUser(req.user as PayloadToken);
     this.accessControlService.assertServerAccess(user, serverId);
   }
 
@@ -54,7 +54,7 @@ export class ProxyController {
   // Only the caller's own servers: the full table would list every server id and hostname.
   @Get('mappings')
   async getMappings(@Request() req) {
-    const user = await this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
+    const user = await this.usersService.getRequestUser(req.user as PayloadToken);
     const mappings = (await this.isVelocityEdge())
       ? Object.entries(await this.velocity.getAddresses()).map(([id, host]) => ({ host, backend: `${id}:25565` }))
       : await this.proxyService.getAllMappings();

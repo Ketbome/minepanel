@@ -24,7 +24,7 @@ describe('AuditLogController', () => {
         {
           provide: UsersService,
           useValue: {
-            getRequiredUserById: jest.fn(),
+            getRequestUser: jest.fn(),
           },
         },
         {
@@ -43,7 +43,7 @@ describe('AuditLogController', () => {
   });
 
   it('should list audit logs for users with manageUsers access', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'USER' } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 1, role: 'USER' } as any);
     auditLogService.list.mockResolvedValue([{ id: 1 }] as any);
 
     await expect(controller.listAuditLogs({ user: { userId: 1 } }, {} as any)).resolves.toEqual([{ id: 1 }]);
@@ -51,7 +51,7 @@ describe('AuditLogController', () => {
   });
 
   it('should reject users without manageUsers access', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 2, role: 'USER' } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 2, role: 'USER' } as any);
     accessControlService.assertManageUsers.mockImplementation(() => {
       throw new ForbiddenException('Forbidden');
     });

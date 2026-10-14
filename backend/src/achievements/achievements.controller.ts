@@ -2,8 +2,10 @@ import { Body, Controller, Get, Post, Request } from '@nestjs/common';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { AchievementsService } from './achievements.service';
 import { UnlockAchievementDto } from './dto/unlock-achievement.dto';
+import { SessionOnly } from 'src/auth/decorators/session-only.decorator';
 
 @Controller('achievements')
+@SessionOnly()
 export class AchievementsController {
   constructor(private readonly achievementsService: AchievementsService) {}
 

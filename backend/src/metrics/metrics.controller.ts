@@ -27,7 +27,7 @@ export class MetricsController {
   @Get(':id/live')
   async getLive(@Request() req, @Param('id') id: string) {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     this.accessControlService.assertServerAccess(user, id);
     return this.monitoring.getSnapshot(id);
   }
@@ -35,7 +35,7 @@ export class MetricsController {
   @Get(':id/history')
   async getHistory(@Request() req, @Param('id') id: string, @Query('hours') hours?: string) {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     this.accessControlService.assertServerAccess(user, id);
 
     const parsedHours = Number.parseInt(hours ?? '', 10);
@@ -48,7 +48,7 @@ export class MetricsController {
   @Get(':id/uptime')
   async getUptime(@Request() req, @Param('id') id: string) {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     this.accessControlService.assertServerAccess(user, id);
     return { serverId: id, ...(await this.metricsService.getUptime(id)) };
   }
@@ -61,7 +61,7 @@ export class MetricsController {
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })) body: TickCommandDto,
   ) {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     if (!this.accessControlService.isAdmin(user)) throw new ForbiddenException('Only admin can perform this action');
     if (!body.tickCommand?.trim()) throw new BadRequestException('tickCommand is required');
     for (const pattern of [body.tickTpsPattern, body.tickMsptPattern]) {

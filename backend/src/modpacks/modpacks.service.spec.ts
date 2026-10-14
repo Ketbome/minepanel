@@ -40,6 +40,41 @@ describe('ModpacksService', () => {
     await expect(service.remove('srv', 'a.mrpack')).rejects.toThrow(NotFoundException);
   });
 
+  describe('scanInstalledMods', () => {
+    const jar = (files: Record<string, string>) => {
+      const zip = new AdmZip();
+      for (const [name, content] of Object.entries(files)) zip.addFile(name, Buffer.from(content));
+      return zip.toBuffer();
+    };
+
+    it('reads the side of every jar in mc-data/mods', async () => {
+      const modsDir = path.join(tempDir, 'srv', 'mc-data', 'mods');
+      await fs.ensureDir(path.join(modsDir, 'folder.jar'));
+      await fs.writeFile(path.join(modsDir, 'zoomify-2.1.jar'), jar({ 'fabric.mod.json': JSON.stringify({ id: 'zoomify', name: 'Zoomify', environment: 'client' }) }));
+      await fs.writeFile(path.join(modsDir, 'lithium-0.12.jar'), jar({ 'fabric.mod.json': JSON.stringify({ id: 'lithium', environment: '*' }) }));
+      await fs.writeFile(path.join(modsDir, 'notes.txt'), 'x');
+
+      const scan = await service.scanInstalledMods('srv');
+
+      expect(scan.truncated).toBe(false);
+      expect(scan.mods.map(({ fileName, modId, side }) => ({ fileName, modId, side }))).toEqual([
+        { fileName: 'lithium-0.12.jar', modId: 'lithium', side: 'both' },
+        { fileName: 'zoomify-2.1.jar', modId: 'zoomify', side: 'client' },
+      ]);
+      expect(scan.mods[0].entry).toBe('mods/lithium-0.12.jar');
+    });
+
+    it('returns nothing without a mods folder and refuses links out of mc-data', async () => {
+      expect(await service.scanInstalledMods('srv')).toEqual({ mods: [], truncated: false });
+
+      const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'minepanel-outside-'));
+      await fs.ensureDir(path.join(tempDir, 'srv', 'mc-data'));
+      await fs.symlink(outside, path.join(tempDir, 'srv', 'mc-data', 'mods'));
+      await expect(service.scanInstalledMods('srv')).rejects.toThrow(BadRequestException);
+      await fs.remove(outside);
+    });
+  });
+
   it('inspects a stored modpack and reports missing ones', async () => {
     const zip = new AdmZip();
     zip.addFile('manifest.json', Buffer.from(JSON.stringify({ minecraft: { version: '1.21.1', modLoaders: [{ id: 'neoforge-21.1.72' }] } })));

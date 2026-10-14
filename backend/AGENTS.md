@@ -16,7 +16,7 @@ backend/src/
 |- main.ts
 |- app.module.ts
 |- config.ts
-|- auth/                    Global JWT guard, public auth endpoints, cookie session flow
+|- auth/                    Global JWT guard, public auth endpoints, cookie session flow, API tokens (mp_)
 |  |- oidc/                 OpenID Connect SSO (provider-agnostic) -> issues Minepanel session
 |- server-management/       Runtime control, status, logs, commands
 |  |- strategies/           Java/Bedrock strategy pattern
@@ -42,8 +42,26 @@ backend/src/
 |- settings/                Global (instance-wide) integration settings: SMTP/OIDC in DB
 |- common/crypto/           Secret encryption at rest (AES-GCM, key derived from JWT_SECRET)
 |- common/fs/               `assertContained`: symlink-safe containment for paths under mc-data
+|- mcp/                     MCP endpoint (POST /mcp): tools are loopback REST calls with the caller's token
 |- database/                TypeORM/sql.js setup
 ```
+
+API tokens and actor loading:
+
+- Controllers load the actor with `usersService.getRequestUser(req.user)`, never
+  `getRequiredUserById(req.user.userId)`. For an `mp_` token it returns an in-memory copy
+  narrowed to the token's scope (permissions AND, servers ∩, `ADMIN` only for admin tokens of
+  admins); never save it. A controller that loads the stored user directly lets tokens exceed
+  their scope.
+- `JwtAuthGuard` resolves `mp_` bearers through `ApiTokensService` (looked up with `ModuleRef`,
+  since `@UseGuards(JwtAuthGuard)` instantiates it in modules without AuthModule). Read-only
+  tokens get `403` on non-GET routes; `@SessionOnly()` routes reject tokens; `@TokenOnly()`
+  routes (`/mcp`) reject cookies and JWTs. New routes that mint credentials or change accounts
+  must be `@SessionOnly()`.
+- `backend/src/mcp/`: every tool calls the REST API on `127.0.0.1:${PORT}${BASE_PATH}` with the
+  caller's token, so authorization stays in the guard and controllers. `McpCatalogService`
+  builds `list_endpoints` from Nest route metadata (skipping public, session-only, token-only,
+  multipart, raw-response and streaming routes). Tool output is capped at 100 KB.
 
 Integration settings & secrets:
 

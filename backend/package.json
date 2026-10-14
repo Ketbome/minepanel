@@ -24,6 +24,8 @@
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@modelcontextprotocol/node": "2.1.1",
+    "@modelcontextprotocol/server": "2.3.1",
     "@nestjs/common": "12.1.2",
     "@nestjs/config": "12.0.1",
     "@nestjs/core": "12.1.2",
@@ -54,7 +56,8 @@
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "sql.js": "1.14.2",
-    "typeorm": "1.1.2"
+    "typeorm": "1.1.2",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

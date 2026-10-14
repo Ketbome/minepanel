@@ -26,7 +26,7 @@ describe('ActivityController', () => {
       }),
     };
     access = { assertServerAccess: jest.fn(), assertViewLogs: jest.fn() };
-    controller = new ActivityController(activity as any, tailer as any, store as any, { getRequiredUserById: jest.fn().mockResolvedValue(user) } as any, access as any);
+    controller = new ActivityController(activity as any, tailer as any, store as any, { getRequestUser: jest.fn().mockResolvedValue(user) } as any, access as any);
   });
 
   it('reports and updates the tracking setting', async () => {

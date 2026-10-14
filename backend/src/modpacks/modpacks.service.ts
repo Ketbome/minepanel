@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 import { inspectModpackArchive, ModpackInspection } from './modpack-inspector';
-import { copyArchiveWithout, ModpackModScan, scanModpackMods } from './modpack-mods';
+import { copyArchiveWithout, MAX_SCANNED_MODS, ModpackModScan, scanModpackMods } from './modpack-mods';
+import { readModJar } from './mod-jar-metadata';
+import { assertContained } from 'src/common/fs/contained-path';
 
 export interface ModpackFile {
   name: string;
@@ -157,7 +159,31 @@ export class ModpacksService {
     return filePath;
   }
 
-  private async getModpacksDir(serverId: string): Promise<string> {
+  // The jars the server loads now, read the same way as a modpack's, so an agent can
+  // find the client-only mods that keep a server from starting.
+  async scanInstalledMods(serverId: string): Promise<ModpackModScan> {
+    const dataDir = path.join(await this.getServerDir(serverId), 'mc-data');
+    const modsDir = path.join(dataDir, 'mods');
+    if (!(await fs.pathExists(modsDir))) {
+      return { mods: [], truncated: false };
+    }
+    // The container owns mc-data and could leave `mods` as a link out of it.
+    await assertContained(dataDir, modsDir);
+
+    const jars = (await fs.readdir(modsDir)).filter((name) => name.toLowerCase().endsWith('.jar'));
+    const mods = [];
+    for (const name of jars.slice(0, MAX_SCANNED_MODS)) {
+      const filePath = path.join(modsDir, name);
+      const stat = await fs.lstat(filePath);
+      if (!stat.isFile()) continue;
+      mods.push(readModJar(await fs.readFile(filePath), `mods/${name}`, stat.size));
+    }
+
+    mods.sort((a, b) => a.fileName.localeCompare(b.fileName));
+    return { mods, truncated: jars.length > MAX_SCANNED_MODS };
+  }
+
+  private async getServerDir(serverId: string): Promise<string> {
     if (!SERVER_ID_PATTERN.test(serverId)) {
       throw new BadRequestException('Invalid server ID');
     }
@@ -169,7 +195,11 @@ export class ModpacksService {
       throw new NotFoundException(`Server ${serverId} not found`);
     }
 
-    const dir = path.join(serverDir, 'modpacks');
+    return serverDir;
+  }
+
+  private async getModpacksDir(serverId: string): Promise<string> {
+    const dir = path.join(await this.getServerDir(serverId), 'modpacks');
     await fs.ensureDir(dir);
     return dir;
   }

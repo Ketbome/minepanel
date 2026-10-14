@@ -97,7 +97,7 @@ describe('ServerManagementController', () => {
     };
 
     const mockUsersService = {
-      getRequiredUserById: jest.fn(),
+      getRequestUser: jest.fn(),
     };
 
     const mockAccessControlService = {
@@ -843,7 +843,7 @@ describe('ServerManagementController', () => {
       ]);
       compose.remapVolumesToServer = jest.fn().mockReturnValue('./mc-data:/data');
       accessControlService.getVisibleServerIds.mockImplementation((_, ids) => ids.filter((id) => id !== 'b'));
-      (controller as any).usersService.getRequiredUserById.mockResolvedValue({ id: 1, username: 'admin', role: 'USER' });
+      (controller as any).usersService.getRequestUser.mockResolvedValue({ id: 1, username: 'admin', role: 'USER' });
     });
 
     it('lists servers and stats filtered by visibility', async () => {
