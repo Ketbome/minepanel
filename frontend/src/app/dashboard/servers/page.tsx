@@ -64,6 +64,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from '@/lib/utils/server-status';
 import { useServersStore } from '@/lib/store/servers-store';
+import { usePolling } from '@/lib/hooks/usePolling';
 import { favoritesFirst, useFavoritesStore } from '@/lib/store/favorites-store';
 import { getTemplatesByEdition, ServerTemplate } from '@/lib/server-templates';
 import { ServerEdition } from '@/lib/types/types';
@@ -110,61 +111,12 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    let isMounted = true;
-
-    const initializeDashboard = async () => {
-      if (isMounted) {
-        try {
-          const user = await getCurrentUser();
-          if (isMounted) {
-            setCanCreateServers(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
-          }
-        } catch {
-          if (isMounted) {
-            setCanCreateServers(false);
-          }
-        }
-        await fetchServersFromBackend();
-      }
-    };
-
-    initializeDashboard();
-
-    const interval = setInterval(() => {
-      if (isMounted) {
-        loadServerInfo();
-      }
-    }, 30000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    getCurrentUser()
+      .then((user) => setCanCreateServers(user.role === 'ADMIN' || user.access.permissions.accessAllServers))
+      .catch(() => setCanCreateServers(false));
+    fetchServersFromBackend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const processServerStatuses = useCallback(
-    async (serversList: ServerInfo[]): Promise<ServerInfo[]> => {
-      if (serversList.length === 0) return [];
-
-      try {
-        const allStatusData: { [key: string]: 'running' | 'stopped' | 'starting' | 'not_found' } =
-          await getAllServersStatus();
-        const updatedServers = serversList.map((server) => {
-          return {
-            ...server,
-            status: allStatusData[server.id] || 'not_found',
-          };
-        });
-        return updatedServers;
-      } catch (error) {
-        console.error('Error processing server statuses:', error);
-        mcToast.error(t('errorProcessingStatuses'));
-        return serversList.map((server) => ({ ...server, status: 'not_found' }));
-      }
-    },
-    [t],
-  );
 
   // Proxied servers publish no host port, so the allocated one is not reachable:
   // what players use is the router hostname.
@@ -187,13 +139,21 @@ export default function Dashboard() {
   const fetchServersFromBackend = useCallback(async () => {
     setIsLoading(true);
     try {
-      const serverList = await fetchServerList();
+      const [serverList, statuses] = await Promise.all([
+        fetchServerList(),
+        getAllServersStatus().catch((error) => {
+          console.error('Error processing server statuses:', error);
+          mcToast.error(t('errorProcessingStatuses'));
+          return {} as Record<string, ServerInfo['status']>;
+        }),
+        loadProxyAddresses().catch((error) => console.error('Error loading proxy addresses:', error)),
+      ]);
       const formattedServers: ServerInfo[] = serverList.map((server) => ({
         id: server.id,
         name: server.serverName || `${t('serverDefaultName')} ${server.id}`,
         description: server.motd || t('minecraftServer'),
         displayName: server.serverName || `minecraft-${server.id}`,
-        status: 'loading',
+        status: statuses[server.id] || 'not_found',
         port: server.port || '25565',
         containerName: `${server.id}`,
       }));
@@ -201,16 +161,13 @@ export default function Dashboard() {
       const ids = new Set(formattedServers.map((s) => s.id));
       setSelected((current) => current.filter((id) => ids.has(id)));
       setServers(formattedServers);
-      await loadProxyAddresses();
-      const updatedServers = await processServerStatuses(formattedServers);
-      setServers(updatedServers);
     } catch (error) {
       console.error('Error fetching server list:', error);
       mcToast.error(t('errorLoadingServerList'));
     } finally {
       setIsLoading(false);
     }
-  }, [t, processServerStatuses, loadProxyAddresses]);
+  }, [t, loadProxyAddresses]);
 
   const refreshGlobalServers = useServersStore((state) => state.refreshAll);
 
@@ -284,16 +241,17 @@ export default function Dashboard() {
     }
   };
 
+  // Functional update: the polling callback must not read a list captured on mount.
   const loadServerInfo = useCallback(async () => {
-    if (servers.length === 0) return;
     try {
-      const updatedServers = await processServerStatuses(servers);
-      setServers(updatedServers);
+      const statuses = await getAllServersStatus();
+      setServers((current) => current.map((server) => ({ ...server, status: statuses[server.id] || 'not_found' })));
     } catch (error) {
       console.error('Error loading server information:', error);
-      mcToast.error(t('errorLoadingServerInfo'));
     }
-  }, [servers, t, processServerStatuses]);
+  }, []);
+
+  usePolling(loadServerInfo, servers.length > 0 ? 30000 : null);
 
   const handleCreateServer = async (values: { id: string }) => {
     setIsCreatingServer(true);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerStatus as apiGetServerStatus, startServer as apiStartServer, stopServer as apiStopServer, forceStopServer as apiForceStopServer } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { usePolling } from "@/lib/hooks/usePolling";
 import { useServersStore, ServerStatus } from "@/lib/store/servers-store";
 
 export function useServerStatus(serverId: string) {
@@ -32,9 +33,9 @@ export function useServerStatus(serverId: string) {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 10000);
-    return () => clearInterval(interval);
   }, [fetchStatus]);
+
+  usePolling(fetchStatus, 10000);
 
   const startServer = async () => {
     setIsProcessingAction(true);

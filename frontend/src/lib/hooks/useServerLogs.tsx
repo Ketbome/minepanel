@@ -116,7 +116,8 @@ export function useServerLogs(serverId: string) {
     }
 
     intervalRef.current = setInterval(async () => {
-      if (!isRealTime) return;
+      // Hidden tabs skip ticks; the next visible one catches up through `since`.
+      if (!isRealTime || document.hidden) return;
 
       try {
         const since = lastTimestampRef.current || undefined;

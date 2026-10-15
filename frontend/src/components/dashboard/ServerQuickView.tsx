@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Cpu, Activity, Server, AlertTriangle, ArrowRight, Clock, Users } from "lucide-react";
-import { getAllServersRuntimeStats, ServerRuntimeStats } from "@/services/docker/fetchs";
+import { ServerRuntimeStats } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { RuntimeChip } from "@/components/molecules/ServerRuntimeChips";
 import { formatPlayers, getCpuPercent, getMemoryPercent, getUsageColor } from "@/lib/utils/server-runtime-stats";
@@ -13,6 +13,7 @@ import { formatUptime } from "@/services/system/system.service";
 
 interface ServerQuickViewProps {
   servers: Array<{ id: string; serverName?: string }>;
+  resources: Record<string, ServerRuntimeStats> | null;
 }
 
 type ServerWithResources = {
@@ -24,24 +25,15 @@ type ServerWithResources = {
   stats: ServerRuntimeStats;
 };
 
-export function ServerQuickView({ servers }: ServerQuickViewProps) {
+export function ServerQuickView({ servers, resources }: ServerQuickViewProps) {
   const { t } = useLanguage();
-  const [serversData, setServersData] = useState<ServerWithResources[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const favorites = useFavoritesStore((state) => state.ids);
+  const isLoading = resources === null;
 
-  const fetchResources = useCallback(async () => {
-    if (servers.length === 0) {
-      setServersData([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const resources = await getAllServersRuntimeStats();
-
-      const data: ServerWithResources[] = servers.map((server) => {
-        const res: ServerRuntimeStats = resources[server.id] || {
+  const serversData = useMemo<ServerWithResources[]>(
+    () =>
+      servers.map((server) => {
+        const res: ServerRuntimeStats = resources?.[server.id] || {
           status: "not_found",
           cpuUsage: "N/A",
           memoryUsage: "N/A",
@@ -63,21 +55,9 @@ export function ServerQuickView({ servers }: ServerQuickViewProps) {
           memoryPercent: getMemoryPercent(res) ?? 0,
           stats: res,
         };
-      });
-
-      setServersData(data);
-    } catch (error) {
-      console.error("Error fetching server resources:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [servers]);
-
-  useEffect(() => {
-    fetchResources();
-    const interval = setInterval(fetchResources, 15000);
-    return () => clearInterval(interval);
-  }, [fetchResources]);
+      }),
+    [servers, resources],
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {

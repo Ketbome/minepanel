@@ -212,12 +212,10 @@ export const isAuthenticated = async (): Promise<boolean> => {
   if (typeof window === "undefined") return false;
 
   try {
-    // Try to fetch current user session (lightweight check)
-    const response = await api.get("/auth/me", { withCredentials: true });
-    return response.status === 200;
-  } catch (error) {
-    // If 401, token expired or invalid
-    console.error("Error checking authentication:", error);
+    // Shares the cached /auth/me call, so the shell and the pages ask once per navigation.
+    await getSessionUser();
+    return true;
+  } catch {
     return false;
   }
 };

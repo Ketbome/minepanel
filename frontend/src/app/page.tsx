@@ -66,6 +66,9 @@ function HomeContent() {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [invitation, setInvitation] = useState<UserInvitation | null>(null);
+  // Hides the form until we know there is no session, so a returning user is not
+  // shown the login screen on the way to the dashboard.
+  const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetToken = searchParams.get('resetToken');
@@ -90,14 +93,25 @@ function HomeContent() {
 
   useEffect(() => {
     const initialize = async () => {
-      const authenticated = await isAuthenticated();
+      const [authenticated, status] = await Promise.all([
+        isAuthenticated(),
+        getSetupStatus().catch((error) => {
+          console.error('Error checking setup status:', error);
+          return null;
+        }),
+      ]);
       if (authenticated) {
-        router.push('/dashboard/home');
+        router.replace('/dashboard/home');
         return;
       }
 
       try {
-        const status = await getSetupStatus();
+        if (!status) {
+          setSetupStatus({ requiresSetup: false, passwordRecoveryEnabled: false });
+          setView(resetToken ? 'reset' : 'login');
+          return;
+        }
+
         setSetupStatus(status);
 
         if (status.requiresSetup) {
@@ -116,9 +130,10 @@ function HomeContent() {
 
         setView(resetToken ? 'reset' : 'login');
       } catch (error) {
-        console.error('Error checking setup status:', error);
-        setSetupStatus({ requiresSetup: false, passwordRecoveryEnabled: false });
+        console.error('Error loading invitation:', error);
         setView(resetToken ? 'reset' : 'login');
+      } finally {
+        setCheckingSession(false);
       }
     };
 
@@ -290,6 +305,17 @@ function HomeContent() {
     if (view === 'invite') return t('createAccount');
     return t('enterServer');
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen mp-blueprint items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">{t('verifyingAuth')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
