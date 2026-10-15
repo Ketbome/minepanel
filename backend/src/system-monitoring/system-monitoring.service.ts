@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { statfs } from 'node:fs/promises';
 import * as os from 'node:os';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
@@ -143,20 +144,21 @@ export class SystemMonitoringService {
     }
   }
 
+  // The disk that holds the servers, not the container's root filesystem, read without
+  // spawning `df`. Same numbers df reports: used counts reserved blocks, free does not.
   private async getDiskStatsUnix(): Promise<{
     total: number;
     used: number;
     free: number;
   }> {
     try {
-      const { stdout } = await execAsync('df -k / | tail -1');
-      const parts = stdout.trim().split(/\s+/);
+      const stats = await statfs(this.configService.get<string>('serversDir') || '/');
 
-      const total = Number.parseInt(parts[1]) * 1024;
-      const used = Number.parseInt(parts[2]) * 1024;
-      const free = Number.parseInt(parts[3]) * 1024;
-
-      return { total, used, free };
+      return {
+        total: stats.blocks * stats.bsize,
+        used: (stats.blocks - stats.bfree) * stats.bsize,
+        free: stats.bavail * stats.bsize,
+      };
     } catch (error) {
       console.error('Error getting Unix disk stats:', error);
       return { total: 0, used: 0, free: 0 };

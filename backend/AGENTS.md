@@ -236,11 +236,15 @@ Path and filesystem patterns (critical):
 ## Critical Files
 
 - `src/config.ts` - source of `serversDir`, `serversHostDir` and `dataHostDir` behavior.
-- `src/main.ts` - CORS/cookies/bootstrap behavior.
+- `src/main.ts` - CORS/cookies/bootstrap behavior. Responses are gzip-compressed (`compression`);
+  `text/event-stream` is excluded because the middleware buffers it.
 - `src/server-management/server-management.service.ts` - lifecycle, status, command execution, world selection.
   Container ids are cached per server (`containerIdCache`, 30s TTL) because every status,
   stats and logs poll needs one. Anything that recreates or removes a server's container
   must go through `execComposeCommand`, which drops the entry; an empty lookup is never kept.
+  Fleet endpoints read every status with one `docker inspect` (`getServerStatuses`).
+  Read-only docker calls go through `execRead` (15s timeout); compose up/down never get one.
+  CPU/memory limits shown with stats come from `server.json`, not the compose file.
 - `src/database/database-persistence.service.ts` - sql.js runs with `autoSave: false`; this
   service saves the file at most every 5s (when `total_changes()` moved) and on shutdown
   (`enableShutdownHooks` in `main.ts`). A crash can lose the last few seconds of writes.

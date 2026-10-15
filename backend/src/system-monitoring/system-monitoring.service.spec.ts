@@ -8,6 +8,9 @@ jest.mock('node:util', () => {
 
 const mockExec = jest.requireMock('node:util').promisify();
 
+jest.mock('node:fs/promises', () => ({ ...jest.requireActual('node:fs/promises'), statfs: jest.fn() }));
+const mockStatfs = jest.requireMock('node:fs/promises').statfs as jest.Mock;
+
 const cpu = (idle: number, user: number) => ({ model: 'Test CPU', speed: 1, times: { user, nice: 0, sys: 0, idle, irq: 0 } });
 
 describe('SystemMonitoringService', () => {
@@ -18,7 +21,7 @@ describe('SystemMonitoringService', () => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     instanceSettings = { getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }) };
-    service = new SystemMonitoringService({ get: jest.fn() } as any, instanceSettings as any);
+    service = new SystemMonitoringService({ get: jest.fn((key: string) => (key === 'serversDir' ? '/app/servers' : undefined)) } as any, instanceSettings as any);
     jest.spyOn(os, 'totalmem').mockReturnValue(1000);
     jest.spyOn(os, 'freemem').mockReturnValue(250);
     jest.spyOn(os, 'uptime').mockReturnValue(42);
@@ -32,7 +35,7 @@ describe('SystemMonitoringService', () => {
   it('reports cpu usage from the delta between two samples', async () => {
     jest.spyOn(os, 'platform').mockReturnValue('linux');
     jest.spyOn(os, 'cpus').mockReturnValueOnce([cpu(100, 100)] as any).mockReturnValueOnce([cpu(150, 250)] as any);
-    mockExec.mockResolvedValue({ stdout: '/dev/sda1 1000 400 600 40% /\n' });
+    mockStatfs.mockResolvedValue({ blocks: 1000, bfree: 600, bavail: 600, bsize: 1024 });
 
     const first = await service.getSystemStats();
     const second = await service.getSystemStats();
@@ -44,12 +47,13 @@ describe('SystemMonitoringService', () => {
     expect(second.disk).toEqual({ total: 1024000, used: 409600, free: 614400, usagePercentage: 40 });
     expect(second.uptime).toBe(42);
     expect(second.platform).toBe('linux');
+    expect(mockStatfs).toHaveBeenCalledWith('/app/servers');
   });
 
-  it('falls back to zeroed disk stats when df fails', async () => {
+  it('falls back to zeroed disk stats when statfs fails', async () => {
     jest.spyOn(os, 'platform').mockReturnValue('linux');
     jest.spyOn(os, 'cpus').mockReturnValue([] as any);
-    mockExec.mockRejectedValue(new Error('no df'));
+    mockStatfs.mockRejectedValue(new Error('no statfs'));
 
     const stats = await service.getSystemStats();
 
