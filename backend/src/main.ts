@@ -1,6 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { normalizeBasePath } from './config';
 
@@ -33,6 +34,13 @@ async function bootstrap() {
     },
   });
 
+  // Runs the shutdown hooks on SIGTERM; the database flushes its last writes there.
+  app.enableShutdownHooks();
+
+  // Logs and stats JSON are repetitive text. Event streams stay uncompressed: the middleware
+  // buffers its output, which would hold events back. Archives and binaries are skipped by
+  // the default filter.
+  app.use(compression({ filter: (req, res) => !String(res.getHeader('Content-Type') ?? '').includes('text/event-stream') && compression.filter(req, res) }));
   app.use(cookieParser());
 
   const basePath = normalizeBasePath(process.env.BASE_PATH);

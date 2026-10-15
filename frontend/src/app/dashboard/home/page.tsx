@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Activity, HardDrive, Cpu, Plus, Server, FolderOpen, Settings } from "lucide-react";
-import { fetchServerList, getAllServersStatus } from "@/services/docker/fetchs";
+import { fetchServerList, getAllServersRuntimeStats, ServerRuntimeStats } from "@/services/docker/fetchs";
 import { getSystemStats, formatBytes, SystemStats } from "@/services/system/system.service";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { usePolling } from "@/lib/hooks/usePolling";
 import { ServerQuickView } from "@/components/dashboard/ServerQuickView";
 import { SystemAlerts } from "@/components/dashboard/SystemAlerts";
 import { getSessionUser } from "@/services/auth/auth.service";
@@ -15,12 +16,13 @@ import { PageTitle } from "@/components/molecules/PageTitle";
 type ServerInfo = {
   id: string;
   serverName?: string;
-  status: "running" | "stopped" | "starting" | "not_found" | "loading";
 };
 
 export default function HomePage() {
   const { t } = useLanguage();
   const [servers, setServers] = useState<ServerInfo[]>([]);
+  // One runtime-stats poll feeds the counters, the alerts and the overview.
+  const [resources, setResources] = useState<Record<string, ServerRuntimeStats> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
@@ -33,69 +35,33 @@ export default function HomePage() {
       });
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        const [serverList, stats] = await Promise.all([fetchServerList(), getSystemStats()]);
-
-        const formattedServers = serverList.map((server) => ({
-          ...server,
-          status: "loading" as const,
-        }));
-
-        if (isMounted) {
-          setServers(formattedServers);
-          setSystemStats(stats);
-          await updateServerStatuses(formattedServers);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    fetchData();
-
-    const interval = setInterval(() => {
-      if (isMounted) {
-        if (servers.length > 0) {
-          updateServerStatuses(servers);
-        }
-        // Update system stats every 30 seconds
-        getSystemStats()
-          .then((stats) => {
-            if (isMounted) setSystemStats(stats);
-          })
-          .catch((error) => console.error("Error updating system stats:", error));
-      }
-    }, 30000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadResources = useCallback(() => {
+    getAllServersRuntimeStats()
+      .then(setResources)
+      .catch((error) => console.error("Error updating server resources:", error));
   }, []);
 
-  const updateServerStatuses = async (serversList: ServerInfo[]) => {
-    try {
-      const statusData = await getAllServersStatus();
-      setServers(
-        serversList.map((server) => ({
-          ...server,
-          status: statusData[server.id] || "not_found",
-        }))
-      );
-    } catch (error) {
-      console.error("Error updating server statuses:", error);
-    }
-  };
+  const loadSystemStats = useCallback(() => {
+    getSystemStats()
+      .then(setSystemStats)
+      .catch((error) => console.error("Error updating system stats:", error));
+  }, []);
 
-  const runningServers = servers.filter((s) => s.status === "running").length;
-  const stoppedServers = servers.filter((s) => s.status === "stopped" || s.status === "not_found").length;
+  useEffect(() => {
+    fetchServerList()
+      .then(setServers)
+      .catch((error) => console.error("Error fetching servers:", error))
+      .finally(() => setIsLoading(false));
+    loadResources();
+    loadSystemStats();
+  }, [loadResources, loadSystemStats]);
+
+  usePolling(loadResources, servers.length > 0 ? 15000 : null);
+  usePolling(loadSystemStats, 30000);
+
+  const statusOf = (id: string) => resources?.[id]?.status ?? "not_found";
+  const runningServers = resources ? servers.filter((s) => statusOf(s.id) === "running").length : null;
+  const stoppedServers = resources ? servers.filter((s) => statusOf(s.id) === "stopped" || statusOf(s.id) === "not_found").length : null;
 
   // Stat slots rendered as inventory item stacks
   const statSlots = [
@@ -111,7 +77,7 @@ export default function HomePage() {
       value: runningServers,
       img: "/images/emerald.webp",
       countColor: "text-emerald-300",
-      active: runningServers > 0,
+      active: (runningServers ?? 0) > 0,
     },
     {
       title: t("stoppedServers"),
@@ -183,7 +149,7 @@ export default function HomePage() {
             <div key={slot.title} className="flex items-center gap-3">
               <div className={`mc-slot ${slot.active ? "mc-slot--active animate-slot-glint" : ""} relative w-16 h-16 flex items-center justify-center`}>
                 <Image src={slot.img} alt={slot.title} width={36} height={36} className="pixelated" />
-                <span className={`mc-count ${slot.countColor} absolute bottom-0.5 right-1 text-lg`}>{isLoading ? "…" : slot.value}</span>
+                <span className={`mc-count ${slot.countColor} absolute bottom-0.5 right-1 text-lg`}>{isLoading || slot.value === null ? "…" : slot.value}</span>
               </div>
               <span className="font-minecraft text-xs uppercase tracking-wider text-gray-400 max-w-[5.5rem] leading-tight">{slot.title}</span>
             </div>
@@ -191,7 +157,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {servers.length > 0 && <SystemAlerts servers={servers} />}
+      {servers.length > 0 && resources && <SystemAlerts servers={servers} resources={resources} />}
 
       {/* System + Quick actions */}
       <div className="grid gap-6 lg:grid-cols-2 animate-fade-in-up stagger-2">
@@ -255,7 +221,7 @@ export default function HomePage() {
       {/* Servers Overview */}
       {servers.length > 0 && (
         <div className="animate-fade-in-up stagger-3">
-          <ServerQuickView servers={servers} />
+          <ServerQuickView servers={servers} resources={resources} />
         </div>
       )}
 

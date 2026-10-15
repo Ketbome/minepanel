@@ -4,7 +4,7 @@ import { CardContent } from "@/components/ui/card";
 import { Terminal, RefreshCcw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { FC, useMemo, useState } from "react";
+import { FC, memo, useMemo, useState } from "react";
 import { AnsiText } from "@/lib/utils/ansiParser";
 import { isChat, lineTone, parseLogLine, repeatKey, shortSource } from "@/lib/utils/log-lines";
 
@@ -67,7 +67,8 @@ const Highlighted: FC<{ text: string; pattern: RegExp | null }> = ({ text, patte
   return <>{parts}</>;
 };
 
-const LogLine: FC<{ content: string; compact: boolean; highlight: RegExp | null }> = ({ content, compact, highlight }) => {
+// Memoized: the console re-renders on every poll, and most lines have not changed.
+const LogLine = memo(function LogLine({ content, compact, highlight }: { content: string; compact: boolean; highlight: RegExp | null }) {
   const tone = lineTone(content);
   const parts = compact ? parseLogLine(content) : null;
   if (!parts) return <span className={tone ? TONE_CLASS[tone] : undefined}><Highlighted text={content} pattern={highlight} /></span>;
@@ -79,7 +80,7 @@ const LogLine: FC<{ content: string; compact: boolean; highlight: RegExp | null 
       <span className={tone ? TONE_CLASS[tone] : undefined}><Highlighted text={parts.message} pattern={highlight} /></span>
     </span>
   );
-};
+});
 
 export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLogEntries, logs, loading, error, hasErrors, handleRefreshLogs, compact, groupRepeats, highlight }) => {
   const { t } = useLanguage();

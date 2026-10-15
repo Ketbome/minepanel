@@ -87,8 +87,14 @@ describe('ServerManagementService lifecycle', () => {
   let velocityForwarding: { apply: jest.Mock };
   let compose: string;
 
-  const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => execRoutes.unshift([pattern, result]);
+  // A new route is a change in Docker's state, so the cached container ids no longer hold.
+  const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => {
+    (service as unknown as { containerIdCache?: Map<string, unknown> } | undefined)?.containerIdCache?.clear();
+    execRoutes.unshift([pattern, result]);
+  };
   const execCalls = () => mockExec.mock.calls.map((call) => call[0] as string);
+  // Answers a batched `docker inspect` with every requested container in `state`.
+  const inspectAll = (state: string) => (cmd: string) => ({ stdout: cmd.split('"').pop()!.trim().split(' ').map((id) => `${id}full ${state}`).join('\n') });
   const settle = async () => {
     for (let i = 0; i < 20; i += 1) await new Promise((resolve) => setImmediate(resolve));
   };
@@ -140,11 +146,12 @@ describe('ServerManagementService lifecycle', () => {
 
     route(/docker compose ps -aq mc/, { stdout: 'abc123\n' });
     route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'running\n' });
+    route(/docker inspect --format="\{\{.Id\}\} \{\{.State.Status\}\}"/, inspectAll('running'));
 
     settingsRepo = { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }), manager: { transaction: jest.fn(async (run) => run({ delete: jest.fn(), find: async () => [], save: jest.fn() })) } };
     discord = { sendServerNotification: jest.fn().mockResolvedValue(undefined) };
     alerts = { markExpectedStop: jest.fn(), clearState: jest.fn() };
-    store = { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20' }) };
+    store = { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20', cpuLimit: '2', maxMemory: '6G' }) };
     composeService = { refreshComposeFile: jest.fn().mockResolvedValue(undefined) };
     instanceSettings = {
       getNetwork: jest.fn().mockResolvedValue({ publicIp: '1.2.3.4', lanIp: '10.0.0.2' }),
@@ -307,7 +314,7 @@ describe('ServerManagementService lifecycle', () => {
       service = build(' Panel ');
       expect(await service.restartServer('srv')).toBe(true);
       expect(composeService.refreshComposeFile).toHaveBeenCalledWith('srv', false);
-      expect(velocityForwarding.apply).toHaveBeenCalledWith({ edition: 'JAVA', maxPlayers: '20' }, false);
+      expect(velocityForwarding.apply).toHaveBeenCalledWith(expect.objectContaining({ edition: 'JAVA', maxPlayers: '20' }), false);
       const upCall = mockExec.mock.calls.find((call) => call[0] === 'docker compose up -d');
       expect(upCall[1]).toEqual({ cwd: '/app/servers/srv', env: expect.objectContaining({ COMPOSE_PROJECT_NAME: 'panel_srv' }) });
 
@@ -571,6 +578,53 @@ describe('ServerManagementService lifecycle', () => {
       expect(await service.getServerStatus('srv')).toBe('not_found');
     });
 
+    it('reuses the container id until compose recreates the container or it disappears', async () => {
+      route(/docker compose ps -aq mc/, { stdout: 'abc123\n' });
+      route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'running\n' });
+      const lookups = () => execCalls().filter((cmd) => cmd.includes('docker compose ps')).length;
+
+      await Promise.all([service.getServerStatus('srv'), service.getServerStatus('srv')]);
+      await service.getServerStatus('srv');
+      expect(lookups()).toBe(1);
+
+      await service.startServer('srv');
+      await service.getServerStatus('srv');
+      expect(lookups()).toBe(2);
+
+      // Removed outside the panel: the stale id is looked up again before answering.
+      execRoutes.unshift([/docker compose ps -aq mc/, { stdout: '' }]);
+      execRoutes.unshift([/docker inspect --format="\{\{.State.Status\}\}"/, () => Promise.reject(new Error('No such container'))]);
+      expect(await service.getServerStatus('srv')).toBe('stopped');
+      expect(lookups()).toBe(3);
+    });
+
+    it('reads every status with one inspect and forgets containers that are gone', async () => {
+      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['srv', 'idle', 'gone']);
+      existing.push('/app/servers/idle', '/app/servers/idle/docker-compose.yml', '/app/servers/gone', '/app/servers/gone/docker-compose.yml');
+      mockExec.mockImplementation(async (cmd: string, options?: { cwd?: string }) => {
+        if (cmd.startsWith('docker compose ps')) return { stdout: options?.cwd?.endsWith('idle') ? '' : `${options?.cwd?.split('/').pop()}-id\n` };
+        if (cmd.startsWith('docker inspect --format="{{.Id}}')) return Promise.reject(Object.assign(new Error('No such object: gone-id'), { stdout: 'srv-id-full running\n' }));
+        if (cmd.startsWith('docker inspect')) return Promise.reject(new Error('No such object: gone-id'));
+        return { stdout: '' };
+      });
+
+      expect(await service.getAllServersStatus()).toEqual({ srv: 'running', idle: 'stopped', gone: 'not_found' });
+      expect(execCalls().filter((cmd) => cmd.startsWith('docker inspect'))[0]).toBe('docker inspect --format="{{.Id}} {{.State.Status}}" srv-id gone-id');
+
+      // srv stays cached; idle (no container) and gone (looked up again, still gone) are not.
+      const lookups = execCalls().filter((cmd) => cmd.startsWith('docker compose ps')).length;
+      await service.getAllServersStatus();
+      expect(execCalls().filter((cmd) => cmd.startsWith('docker compose ps')).length - lookups).toBe(lookups - 1);
+    });
+
+    it('does not keep an empty container lookup', async () => {
+      route(/docker compose ps -aq mc/, { stdout: '' });
+      route(/docker ps -a --filter/, { stdout: '' });
+      await service.getServerStatus('srv');
+      await service.getServerStatus('srv');
+      expect(execCalls().filter((cmd) => cmd.includes('docker compose ps'))).toHaveLength(2);
+    });
+
     it('getServerInfo measures the world folder', async () => {
       existing.push('/app/servers/srv/mc-data', '/app/servers/srv/mc-data/world');
       route(/du -sb/, { stdout: '2048\n' });
@@ -588,8 +642,7 @@ describe('ServerManagementService lifecycle', () => {
     });
 
     it('getServerResources parses docker stats', async () => {
-      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}"/, { stdout: '12.5%\n' });
-      route(/docker stats abc123 --no-stream --format "\{\{.MemUsage\}\}"/, { stdout: '1GiB / 4GiB\n' });
+      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}\\t\{\{.MemUsage\}\}"/, { stdout: '12.5%\t1GiB / 4GiB\n' });
       expect(await service.getServerResources('srv')).toEqual({ cpuUsage: '12.5%', memoryUsage: '1GiB', memoryLimit: '4GiB' });
       expect(await service.getServerResources('bad id')).toEqual({ cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' });
     });
@@ -615,7 +668,8 @@ describe('ServerManagementService lifecycle', () => {
       (fs.readdir as unknown as jest.Mock).mockResolvedValue(['srv']);
       route(/docker stats --no-stream --format/, () => Promise.reject(new Error('no stats')));
       route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'exited\n' });
-      compose = 'not: [valid';
+      route(/docker inspect --format="\{\{.Id\}\} \{\{.State.Status\}\}"/, inspectAll('exited'));
+      store.readConfig.mockRejectedValue(new Error('no config'));
       const resources = await service.getAllServersResources();
       expect(resources.srv).toEqual({ status: 'stopped', cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A', cpuLimit: '1', memoryConfigLimit: '4G' });
 
@@ -627,12 +681,17 @@ describe('ServerManagementService lifecycle', () => {
     });
 
     it('getServerRuntimeStats reads limits and probe config errors', async () => {
-      store.readConfig.mockRejectedValueOnce(new Error('no config'));
       spawnQueue.push({ stdout: '', exitCode: 1 }, { stdout: '', exitCode: 1 });
-      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}"/, { stdout: '1%\n' });
-      route(/docker stats abc123 --no-stream --format "\{\{.MemUsage\}\}"/, { stdout: '1GiB / 4GiB\n' });
+      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}\\t\{\{.MemUsage\}\}"/, { stdout: '1%\t1GiB / 4GiB\n' });
+      expect(await service.getServerRuntimeStats('srv')).toMatchObject({ status: 'running', cpuLimit: '2', memoryConfigLimit: '6G', playersMax: 20 });
+
+      // Limits and the probe config both come from server.json; unreadable means defaults.
+      store.readConfig.mockRejectedValue(new Error('no config'));
       const stats = await service.getServerRuntimeStats('srv');
-      expect(stats).toMatchObject({ status: 'running', cpuLimit: '2', memoryConfigLimit: '6G', playersMax: null, gameReachable: false });
+      expect(stats).toMatchObject({ status: 'running', cpuLimit: '1', memoryConfigLimit: '4G', playersMax: null, gameReachable: false });
+
+      store.readConfig.mockResolvedValue({ edition: 'BEDROCK', cpuLimit: '3' });
+      expect(await service.getServerRuntimeStats('srv')).toMatchObject({ cpuLimit: '1', memoryConfigLimit: '4G' });
 
       route(/docker compose ps -aq mc/, () => Promise.reject(new Error('boom')));
       route(/docker ps -a --filter/, () => Promise.reject(new Error('boom')));

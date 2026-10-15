@@ -56,6 +56,10 @@ function MonitoringView({ serverId, config, updateConfig }: MetricsTabProps) {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
+      if (document.hidden) {
+        timer = setTimeout(poll, 10_000);
+        return;
+      }
       try {
         const result = await getServerMonitoring(serverId);
         if (active) { setLive(result); setLiveError(false); }

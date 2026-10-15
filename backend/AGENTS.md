@@ -236,8 +236,21 @@ Path and filesystem patterns (critical):
 ## Critical Files
 
 - `src/config.ts` - source of `serversDir`, `serversHostDir` and `dataHostDir` behavior.
-- `src/main.ts` - CORS/cookies/bootstrap behavior.
+- `src/main.ts` - CORS/cookies/bootstrap behavior. Responses are gzip-compressed (`compression`);
+  `text/event-stream` is excluded because the middleware buffers it.
 - `src/server-management/server-management.service.ts` - lifecycle, status, command execution, world selection.
+  Container ids are cached per server (`containerIdCache`, 30s TTL) because every status,
+  stats and logs poll needs one. Anything that recreates or removes a server's container
+  must go through `execComposeCommand`, which drops the entry; an empty lookup is never kept.
+  Fleet endpoints read every status with one `docker inspect` (`getServerStatuses`).
+  Read-only docker calls go through `execRead` (15s timeout); compose up/down never get one.
+  CPU/memory limits shown with stats come from `server.json`, not the compose file. A failed
+  inspect on a cached id looks the container up again once before reporting a status.
+- `src/database/database-persistence.service.ts` - sql.js runs with `autoSave: false`; this
+  service saves the file at most every 5s (when `total_changes()` moved) and on shutdown
+  (`enableShutdownHooks` in `main.ts`). A crash can lose the last few seconds of writes.
+  Every sql.js export reopens the database with foreign keys off, so the service turns them
+  back on right after each save; without that, `onDelete: 'CASCADE'` relations stop applying.
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
 - `src/server-management/minecraft-status.util.ts` - parses the `mc-monitor` probe output (`key=value` pairs, order not guaranteed).
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.

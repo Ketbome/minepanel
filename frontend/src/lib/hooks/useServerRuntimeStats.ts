@@ -27,7 +27,9 @@ export function useServerRuntimeStats(serverId: string, serverStatus: string) {
     };
 
     loadStats();
-    const interval = setInterval(loadStats, POLL_INTERVAL_MS);
+    const interval = setInterval(() => {
+      if (!document.hidden) loadStats();
+    }, POLL_INTERVAL_MS);
 
     return () => {
       active = false;

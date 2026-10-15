@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Cpu, Activity, X } from "lucide-react";
-import { getAllServersResources, ServerResourceInfo } from "@/services/docker/fetchs";
+import { ServerResourceInfo } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface SystemAlertsProps {
   servers: Array<{ id: string; serverName?: string }>;
+  resources: Record<string, ServerResourceInfo>;
 }
 
 type Alert = {
@@ -54,75 +55,58 @@ function parseMemorySize(str: string): number {
   return value * (multipliers[unit] || 1);
 }
 
-export function SystemAlerts({ servers }: SystemAlertsProps) {
+export function SystemAlerts({ servers, resources }: SystemAlertsProps) {
   const { t } = useLanguage();
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
-  const checkAlerts = useCallback(async () => {
-    if (servers.length === 0) {
-      setAlerts([]);
-      return;
-    }
+  const alerts = useMemo(() => {
+    const newAlerts: Alert[] = [];
 
-    try {
-      const resources = await getAllServersResources();
-      const newAlerts: Alert[] = [];
+    servers.forEach((server) => {
+      const res: ServerResourceInfo = resources[server.id] || {
+        status: "not_found",
+        cpuUsage: "N/A",
+        memoryUsage: "N/A",
+        memoryLimit: "N/A",
+        cpuLimit: "1",
+        memoryConfigLimit: "4G",
+      };
 
-      servers.forEach((server) => {
-        const res: ServerResourceInfo = resources[server.id] || {
-          status: "not_found",
-          cpuUsage: "N/A",
-          memoryUsage: "N/A",
-          memoryLimit: "N/A",
-          cpuLimit: "1",
-          memoryConfigLimit: "4G",
-        };
+      const serverName = server.serverName || server.id;
 
-        const serverName = server.serverName || server.id;
+      if (res.status === "running") {
+        const cpuUsage = parsePercentage(res.cpuUsage);
+        const cpuLimit = parseCpuLimit(res.cpuLimit);
+        const cpuPercent = cpuLimit > 0 ? (cpuUsage / (cpuLimit * 100)) * 100 : 0;
 
-        if (res.status === "running") {
-          const cpuUsage = parsePercentage(res.cpuUsage);
-          const cpuLimit = parseCpuLimit(res.cpuLimit);
-          const cpuPercent = cpuLimit > 0 ? (cpuUsage / (cpuLimit * 100)) * 100 : 0;
+        const memoryUsed = parseMemorySize(res.memoryUsage);
+        const memoryLimit = parseMemorySize(res.memoryConfigLimit);
+        const memoryPercent = memoryLimit > 0 ? (memoryUsed / memoryLimit) * 100 : 0;
 
-          const memoryUsed = parseMemorySize(res.memoryUsage);
-          const memoryLimit = parseMemorySize(res.memoryConfigLimit);
-          const memoryPercent = memoryLimit > 0 ? (memoryUsed / memoryLimit) * 100 : 0;
-
-          if (cpuPercent >= WARNING_THRESHOLD) {
-            newAlerts.push({
-              id: `cpu-${server.id}`,
-              type: "high_cpu",
-              serverId: server.id,
-              serverName,
-              value: cpuPercent,
-            });
-          }
-
-          if (memoryPercent >= WARNING_THRESHOLD) {
-            newAlerts.push({
-              id: `mem-${server.id}`,
-              type: "high_memory",
-              serverId: server.id,
-              serverName,
-              value: memoryPercent,
-            });
-          }
+        if (cpuPercent >= WARNING_THRESHOLD) {
+          newAlerts.push({
+            id: `cpu-${server.id}`,
+            type: "high_cpu",
+            serverId: server.id,
+            serverName,
+            value: cpuPercent,
+          });
         }
-      });
 
-      setAlerts(newAlerts);
-    } catch (error) {
-      console.error("Error checking alerts:", error);
-    }
-  }, [servers]);
+        if (memoryPercent >= WARNING_THRESHOLD) {
+          newAlerts.push({
+            id: `mem-${server.id}`,
+            type: "high_memory",
+            serverId: server.id,
+            serverName,
+            value: memoryPercent,
+          });
+        }
+      }
+    });
 
-  useEffect(() => {
-    checkAlerts();
-    const interval = setInterval(checkAlerts, 30000);
-    return () => clearInterval(interval);
-  }, [checkAlerts]);
+    return newAlerts;
+  }, [servers, resources]);
 
   const dismissAlert = (alertId: string) => {
     setDismissedAlerts((prev) => new Set([...prev, alertId]));

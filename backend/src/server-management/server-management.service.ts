@@ -31,6 +31,12 @@ import { isVelocityBackend } from 'src/proxy/velocity-backend';
 
 const execAsync = promisify(exec);
 
+// Read-only docker calls behind the polls get a deadline, so a hung daemon cannot pile up
+// one stuck process per poll. Commands that change state (compose up/down) have none:
+// an image pull can legitimately take minutes.
+const DOCKER_READ_TIMEOUT_MS = 15_000;
+const execRead = (command: string, options: ExecOptions = {}) => execAsync(command, { timeout: DOCKER_READ_TIMEOUT_MS, ...options, encoding: 'utf8' });
+
 export type ServerDeletionGuard = (serverId: string) => Promise<() => void>;
 
 const DOCKER_COMMANDS = {
@@ -40,9 +46,9 @@ const DOCKER_COMMANDS = {
   PS_FILTER: (serverId: string) => `docker ps -a --filter "name=^/${serverId}$" --format "{{.ID}}"`,
   PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
   INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
+  INSPECT_STATUSES: (containerIds: string[]) => `docker inspect --format="{{.Id}} {{.State.Status}}" ${containerIds.join(' ')}`,
   INSPECT_EXIT_CODE: (containerId: string) => `docker inspect --format="{{.State.ExitCode}}" ${containerId}`,
-  STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
-  STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
+  STATS_ONE: (containerId: string) => String.raw`docker stats ${containerId} --no-stream --format "{{.CPUPerc}}\t{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
   STATS_ALL: String.raw`docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
@@ -175,6 +181,13 @@ export class ServerManagementService {
   private readonly STATUS_PROBE_TTL_MS = 8_000;
   private readonly statusProbeCache = new Map<string, { at: number; value: GameProbeResult }>();
   private readonly statusProbeInFlight = new Map<string, Promise<GameProbeResult>>();
+
+  // Every status, stats and logs poll needs the container id, and resolving it runs
+  // `docker compose ps`. The id only changes when compose recreates the container, which
+  // goes through execComposeCommand and drops the entry; the TTL covers changes made
+  // outside the panel.
+  private readonly CONTAINER_ID_TTL_MS = 30_000;
+  private readonly containerIdCache = new Map<string, { at: number; id: Promise<string> }>();
 
   // Modpack first boots can take well over ten minutes before the server accepts players.
   private readonly READY_POLL_INTERVAL_MS = 5_000;
@@ -477,7 +490,15 @@ export class ServerManagementService {
   }
 
   private async execComposeCommand(serverId: string, command: string) {
-    return execAsync(command, this.getComposeExecOptions(serverId));
+    if (command === DOCKER_COMMANDS.COMPOSE_PS_SERVICE) {
+      return execRead(command, this.getComposeExecOptions(serverId));
+    }
+    this.containerIdCache.delete(serverId);
+    try {
+      return await execAsync(command, this.getComposeExecOptions(serverId));
+    } finally {
+      this.containerIdCache.delete(serverId);
+    }
   }
 
   private parseComposeSeconds(value: unknown): number | undefined {
@@ -881,10 +902,28 @@ export class ServerManagementService {
     }
   }
 
-  private async findContainerId(serverId: string): Promise<string> {
+  private findContainerId(serverId: string): Promise<string> {
     if (!this.validateServerId(serverId)) {
-      throw new Error(`Invalid server ID: ${serverId}`);
+      return Promise.reject(new Error(`Invalid server ID: ${serverId}`));
     }
+
+    const cached = this.containerIdCache.get(serverId);
+    if (cached && Date.now() - cached.at < this.CONTAINER_ID_TTL_MS) {
+      return cached.id;
+    }
+
+    const entry = { at: Date.now(), id: this.lookupContainerId(serverId) };
+    this.containerIdCache.set(serverId, entry);
+    // Only a found id is worth keeping: a server with no container yet must see it as
+    // soon as one exists. Concurrent callers still share the in-flight lookup.
+    const drop = () => {
+      if (this.containerIdCache.get(serverId) === entry) this.containerIdCache.delete(serverId);
+    };
+    entry.id.then((id) => !id && drop(), drop);
+    return entry.id;
+  }
+
+  private async lookupContainerId(serverId: string): Promise<string> {
 
     const dockerComposePath = this.getDockerComposePath(serverId);
     if (await fs.pathExists(dockerComposePath)) {
@@ -907,7 +946,7 @@ export class ServerManagementService {
       }
     }
 
-    const { stdout } = await execAsync(DOCKER_COMMANDS.PS_FILTER(serverId));
+    const { stdout } = await execRead(DOCKER_COMMANDS.PS_FILTER(serverId));
     if (stdout.trim()) {
       const containerIds = stdout
         .trim()
@@ -1012,8 +1051,8 @@ export class ServerManagementService {
       if (!containerId) {
         return null;
       }
-      const { stdout: exitCode } = await execAsync(DOCKER_COMMANDS.INSPECT_EXIT_CODE(containerId));
-      const { stdout: logTail } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, 20));
+      const { stdout: exitCode } = await execRead(DOCKER_COMMANDS.INSPECT_EXIT_CODE(containerId));
+      const { stdout: logTail } = await execRead(DOCKER_COMMANDS.LOGS(containerId, 20));
       return { exitCode: Number.parseInt(exitCode.trim(), 10), logTail };
     } catch (error) {
       this.logger.warn(`Failed to read crash info for ${serverId}: ${(error as Error).message}`);
@@ -1021,7 +1060,9 @@ export class ServerManagementService {
     }
   }
 
-  async getServerStatus(serverId: string): Promise<ServerStatus> {
+  // `retry`: a cached id may belong to a container removed outside the panel, so a failed
+  // inspect looks the container up again once before reporting.
+  async getServerStatus(serverId: string, retry = true): Promise<ServerStatus> {
     try {
       if (!this.validateServerId(serverId)) {
         this.logger.error(`Invalid server ID: ${serverId}`);
@@ -1035,13 +1076,12 @@ export class ServerManagementService {
       const containerId = await this.findContainerId(serverId);
 
       if (containerId) {
-        const { stdout } = await execAsync(DOCKER_COMMANDS.INSPECT_STATUS(containerId));
-        const status = stdout.trim().toLowerCase();
-
-        if (status.includes('restarting') || status.includes('created')) return 'starting';
-        if (status.includes('running')) return 'running';
-        if (status.includes('paused') || status.includes('exited') || status.includes('dead')) return 'stopped';
-        return 'stopped';
+        const inspected = await execRead(DOCKER_COMMANDS.INSPECT_STATUS(containerId)).catch((error) => {
+          this.containerIdCache.delete(serverId);
+          if (!retry) throw error;
+          return null;
+        });
+        return inspected ? this.toServerStatus(inspected.stdout) : this.getServerStatus(serverId, false);
       }
 
       if (await fs.pathExists(this.getDockerComposePath(serverId))) {
@@ -1053,6 +1093,59 @@ export class ServerManagementService {
       this.logger.error(`Failed to get status for server ${serverId}`, error);
       return 'not_found';
     }
+  }
+
+  private toServerStatus(state: string): ServerStatus {
+    const status = state.trim().toLowerCase();
+    if (status.includes('restarting') || status.includes('created')) return 'starting';
+    if (status.includes('running')) return 'running';
+    return 'stopped';
+  }
+
+  // getServerStatus for many servers with a single `docker inspect`, so a fleet poll costs
+  // one inspect instead of one per server.
+  private async getServerStatuses(serverIds: string[]): Promise<Map<string, { status: ServerStatus; containerId: string }>> {
+    const lookups = await Promise.all(
+      serverIds.map(async (serverId) => {
+        if (!this.validateServerId(serverId) || !(await this.serverExists(serverId))) {
+          return { serverId, containerId: '', exists: false };
+        }
+        const containerId = await this.findContainerId(serverId).catch((error) => {
+          this.logger.error(`Failed to get status for server ${serverId}`, error);
+          return null;
+        });
+        return { serverId, containerId, exists: containerId !== null };
+      }),
+    );
+
+    const ids = lookups.map(({ containerId }) => containerId).filter((id): id is string => !!id);
+    const states = new Map<string, string>();
+    if (ids.length > 0) {
+      // Exits non-zero when one id is gone, but still prints the others.
+      const { stdout } = await execRead(DOCKER_COMMANDS.INSPECT_STATUSES(ids)).catch((error: { stdout?: string }) => ({ stdout: error.stdout ?? '' }));
+      for (const line of stdout.trim().split('\n')) {
+        const [fullId, state] = line.trim().split(' ');
+        const id = fullId && ids.find((candidate) => fullId.startsWith(candidate));
+        if (id && state) states.set(id, state);
+      }
+    }
+
+    const result = new Map<string, { status: ServerStatus; containerId: string }>();
+    for (const { serverId, containerId, exists } of lookups) {
+      if (!exists) {
+        result.set(serverId, { status: 'not_found', containerId: '' });
+      } else if (containerId && states.has(containerId)) {
+        result.set(serverId, { status: this.toServerStatus(states.get(containerId)), containerId });
+      } else if (containerId) {
+        // A cached id whose container was removed outside the panel: look it up again.
+        this.containerIdCache.delete(serverId);
+        const status = await this.getServerStatus(serverId);
+        result.set(serverId, { status, containerId: status === 'not_found' ? '' : await this.findContainerId(serverId).catch(() => '') });
+      } else {
+        result.set(serverId, { status: (await fs.pathExists(this.getDockerComposePath(serverId))) ? 'stopped' : 'not_found', containerId: '' });
+      }
+    }
+    return result;
   }
 
   async getAllServersStatus(): Promise<Record<string, ServerStatus>> {
@@ -1071,19 +1164,8 @@ export class ServerManagementService {
       );
 
       const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
-      const statusPromises = validServers.map(async (serverId) => ({
-        serverId,
-        status: await this.getServerStatus(serverId),
-      }));
-
-      const statusResults = await Promise.all(statusPromises);
-      return statusResults.reduce(
-        (acc, { serverId, status }) => {
-          acc[serverId] = status;
-          return acc;
-        },
-        {} as Record<string, ServerStatus>,
-      );
+      const statuses = await this.getServerStatuses(validServers);
+      return Object.fromEntries([...statuses].map(([serverId, { status }]) => [serverId, status]));
     } catch (error) {
       this.logger.error('Error obtaining all servers status', error);
       return {};
@@ -1248,8 +1330,8 @@ export class ServerManagementService {
       const containerId = await this.findContainerId(serverId);
       if (!containerId) throw new Error('Container not found or not running');
 
-      const { stdout: cpuStats } = await execAsync(DOCKER_COMMANDS.STATS_CPU(containerId));
-      const { stdout: memStats } = await execAsync(DOCKER_COMMANDS.STATS_MEM(containerId));
+      const { stdout } = await execRead(DOCKER_COMMANDS.STATS_ONE(containerId));
+      const [cpuStats = '', memStats = ''] = stdout.trim().split('\t');
 
       const memoryParts = memStats.trim().split(' / ');
       return {
@@ -1267,28 +1349,20 @@ export class ServerManagementService {
     }
   }
 
+  // Same defaults the stats UI assumed when the compose file had no limits (Bedrock never has).
   private async getServerLimits(serverId: string): Promise<{ cpuLimit: string; memoryLimit: string }> {
     try {
-      const composePath = this.getDockerComposePath(serverId);
-      if (!(await fs.pathExists(composePath))) {
+      const config = await this.store.readConfig(serverId);
+      if (!config || config.edition === 'BEDROCK') {
         return { cpuLimit: '1', memoryLimit: '4G' };
       }
-
-      const content = await fs.readFile(composePath, 'utf-8');
-
-      const parsed = yaml.load(content) as any;
-      const mcService = parsed?.services?.mc;
-      const limits = mcService?.deploy?.resources?.limits;
-
-      return {
-        cpuLimit: limits?.cpus || '1',
-        memoryLimit: limits?.memory || '4G',
-      };
+      return { cpuLimit: config.cpuLimit || '1', memoryLimit: config.maxMemory || '4G' };
     } catch (error) {
       this.logger.warn(`Failed to read limits for ${serverId}:`, error);
       return { cpuLimit: '1', memoryLimit: '4G' };
     }
   }
+
 
   async getAllServersResources(): Promise<Record<string, ServerResourceInfo>> {
     const results = await this.collectServersResources();
@@ -1322,11 +1396,11 @@ export class ServerManagementService {
       const validServers = serverDirectories.filter((dir): dir is string => dir !== null);
 
       // Get all stats in ONE docker command (much faster than individual calls)
-      const allStats = await this.getAllContainersStats();
+      const [allStats, statuses] = await Promise.all([this.getAllContainersStats(), this.getServerStatuses(validServers)]);
 
-      // Get statuses and limits in parallel
       const serverDataPromises = validServers.map(async (serverId) => {
-        const [status, limits, containerId] = await Promise.all([this.getServerStatus(serverId), this.getServerLimits(serverId), this.findContainerId(serverId)]);
+        const limits = await this.getServerLimits(serverId);
+        const { status, containerId } = statuses.get(serverId);
 
         // Prefer exact container ID mapping, then fallback to legacy name patterns
         const stats = allStats.byId[containerId] || allStats.byName[serverId] || allStats.byName[`${serverId}-minecraft-1`] || allStats.byName[`${serverId}_minecraft_1`];
@@ -1373,7 +1447,7 @@ export class ServerManagementService {
     byName: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }>;
   }> {
     try {
-      const { stdout } = await execAsync(DOCKER_COMMANDS.STATS_ALL);
+      const { stdout } = await execRead(DOCKER_COMMANDS.STATS_ALL);
       const statsById: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
       const statsByName: Record<string, { cpuUsage: string; memoryUsage: string; memoryLimit: string }> = {};
 
@@ -1684,7 +1758,7 @@ export class ServerManagementService {
         };
       }
 
-      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, lines));
+      const { stdout: logs } = await execRead(DOCKER_COMMANDS.LOGS(containerId, lines));
       const logAnalysis = this.analyzeLogs(logs);
 
       return {
@@ -2304,7 +2378,7 @@ export class ServerManagementService {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Read recent logs to find the response
-      const { stdout: logs } = await execAsync(DOCKER_COMMANDS.LOGS(containerId, 20));
+      const { stdout: logs } = await execRead(DOCKER_COMMANDS.LOGS(containerId, 20));
 
       // Bedrock format: "There are X/Y players online:"
       const match = /There are (\d+)\/(\d+) players online[:\s]*(.*)/i.exec(logs);

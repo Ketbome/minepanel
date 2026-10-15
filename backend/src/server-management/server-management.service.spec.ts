@@ -192,7 +192,7 @@ describe('ServerManagementService', () => {
       const info = await service.getCrashInfo('myserver');
 
       expect(info).toEqual({ exitCode: 1, logTail: 'Exception in server tick loop\n' });
-      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('{{.State.ExitCode}}'));
+      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('{{.State.ExitCode}}'), expect.objectContaining({ timeout: expect.any(Number) }));
     });
 
     it('should return null when there is no container', async () => {
@@ -233,7 +233,7 @@ describe('ServerManagementService', () => {
       const containerId = await (service as any).findContainerId('myserver');
 
       expect(containerId).toBe('legacy123');
-      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('name=^/myserver$'));
+      expect(mockExec).toHaveBeenCalledWith(expect.stringContaining('name=^/myserver$'), expect.objectContaining({ timeout: expect.any(Number) }));
     });
   });
 

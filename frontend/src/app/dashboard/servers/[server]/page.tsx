@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { isAuthenticated } from "@/services/auth/auth.service";
+import { useCallback, useState } from "react";
+import { useParams } from "next/navigation";
 import { useServerStatus } from "@/lib/hooks/useServerStatus";
 import { useServerConfig } from "@/lib/hooks/useServerConfig";
 import { ServerPageHeader } from "@/components/organisms/ServerPageHeader";
@@ -12,7 +11,6 @@ import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
 
 export default function ServerConfig() {
-  const router = useRouter();
   const params = useParams();
   const serverId = params.server as string;
   const [refreshToken, setRefreshToken] = useState(0);
@@ -20,12 +18,6 @@ export default function ServerConfig() {
   const { config, loading: configLoading, updateConfig, saveConfig, restartServer, clearServerData, isSaving } = useServerConfig(serverId);
   const { status, isProcessingAction, startServer, stopServer, forceStopServer } = useServerStatus(serverId);
   const { t } = useLanguage();
-
-  useEffect(() => {
-    isAuthenticated().then((authenticated) => {
-      if (!authenticated) router.push("/");
-    });
-  }, [router]);
 
   const handleClearServerData = useCallback(async () => {
     const success = await clearServerData();
