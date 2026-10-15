@@ -63,7 +63,6 @@ import {
 import Link from 'next/link';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getStatusBadgeClass, getStatusColor, getStatusIcon } from '@/lib/utils/server-status';
-import { useServersStore } from '@/lib/store/servers-store';
 import { usePolling } from '@/lib/hooks/usePolling';
 import { favoritesFirst, useFavoritesStore } from '@/lib/store/favorites-store';
 import { getTemplatesByEdition, ServerTemplate } from '@/lib/server-templates';
@@ -169,8 +168,6 @@ export default function Dashboard() {
     }
   }, [t, loadProxyAddresses]);
 
-  const refreshGlobalServers = useServersStore((state) => state.refreshAll);
-
   const toggleSelected = (id: string) =>
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
 
@@ -194,7 +191,6 @@ export default function Dashboard() {
       failed.length ? `${t('bulkFailed')}: ${failed.join(', ')}` : `${t('bulkDone')}: ${targets.length}`,
     );
     await fetchServersFromBackend();
-    refreshGlobalServers();
   };
 
 
@@ -205,7 +201,6 @@ export default function Dashboard() {
       if (response.success) {
         mcToast.success(`${t('serverDeletedSuccess')} "${serverId}"`);
         await fetchServersFromBackend();
-        refreshGlobalServers();
       } else {
         mcToast.error(`${t('errorDeletingServer')}: ${response.message}`);
       }
@@ -228,7 +223,6 @@ export default function Dashboard() {
         setCloneSource(null);
         setCloneNewId('');
         await fetchServersFromBackend();
-        refreshGlobalServers();
       } else {
         mcToast.error(`${t('errorCloningServer')}: ${response.message}`);
       }
@@ -275,7 +269,6 @@ export default function Dashboard() {
         setCreateMode('quick');
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await fetchServersFromBackend();
-        refreshGlobalServers();
       } else {
         mcToast.error(`${t('errorCreatingServer')}: ${response.message}`);
       }
