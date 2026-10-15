@@ -87,7 +87,11 @@ describe('ServerManagementService lifecycle', () => {
   let velocityForwarding: { apply: jest.Mock };
   let compose: string;
 
-  const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => execRoutes.unshift([pattern, result]);
+  // A new route is a change in Docker's state, so the cached container ids no longer hold.
+  const route = (pattern: RegExp, result: ExecResult | ((cmd: string) => ExecResult | Promise<ExecResult>)) => {
+    (service as unknown as { containerIdCache?: Map<string, unknown> } | undefined)?.containerIdCache?.clear();
+    execRoutes.unshift([pattern, result]);
+  };
   const execCalls = () => mockExec.mock.calls.map((call) => call[0] as string);
   const settle = async () => {
     for (let i = 0; i < 20; i += 1) await new Promise((resolve) => setImmediate(resolve));
@@ -571,6 +575,34 @@ describe('ServerManagementService lifecycle', () => {
       expect(await service.getServerStatus('srv')).toBe('not_found');
     });
 
+    it('reuses the container id until compose recreates the container or it disappears', async () => {
+      route(/docker compose ps -aq mc/, { stdout: 'abc123\n' });
+      route(/docker inspect --format="\{\{.State.Status\}\}"/, { stdout: 'running\n' });
+      const lookups = () => execCalls().filter((cmd) => cmd.includes('docker compose ps')).length;
+
+      await Promise.all([service.getServerStatus('srv'), service.getServerStatus('srv')]);
+      await service.getServerStatus('srv');
+      expect(lookups()).toBe(1);
+
+      await service.startServer('srv');
+      await service.getServerStatus('srv');
+      expect(lookups()).toBe(2);
+
+      execRoutes.unshift([/docker inspect --format="\{\{.State.Status\}\}"/, () => Promise.reject(new Error('No such container'))]);
+      expect(await service.getServerStatus('srv')).toBe('not_found');
+      execRoutes.shift();
+      await service.getServerStatus('srv');
+      expect(lookups()).toBe(3);
+    });
+
+    it('does not keep an empty container lookup', async () => {
+      route(/docker compose ps -aq mc/, { stdout: '' });
+      route(/docker ps -a --filter/, { stdout: '' });
+      await service.getServerStatus('srv');
+      await service.getServerStatus('srv');
+      expect(execCalls().filter((cmd) => cmd.includes('docker compose ps'))).toHaveLength(2);
+    });
+
     it('getServerInfo measures the world folder', async () => {
       existing.push('/app/servers/srv/mc-data', '/app/servers/srv/mc-data/world');
       route(/du -sb/, { stdout: '2048\n' });
@@ -588,8 +620,7 @@ describe('ServerManagementService lifecycle', () => {
     });
 
     it('getServerResources parses docker stats', async () => {
-      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}"/, { stdout: '12.5%\n' });
-      route(/docker stats abc123 --no-stream --format "\{\{.MemUsage\}\}"/, { stdout: '1GiB / 4GiB\n' });
+      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}\\t\{\{.MemUsage\}\}"/, { stdout: '12.5%\t1GiB / 4GiB\n' });
       expect(await service.getServerResources('srv')).toEqual({ cpuUsage: '12.5%', memoryUsage: '1GiB', memoryLimit: '4GiB' });
       expect(await service.getServerResources('bad id')).toEqual({ cpuUsage: 'N/A', memoryUsage: 'N/A', memoryLimit: 'N/A' });
     });
@@ -629,8 +660,7 @@ describe('ServerManagementService lifecycle', () => {
     it('getServerRuntimeStats reads limits and probe config errors', async () => {
       store.readConfig.mockRejectedValueOnce(new Error('no config'));
       spawnQueue.push({ stdout: '', exitCode: 1 }, { stdout: '', exitCode: 1 });
-      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}"/, { stdout: '1%\n' });
-      route(/docker stats abc123 --no-stream --format "\{\{.MemUsage\}\}"/, { stdout: '1GiB / 4GiB\n' });
+      route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}\\t\{\{.MemUsage\}\}"/, { stdout: '1%\t1GiB / 4GiB\n' });
       const stats = await service.getServerRuntimeStats('srv');
       expect(stats).toMatchObject({ status: 'running', cpuLimit: '2', memoryConfigLimit: '6G', playersMax: null, gameReachable: false });
 

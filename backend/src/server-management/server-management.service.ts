@@ -41,8 +41,7 @@ const DOCKER_COMMANDS = {
   PS_PARTIAL: (serverId: string) => `docker ps -a --filter "name=${serverId}" --format "{{.ID}}"`,
   INSPECT_STATUS: (containerId: string) => `docker inspect --format="{{.State.Status}}" ${containerId}`,
   INSPECT_EXIT_CODE: (containerId: string) => `docker inspect --format="{{.State.ExitCode}}" ${containerId}`,
-  STATS_CPU: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.CPUPerc}}"`,
-  STATS_MEM: (containerId: string) => `docker stats ${containerId} --no-stream --format "{{.MemUsage}}"`,
+  STATS_ONE: (containerId: string) => String.raw`docker stats ${containerId} --no-stream --format "{{.CPUPerc}}\t{{.MemUsage}}"`,
   // Single command to get all running containers stats at once (much faster)
   STATS_ALL: String.raw`docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"`,
   LOGS: (containerId: string, lines: number) => `docker logs --tail ${lines} --timestamps ${containerId} 2>&1`,
@@ -175,6 +174,13 @@ export class ServerManagementService {
   private readonly STATUS_PROBE_TTL_MS = 8_000;
   private readonly statusProbeCache = new Map<string, { at: number; value: GameProbeResult }>();
   private readonly statusProbeInFlight = new Map<string, Promise<GameProbeResult>>();
+
+  // Every status, stats and logs poll needs the container id, and resolving it runs
+  // `docker compose ps`. The id only changes when compose recreates the container, which
+  // goes through execComposeCommand and drops the entry; the TTL covers changes made
+  // outside the panel.
+  private readonly CONTAINER_ID_TTL_MS = 30_000;
+  private readonly containerIdCache = new Map<string, { at: number; id: Promise<string> }>();
 
   // Modpack first boots can take well over ten minutes before the server accepts players.
   private readonly READY_POLL_INTERVAL_MS = 5_000;
@@ -477,7 +483,15 @@ export class ServerManagementService {
   }
 
   private async execComposeCommand(serverId: string, command: string) {
-    return execAsync(command, this.getComposeExecOptions(serverId));
+    if (command === DOCKER_COMMANDS.COMPOSE_PS_SERVICE) {
+      return execAsync(command, this.getComposeExecOptions(serverId));
+    }
+    this.containerIdCache.delete(serverId);
+    try {
+      return await execAsync(command, this.getComposeExecOptions(serverId));
+    } finally {
+      this.containerIdCache.delete(serverId);
+    }
   }
 
   private parseComposeSeconds(value: unknown): number | undefined {
@@ -881,10 +895,28 @@ export class ServerManagementService {
     }
   }
 
-  private async findContainerId(serverId: string): Promise<string> {
+  private findContainerId(serverId: string): Promise<string> {
     if (!this.validateServerId(serverId)) {
-      throw new Error(`Invalid server ID: ${serverId}`);
+      return Promise.reject(new Error(`Invalid server ID: ${serverId}`));
     }
+
+    const cached = this.containerIdCache.get(serverId);
+    if (cached && Date.now() - cached.at < this.CONTAINER_ID_TTL_MS) {
+      return cached.id;
+    }
+
+    const entry = { at: Date.now(), id: this.lookupContainerId(serverId) };
+    this.containerIdCache.set(serverId, entry);
+    // Only a found id is worth keeping: a server with no container yet must see it as
+    // soon as one exists. Concurrent callers still share the in-flight lookup.
+    const drop = () => {
+      if (this.containerIdCache.get(serverId) === entry) this.containerIdCache.delete(serverId);
+    };
+    entry.id.then((id) => !id && drop(), drop);
+    return entry.id;
+  }
+
+  private async lookupContainerId(serverId: string): Promise<string> {
 
     const dockerComposePath = this.getDockerComposePath(serverId);
     if (await fs.pathExists(dockerComposePath)) {
@@ -1035,7 +1067,11 @@ export class ServerManagementService {
       const containerId = await this.findContainerId(serverId);
 
       if (containerId) {
-        const { stdout } = await execAsync(DOCKER_COMMANDS.INSPECT_STATUS(containerId));
+        const { stdout } = await execAsync(DOCKER_COMMANDS.INSPECT_STATUS(containerId)).catch((error) => {
+          // A cached id whose container was removed outside the panel.
+          this.containerIdCache.delete(serverId);
+          throw error;
+        });
         const status = stdout.trim().toLowerCase();
 
         if (status.includes('restarting') || status.includes('created')) return 'starting';
@@ -1248,8 +1284,8 @@ export class ServerManagementService {
       const containerId = await this.findContainerId(serverId);
       if (!containerId) throw new Error('Container not found or not running');
 
-      const { stdout: cpuStats } = await execAsync(DOCKER_COMMANDS.STATS_CPU(containerId));
-      const { stdout: memStats } = await execAsync(DOCKER_COMMANDS.STATS_MEM(containerId));
+      const { stdout } = await execAsync(DOCKER_COMMANDS.STATS_ONE(containerId));
+      const [cpuStats = '', memStats = ''] = stdout.trim().split('\t');
 
       const memoryParts = memStats.trim().split(' / ');
       return {
