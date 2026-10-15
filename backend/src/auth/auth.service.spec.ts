@@ -12,6 +12,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { AuthMailService } from './auth-mail.service';
 import { Repository } from 'typeorm';
 import { AuditLogService } from 'src/users/services/audit-log.service';
+import { ApiToken } from './entities/api-token.entity';
 
 jest.mock('bcrypt');
 jest.mock('node:crypto', () => ({
@@ -73,6 +74,7 @@ describe('AuthService', () => {
       update: jest.fn(),
       manager: {
         save: jest.fn(),
+        delete: jest.fn(),
       },
     };
 
@@ -369,6 +371,7 @@ describe('AuthService', () => {
         expect.objectContaining({ password: 'new-hashed-password' }),
       );
       expect(refreshTokenRepo.update).toHaveBeenCalledWith({ userId: 1, revoked: false }, { revoked: true });
+      expect(passwordResetTokenRepo.manager.delete).toHaveBeenCalledWith(ApiToken, { userId: 1 });
     });
   });
 });

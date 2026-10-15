@@ -3,7 +3,7 @@ import { IsBoolean, IsIn, IsInt, IsString, Matches, Max, MaxLength, Min, MinLeng
 // Same rule as ServerManagementService.validateServerId, so a path like ../ never reaches readConfig.
 const SERVER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
-export const LOG_LEVELS = ['all', 'error', 'warn', 'info', 'debug'] as const;
+export const LOG_LEVELS = ['all', 'error', 'warn', 'info', 'debug', 'chat'] as const;
 export const LOG_LINES = [100, 500, 1000, 2000] as const;
 
 export class SaveLogPresetDto {

@@ -13,7 +13,7 @@ describe('PlayersController', () => {
   beforeEach(() => {
     players = { list: jest.fn().mockResolvedValue(['p']), profile: jest.fn().mockResolvedValue({ uuid: 'u' }), searchItems: jest.fn().mockResolvedValue([]) };
     access = { assertServerAccess: jest.fn() };
-    controller = new PlayersController(players as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, access as any);
+    controller = new PlayersController(players as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, access as any);
   });
 
   it('lists players after checking server access', async () => {

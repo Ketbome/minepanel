@@ -17,7 +17,7 @@ describe('BedrockAddonsController', () => {
       deleteAddon: jest.fn().mockResolvedValue('deleted'),
     };
     accessControl = { assertServerAccess: jest.fn() };
-    controller = new BedrockAddonsController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 3 }) } as any, accessControl as any);
+    controller = new BedrockAddonsController(service as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 3 }) } as any, accessControl as any);
   });
 
   it('checks server access on every route and delegates', async () => {

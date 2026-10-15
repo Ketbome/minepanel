@@ -58,7 +58,7 @@ export class VersionController {
 
   private async requireAdmin(req): Promise<void> {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     if (!this.accessControlService.isAdmin(user)) {
       throw new ForbiddenException('Only admins can update the panel');
     }

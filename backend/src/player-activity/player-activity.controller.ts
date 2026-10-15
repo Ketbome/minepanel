@@ -10,7 +10,7 @@ export class PlayerActivityController {
 
   private async authorize(req: { user: PayloadToken }, id: string, page?: string) {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new BadRequestException('Invalid server ID');
-    const user = await this.users.getRequiredUserById(req.user.userId);
+    const user = await this.users.getRequestUser(req.user);
     this.access.assertServerAccess(user, id);
     const parsed = Number(page ?? 0);
     if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 100_000) throw new BadRequestException('Invalid page');

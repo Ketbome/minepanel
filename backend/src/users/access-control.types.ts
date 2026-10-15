@@ -10,6 +10,7 @@ export interface UserPermissions {
   viewServerFiles: boolean;
   useServerFiles: boolean;
   changeServerVersion: boolean;
+  useApiTokens: boolean;
 }
 
 export interface UserAccessState {
@@ -27,6 +28,7 @@ export const DEFAULT_USER_PERMISSIONS: UserPermissions = {
   viewServerFiles: false,
   useServerFiles: false,
   changeServerVersion: false,
+  useApiTokens: false,
 };
 
 export const FULL_ACCESS_PERMISSIONS: UserPermissions = {
@@ -39,11 +41,12 @@ export const FULL_ACCESS_PERMISSIONS: UserPermissions = {
   viewServerFiles: true,
   useServerFiles: true,
   changeServerVersion: true,
+  useApiTokens: true,
 };
 
 // Permissions that `manageUsers` is not enough to hand out. Without this, any
 // delegated operator could grant them to another account or to themselves.
-export const ADMIN_GRANTED_PERMISSIONS: Array<keyof UserPermissions> = ['changeServerVersion', 'useGlobalFiles'];
+export const ADMIN_GRANTED_PERMISSIONS: Array<keyof UserPermissions> = ['changeServerVersion', 'useGlobalFiles', 'useApiTokens'];
 
 export const normalizePermissions = (permissions?: Partial<UserPermissions> | null): UserPermissions => ({
   ...DEFAULT_USER_PERMISSIONS,

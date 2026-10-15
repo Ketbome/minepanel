@@ -95,7 +95,7 @@ describe('log presets', () => {
   it('checks server access before touching presets', async () => {
     const svc = { list: jest.fn().mockResolvedValue([]), save: jest.fn().mockResolvedValue({}), remove: jest.fn() };
     const assertViewLogs = jest.fn();
-    const controller = new LogPresetsController(svc as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 7 }) } as any, { assertViewLogs } as any);
+    const controller = new LogPresetsController(svc as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 7 }) } as any, { assertViewLogs } as any);
     const req = { user: { userId: 7 } };
 
     await controller.list(req, { serverId: 'srv' });
@@ -123,7 +123,7 @@ describe('log presets', () => {
   it('requires log-view permission for every preset operation, even with server access', async () => {
     const svc = { list: jest.fn(), save: jest.fn(), remove: jest.fn() };
     const user = { id: 7, role: 'USER', serverAccess: ['srv'], permissions: { viewLogs: false } };
-    const controller = new LogPresetsController(svc as any, { getRequiredUserById: async () => user } as any, new AccessControlService());
+    const controller = new LogPresetsController(svc as any, { getRequestUser: async () => user } as any, new AccessControlService());
     const req = { user: { userId: 7 } };
     await expect(controller.list(req, { serverId: 'srv' })).rejects.toThrow('permission to view logs');
     await expect(controller.save(req, dto('a'))).rejects.toThrow('permission to view logs');

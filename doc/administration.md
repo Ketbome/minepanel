@@ -174,8 +174,18 @@ Each switch in **Settings → Roles & Access** maps to one permission:
 | View server files | `viewServerFiles` | Browse a server's files | Admin or `manageUsers` |
 | Manage server files | `useServerFiles` | Edit a server's files | Admin or `manageUsers` |
 | Change server version | `changeServerVersion` | Change the Minecraft version and official image tag | **Admin only** |
+| Use API tokens | `useApiTokens` | Create personal [API tokens](/api#api-tokens) for scripts and [AI agents](/mcp) | **Admin only** |
 
 If a user can access a server, they can view and operate that server. Logs and console are separate permissions, so a user can read logs without being allowed to run commands. Scheduled tasks of type **command** count as console usage: creating, editing, enabling or running one requires the console permission.
+
+### API tokens
+
+**Settings → API tokens** lists the caller's tokens, creates new ones (the secret is shown once)
+and revokes them. Admins also see every user's tokens there and can revoke any of them.
+
+A token never exceeds its user: its permissions and servers are re-checked against the user's
+current access on every request. Turning off **Use API tokens** for a user invalidates all their
+tokens immediately; turning it back on restores the ones that were not revoked or expired.
 
 ### Admin-only container settings
 
@@ -309,7 +319,7 @@ result, server and date.
 
 | Area | Actions |
 | --- | --- |
-| Accounts | Login, password changes, email change request and confirmation |
+| Accounts | Login, password changes, email change request and confirmation, API token creation and revocation |
 | Users | Invitation creation, copy and acceptance; access updates; deletion |
 | Servers | Configuration saves; start, stop, restart; console commands |
 | Panel | Settings saves; proxy start and stop |

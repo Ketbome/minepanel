@@ -9,7 +9,7 @@ export interface ModpackModScan {
 
 // A pack with more mods than this is well past the point where reading every jar
 // is worth the wait, and the review list stops being reviewable anyway.
-const MAX_SCANNED_MODS = 600;
+export const MAX_SCANNED_MODS = 600;
 
 const MODS_ENTRY = /(^|\/)mods\/[^/]+\.jar$/i;
 

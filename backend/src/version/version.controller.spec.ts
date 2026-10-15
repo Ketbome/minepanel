@@ -13,7 +13,7 @@ describe('VersionController', () => {
     versionService = { getVersionInfo: jest.fn().mockResolvedValue({ current: '1.12.0', latest: '1.13.0' }), getCurrentVersion: jest.fn().mockReturnValue('1.12.0') };
     updater = { canSelfUpdate: jest.fn().mockResolvedValue(true), getLastResult: jest.fn().mockResolvedValue(null), start: jest.fn().mockResolvedValue({ started: true }) };
     accessControl = { isAdmin: jest.fn().mockReturnValue(true) };
-    controller = new VersionController(versionService as any, updater as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
+    controller = new VersionController(versionService as any, updater as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
   });
 
   it('returns version info with update capability', async () => {

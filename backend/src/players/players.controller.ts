@@ -38,7 +38,7 @@ export class PlayersController {
 
   private async assertServerAccess(req, serverId: string): Promise<void> {
     const payload = req.user as PayloadToken;
-    const user = await this.usersService.getRequiredUserById(payload.userId);
+    const user = await this.usersService.getRequestUser(payload);
     this.accessControlService.assertServerAccess(user, serverId);
   }
 }

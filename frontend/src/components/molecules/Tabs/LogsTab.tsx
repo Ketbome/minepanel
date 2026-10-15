@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Terminal, RefreshCcw, Cpu, Server, AlertTriangle, XCircle, CheckCircle, Clock, Search, Filter, Play, Pause, Download } from "lucide-react";
@@ -14,12 +14,17 @@ import LogsFooter from "../Logs/LogsFooter";
 import LogsResources from "../Logs/LogsResources";
 import { LogsDisplay } from "../Logs/LogsDisplay";
 import { QuickCommandConsole } from "../Logs/QuickCommandConsole";
+import { LogsDiagnosisDialog } from "../Logs/LogsDiagnosisDialog";
+import { useLogView } from "@/lib/hooks/useLogView";
+import { highlightPattern } from "@/lib/utils/log-lines";
 
 export interface LogEntry {
   id: string;
   content: string;
   timestamp: Date;
   level: "info" | "warn" | "error" | "debug";
+  continuation?: boolean;
+  parentId?: string;
 }
 
 export interface LogsError {
@@ -50,6 +55,8 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
   const [loadingResources, setLoadingResources] = useState(false);
   const [resourcesError, setResourcesError] = useState<string | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const { compact, groupRepeats, hidePanelNoise, setView } = useLogView();
+  const highlight = useMemo(() => highlightPattern(searchTerm, regex), [searchTerm, regex]);
   const isUserScrollingRef = useRef(false);
   const manualScrollControlRef = useRef(false);
 
@@ -175,6 +182,8 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
             )}
           </CardDescription>
         </div>
+        <div className="flex items-center gap-2">
+        <LogsDiagnosisDialog serverId={serverId} />
         <Button
           type="button"
           variant="outline"
@@ -186,13 +195,14 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
           <Download className="h-4 w-4 mr-1" />
           {t("downloadLogs")}
         </Button>
+        </div>
       </CardHeader>
-      <LogsControls serverId={serverId} regex={regex} setRegex={setRegex} sinceMinutes={sinceMinutes} setSinceMinutes={setSinceMinutes} searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} />
+      <LogsControls serverId={serverId} regex={regex} setRegex={setRegex} sinceMinutes={sinceMinutes} setSinceMinutes={setSinceMinutes} searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} hidePanelNoise={hidePanelNoise} setHidePanelNoise={(value) => setView({ hidePanelNoise: value })} compact={compact} setCompact={(value) => setView({ compact: value })} groupRepeats={groupRepeats} setGroupRepeats={(value) => setView({ groupRepeats: value })} />
       <LogsErrorAlert error={error} resourcesError={resourcesError} />
       <LogsStatusAlert hasErrors={hasErrors} error={error} />
       <LogsLastUpdate lastUpdate={lastUpdate} error={error} />
       <LogsResources resources={resources} loadingResources={loadingResources} resourcesError={resourcesError} />
-      <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} />
+      <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} compact={compact} groupRepeats={groupRepeats} highlight={highlight} />
       <QuickCommandConsole serverId={serverId} rconPort={rconPort || ""} rconPassword={rconPassword || ""} serverStatus={serverStatus || "stopped"} />
       <LogsFooter error={error} hasErrors={hasErrors} isRealTime={isRealTime} lastUpdate={lastUpdate} filteredLogEntries={filteredLogEntries} logEntries={logEntries} loadingResources={loadingResources} fetchServerResources={fetchServerResources} resourcesError={resourcesError} />
       <style jsx global>{`

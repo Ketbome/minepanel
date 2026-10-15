@@ -56,6 +56,10 @@ export class UserPermissionsDto {
   @IsOptional()
   @IsBoolean()
   changeServerVersion?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  useApiTokens?: boolean;
 }
 
 export class UpdateUserAccessDto {

@@ -11,8 +11,10 @@ import { CreateUserInvitationDto } from 'src/users/dtos/users.dto';
 import { AuditLogService } from 'src/users/services/audit-log.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { setAuthCookies } from './utils/auth-cookies';
+import { SessionOnly } from './decorators/session-only.decorator';
 
 @Controller('auth')
+@SessionOnly()
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

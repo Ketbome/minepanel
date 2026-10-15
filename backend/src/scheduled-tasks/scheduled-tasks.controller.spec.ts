@@ -15,7 +15,7 @@ describe('ScheduledTasksController', () => {
       runNow: jest.fn().mockResolvedValue({ id: 1, lastResult: 'ok' }),
     };
     accessControl = { assertServerAccess: jest.fn(), canUsePermission: jest.fn().mockReturnValue(false) };
-    controller = new ScheduledTasksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
+    controller = new ScheduledTasksController(service as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any);
   });
 
   it('guards every route with server access and delegates', async () => {

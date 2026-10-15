@@ -52,6 +52,29 @@ so two tabs refreshing at once don't sign each other out.
   The login flow never returns raw JWTs in the response body.
 - JWT tokens are not accepted in query strings.
 
+### API tokens
+
+Scripts and automations authenticate with a personal API token instead of a login:
+
+```bash
+curl -H "Authorization: Bearer mp_..." https://panel.example.com/api/servers
+```
+
+- Created in **Settings → API tokens** by admins and by users with the `useApiTokens`
+  permission (granted by an admin only). The `mp_…` value is shown once; only its hash is stored.
+- Each token has a scope chosen at creation: a subset of the user's permissions and servers,
+  `readOnly` (only `GET`/`HEAD`), `admin` (admins only) and an expiry of 30, 90 or 365 days or
+  none.
+- The scope is intersected with the user's current access on every request. Removing a permission
+  or server from the user removes it from their tokens at once; an inactive user, a user who lost
+  `useApiTokens`, an expired or a revoked token gets `401`. A password reset deletes the user's tokens.
+- An admin's token without `admin` acts as a regular user with the token's permissions.
+- Tokens get `403` on routes that manage credentials or accounts, even with `admin`: `auth/*`,
+  `api-tokens/*`, every `users/*` write, `PATCH /settings/integrations`, achievements and end runs.
+- Audit entries made with a token show the token's user.
+
+AI agents use the same tokens through the [MCP endpoint](/mcp).
+
 ## Public Endpoints
 
 These routes do not require an authenticated session:
@@ -511,12 +534,20 @@ The endpoints require authentication and access to the requested server.
   `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
   Samples are collected every minute and retained for 7 days.
 
+### Diagnosis
+
+- `GET /servers/:id/diagnosis` — needs `viewLogs`. Returns `{ status, problems, errorLines,
+  crashReport, logTail }`: known problems (`kind`: `client_only_mod` | `missing_dependency` |
+  `mixin_failure` | `duplicate_mod` | `java_version` | `out_of_memory` | `port_in_use`, with the
+  `mods` involved and the `evidence` line) found in the last 400 log lines and the newest
+  `crash-reports/*.txt`, the recent error lines, and the first 4,000 characters of that crash report.
+
 ### Saved log views
 
 Log presets require authentication, access to the selected server and the `viewLogs` permission.
 
 - `GET /log-presets?serverId=` — list the current user's presets for that server.
-- `PUT /log-presets` — save a preset with `serverId`, `name`, `searchTerm`, `levelFilter`,
+- `PUT /log-presets` — save a preset with `serverId`, `name`, `searchTerm`, `levelFilter` (`all`, `error`, `warn`, `info`, `debug` or `chat`),
   `regex`, `lines` and `sinceMinutes`; an existing name is replaced.
 - `DELETE /log-presets?serverId=&name=` — remove one of the current user's presets.
 
@@ -605,6 +636,12 @@ filter" instead of returning zero results. CurseForge endpoints use the global A
 from user settings; Modrinth needs no credentials. Modrinth version objects (from
 `/modrinth/projects/:ref/versions` and `/modrinth/versions/resolve`) carry their `changelog`
 inline at no extra request cost.
+
+Installed mods:
+
+- `GET /servers/:id/installed-mods` — `{ mods, truncated }`, one entry per jar in the server's
+  `mods/` folder with `fileName`, `modId`, `name`, `loader` and `side` (`client` | `server` |
+  `both` | `known-client` | `unknown`). Needs **View server files**.
 
 ### Mod Watch
 
@@ -714,6 +751,22 @@ Auto-scaling webhook, called by mc-router (see [Networking](/networking#auto-sca
 
 Requires `Authorization: Bearer <token>`, where the token is the one the panel generated when auto-scaling was enabled. `action: "up"` starts the server and only answers `200` once it accepts connections; `action: "down"` stops it. Servers that are not in the proxy routes are rejected with `404`. When a server has auto-scaling turned off, `down` answers `200` with `{ "status": "skipped" }` and `up` is rejected with `503`.
 
+### API token management
+
+Session only (a token gets `403`):
+
+- `GET /api-tokens` — the caller's tokens, without the secret
+- `POST /api-tokens` — `{ name, admin?, readOnly?, permissions, serverAccess, expiresInDays: 30|90|365|null }`;
+  returns the token with `token` (the only time it is shown). `400` when the scope exceeds the
+  caller's access, `403` without `useApiTokens`
+- `DELETE /api-tokens/:id` — `204`; own tokens, or any token for admins
+- `GET /api-tokens/all` — admins only; every token with `userId` and `username`
+
+### MCP
+
+- `POST /mcp` — [Model Context Protocol](/mcp) over Streamable HTTP, stateless. Accepts only an
+  API token (`401` for cookies and JWTs); `GET` and `DELETE` return `405`
+
 ## Response Patterns
 
 Minepanel uses standard HTTP status codes:
@@ -739,7 +792,7 @@ Validation errors usually come from NestJS validation pipes.
 ## Security Notes
 
 - Treat the API as private by default.
-- Prefer cookie-based auth for browser clients.
+- Prefer cookie-based auth for browser clients and scoped, expiring API tokens for scripts.
 - Do not send JWT tokens in query params.
 - File and proxy endpoints are protected and should not be exposed through unauthenticated reverse-proxy exceptions.
 - Restrict access to trusted users only; Minepanel can control Docker and host-mounted server data.

@@ -6,8 +6,10 @@ import { OidcService } from './oidc.service';
 import { AuthService } from '../auth.service';
 import { AuditLogService } from 'src/users/services/audit-log.service';
 import { authCookieOptions, OIDC_TX_COOKIE, OIDC_TX_MAX_AGE, setAuthCookies } from '../utils/auth-cookies';
+import { SessionOnly } from '../decorators/session-only.decorator';
 
 @Controller('auth/oidc')
+@SessionOnly()
 export class OidcController {
   constructor(
     private readonly oidcService: OidcService,

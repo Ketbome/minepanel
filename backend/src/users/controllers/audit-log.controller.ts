@@ -16,7 +16,7 @@ export class AuditLogController {
 
   @Get()
   async listAuditLogs(@Request() req, @Query(new ValidationPipe({ transform: true })) query: AuditLogQueryDto) {
-    const currentUser = await this.usersService.getRequiredUserById(req.user.userId);
+    const currentUser = await this.usersService.getRequestUser(req.user);
     this.accessControlService.assertManageUsers(currentUser);
 
     return this.auditLogService.list(query);

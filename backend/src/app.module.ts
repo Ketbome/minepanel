@@ -29,6 +29,7 @@ import { ActivityModule } from './activity/activity.module';
 import { AchievementsModule } from './achievements/achievements.module';
 import { LogPresetsModule } from './log-presets/log-presets.module';
 import { EndRunsModule } from './end-runs/end-runs.module';
+import { McpModule } from './mcp/mcp.module';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 
 @Module({
@@ -62,6 +63,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     EndRunsModule,
     FilesModule,
     ProxyModule,
+    McpModule,
   ],
   controllers: [AppController],
   providers: [

@@ -122,6 +122,21 @@ export const getServerLogs = async (
   return data;
 };
 
+export type DiagnosisProblemKind = "client_only_mod" | "missing_dependency" | "mixin_failure" | "duplicate_mod" | "java_version" | "out_of_memory" | "port_in_use";
+
+export interface ServerDiagnosis {
+  status: "running" | "stopped" | "starting" | "not_found";
+  problems: { kind: DiagnosisProblemKind; evidence: string; mods: string[] }[];
+  errorLines: string[];
+  crashReport: { file: string; modified: string; excerpt: string } | null;
+  logTail: string;
+}
+
+export const getServerDiagnosis = async (serverId: string): Promise<ServerDiagnosis> => {
+  const response = await api.get(`/servers/${serverId}/diagnosis`);
+  return response.data;
+};
+
 export const getServerLogsStream = async (
   serverId: string,
   lines: number = 500,

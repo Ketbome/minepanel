@@ -43,7 +43,7 @@ export class WorldDiscoveryController {
   ) {
     const user = req.user as PayloadToken;
     // Imports land in the global world library, which every server can load.
-    this.accessControlService.assertGlobalFiles(await this.usersService.getRequiredUserById(user.userId), true);
+    this.accessControlService.assertGlobalFiles(await this.usersService.getRequestUser(user), true);
 
     if (body.provider === 'curseforge') {
       return this.worldDiscoveryService.importFromCurseForge(user.userId, {

@@ -70,6 +70,6 @@ export class ActivityController {
   }
 
   private currentUser(req): Promise<Users> {
-    return this.usersService.getRequiredUserById((req.user as PayloadToken).userId);
+    return this.usersService.getRequestUser(req.user as PayloadToken);
   }
 }

@@ -25,13 +25,19 @@ interface LogsControlsProps {
   toggleRealTime: () => void;
   loading: boolean;
   handleRefreshLogs: () => void | Promise<void>;
+  hidePanelNoise: boolean;
+  setHidePanelNoise: (value: boolean) => void;
+  compact: boolean;
+  setCompact: (value: boolean) => void;
+  groupRepeats: boolean;
+  setGroupRepeats: (value: boolean) => void;
 }
 
 const SINCE_OPTIONS = [0, 5, 15, 60, 360, 1440];
 const sinceLabel = (minutes: number, all: string) => (minutes === 0 ? all : minutes < 60 ? `${minutes} min` : `${minutes / 60} h`);
 const selectClass = "h-8 appearance-none rounded border border-gray-700/50 bg-gray-800/70 text-gray-200 px-2 text-xs";
 
-const LogsControls: FC<LogsControlsProps> = ({ serverId, searchTerm, setSearchTerm, levelFilter, setLevelFilter, regex, setRegex, sinceMinutes, setSinceMinutes, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs }) => {
+const LogsControls: FC<LogsControlsProps> = ({ serverId, searchTerm, setSearchTerm, levelFilter, setLevelFilter, regex, setRegex, sinceMinutes, setSinceMinutes, autoScroll, setAutoScroll, lineCount, setLogLines, isRealTime, toggleRealTime, loading, handleRefreshLogs, hidePanelNoise, setHidePanelNoise, compact, setCompact, groupRepeats, setGroupRepeats }) => {
   const { t } = useLanguage();
   const { presets, save, remove } = useLogPresets(serverId);
   const [selected, setSelected] = useState("");
@@ -95,6 +101,7 @@ const LogsControls: FC<LogsControlsProps> = ({ serverId, searchTerm, setSearchTe
               <option value="warn">{t("onlyWarnings")}</option>
               <option value="info">{t("onlyInfo")}</option>
               <option value="debug">{t("onlyDebug")}</option>
+              <option value="chat">{t("onlyChat")}</option>
             </select>
             <Filter className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
@@ -121,6 +128,18 @@ const LogsControls: FC<LogsControlsProps> = ({ serverId, searchTerm, setSearchTe
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={autoScroll} onChange={(e) => setAutoScroll(e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
             {t("autoScroll")}
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer" title={t("logHidePanelNoiseHint")}>
+            <input type="checkbox" checked={hidePanelNoise} onChange={(e) => setHidePanelNoise(e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+            {t("logHidePanelNoise")}
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer" title={t("logCompactHint")}>
+            <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+            {t("logCompact")}
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={groupRepeats} onChange={(e) => setGroupRepeats(e.target.checked)} className="rounded border-gray-600 bg-gray-800" />
+            {t("logGroupRepeats")}
           </label>
           <div className="flex items-center gap-2">
             <span>{t("lines")}:</span>

@@ -14,6 +14,7 @@ import { PendingEmailChange } from '../entities/pending-email-change.entity';
 import { AuthMailService } from 'src/auth/auth-mail.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
+import { ApiTokenPermissions, PayloadToken } from 'src/auth/models/token.model';
 
 @Injectable()
 export class UsersService {
@@ -46,6 +47,28 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  // The actor for a request. For API tokens it is an in-memory copy narrowed to the token's
+  // scope, re-intersected with the user's current access on every call; never save it.
+  async getRequestUser(payload: PayloadToken): Promise<Users> {
+    const user = await this.getRequiredUserById(payload.userId);
+    const scope = payload.apiToken;
+    const isAdmin = user.role === 'ADMIN';
+    if (!scope || (isAdmin && scope.admin)) {
+      return user;
+    }
+
+    const effective = isAdmin ? FULL_ACCESS_PERMISSIONS : normalizePermissions(user.permissions);
+    const permissions = { ...DEFAULT_USER_PERMISSIONS };
+    for (const key of Object.keys(scope.permissions ?? {}) as Array<keyof ApiTokenPermissions>) {
+      permissions[key] = Boolean(effective[key] && scope.permissions[key]);
+    }
+
+    const userServers = normalizeServerAccess(user.serverAccess);
+    const serverAccess = normalizeServerAccess(scope.serverAccess).filter((serverId) => isAdmin || effective.accessAllServers || userServers.includes(serverId));
+
+    return Object.assign(new Users(), user, { role: 'USER', permissions, serverAccess });
   }
 
   async getUserByUsername(username: string): Promise<Users> {

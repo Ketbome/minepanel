@@ -2,7 +2,7 @@ import { PlayerActivityController } from './player-activity.controller';
 
 describe('Player activity access', () => {
   const activity = { list: jest.fn(), detail: jest.fn() };
-  const users = { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) };
+  const users = { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) };
   const access = { assertServerAccess: jest.fn() };
   const controller = new PlayerActivityController(activity as any, users as any, access as any);
   const req = { user: { userId: 1 } };

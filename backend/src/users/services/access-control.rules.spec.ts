@@ -65,4 +65,10 @@ describe('AccessControlService rules', () => {
     expect(applyAdminGrantedPermissions(next, DEFAULT_USER_PERMISSIONS, true)).toBe(next);
     expect(applyAdminGrantedPermissions(next, DEFAULT_USER_PERMISSIONS, false)).toEqual({ ...next, changeServerVersion: false });
   });
+
+  it('keeps useApiTokens admin-granted', () => {
+    const next = { ...DEFAULT_USER_PERMISSIONS, useApiTokens: true };
+    expect(applyAdminGrantedPermissions(next, DEFAULT_USER_PERMISSIONS, false).useApiTokens).toBe(false);
+    expect(applyAdminGrantedPermissions(next, DEFAULT_USER_PERMISSIONS, true).useApiTokens).toBe(true);
+  });
 });

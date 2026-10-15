@@ -2,8 +2,10 @@ import { BadRequestException, Body, Controller, Get, Post, Query, Request } from
 import { PayloadToken } from 'src/auth/models/token.model';
 import { EndRunsService } from './end-runs.service';
 import { RUN_MODES, SubmitRunDto, type RunMode } from './dto/submit-run.dto';
+import { SessionOnly } from 'src/auth/decorators/session-only.decorator';
 
 @Controller('end-runs')
+@SessionOnly()
 export class EndRunsController {
   constructor(private readonly endRunsService: EndRunsService) {}
 

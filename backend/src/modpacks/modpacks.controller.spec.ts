@@ -27,7 +27,7 @@ describe('ModpacksController', () => {
       completeFor: jest.fn(async (_kind, _userId, _serverId, _id, move: (staged: string, session: { path: string }) => Promise<unknown>) => move('/staged.part', { path: 'big.zip' })),
     };
     accessControl = { assertServerFiles: jest.fn() };
-    controller = new ModpacksController(service as any, { getRequiredUserById: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any, uploadSessions as any);
+    controller = new ModpacksController(service as any, { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) } as any, accessControl as any, uploadSessions as any);
   });
 
   it('uses read access for listing and write access for changes', async () => {

@@ -70,7 +70,7 @@ describe('SettingsController', () => {
         {
           provide: UsersService,
           useValue: {
-            getRequiredUserById: jest.fn(),
+            getRequestUser: jest.fn(),
           },
         },
         {
@@ -117,13 +117,13 @@ describe('SettingsController', () => {
 
     await controller.updateSettings({ user: { userId: 1 } }, { language: 'en' });
 
-    expect(usersService.getRequiredUserById).not.toHaveBeenCalled();
+    expect(usersService.getRequestUser).not.toHaveBeenCalled();
     expect(accessControlService.assertManageSystemSettings).not.toHaveBeenCalled();
     expect(settingsService.updateSettings).toHaveBeenCalledWith({ language: 'en' }, 1);
   });
 
   it('should enforce high-level permission for network settings', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 1 } as any);
     accessControlService.assertManageSystemSettings.mockImplementation(() => {
       throw new ForbiddenException('forbidden');
     });
@@ -137,7 +137,7 @@ describe('SettingsController', () => {
   });
 
   it('should enforce high-level permission for integration settings', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 1 } as any);
     accessControlService.assertManageSystemSettings.mockImplementation(() => {
       throw new ForbiddenException('forbidden');
     });
@@ -151,7 +151,7 @@ describe('SettingsController', () => {
   });
 
   it('should enforce high-level permission for java defaults', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 1 } as any);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
     settingsService.updateSettings.mockResolvedValue({} as any);
 
@@ -168,7 +168,7 @@ describe('SettingsController', () => {
   });
 
   it('should enforce high-level permission for audit retention settings', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 1, role: 'ADMIN' } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 1, role: 'ADMIN' } as any);
     accessControlService.isAdmin.mockReturnValue(true);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
     settingsService.updateSettings.mockResolvedValue({} as any);
@@ -181,7 +181,7 @@ describe('SettingsController', () => {
   });
 
   it('should reject audit retention updates for non-admin users', async () => {
-    usersService.getRequiredUserById.mockResolvedValue({ id: 2, role: 'USER' } as any);
+    usersService.getRequestUser.mockResolvedValue({ id: 2, role: 'USER' } as any);
     accessControlService.isAdmin.mockReturnValue(false);
     accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
 
@@ -194,7 +194,7 @@ describe('SettingsController', () => {
 
   describe('checking the CurseForge key', () => {
     beforeEach(() => {
-      usersService.getRequiredUserById.mockResolvedValue({ id: 1 } as any);
+      usersService.getRequestUser.mockResolvedValue({ id: 1 } as any);
       accessControlService.assertManageSystemSettings.mockImplementation(() => undefined);
     });
 
