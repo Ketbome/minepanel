@@ -2409,4 +2409,6 @@ export const ru: Record<TranslationKey, string> = {
   diagnosisOutOfMemoryFix: "Серверу не хватило памяти. Увеличьте максимальную память в разделе Ресурсы или удалите тяжёлые моды.",
   diagnosisPortInUse: "Порт занят",
   diagnosisPortInUseFix: "Этот порт уже использует другой сервер или программа. Измените порт в разделе Сеть.",
+  logTraceShow: "Показать больше строк",
+  logTraceHide: "Скрыть строки",
 };

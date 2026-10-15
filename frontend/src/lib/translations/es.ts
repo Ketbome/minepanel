@@ -2434,4 +2434,6 @@ export const es: Record<TranslationKey, string> = {
   diagnosisOutOfMemoryFix: "El servidor se quedó sin memoria. Sube la memoria máxima en Recursos o quita mods pesados.",
   diagnosisPortInUse: "Puerto en uso",
   diagnosisPortInUseFix: "Otro servidor o programa ya usa este puerto. Cambia el puerto en Red.",
+  logTraceShow: "Ver más líneas",
+  logTraceHide: "Ocultar líneas",
 };

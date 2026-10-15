@@ -2484,4 +2484,6 @@ export const tr: Record<TranslationKey, string> = {
   diagnosisOutOfMemoryFix: "Sunucunun belleği tükendi. Kaynaklar bölümünden maksimum belleği artırın veya ağır modları kaldırın.",
   diagnosisPortInUse: "Port kullanımda",
   diagnosisPortInUseFix: "Bu portu başka bir sunucu veya program zaten kullanıyor. Portu Ağ bölümünden değiştirin.",
+  logTraceShow: "Daha fazla satır göster",
+  logTraceHide: "Satırları gizle",
 };

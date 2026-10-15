@@ -2439,4 +2439,6 @@ export const de: Record<TranslationKey, string> = {
   diagnosisOutOfMemoryFix: "Dem Server ist der Speicher ausgegangen. Erhöhe den maximalen Speicher unter Ressourcen oder entferne schwere Mods.",
   diagnosisPortInUse: "Port belegt",
   diagnosisPortInUseFix: "Ein anderer Server oder ein anderes Programm nutzt diesen Port bereits. Ändere den Port unter Netzwerk.",
+  logTraceShow: "Mehr Zeilen anzeigen",
+  logTraceHide: "Zeilen ausblenden",
 };

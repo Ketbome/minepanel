@@ -2,7 +2,8 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerLogsStream } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
-import { cleanConsoleLine, isChat, isPanelNoise, levelOf, parseLogLine } from "@/lib/utils/log-lines";
+import { cleanConsoleLine, isChat, isContinuation, isPanelNoise, levelOf, parseLogLine } from "@/lib/utils/log-lines";
+import { useLogViewStore } from "@/lib/store/log-view-store";
 
 interface LogsError {
   type: "container_not_found" | "server_not_found" | "connection_error" | "unknown";
@@ -16,6 +17,10 @@ interface LogEntry {
   level: "info" | "warn" | "error" | "debug";
   // Docker's own timestamp for the line (UTC), when the stream carried one.
   loggedAt?: number;
+  // Part of the line before it (a stack frame, "Caused by:"); takes that line's level.
+  continuation?: boolean;
+  // The header line a continuation belongs to.
+  parentId?: string;
 }
 
 const parseDockerTime = (line: string): number | undefined => {
@@ -38,7 +43,7 @@ export function useServerLogs(serverId: string) {
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [regex, setRegex] = useState<boolean>(false);
   const [sinceMinutes, setSinceMinutes] = useState<number>(0);
-  const [hidePanelNoise, setHidePanelNoise] = useState<boolean>(true);
+  const hidePanelNoise = useLogViewStore((state) => state.hidePanelNoise);
   const [filterNow, setFilterNow] = useState(() => Date.now());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
@@ -81,15 +86,26 @@ export function useServerLogs(serverId: string) {
 
       const existingContents = new Set(existingEntries.map((entry) => entry.content));
 
+      let previous: LogEntry | undefined = existingEntries[existingEntries.length - 1];
       return lines
         .filter((line) => !existingContents.has(cleanLogContent(line)))
-        .map((line, index) => ({
-          id: `${Date.now()}-${index}`,
-          content: cleanLogContent(line),
-          timestamp: new Date(),
-          level: parseLogLevel(cleanLogContent(line)),
-          loggedAt: parseDockerTime(line),
-        }));
+        .map((line, index) => {
+          const content = cleanLogContent(line);
+          // Leading whitespace marks a stack frame, so check before the content is trimmed.
+          const raw = cleanConsoleLine(line.replace(/\r/g, "").replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z ?/, ""));
+          const continuation = previous !== undefined && isContinuation(raw);
+          const entry: LogEntry = {
+            id: `${Date.now()}-${index}`,
+            content,
+            timestamp: new Date(),
+            level: continuation && previous ? previous.level : parseLogLevel(content),
+            loggedAt: parseDockerTime(line),
+            continuation,
+            parentId: continuation && previous ? (previous.continuation ? previous.parentId : previous.id) : undefined,
+          };
+          previous = entry;
+          return entry;
+        });
     },
     [parseLogLevel, cleanLogContent]
   );
@@ -269,12 +285,17 @@ export function useServerLogs(serverId: string) {
     // timezone and on Bedrock. Continuation lines inherit the previous line's time; lines before the first stay visible.
     const cutoff = sinceMinutes > 0 ? filterNow - sinceMinutes * 60_000 : 0;
     let lineTime: number | null = null;
+    let headerShown = false;
     return logEntries.filter((entry) => {
       if (entry.loggedAt !== undefined) lineTime = entry.loggedAt;
       const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
       if (hidePanelNoise && isPanelNoise(entry.content)) return false;
       const levelMatches = levelFilter === "all" || (levelFilter === "chat" ? isChat(entry.content) : entry.level === levelFilter);
-      return inRange && !invalidRegex && matcher(entry.content) && levelMatches;
+      const shown = inRange && !invalidRegex && matcher(entry.content) && levelMatches;
+      // A stack frame stays with its error, and also shows on its own when it matches the search.
+      if (entry.continuation) return inRange && !invalidRegex && (headerShown || (searchTerm !== "" && shown));
+      headerShown = shown;
+      return shown;
     });
   }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes, filterNow, hidePanelNoise]);
 
@@ -300,8 +321,6 @@ export function useServerLogs(serverId: string) {
     setLevelFilter,
     setRegex,
     setSinceMinutes,
-    hidePanelNoise,
-    setHidePanelNoise,
     startRealTimeUpdates,
     stopRealTimeUpdates,
   };

@@ -2443,4 +2443,6 @@ export const nl: Record<TranslationKey, string> = {
   diagnosisOutOfMemoryFix: "De server had geen geheugen meer. Verhoog het maximale geheugen onder Resources, of verwijder zware mods.",
   diagnosisPortInUse: "Poort in gebruik",
   diagnosisPortInUseFix: "Een andere server of een ander programma gebruikt deze poort al. Wijzig de poort onder Netwerk.",
+  logTraceShow: "Meer regels tonen",
+  logTraceHide: "Regels verbergen",
 };

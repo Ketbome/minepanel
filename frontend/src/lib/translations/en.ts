@@ -2408,6 +2408,8 @@ export const en = {
   diagnosisOutOfMemoryFix: "The server ran out of memory. Raise the maximum memory in Resources, or remove heavy mods.",
   diagnosisPortInUse: "Port in use",
   diagnosisPortInUseFix: "Another server or program already uses this port. Change the port in Network.",
+  logTraceShow: "Show more lines",
+  logTraceHide: "Hide lines",
 };
 
 export type TranslationKey = keyof typeof en;

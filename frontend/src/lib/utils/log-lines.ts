@@ -54,3 +54,28 @@ export const repeatKey = (content: string): string => {
   const parts = parseLogLine(content);
   return parts ? `${parts.level}|${parts.source ?? parts.thread}|${parts.message}` : stripColors(content);
 };
+
+// Lines with no "[12:00:00]" header of their own that belong to the line before: stack frames,
+// "Caused by:", "... 12 more", and the exception line under an error.
+const TRACE_LINE = /^(?:\s+\S|\s*at [\w$.<>/]+\(|\s*\.\.\. \d+ more|Caused by: |Suppressed: )/;
+const EXCEPTION_LINE = /^[a-z][\w$]*(?:\.[\w$]+)+(?:Exception|Error|Throwable)\b/;
+export const isContinuation = (raw: string): boolean => TRACE_LINE.test(raw) || EXCEPTION_LINE.test(raw.trim());
+
+// Lines worth spotting at a glance in a busy log.
+export const lineTone = (content: string): "join" | "leave" | "ready" | null => {
+  const message = parseLogLine(content)?.message ?? stripColors(content);
+  if (/^\w{2,16} joined the game$/.test(message)) return "join";
+  if (/^\w{2,16} left the game$/.test(message)) return "leave";
+  if (/^Done \([\d.,]+s\)!/.test(message)) return "ready";
+  return null;
+};
+
+// The search box as a pattern to highlight; null when empty or not a valid regex.
+export const highlightPattern = (term: string, regex: boolean): RegExp | null => {
+  if (!term) return null;
+  try {
+    return new RegExp(regex ? term : term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+  } catch {
+    return null;
+  }
+};
