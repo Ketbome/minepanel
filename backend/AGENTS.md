@@ -238,6 +238,12 @@ Path and filesystem patterns (critical):
 - `src/config.ts` - source of `serversDir`, `serversHostDir` and `dataHostDir` behavior.
 - `src/main.ts` - CORS/cookies/bootstrap behavior.
 - `src/server-management/server-management.service.ts` - lifecycle, status, command execution, world selection.
+  Container ids are cached per server (`containerIdCache`, 30s TTL) because every status,
+  stats and logs poll needs one. Anything that recreates or removes a server's container
+  must go through `execComposeCommand`, which drops the entry; an empty lookup is never kept.
+- `src/database/database-persistence.service.ts` - sql.js runs with `autoSave: false`; this
+  service saves the file at most every 5s (when `total_changes()` moved) and on shutdown
+  (`enableShutdownHooks` in `main.ts`). A crash can lose the last few seconds of writes.
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
 - `src/server-management/minecraft-status.util.ts` - parses the `mc-monitor` probe output (`key=value` pairs, order not guaranteed).
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.

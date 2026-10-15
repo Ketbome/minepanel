@@ -33,6 +33,9 @@ async function bootstrap() {
     },
   });
 
+  // Runs the shutdown hooks on SIGTERM; the database flushes its last writes there.
+  app.enableShutdownHooks();
+
   app.use(cookieParser());
 
   const basePath = normalizeBasePath(process.env.BASE_PATH);

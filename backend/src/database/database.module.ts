@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabasePersistenceService } from './database-persistence.service';
 
 @Global()
 @Module({
@@ -12,7 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         return {
           type: 'sqljs',
           location: path,
-          autoSave: true,
+          autoSave: false,
           synchronize: true,
           autoLoadEntities: true,
           entities: ['dist/**/*.entity{.ts,.js}'],
@@ -20,7 +21,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       },
     }),
   ],
-  providers: [],
+  providers: [DatabasePersistenceService],
   exports: [TypeOrmModule],
 })
 export class DatabaseModule {}

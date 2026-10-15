@@ -25,7 +25,7 @@ flowchart LR
 | --- | --- | --- |
 | Frontend | `frontend` container (Next.js) | Talks only to the backend API |
 | Backend | `backend` container (NestJS) | Owns `servers/` and `data/`, drives Docker through the socket |
-| Database | `data/minepanel.db` (SQLite via sql.js) | Users, settings, audit, metrics, player sessions |
+| Database | `data/minepanel.db` (SQLite via sql.js) | Users, settings, audit, metrics, player sessions. Held in memory and written to disk every few seconds and on shutdown, so stop the backend before copying or editing the file |
 | Minecraft servers | One compose project per server | `itzg/minecraft-server` or `itzg/minecraft-bedrock-server` |
 | Edge proxy | Its own compose project | mc-router in `data/proxy/` or Velocity in `data/velocity/`, never both |
 
