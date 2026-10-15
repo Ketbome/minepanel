@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 export const DATABASE_SAVE_INTERVAL_MS = 5_000;
@@ -10,7 +10,7 @@ type SqljsDriver = { save(): Promise<void>; queryRunner?: { isTransactionActive:
 // whole file after every write, blocking the event loop. Writes are batched here into at
 // most one save per interval, plus one on shutdown.
 @Injectable()
-export class DatabasePersistenceService implements OnApplicationBootstrap, OnApplicationShutdown {
+export class DatabasePersistenceService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly logger = new Logger(DatabasePersistenceService.name);
   private timer?: NodeJS.Timeout;
   private saving?: Promise<void>;
@@ -25,7 +25,9 @@ export class DatabasePersistenceService implements OnApplicationBootstrap, OnApp
     this.timer.unref();
   }
 
-  async onApplicationShutdown() {
+  // Before, not on, application shutdown: TypeORM closes the connection in its own
+  // onApplicationShutdown, and a closed sql.js database can no longer be exported.
+  async beforeApplicationShutdown() {
     clearInterval(this.timer);
     await this.flush();
   }

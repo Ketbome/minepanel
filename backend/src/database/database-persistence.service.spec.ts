@@ -34,14 +34,14 @@ describe('DatabasePersistenceService', () => {
     await jest.advanceTimersByTimeAsync(DATABASE_SAVE_INTERVAL_MS);
     expect(driver.save).toHaveBeenCalledTimes(2);
 
-    await service.onApplicationShutdown();
+    await service.beforeApplicationShutdown();
     expect(driver.save).toHaveBeenCalledTimes(2);
   });
 
   it('flushes pending writes on shutdown and stops the timer', async () => {
     await service.onApplicationBootstrap();
     changes = 1;
-    await service.onApplicationShutdown();
+    await service.beforeApplicationShutdown();
     expect(driver.save).toHaveBeenCalledTimes(2);
 
     changes = 1;
