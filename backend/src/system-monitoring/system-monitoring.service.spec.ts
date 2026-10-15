@@ -21,7 +21,7 @@ describe('SystemMonitoringService', () => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     instanceSettings = { getNetwork: jest.fn().mockResolvedValue({ publicIp: null, lanIp: null }) };
-    service = new SystemMonitoringService({ get: jest.fn((key: string) => (key === 'serversDir' ? '/app/servers' : undefined)) } as any, instanceSettings as any);
+    service = new SystemMonitoringService({ get: jest.fn() } as any, instanceSettings as any);
     jest.spyOn(os, 'totalmem').mockReturnValue(1000);
     jest.spyOn(os, 'freemem').mockReturnValue(250);
     jest.spyOn(os, 'uptime').mockReturnValue(42);
@@ -47,7 +47,7 @@ describe('SystemMonitoringService', () => {
     expect(second.disk).toEqual({ total: 1024000, used: 409600, free: 614400, usagePercentage: 40 });
     expect(second.uptime).toBe(42);
     expect(second.platform).toBe('linux');
-    expect(mockStatfs).toHaveBeenCalledWith('/app/servers');
+    expect(mockStatfs).toHaveBeenCalledWith('/');
   });
 
   it('falls back to zeroed disk stats when statfs fails', async () => {

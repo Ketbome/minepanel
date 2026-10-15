@@ -144,15 +144,16 @@ export class SystemMonitoringService {
     }
   }
 
-  // The disk that holds the servers, not the container's root filesystem, read without
-  // spawning `df`. Same numbers df reports: used counts reserved blocks, free does not.
+  // Same numbers `df -k /` reported, without spawning it: used counts reserved blocks, free
+  // does not. The root filesystem on purpose: Docker Desktop reports bind mounts (the
+  // servers folder) with the host's bogus totals.
   private async getDiskStatsUnix(): Promise<{
     total: number;
     used: number;
     free: number;
   }> {
     try {
-      const stats = await statfs(this.configService.get<string>('serversDir') || '/');
+      const stats = await statfs('/');
 
       return {
         total: stats.blocks * stats.bsize,
