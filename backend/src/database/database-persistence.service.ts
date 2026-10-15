@@ -4,7 +4,11 @@ import { DataSource } from 'typeorm';
 export const DATABASE_SAVE_INTERVAL_MS = 5_000;
 
 // The parts of TypeORM's SqljsDriver used here; the class is not exported by the package.
-type SqljsDriver = { save(): Promise<void>; queryRunner?: { isTransactionActive: boolean } };
+type SqljsDriver = {
+  save(): Promise<void>;
+  databaseConnection: { exec(sql: string): unknown };
+  queryRunner?: { isTransactionActive: boolean };
+};
 
 // sql.js keeps the database in memory and TypeORM's autoSave exports and rewrites the
 // whole file after every write, blocking the event loop. Writes are batched here into at
@@ -44,8 +48,9 @@ export class DatabasePersistenceService implements OnApplicationBootstrap, Befor
       // export() ends an open transaction, so never save in the middle of one.
       if (changes === this.savedChanges || driver.queryRunner?.isTransactionActive) return;
       // export() runs synchronously inside save() and reopens the database, which resets
-      // total_changes() to 0; anything written after it counts from there.
+      // total_changes() to 0 and turns foreign keys off; restore them before any query runs.
       const pending = driver.save();
+      driver.databaseConnection.exec('PRAGMA foreign_keys = ON');
       this.savedChanges = 0;
       await pending;
     } catch (error) {

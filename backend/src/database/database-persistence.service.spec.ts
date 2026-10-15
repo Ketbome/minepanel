@@ -2,7 +2,7 @@ import { DATABASE_SAVE_INTERVAL_MS, DatabasePersistenceService } from './databas
 
 describe('DatabasePersistenceService', () => {
   let changes: number;
-  let driver: { save: jest.Mock; queryRunner?: { isTransactionActive: boolean } };
+  let driver: { save: jest.Mock; databaseConnection: { exec: jest.Mock }; queryRunner?: { isTransactionActive: boolean } };
   let dataSource: { driver: typeof driver; query: jest.Mock };
   let service: DatabasePersistenceService;
 
@@ -15,6 +15,7 @@ describe('DatabasePersistenceService', () => {
         changes = 0;
         return Promise.resolve();
       }),
+      databaseConnection: { exec: jest.fn() },
       queryRunner: { isTransactionActive: false },
     };
     dataSource = { driver, query: jest.fn(async () => [{ changes }]) };
@@ -36,6 +37,12 @@ describe('DatabasePersistenceService', () => {
 
     await service.beforeApplicationShutdown();
     expect(driver.save).toHaveBeenCalledTimes(2);
+  });
+
+  it('turns foreign keys back on after every export', async () => {
+    await service.flush();
+    expect(driver.databaseConnection.exec).toHaveBeenCalledWith('PRAGMA foreign_keys = ON');
+    expect(driver.databaseConnection.exec.mock.invocationCallOrder[0]).toBeGreaterThan(driver.save.mock.invocationCallOrder[0]);
   });
 
   it('flushes pending writes on shutdown and stops the timer', async () => {

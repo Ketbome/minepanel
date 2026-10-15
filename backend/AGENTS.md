@@ -249,6 +249,8 @@ Path and filesystem patterns (critical):
 - `src/database/database-persistence.service.ts` - sql.js runs with `autoSave: false`; this
   service saves the file at most every 5s (when `total_changes()` moved) and on shutdown
   (`enableShutdownHooks` in `main.ts`). A crash can lose the last few seconds of writes.
+  Every sql.js export reopens the database with foreign keys off, so the service turns them
+  back on right after each save; without that, `onDelete: 'CASCADE'` relations stop applying.
 - `src/server-management/strategies/server-strategy.factory.ts` - Java/Bedrock strategy selection.
 - `src/server-management/minecraft-status.util.ts` - parses the `mc-monitor` probe output (`key=value` pairs, order not guaranteed).
 - `src/docker-compose/docker-compose.service.ts` - compose generation, path-to-volume mapping, server discovery.
