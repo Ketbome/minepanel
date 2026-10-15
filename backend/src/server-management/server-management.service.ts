@@ -1060,7 +1060,9 @@ export class ServerManagementService {
     }
   }
 
-  async getServerStatus(serverId: string): Promise<ServerStatus> {
+  // `retry`: a cached id may belong to a container removed outside the panel, so a failed
+  // inspect looks the container up again once before reporting.
+  async getServerStatus(serverId: string, retry = true): Promise<ServerStatus> {
     try {
       if (!this.validateServerId(serverId)) {
         this.logger.error(`Invalid server ID: ${serverId}`);
@@ -1074,12 +1076,12 @@ export class ServerManagementService {
       const containerId = await this.findContainerId(serverId);
 
       if (containerId) {
-        const { stdout } = await execRead(DOCKER_COMMANDS.INSPECT_STATUS(containerId)).catch((error) => {
-          // A cached id whose container was removed outside the panel.
+        const inspected = await execRead(DOCKER_COMMANDS.INSPECT_STATUS(containerId)).catch((error) => {
           this.containerIdCache.delete(serverId);
-          throw error;
+          if (!retry) throw error;
+          return null;
         });
-        return this.toServerStatus(stdout);
+        return inspected ? this.toServerStatus(inspected.stdout) : this.getServerStatus(serverId, false);
       }
 
       if (await fs.pathExists(this.getDockerComposePath(serverId))) {
@@ -1132,11 +1134,13 @@ export class ServerManagementService {
     for (const { serverId, containerId, exists } of lookups) {
       if (!exists) {
         result.set(serverId, { status: 'not_found', containerId: '' });
+      } else if (containerId && states.has(containerId)) {
+        result.set(serverId, { status: this.toServerStatus(states.get(containerId)), containerId });
       } else if (containerId) {
-        const state = states.get(containerId);
-        // A cached id whose container was removed outside the panel.
-        if (state === undefined) this.containerIdCache.delete(serverId);
-        result.set(serverId, { status: state === undefined ? 'not_found' : this.toServerStatus(state), containerId });
+        // A cached id whose container was removed outside the panel: look it up again.
+        this.containerIdCache.delete(serverId);
+        const status = await this.getServerStatus(serverId);
+        result.set(serverId, { status, containerId: status === 'not_found' ? '' : await this.findContainerId(serverId).catch(() => '') });
       } else {
         result.set(serverId, { status: (await fs.pathExists(this.getDockerComposePath(serverId))) ? 'stopped' : 'not_found', containerId: '' });
       }

@@ -244,7 +244,8 @@ Path and filesystem patterns (critical):
   must go through `execComposeCommand`, which drops the entry; an empty lookup is never kept.
   Fleet endpoints read every status with one `docker inspect` (`getServerStatuses`).
   Read-only docker calls go through `execRead` (15s timeout); compose up/down never get one.
-  CPU/memory limits shown with stats come from `server.json`, not the compose file.
+  CPU/memory limits shown with stats come from `server.json`, not the compose file. A failed
+  inspect on a cached id looks the container up again once before reporting a status.
 - `src/database/database-persistence.service.ts` - sql.js runs with `autoSave: false`; this
   service saves the file at most every 5s (when `total_changes()` moved) and on shutdown
   (`enableShutdownHooks` in `main.ts`). A crash can lose the last few seconds of writes.

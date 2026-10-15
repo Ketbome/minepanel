@@ -591,10 +591,10 @@ describe('ServerManagementService lifecycle', () => {
       await service.getServerStatus('srv');
       expect(lookups()).toBe(2);
 
+      // Removed outside the panel: the stale id is looked up again before answering.
+      execRoutes.unshift([/docker compose ps -aq mc/, { stdout: '' }]);
       execRoutes.unshift([/docker inspect --format="\{\{.State.Status\}\}"/, () => Promise.reject(new Error('No such container'))]);
-      expect(await service.getServerStatus('srv')).toBe('not_found');
-      execRoutes.shift();
-      await service.getServerStatus('srv');
+      expect(await service.getServerStatus('srv')).toBe('stopped');
       expect(lookups()).toBe(3);
     });
 
@@ -604,14 +604,17 @@ describe('ServerManagementService lifecycle', () => {
       mockExec.mockImplementation(async (cmd: string, options?: { cwd?: string }) => {
         if (cmd.startsWith('docker compose ps')) return { stdout: options?.cwd?.endsWith('idle') ? '' : `${options?.cwd?.split('/').pop()}-id\n` };
         if (cmd.startsWith('docker inspect --format="{{.Id}}')) return Promise.reject(Object.assign(new Error('No such object: gone-id'), { stdout: 'srv-id-full running\n' }));
+        if (cmd.startsWith('docker inspect')) return Promise.reject(new Error('No such object: gone-id'));
         return { stdout: '' };
       });
 
       expect(await service.getAllServersStatus()).toEqual({ srv: 'running', idle: 'stopped', gone: 'not_found' });
-      expect(execCalls().filter((cmd) => cmd.startsWith('docker inspect'))).toEqual(['docker inspect --format="{{.Id}} {{.State.Status}}" srv-id gone-id']);
+      expect(execCalls().filter((cmd) => cmd.startsWith('docker inspect'))[0]).toBe('docker inspect --format="{{.Id}} {{.State.Status}}" srv-id gone-id');
 
+      // srv stays cached; idle (no container) and gone (looked up again, still gone) are not.
+      const lookups = execCalls().filter((cmd) => cmd.startsWith('docker compose ps')).length;
       await service.getAllServersStatus();
-      expect(execCalls().filter((cmd) => cmd.startsWith('docker compose ps'))).toHaveLength(5);
+      expect(execCalls().filter((cmd) => cmd.startsWith('docker compose ps')).length - lookups).toBe(lookups - 1);
     });
 
     it('does not keep an empty container lookup', async () => {
