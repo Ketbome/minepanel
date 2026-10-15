@@ -3,6 +3,8 @@ import { DockerComposeModule } from 'src/docker-compose/docker-compose.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServerManagementController } from './server-management.controller';
 import { AutoScaleController } from './auto-scale.controller';
+import { ServerDiagnosticsController } from './server-diagnostics.controller';
+import { ServerDiagnosticsService } from './server-diagnostics.service';
 import { ServerManagementService } from './server-management.service';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { UsersModule } from 'src/users/users.module';
@@ -15,8 +17,8 @@ import { VanillaTweaksModule } from 'src/vanilla-tweaks/vanilla-tweaks.module';
 
 @Module({
   imports: [DockerComposeModule, TypeOrmModule.forFeature([Settings]), NotificationsModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule, SettingsModule, VanillaTweaksModule],
-  controllers: [ServerManagementController, AutoScaleController],
-  providers: [ServerManagementService],
+  controllers: [ServerManagementController, AutoScaleController, ServerDiagnosticsController],
+  providers: [ServerManagementService, ServerDiagnosticsService],
   exports: [ServerManagementService],
 })
 export class ServerManagementModule {}

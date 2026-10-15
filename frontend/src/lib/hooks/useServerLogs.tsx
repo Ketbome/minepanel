@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { mcToast } from "@/lib/utils/minecraft-toast";
 import { getServerLogsStream } from "@/services/docker/fetchs";
 import { useLanguage } from "@/lib/hooks/useLanguage";
+import { cleanConsoleLine, isChat, isPanelNoise, levelOf, parseLogLine } from "@/lib/utils/log-lines";
 
 interface LogsError {
   type: "container_not_found" | "server_not_found" | "connection_error" | "unknown";
@@ -37,6 +38,7 @@ export function useServerLogs(serverId: string) {
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [regex, setRegex] = useState<boolean>(false);
   const [sinceMinutes, setSinceMinutes] = useState<number>(0);
+  const [hidePanelNoise, setHidePanelNoise] = useState<boolean>(true);
   const [filterNow, setFilterNow] = useState(() => Date.now());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousLogsRef = useRef<string>("");
@@ -44,6 +46,9 @@ export function useServerLogs(serverId: string) {
   const isInitialLoadRef = useRef<boolean>(true);
 
   const parseLogLevel = useCallback((content: string): "info" | "warn" | "error" | "debug" => {
+    // The level the game wrote, when the line has the usual format; a chat message saying "error" stays info.
+    const parts = parseLogLine(content);
+    if (parts) return levelOf(parts.level);
     const upperContent = content.toUpperCase();
     if (upperContent.includes("[ERROR]") || upperContent.includes("ERROR") || upperContent.includes("SEVERE") || upperContent.includes("FATAL")) {
       return "error";
@@ -65,7 +70,7 @@ export function useServerLogs(serverId: string) {
     // Remover timestamp Docker al inicio
     cleaned = cleaned.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
 
-    return cleaned.trim();
+    return cleanConsoleLine(cleaned).trim();
   }, []);
 
   const parseLogsToEntries = useCallback(
@@ -82,7 +87,7 @@ export function useServerLogs(serverId: string) {
           id: `${Date.now()}-${index}`,
           content: cleanLogContent(line),
           timestamp: new Date(),
-          level: parseLogLevel(line),
+          level: parseLogLevel(cleanLogContent(line)),
           loggedAt: parseDockerTime(line),
         }));
     },
@@ -267,9 +272,11 @@ export function useServerLogs(serverId: string) {
     return logEntries.filter((entry) => {
       if (entry.loggedAt !== undefined) lineTime = entry.loggedAt;
       const inRange = cutoff === 0 || lineTime === null || lineTime >= cutoff;
-      return inRange && !invalidRegex && matcher(entry.content) && (levelFilter === "all" || entry.level === levelFilter);
+      if (hidePanelNoise && isPanelNoise(entry.content)) return false;
+      const levelMatches = levelFilter === "all" || (levelFilter === "chat" ? isChat(entry.content) : entry.level === levelFilter);
+      return inRange && !invalidRegex && matcher(entry.content) && levelMatches;
     });
-  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes, filterNow]);
+  }, [logEntries, searchTerm, levelFilter, regex, sinceMinutes, filterNow, hidePanelNoise]);
 
   return {
     logs,
@@ -293,6 +300,8 @@ export function useServerLogs(serverId: string) {
     setLevelFilter,
     setRegex,
     setSinceMinutes,
+    hidePanelNoise,
+    setHidePanelNoise,
     startRealTimeUpdates,
     stopRealTimeUpdates,
   };

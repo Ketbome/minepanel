@@ -4,8 +4,9 @@ import { CardContent } from "@/components/ui/card";
 import { Terminal, RefreshCcw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { AnsiText } from "@/lib/utils/ansiParser";
+import { isChat, parseLogLine, repeatKey, shortSource } from "@/lib/utils/log-lines";
 
 interface LogsDisplayProps {
   logsContainerRef: React.RefObject<HTMLPreElement>;
@@ -15,10 +16,47 @@ interface LogsDisplayProps {
   error: LogsError | null;
   hasErrors: boolean;
   handleRefreshLogs: () => void | Promise<void>;
+  compact: boolean;
+  groupRepeats: boolean;
 }
 
-export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLogEntries, logs, loading, error, hasErrors, handleRefreshLogs }) => {
+interface LogRow {
+  entry: LogEntry;
+  count: number;
+}
+
+// Consecutive lines with the same text (ignoring the time) collapse into one with a counter.
+const groupRows = (entries: LogEntry[], group: boolean): LogRow[] => {
+  const rows: Array<LogRow & { key: string }> = [];
+  for (const entry of entries) {
+    const key = group ? repeatKey(entry.content) : entry.id;
+    const last = rows[rows.length - 1];
+    if (group && last?.key === key) {
+      last.count += 1;
+      last.entry = entry;
+    } else {
+      rows.push({ entry, count: 1, key });
+    }
+  }
+  return rows;
+};
+
+const LogLine: FC<{ content: string; compact: boolean }> = ({ content, compact }) => {
+  const parts = compact ? parseLogLine(content) : null;
+  if (!parts) return <AnsiText text={content} />;
+  const source = shortSource(parts.source) ?? (parts.thread !== "Server thread" ? parts.thread : undefined);
+  return (
+    <span title={content}>
+      <span className="mr-2 text-gray-500">{parts.time}</span>
+      {source && <span className="mr-1 text-gray-400">{source}:</span>}
+      <AnsiText text={parts.message} />
+    </span>
+  );
+};
+
+export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLogEntries, logs, loading, error, hasErrors, handleRefreshLogs, compact, groupRepeats }) => {
   const { t } = useLanguage();
+  const rows = useMemo(() => groupRows(filteredLogEntries, groupRepeats), [filteredLogEntries, groupRepeats]);
   const statusBarClassName = "absolute top-0 right-0 px-3 py-1 text-xs font-minecraft rounded-bl-md flex items-center border-l border-b border-gray-700/50 " + (error ? "bg-red-800/80 text-red-400" : hasErrors ? "bg-yellow-800/80 text-yellow-400" : "bg-gray-800/80 text-emerald-400");
 
   return (
@@ -31,12 +69,16 @@ export const LogsDisplay: FC<LogsDisplayProps> = ({ logsContainerRef, filteredLo
         <pre ref={logsContainerRef} className={`logs-container p-4 pt-6 rounded-md overflow-x-hidden overflow-y-auto text-xs font-mono border-gray-700/50 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 h-[600px] max-w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap ${error ? "bg-red-950/40 text-red-300" : hasErrors ? "bg-yellow-950/20 text-emerald-400" : "bg-gray-950/80 text-emerald-400"}`}>
           {filteredLogEntries.length > 0 ? (
             <div className="minecraft-log">
-              {filteredLogEntries.map((entry: any) => (
-                <div key={entry.id} className={`log-entry mb-1 p-1 rounded ${entry.level === "error" ? "bg-red-900/20 border-l-2 border-red-500" : entry.level === "warn" ? "bg-yellow-900/20 border-l-2 border-yellow-500" : entry.level === "debug" ? "bg-gray-800/20" : ""}`}>
-                  <span className={`level-indicator mr-2 px-1 rounded text-xs ${entry.level === "error" ? "bg-red-600 text-white" : entry.level === "warn" ? "bg-yellow-600 text-white" : entry.level === "info" ? "bg-blue-600 text-white" : entry.level === "debug" ? "bg-gray-600 text-white" : "bg-gray-500 text-white"}`}>{entry.level.toUpperCase()}</span>
-                  <AnsiText text={entry.content} />
-                </div>
-              ))}
+              {rows.map(({ entry, count }) => {
+                const chat = entry.level === "info" && isChat(entry.content);
+                return (
+                  <div key={entry.id} className={`log-entry mb-1 p-1 rounded ${entry.level === "error" ? "bg-red-900/20 border-l-2 border-red-500" : entry.level === "warn" ? "bg-yellow-900/20 border-l-2 border-yellow-500" : chat ? "bg-sky-900/20 border-l-2 border-sky-400" : entry.level === "debug" ? "bg-gray-800/20" : ""}`}>
+                    <span className={`level-indicator mr-2 px-1 rounded text-xs ${entry.level === "error" ? "bg-red-600 text-white" : entry.level === "warn" ? "bg-yellow-600 text-white" : chat ? "bg-sky-600 text-white" : entry.level === "info" ? "bg-blue-600 text-white" : entry.level === "debug" ? "bg-gray-600 text-white" : "bg-gray-500 text-white"}`}>{chat ? t("logChat").toUpperCase() : entry.level.toUpperCase()}</span>
+                    <LogLine content={entry.content} compact={compact} />
+                    {count > 1 && <span className="ml-2 rounded bg-gray-700 px-1 text-xs text-gray-200" title={t("logRepeated")}>×{count}</span>}
+                  </div>
+                );
+              })}
             </div>
           ) : logs ? (
             <div className="minecraft-log">

@@ -62,6 +62,10 @@ API tokens and actor loading:
   caller's token, so authorization stays in the guard and controllers. `McpCatalogService`
   builds `list_endpoints` from Nest route metadata (skipping public, session-only, token-only,
   multipart, raw-response and streaming routes). Tool output is capped at 100 KB.
+- Startup/crash diagnosis lives in `server-management/server-diagnostics.ts` (pure signatures) and
+  `server-diagnostics.service.ts` (`GET /servers/:id/diagnosis`, log tail + newest crash report). The
+  Logs tab and the MCP `diagnose_server`/`wait_for_server` tools both read that endpoint; the MCP adds
+  agent-facing fixes. Add new signatures there, with a test from a real log line.
 
 Integration settings & secrets:
 

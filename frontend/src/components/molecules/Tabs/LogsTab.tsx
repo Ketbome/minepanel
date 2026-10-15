@@ -14,6 +14,7 @@ import LogsFooter from "../Logs/LogsFooter";
 import LogsResources from "../Logs/LogsResources";
 import { LogsDisplay } from "../Logs/LogsDisplay";
 import { QuickCommandConsole } from "../Logs/QuickCommandConsole";
+import { LogsDiagnosisDialog } from "../Logs/LogsDiagnosisDialog";
 
 export interface LogEntry {
   id: string;
@@ -43,13 +44,15 @@ interface LogsTabProps {
 
 export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Readonly<LogsTabProps>) {
   const { t } = useLanguage();
-  const { logs, logEntries, filteredLogEntries, loading, lineCount, error, hasErrors, lastUpdate, isRealTime, searchTerm, levelFilter, regex, sinceMinutes, fetchLogs, setLogLines, clearError, toggleRealTime, setSearchTerm, setLevelFilter, setRegex, setSinceMinutes } = useServerLogs(serverId);
+  const { logs, logEntries, filteredLogEntries, loading, lineCount, error, hasErrors, lastUpdate, isRealTime, searchTerm, levelFilter, regex, sinceMinutes, hidePanelNoise, fetchLogs, setLogLines, clearError, toggleRealTime, setSearchTerm, setLevelFilter, setRegex, setSinceMinutes, setHidePanelNoise } = useServerLogs(serverId);
 
   const logsContainerRef = useRef<HTMLPreElement>(null!);
   const [resources, setResources] = useState<ResourcesData | null>(null);
   const [loadingResources, setLoadingResources] = useState(false);
   const [resourcesError, setResourcesError] = useState<string | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [compact, setCompact] = useState(true);
+  const [groupRepeats, setGroupRepeats] = useState(true);
   const isUserScrollingRef = useRef(false);
   const manualScrollControlRef = useRef(false);
 
@@ -175,6 +178,8 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
             )}
           </CardDescription>
         </div>
+        <div className="flex items-center gap-2">
+        <LogsDiagnosisDialog serverId={serverId} />
         <Button
           type="button"
           variant="outline"
@@ -186,13 +191,14 @@ export function LogsTab({ serverId, rconPort, rconPassword, serverStatus }: Read
           <Download className="h-4 w-4 mr-1" />
           {t("downloadLogs")}
         </Button>
+        </div>
       </CardHeader>
-      <LogsControls serverId={serverId} regex={regex} setRegex={setRegex} sinceMinutes={sinceMinutes} setSinceMinutes={setSinceMinutes} searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} />
+      <LogsControls serverId={serverId} regex={regex} setRegex={setRegex} sinceMinutes={sinceMinutes} setSinceMinutes={setSinceMinutes} searchTerm={searchTerm} setSearchTerm={setSearchTerm} levelFilter={levelFilter} setLevelFilter={setLevelFilter} autoScroll={autoScroll} setAutoScroll={handleAutoScrollToggle} lineCount={lineCount} setLogLines={setLogLines} isRealTime={isRealTime} toggleRealTime={toggleRealTime} loading={loading} handleRefreshLogs={handleRefreshLogs} hidePanelNoise={hidePanelNoise} setHidePanelNoise={setHidePanelNoise} compact={compact} setCompact={setCompact} groupRepeats={groupRepeats} setGroupRepeats={setGroupRepeats} />
       <LogsErrorAlert error={error} resourcesError={resourcesError} />
       <LogsStatusAlert hasErrors={hasErrors} error={error} />
       <LogsLastUpdate lastUpdate={lastUpdate} error={error} />
       <LogsResources resources={resources} loadingResources={loadingResources} resourcesError={resourcesError} />
-      <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} />
+      <LogsDisplay logsContainerRef={logsContainerRef} filteredLogEntries={filteredLogEntries} logs={logs} loading={loading} error={error} hasErrors={hasErrors} handleRefreshLogs={handleRefreshLogs} compact={compact} groupRepeats={groupRepeats} />
       <QuickCommandConsole serverId={serverId} rconPort={rconPort || ""} rconPassword={rconPassword || ""} serverStatus={serverStatus || "stopped"} />
       <LogsFooter error={error} hasErrors={hasErrors} isRealTime={isRealTime} lastUpdate={lastUpdate} filteredLogEntries={filteredLogEntries} logEntries={logEntries} loadingResources={loadingResources} fetchServerResources={fetchServerResources} resourcesError={resourcesError} />
       <style jsx global>{`

@@ -77,7 +77,8 @@ The server tells the agent this loop when it connects:
 1. Make the change: `add_mods`, `update_server`, `write_file`…
 2. `start_server` or `restart_server`, then `wait_for_server`. It returns `ready`, `stopped` or
    `still_starting`.
-3. When it did not come up, the result includes a diagnosis (also available as `diagnose_server`):
+3. When it did not come up, the result includes a diagnosis (also available as `diagnose_server`, and as
+   the **Diagnose** button in the Logs tab):
    recognised problems with the mods involved and a suggested fix, the recent error lines and the
    newest file in `crash-reports/`. Recognised problems:
    - **Client-only mod**: `invalid dist DEDICATED_SERVER`, `net/minecraft/client` classes

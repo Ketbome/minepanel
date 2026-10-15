@@ -534,12 +534,20 @@ The endpoints require authentication and access to the requested server.
   `msptMedian`, and `msptP95`. New tick/player fields are nullable for older rows.
   Samples are collected every minute and retained for 7 days.
 
+### Diagnosis
+
+- `GET /servers/:id/diagnosis` — needs `viewLogs`. Returns `{ status, problems, errorLines,
+  crashReport, logTail }`: known problems (`kind`: `client_only_mod` | `missing_dependency` |
+  `mixin_failure` | `duplicate_mod` | `java_version` | `out_of_memory` | `port_in_use`, with the
+  `mods` involved and the `evidence` line) found in the last 400 log lines and the newest
+  `crash-reports/*.txt`, the recent error lines, and the first 4,000 characters of that crash report.
+
 ### Saved log views
 
 Log presets require authentication, access to the selected server and the `viewLogs` permission.
 
 - `GET /log-presets?serverId=` — list the current user's presets for that server.
-- `PUT /log-presets` — save a preset with `serverId`, `name`, `searchTerm`, `levelFilter`,
+- `PUT /log-presets` — save a preset with `serverId`, `name`, `searchTerm`, `levelFilter` (`all`, `error`, `warn`, `info`, `debug` or `chat`),
   `regex`, `lines` and `sinceMinutes`; an existing name is replaced.
 - `DELETE /log-presets?serverId=&name=` — remove one of the current user's presets.
 
