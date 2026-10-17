@@ -131,6 +131,10 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
     expect(row.autoScaleTokenEnc).toBe(first);
     expect(row.proxyExtraNetworks).toBeNull();
     expect(row.velocityMotd).toBeNull();
+
+    row.velocityMotd = '<gold>Hub';
+    await service.updateRouterSettings({ velocityMotd: null });
+    expect(row.velocityMotd).toBeNull();
     expect(await service.getAutoScaleToken()).toBeNull();
 
     await service.updateRouterSettings({ autoScaleEnabled: true });
