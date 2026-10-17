@@ -217,22 +217,22 @@ export class InstanceSettingsService implements OnModuleInit {
   }
 
   async updateRouterSettings(update: {
-    proxyPort?: string;
+    proxyPort?: string | null;
     autoScaleEnabled?: boolean;
-    autoScaleDownAfter?: string;
-    autoScaleWakeTimeout?: string;
-    autoScaleAsleepMotd?: string;
-    autoScaleLoadingMotd?: string;
+    autoScaleDownAfter?: string | null;
+    autoScaleWakeTimeout?: string | null;
+    autoScaleAsleepMotd?: string | null;
+    autoScaleLoadingMotd?: string | null;
     extraNetworks?: string | null;
     velocityMotd?: string | null;
   }): Promise<void> {
     const row = await this.getRow();
 
-    if (update.proxyPort !== undefined) row.proxyPort = update.proxyPort.trim() || null;
-    if (update.autoScaleDownAfter !== undefined) row.autoScaleDownAfter = update.autoScaleDownAfter.trim() || null;
-    if (update.autoScaleWakeTimeout !== undefined) row.autoScaleWakeTimeout = update.autoScaleWakeTimeout.trim() || null;
-    if (update.autoScaleAsleepMotd !== undefined) row.autoScaleAsleepMotd = update.autoScaleAsleepMotd.trim() || null;
-    if (update.autoScaleLoadingMotd !== undefined) row.autoScaleLoadingMotd = update.autoScaleLoadingMotd.trim() || null;
+    if (update.proxyPort !== undefined) row.proxyPort = update.proxyPort?.trim() || null;
+    if (update.autoScaleDownAfter !== undefined) row.autoScaleDownAfter = update.autoScaleDownAfter?.trim() || null;
+    if (update.autoScaleWakeTimeout !== undefined) row.autoScaleWakeTimeout = update.autoScaleWakeTimeout?.trim() || null;
+    if (update.autoScaleAsleepMotd !== undefined) row.autoScaleAsleepMotd = update.autoScaleAsleepMotd?.trim() || null;
+    if (update.autoScaleLoadingMotd !== undefined) row.autoScaleLoadingMotd = update.autoScaleLoadingMotd?.trim() || null;
     if (update.extraNetworks !== undefined) row.proxyExtraNetworks = update.extraNetworks?.trim() || null;
     if (update.velocityMotd !== undefined) row.velocityMotd = update.velocityMotd?.trim() || null;
 

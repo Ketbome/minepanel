@@ -132,9 +132,17 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
     expect(row.proxyExtraNetworks).toBeNull();
     expect(row.velocityMotd).toBeNull();
 
-    row.velocityMotd = '<gold>Hub';
-    await service.updateRouterSettings({ velocityMotd: null });
-    expect(row.velocityMotd).toBeNull();
+    // A JSON null passes @IsOptional() and means "back to the default".
+    await service.updateRouterSettings({ proxyPort: '25570', velocityMotd: '<gold>Hub' });
+    await service.updateRouterSettings({ proxyPort: null, autoScaleDownAfter: null, autoScaleWakeTimeout: null, autoScaleAsleepMotd: null, autoScaleLoadingMotd: null, velocityMotd: null });
+    expect(await service.getRouterSettings()).toMatchObject({
+      proxyPort: '25565',
+      autoScaleDownAfter: '10m',
+      autoScaleWakeTimeout: '180s',
+      autoScaleAsleepMotd: 'Server is asleep. Join to wake it up!',
+      autoScaleLoadingMotd: 'Server is starting...',
+      velocityMotd: '<#09add3>Minepanel network',
+    });
     expect(await service.getAutoScaleToken()).toBeNull();
 
     await service.updateRouterSettings({ autoScaleEnabled: true });
