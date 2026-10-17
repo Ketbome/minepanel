@@ -32,7 +32,7 @@ describe('FilesController', () => {
       rename: jest.fn().mockResolvedValue(undefined),
       deleteFile: jest.fn().mockResolvedValue(undefined),
     };
-    accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
+    accessControl = { assertGlobalFiles: jest.fn(), assertServerFiles: jest.fn(), assertIsAdmin: jest.fn(), isAdmin: jest.fn().mockReturnValue(false) };
     const usersService = { getRequestUser: jest.fn().mockResolvedValue({ id: 1 }) };
     uploadSessions = {
       create: jest.fn().mockResolvedValue({ id: 'u1', offset: 0 }),
@@ -53,6 +53,10 @@ describe('FilesController', () => {
     await controller.writeFile(req, 'srv', { path: 'a', content: 'b' });
     expect(accessControl.assertServerFiles).toHaveBeenCalledWith({ id: 1 }, 'srv', true);
     expect(filesService.listFiles).toHaveBeenCalledWith('.world', 'dir', false);
+
+    await controller.readFile(req, '.velocity', 'velocity.toml');
+    expect(accessControl.assertIsAdmin).toHaveBeenCalledWith({ id: 1 });
+    expect(accessControl.assertGlobalFiles).toHaveBeenCalledTimes(2);
   });
 
   it('requires a path for read, info, write, mkdir and delete', async () => {

@@ -22,7 +22,8 @@ backend/src/
 |  |- strategies/           Java/Bedrock strategy pattern
 |- docker-compose/          Compose generation and server config persistence
 |- files/                   File browser API over server directories; chunked uploads staged in
-|                           servers/.upload-sessions (upload-sessions.service.ts)
+|                           servers/.upload-sessions (upload-sessions.service.ts). `.velocity` is the
+|                           admin-only Velocity folder: velocity.toml read-only, forwarding.secret hidden
 |- world-discovery/         World import/discovery into global world library
 |- proxy/                   Edge proxy: mc-router (routes.json) or Velocity (velocity.toml,
 |                           paper-global.yml forwarding on member servers)

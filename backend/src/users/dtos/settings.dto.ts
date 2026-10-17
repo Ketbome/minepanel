@@ -31,6 +31,10 @@ export class ProxyRouterSettingsDto {
   @IsOptional()
   @IsString()
   extraNetworks?: string;
+
+  @IsOptional()
+  @IsString()
+  velocityMotd?: string;
 }
 
 export class ProxyPowerDto {

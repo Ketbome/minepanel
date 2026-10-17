@@ -200,6 +200,7 @@ export class InstanceSettingsService implements OnModuleInit {
     autoScaleAsleepMotd: string;
     autoScaleLoadingMotd: string;
     extraNetworks: string | null;
+    velocityMotd: string;
   }> {
     const row = await this.getRow();
     return {
@@ -211,6 +212,7 @@ export class InstanceSettingsService implements OnModuleInit {
       autoScaleAsleepMotd: row.autoScaleAsleepMotd?.trim() || 'Server is asleep. Join to wake it up!',
       autoScaleLoadingMotd: row.autoScaleLoadingMotd?.trim() || 'Server is starting...',
       extraNetworks: row.proxyExtraNetworks ?? null,
+      velocityMotd: row.velocityMotd?.trim() || '<#09add3>Minepanel network',
     };
   }
 
@@ -222,6 +224,7 @@ export class InstanceSettingsService implements OnModuleInit {
     autoScaleAsleepMotd?: string;
     autoScaleLoadingMotd?: string;
     extraNetworks?: string | null;
+    velocityMotd?: string;
   }): Promise<void> {
     const row = await this.getRow();
 
@@ -231,6 +234,7 @@ export class InstanceSettingsService implements OnModuleInit {
     if (update.autoScaleAsleepMotd !== undefined) row.autoScaleAsleepMotd = update.autoScaleAsleepMotd.trim() || null;
     if (update.autoScaleLoadingMotd !== undefined) row.autoScaleLoadingMotd = update.autoScaleLoadingMotd.trim() || null;
     if (update.extraNetworks !== undefined) row.proxyExtraNetworks = update.extraNetworks?.trim() || null;
+    if (update.velocityMotd !== undefined) row.velocityMotd = update.velocityMotd.trim() || null;
 
     if (update.autoScaleEnabled !== undefined) {
       row.autoScaleEnabled = update.autoScaleEnabled;

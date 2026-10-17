@@ -115,20 +115,22 @@ describe('InstanceSettingsService router, defaults and OIDC', () => {
       autoScaleAsleepMotd: 'Server is asleep. Join to wake it up!',
       autoScaleLoadingMotd: 'Server is starting...',
       extraNetworks: null,
+      velocityMotd: '<#09add3>Minepanel network',
     });
     expect(await service.getAutoScaleToken()).toBeNull();
 
-    await service.updateRouterSettings({ proxyPort: ' 25566 ', autoScaleEnabled: true, autoScaleDownAfter: '5m', autoScaleWakeTimeout: ' ', autoScaleAsleepMotd: 'zzz', autoScaleLoadingMotd: 'loading', extraNetworks: 'net-a\n' });
+    await service.updateRouterSettings({ proxyPort: ' 25566 ', autoScaleEnabled: true, autoScaleDownAfter: '5m', autoScaleWakeTimeout: ' ', autoScaleAsleepMotd: 'zzz', autoScaleLoadingMotd: 'loading', extraNetworks: 'net-a\n', velocityMotd: ' <gold>Hub ' });
     const first = row.autoScaleTokenEnc;
     expect(first).toMatch(/^enc:/);
     const settings = await service.getRouterSettings();
-    expect(settings).toMatchObject({ proxyPort: '25566', autoScaleEnabled: true, autoScaleDownAfter: '5m', autoScaleWakeTimeout: '180s', autoScaleAsleepMotd: 'zzz', autoScaleLoadingMotd: 'loading', extraNetworks: 'net-a' });
+    expect(settings).toMatchObject({ proxyPort: '25566', autoScaleEnabled: true, autoScaleDownAfter: '5m', autoScaleWakeTimeout: '180s', autoScaleAsleepMotd: 'zzz', autoScaleLoadingMotd: 'loading', extraNetworks: 'net-a', velocityMotd: '<gold>Hub' });
     expect(settings.autoScaleToken).toBe(first.slice(4));
     expect(await service.getAutoScaleToken()).toBe(first.slice(4));
 
-    await service.updateRouterSettings({ autoScaleEnabled: false, extraNetworks: null });
+    await service.updateRouterSettings({ autoScaleEnabled: false, extraNetworks: null, velocityMotd: ' ' });
     expect(row.autoScaleTokenEnc).toBe(first);
     expect(row.proxyExtraNetworks).toBeNull();
+    expect(row.velocityMotd).toBeNull();
     expect(await service.getAutoScaleToken()).toBeNull();
 
     await service.updateRouterSettings({ autoScaleEnabled: true });

@@ -25,7 +25,13 @@ export interface VelocityMember {
   hostname?: string;
 }
 
-const tomlString = (value: string) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+// Control characters (a newline in the MOTD) must be escaped too, or Velocity rejects the file.
+const tomlString = (value: string) =>
+  `"${value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]/g, (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`)}"`;
 
 /**
  * Runs Velocity as its own compose project, the same way mc-router is run.
@@ -108,7 +114,7 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
     return content;
   }
 
-  buildVelocityToml(members: VelocityMember[], baseDomain: string | null): string {
+  buildVelocityToml(members: VelocityMember[], baseDomain: string | null, motd: string): string {
     const servers = members.map((member) => `${tomlString(member.id)} = ${tomlString(`${member.id}:25565`)}`);
     const tryOrder = members
       .filter((member) => typeof member.fallbackOrder === 'number')
@@ -132,7 +138,7 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
       ...GENERATED_HEADER,
       'config-version = "2.7"',
       'bind = "0.0.0.0:25565"',
-      'motd = "<#09add3>Minepanel network"',
+      `motd = ${tomlString(motd)}`,
       'online-mode = true',
       'force-key-authentication = true',
       'player-info-forwarding-mode = "modern"',
@@ -169,9 +175,14 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
   }
 
   async writeConfig(): Promise<void> {
-    const [members, edge, secrets] = await Promise.all([this.getMembers(), this.instanceSettings.getEdge(), this.instanceSettings.getVelocitySecrets()]);
+    const [members, edge, secrets, router] = await Promise.all([
+      this.getMembers(),
+      this.instanceSettings.getEdge(),
+      this.instanceSettings.getVelocitySecrets(),
+      this.instanceSettings.getRouterSettings(),
+    ]);
     await fs.ensureDir(this.getServerDir());
-    await fs.writeFile(path.join(this.getServerDir(), 'velocity.toml'), this.buildVelocityToml(members, edge.baseDomain));
+    await fs.writeFile(path.join(this.getServerDir(), 'velocity.toml'), this.buildVelocityToml(members, edge.baseDomain, router.velocityMotd));
     await fs.writeFile(path.join(this.getServerDir(), 'forwarding.secret'), secrets.forwardingSecret, { mode: 0o600 });
   }
 

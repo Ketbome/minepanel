@@ -11,6 +11,7 @@ export interface ProxyRouterSettings {
   autoScaleAsleepMotd?: string;
   autoScaleLoadingMotd?: string;
   extraNetworks?: string | null;
+  velocityMotd?: string;
 }
 
 export type EdgeMode = 'mc-router' | 'velocity';
