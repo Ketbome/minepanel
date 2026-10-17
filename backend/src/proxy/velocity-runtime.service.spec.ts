@@ -44,7 +44,7 @@ describe('VelocityRuntimeService', () => {
     execMock.mockResolvedValue({ stdout: '', stderr: '' });
     instanceSettings = {
       getEdge: jest.fn().mockResolvedValue({ enabled: true, mode: 'velocity', baseDomain: 'mc.example.com' }),
-      getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: '25565' }),
+      getRouterSettings: jest.fn().mockResolvedValue({ proxyPort: '25565', velocityMotd: '<gold>My network' }),
       getVelocitySecrets: jest.fn().mockResolvedValue({ forwardingSecret: 'fwd-secret', rconPassword: 'rcon-pass' }),
       getNetwork: jest.fn().mockResolvedValue({ publicIp: '1.2.3.4', lanIp: null }),
     };
@@ -84,6 +84,7 @@ describe('VelocityRuntimeService', () => {
       const toml = written('/app/data/velocity/server/velocity.toml');
 
       expect(toml).toContain('player-info-forwarding-mode = "modern"');
+      expect(toml).toContain('motd = "<gold>My network"');
       expect(toml).toContain('"lobby" = "lobby:25565"');
       expect(toml).toContain('"minigames" = "minigames:25565"');
       expect(toml).not.toContain('standalone');
@@ -96,7 +97,7 @@ describe('VelocityRuntimeService', () => {
     });
 
     it('leaves forced hosts empty without a base domain', () => {
-      const toml = service.buildVelocityToml([{ id: 'lobby', fallbackOrder: 0 }], null);
+      const toml = service.buildVelocityToml([{ id: 'lobby', fallbackOrder: 0 }], null, 'motd');
 
       expect(toml).toMatch(/\[forced-hosts\]\n\n?$/);
     });
@@ -110,6 +111,7 @@ describe('VelocityRuntimeService', () => {
           { id: 'game' },
         ],
         'mc.example.com',
+        'motd',
       );
 
       expect(toml).toContain('"play.mc.example.com" = ["lobby"]');
@@ -120,9 +122,16 @@ describe('VelocityRuntimeService', () => {
     });
 
     it('escapes quotes and backslashes', () => {
-      const toml = service.buildVelocityToml([{ id: 'a"b\\c' }], null);
+      const toml = service.buildVelocityToml([{ id: 'a"b\\c' }], null, 'motd');
 
       expect(toml).toContain('"a\\"b\\\\c" = "a\\"b\\\\c:25565"');
+    });
+
+    it('keeps a MOTD with a newline on one line', () => {
+      const toml = service.buildVelocityToml([], null, 'Hub\n[servers]\t"x"');
+
+      expect(toml).toContain('motd = "Hub\\u000a[servers]\\u0009\\"x\\""');
+      expect(toml.match(/^\[servers\]$/gm)).toHaveLength(1);
     });
   });
 

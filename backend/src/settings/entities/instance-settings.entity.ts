@@ -120,6 +120,9 @@ export class InstanceSettings {
   @Column({ type: 'text', nullable: true, name: 'velocity_rcon_enc' })
   velocityRconEnc?: string | null;
 
+  @Column({ type: 'text', nullable: true, name: 'velocity_motd' })
+  velocityMotd?: string | null;
+
   // Set once the values above have been lifted out of a user's preferences, so
   // clearing one of them does not get undone on the next boot.
   @Column({ type: 'boolean', default: false, name: 'preferences_migrated' })

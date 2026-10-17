@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Globe, Info, Loader2, Network, Power, Save } from 'lucide-react';
+import { AlertTriangle, FolderOpen, Globe, Info, Loader2, Network, Power, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { FileBrowser } from '@/components/molecules/FileBrowser';
 import { EdgeMode, getSettings, ProxyRouterSettings, ProxySettings, setProxyPower, updateSettings } from '@/services/settings/settings.service';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/hooks/useLanguage';
@@ -28,6 +29,7 @@ export default function NetworkSettingsPage() {
   const [publicIp, setPublicIp] = useState('');
   const [lanIp, setLanIp] = useState('');
   const [canManageSystemSettings, setCanManageSystemSettings] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [router, setRouter] = useState<ProxyRouterSettings>({});
   const [initialProxyPort, setInitialProxyPort] = useState('');
   // null means the state could not be read; the button must not guess.
@@ -45,6 +47,7 @@ export default function NetworkSettingsPage() {
       .then(([settings, user, status]) => {
         setIsRunning(status.running ?? null);
         setCanManageSystemSettings(user.role === 'ADMIN' || user.access.permissions.accessAllServers);
+        setIsAdmin(user.role === 'ADMIN');
         const nextProxy = settings.proxy || { enabled: false, baseDomain: null, available: false };
         setProxySettings(nextProxy);
         setProxyBaseDomain(nextProxy.baseDomain || '');
@@ -244,10 +247,23 @@ export default function NetworkSettingsPage() {
             </div>
 
             {isVelocity ? (
-              <div className="flex items-start gap-2 rounded-lg border border-cyan-600/30 bg-cyan-900/20 p-3">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
-                <p className="text-xs text-cyan-300">{t('velocityPluginsInfo')}</p>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="velocityMotd" className="text-gray-200">{t('velocityMotd')}</Label>
+                  <Input
+                    id="velocityMotd"
+                    value={router.velocityMotd ?? ''}
+                    onChange={(event) => setRouter((current) => ({ ...current, velocityMotd: event.target.value }))}
+                    placeholder="<#09add3>Minepanel network"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500">{t('velocityMotdDesc')}</p>
+                </div>
+                <div className="flex items-start gap-2 rounded-lg border border-cyan-600/30 bg-cyan-900/20 p-3">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+                  <p className="text-xs text-cyan-300">{t('velocityPluginsInfo')}</p>
+                </div>
+              </>
             ) : null}
 
             {!isVelocity ? (
@@ -310,6 +326,26 @@ export default function NetworkSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* The folder only exists once Velocity is the saved edge, and its plugins see the whole network. */}
+      {isAdmin && initialEdgeMode === 'velocity' ? (
+        <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/20">
+                <FolderOpen className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div>
+                <CardTitle className="text-white font-minecraft">{t('velocityFiles')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('velocityFilesDesc')}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <FileBrowser serverId=".velocity" />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>

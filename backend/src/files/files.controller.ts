@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Delete, Put, Param, Query, Body, Res, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, ParseIntPipe, HttpCode, Logger, ConflictException, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { FilesService, FileItem } from './files.service';
+import { FilesService, FileItem, VELOCITY_FILES } from './files.service';
 import { UploadSessionsService } from './upload-sessions.service';
 import { CreateUploadDto } from './dto/create-upload.dto';
 import * as fs from 'fs-extra';
@@ -37,7 +37,10 @@ export class FilesController {
   private async assertFilesAccess(req, serverId: string, write: boolean): Promise<boolean> {
     const user = await this.usersService.getRequestUser(req.user);
 
-    if (serverId === '_root' || serverId === '.world') {
+    if (serverId === VELOCITY_FILES) {
+      // The proxy fronts every member server, so its plugins are trusted with the whole network.
+      this.accessControlService.assertIsAdmin(user);
+    } else if (serverId === '_root' || serverId === '.world') {
       this.accessControlService.assertGlobalFiles(user, write);
     } else {
       this.accessControlService.assertServerFiles(user, serverId, write);

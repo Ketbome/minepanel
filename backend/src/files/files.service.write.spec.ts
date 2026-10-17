@@ -238,6 +238,18 @@ describe('FilesService writes', () => {
     expect(lastFilter()(entry('server.json'))).toEqual(entry('server.json'));
   });
 
+  it('leaves the forwarding secret out of Velocity zips', async () => {
+    (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+    (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true });
+    const entry = (name: string) => ({ name });
+
+    await service.createZipStream('.velocity', [''], true);
+    const filter = mockArchive.directory.mock.calls[mockArchive.directory.mock.calls.length - 1][2];
+    expect(filter(entry('forwarding.secret'))).toBe(false);
+    expect(filter(entry('plugins/forwarding.secret'))).toEqual(entry('plugins/forwarding.secret'));
+    expect(filter(entry('velocity.toml'))).toEqual(entry('velocity.toml'));
+  });
+
   it('listFiles rejects non-directories and skips entries it cannot stat', async () => {
     (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
     (fs.stat as unknown as jest.Mock).mockResolvedValueOnce({ isDirectory: () => false });

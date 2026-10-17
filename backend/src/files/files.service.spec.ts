@@ -145,6 +145,47 @@ describe('FilesService', () => {
     });
   });
 
+  describe('Velocity folder', () => {
+    const VELOCITY_DIR = '/app/data/velocity/server';
+
+    afterEach(() => (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => target));
+
+    it('maps ".velocity" to the proxy folder and keeps traversal out', async () => {
+      expect(await service.getFullPath('.velocity', 'plugins/a.jar', true)).toBe(`${VELOCITY_DIR}/plugins/a.jar`);
+      await expect(service.getFullPath('.velocity', '../docker-compose.yml', true)).rejects.toThrow(BadRequestException);
+    });
+
+    it('never serves the forwarding secret, links included', async () => {
+      await expect(service.getFullPath('.velocity', 'forwarding.secret', true)).rejects.toThrow(ForbiddenException);
+      await expect(service.readFile('.velocity', 'forwarding.secret', true)).rejects.toThrow(ForbiddenException);
+
+      (fs.realpath as unknown as jest.Mock).mockImplementation(async (target: string) => (target.endsWith('/link') ? `${VELOCITY_DIR}/forwarding.secret` : target));
+      await expect(service.getFullPath('.velocity', 'plugins/link', true)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('reads velocity.toml but refuses to write it', async () => {
+      (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+      (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => false, size: 3 });
+      (fs.readFile as unknown as jest.Mock).mockResolvedValue('a=1');
+
+      expect(await service.readFile('.velocity', 'velocity.toml', true)).toEqual({ content: 'a=1', encoding: 'utf-8' });
+      await expect(service.writeFile('.velocity', 'velocity.toml', 'x', true)).rejects.toThrow(ForbiddenException);
+      await expect(service.deleteFile('.velocity', 'velocity.toml', true)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('hides the secret from the listing and is empty before the first start', async () => {
+      (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
+      (fs.stat as unknown as jest.Mock).mockResolvedValue({ isDirectory: () => true, size: 0, mtime: new Date() });
+      (fs.readdir as unknown as jest.Mock).mockResolvedValue(['plugins', 'forwarding.secret', 'velocity.toml'].map((name) => ({ name, isDirectory: () => name === 'plugins' })));
+
+      expect((await service.listFiles('.velocity', '', true)).map((f) => f.name)).toEqual(['plugins', 'velocity.toml']);
+
+      (fs.pathExists as unknown as jest.Mock).mockResolvedValue(false);
+      expect(await service.listFiles('.velocity', '', true)).toEqual([]);
+      await expect(service.listFiles('.velocity', 'plugins', true)).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('readFile', () => {
     it('should throw BadRequestException when the path is a directory', async () => {
       (fs.pathExists as unknown as jest.Mock).mockResolvedValue(true);
