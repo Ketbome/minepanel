@@ -33,6 +33,42 @@ const tomlString = (value: string) =>
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f]/g, (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`)}"`;
 
+const LEGACY_TAGS: Record<string, string> = {
+  '0': 'black',
+  '1': 'dark_blue',
+  '2': 'dark_green',
+  '3': 'dark_aqua',
+  '4': 'dark_red',
+  '5': 'dark_purple',
+  '6': 'gold',
+  '7': 'gray',
+  '8': 'dark_gray',
+  '9': 'blue',
+  a: 'green',
+  b: 'aqua',
+  c: 'red',
+  d: 'light_purple',
+  e: 'yellow',
+  f: 'white',
+  k: 'obfuscated',
+  l: 'bold',
+  m: 'strikethrough',
+  n: 'underlined',
+  o: 'italic',
+  r: 'reset',
+};
+
+/**
+ * MiniMessage rejects legacy codes (&6, §6, &#rrggbb, &x&r&r&g&g&b&b): a reload then
+ * keeps the old MOTD and a restart refuses to start the proxy at all. People paste
+ * MOTDs from their servers, so translate the codes instead of failing.
+ */
+export const legacyToMiniMessage = (motd: string) =>
+  motd
+    .replace(/[&§]x((?:[&§][0-9a-f]){6})/gi, (_, hex: string) => `<#${hex.replace(/[&§]/g, '').toLowerCase()}>`)
+    .replace(/[&§]#([0-9a-f]{6})/gi, (_, hex: string) => `<#${hex.toLowerCase()}>`)
+    .replace(/[&§]([0-9a-fk-or])/gi, (_, code: string) => `<${LEGACY_TAGS[code.toLowerCase()]}>`);
+
 /**
  * Runs Velocity as its own compose project, the same way mc-router is run.
  *
@@ -138,7 +174,7 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
       ...GENERATED_HEADER,
       'config-version = "2.7"',
       'bind = "0.0.0.0:25565"',
-      `motd = ${tomlString(motd)}`,
+      `motd = ${tomlString(legacyToMiniMessage(motd))}`,
       'online-mode = true',
       'force-key-authentication = true',
       'player-info-forwarding-mode = "modern"',
@@ -189,7 +225,11 @@ export class VelocityRuntimeService implements OnApplicationBootstrap {
   // A reload keeps connected players; a restart would not.
   private async reload(): Promise<void> {
     try {
-      await execAsync(`docker exec ${CONTAINER_NAME} rcon-cli velocity reload`);
+      // rcon-cli exits 0 when Velocity rejects the file; only its reply tells.
+      const { stdout } = await execAsync(`docker exec ${CONTAINER_NAME} rcon-cli velocity reload`);
+      if (/unable to reload/i.test(stdout)) {
+        this.logger.warn(`Velocity rejected the new config and kept the previous one: ${stdout.trim()}`);
+      }
     } catch (error) {
       this.logger.warn('Velocity did not reload its config; it applies on the next restart', error);
     }

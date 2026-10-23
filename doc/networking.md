@@ -446,7 +446,9 @@ that file it mints a new one and every member needs a restart.
 
 The **Proxy MOTD** field in **Settings → Network** sets the line players see in the server
 list. It uses [MiniMessage](https://docs.advntr.dev/minimessage/format.html) (`<gold>My network`);
-leave it empty for the default. **Save** applies it with `velocity reload`, so nobody is kicked.
+leave it empty for the default. Legacy codes pasted from a server MOTD (`&6`, `§6`, `&#09add3`)
+are converted to MiniMessage, since Velocity refuses them. **Save** applies it with
+`velocity reload`, so nobody is kicked.
 
 Admins also get a **Velocity files** browser on that page, over `data/velocity/server`:
 
