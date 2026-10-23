@@ -219,6 +219,9 @@ export const nl: Record<TranslationKey, string> = {
   serverSpigot: 'Geoptimaliseerde server compatibel met Bukkit plugins',
   serverPaper: 'Geoptimaliseerde server gebaseerd op Spigot met extra optimalisaties',
   serverBukkit: 'Klassieke server met plugin API ondersteuning',
+  serverCustom: 'Draai je eigen server-jar (Thermos, Mohist, een fork...)',
+  customServerJar: 'Server-JAR',
+  customServerJarDesc: 'Een .jar in de servermap (upload hem bij Bestanden, bijv. thermos.jar) of een http(s)-URL. Kies hierboven de Java-image die nodig is (java8 voor 1.7.10). Alleen beheerders kunnen dit instellen.',
   serverPufferfish:
     'Geoptimaliseerde Paper fork voor grote servers die maximale prestaties vereisen',
   serverPurpur: 'Server met leuke en configureerbare functies gebaseerd op Paper',

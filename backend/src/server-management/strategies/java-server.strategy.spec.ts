@@ -308,6 +308,17 @@ describe('JavaServerStrategy', () => {
       }
     });
 
+    it('points a custom server at a jar in the server folder, an absolute path or a URL', () => {
+      const env = (customServer?: string) => strategy.buildEnvironment({ ...baseConfig(), serverType: 'CUSTOM', customServer } as any);
+
+      expect(env('./thermos.jar')).toMatchObject({ TYPE: 'CUSTOM', VERSION: '1.21.1', CUSTOM_SERVER: '/data/thermos.jar' });
+      expect(env(' jars/server.jar ').CUSTOM_SERVER).toBe('/data/jars/server.jar');
+      expect(env('/opt/server.jar').CUSTOM_SERVER).toBe('/opt/server.jar');
+      expect(env('https://example.com/server.jar').CUSTOM_SERVER).toBe('https://example.com/server.jar');
+      expect(env('').CUSTOM_SERVER).toBeUndefined();
+      expect(strategy.getServerTypes()).toContain('CUSTOM');
+    });
+
     it('provisions the whitelist from the players list and the enable flag', () => {
       expect(strategy.buildEnvironment({ ...baseConfig(), whitelistPlayers: ' alice,bob ' } as any)).toMatchObject({ WHITELIST: 'alice,bob' });
 

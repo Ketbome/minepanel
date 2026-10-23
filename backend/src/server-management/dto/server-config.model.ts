@@ -64,9 +64,9 @@ export class ServerConfigDto {
   @IsOptional()
   edition?: ServerEdition;
 
-  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA'])
+  @IsEnum(['VANILLA', 'FORGE', 'NEOFORGE', 'AUTO_CURSEFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'FABRIC', 'MAGMA', 'PAPER', 'QUILT', 'BUKKIT', 'PUFFERFISH', 'PURPUR', 'LEAF', 'FOLIA', 'CUSTOM'])
   @IsOptional()
-  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'FTBA' | 'MODRINTH' | 'GTNH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA';
+  serverType?: 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'AUTO_CURSEFORGE' | 'CURSEFORGE' | 'FTBA' | 'MODRINTH' | 'GTNH' | 'SPIGOT' | 'FABRIC' | 'MAGMA' | 'PAPER' | 'QUILT' | 'BUKKIT' | 'PUFFERFISH' | 'PURPUR' | 'LEAF' | 'FOLIA' | 'CUSTOM';
 
   // General configuration
   @IsString()
@@ -734,6 +734,12 @@ export class ServerConfigDto {
   @IsString()
   @IsOptional()
   foliaDownloadUrl?: string;
+
+  // CUSTOM: a .jar under the server folder (or an absolute container path), or a URL.
+  @IsString()
+  @IsOptional()
+  @Matches(/^(|https?:\/\/\S+|(?!.*\.\.)[\w\-. /]+\.jar)$/i, { message: 'customServer must be a .jar path inside the server folder or an http(s) URL' })
+  customServer?: string;
 
   // General Paper/Bukkit/Spigot config
   @IsBoolean()

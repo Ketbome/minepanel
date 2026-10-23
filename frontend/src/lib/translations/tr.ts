@@ -216,6 +216,9 @@ export const tr: Record<TranslationKey, string> = {
   serverSpigot: 'Bukkit eklentileriyle uyumlu, optimize edilmiş sunucu',
   serverPaper: "Spigot tabanlı, ek optimizasyonlar içeren yüksek performanslı sunucu",
   serverBukkit: 'Standart eklenti API desteği sunan klasik sunucu',
+  serverCustom: 'Kendi sunucu jar dosyanı çalıştır (Thermos, Mohist, bir fork...)',
+  customServerJar: 'Sunucu JAR',
+  customServerJarDesc: 'Sunucu klasöründe bir .jar (Dosyalar\'dan yükle, ör. thermos.jar) ya da bir http(s) URL\'si. Gereken Java imajını yukarıdan seç (1.7.10 için java8). Yalnızca yöneticiler ayarlayabilir.',
   serverPufferfish:
     'Maksimum performans gerektiren büyük sunucular için optimize edilmiş Paper türevi',
   serverPurpur: 'Paper tabanlı, eğlenceli ve yapılandırılabilir özellikler sunan sunucu',

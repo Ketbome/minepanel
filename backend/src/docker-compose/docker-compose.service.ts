@@ -749,6 +749,8 @@ export class DockerComposeService implements OnApplicationBootstrap {
       foliaChannel: '',
       foliaDownloadUrl: '',
 
+      customServer: '',
+
       skipDownloadDefaults: false,
 
       forgeBuild: '',
