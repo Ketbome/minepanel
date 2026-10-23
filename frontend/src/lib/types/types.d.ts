@@ -24,7 +24,8 @@ export type ServerType =
   | 'PUFFERFISH'
   | 'PURPUR'
   | 'LEAF'
-  | 'FOLIA';
+  | 'FOLIA'
+  | 'CUSTOM';
 
 /**
  * Simplified server list item returned by GET /servers
@@ -275,6 +276,8 @@ export interface ServerConfig {
   foliaBuild?: string;
   foliaChannel?: string;
   foliaDownloadUrl?: string;
+
+  customServer?: string;
 
   // General Paper/Bukkit/Spigot config
   skipDownloadDefaults?: boolean;

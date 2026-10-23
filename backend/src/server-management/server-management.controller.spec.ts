@@ -422,7 +422,7 @@ describe('ServerManagementController', () => {
     });
 
     it('should reject JVM, exec and port changes from a server-scoped user', async () => {
-      for (const change of [{ jvmOpts: '-javaagent:/data/x.jar' }, { jvmXxOpts: '-XX:+Foo' }, { jvmDdOpts: 'a=b' }, { execDirectly: false }, { extraPorts: ['127.0.0.1:2375:2375'] }]) {
+      for (const change of [{ jvmOpts: '-javaagent:/data/x.jar' }, { jvmXxOpts: '-XX:+Foo' }, { jvmDdOpts: 'a=b' }, { execDirectly: false }, { extraPorts: ['127.0.0.1:2375:2375'] }, { customServer: 'evil.jar' }]) {
         await expect(controller.updateServer(mockReq, 'victim', change as any)).rejects.toThrow(/Only admins can change these settings/);
       }
       expect(dockerComposeService.updateServerConfig).not.toHaveBeenCalled();

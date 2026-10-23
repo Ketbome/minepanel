@@ -141,6 +141,7 @@ const defaultConfig: ServerConfig = {
   foliaBuild: '',
   foliaChannel: '',
   foliaDownloadUrl: '',
+  customServer: '',
   skipDownloadDefaults: false,
 };
 

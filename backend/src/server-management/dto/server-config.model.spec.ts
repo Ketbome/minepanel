@@ -53,3 +53,20 @@ describe('normalizeEventCommands', () => {
     expect(normalizeEventCommands(many)?.split('\n')).toHaveLength(50);
   });
 });
+
+describe('UpdateServerConfigDto customServer', () => {
+  const errorsFor = async (customServer: unknown) =>
+    (await validate(plainToInstance(UpdateServerConfigDto, { customServer }))).filter((error) => error.property === 'customServer');
+
+  it('accepts a jar in the server folder, an absolute path, a URL or nothing', async () => {
+    for (const value of ['thermos.jar', 'jars/Server-1.7.10.jar', '/opt/server.jar', 'https://example.com/server.jar', '']) {
+      expect(await errorsFor(value)).toHaveLength(0);
+    }
+  });
+
+  it('rejects other files and paths that leave the folder', async () => {
+    for (const value of ['server.zip', '../other/server.jar', 'jars/../../x.jar', 'ftp://example.com/server.jar']) {
+      expect(await errorsFor(value)).toHaveLength(1);
+    }
+  });
+});

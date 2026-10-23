@@ -19,7 +19,7 @@ jest.mock('fs-extra', () => ({
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import { ProxyService } from './proxy.service';
-import { VelocityRuntimeService } from './velocity-runtime.service';
+import { legacyToMiniMessage, VelocityRuntimeService } from './velocity-runtime.service';
 
 describe('VelocityRuntimeService', () => {
   let instanceSettings: Record<string, jest.Mock>;
@@ -133,6 +133,13 @@ describe('VelocityRuntimeService', () => {
       expect(toml).toContain('motd = "Hub\\u000a[servers]\\u0009\\"x\\""');
       expect(toml.match(/^\[servers\]$/gm)).toHaveLength(1);
     });
+
+    it('turns legacy color codes into MiniMessage, which Velocity would otherwise refuse', () => {
+      expect(legacyToMiniMessage('&6Gold §lBold &R reset')).toBe('<gold>Gold <bold>Bold <reset> reset');
+      expect(legacyToMiniMessage('&#09ADD3Hex &x&f&f&0&0&a&aBungee')).toBe('<#09add3>Hex <#ff00aa>Bungee');
+      expect(legacyToMiniMessage('<gold>Tom & Jerry &z')).toBe('<gold>Tom & Jerry &z');
+      expect(service.buildVelocityToml([], null, '&aHub')).toContain('motd = "<green>Hub"');
+    });
   });
 
   describe('addresses', () => {
@@ -211,6 +218,16 @@ describe('VelocityRuntimeService', () => {
 
       execMock.mockRejectedValueOnce(new Error('rcon down'));
       await expect(service.syncConfig()).resolves.toBeUndefined();
+    });
+
+    it('warns when Velocity rejects the reloaded config', async () => {
+      jest.spyOn(service, 'isRunning').mockResolvedValue(true);
+      const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+      execMock.mockResolvedValueOnce({ stdout: 'Unable to reload your Velocity configuration. Check the console for more details.\n', stderr: '' });
+
+      await service.syncConfig();
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('kept the previous one'));
     });
 
     it('only rewrites the config while the proxy is down', async () => {

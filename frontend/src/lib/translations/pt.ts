@@ -219,6 +219,9 @@ export const pt: Record<TranslationKey, string> = {
   serverSpigot: 'Servidor otimizado compatível com plugins do Bukkit',
   serverPaper: 'Servidor de alto desempenho baseado no Spigot com otimizações adicionais',
   serverBukkit: 'Servidor clássico com suporte à API padrão de plugins',
+  serverCustom: 'Rode seu próprio jar de servidor (Thermos, Mohist, um fork...)',
+  customServerJar: 'JAR do servidor',
+  customServerJarDesc: 'Um .jar na pasta do servidor (envie em Arquivos, ex.: thermos.jar) ou uma URL http(s). Escolha acima a imagem Java necessária (java8 para 1.7.10). Só administradores podem definir.',
   serverPufferfish:
     'Fork otimizado do Paper para servidores grandes que exigem desempenho máximo',
   serverPurpur: 'Servidor com recursos divertidos e configuráveis baseado no Paper',

@@ -27,7 +27,7 @@ interface ServerTypeTabProps {
   updateConfig: <K extends keyof ServerConfig>(field: K, value: ServerConfig[K]) => void;
 }
 
-const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT'];
+const OTHER_SERVER_TYPES: ServerType[] = ['NEOFORGE', 'CURSEFORGE', 'FTBA', 'MODRINTH', 'GTNH', 'SPIGOT', 'PAPER', 'BUKKIT', 'CUSTOM'];
 
 // Tags the panel can pick on its own. Anything newer is still reachable through
 // the custom option, so a future java tag does not need a release.
@@ -715,10 +715,36 @@ export const ServerTypeTab: FC<ServerTypeTabProps> = ({ config, updateConfig }) 
                       description={t('serverBukkit')}
                       selected={config.serverType === 'BUKKIT'}
                     />
+
+                    <ServerTypeOption
+                      value="CUSTOM"
+                      id="custom-jar"
+                      icon="/images/command-block.webp"
+                      title="Custom JAR"
+                      description={t('serverCustom')}
+                      selected={config.serverType === 'CUSTOM'}
+                      accent="amber"
+                    />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             </RadioGroup>
+
+            {config.serverType === 'CUSTOM' && (
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="customServer" className="text-gray-200 font-minecraft text-sm">
+                  {t('customServerJar')}
+                </Label>
+                <Input
+                  id="customServer"
+                  value={config.customServer || ''}
+                  onChange={(e) => updateConfig('customServer', e.target.value)}
+                  placeholder="thermos.jar"
+                  className="bg-gray-800/70 text-gray-200 border-gray-700/50 focus:border-emerald-500/50 font-mono text-sm"
+                />
+                <p className="text-xs text-gray-400">{t('customServerJarDesc')}</p>
+              </div>
+            )}
           </div>
         )}
 

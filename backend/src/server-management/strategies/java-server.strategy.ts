@@ -60,6 +60,7 @@ export class JavaServerStrategy implements IServerStrategy {
       'PURPUR',
       'LEAF',
       'FOLIA',
+      'CUSTOM',
     ];
   }
 
@@ -242,6 +243,7 @@ export class JavaServerStrategy implements IServerStrategy {
       PURPUR: () => this.addPluginServerConfig(env, config),
       LEAF: () => this.addPluginServerConfig(env, config),
       FOLIA: () => this.addPluginServerConfig(env, config),
+      CUSTOM: () => this.addCustomServerConfig(env, config),
     };
 
     const handler = serverTypeHandlers[config.serverType];
@@ -267,6 +269,14 @@ export class JavaServerStrategy implements IServerStrategy {
     if (config.serverType === 'MODRINTH') {
       env['MODRINTH_MODPACK'] = config.modrinthModpack;
     }
+  }
+
+  // itzg reads CUSTOM_SERVER as a URL or a path inside the container, where the server folder is /data.
+  private addCustomServerConfig(env: Record<string, string>, config: ServerConfig): void {
+    env['VERSION'] = String(config.minecraftVersion);
+    const jar = config.customServer?.trim();
+    if (!jar) return;
+    env['CUSTOM_SERVER'] = /^https?:\/\//i.test(jar) || jar.startsWith('/') ? jar : `/data/${jar.replace(/^\.\//, '')}`;
   }
 
   private addGtnhConfig(env: Record<string, string>, config: ServerConfig): void {

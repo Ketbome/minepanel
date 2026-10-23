@@ -368,6 +368,24 @@ Another Paper fork with optimizations.
 | ------ | ------------ | -------------- | ------- |
 | Build  | `LEAF_BUILD` | Specific build | Latest  |
 
+## Custom JAR
+
+Runs a server jar the panel does not download for you: Thermos, Mohist, Crucible, a private
+fork. Pick **Custom JAR** under **Others** and set **Server JAR**. Only admins can set it,
+because it decides which code runs in the container.
+
+1. Create the server and upload the jar in **Files** (to the server folder, next to `server.properties`).
+2. Set **Server JAR** to its name (`thermos.jar`) or to a path under that folder (`jars/server.jar`).
+   An absolute container path or an `http(s)` URL also works.
+3. Choose the Java image the jar needs in **Docker image** (`java8` for 1.7.10).
+
+| Option     | Variable        | Description                                              | Default |
+| ---------- | --------------- | -------------------------------------------------------- | ------- |
+| Server JAR | `CUSTOM_SERVER` | Relative paths resolve under `/data`, the server folder | -       |
+
+Forge-based jars such as Thermos also need their `libraries/` folder next to the jar. The
+Mods and Plugins tabs are hidden for this type; manage `mods/` or `plugins/` from **Files**.
+
 ## Modrinth Modpacks
 
 Install complete modpacks from Modrinth.
@@ -529,6 +547,7 @@ environment:
 | **Mod Loaders**    | Forge, Neoforge, Fabric                  | Client-side mods required                        |
 | **Plugin Servers** | Paper, Spigot, Purpur, Pufferfish, Folia | Server-side plugins, vanilla clients             |
 | **Modpacks**       | AUTO_CURSEFORGE, Modrinth, GTNH, FTBA    | Pre-configured mod collections                   |
+| **Custom**         | CUSTOM                                   | Your own server jar (Thermos, Mohist, forks)     |
 
 The diagram at the [top of the page](#server-types) picks a category from what your players need.
 
