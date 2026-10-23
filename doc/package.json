@@ -18,7 +18,7 @@
   "author": "Ketbome",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "mermaid": "12.1.0",
+    "mermaid": "12.2.0",
     "terser": "^5.46.0",
     "vitepress": "1.6.4",
     "vitepress-plugin-llms": "^1.14.0",
@@ -29,8 +29,10 @@
     "vue-router": "^5.4.0"
   },
   "overrides": {
-    "vite": "6.4.3",
+    "vite": "6.4.5",
     "lodash-es": "4.18.1",
-    "source-map-js": "1.2.2"
+    "source-map-js": "1.2.2",
+    "dompurify": "3.4.17",
+    "markdown-it": "14.3.3"
   }
 }
