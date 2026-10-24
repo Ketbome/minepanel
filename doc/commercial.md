@@ -17,6 +17,10 @@ you must offer them the source code of your modified version under the same lice
 The name and logo are covered separately by the
 [trademark policy](https://github.com/Ketbome/minepanel/blob/main/TRADEMARK.md).
 
+Minepanel will always be available under the AGPL-3.0. Contributors sign a
+[CLA](https://github.com/Ketbome/minepanel/blob/main/CLA.md) so the project can also be offered
+under commercial licenses; it will never be used to make Minepanel closed source.
+
 ## What I offer
 
 | Option                 | For                                                                                            |
