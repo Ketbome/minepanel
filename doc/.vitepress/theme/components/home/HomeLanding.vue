@@ -8,7 +8,7 @@ import HomePoweredBy from './HomePoweredBy.vue';
 import HomeDocsMap from './HomeDocsMap.vue';
 import HomeCta from './HomeCta.vue';
 
-const tickerItems = ['100% FREE', 'SELF-HOSTED', 'JAVA + BEDROCK', 'DOCKER-BASED', 'MIT LICENSE'];
+const tickerItems = ['100% FREE', 'SELF-HOSTED', 'JAVA + BEDROCK', 'DOCKER-BASED', 'AGPL-3.0 LICENSE'];
 
 const root = ref(null);
 let mm;

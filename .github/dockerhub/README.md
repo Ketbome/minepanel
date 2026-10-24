@@ -94,4 +94,4 @@ Upgrading from 1.11 or older? Read [Upgrading to 1.12](https://minepanel.ketbome
 - [Troubleshooting](https://minepanel.ketbome.com/troubleshooting)
 - [FAQ](https://minepanel.ketbome.com/faq)
 
-Created by [@Ketbome](https://github.com/Ketbome). Community license, see [LICENSE](https://github.com/Ketbome/minepanel/blob/main/LICENSE). If Minepanel helps you, a ⭐ on GitHub goes a long way.
+Created by [@Ketbome](https://github.com/Ketbome). Licensed under AGPL-3.0, see [LICENSE](https://github.com/Ketbome/minepanel/blob/main/LICENSE). If Minepanel helps you, a ⭐ on GitHub goes a long way.

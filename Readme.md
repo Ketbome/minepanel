@@ -6,7 +6,7 @@
 
 Web panel to manage Minecraft servers with Docker — Create, configure, and monitor Java and Bedrock servers from a modern UI.
 
-[![License](https://img.shields.io/badge/License-Community-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ketbom/minepanel?logo=docker&color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 [![Docker Size](https://img.shields.io/docker/image-size/ketbom/minepanel/latest?color=2496ED)](https://hub.docker.com/r/ketbom/minepanel)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Ketbome/minepanel)
@@ -152,6 +152,6 @@ Thanks for being here.
 
 <div align="center">
 
-Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [Community License](LICENSE)
+Made with ❤️ by [@Ketbome](https://github.com/Ketbome) · [AGPL-3.0 License](LICENSE)
 
 </div>

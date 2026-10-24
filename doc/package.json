@@ -16,7 +16,7 @@
     "documentation"
   ],
   "author": "Ketbome",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "AGPL-3.0-only",
   "devDependencies": {
     "mermaid": "12.2.0",
     "terser": "^5.46.0",

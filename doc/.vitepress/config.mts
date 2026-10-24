@@ -327,7 +327,7 @@ export default defineConfig({
 
     footer: {
       message:
-        'Released under the MIT License. · Anonymous, cookieless analytics (self-hosted Umami).',
+        'Released under the AGPL-3.0 License. · Anonymous, cookieless analytics (self-hosted Umami).',
       copyright: 'Copyright © 2024-2026 Ketbome',
     },
 

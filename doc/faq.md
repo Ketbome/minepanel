@@ -13,7 +13,7 @@ Quick answers. For detailed guides, see linked docs.
 Web panel for managing Minecraft servers with Docker. No command-line needed.
 
 **Is it free?**
-Yes, open-source (MIT License).
+Yes, open-source (AGPL-3.0 License).
 
 **Requirements?**
 Docker 20.10+, 2GB RAM minimum, Linux/macOS/Windows(WSL2).
