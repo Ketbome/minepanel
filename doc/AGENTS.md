@@ -8,6 +8,7 @@ Public documentation site built with VitePress. Hosted at https://minepanel.ketb
 
 ---
 
+├── commercial.md # Licensing and commercial contact
 ├── faq.md # Frequently asked
 ├── roadmap.md # Planned features
 

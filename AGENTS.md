@@ -133,6 +133,7 @@ estimated native TPS distinct from spark measurements; unavailable metrics stay 
 
 - `AGENTS.md`
 - `Readme.md`
+- `LICENSE` (AGPL-3.0-only), `CLA.md`, `TRADEMARK.md`
 - `.env.example`
 - `pnpm-workspace.yaml` / `.npmrc`
 - `docker-compose.yml`
