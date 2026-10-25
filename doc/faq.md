@@ -16,7 +16,7 @@ Web panel for managing Minecraft servers with Docker. No command-line needed.
 Yes, open-source (AGPL-3.0 License).
 
 **Can I use it in a business?**
-Yes, under the AGPL-3.0. For a commercial license, white-label or support, see [Commercial Use](/commercial).
+Yes, under the AGPL-3.0.
 
 **Requirements?**
 Docker 20.10+, 2GB RAM minimum, Linux/macOS/Windows(WSL2).

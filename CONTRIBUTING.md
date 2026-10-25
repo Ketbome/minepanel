@@ -154,12 +154,7 @@ minepanel/
 
 2. Open a PR on GitHub
 
-3. Sign the [Contributor License Agreement](CLA.md) when the CLA Assistant bot asks (once,
-   on your first PR). You keep the copyright of your code; the CLA lets Minepanel stay
-   AGPL-3.0 and also be offered under a commercial license. Minepanel will always be
-   available under the AGPL-3.0: the CLA will never be used to make it closed source.
-
-4. Fill out the template:
+3. Fill out the template:
    - What changed
    - Related issues
    - Screenshots for UI stuff

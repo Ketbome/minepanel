@@ -124,16 +124,6 @@ Part of the same self-hosted game-server ecosystem:
 
 ---
 
-## Commercial Use
-
-Minepanel is free under the AGPL-3.0, including for businesses. Need a commercial license
-without the AGPL obligations, a white-label build, a hosting partnership, support or custom
-development? See [Commercial Use](https://minepanel.ketbome.com/commercial) or write to
-[pablo.moraga.san@gmail.com](mailto:pablo.moraga.san@gmail.com). The name and logo follow the
-[trademark policy](TRADEMARK.md).
-
----
-
 ## Support Minepanel
 
 Minepanel is a side project I build in my free time, and it grows mostly by word of mouth. If it

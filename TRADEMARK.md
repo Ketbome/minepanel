@@ -23,11 +23,10 @@ Pablo Moraga Sandoval ("Ketbome"), and this policy explains how you can use them
   handle.
 - Selling merchandise with the name or logo.
 
-Rebranding Minepanel under your own name (white-label) needs no trademark permission, but
-the AGPL-3.0 obligations still apply. See
-[Commercial use](https://minepanel.ketbome.com/commercial) for a license without them.
+Rebranding Minepanel under your own name needs no trademark permission, but the
+AGPL-3.0 obligations still apply.
 
 ## Contact
 
-To ask for permission, become a hosting partner or report misuse, write to
+To ask for permission or report misuse, write to
 [pablo.moraga.san@gmail.com](mailto:pablo.moraga.san@gmail.com).
