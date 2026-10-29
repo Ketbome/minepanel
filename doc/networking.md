@@ -378,7 +378,10 @@ Server Address: your-ip
 Port: 19132 (or assigned port)
 ```
 
-Test that port over UDP, from outside your network. A TCP port checker shows 19132 as closed even when the UDP forward works, and `nc -zu` reports success without a reply from the server. Join from a Bedrock client on another connection, such as mobile data, or run an external Bedrock status check such as [ServerBuddy's Connection Doctor](https://serverbuddy.net/tools/minecraft-server-port-forwarding-helper) with **Bedrock UDP** selected. Both work with the default `TRANSPORT=raknet`. If the check times out, confirm the UDP firewall rule and the router forward for that port.
+Test that port over UDP, from outside your network. A TCP port checker shows 19132 as closed
+even when the UDP forward works, and `nc -zu` reports success without a reply from the server.
+Join from a Bedrock client on another connection, such as mobile data. If it cannot connect,
+confirm the UDP firewall rule and the router forward for that port.
 
 ## Velocity Network (Java Only)
 
