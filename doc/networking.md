@@ -378,6 +378,11 @@ Server Address: your-ip
 Port: 19132 (or assigned port)
 ```
 
+Test that port over UDP, from outside your network. A TCP port checker shows 19132 as closed
+even when the UDP forward works, and `nc -zu` reports success without a reply from the server.
+Join from a Bedrock client on another connection, such as mobile data. If it cannot connect,
+confirm the UDP firewall rule and the router forward for that port.
+
 ## Velocity Network (Java Only)
 
 Players join a lobby, move with `/server <name>`, and land on the next lobby if one goes down.
