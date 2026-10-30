@@ -1185,6 +1185,8 @@ export const pl: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Otwórz folder serwera',
   openFileBrowser: 'Menedżer plików',
   filesDesc: 'Przeglądaj, edytuj i zarządzaj plikami serwera',
+  filesRunningWarning:
+    'Serwer jest uruchomiony. Większość zmian zadziała po restarcie, a serwer może nadpisać pliki, którymi zarządza. Zatrzymaj go przed edycją folderu świata.',
   allServersFilesDesc: 'Przeglądaj i zarządzaj plikami wszystkich serwerów',
   openInNewTab: 'Otwórz w nowej karcie',
   fileBrowserError: 'Nie można załadować przeglądarki plików',

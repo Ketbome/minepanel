@@ -1197,6 +1197,8 @@ export const es: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Abrir carpeta del servidor',
   openFileBrowser: 'Gestor de archivos',
   filesDesc: 'Explora, edita y gestiona los archivos de tu servidor',
+  filesRunningWarning:
+    'El servidor está en ejecución. La mayoría de los cambios se aplican al reiniciar, y el servidor puede sobrescribir los archivos que gestiona. Detenlo antes de editar la carpeta del mundo.',
   allServersFilesDesc: 'Explora y gestiona archivos de todos tus servidores',
   openInNewTab: 'Abrir en nueva pestaña',
   fileBrowserError: 'No se pudo cargar el Gestor de Archivos',

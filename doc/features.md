@@ -386,6 +386,9 @@ What gets recorded:
 
 Built-in browser for each server under `servers/<id>/mc-data`.
 
+The Files tab stays open while the server runs, with a warning: most changes apply after a restart,
+the server may overwrite files it manages, and the world folder should only be edited with the server stopped.
+
 ![File Manager inside a server's mc-data folder](/img/server-files.webp)
 
 | Area | What it does |

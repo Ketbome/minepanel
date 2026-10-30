@@ -102,7 +102,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "logs", label: t("logs"), icon: ScrollText, group: "operation", show: true, disabled: false, keywords: "logs registros consola console errores errors crash" },
     { value: "commands", label: t("commands"), icon: Terminal, group: "operation", show: showCommandsTab, disabled: !isServerRunning, keywords: "comandos commands consola console rcon terminal tiempo time clima weather" },
     { value: "players", label: t("players"), icon: Users, group: "operation", show: true, disabled: false, keywords: "jugadores players stats estadisticas inventario inventory logros advancements sesiones sessions online kick ban" },
-    { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: isServerRunning, keywords: "archivos files carpetas folders editar edit subir upload descargar download properties" },
+    { value: "files", label: t("files"), icon: FolderOpen, group: "operation", show: true, disabled: false, keywords: "archivos files carpetas folders editar edit subir upload descargar download properties" },
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false, keywords: "metricas metrics tps mspt cpu ram memoria memory spark rendimiento performance lag" },
     { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false, keywords: "actividad activity eventos events muertes deaths chat historial history" },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false, keywords: "tareas tasks programadas scheduled cron reinicio restart automatico automatic" },
@@ -329,7 +329,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   useEffect(() => {
     if (isServerRunning) {
-      const disabledTabs = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced", "files"];
+      const disabledTabs = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "plugins", "backups", "advanced"];
       if (disabledTabs.includes(activeTab)) {
         setActiveTab("logs");
       }
@@ -445,7 +445,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
               </TabsContent>
 
               <TabsContent value="files" className="space-y-4 mt-0">
-                <FilesTab serverId={serverId} minecraftVersion={isJava ? config.minecraftVersion : undefined} bedrock={isBedrock} />
+                <FilesTab serverId={serverId} minecraftVersion={isJava ? config.minecraftVersion : undefined} bedrock={isBedrock} running={isServerRunning} />
               </TabsContent>
 
               <TabsContent value="metrics" className="space-y-4 mt-0">
