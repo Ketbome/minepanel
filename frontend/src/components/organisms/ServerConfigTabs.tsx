@@ -342,7 +342,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
       <ConfigModeToggle mode={configMode} onChange={setConfigMode} hiddenCount={hiddenTabCount} />
 
-      {isServerRunning && (
+      {isServerRunning && activeTab !== "files" && (
         <div className="mc-slot p-4 flex items-start gap-3 animate-fade-in-up" style={{ borderColor: "#f5c542" }}>
           <div className="shrink-0 mt-0.5">
             <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
