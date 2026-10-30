@@ -295,8 +295,8 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // The file browser's buttons have no type, so inside this form they submit it.
-    if (activeTab === "files") return;
+    // Only config tabs save through this form; buttons without a type in the other tabs submit it too.
+    if (tabsMeta.find((tab) => tab.value === activeTab)?.group !== "config") return;
     const success = await saveConfig();
     if (success) {
       setSavedConfig(config);
