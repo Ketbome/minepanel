@@ -1215,6 +1215,8 @@ export const tr: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Sunucu klasörünü aç',
   openFileBrowser: 'Dosya yöneticisi',
   filesDesc: 'Sunucu dosyalarınıza göz atın, düzenleyin ve yönetin',
+  filesRunningWarning:
+    'Sunucu çalışıyor. Çoğu değişiklik yeniden başlatmadan sonra geçerli olur ve sunucu yönettiği dosyaların üzerine yazabilir. Dünya klasörünü düzenlemeden önce sunucuyu durdurun.',
   allServersFilesDesc: 'Tüm sunucularınızın dosyalarına göz atın ve yönetin',
   openInNewTab: 'Yeni sekmede aç',
   fileBrowserError: 'Dosya yöneticisi yüklenemedi',

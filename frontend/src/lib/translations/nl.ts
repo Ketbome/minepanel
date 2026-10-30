@@ -1214,6 +1214,8 @@ export const nl: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Server map openen',
   openFileBrowser: 'Bestandsbeheerder',
   filesDesc: 'Blader, bewerk en beheer je serverbestanden',
+  filesRunningWarning:
+    'De server is actief. De meeste wijzigingen gelden pas na een herstart, en de server kan bestanden overschrijven die hij zelf beheert. Stop hem voordat je de wereldmap bewerkt.',
   allServersFilesDesc: 'Blader en beheer bestanden van al je servers',
   openInNewTab: 'Openen in nieuw tabblad',
   fileBrowserError: 'Kan bestandsbeheerder niet laden',

@@ -1200,6 +1200,8 @@ export const de: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Server-Ordner öffnen',
   openFileBrowser: 'Dateimanager',
   filesDesc: 'Serverdateien durchsuchen, bearbeiten und verwalten',
+  filesRunningWarning:
+    'Der Server läuft. Die meisten Änderungen gelten erst nach einem Neustart, und der Server kann Dateien überschreiben, die er selbst verwaltet. Stoppe ihn, bevor du den Weltordner bearbeitest.',
   allServersFilesDesc: 'Dateien aller Server durchsuchen und verwalten',
   openInNewTab: 'In neuem Tab öffnen',
   fileBrowserError: 'Dateibrowser kann nicht geladen werden',

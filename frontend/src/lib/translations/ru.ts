@@ -1189,6 +1189,8 @@ export const ru: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Открыть папку сервера',
   openFileBrowser: 'Менеджер файлов',
   filesDesc: 'Просматривайте, изменяйте и управляйте файлами сервера',
+  filesRunningWarning:
+    'Сервер запущен. Большинство изменений вступят в силу после перезапуска, а сервер может перезаписать файлы, которыми управляет. Остановите его перед изменением папки мира.',
   allServersFilesDesc: 'Просматривайте и управляйте файлами всех серверов',
   openInNewTab: 'Открыть в новой вкладке',
   fileBrowserError: 'Не удалось загрузить File Browser',

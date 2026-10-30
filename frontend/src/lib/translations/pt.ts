@@ -1197,6 +1197,8 @@ export const pt: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Abrir pasta do servidor',
   openFileBrowser: 'Gerenciador de arquivos',
   filesDesc: 'Explore, edite e gerencie os arquivos do seu servidor',
+  filesRunningWarning:
+    'O servidor está em execução. A maioria das alterações só vale após reiniciar, e o servidor pode sobrescrever os arquivos que gerencia. Pare-o antes de editar a pasta do mundo.',
   allServersFilesDesc: 'Explore e gerencie arquivos de todos os seus servidores',
   openInNewTab: 'Abrir em nova aba',
   fileBrowserError: 'Não foi possível carregar o Gerenciador de Arquivos',

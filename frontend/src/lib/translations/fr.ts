@@ -1189,6 +1189,8 @@ export const fr: Record<TranslationKey, string> = {
   pluginsOpenServerFolder: 'Ouvrir le dossier du serveur',
   openFileBrowser: 'Gestionnaire de fichiers',
   filesDesc: 'Parcourir, modifier et gérer les fichiers de votre serveur',
+  filesRunningWarning:
+    'Le serveur est en cours d’exécution. La plupart des modifications s’appliquent après un redémarrage, et le serveur peut écraser les fichiers qu’il gère. Arrêtez-le avant de modifier le dossier du monde.',
   allServersFilesDesc: 'Parcourir et gérer les fichiers de tous vos serveurs',
   openInNewTab: 'Ouvrir dans un nouvel onglet',
   fileBrowserError: 'Impossible de charger le gestionnaire de fichiers',

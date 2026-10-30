@@ -10,9 +10,10 @@ interface FilesTabProps {
   serverId: string;
   minecraftVersion?: string;
   bedrock?: boolean;
+  running?: boolean;
 }
 
-export const FilesTab: FC<FilesTabProps> = ({ serverId, minecraftVersion, bedrock }) => {
+export const FilesTab: FC<FilesTabProps> = ({ serverId, minecraftVersion, bedrock, running }) => {
   const { t } = useLanguage();
 
   return (
@@ -33,7 +34,12 @@ export const FilesTab: FC<FilesTabProps> = ({ serverId, minecraftVersion, bedroc
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-4">
+        {running && (
+          <div className="p-3 rounded bg-amber-900/30 border border-amber-700/50">
+            <p className="text-amber-300 text-xs">{t("filesRunningWarning")}</p>
+          </div>
+        )}
         <FileBrowser serverId={serverId} minecraftVersion={minecraftVersion} bedrock={bedrock} />
       </CardContent>
     </Card>
