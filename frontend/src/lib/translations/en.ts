@@ -2419,6 +2419,13 @@ export const en = {
   diagnosisPortInUseFix: "Another server or program already uses this port. Change the port in Network.",
   logTraceShow: "Show more lines",
   logTraceHide: "Hide lines",
+
+  halloweenTheme: "Halloween theme",
+  halloweenPumpkin: "Jack o'lantern",
+  halloweenBlackout: "Lights out. Move the lantern to look around. Esc turns the lights back on.",
+  halloweenFound: "Found {n} of {total}",
+  halloweenAllFound: "You found them all. Happy Halloween!",
+  halloweenLightsOn: "Lights on",
 };
 
 export type TranslationKey = keyof typeof en;

@@ -2495,4 +2495,11 @@ export const tr: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Bu portu başka bir sunucu veya program zaten kullanıyor. Portu Ağ bölümünden değiştirin.",
   logTraceShow: "Daha fazla satır göster",
   logTraceHide: "Satırları gizle",
+
+  halloweenTheme: "Cadılar Bayramı teması",
+  halloweenPumpkin: "Bal kabağı feneri",
+  halloweenBlackout: "Işıklar söndü. Etrafa bakmak için feneri gezdir. Esc ışıkları geri açar.",
+  halloweenFound: "{total} taneden {n} bulundu",
+  halloweenAllFound: "Hepsini buldun. Mutlu Cadılar Bayramı!",
+  halloweenLightsOn: "Işıkları aç",
 };

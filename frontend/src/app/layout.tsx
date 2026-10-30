@@ -2,6 +2,7 @@ import type React from 'react';
 import type { Metadata } from 'next';
 import { Archivo, Archivo_Black, JetBrains_Mono } from 'next/font/google';
 import { PublicEnvScript } from '@/components/PublicEnvScript';
+import { SeasonLayer } from '@/components/organisms/halloween';
 import { Toaster } from '@/components/ui/sonner';
 import { LanguageProvider } from '@/lib/hooks/useLanguage';
 import { MotionProvider } from '@/lib/providers/motion-provider';
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
         <MotionProvider>
           <LanguageProvider>
             {children}
+            <SeasonLayer />
             <Toaster />
           </LanguageProvider>
         </MotionProvider>

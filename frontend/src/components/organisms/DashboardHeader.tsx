@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { getSessionUser, type SessionUser } from '@/services/auth/auth.service';
 import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
 import { AchievementsTrophy } from './settings/end/AchievementsTrophy';
+import { HalloweenHeader, HalloweenLantern, HalloweenToggle } from './halloween';
 
 type Crumb = { label: string; href?: string };
 
@@ -77,6 +78,7 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md animate-fade-in">
+      <HalloweenHeader />
       <div className="flex h-14 items-center gap-3 px-6">
         <nav aria-label="Breadcrumb" className="mp-tag flex min-w-0 items-center gap-2 truncate">
           {crumbs.map((crumb, index) => {
@@ -110,6 +112,8 @@ export function DashboardHeader() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <HalloweenLantern />
+          <HalloweenToggle />
           <AchievementsTrophy label={t('achievements')} lockedLabel={t('achievementsLocked')} />
           <GitHubStarButton label={t('github')} />
 

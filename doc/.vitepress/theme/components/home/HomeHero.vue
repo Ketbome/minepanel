@@ -1,3 +1,7 @@
+<script setup>
+import HalloweenGate from '../../halloween/HalloweenGate.vue';
+</script>
+
 <template>
   <header class="mp-hero" aria-label="Minepanel intro">
     <div class="mp-hero-copy" data-gsap="hero-copy">
@@ -21,6 +25,7 @@
     </div>
 
     <div class="mp-hero-terminal" data-gsap="hero-terminal">
+      <HalloweenGate part="hero" />
       <div class="mp-term">
         <div class="mp-term-bar">
           <span class="mp-term-path">~/minepanel</span>

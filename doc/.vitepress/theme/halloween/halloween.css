@@ -1,0 +1,285 @@
+/* Halloween season for the docs: only applies while <html data-season="halloween">.
+   Acid green stays the accent; pumpkin orange lives only in the art and its light.
+   The panel has the same theme in frontend/src/components/organisms/halloween/. */
+
+:root[data-season='halloween'] {
+  --mp-bg: #110c18;
+  --mp-bg-panel: #140e1d;
+  --mp-bg-elev: #1a1226;
+  --mp-border: #2a1f3a;
+  --mp-border-strong: #4a3566;
+  --mp-text: #f0ebf5;
+  --mp-muted: #b3a6c6;
+  --mp-dim: #7f6f96;
+  --mp-shadow-acid: 8px 8px 0 rgba(180, 108, 255, 0.16);
+  --mp-shadow-hard: 4px 4px 0 var(--mp-border-strong);
+}
+
+:root[data-season='halloween'] body,
+:root[data-season='halloween'] .mp-landing {
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% 110%, rgba(255, 138, 31, 0.07), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% -10%, rgba(180, 108, 255, 0.1), transparent 70%),
+    linear-gradient(rgba(180, 108, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 108, 255, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+}
+
+:root[data-season='halloween'] .mp-term {
+  position: relative;
+  z-index: 1;
+  box-shadow: 10px 10px 0 rgba(180, 108, 255, 0.18);
+}
+
+/* ---------------------------------------------------------------- voxel art */
+
+.hw-voxel {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.hw-voxel path {
+  stroke-width: 0.35;
+  stroke-linejoin: round;
+}
+
+.hw-voxel [data-part='shadow'] {
+  opacity: 0.5;
+}
+
+.hw-lit [data-part='eyes'],
+.hw-lit [data-part='mouth'],
+.hw-lit [data-part='flame'] {
+  animation: hw-ember 2.9s infinite;
+}
+
+/* a candle is never a sine wave: irregular stops */
+@keyframes hw-flicker {
+  0%, 100% { opacity: 0.86; transform: translate(-50%, -50%) scale(1); }
+  8% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+  12% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.04); }
+  29% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.99); }
+  35% { opacity: 0.93; transform: translate(-50%, -50%) scale(1.02); }
+  57% { opacity: 0.72; transform: translate(-50%, -50%) scale(0.96); }
+  61% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.01); }
+  80% { opacity: 0.82; transform: translate(-50%, -50%) scale(1.03); }
+}
+
+@keyframes hw-ember {
+  0%, 100% { opacity: 1; }
+  9% { opacity: 0.84; }
+  14% { opacity: 1; }
+  58% { opacity: 0.8; }
+  63% { opacity: 0.96; }
+}
+
+.hw-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 150, 50, 0.38), rgba(255, 120, 30, 0.12) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: hw-flicker 3.1s infinite;
+}
+
+/* two poses swapped like a flipbook */
+.hw-frames {
+  position: relative;
+}
+
+.hw-frames > * + * {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.hw-frames.is-moving > * {
+  animation: hw-frame-a 0.24s steps(1) infinite;
+}
+
+.hw-frames.is-moving > * + * {
+  animation-name: hw-frame-b;
+}
+
+@keyframes hw-frame-a {
+  0% { visibility: visible; }
+  50% { visibility: hidden; }
+}
+
+@keyframes hw-frame-b {
+  0% { visibility: hidden; }
+  50% { visibility: visible; }
+}
+
+/* ---------------------------------------------------------------- fog */
+
+.hw-fog {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 200px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+  mask-image: linear-gradient(to top, #000 25%, transparent);
+}
+
+/* soft banks of mist drawn with gradients: a tile that never shows a seam */
+.hw-fog i {
+  position: absolute;
+  inset: 0 -1200px 0 0;
+  background-image:
+    radial-gradient(ellipse 280px 70px at 300px 75%, rgba(205, 190, 240, 0.55), transparent 70%),
+    radial-gradient(ellipse 320px 60px at 640px 88%, rgba(205, 190, 240, 0.5), transparent 70%),
+    radial-gradient(ellipse 230px 55px at 930px 70%, rgba(205, 190, 240, 0.45), transparent 70%);
+  background-size: 1200px 100%;
+  opacity: 0.16;
+  animation: hw-drift 90s linear infinite;
+}
+
+.hw-fog i + i {
+  inset: 0 -1600px 0 0;
+  background-size: 1600px 100%;
+  opacity: 0.11;
+  animation: hw-drift-far 140s linear infinite reverse;
+}
+
+@keyframes hw-drift {
+  to { translate: -1200px 0; }
+}
+
+@keyframes hw-drift-far {
+  to { translate: -1600px 0; }
+}
+
+/* ---------------------------------------------------------------- pieces */
+
+.hw-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: 8px;
+  padding: 4px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+.hw-toggle[aria-pressed='false'] {
+  filter: grayscale(1) brightness(0.8);
+  opacity: 0.55;
+}
+
+.hw-toggle:hover {
+  opacity: 1;
+}
+
+.hw-toggle:focus-visible,
+.hw-hero-ghost:focus-visible {
+  outline: 2px solid var(--mp-acid);
+  outline-offset: 2px;
+}
+
+.hw-hero-patch {
+  position: absolute;
+  right: -70px;
+  top: -112px;
+  width: 170px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hw-hero-patch .hw-glow {
+  left: 45%;
+  top: 48%;
+  width: 420px;
+  height: 420px;
+}
+
+.hw-hero-patch .hw-voxel {
+  position: relative;
+}
+
+/* hides behind the terminal's top edge and rises when the pointer reaches the terminal */
+.hw-hero-ghost {
+  position: absolute;
+  left: 14%;
+  top: 0;
+  width: 92px;
+  z-index: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  translate: 0 0;
+  transition: translate 0.5s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.mp-hero-terminal:hover .hw-hero-ghost,
+.hw-hero-ghost:focus-visible {
+  translate: 0 -78%;
+}
+
+.hw-hero-ghost.is-spooked {
+  translate: 0 -40%;
+  transition-duration: 0.15s;
+}
+
+.hw-ghost-eyes [data-part='eyes'] {
+  transform: translate(var(--lx, 0), var(--ly, 0));
+  transition: transform 0.15s;
+}
+
+.hw-boo {
+  position: absolute;
+  left: 70%;
+  top: -18px;
+  padding: 2px 8px;
+  background: var(--mp-text);
+  color: var(--mp-bg);
+  font-family: var(--mp-font-display);
+  font-size: 14px;
+  box-shadow: 3px 3px 0 rgba(180, 108, 255, 0.5);
+  white-space: nowrap;
+}
+
+.hw-burst {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  translate: -50% -50%;
+  animation: hw-scatter 1.8s cubic-bezier(0.2, 0.6, 0.4, 1) both;
+}
+
+@keyframes hw-scatter {
+  from { transform: translate(0, 0) scale(0.4); opacity: 1; }
+  80% { opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+
+@media (max-width: 959px) {
+  .hw-hero-patch {
+    right: -8px;
+    top: -70px;
+    width: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-glow,
+  .hw-lit [data-part],
+  .hw-fog i,
+  .hw-frames > *,
+  .hw-burst {
+    animation: none !important;
+  }
+
+  .hw-burst {
+    display: none;
+  }
+}

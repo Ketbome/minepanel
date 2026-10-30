@@ -2446,4 +2446,11 @@ export const pl: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Inny serwer lub program już używa tego portu. Zmień port w Sieci.",
   logTraceShow: "Pokaż więcej linii",
   logTraceHide: "Ukryj linie",
+
+  halloweenTheme: "Motyw Halloween",
+  halloweenPumpkin: "Dyniowa latarnia",
+  halloweenBlackout: "Zgasło światło. Przesuwaj latarnię, żeby się rozejrzeć. Esc zapala światło.",
+  halloweenFound: "Znaleziono {n} z {total}",
+  halloweenAllFound: "Znalazłeś wszystkich. Wesołego Halloween!",
+  halloweenLightsOn: "Zapal światło",
 };

@@ -2444,4 +2444,11 @@ export const pt: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Outro servidor ou programa já usa esta porta. Altere a porta em Rede.",
   logTraceShow: "Mostrar mais linhas",
   logTraceHide: "Ocultar linhas",
+
+  halloweenTheme: "Tema de Halloween",
+  halloweenPumpkin: "Abóbora de Halloween",
+  halloweenBlackout: "A luz acabou. Mova a lanterna para olhar ao redor. Esc acende a luz de novo.",
+  halloweenFound: "Encontrou {n} de {total}",
+  halloweenAllFound: "Você encontrou todos. Feliz Halloween!",
+  halloweenLightsOn: "Acender a luz",
 };
