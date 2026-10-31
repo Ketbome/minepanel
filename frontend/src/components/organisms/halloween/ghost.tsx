@@ -28,8 +28,8 @@ export function Ghost() {
         const dy = e.clientY - (box.top + box.height * 0.4);
         const len = Math.hypot(dx, dy) || 1;
         const reach = Math.min(1, len / 260);
-        el.style.setProperty('--lx', `${(dx / len) * reach * 1.4}px`);
-        el.style.setProperty('--ly', `${(dy / len) * reach * 1.1}px`);
+        el.style.setProperty('--lx', `${(dx / len) * reach * 0.9}px`);
+        el.style.setProperty('--ly', `${(dy / len) * reach * 0.6}px`);
       });
     };
     document.addEventListener('focusin', password);

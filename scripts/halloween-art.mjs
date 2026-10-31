@@ -332,19 +332,15 @@ function spider(frame) {
   return render(m);
 }
 
-const GHOST_FACE = [
-  '.##...##.',
-  '.#@...#@.',
-  '.##...##.',
-  '.........',
-  'c..oo..c.',
-  '....o....',
-];
+// eyes, mouth and cheeks as columns along x - y, one voxel each: a carved column always spans
+// two of them, so two-wide marks smear into blobs
+const GHOST_FACE = { eyes: [-3, 3], mouth: 0, cheeks: [-5, 5] };
 
 function ghost(hands) {
   const m = new Model();
   const sheet = '#efeaff';
-  const R = 5;
+  const palm = '#d9cff2';
+  const R = 5.5;
   const H = 15;
   for (let x = 0; x < 2 * R; x++)
     for (let y = 0; y < 2 * R; y++)
@@ -356,27 +352,35 @@ function ghost(hands) {
         const hem = z < 2 && (z === 0 ? (x + y) % 2 === 0 : (x + 2 * y) % 5 === 0);
         if (dome && !hem) m.set(x, y, z, sheet, { grain: 0.025 });
       }
-  const colors = { '#': '#1a1024', '@': '#8c7bb0', o: '#2a1a38', c: '#ff9fc2' };
-  carve(m, GHOST_FACE, 0, 6, (x, y, z, ch) => m.set(x, y, z, colors[ch], { part: '#@'.includes(ch) ? 'eyes' : 'face', grain: 0 }));
-  // nubby hands: at the sides, or held up in front of the eyes
-  const nub = (d, s, z, tall = 2) => {
-    const x = (s + d) / 2;
-    const y = (s - d) / 2;
-    m.box(x, y, z, x + 1, y + 1, z + tall - 1, sheet, { part: 'hands', grain: 0.025 });
+  const paint = (d, z, color, part) => {
+    const [x, y] = front(m, d, z);
+    m.set(x, y, z, color, { part, grain: 0 });
   };
-  const eyeFront = (d) => {
-    const [x, y] = front(m, d, 10);
-    return x + y;
+  for (const d of GHOST_FACE.eyes) for (const z of [9, 10]) paint(d, z, '#1a1024', 'eyes');
+  for (const z of [6, 7]) paint(GHOST_FACE.mouth, z, '#2a1a38', 'face');
+  for (const d of GHOST_FACE.cheeks) paint(d, 8, '#ff9fc2', 'face');
+  // a palm in front of an eye hides it; a stub on the outermost column is a hand at rest
+  // (one step closer also draws one voxel lower, hence the palm sits a layer above the eye)
+  const cover = (d) => {
+    const [x, y] = front(m, d, 9);
+    const out = Math.sign(d);
+    m.box(x + 1, y + 1, 9, x + 1 + Math.max(out, 0), y + 1 + Math.max(-out, 0), 11, palm, { part: 'hands', grain: 0.025 });
+  };
+  const rest = (side) => {
+    let edge = null;
+    for (const c of m.cells.values()) if (c.z === 5 && (!edge || side * (c.x - c.y) > side * (edge.x - edge.y))) edge = c;
+    const [x, y] = side < 0 ? [edge.x, edge.y + 1] : [edge.x + 1, edge.y];
+    m.box(x, y, 4, x, y, 5, palm, { part: 'hands', grain: 0.025 });
   };
   if (hands === 'down') {
-    nub(-7, 8, 5);
-    nub(7, 8, 5);
+    rest(-1);
+    rest(1);
   } else {
-    nub(-2, eyeFront(-2) + 2, 9, 3);
-    if (hands === 'cover') nub(2, eyeFront(2) + 2, 9, 3);
-    else nub(7, 8, 6);
+    cover(GHOST_FACE.eyes[0]);
+    if (hands === 'cover') cover(GHOST_FACE.eyes[1]);
+    else rest(1);
   }
-  m.anchors.eyes = [R + 3.5, R + 3.5, 10];
+  m.anchors.eyes = [R, R, 10];
   return render(m);
 }
 
