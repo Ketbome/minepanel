@@ -2450,4 +2450,11 @@ export const de: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Ein anderer Server oder ein anderes Programm nutzt diesen Port bereits. Ändere den Port unter Netzwerk.",
   logTraceShow: "Mehr Zeilen anzeigen",
   logTraceHide: "Zeilen ausblenden",
+
+  halloweenTheme: "Halloween-Design",
+  halloweenPumpkin: "Kürbislaterne",
+  halloweenBlackout: "Licht aus. Bewege die Laterne, um dich umzusehen. Esc macht das Licht wieder an.",
+  halloweenFound: "{n} von {total} gefunden",
+  halloweenAllFound: "Du hast alle gefunden. Fröhliches Halloween!",
+  halloweenLightsOn: "Licht an",
 };

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { getCurrentUser, User } from '@/services/users/users.service';
 import { SidebarServerNav } from './SidebarServerNav';
 import { VersionBadge } from '../molecules/VersionBadge';
+import { HalloweenPumpkin } from './halloween';
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -263,7 +264,9 @@ export function Sidebar() {
             </div>
           </div>
 
-          <div className="flex-1" />
+          <div className="flex flex-1 items-end justify-center pb-2">
+            <HalloweenPumpkin collapsed={isCollapsed} />
+          </div>
 
           {/* External Links */}
           <div

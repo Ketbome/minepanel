@@ -1,6 +1,7 @@
 const defaultPublicEnv = {
   NEXT_PUBLIC_BACKEND_URL: '',
   NEXT_PUBLIC_DEFAULT_LANGUAGE: 'en',
+  NEXT_PUBLIC_SEASONAL_THEME: '',
 } as const;
 
 export type PublicEnvKey = keyof typeof defaultPublicEnv;
@@ -27,5 +28,6 @@ function readPublicEnv() {
   return {
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL ?? defaultPublicEnv.NEXT_PUBLIC_BACKEND_URL,
     NEXT_PUBLIC_DEFAULT_LANGUAGE: process.env.NEXT_PUBLIC_DEFAULT_LANGUAGE ?? defaultPublicEnv.NEXT_PUBLIC_DEFAULT_LANGUAGE,
+    NEXT_PUBLIC_SEASONAL_THEME: process.env.NEXT_PUBLIC_SEASONAL_THEME ?? defaultPublicEnv.NEXT_PUBLIC_SEASONAL_THEME,
   } as const;
 }

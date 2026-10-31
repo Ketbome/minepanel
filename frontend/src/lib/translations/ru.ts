@@ -2420,4 +2420,11 @@ export const ru: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Этот порт уже использует другой сервер или программа. Измените порт в разделе Сеть.",
   logTraceShow: "Показать больше строк",
   logTraceHide: "Скрыть строки",
+
+  halloweenTheme: "Тема Хэллоуина",
+  halloweenPumpkin: "Тыква-фонарь",
+  halloweenBlackout: "Свет погас. Двигай фонарь, чтобы осмотреться. Esc снова включает свет.",
+  halloweenFound: "Найдено {n} из {total}",
+  halloweenAllFound: "Ты нашёл всех. Счастливого Хэллоуина!",
+  halloweenLightsOn: "Включить свет",
 };

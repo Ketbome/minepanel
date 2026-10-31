@@ -675,6 +675,7 @@ This integration sends notifications; it does not receive chat commands.
 | Update notices   | Release notes for every version between yours and the newest, flagged when a change is breaking |
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
 | End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone, see below |
+| Halloween theme | From October 24 to November 1 the panel and these docs dress up in hand-built voxel art, with a few surprises for the curious. The pumpkin in the header turns it off in your browser; `NEXT_PUBLIC_SEASONAL_THEME=false` turns it off in your panel for every user |
 
 ### End Portal expedition
 

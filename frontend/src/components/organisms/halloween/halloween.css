@@ -1,0 +1,464 @@
+/* Halloween season: only applies while <html data-season="halloween">, which the lazy season
+   layer sets. Acid green stays the one UI accent; pumpkin orange lives only in art and light. */
+
+:root[data-season='halloween'] {
+  --background: #110c18;
+  --foreground: #f0ebf5;
+  --card: #171021;
+  --card-foreground: #f0ebf5;
+  --popover: #171021;
+  --popover-foreground: #f0ebf5;
+  --primary: #2a1f3a;
+  --secondary: #221832;
+  --muted: #221832;
+  --muted-foreground: #b3a6c6;
+  --accent: #2a1f3a;
+  --border: #2a1f3a;
+  --input: #2a1f3a;
+  --sidebar: #171021;
+  --sidebar-accent: #2a1f3a;
+  --sidebar-border: #2a1f3a;
+  --sidebar-primary-foreground: #110c18;
+
+  --mc-frame: #0c0812;
+  --mc-stone: #171021;
+  --mc-stone-deep: #130d1b;
+
+  --color-gray-100: #f6f2fa;
+  --color-gray-200: #f0ebf5;
+  --color-gray-300: #d3c9e0;
+  --color-gray-400: #ae9fc4;
+  --color-gray-500: #7f6f96;
+  --color-gray-600: #54456a;
+  --color-gray-700: #2a1f3a;
+  --color-gray-800: #171021;
+  --color-gray-900: #130d1b;
+  --color-gray-950: #0c0812;
+
+  --season-pumpkin: #ff8a1f;
+  --season-ember: #ffc46b;
+  --season-soul: #5fe0ff;
+}
+
+:root[data-season='halloween'] .mp-blueprint {
+  background-color: var(--mc-frame);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% 110%, rgba(255, 138, 31, 0.07), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% -10%, rgba(180, 108, 255, 0.09), transparent 70%),
+    linear-gradient(rgba(180, 108, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 108, 255, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+}
+
+:root[data-season='halloween'] .mc-panel {
+  box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.08), inset -3px -3px 0 rgba(0, 0, 0, 0.5), 6px 6px 0 rgba(180, 108, 255, 0.12);
+}
+
+/* ---------------------------------------------------------------- voxel art */
+
+.hw-voxel {
+  display: block;
+  overflow: visible;
+}
+
+.hw-voxel path {
+  stroke-width: 0.35;
+  stroke-linejoin: round;
+}
+
+.hw-voxel [data-part='shadow'] {
+  opacity: 0.5;
+}
+
+/* emissive blocks breathe with the candle */
+.hw-lit [data-part='eyes'],
+.hw-lit [data-part='mouth'],
+.hw-lit [data-part='flame'] {
+  animation: hw-ember 2.9s infinite;
+}
+
+/* a candle is never a sine wave: irregular stops, each light out of phase with the others */
+@keyframes hw-flicker {
+  0%, 100% { opacity: 0.86; transform: translate(-50%, -50%) scale(1); }
+  8% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+  12% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.04); }
+  29% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.99); }
+  35% { opacity: 0.93; transform: translate(-50%, -50%) scale(1.02); }
+  57% { opacity: 0.72; transform: translate(-50%, -50%) scale(0.96); }
+  61% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.01); }
+  80% { opacity: 0.82; transform: translate(-50%, -50%) scale(1.03); }
+}
+
+@keyframes hw-ember {
+  0%, 100% { opacity: 1; }
+  9% { opacity: 0.84; }
+  14% { opacity: 1; }
+  58% { opacity: 0.8; }
+  63% { opacity: 0.96; }
+}
+
+.hw-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 150, 50, 0.38), rgba(255, 120, 30, 0.12) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: hw-flicker 3.1s infinite;
+}
+
+.hw-glow--soul {
+  background: radial-gradient(circle, rgba(95, 224, 255, 0.42), rgba(95, 224, 255, 0.12) 40%, transparent 70%);
+  animation-duration: 0.9s;
+}
+
+/* ---------------------------------------------------------------- fog */
+
+.hw-fog {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 200px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+  mask-image: linear-gradient(to top, #000 25%, transparent);
+}
+
+/* soft banks of mist drawn with gradients: a tile that never shows a seam */
+.hw-fog i {
+  position: absolute;
+  inset: 0 -1200px 0 0;
+  background-image:
+    radial-gradient(ellipse 280px 70px at 300px 75%, rgba(205, 190, 240, 0.55), transparent 70%),
+    radial-gradient(ellipse 320px 60px at 640px 88%, rgba(205, 190, 240, 0.5), transparent 70%),
+    radial-gradient(ellipse 230px 55px at 930px 70%, rgba(205, 190, 240, 0.45), transparent 70%);
+  background-size: 1200px 100%;
+  opacity: 0.16;
+  animation: hw-drift 90s linear infinite;
+}
+
+.hw-fog i + i {
+  inset: 0 -1600px 0 0;
+  background-size: 1600px 100%;
+  opacity: 0.11;
+  animation: hw-drift-far 140s linear infinite reverse;
+}
+
+@keyframes hw-drift {
+  to { translate: -1200px 0; }
+}
+
+@keyframes hw-drift-far {
+  to { translate: -1600px 0; }
+}
+
+/* ---------------------------------------------------------------- pieces */
+
+.hw-pumpkin {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hw-pumpkin:focus-visible {
+  outline: 2px solid var(--mc-emerald);
+  outline-offset: 4px;
+}
+
+.hw-pumpkin .hw-voxel {
+  position: relative;
+  transition: transform 0.12s steps(2);
+}
+
+.hw-pumpkin.is-poked .hw-voxel {
+  transform: scale(1.08, 0.9) translateY(4%);
+}
+
+.hw-pumpkin.is-angry .hw-voxel {
+  animation: hw-shake 0.12s steps(2) infinite;
+}
+
+@keyframes hw-shake {
+  50% { transform: translateX(1.5px); }
+}
+
+.hw-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--season-soul);
+  box-shadow: 0 0 6px var(--season-soul);
+  pointer-events: none;
+  animation: hw-spark 0.9s steps(9) forwards;
+}
+
+@keyframes hw-spark {
+  from { transform: translate(0, 0); opacity: 1; }
+  to { transform: translate(var(--sx), var(--sy)); opacity: 0; }
+}
+
+.hw-lantern {
+  position: relative;
+  transform-origin: 50% 0;
+  animation: hw-swing 5.5s ease-in-out infinite;
+}
+
+@keyframes hw-swing {
+  0%, 100% { rotate: 4deg; }
+  50% { rotate: -4deg; }
+}
+
+.hw-spider {
+  position: absolute;
+  top: 100%;
+  pointer-events: none;
+}
+
+.hw-spider__thread {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  background: linear-gradient(rgba(220, 210, 240, 0.15), rgba(220, 210, 240, 0.5));
+  height: var(--drop);
+  transition: height 0.9s cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+.hw-spider__body {
+  position: absolute;
+  left: 50%;
+  top: var(--drop);
+  translate: -50% -10%;
+  pointer-events: auto;
+  transform-origin: 50% 0;
+  animation: hw-dangle 4.2s ease-in-out infinite;
+  transition: top 0.9s cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+.hw-spider.is-up .hw-spider__thread {
+  height: 4px;
+}
+
+.hw-spider.is-up .hw-spider__body {
+  top: 4px;
+}
+
+@keyframes hw-dangle {
+  0%, 100% { rotate: 3deg; }
+  50% { rotate: -3deg; }
+}
+
+/* two leg poses swapped like a flipbook while it climbs */
+.hw-frames > * + * {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.hw-frames.is-moving > * {
+  animation: hw-frame-a 0.24s steps(1) infinite;
+  animation-delay: var(--flap, 0s);
+}
+
+.hw-frames.is-moving > * + * {
+  animation-name: hw-frame-b;
+}
+
+@keyframes hw-frame-a {
+  0% { visibility: visible; }
+  50% { visibility: hidden; }
+}
+
+@keyframes hw-frame-b {
+  0% { visibility: hidden; }
+  50% { visibility: visible; }
+}
+
+.hw-cobweb {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.hw-ghost {
+  animation: hw-float 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 18px rgba(200, 180, 255, 0.25));
+}
+
+.hw-ghost [data-part='eyes'] {
+  transform: translate(var(--lx, 0), var(--ly, 0));
+  transition: transform 0.15s;
+}
+
+@keyframes hw-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+.hw-bat {
+  position: absolute;
+  animation: hw-flutter 7s ease-in-out infinite;
+}
+
+@keyframes hw-flutter {
+  0%, 100% { translate: 0 0; }
+  25% { translate: 14px -18px; }
+  50% { translate: -6px -8px; }
+  75% { translate: -14px -22px; }
+}
+
+.hw-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+.hw-toggle[aria-pressed='false'] {
+  filter: grayscale(1) brightness(0.8);
+  opacity: 0.55;
+}
+
+.hw-toggle:hover {
+  opacity: 1;
+}
+
+.hw-toggle:focus-visible {
+  outline: 2px solid var(--mc-emerald);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- blackout */
+
+.hw-blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  cursor: none;
+  overflow: hidden;
+  touch-action: none;
+  animation: hw-fade-in 0.5s steps(5);
+}
+
+.hw-blackout__dark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle var(--r, 170px) at var(--x, 50%) var(--y, 50%),
+    rgba(255, 190, 110, 0.07),
+    rgba(6, 3, 12, 0.55) 55%,
+    rgb(6, 3, 12) 100%
+  );
+}
+
+.hw-blackout__lamp {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  width: 34px;
+  pointer-events: none;
+  translate: -50% -15%;
+}
+
+.hw-blackout__hud {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-gray-300);
+  text-align: center;
+  cursor: auto;
+}
+
+.hw-blackout__hud button {
+  cursor: pointer;
+}
+
+.hw-creature {
+  position: absolute;
+  pointer-events: none;
+}
+
+.hw-creature.is-found {
+  transition: translate 0.6s cubic-bezier(0.6, 0, 0.9, 0.4), opacity 0.6s;
+}
+
+/* caught in the light it covers its face and shakes, then drops out of sight */
+.hw-rake.is-found {
+  animation: hw-shake 0.08s steps(2) 10;
+  transition-delay: 0.9s;
+}
+
+.hw-dark-eyes {
+  position: absolute;
+  display: flex;
+  gap: 14px;
+  pointer-events: none;
+  animation: hw-blink 4.5s steps(1) infinite;
+}
+
+.hw-dark-eyes i {
+  width: 12px;
+  height: 6px;
+  background: #ffe7a3;
+  box-shadow: 0 0 10px 2px rgba(255, 200, 90, 0.7);
+  clip-path: polygon(0 100%, 30% 0, 100% 40%, 85% 100%);
+}
+
+.hw-dark-eyes i + i {
+  transform: scaleX(-1);
+}
+
+.hw-dark-eyes.is-found {
+  animation: none;
+  transition: opacity 0.3s steps(3);
+  opacity: 0;
+}
+
+@keyframes hw-blink {
+  0%, 46%, 50%, 100% { opacity: 1; }
+  47%, 49% { opacity: 0; }
+}
+
+@keyframes hw-fade-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-glow,
+  .hw-lit [data-part],
+  .hw-fog i,
+  .hw-lantern,
+  .hw-spider__body,
+  .hw-ghost,
+  .hw-bat,
+  .hw-dark-eyes,
+  .hw-frames > *,
+  .hw-pumpkin.is-angry .hw-voxel,
+  .hw-rake.is-found,
+  .hw-blackout {
+    animation: none !important;
+  }
+
+  .hw-spark {
+    display: none;
+  }
+}

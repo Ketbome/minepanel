@@ -2423,4 +2423,11 @@ export const fr: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Un autre serveur ou programme utilise déjà ce port. Changez le port dans Réseau.",
   logTraceShow: "Afficher plus de lignes",
   logTraceHide: "Masquer les lignes",
+
+  halloweenTheme: "Thème d'Halloween",
+  halloweenPumpkin: "Citrouille d'Halloween",
+  halloweenBlackout: "Lumières éteintes. Déplace la lanterne pour regarder autour. Échap rallume la lumière.",
+  halloweenFound: "{n} sur {total} trouvés",
+  halloweenAllFound: "Tu les as tous trouvés. Joyeux Halloween !",
+  halloweenLightsOn: "Rallumer",
 };

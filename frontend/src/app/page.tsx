@@ -34,6 +34,7 @@ import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
 import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
+import { HalloweenBats, HalloweenGhost, HalloweenToggle, useHalloween } from '@/components/organisms/halloween';
 
 type AuthView = 'login' | 'setup' | 'forgot' | 'reset' | 'invite';
 
@@ -75,6 +76,7 @@ function HomeContent() {
   const inviteToken = searchParams.get('inviteToken');
   const ssoError = searchParams.get('ssoError');
   const { t } = useLanguage();
+  const halloween = useHalloween();
 
   const sso = setupStatus?.sso;
   const ssoEnabled = !!sso?.enabled;
@@ -322,36 +324,40 @@ function HomeContent() {
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
       <div className="relative flex min-h-screen flex-col overflow-hidden mp-blueprint">
 
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <m.div
-            animate={{ y: [0, -20, 0], x: [0, 10, 0], rotate: [0, 5, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute left-10 top-20 opacity-20"
-          >
-            <Image src="/images/grass.webp" alt="" width={60} height={60} />
-          </m.div>
-          <m.div
-            animate={{ y: [0, 20, 0], x: [0, -15, 0], rotate: [0, -5, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute right-20 top-40 opacity-20"
-          >
-            <Image src="/images/diamond.webp" alt="" width={50} height={50} />
-          </m.div>
-          <m.div
-            animate={{ y: [0, -25, 0], x: [0, 12, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            className="absolute bottom-32 left-1/4 opacity-15"
-          >
-            <Image src="/images/grass.webp" alt="" width={45} height={45} />
-          </m.div>
-          <m.div
-            animate={{ y: [0, 18, 0], rotate: [0, 10, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-            className="absolute bottom-20 right-1/4 opacity-15"
-          >
-            <Image src="/images/diamond.webp" alt="" width={55} height={55} />
-          </m.div>
-        </div>
+        {halloween ? (
+          <HalloweenBats />
+        ) : (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <m.div
+              animate={{ y: [0, -20, 0], x: [0, 10, 0], rotate: [0, 5, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute left-10 top-20 opacity-20"
+            >
+              <Image src="/images/grass.webp" alt="" width={60} height={60} />
+            </m.div>
+            <m.div
+              animate={{ y: [0, 20, 0], x: [0, -15, 0], rotate: [0, -5, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              className="absolute right-20 top-40 opacity-20"
+            >
+              <Image src="/images/diamond.webp" alt="" width={50} height={50} />
+            </m.div>
+            <m.div
+              animate={{ y: [0, -25, 0], x: [0, 12, 0] }}
+              transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+              className="absolute bottom-32 left-1/4 opacity-15"
+            >
+              <Image src="/images/grass.webp" alt="" width={45} height={45} />
+            </m.div>
+            <m.div
+              animate={{ y: [0, 18, 0], rotate: [0, 10, 0] }}
+              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+              className="absolute bottom-20 right-1/4 opacity-15"
+            >
+              <Image src="/images/diamond.webp" alt="" width={55} height={55} />
+            </m.div>
+          </div>
+        )}
 
         <header className="relative z-10 mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
@@ -371,6 +377,7 @@ function HomeContent() {
               </span>
             </Link>
             <div className="flex items-center gap-3">
+              <HalloweenToggle />
               <GitHubStarButton label={t('github')} />
               <LanguageSwitcher />
             </div>
@@ -413,6 +420,9 @@ function HomeContent() {
               className="relative"
             >
               <div className="absolute -inset-1 animate-pulse bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 opacity-30 blur-lg" />
+              <div className="absolute bottom-0 right-full mr-8 hidden w-28 lg:block">
+                <HalloweenGhost />
+              </div>
 
               <div className="mc-panel relative backdrop-blur-md">
                 <form onSubmit={handleSubmit}>

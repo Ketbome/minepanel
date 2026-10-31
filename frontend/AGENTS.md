@@ -118,6 +118,12 @@ Design system (Minecraft GUI, converged with the docs brand):
   on GUI surfaces, since it is inherited by the sprites inside them.
 - No perpetual decorative motion in operating screens (no floating item rows or bobbing
   header icons); motion is for state changes.
+  The one exception is the Halloween season theme (`components/organisms/halloween/`,
+  gated by `useSeasonStore` in `lib/store/season-store.ts`): app code imports only the wrappers
+  in its `index.tsx`, which render nothing out of season and lazy-load the art, CSS and sounds.
+  Its colors are token overrides under `:root[data-season='halloween']`; pumpkin orange stays in
+  the art and its light, never on buttons. Scares start only from a user action (pumpkin clicks,
+  the Konami code) and every animation stops under `prefers-reduced-motion`.
 
 Auth/session patterns:
 

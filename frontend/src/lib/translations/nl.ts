@@ -2454,4 +2454,11 @@ export const nl: Record<TranslationKey, string> = {
   diagnosisPortInUseFix: "Een andere server of een ander programma gebruikt deze poort al. Wijzig de poort onder Netwerk.",
   logTraceShow: "Meer regels tonen",
   logTraceHide: "Regels verbergen",
+
+  halloweenTheme: "Halloween-thema",
+  halloweenPumpkin: "Halloweenpompoen",
+  halloweenBlackout: "Licht uit. Beweeg de lantaarn om rond te kijken. Esc doet het licht weer aan.",
+  halloweenFound: "{n} van {total} gevonden",
+  halloweenAllFound: "Je hebt ze allemaal gevonden. Fijne Halloween!",
+  halloweenLightsOn: "Licht aan",
 };
