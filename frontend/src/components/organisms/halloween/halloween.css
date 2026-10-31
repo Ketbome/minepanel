@@ -451,7 +451,14 @@
   .hw-ghost,
   .hw-bat,
   .hw-dark-eyes,
-  .hw-frames > * {
+  .hw-frames > *,
+  .hw-pumpkin.is-angry .hw-voxel,
+  .hw-rake.is-found,
+  .hw-blackout {
     animation: none !important;
+  }
+
+  .hw-spark {
+    display: none;
   }
 }

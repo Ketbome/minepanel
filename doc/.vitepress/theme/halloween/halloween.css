@@ -271,6 +271,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hw-hero-ghost,
+  .hw-ghost-eyes [data-part='eyes'] {
+    transition: none !important;
+  }
+
   .hw-glow,
   .hw-lit [data-part],
   .hw-fog i,
