@@ -1,4 +1,5 @@
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { DiscordRoutingService } from 'src/discord/discord-routing.service';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { exec, spawn } from 'node:child_process';
 import type { ExecOptions, SpawnOptionsWithoutStdio } from 'node:child_process';
@@ -199,6 +200,7 @@ export class ServerManagementService {
     @InjectRepository(Settings)
     private readonly settingsRepo: Repository<Settings>,
     private readonly notificationsService: NotificationsService,
+    private readonly discordRouting: DiscordRoutingService,
     private readonly alertsService: AlertsService,
     private readonly store: ServerStoreService,
     private readonly instanceSettings: InstanceSettingsService,
@@ -821,52 +823,67 @@ export class ServerManagementService {
     }
   }
 
+  private async serverNotificationPayload(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }) {
+    const userSettings = await this.getUserSettings();
+
+    const enrichedDetails = { ...details };
+
+    // Get port if not provided
+    if (!enrichedDetails.port) {
+      enrichedDetails.port = await this.getServerPort(serverName);
+    }
+
+    const config = await this.store.readConfig(serverName).catch(() => null);
+    if (config?.minecraftVersion) enrichedDetails.version ??= config.minecraftVersion;
+    const modpack = config && this.describeModpack(config);
+    if (modpack) enrichedDetails.modpack ??= modpack;
+
+    // Get server edition - proxy only works with Java
+    const edition = await this.getServerEdition(serverName);
+    const supportsProxy = edition === 'JAVA';
+
+    // Priority: 1. Proxy hostname (Java only), 2. Settings IP, 3. ENV, 4. undefined
+    if (supportsProxy && userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
+      // When proxy is active, use hostname instead of IP:port
+      const proxyHostname = await this.getServerProxyHostname(serverName, userSettings.proxyBaseDomain);
+      if (proxyHostname) {
+        enrichedDetails.ip = proxyHostname;
+        enrichedDetails.port = undefined; // Don't show port with proxy hostname
+        enrichedDetails.lanIp = undefined; // LAN IP not relevant with proxy
+      }
+    } else {
+      // No proxy or Bedrock - use IP:port from settings
+      if (!enrichedDetails.ip) {
+        enrichedDetails.ip = userSettings.publicIp || undefined;
+      }
+      if (!enrichedDetails.lanIp) {
+        enrichedDetails.lanIp = userSettings.lanIp || undefined;
+      }
+      // A Velocity member publishes no port of its own: players come in through the proxy.
+      if (supportsProxy && (await this.isVelocityMember(serverName))) {
+        enrichedDetails.port = (await this.instanceSettings.getRouterSettings()).proxyPort;
+      }
+    }
+
+    return { webhook: userSettings.webhook || '', type, serverName, lang: userSettings.lang, details: enrichedDetails };
+  }
+
   private async sendServerNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<void> {
     try {
-      const userSettings = await this.getUserSettings();
-
-      const enrichedDetails = { ...details };
-
-      // Get port if not provided
-      if (!enrichedDetails.port) {
-        enrichedDetails.port = await this.getServerPort(serverName);
-      }
-
-      const config = await this.store.readConfig(serverName).catch(() => null);
-      if (config?.minecraftVersion) enrichedDetails.version ??= config.minecraftVersion;
-      const modpack = config && this.describeModpack(config);
-      if (modpack) enrichedDetails.modpack ??= modpack;
-
-      // Get server edition - proxy only works with Java
-      const edition = await this.getServerEdition(serverName);
-      const supportsProxy = edition === 'JAVA';
-
-      // Priority: 1. Proxy hostname (Java only), 2. Settings IP, 3. ENV, 4. undefined
-      if (supportsProxy && userSettings.proxyEnabled && userSettings.proxyBaseDomain) {
-        // When proxy is active, use hostname instead of IP:port
-        const proxyHostname = await this.getServerProxyHostname(serverName, userSettings.proxyBaseDomain);
-        if (proxyHostname) {
-          enrichedDetails.ip = proxyHostname;
-          enrichedDetails.port = undefined; // Don't show port with proxy hostname
-          enrichedDetails.lanIp = undefined; // LAN IP not relevant with proxy
-        }
-      } else {
-        // No proxy or Bedrock - use IP:port from settings
-        if (!enrichedDetails.ip) {
-          enrichedDetails.ip = userSettings.publicIp || undefined;
-        }
-        if (!enrichedDetails.lanIp) {
-          enrichedDetails.lanIp = userSettings.lanIp || undefined;
-        }
-        // A Velocity member publishes no port of its own: players come in through the proxy.
-        if (supportsProxy && (await this.isVelocityMember(serverName))) {
-          enrichedDetails.port = (await this.instanceSettings.getRouterSettings()).proxyPort;
-        }
-      }
-
-      await this.notificationsService.sendServerNotification(userSettings.webhook || '', type, serverName, userSettings.lang, enrichedDetails);
+      const payload = await this.serverNotificationPayload(type, serverName, details);
+      await this.notificationsService.sendServerNotification(payload.webhook, payload.type, payload.serverName, payload.lang, payload.details);
     } catch (error) {
       this.logger.error('Server notification error', error);
+    }
+  }
+
+  private async prepareServerNotification(type: ServerEventType, serverName: string, details?: { port?: string; ip?: string; lanIp?: string; players?: string; version?: string; modpack?: string; reason?: string }): Promise<(() => Promise<void>) | null> {
+    try {
+      const payload = await this.serverNotificationPayload(type, serverName, details);
+      return await this.notificationsService.prepareServerNotification(payload.webhook, payload.type, payload.serverName, payload.lang, payload.details);
+    } catch (error) {
+      this.logger.error('Server notification error', error);
+      return null;
     }
   }
 
@@ -1299,12 +1316,17 @@ export class ServerManagementService {
         this.logger.warn(`Could not clean up docker volumes for ${serverId}`, error);
       }
 
+      // Capture the notification's targets before cleanup removes the routes and
+      // config, then send after the server is gone so deletion never waits on Discord.
+      const deletedNotification = await this.prepareServerNotification('deleted', serverId);
+      await this.discordRouting.removeForServer(serverId);
+
       await fs.remove(serverDir);
       this.alertsService.clearState(serverId);
       await this.store.removeFromIndex(serverId);
 
       this.logger.log(`Server ${serverId} deleted successfully`);
-      void this.sendServerNotification('deleted', serverId);
+      void deletedNotification?.();
 
       return true;
     } catch (error) {

@@ -89,15 +89,21 @@ export class NotificationsService {
   }
 
   async sendServerNotification(webhook: string, type: ServerEventType, serverName: string, lang: SupportedLanguage, details?: ServerDetails): Promise<void> {
+    const send = await this.prepareServerNotification(webhook, type, serverName, lang, details);
+    await send();
+  }
+
+  /** Builds a lifecycle message and captures its targets without sending it yet. */
+  async prepareServerNotification(webhook: string, type: ServerEventType, serverName: string, lang: SupportedLanguage, details?: ServerDetails): Promise<() => Promise<void>> {
     const config = await this.settings.getNotifications();
-    if (!config.lifecycleEnabled) return;
+    if (!config.lifecycleEnabled) return async () => undefined;
     const event = getRandomEvent(lang, type);
     const text = [serverName, event.description, ...Object.entries(details ?? {}).filter(([, value]) => value).map(([key, value]) => `${key}: ${value}`)].join('\n');
     const mention = this.discordMention(config, 'lifecycle');
     const senders = await this.discordSenders(serverName, 'lifecycle', webhook, config.discordChannelMode, (url, prefix) =>
       this.discord.sendServerNotification(url, type, prefix ? prefix : serverName, lang, details, mention, prefix),
     );
-    await this.deliver(config, event.title, text, senders);
+    return () => this.deliver(config, event.title, text, senders);
   }
 
   async sendCustomMessage(webhook: string, title: string, description: string, color: 'error' | 'warning' | 'success', fields: NotificationField[], kind: DiscordAlertKind, serverId?: string): Promise<void> {

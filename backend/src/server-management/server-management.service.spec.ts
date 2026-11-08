@@ -8,6 +8,7 @@ import { MetricSample } from '../metrics/entities/metric-sample.entity';
 import { LogPreset } from '../log-presets/entities/log-preset.entity';
 import { ScheduledTask } from '../scheduled-tasks/entities/scheduled-task.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DiscordRoutingService } from '../discord/discord-routing.service';
 
 // Mock fs-extra with factory function
 jest.mock('fs-extra', () => ({
@@ -77,6 +78,7 @@ describe('ServerManagementService', () => {
 
     const mockDiscordService = {
       sendServerNotification: jest.fn(),
+      prepareServerNotification: jest.fn().mockResolvedValue(jest.fn()),
     };
 
     const mockAlertsService = {
@@ -116,6 +118,7 @@ describe('ServerManagementService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: getRepositoryToken(Settings), useValue: mockSettingsRepo },
         { provide: NotificationsService, useValue: mockDiscordService },
+        { provide: DiscordRoutingService, useValue: { removeForServer: jest.fn() } },
         { provide: AlertsService, useValue: mockAlertsService },
         { provide: ServerStoreService, useValue: mockStore },
         { provide: DockerComposeService, useValue: mockDockerComposeService },
@@ -407,7 +410,8 @@ describe('ServerManagementService', () => {
             },
           },
           { provide: getRepositoryToken(Settings), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
-          { provide: NotificationsService, useValue: { sendServerNotification: jest.fn() } },
+          { provide: NotificationsService, useValue: { sendServerNotification: jest.fn(), prepareServerNotification: jest.fn().mockResolvedValue(jest.fn()) } },
+          { provide: DiscordRoutingService, useValue: { removeForServer: jest.fn() } },
           { provide: AlertsService, useValue: { markExpectedStop: jest.fn() } },
           { provide: ServerStoreService, useValue: { readConfig: jest.fn() } },
           { provide: DockerComposeService, useValue: { refreshComposeFile: jest.fn().mockResolvedValue(true) } },

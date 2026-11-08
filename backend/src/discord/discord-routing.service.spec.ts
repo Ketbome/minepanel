@@ -108,6 +108,23 @@ describe('DiscordRoutingService', () => {
     await expect(service.resolve('srv', 'down')).resolves.toBeNull();
   });
 
+  it('removes only a deleted server’s routes and owned webhooks', async () => {
+    const own = await service.create('srv', { name: 'Ops', url: WEBHOOK });
+    const shared = await service.create('srv', { name: 'Community', url: WEBHOOK, shared: true });
+    const other = await service.create('other', { name: 'Other', url: WEBHOOK });
+    await service.setRoutes('srv', { chat: own.id, down: shared.id });
+    await service.setRoutes('other', { chat: other.id });
+
+    await service.removeForServer('srv');
+
+    await expect(webhooks.findOneBy({ id: own.id })).resolves.toBeNull();
+    await expect(webhooks.findOneBy({ id: shared.id })).resolves.not.toBeNull();
+    await expect(webhooks.findOneBy({ id: other.id })).resolves.not.toBeNull();
+    await expect(routes.findOneBy({ serverId: 'srv', eventKey: 'chat' })).resolves.toBeNull();
+    await expect(routes.findOneBy({ serverId: 'srv', eventKey: 'down' })).resolves.toBeNull();
+    await expect(routes.findOneBy({ serverId: 'other', eventKey: 'chat' })).resolves.not.toBeNull();
+  });
+
   it('renames and re-points an own webhook but refuses a foreign one', async () => {
     const hook = await service.create('srv', { name: 'Old', url: WEBHOOK });
     const updated = await service.update('srv', hook.id, { name: 'New', url: `${WEBHOOK}-2` });
