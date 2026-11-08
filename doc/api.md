@@ -393,7 +393,7 @@ Examples:
   even if automatic delivery is disabled. Returns `{ success, message }`.
 
 `PATCH /settings/integrations` accepts a nested `notifications` object:
-`{ ntfyEnabled?, ntfyServerUrl?, ntfyTopic?, ntfyToken?, slackEnabled?, slackWebhook?, discordEnabled?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
+`{ ntfyEnabled?, ntfyServerUrl?, ntfyTopic?, ntfyToken?, slackEnabled?, slackWebhook?, discordEnabled?, discordMentionType?, discordMentionId?, discordMentionOn?, discordChannelMode?, emailEnabled?, emailTo?, telegramEnabled?, telegramToken?,
 telegramChatId?, lifecycleEnabled?, alertsEnabled?, diskAlertEnabled?,
 backupFailureEnabled?, recoveryEnabled?, diskFreeThresholdPercent?, alertCooldownMinutes?, taskFailureEnabled?, gameAlertEnabled?, staleBackupEnabled?,
 gameFailureSamples?, gameStartupGraceMinutes?, staleBackupToleranceMinutes? }`. These are instance-wide,
@@ -401,7 +401,15 @@ admin-managed destinations for all servers. Email accepts one address. Telegram 
 numeric chat ID or `@channel_username`; enabled channels require their destination (and
 Telegram requires a token). `telegramToken` is write-only: omit to keep, `""` to clear.
 The GET/PATCH responses expose `hasTelegramToken`, never the token. Discord continues
-using the existing first configured user webhook. New channels default to disabled;
+using the existing first configured user webhook. `discordChannelMode` is `per-server`
+(the default, so existing installs keep their routing) or `shared`; shared mode sends every
+server's unrouted activity and alerts to that webhook, prefixed with the server name.
+`discordMentionType` is `none`, `here`, `everyone`, `role` or `user`; `role` and `user`
+require `discordMentionId`, a 17–20 digit Discord ID. `discordMentionOn` is `errors`
+(the default: server down, crash loops, backup failures and task failures) or `all`,
+which also pings for CPU/RAM, disk, stale backups, game queries, recovery and lifecycle
+events. The mention token is the only message content and every Discord POST states
+`allowed_mentions`, so server names can never ping a channel. New channels default to disabled;
 Discord and both event groups default to enabled. The additional disk/backup/recovery rules
 start disabled. `diskFreeThresholdPercent` is 1–50 (default 10), `alertCooldownMinutes` is
 1–10080 (default 60). Per-type switches control which automatic messages are sent.

@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ActivityEventKey } from './discord-events';
-import { DiscordRoutingService } from './discord-routing.service';
+import { DiscordRoutingService, DiscordTarget } from './discord-routing.service';
 import { DiscordService } from './discord.service';
 
 // Chat can arrive faster than Discord accepts messages, so feed events are
@@ -19,6 +19,9 @@ const ICONS: Record<ActivityEventKey, string> = {
   advancement: '🏆',
   console: '🛠️',
 };
+
+// `in` would also match inherited keys such as `toString`.
+const ACTIVITY_KEYS = new Set<string>(Object.keys(ICONS));
 
 interface FeedEntry {
   key: ActivityEventKey;
@@ -61,7 +64,7 @@ export class DiscordFeedService implements OnModuleInit, OnModuleDestroy {
   publishActivity(serverId: string, events: FeedEvent[]): void {
     for (const event of events) {
       const key = event.type as ActivityEventKey;
-      if (!(key in ICONS)) continue;
+      if (!ACTIVITY_KEYS.has(key)) continue;
       this.enqueue(serverId, { key, line: formatActivity(key, event), allowSharedFallback: true });
     }
   }
@@ -110,8 +113,15 @@ export class DiscordFeedService implements OnModuleInit, OnModuleDestroy {
     if (!enabled) return;
 
     const groups = new Map<string, { url: string; shared: boolean; lines: string[] }>();
+    // One lookup per event kind, not one per queued line: a busy chat would
+    // otherwise run two queries for every message in the batch.
+    const targetsByKey = new Map<string, DiscordTarget[] | null>();
     for (const entry of batch) {
-      const targets = await this.routing.resolve(serverId, entry.key);
+      let targets = targetsByKey.get(entry.key);
+      if (targets === undefined) {
+        targets = await this.routing.resolve(serverId, entry.key);
+        targetsByKey.set(entry.key, targets);
+      }
       const resolved = targets ?? (entry.allowSharedFallback && sharedTarget?.url ? [sharedTarget] : []);
       for (const target of resolved) {
         if (!target.url) continue;
@@ -158,5 +168,7 @@ function clean(text: string, max = MAX_LINE_CHARS): string {
     .replace(/\s+/g, ' ')
     .replace(/`/g, "'")
     .trim();
-  return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
+  // Cut by code point so an emoji or other surrogate pair is never split in half.
+  const characters = Array.from(flat);
+  return characters.length > max ? `${characters.slice(0, max - 1).join('')}…` : flat;
 }

@@ -56,6 +56,13 @@ const choiceFor = (state: DiscordIntegrationState, key: string, operational: boo
   return saved === null ? "off" : `hook:${saved}`;
 };
 
+// Every select works from this one projection, so a response with fewer routes
+// than were sent (an event turned back to the default) cannot leave a stale value.
+const choicesFor = (state: DiscordIntegrationState): Record<string, RouteChoice> => Object.fromEntries([
+  ...DISCORD_ACTIVITY_EVENTS.map((key) => [key, choiceFor(state, key, false)]),
+  ...DISCORD_OPERATIONAL_EVENTS.map((key) => [key, choiceFor(state, key, true)]),
+]);
+
 interface IntegrationsTabProps {
   serverId: string;
 }
@@ -85,10 +92,7 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ serverId }) => {
         const integration = await getDiscordIntegration(serverId);
         if (!active) return;
         setState(integration);
-        setRoutes(Object.fromEntries([
-          ...DISCORD_ACTIVITY_EVENTS.map((key) => [key, choiceFor(integration, key, false)]),
-          ...DISCORD_OPERATIONAL_EVENTS.map((key) => [key, choiceFor(integration, key, true)]),
-        ]));
+        setRoutes(choicesFor(integration));
         getActivitySettings(serverId).then((settings) => active && setTracking(settings.enabled)).catch(() => active && setTracking(null));
       } catch {
         if (active) mcToast.error(t("discordWebhookSaveFailed"));
@@ -105,10 +109,7 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ serverId }) => {
   const reload = async () => {
     const integration = await getDiscordIntegration(serverId);
     setState(integration);
-    setRoutes(Object.fromEntries([
-      ...DISCORD_ACTIVITY_EVENTS.map((key) => [key, choiceFor(integration, key, false)]),
-      ...DISCORD_OPERATIONAL_EVENTS.map((key) => [key, choiceFor(integration, key, true)]),
-    ]));
+    setRoutes(choicesFor(integration));
   };
 
   const urlInvalid = draft.url.trim() !== "" && !DISCORD_WEBHOOK_PATTERN.test(draft.url.trim());
@@ -164,6 +165,7 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ serverId }) => {
       }
       const saved = await saveDiscordRoutes(serverId, payload);
       setState(saved);
+      setRoutes(choicesFor(saved));
       mcToast.success(t("discordRoutesSaved"));
     } catch {
       mcToast.error(t("discordWebhookSaveFailed"));

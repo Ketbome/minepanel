@@ -157,6 +157,24 @@ describe('DiscordFeedService', () => {
     expect(sent[0]).toBe('💬 Steve: line 60');
   });
 
+  it('resolves each event kind once per batch instead of once per line', async () => {
+    const events = Array.from({ length: 25 }, (_, index) => ({ type: 'chat', name: 'Steve', message: `line ${index}` }));
+
+    service.publishActivity('srv', events);
+    await service.flush('srv');
+
+    expect(routing.resolve).toHaveBeenCalledTimes(1);
+    expect(discord.sendActivity).toHaveBeenCalledTimes(3);
+  });
+
+  it('ignores inherited object keys as event types', async () => {
+    service.publishActivity('srv', [{ type: 'toString', name: 'Steve', message: 'x' }]);
+
+    await service.flush('srv');
+
+    expect(discord.sendActivity).not.toHaveBeenCalled();
+  });
+
   it('ignores unknown event types', async () => {
     service.publishActivity('srv', [{ type: 'unknown', name: 'Steve', message: 'x' }]);
 

@@ -116,7 +116,9 @@ export default function DiscordSettingsPage() {
   };
 
   const discordWebhookInvalid = discordWebhook.trim() !== '' && !/^https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/\d{17,20}\/[A-Za-z0-9_-]+$/.test(discordWebhook.trim());
-  const sharedMode = mode === 'shared';
+  // Descriptions below the picker must describe the mode that is actually in
+  // effect, not the one the admin has selected but not saved yet.
+  const sharedMode = savedMode === 'shared';
 
   if (!isLoading && !canManageSystemSettings) {
     return (

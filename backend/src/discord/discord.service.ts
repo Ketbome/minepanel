@@ -164,7 +164,9 @@ export class DiscordService {
 
     const embed: DiscordEmbed = {
       title: `${shared ? `${serverName} · ` : ''}Activity`,
-      description: lines.join('\n').slice(0, 4000),
+      // Discord rejects a description over 4096 characters; cut by code point so
+      // a player's emoji is never split into an invalid surrogate.
+      description: Array.from(lines.join('\n')).slice(0, 4000).join(''),
       color: this.COLORS.info,
       timestamp: new Date().toISOString(),
       footer: { text: 'MinePanel' },
