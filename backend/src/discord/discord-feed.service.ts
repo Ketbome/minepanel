@@ -23,6 +23,8 @@ const ICONS: Record<ActivityEventKey, string> = {
 interface FeedEntry {
   key: ActivityEventKey;
   line: string;
+  // Console output is operational; only an explicit route may send it to Discord.
+  allowSharedFallback: boolean;
 }
 
 interface FeedEvent {
@@ -60,13 +62,13 @@ export class DiscordFeedService implements OnModuleInit, OnModuleDestroy {
     for (const event of events) {
       const key = event.type as ActivityEventKey;
       if (!(key in ICONS)) continue;
-      this.enqueue(serverId, { key, line: formatActivity(key, event) });
+      this.enqueue(serverId, { key, line: formatActivity(key, event), allowSharedFallback: true });
     }
   }
 
   publishConsole(serverId: string, actor: string, command: string, success: boolean): void {
     const line = `${ICONS.console} ${clean(actor)}: ${clean(command)}${success ? '' : ' (failed)'}`;
-    this.enqueue(serverId, { key: 'console', line });
+    this.enqueue(serverId, { key: 'console', line, allowSharedFallback: false });
   }
 
   /** Drains the queues; also the entry point used by tests. */
@@ -110,7 +112,7 @@ export class DiscordFeedService implements OnModuleInit, OnModuleDestroy {
     const groups = new Map<string, { url: string; shared: boolean; lines: string[] }>();
     for (const entry of batch) {
       const targets = await this.routing.resolve(serverId, entry.key);
-      const resolved = targets ?? (sharedTarget?.url ? [sharedTarget] : []);
+      const resolved = targets ?? (entry.allowSharedFallback && sharedTarget?.url ? [sharedTarget] : []);
       for (const target of resolved) {
         if (!target.url) continue;
         const group = groups.get(target.url) ?? { url: target.url, shared: target.shared, lines: [] };

@@ -107,6 +107,29 @@ describe('DiscordFeedService', () => {
     expect(discord.sendActivity).toHaveBeenCalledWith('https://shared', 'Survival', true, ['💬 Steve: hello']);
   });
 
+  it('does not deliver unrouted console entries to the shared channel', async () => {
+    routing.channelMode.mockResolvedValue('shared');
+    routing.sharedChannel.mockResolvedValue({ url: 'https://shared', shared: true });
+    routing.resolve.mockResolvedValue(null);
+    routing.listFor.mockResolvedValue({ webhooks: [], routes: {} });
+
+    service.publishConsole('srv', 'admin', 'stop', true);
+    await service.flush('srv');
+
+    expect(discord.sendActivity).not.toHaveBeenCalled();
+  });
+
+  it('delivers console entries with an explicit route in shared mode', async () => {
+    routing.channelMode.mockResolvedValue('shared');
+    routing.sharedChannel.mockResolvedValue({ url: 'https://shared', shared: true });
+    routing.resolve.mockResolvedValue([{ url: 'https://ops', shared: false }]);
+
+    service.publishConsole('srv', 'admin', 'stop', true);
+    await service.flush('srv');
+
+    expect(discord.sendActivity).toHaveBeenCalledWith('https://ops', 'Survival', false, ['🛠️ admin: stop']);
+  });
+
   it('still respects an explicit do-not-send in shared mode', async () => {
     routing.channelMode.mockResolvedValue('shared');
     routing.sharedChannel.mockResolvedValue({ url: 'https://shared', shared: true });
