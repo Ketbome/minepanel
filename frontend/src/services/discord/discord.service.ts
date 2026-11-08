@@ -1,7 +1,7 @@
 import api from '../axios.service';
 
 export const DISCORD_ACTIVITY_EVENTS = ['chat', 'command', 'join', 'leave', 'death', 'advancement', 'console'] as const;
-export const DISCORD_OPERATIONAL_EVENTS = ['down', 'crash', 'cpu', 'memory', 'disk', 'backup', 'task', 'game', 'stale', 'recovery', 'lifecycle'] as const;
+export const DISCORD_OPERATIONAL_EVENTS = ['down', 'crash', 'cpu', 'memory', 'backup', 'task', 'game', 'stale', 'recovery', 'lifecycle'] as const;
 
 export type DiscordActivityEvent = (typeof DISCORD_ACTIVITY_EVENTS)[number];
 export type DiscordOperationalEvent = (typeof DISCORD_OPERATIONAL_EVENTS)[number];

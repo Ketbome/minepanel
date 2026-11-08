@@ -40,7 +40,6 @@ const OPERATIONAL_LABELS: Record<(typeof DISCORD_OPERATIONAL_EVENTS)[number], Tr
   crash: "discordEventCrash",
   cpu: "discordEventCpu",
   memory: "discordEventMemory",
-  disk: "notificationDisk",
   backup: "notificationBackup",
   task: "notificationTask",
   game: "notificationGame",

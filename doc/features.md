@@ -618,9 +618,14 @@ feed, so one busy world does not have to share a channel with every other server
   server-owned webhook is sent as-is and is not visible from another server's page.
 - **Per-event routing.** Every activity and alert type has its own dropdown: chat, player commands,
   joins, leaves, deaths, advancements and panel/console commands, plus server down, crash, high
-  CPU, high memory, disk, backup failure, task failure, game-query failure, stale backup and
-  recovery. Assign each one to a webhook, turn it off, or leave panel alerts on **Minepanel alerts
-  channel** to keep the instance-wide behaviour.
+  CPU, high memory, backup failure, task failure, game-query failure, stale backup, recovery and
+  server lifecycle events (created, started, stopped, deleted and operation errors). Assign each
+  one to a webhook, turn it off, or leave panel alerts on **Minepanel alerts
+  channel** to keep the instance-wide behaviour. Disk-space alerts watch the whole server-data
+  filesystem, so they stay on the instance-wide channel and have no per-server route.
+- **Deleting a server** removes the webhooks it created and every route saved for it, so a server
+  reusing the same ID never posts to the previous channel. Shared webhooks stay available to the
+  other servers.
 - **Activity needs the Activity log.** Chat, player commands, joins/leaves, deaths and advancements
   are read from the server log, so they require **Activity tracking** for that server (Java only;
   Bedrock has no `latest.log`). Panel commands come from the audit hook instead and work on both

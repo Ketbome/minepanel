@@ -492,9 +492,10 @@ the host. Webhook URLs are encrypted at rest and never returned; the response on
 - `POST /servers/:serverId/discord/webhooks/:id/test` — sends a sample message to that webhook.
 - `PUT /servers/:serverId/discord/routes` — body `{ routes: { <event>: <webhookId|null|'instance'> } }`.
   Events: `chat`, `command`, `join`, `leave`, `death`, `advancement`, `console`, `down`, `crash`,
-  `cpu`, `memory`, `disk`, `backup`, `task`, `game`, `stale`, `recovery`. `null` turns the event
+  `cpu`, `memory`, `backup`, `task`, `game`, `stale`, `recovery`, `lifecycle`. `null` turns the event
   off; `'instance'` removes the route so panel alerts keep using the Minepanel-wide Discord
-  webhook. Activity defaults to off, panel alerts default to the instance webhook.
+  webhook. Activity defaults to off, panel alerts default to the instance webhook. Disk-space
+  alerts are instance-wide and have no per-server route.
 
 ### Alerts
 

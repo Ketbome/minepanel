@@ -100,20 +100,25 @@ export class DiscordRoutingService {
   }
 
   async setRoutes(serverId: string, input: Record<string, number | null | 'instance'>): Promise<DiscordIntegrationState> {
-    for (const [eventKey, value] of Object.entries(input)) {
+    const entries = Object.entries(input);
+    // Validate everything first: a rejected entry must not leave the earlier ones saved.
+    for (const [eventKey, value] of entries) {
       if (!isRoutableEventKey(eventKey)) {
         throw new BadRequestException(`Unknown notification event: ${eventKey}`);
       }
+      if (value === 'instance' || value === null) continue;
+      if (!Number.isInteger(value)) {
+        throw new BadRequestException(`Invalid webhook for ${eventKey}`);
+      }
+      await this.accessibleWebhook(serverId, value);
+    }
+    for (const [eventKey, value] of entries) {
       if (value === 'instance') {
         // Back to the default: no row is exactly what the resolver looks for.
         await this.routes.delete({ serverId, eventKey });
-        continue;
+      } else {
+        await this.saveRoute(serverId, eventKey, value as number | null);
       }
-      if (value !== null && !Number.isInteger(value)) {
-        throw new BadRequestException(`Invalid webhook for ${eventKey}`);
-      }
-      if (value !== null) await this.accessibleWebhook(serverId, value);
-      await this.saveRoute(serverId, eventKey, value);
     }
     return this.listFor(serverId);
   }

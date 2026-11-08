@@ -90,6 +90,14 @@ describe('DiscordRoutingService', () => {
     expect((await service.listFor('srv')).routes).toEqual({});
   });
 
+  it('saves nothing when one entry of the request is invalid', async () => {
+    const hook = await service.create('srv', { name: 'Ops', url: WEBHOOK });
+
+    await expect(service.setRoutes('srv', { chat: hook.id, nope: null })).rejects.toBeInstanceOf(BadRequestException);
+
+    expect((await service.listFor('srv')).routes).toEqual({});
+  });
+
   it('rejects unknown events and webhooks from another server', async () => {
     const foreign = await service.create('other', { name: 'Other', url: WEBHOOK });
 

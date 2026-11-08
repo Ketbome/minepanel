@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AuthMailService } from 'src/auth/auth-mail.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import { DiscordMention, DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
+import { isRoutableEventKey } from 'src/discord/discord-events';
 import { DiscordRoutingService } from 'src/discord/discord-routing.service';
 import { getRandomEvent } from 'src/discord/discord.translations';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -130,6 +131,8 @@ export class NotificationsService {
   ): Promise<Array<() => Promise<void>>> {
     const legacy = legacyWebhook ? [() => send(legacyWebhook)] : [];
     if (!serverId) return legacy;
+    // Disk space is one filesystem for the whole instance, so it has no per-server route.
+    if (!isRoutableEventKey(kind)) return legacy;
     let targets: Awaited<ReturnType<DiscordRoutingService['resolve']>>;
     try { targets = await this.discordRouting.resolve(serverId, kind); }
     catch { targets = null; }

@@ -3,7 +3,9 @@
 // that can be redirected from the instance-wide channel to a server's channel.
 export const ACTIVITY_EVENT_KEYS = ['chat', 'command', 'join', 'leave', 'death', 'advancement', 'console'] as const;
 
-export const OPERATIONAL_EVENT_KEYS = ['down', 'crash', 'cpu', 'memory', 'disk', 'backup', 'task', 'game', 'stale', 'recovery'] as const;
+// `disk` is deliberately absent: the filesystem probe is instance-wide and never
+// carries a server ID, so a per-server route for it would never be read.
+export const OPERATIONAL_EVENT_KEYS = ['down', 'crash', 'cpu', 'memory', 'backup', 'task', 'game', 'stale', 'recovery'] as const;
 
 // Server lifecycle events (created, started, stopped, deleted, restart/operation
 // errors) can be routed like alerts; without a route they use the delivery mode.

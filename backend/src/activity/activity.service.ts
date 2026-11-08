@@ -146,7 +146,8 @@ export class ActivityService {
     if (events.length > 0) {
       await this.eventRepo.save(events);
       // Fire-and-forget: a slow or broken Discord channel must not stall the log tailer.
-      this.discordFeed?.publishActivity(serverId, events);
+      // History imports replay old lines without their timestamps; only live ingest is a feed event.
+      if (!state) this.discordFeed?.publishActivity(serverId, events);
     }
     return events.length;
   }
