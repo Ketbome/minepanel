@@ -564,9 +564,18 @@ switches control automatic delivery. Existing Discord webhooks remain enabled by
 email, Telegram, ntfy and Slack start disabled. The page separates delivery channels from alert rules,
 shows saved configuration status, keeps tests beside each channel and offers **Discard changes**.
 
-- **Discord:** uses the existing webhook field on the Integrations page. The
+- **Discord:** uses the existing webhook field on the Integrations page. Only an
+  `https://discord.com/api/webhooks/<id>/<token>` URL (or `discordapp.com`) is accepted, and
+  other hosts, `http`, credentials and fragments are rejected before saving. The
   existing selection rule is preserved: automatic events use the first user settings row
   with a webhook; this is not a separate per-user subscription system.
+  **Pings:** choose **@here**, **@everyone**, a role or a user in the notification settings.
+  **Errors only** (the default) mentions for server down, crash loops, backup failures and
+  scheduled task failures; **All alerts and lifecycle** adds CPU/RAM, disk, overdue backups,
+  game query failures, recovery and lifecycle events. The ping is sent as message content
+  with an explicit `allowed_mentions` allowlist, and server names or alert details stay in
+  embed fields, so a server named `@everyone` can never ping the channel. The Discord test
+  button sends the saved ping, so a role or user can be verified after saving.
 - **Email:** configure SMTP in the same page, then enter one recipient address and enable
   email notifications. Notifications reuse the instance SMTP configuration.
 - **ntfy:** enter the server URL (default `https://ntfy.sh`) and topic, then subscribe to
@@ -590,6 +599,41 @@ shows saved configuration status, keeps tests beside each channel and offers **D
   through that bot’s existing integration instead.
   Tokens are encrypted at rest and never returned by the API. You can replace or clear a
   saved token; disable Telegram before clearing the token.
+
+### Per-server Discord integrations
+
+Settings > Integrations > **Discord** owns the Minepanel-wide webhook, the delivery switches and
+the mention policy. Each Minecraft server also has an **Integrations** tab (admin only) for its own
+feed, so one busy world does not have to share a channel with every other server's alerts.
+
+- **Multiple webhooks.** Add as many as you need, one per channel: for example one for chat and a
+  separate one for alerts, or a single channel that receives everything. A webhook belongs to the
+  server that created it unless it is marked **Shared across servers**.
+- **Delivery mode.** Settings > Integrations > Discord switches between **one channel per server**
+  (the default, so existing installs keep their routing) and **a single shared channel**. In shared
+  mode every server's unrouted activity and panel alerts go to the Minepanel-wide webhook and are
+  prefixed with the server name; saved per-event routes still win and **Do not send** stays off.
+- **Shared channels.** A shared webhook can be routed to from several servers; every message it
+  receives is prefixed with the server name, so one channel can follow a whole network. A
+  server-owned webhook is sent as-is and is not visible from another server's page.
+- **Per-event routing.** Every activity and alert type has its own dropdown: chat, player commands,
+  joins, leaves, deaths, advancements and panel/console commands, plus server down, crash, high
+  CPU, high memory, disk, backup failure, task failure, game-query failure, stale backup and
+  recovery. Assign each one to a webhook, turn it off, or leave panel alerts on **Minepanel alerts
+  channel** to keep the instance-wide behaviour.
+- **Activity needs the Activity log.** Chat, player commands, joins/leaves, deaths and advancements
+  are read from the server log, so they require **Activity tracking** for that server (Java only;
+  Bedrock has no `latest.log`). Panel commands come from the audit hook instead and work on both
+  editions.
+- **Batching.** Activity is queued and flushed every few seconds in messages of at most ten lines
+  (the queue drops its oldest entries past 200) instead of one POST per chat line, which keeps a
+  busy server inside Discord's webhook rate limit. Pending lines are in memory only; the Activity
+  tab remains the durable record.
+- **Security.** Webhook URLs are encrypted at rest, write-only in the API and never returned;
+  rotating `JWT_SECRET` makes them unreadable and they must be re-entered. Adding or routing a
+  webhook is admin-only because it is a secret and moves server data off the host. Feed messages
+  never mention anyone and keep player text in the embed description, where it cannot ping or
+  break the message formatting.
 
 **Save changes before testing.** Every channel's test button (email, Telegram, Discord, ntfy and Slack) uses the saved
 destination and works even when automatic delivery is disabled.

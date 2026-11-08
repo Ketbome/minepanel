@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Key, Loader2, Mail, ShieldCheck, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, ArrowRight, CheckCircle2, Key, Loader2, Mail, ShieldCheck, Webhook, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import {
   getSettings,
   updateSettings,
-  testDiscordWebhook,
   testCurseforgeKey,
   CurseforgeKeyCheck,
   CurseforgeKeyCheckCode,
@@ -22,7 +22,6 @@ import {
 } from '@/services/settings/settings.service';
 import { mcToast } from '@/lib/utils/minecraft-toast';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { NotificationSettingsCard } from '@/components/organisms/settings/notification-settings';
 import { getCurrentUser } from '@/services/users/users.service';
 import type { TranslationKey } from '@/lib/translations';
 
@@ -40,7 +39,7 @@ function SourceBadge({ label, tone }: { label: string; tone: 'unset' | 'db' | 'e
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${color}`}>{label}</span>;
 }
 
-/** Settings > Integrations: CurseForge key and Discord webhook, plus SMTP and OIDC for admins. */
+/** Settings > Integrations: CurseForge key, plus SMTP and OIDC for admins. Discord has its own page. */
 export default function IntegrationsSettingsPage() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
@@ -49,11 +48,8 @@ export default function IntegrationsSettingsPage() {
 
   // CurseForge + Discord (write-only secrets)
   const [hasCfApiKey, setHasCfApiKey] = useState(false);
-  const [hasDiscordWebhook, setHasDiscordWebhook] = useState(false);
   const [cfApiKey, setCfApiKey] = useState('');
-  const [discordWebhook, setDiscordWebhook] = useState('');
   const [savingBasic, setSavingBasic] = useState(false);
-  const [testingWebhook, setTestingWebhook] = useState(false);
   const [testingCfKey, setTestingCfKey] = useState(false);
   // Result of the last Test click or key save; cleared as soon as the key is edited.
   const [cfKeyCheck, setCfKeyCheck] = useState<CurseforgeKeyCheck | null>(null);
@@ -77,7 +73,6 @@ export default function IntegrationsSettingsPage() {
         setCanManageSystemSettings(admin || user.access.permissions.accessAllServers);
         setIsAdmin(admin);
         setHasCfApiKey(!!settings.hasCfApiKey);
-        setHasDiscordWebhook(!!settings.hasDiscordWebhook);
 
         if (admin) {
           const int = await getIntegrationSettings();
@@ -130,21 +125,13 @@ export default function IntegrationsSettingsPage() {
     setSavingBasic(true);
     const edit = cfKeyEdits.current;
     try {
-      // Write-only: only send fields the user actually typed.
-      const payload: { cfApiKey?: string; discordWebhook?: string } = {};
+      // Write-only: only send the field the user actually typed.
+      const payload: { cfApiKey?: string } = {};
       if (cfApiKey) payload.cfApiKey = cfApiKey;
-      if (discordWebhook) payload.discordWebhook = discordWebhook;
       const res = await updateSettings(payload);
       setHasCfApiKey(!!res.hasCfApiKey);
-      setHasDiscordWebhook(!!res.hasDiscordWebhook);
       if (payload.cfApiKey && edit === cfKeyEdits.current) setCfKeyCheck(res.cfApiKeyCheck ?? null);
-      if (isAdmin && payload.discordWebhook) {
-        // Notifications use the instance-wide webhook; refresh only that flag to keep unsaved SMTP/OIDC edits.
-        const { systemDiscordConfigured } = await getIntegrationSettings();
-        setIntegrations((current) => (current ? { ...current, systemDiscordConfigured } : current));
-      }
       setCfApiKey('');
-      setDiscordWebhook('');
       mcToast.success(t('settingsSaved'));
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -173,18 +160,6 @@ export default function IntegrationsSettingsPage() {
     }
     if (edit === cfKeyEdits.current) setCfKeyCheck(result);
     setTestingCfKey(false);
-  };
-
-  const handleTestWebhook = async () => {
-    setTestingWebhook(true);
-    try {
-      const result = await testDiscordWebhook();
-      result.success ? mcToast.success(t('webhookTestSuccess')) : mcToast.error(result.message);
-    } catch {
-      mcToast.error(t('webhookTestFailed'));
-    } finally {
-      setTestingWebhook(false);
-    }
   };
 
   const saveSmtp = async () => {
@@ -257,7 +232,24 @@ export default function IntegrationsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* CurseForge + Discord */}
+      <Link
+        href="/dashboard/settings/integrations/discord"
+        className="mc-panel flex items-center gap-3 p-4 transition-colors hover:bg-black/30"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600/20">
+          <Webhook className="h-5 w-5 text-indigo-300" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-minecraft text-white">{t('settingsNavDiscord')}</p>
+          <p className="text-xs text-gray-400">{t('discordSettingsDesc')}</p>
+        </div>
+        <span className="flex items-center gap-1 text-sm text-emerald-300">
+          {t('discordOpenSettings')}
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      </Link>
+
+      {/* CurseForge */}
       <Card className="border-2 border-gray-700/60 bg-gray-900/80 backdrop-blur-md shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -299,16 +291,6 @@ export default function IntegrationsSettingsPage() {
                   </p>
                 ) : null}
                 <p className="text-xs text-gray-400">{t('curseforgeApiKeyDesc')}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-gray-200">{t('discordWebhook')}</Label>
-                <div className="flex gap-2">
-                  <Input id="integration-discord-webhook" value={discordWebhook} onChange={(e) => setDiscordWebhook(e.target.value)} type="password" placeholder={secretPlaceholder(hasDiscordWebhook)} className="flex-1 bg-gray-800 border-gray-700 text-white" />
-                  <Button type="button" variant="outline" onClick={handleTestWebhook} disabled={testingWebhook || !hasDiscordWebhook} className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
-                    {testingWebhook ? <Loader2 className="h-4 w-4 animate-spin" /> : t('test')}
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-400">{t('discordWebhookDesc')}</p>
               </div>
               <Button onClick={saveBasic} disabled={savingBasic} className="bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-minecraft">
                 {savingBasic ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -435,7 +417,6 @@ export default function IntegrationsSettingsPage() {
           </Card>
         </>
       )}
-      {!isLoading && isAdmin && integrations ? <NotificationSettingsCard initial={integrations.notifications} smtpConfigured={integrations.smtp.configured} hasDiscordWebhook={integrations.systemDiscordConfigured ?? hasDiscordWebhook} delivery={integrations.notificationDelivery} /> : null}
     </div>
   );
 }

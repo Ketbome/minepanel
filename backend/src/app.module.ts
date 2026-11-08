@@ -13,6 +13,7 @@ import { DatabaseModule } from './database/database.module';
 import { SystemMonitoringModule } from './system-monitoring/system-monitoring.module';
 import { VersionModule } from './version/version.module';
 import { DiscordModule } from './discord/discord.module';
+import { DiscordIntegrationsModule } from './discord/discord-integrations.module';
 import { CurseforgeModule } from './curseforge/curseforge.module';
 import { FilesModule } from './files/files.module';
 import { ProxyModule } from './proxy/proxy.module';
@@ -46,6 +47,7 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
     SystemMonitoringModule,
     VersionModule,
     DiscordModule,
+    DiscordIntegrationsModule,
     CurseforgeModule,
     ModrinthModule,
     VanillaTweaksModule,

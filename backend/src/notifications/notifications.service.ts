@@ -2,7 +2,8 @@ import { deliveryFailureReason, RateLimitedError, withRateLimitRetry } from './d
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthMailService } from 'src/auth/auth-mail.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
-import { DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
+import { DiscordMention, DiscordService, ServerEventType, SupportedLanguage } from 'src/discord/discord.service';
+import { DiscordRoutingService } from 'src/discord/discord-routing.service';
 import { getRandomEvent } from 'src/discord/discord.translations';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
@@ -10,6 +11,13 @@ import { Settings } from 'src/users/entities/settings.entity';
 import { operationalMessages } from './operational-messages';
 
 export type NotificationChannel = 'discord' | 'email' | 'telegram' | 'ntfy' | 'slack';
+
+// Which alert produced a Discord message, so the mention policy can be applied per
+// delivery instead of at every call site. 'errors' pings only for the first four.
+export type DiscordAlertKind = 'down' | 'crash' | 'cpu' | 'memory' | 'disk' | 'backup' | 'task' | 'game' | 'stale' | 'recovery' | 'lifecycle';
+
+const DISCORD_ERROR_MENTION_KINDS: ReadonlySet<DiscordAlertKind> = new Set<DiscordAlertKind>(['down', 'crash', 'backup', 'task']);
+const MENTION_SNOWFLAKE = /^\d{17,20}$/;
 export interface DeliveryState { status: 'accepted' | 'failed' | 'unknown'; attemptedAt: string; source: 'automatic' | 'test'; reason?: string }
 function truncateUtf8(text: string, maxBytes: number): string {
   let bytes = 0;
@@ -37,6 +45,7 @@ export class NotificationsService {
   constructor(
     private readonly settings: InstanceSettingsService,
     private readonly discord: DiscordService,
+    private readonly discordRouting: DiscordRoutingService,
     @InjectRepository(Settings) private readonly userSettings: Repository<Settings>,
     private readonly mail: AuthMailService,
   ) { this.settings.registerResetHandler(() => this.resetDeliveryState()); }
@@ -84,17 +93,78 @@ export class NotificationsService {
     if (!config.lifecycleEnabled) return;
     const event = getRandomEvent(lang, type);
     const text = [serverName, event.description, ...Object.entries(details ?? {}).filter(([, value]) => value).map(([key, value]) => `${key}: ${value}`)].join('\n');
-    await this.deliver(config, event.title, text, () => this.discord.sendServerNotification(webhook, type, serverName, lang, details), webhook);
+    const mention = this.discordMention(config, 'lifecycle');
+    const senders = await this.discordSenders(serverName, 'lifecycle', webhook, config.discordChannelMode, (url, prefix) =>
+      this.discord.sendServerNotification(url, type, prefix ? prefix : serverName, lang, details, mention, prefix),
+    );
+    await this.deliver(config, event.title, text, senders);
   }
 
-  async sendCustomMessage(webhook: string, title: string, description: string, color: 'error' | 'warning' | 'success', fields: NotificationField[]): Promise<void> {
+  async sendCustomMessage(webhook: string, title: string, description: string, color: 'error' | 'warning' | 'success', fields: NotificationField[], kind: DiscordAlertKind, serverId?: string): Promise<void> {
     const config = await this.settings.getNotifications();
     if (!config.alertsEnabled) return;
     const text = [description, ...fields.filter((field) => !field.discordOnly).map((field) => `${field.name}: ${field.value.replace(/`/g, '')}`)].join('\n');
-    await this.deliver(config, title, text, () => this.discord.sendCustomMessage(webhook, title, description, color, fields.map(({ discordOnly: _discordOnly, ...field }) => field)), webhook);
+    const mention = this.discordMention(config, kind);
+    const senders = await this.discordSenders(serverId, kind, webhook, config.discordChannelMode, (url, prefix) =>
+      this.discord.sendCustomMessage(url, prefix ? `${prefix} · ${title}` : title, description, color, fields.map(({ discordOnly: _discordOnly, ...field }) => field), mention),
+    );
+    await this.deliver(config, title, text, senders);
   }
 
-  async sendOperationalAlert(kind: 'disk' | 'backup' | 'recovery' | 'task' | 'game' | 'stale', subject: string, detail: string, incidentSeverity: 'warning' | 'error' = 'warning'): Promise<void> {
+  // A server with explicit routes sends there instead of the default; `null`
+  // from the resolver means no route was saved, so the delivery mode decides:
+  // per-server keeps the legacy instance fallback, shared uses one channel for
+  // every server and prefixes the server name.
+  private async discordSenders(
+    serverId: string | undefined,
+    kind: DiscordAlertKind,
+    legacyWebhook: string,
+    mode: 'per-server' | 'shared',
+    send: (url: string, serverName?: string) => Promise<void>,
+  ): Promise<Array<() => Promise<void>>> {
+    const legacy = legacyWebhook ? [() => send(legacyWebhook)] : [];
+    if (!serverId) return legacy;
+    let targets: Awaited<ReturnType<DiscordRoutingService['resolve']>>;
+    try { targets = await this.discordRouting.resolve(serverId, kind); }
+    catch { targets = null; }
+    if (targets === null) {
+      if (mode !== 'shared') return legacy;
+      const shared = await this.discordRouting.sharedChannel().catch(() => null);
+      const url = shared?.url || legacyWebhook;
+      if (!url) return [];
+      const name = await this.discordRouting.serverName(serverId).catch(() => serverId);
+      return [() => send(url, name)];
+    }
+    return targets.filter((target) => target.url).map((target) => () => send(target.url, target.shared ? target.serverName : undefined));
+  }
+
+  // A saved mention type is not enough: role/user needs a valid snowflake, and the
+  // errors/all switch decides whether this kind may ping. 'test' bypasses the switch
+  // only, so an admin can verify the role actually pings.
+  private discordMention(config: NotificationConfig, kind: DiscordAlertKind | 'test'): DiscordMention | undefined {
+    const type = config.discordMentionType;
+    if (type !== 'here' && type !== 'everyone' && type !== 'role' && type !== 'user') return undefined;
+    if (kind !== 'test') {
+      if (kind === 'lifecycle') {
+        if (config.discordMentionOn !== 'all') return undefined;
+      } else if (config.discordMentionOn === 'errors' && !DISCORD_ERROR_MENTION_KINDS.has(kind)) {
+        return undefined;
+      }
+    }
+    if (type === 'role' || type === 'user') {
+      const id = (config.discordMentionId ?? '').trim();
+      return MENTION_SNOWFLAKE.test(id) ? { type, id } : undefined;
+    }
+    return { type };
+  }
+
+  /** The mention a test message should carry, so the saved role/user can be verified. */
+  async getDiscordMention(): Promise<DiscordMention | undefined> {
+    try { return this.discordMention(await this.settings.getNotifications(), 'test'); }
+    catch { return undefined; }
+  }
+
+  async sendOperationalAlert(kind: 'disk' | 'backup' | 'recovery' | 'task' | 'game' | 'stale', subject: string, detail: string, incidentSeverity: 'warning' | 'error' = 'warning', serverId?: string): Promise<void> {
     const config = await this.settings.getNotifications();
     const switches = { disk: config.diskAlertEnabled, backup: config.backupFailureEnabled, recovery: config.recoveryEnabled, task: config.taskFailureEnabled, game: config.gameAlertEnabled, stale: config.staleBackupEnabled };
     if (!config.alertsEnabled || !switches[kind]) return;
@@ -103,7 +173,7 @@ export class NotificationsService {
     const color = kind === 'backup' || kind === 'task' ? 'error' : kind === 'recovery' ? incidentSeverity : 'warning';
     await this.sendCustomMessage(settings?.discordWebhook || '', t[kind], kind === 'recovery' ? t.recovered : t.description, color, [
       { name: 'Minepanel', value: subject }, { name: 'Details', value: detail },
-    ]);
+    ], kind, serverId);
   }
 
   async getAlertRules() {
@@ -111,9 +181,9 @@ export class NotificationsService {
     return { enabled: config.alertsEnabled, taskFailureEnabled: config.taskFailureEnabled, gameAlertEnabled: config.gameAlertEnabled, gameFailureSamples: config.gameFailureSamples, gameStartupGraceMinutes: config.gameStartupGraceMinutes, cooldownMinutes: config.alertCooldownMinutes };
   }
 
-  private async deliver(config: NotificationConfig, title: string, text: string, discord: () => Promise<void>, webhook: string): Promise<void> {
+  private async deliver(config: NotificationConfig, title: string, text: string, discordSenders: Array<() => Promise<void>>): Promise<void> {
     const jobs: Array<{ channel: NotificationChannel; send: () => Promise<void> }> = [];
-    if (config.discordEnabled && webhook) jobs.push({ channel: 'discord', send: discord });
+    if (config.discordEnabled && discordSenders.length > 0) jobs.push({ channel: 'discord', send: () => Promise.all(discordSenders.map((send) => send())).then(() => undefined) });
     if (config.emailEnabled) jobs.push({ channel: 'email', send: () => this.sendEmail(config, title, text) });
     if (config.telegramEnabled) jobs.push({ channel: 'telegram', send: () => this.sendTelegram(config, title, text) });
     if (config.ntfyEnabled) jobs.push({ channel: 'ntfy', send: () => this.sendNtfy(config, title, text) });
@@ -137,7 +207,7 @@ export class NotificationsService {
         else {
           const row = await this.firstWebhookSettings();
           if (!row?.discordWebhook) throw new Error('Discord webhook is not configured');
-          await this.discord.sendCustomMessage(row.discordWebhook, 'Notification test', text);
+          await this.discord.sendCustomMessage(row.discordWebhook, 'Notification test', text, 'info', undefined, this.discordMention(config, 'test'));
         }
       });
       return { success: true, message: 'Test notification sent' };

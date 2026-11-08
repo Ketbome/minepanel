@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ServerConfig } from "@/lib/types/types";
 import { SaveModeControl } from "../molecules/SaveModeControl";
-import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users, History } from "lucide-react";
+import { Settings, Server, Cpu, Package, Terminal, ScrollText, Code, Layers, FolderOpen, Smartphone, Activity, Clock, Gamepad2, Shield, Network, Power, Archive, Globe, Eye, Users, History, Webhook } from "lucide-react";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { type TabSearchItem } from "./TabSearch";
 import { useServerNavStore, type ServerNavItem } from "@/lib/store/server-nav-store";
@@ -33,10 +33,11 @@ const FilesTab = dynamic(() => import("../molecules/Tabs/FilesTab").then(mod => 
 const PlayerActivityTab = dynamic(() => import("../molecules/players/player-activity").then(mod => mod.PlayerActivityTab));
 const MetricsTab = dynamic(() => import("../molecules/Tabs/MetricsTab").then(mod => mod.MetricsTab));
 const ScheduledTasksTab = dynamic(() => import("../molecules/Tabs/ScheduledTasksTab").then(mod => mod.ScheduledTasksTab));
+const IntegrationsTab = dynamic(() => import("../molecules/Tabs/IntegrationsTab").then(mod => mod.IntegrationsTab));
 
 // Fixed list of every possible tab value, used only to validate the URL hash
 // regardless of which tabs are currently visible for this edition/type.
-const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "players", "files", "metrics", "activity", "tasks"];
+const ALL_TAB_VALUES = ["type", "game", "worlds", "access", "network", "resources", "lifecycle", "addons", "mods", "modwatch", "plugins", "backups", "advanced", "logs", "commands", "players", "files", "metrics", "activity", "tasks", "integrations"];
 
 // Tabs that were split up or absorbed. People bookmark these hashes and the docs
 // link to them, so an old one lands on whichever tab took over its content.
@@ -106,6 +107,7 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
     { value: "metrics", label: t("metrics"), icon: Activity, group: "monitoring", show: true, disabled: false, keywords: "metricas metrics tps mspt cpu ram memoria memory spark rendimiento performance lag" },
     { value: "activity", label: t("activity"), icon: History, group: "monitoring", show: showActivityTab, disabled: false, keywords: "actividad activity eventos events muertes deaths chat historial history" },
     { value: "tasks", label: t("tasks"), icon: Clock, group: "monitoring", show: true, disabled: false, keywords: "tareas tasks programadas scheduled cron reinicio restart automatico automatic" },
+    { value: "integrations", label: t("serverIntegrations"), icon: Webhook, group: "monitoring", show: true, disabled: false, keywords: "integraciones integrations discord webhook notificaciones notifications avisos alerts" },
   ];
 
   // Two different reasons a tab can be missing: it does not apply to this server
@@ -462,6 +464,10 @@ export const ServerConfigTabs: FC<ServerConfigTabsProps> = ({ serverId, config, 
 
               <TabsContent value="tasks" className="space-y-4 mt-0">
                 <ScheduledTasksTab serverId={serverId} />
+              </TabsContent>
+
+              <TabsContent value="integrations" className="space-y-4 mt-0">
+                <IntegrationsTab serverId={serverId} />
               </TabsContent>
           </div>
         </Tabs>

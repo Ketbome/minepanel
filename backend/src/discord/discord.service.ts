@@ -3,6 +3,15 @@ import { Injectable } from '@nestjs/common';
 import * as https from 'node:https';
 import { ServerEventType, SupportedLanguage, getTranslation, getRandomEvent } from './discord.translations';
 
+export type DiscordMentionType = 'here' | 'everyone' | 'role' | 'user';
+
+export interface DiscordMention {
+  type: DiscordMentionType;
+  id?: string;
+}
+
+const SNOWFLAKE = /^\d{17,20}$/;
+
 interface DiscordEmbed {
   title?: string;
   description?: string;
@@ -13,9 +22,31 @@ interface DiscordEmbed {
   thumbnail?: { url: string };
 }
 
+interface DiscordAllowedMentions {
+  parse: Array<'roles' | 'users' | 'everyone'>;
+  roles?: string[];
+  users?: string[];
+}
+
 interface DiscordWebhookPayload {
   content?: string;
   embeds?: DiscordEmbed[];
+  allowed_mentions?: DiscordAllowedMentions;
+}
+
+// `content` only ever carries the configured mention token. Server names, reasons and
+// alert details live in embed fields, where Discord never turns text into a ping, and
+// `allowed_mentions` is always explicit so a name like "@everyone" cannot become one.
+function mentionPayload(mention?: DiscordMention): Pick<DiscordWebhookPayload, 'content' | 'allowed_mentions'> {
+  if (!mention) return { allowed_mentions: { parse: [] } };
+  if (mention.type === 'here' || mention.type === 'everyone') {
+    return { content: `@${mention.type}`, allowed_mentions: { parse: ['everyone'] } };
+  }
+  const id = mention.id && SNOWFLAKE.test(mention.id) ? mention.id : null;
+  if (!id) return { allowed_mentions: { parse: [] } };
+  return mention.type === 'role'
+    ? { content: `<@&${id}>`, allowed_mentions: { parse: [], roles: [id] } }
+    : { content: `<@${id}>`, allowed_mentions: { parse: [], users: [id] } };
 }
 
 interface ServerNotificationDetails {
@@ -53,7 +84,7 @@ export class DiscordService {
     return colorMap[type];
   }
 
-  async sendServerNotification(webhookUrl: string, type: ServerEventType, serverName: string, lang: SupportedLanguage = 'en', details?: ServerNotificationDetails): Promise<void> {
+  async sendServerNotification(webhookUrl: string, type: ServerEventType, serverName: string, lang: SupportedLanguage = 'en', details?: ServerNotificationDetails, mention?: DiscordMention, prefix?: string): Promise<void> {
     if (!webhookUrl) return;
 
     const event = getRandomEvent(lang, type);
@@ -100,7 +131,7 @@ export class DiscordService {
     }
 
     const embed: DiscordEmbed = {
-      title: `${event.emoji} ${event.title}`,
+      title: `${prefix ? `${prefix} · ` : ''}${event.emoji} ${event.title}`,
       description: event.description,
       color: this.getColor(type),
       fields,
@@ -108,10 +139,10 @@ export class DiscordService {
       footer: { text: event.footer },
     };
 
-    await this.postToWebhook(webhookUrl, { embeds: [embed] });
+    await this.postToWebhook(webhookUrl, { ...mentionPayload(mention), embeds: [embed] });
   }
 
-  async sendCustomMessage(webhookUrl: string, title: string, description: string, color: keyof typeof this.COLORS = 'info', fields?: Array<{ name: string; value: string; inline?: boolean }>): Promise<void> {
+  async sendCustomMessage(webhookUrl: string, title: string, description: string, color: keyof typeof this.COLORS = 'info', fields?: Array<{ name: string; value: string; inline?: boolean }>, mention?: DiscordMention): Promise<void> {
     if (!webhookUrl) return;
 
     const embed: DiscordEmbed = {
@@ -123,10 +154,26 @@ export class DiscordService {
       fields,
     };
 
-    await this.postToWebhook(webhookUrl, { embeds: [embed] });
+    await this.postToWebhook(webhookUrl, { ...mentionPayload(mention), embeds: [embed] });
   }
 
-  async testWebhook(webhookUrl: string, lang: SupportedLanguage = 'en'): Promise<{ success: boolean; message: string }> {
+  // One message per flushed batch: activity lines stay in the embed description,
+  // where Discord never turns player text into a mention.
+  async sendActivity(webhookUrl: string, serverName: string, shared: boolean, lines: string[]): Promise<void> {
+    if (!webhookUrl || lines.length === 0) return;
+
+    const embed: DiscordEmbed = {
+      title: `${shared ? `${serverName} · ` : ''}Activity`,
+      description: lines.join('\n').slice(0, 4000),
+      color: this.COLORS.info,
+      timestamp: new Date().toISOString(),
+      footer: { text: 'MinePanel' },
+    };
+
+    await this.postToWebhook(webhookUrl, { ...mentionPayload(undefined), embeds: [embed] });
+  }
+
+  async testWebhook(webhookUrl: string, lang: SupportedLanguage = 'en', mention?: DiscordMention): Promise<{ success: boolean; message: string }> {
     try {
       const t = getTranslation(lang);
 
@@ -140,7 +187,7 @@ export class DiscordService {
         footer: { text: '⛏️ MinePanel' },
       };
 
-      await this.postToWebhook(webhookUrl, { embeds: [embed] });
+      await this.postToWebhook(webhookUrl, { ...mentionPayload(mention), embeds: [embed] });
       return { success: true, message: t.test.success };
     } catch (error) {
       return { success: false, message: deliveryFailureReason(error) };
@@ -151,7 +198,8 @@ export class DiscordService {
     return withRateLimitRetry((signal) => new Promise((resolve, reject) => {
       const url = new URL(webhookUrl);
       url.searchParams.set('wait', 'true');
-      const data = JSON.stringify(payload);
+      // Every POST states its mention policy; an omitted one allows no mentions at all.
+      const data = JSON.stringify({ ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } });
 
       const options = {
         hostname: url.hostname,

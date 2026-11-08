@@ -57,6 +57,15 @@ describe('DiscordService', () => {
     expect(req.end).toHaveBeenCalled();
   });
 
+  it('prefixes a shared-channel lifecycle title with the server name', async () => {
+    const req = stubRequest(204);
+
+    await service.sendServerNotification('https://hooks.example/x', 'started', 'Survival', 'en', undefined, undefined, 'Survival');
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload.embeds[0].title).toMatch(/^Survival · /);
+  });
+
   it('adds the modpack next to the version', async () => {
     const req = stubRequest(204);
 
@@ -126,5 +135,99 @@ describe('DiscordService', () => {
     await service.sendCustomMessage('https://hooks.example/x?wait=false', 'Title', 'Body');
     expect(https.request).toHaveBeenCalledTimes(2);
     expect((https.request as jest.Mock).mock.calls[0][0].path).toBe('/x?wait=true');
+  });
+
+  it('sends no content and allows no mentions by default', async () => {
+    const req = stubRequest(204);
+
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', 'Title', 'Body');
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload).not.toHaveProperty('content');
+    expect(payload.allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('pings a configured role through an explicit allowlist only', async () => {
+    const req = stubRequest(204);
+
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', 'Server down', 'Body', 'error', [], { type: 'role', id: '123456789012345678' });
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload.content).toBe('<@&123456789012345678>');
+    expect(payload.allowed_mentions).toEqual({ parse: [], roles: ['123456789012345678'] });
+  });
+
+  it('pings a user and falls back to no mention for a malformed id', async () => {
+    const userRequest = stubRequest(204);
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', 'Title', 'Body', 'error', [], { type: 'user', id: '234567890123456789' });
+    expect(JSON.parse(userRequest.write.mock.calls[0][0]).content).toBe('<@234567890123456789>');
+
+    const malformed = stubRequest(204);
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', 'Title', 'Body', 'error', [], { type: 'role', id: '@everyone' });
+    const payload = JSON.parse(malformed.write.mock.calls[0][0]);
+    expect(payload).not.toHaveProperty('content');
+    expect(payload.allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('uses parse everyone only for @here and @everyone', async () => {
+    for (const type of ['here', 'everyone'] as const) {
+      const req = stubRequest(204);
+
+      await service.sendServerNotification('https://discord.com/api/webhooks/1/abc', 'error', 'srv', 'en', undefined, { type });
+
+      const payload = JSON.parse(req.write.mock.calls[0][0]);
+      expect(payload.content).toBe(`@${type}`);
+      expect(payload.allowed_mentions).toEqual({ parse: ['everyone'] });
+    }
+  });
+
+  it('never lets a server name become a ping', async () => {
+    const req = stubRequest(204);
+
+    await service.sendServerNotification('https://discord.com/api/webhooks/1/abc', 'stopped', '@everyone @here <@&123456789012345678>', 'en', { reason: '@everyone' });
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload).not.toHaveProperty('content');
+    expect(payload.allowed_mentions).toEqual({ parse: [] });
+    // The text still shows up where it cannot ping.
+    expect(JSON.stringify(payload.embeds)).toContain('@everyone');
+  });
+
+  it('never lets custom message text become a ping', async () => {
+    const req = stubRequest(204);
+
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', '@here outage', 'server @everyone is down', 'error', [
+      { name: 'Server', value: '@everyone' },
+    ]);
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload).not.toHaveProperty('content');
+    expect(payload.allowed_mentions).toEqual({ parse: [] });
+    // The text is only ever rendered in the embed, where it cannot mention anyone.
+    expect(JSON.stringify(payload.embeds)).toContain('@here');
+    expect(JSON.stringify(payload.embeds)).toContain('@everyone');
+  });
+
+  it('puts only the configured token in content even beside hostile text', async () => {
+    const req = stubRequest(204);
+
+    await service.sendCustomMessage('https://discord.com/api/webhooks/1/abc', '@everyone', '@here @everyone', 'error', [
+      { name: '@here', value: '@everyone' },
+    ], { type: 'role', id: '111111111111111111' });
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload.content).toBe('<@&111111111111111111>');
+    expect(payload.content).not.toContain('everyone');
+    expect(payload.allowed_mentions).toEqual({ parse: [], roles: ['111111111111111111'] });
+  });
+
+  it('carries the saved mention with a test message', async () => {
+    const req = stubRequest(204);
+
+    expect(await service.testWebhook('https://discord.com/api/webhooks/1/abc', 'en', { type: 'role', id: '345678901234567890' })).toEqual({ success: true, message: expect.any(String) });
+
+    const payload = JSON.parse(req.write.mock.calls[0][0]);
+    expect(payload.content).toBe('<@&345678901234567890>');
+    expect(payload.allowed_mentions).toEqual({ parse: [], roles: ['345678901234567890'] });
   });
 });

@@ -81,7 +81,7 @@ describe('NotificationMonitorService', () => {
     output = '2026-10-01T11:59:50.123456789Z 2026-10-01T11:59:50+0000 ERROR Backup failed with exit code 1\nsecret-repository';
     await service.collect();await service.collect();
     expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
-    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String), 'warning', 'srv');
     expect(JSON.stringify(notifications.sendOperationalAlert.mock.calls)).not.toContain('secret');
     expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['--tail', '500', '--since', '--until', 'backup-id']), expect.objectContaining({ timeout: 5000, maxBuffer: 512 * 1024 }), expect.any(Function));
   });
@@ -129,7 +129,7 @@ describe('NotificationMonitorService', () => {
       if (args[0] === 'compose') return callback(null, args.at(-1) === 'mc' ? 'generated-mc-id\n' : 'backup-id\n', '');
       callback(null, args[0] === 'inspect' ? JSON.stringify({ Running: true }) + '\n' + JSON.stringify({ Running: true, Restarting: true, ExitCode: 1 }) : '', '');
     });
-    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String), 'warning', 'srv');
   });
   it('resolves Compose service IDs rather than assuming the Minecraft container name', async () => {
     (execFile as unknown as jest.Mock).mockImplementation((_cmd, args, _opts, callback) => {
@@ -138,7 +138,7 @@ describe('NotificationMonitorService', () => {
       else callback(new Error('No such object: srv'));
     });
     await service.collect();
-    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String), 'warning', 'srv');
     expect(Logger.prototype.warn).not.toHaveBeenCalled();
   });
 
@@ -168,10 +168,10 @@ describe('NotificationMonitorService', () => {
       else if (args[0] === 'inspect') callback(null, JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }) + '\n' + JSON.stringify({ Running: true, StartedAt: new Date(now - 3 * 3_600_000).toISOString() }), '');
       else callback(null, JSON.stringify(snapshots), '');
     });
-    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('stale', 'srv', expect.any(String));
+    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('stale', 'srv', expect.any(String), 'warning', 'srv');
     snapshots = [{ time: 'bad timestamp' }];jest.setSystemTime(now + 5 * 60_000);await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
     snapshots = [{ time: new Date(now + 9 * 60_000).toISOString() }];jest.setSystemTime(now + 10 * 60_000);await service.collect();
-    expect(notifications.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'A new restic snapshot was observed.');
+    expect(notifications.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'A new restic snapshot was observed.', 'warning', 'srv');
     expect(execFile).toHaveBeenCalledWith('docker', expect.arrayContaining(['--host', 'srv', '--path', '/data']), expect.any(Object), expect.any(Function));
   });
 
@@ -193,7 +193,7 @@ describe('NotificationMonitorService', () => {
       else if (args[0] === 'exec') callback(new Error('private repository credentials'));
       else callback(null, '', output);
     });
-    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String));
+    await service.collect();expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('backup', 'srv', expect.any(String), 'warning', 'srv');
     expect(JSON.stringify((Logger.prototype.warn as jest.Mock).mock.calls)).not.toContain('credentials');
   });
 });

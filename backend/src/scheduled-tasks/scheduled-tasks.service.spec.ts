@@ -413,7 +413,7 @@ describe('ScheduledTasksService', () => {
     await service.runNow('srv', 12);await service.runNow('srv', 12);
     expect(serverManagement.restartServer).toHaveBeenCalledWith('srv', false);
     expect(notifications.sendOperationalAlert).toHaveBeenCalledTimes(1);
-    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #12 (restart) failed');
+    expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #12 (restart) failed', 'warning', 'srv');
   });
 
   it('does not mistake skipped commands or successful command output for a task failure', async () => {
@@ -424,6 +424,6 @@ describe('ScheduledTasksService', () => {
     serverManagement.executeCommand.mockResolvedValue({ success: true, output: 'Command failed: text printed by command' });
     await service.runNow('srv', 2);expect(notifications.sendOperationalAlert).not.toHaveBeenCalled();
     serverManagement.executeCommand.mockResolvedValue({ success: false, output: 'private token' });
-    await service.runNow('srv', 2);expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #2 (command) failed');
+    await service.runNow('srv', 2);expect(notifications.sendOperationalAlert).toHaveBeenCalledWith('task', 'srv', 'Task #2 (command) failed', 'warning', 'srv');
   });
 });

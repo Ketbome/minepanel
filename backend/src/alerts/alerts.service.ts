@@ -132,7 +132,7 @@ export class AlertsService {
           state.gameFailureCount++;
           if (state.gameFailureCount >= gameRule.gameFailureSamples && !this.isInCooldown(state, 'game', gameRule.cooldownMinutes)) {
             state.incidents.add('game'); state.lastAlertAt.game = Date.now();
-            await this.notificationsService.sendOperationalAlert('game', serverId, `Game query failed for ${gameRule.gameFailureSamples} consecutive samples`);
+            await this.notificationsService.sendOperationalAlert('game', serverId, `Game query failed for ${gameRule.gameFailureSamples} consecutive samples`, 'warning', serverId);
           }
         } else state.gameFailureCount = 0;
       } else { state.gameFailureCount = 0; if (!gameRule.gameAlertEnabled) state.incidents.delete('game'); }
@@ -274,7 +274,7 @@ export class AlertsService {
 
   private async recover(serverId: string, state: ServerAlertState, type: AlertType): Promise<void> {
     if (!state.incidents.has(type)) return;
-    await this.notificationsService.sendOperationalAlert('recovery', serverId, type, type === 'down' || type === 'crash' ? 'error' : 'warning');
+    await this.notificationsService.sendOperationalAlert('recovery', serverId, type, type === 'down' || type === 'crash' ? 'error' : 'warning', serverId);
     state.incidents.delete(type);
   }
 
@@ -296,7 +296,7 @@ export class AlertsService {
         { name: t.retriesField, value: `\`${maxRetries}\``, inline: true },
         { name: t.logTailField, value: `\`\`\`\n${logTail}\n\`\`\``, discordOnly: true },
       ];
-      await this.notificationsService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields);
+      await this.notificationsService.sendCustomMessage(webhook, t.crashTitle, t.crashDescription, 'error', fields, 'crash', serverId);
     } catch (error) {
       this.logger.warn(`Failed to send crash alert for server ${serverId}: ${(error as Error).message}`);
     }
@@ -320,7 +320,7 @@ export class AlertsService {
       const fields: Array<{ name: string; value: string; inline?: boolean }> = [{ name: t.serverField, value: `\`${serverId}\``, inline: true }];
 
       if (type === 'down') {
-        await this.notificationsService.sendCustomMessage(webhook, t.downTitle, t.downDescription, 'error', fields);
+        await this.notificationsService.sendCustomMessage(webhook, t.downTitle, t.downDescription, 'error', fields, 'down', serverId);
         return;
       }
 
@@ -330,7 +330,7 @@ export class AlertsService {
 
       const title = type === 'cpu' ? t.cpuTitle : t.memoryTitle;
       const description = type === 'cpu' ? t.cpuDescription : t.memoryDescription;
-      await this.notificationsService.sendCustomMessage(webhook, title, description, 'warning', fields);
+      await this.notificationsService.sendCustomMessage(webhook, title, description, 'warning', fields, type === 'cpu' ? 'cpu' : 'memory', serverId);
     } catch (error) {
       this.logger.warn(`Failed to send ${type} alert for server ${serverId}: ${(error as Error).message}`);
     }

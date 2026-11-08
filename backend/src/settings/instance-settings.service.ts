@@ -428,6 +428,17 @@ export class InstanceSettingsService implements OnModuleInit {
       if (row.notifications.telegramEnabled && (!row.notifications.telegramChatId || !row.telegramTokenEnc)) {
         throw new BadRequestException('Telegram notifications require a bot token and chat ID');
       }
+      const mentionType = row.notifications.discordMentionType;
+      if (mentionType === 'role' || mentionType === 'user') {
+        const mentionId = (row.notifications.discordMentionId ?? '').trim();
+        if (!/^\d{17,20}$/.test(mentionId)) {
+          throw new BadRequestException('Discord role and user mentions require a 17 to 20 digit ID');
+        }
+        row.notifications.discordMentionId = mentionId;
+      } else {
+        // A stale ID would otherwise resurface if the type is switched back later.
+        row.notifications.discordMentionId = '';
+      }
     }
 
     if (dto.smtp) {
@@ -464,6 +475,12 @@ export class InstanceSettingsService implements OnModuleInit {
       ntfyTopic: '',
       slackEnabled: false,
       discordEnabled: true,
+      discordMentionType: 'none' as const,
+      discordMentionId: '',
+      discordMentionOn: 'errors' as const,
+      // Existing installations keep their current per-server routing until an
+      // admin explicitly switches to one shared channel.
+      discordChannelMode: 'per-server' as const,
       emailEnabled: false,
       emailTo: '',
       telegramEnabled: false,

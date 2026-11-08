@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, Put, Query, BadRequestException, ValidationPipe, Delete, UseGuards, Request, ForbiddenException, ConflictException, Optional } from '@nestjs/common';
 import { DockerComposeService } from 'src/docker-compose/docker-compose.service';
 import { assertValidComposeSnippets } from 'src/common/compose/compose-snippets';
 import { ServerManagementService } from './server-management.service';
@@ -25,6 +25,7 @@ import { AccessControlService } from 'src/users/services/access-control.service'
 import { Users } from 'src/users/entities/users.entity';
 import { AuditLogService } from 'src/users/services/audit-log.service';
 import { VanillaTweaksService } from 'src/vanilla-tweaks/vanilla-tweaks.service';
+import { DiscordFeedService } from 'src/discord/discord-feed.service';
 import * as path from 'path';
 
 // Accepts an ISO 8601 timestamp, a Unix timestamp, or a Go-style duration (e.g. "10m", "1h30m").
@@ -231,6 +232,7 @@ export class ServerManagementController {
     private readonly accessControlService: AccessControlService,
     private readonly auditLogService: AuditLogService,
     private readonly vanillaTweaks: VanillaTweaksService,
+    @Optional() private readonly discordFeed?: DiscordFeedService,
   ) {}
 
   private async recordServerAudit(user: Users | null, action: string, serverId: string, summary: string, outcome: 'success' | 'error' = 'success', metadata?: Record<string, unknown>) {
@@ -1051,6 +1053,7 @@ export class ServerManagementController {
     this.accessControlService.assertUseConsole(user, id);
     const result = await this.managementService.executeCommand(id, body.command, body.rconPort, body.rconPassword);
     await this.recordServerAudit(user, 'execute_server_command', id, `Executed command on ${id}: ${body.command}`, 'success', { command: body.command });
+    this.discordFeed?.publishConsole(id, user.username, body.command, result.success);
     return result;
   }
 

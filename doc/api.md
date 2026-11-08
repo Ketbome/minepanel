@@ -475,6 +475,27 @@ Per-server restarts, console commands and rotating announcements. Requires acces
 `scheduleKind` is `interval` (default; `intervalMinutes` 1–43200) or `cron` (`cronExpression`,
 validated on save).
 
+### Discord integrations
+
+Per-server Discord feeds. Admin only, because the webhook is a secret and moves game data off
+the host. Webhook URLs are encrypted at rest and never returned; the response only carries
+`{ id, name, shared }`.
+
+- `GET /servers/:serverId/discord` — `{ webhooks, routes }`. `routes` only contains explicitly
+  saved events: a webhook id, or `null` for off.
+- `POST /servers/:serverId/discord/webhooks` — body `{ name, url, shared? }`. A Discord webhook
+  URL is required (`discord.com` or `discordapp.com`). `shared: true` makes the webhook usable
+  from every server and prefixes its messages with the server name.
+- `PATCH /servers/:serverId/discord/webhooks/:id` — `{ name?, url?, shared? }`; only the owning
+  server can change a server-owned webhook.
+- `DELETE /servers/:serverId/discord/webhooks/:id` — also removes the routes that pointed at it.
+- `POST /servers/:serverId/discord/webhooks/:id/test` — sends a sample message to that webhook.
+- `PUT /servers/:serverId/discord/routes` — body `{ routes: { <event>: <webhookId|null|'instance'> } }`.
+  Events: `chat`, `command`, `join`, `leave`, `death`, `advancement`, `console`, `down`, `crash`,
+  `cpu`, `memory`, `disk`, `backup`, `task`, `game`, `stale`, `recovery`. `null` turns the event
+  off; `'instance'` removes the route so panel alerts keep using the Minepanel-wide Discord
+  webhook. Activity defaults to off, panel alerts default to the instance webhook.
+
 ### Alerts
 
 Alerts per server. Requires access to the server. Delivery uses the channels and event
