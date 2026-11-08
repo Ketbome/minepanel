@@ -83,7 +83,8 @@ describe('NotificationsService', () => {
     await service.sendServerNotification('https://fallback', 'stopped', 'srv', 'en');
 
     expect(discord.sendServerNotification).toHaveBeenCalledWith('https://server', 'stopped', 'srv', 'en', undefined, undefined, undefined);
-    expect(discord.sendServerNotification).not.toHaveBeenCalledWith('https://fallback', expect.anything(), expect.anything(), expect.anything());
+    expect(discord.sendServerNotification).toHaveBeenCalledTimes(1);
+    expect(discord.sendServerNotification.mock.calls.map((call) => call[0])).toEqual(['https://server']);
   });
 
   it('suppresses lifecycle delivery for an explicit do-not-send route', async () => {

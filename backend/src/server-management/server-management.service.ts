@@ -1287,9 +1287,14 @@ export class ServerManagementService {
 
       for (const guard of this.deletionGuards) releases.push(await guard(serverId));
 
+      // The targets are resolved while the routes still exist; the message itself is sent
+      // after the server is gone, so deletion never waits for Discord.
+      const deletedNotification = await this.prepareServerNotification('deleted', serverId);
+
       // Server IDs are reusable: a new server with this ID must not inherit its player
-      // history, its scheduled tasks or the users that were granted access to it.
-      // Keep server.json/compose in place until cleanup commits: createServer treats the ID as taken.
+      // history, its scheduled tasks, its Discord channels or the users that were granted
+      // access to it. Keep server.json/compose in place until cleanup commits: createServer
+      // treats the ID as taken.
       await this.settingsRepo.manager.transaction(async (manager) => {
         await manager.delete(PlayerSession, { serverId });
         await manager.delete(PlayerTracking, { serverId });
@@ -1297,6 +1302,7 @@ export class ServerManagementService {
         await manager.delete(MetricSample, { serverId });
         await manager.delete(UptimeInterval, { serverId });
         await manager.delete(LogPreset, { serverId });
+        await this.discordRouting.removeForServer(serverId, manager);
         for (const entity of [Users, UserInvitation]) {
           const grantees = (await manager.find(entity)).filter((row) => row.serverAccess?.includes(serverId));
           for (const row of grantees) row.serverAccess = row.serverAccess.filter((id) => id !== serverId);
@@ -1315,11 +1321,6 @@ export class ServerManagementService {
       } catch (error) {
         this.logger.warn(`Could not clean up docker volumes for ${serverId}`, error);
       }
-
-      // Capture the notification's targets before cleanup removes the routes and
-      // config, then send after the server is gone so deletion never waits on Discord.
-      const deletedNotification = await this.prepareServerNotification('deleted', serverId);
-      await this.discordRouting.removeForServer(serverId);
 
       await fs.remove(serverDir);
       this.alertsService.clearState(serverId);

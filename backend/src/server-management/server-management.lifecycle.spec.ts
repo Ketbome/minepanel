@@ -501,7 +501,7 @@ describe('ServerManagementService lifecycle', () => {
       expect(execCalls()).toEqual(expect.arrayContaining(['docker volume rm srv_data', 'docker volume rm srv_backups']));
       expect(discord.prepareServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
       expect(deletedNotification).toHaveBeenCalledTimes(1);
-      expect(discordRouting.removeForServer).toHaveBeenCalledWith('srv');
+      expect(discordRouting.removeForServer).toHaveBeenCalledWith('srv', expect.anything());
       expect(discord.prepareServerNotification.mock.invocationCallOrder[0]).toBeLessThan(discordRouting.removeForServer.mock.invocationCallOrder[0]);
       expect(discordRouting.removeForServer.mock.invocationCallOrder[0]).toBeLessThan((fs.remove as unknown as jest.Mock).mock.invocationCallOrder[0]);
       expect(discordRouting.removeForServer.mock.invocationCallOrder[0]).toBeLessThan(deletedNotification.mock.invocationCallOrder[0]);

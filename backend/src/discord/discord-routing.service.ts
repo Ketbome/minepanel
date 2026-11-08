@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, Not, Repository } from 'typeorm';
 import { decryptSecret, encryptSecret } from 'src/common/crypto/secret-cipher';
 import { ServerStoreService } from 'src/docker-compose/server-store.service';
 import { InstanceSettingsService } from 'src/settings/instance-settings.service';
@@ -86,17 +86,24 @@ export class DiscordRoutingService {
     await this.webhooks.delete({ id: hook.id });
   }
 
-  /** Clears one deleted server's routes and its own webhooks, keeping shared ones. */
-  async removeForServer(serverId: string): Promise<void> {
-    await this.webhooks.manager.transaction(async (manager) => {
-      const owned = await manager.find(DiscordWebhook, { where: { serverId }, select: { id: true } });
-      if (owned.length > 0) {
-        await manager.delete(DiscordRoute, { webhookId: In(owned.map((hook) => hook.id)) });
-      }
-      // A shared webhook has serverId null, so it is never matched here.
-      await manager.delete(DiscordRoute, { serverId });
-      await manager.delete(DiscordWebhook, { serverId });
-    });
+  /**
+   * Clears one deleted server's routes and its own webhooks, keeping shared ones.
+   * `manager` lets the caller run this inside the deletion transaction, so the
+   * Discord rows roll back together with the rest of the server cleanup.
+   */
+  async removeForServer(serverId: string, manager?: EntityManager): Promise<void> {
+    if (manager) return this.clearForServer(serverId, manager);
+    await this.webhooks.manager.transaction((run) => this.clearForServer(serverId, run));
+  }
+
+  private async clearForServer(serverId: string, manager: EntityManager): Promise<void> {
+    const owned = await manager.find(DiscordWebhook, { where: { serverId }, select: { id: true } });
+    if (owned.length > 0) {
+      await manager.delete(DiscordRoute, { webhookId: In(owned.map((hook) => hook.id)) });
+    }
+    // A shared webhook has serverId null, so it is never matched here.
+    await manager.delete(DiscordRoute, { serverId });
+    await manager.delete(DiscordWebhook, { serverId });
   }
 
   async setRoutes(serverId: string, input: Record<string, number | null | 'instance'>): Promise<DiscordIntegrationState> {
