@@ -448,6 +448,7 @@ export const fr: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Impossible de charger le journal d’audit',
   noAuditLogs: 'Aucun événement d’audit trouvé.',
   copyLink: 'Copier le lien',
+  copyLinkManually: 'Votre navigateur a bloqué le presse-papiers. Copiez ce lien manuellement :',
 
   // Server Creation
   serverCreationDesc: 'Créer un nouveau serveur Minecraft',

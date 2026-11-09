@@ -457,6 +457,7 @@ export const tr: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Denetim kayıtları yüklenemedi',
   noAuditLogs: 'Denetim kaydı bulunamadı.',
   copyLink: 'Bağlantıyı kopyala',
+  copyLinkManually: 'Tarayıcınız panoyu engelledi. Bu bağlantıyı elle kopyalayın:',
 
   // Server Creation
   serverCreationDesc: 'Yeni bir Minecraft sunucusu oluştur',

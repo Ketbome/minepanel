@@ -451,6 +451,7 @@ export const nl: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Auditlogboek laden mislukt',
   noAuditLogs: 'Geen auditgebeurtenissen gevonden.',
   copyLink: 'Link kopiëren',
+  copyLinkManually: 'Je browser heeft het klembord geblokkeerd. Kopieer deze link handmatig:',
 
   // Server Creation
   serverCreationDesc: 'Maak een nieuwe Minecraft server aan',

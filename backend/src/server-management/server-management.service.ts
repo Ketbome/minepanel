@@ -28,6 +28,7 @@ import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose
 import { MinecraftStatusProbe, parseMinecraftStatus } from './minecraft-status.util';
 import { assertContained } from 'src/common/fs/contained-path';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
+import { containerMemoryLimit } from 'src/common/compose/container-memory';
 
 const execAsync = promisify(exec);
 
@@ -1356,7 +1357,7 @@ export class ServerManagementService {
       if (!config || config.edition === 'BEDROCK') {
         return { cpuLimit: '1', memoryLimit: '4G' };
       }
-      return { cpuLimit: config.cpuLimit || '1', memoryLimit: config.maxMemory || '4G' };
+      return { cpuLimit: config.cpuLimit || '1', memoryLimit: containerMemoryLimit(config.maxMemory || '4G') };
     } catch (error) {
       this.logger.warn(`Failed to read limits for ${serverId}:`, error);
       return { cpuLimit: '1', memoryLimit: '4G' };

@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { TranslationKey } from '@/lib/translations';
 import { mcToast } from '@/lib/utils/minecraft-toast';
+import { copyText } from '@/lib/utils/clipboard';
 import { createApiToken, getMcpUrl, type ApiTokenExpiry, type ApiTokenPermissions, type CreatedApiToken } from '@/services/api-tokens/api-tokens.service';
 import type { User } from '@/services/users/users.service';
 
@@ -239,10 +240,9 @@ function CopyBlock({ value }: { value: string }) {
   const { t } = useLanguage();
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
+    if (await copyText(value)) {
       mcToast.success(t('copiedToClipboard'));
-    } catch {
+    } else {
       mcToast.error(t('copyError'));
     }
   };

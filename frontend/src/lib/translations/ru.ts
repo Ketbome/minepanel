@@ -448,6 +448,7 @@ export const ru: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Не удалось загрузить журнал аудита',
   noAuditLogs: 'Записей аудита не найдено.',
   copyLink: 'Копировать ссылку',
+  copyLinkManually: 'Браузер заблокировал буфер обмена. Скопируйте ссылку вручную:',
 
   // Server Creation
   serverCreationDesc: 'Создайте новый Minecraft-сервер',

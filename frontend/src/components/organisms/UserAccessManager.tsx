@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
+import { copyText } from '@/lib/utils/clipboard';
 import { fetchServerList } from '@/services/docker/fetchs';
 import {
   createInvitation,
@@ -86,6 +87,7 @@ export function UserAccessManager() {
   const [isInviting, setIsInviting] = useState(false);
   const [copyingInvitationId, setCopyingInvitationId] = useState<number | null>(null);
   const [copiedInvitationId, setCopiedInvitationId] = useState<number | null>(null);
+  const [manualInvite, setManualInvite] = useState<{ id: number; url: string } | null>(null);
   const [inviteForm, setInviteForm] = useState<CreateInvitationData>({
     email: '',
     permissions: emptyPermissions,
@@ -165,7 +167,12 @@ export function UserAccessManager() {
     setCopyingInvitationId(invitationId);
     try {
       const { inviteUrl } = await getInvitationLink(invitationId);
-      await navigator.clipboard.writeText(inviteUrl);
+      // Every request rotates the token, so a failed copy must leave the new link on screen.
+      if (!(await copyText(inviteUrl))) {
+        setManualInvite({ id: invitationId, url: inviteUrl });
+        return;
+      }
+      setManualInvite(null);
       setCopiedInvitationId(invitationId);
       mcToast.success(t('copiedToClipboard'));
       window.setTimeout(() => {
@@ -321,15 +328,23 @@ export function UserAccessManager() {
             <Label className="text-gray-200">{t('pendingInvitations')}</Label>
             {invitations.length === 0 ? <p className="text-sm text-gray-400">{t('noPendingInvitations')}</p> : null}
             {invitations.map((invitation) => (
-              <div key={invitation.id} className="flex items-center justify-between gap-4 rounded-lg border border-gray-700/60 bg-gray-800/40 px-4 py-3 text-sm text-gray-300">
-                <div>
-                  <div className="font-medium text-white">{invitation.email || t('invitationLinkOnly')}</div>
-                  <div>{t('invitationExpires')}: {new Date(invitation.expiresAt).toLocaleString()}</div>
+              <div key={invitation.id} className="space-y-3 rounded-lg border border-gray-700/60 bg-gray-800/40 px-4 py-3 text-sm text-gray-300">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="font-medium text-white">{invitation.email || t('invitationLinkOnly')}</div>
+                    <div>{t('invitationExpires')}: {new Date(invitation.expiresAt).toLocaleString()}</div>
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => handleCopyInvitation(invitation.id)} disabled={copyingInvitationId === invitation.id} className="border-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800">
+                    {copyingInvitationId === invitation.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : copiedInvitationId === invitation.id ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                    {t('copyLink')}
+                  </Button>
                 </div>
-                <Button type="button" variant="outline" onClick={() => handleCopyInvitation(invitation.id)} disabled={copyingInvitationId === invitation.id} className="border-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800">
-                  {copyingInvitationId === invitation.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : copiedInvitationId === invitation.id ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                  {t('copyLink')}
-                </Button>
+                {manualInvite?.id === invitation.id ? (
+                  <div className="space-y-1">
+                    <Label htmlFor={`invite-link-${invitation.id}`} className="text-amber-300">{t('copyLinkManually')}</Label>
+                    <Input id={`invite-link-${invitation.id}`} readOnly autoFocus value={manualInvite.url} onFocus={(event) => event.currentTarget.select()} className="border-gray-700 bg-gray-950 font-mono text-xs text-gray-100" />
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

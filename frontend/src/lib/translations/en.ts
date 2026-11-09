@@ -446,6 +446,7 @@ export const en = {
   errorLoadingAuditLogs: 'Failed to load audit logs',
   noAuditLogs: 'No audit logs found.',
   copyLink: 'Copy link',
+  copyLinkManually: 'Your browser blocked the clipboard. Copy this link manually:',
 
   // Server Creation
   serverCreationDesc: 'Create a new Minecraft server',

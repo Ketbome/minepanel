@@ -449,6 +449,7 @@ export const pt: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Não foi possível carregar a auditoria',
   noAuditLogs: 'Nenhum evento de auditoria encontrado.',
   copyLink: 'Copiar link',
+  copyLinkManually: 'Seu navegador bloqueou a área de transferência. Copie este link manualmente:',
 
   // Criação de Servidor
   serverCreationDesc: 'Crie um novo servidor de Minecraft',

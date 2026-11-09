@@ -10,6 +10,7 @@ import { FC, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { mcToast } from "@/lib/utils/minecraft-toast";
+import { copyText } from "@/lib/utils/clipboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { createServer } from "@/services/docker/fetchs";
@@ -75,8 +76,11 @@ export function ModpackDetailsModalEnhanced({ modpack, open, onClose }: ModpackD
   const distributionBlocked = modpack.allowModDistribution === false;
   const downloadUrl = `${modpack.links.websiteUrl}/${selectedFileId ? `download/${selectedFileId}` : "files"}`;
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, label: string) => {
+    if (!(await copyText(text))) {
+      mcToast.error(t("copyError"));
+      return;
+    }
     setCopied(true);
     mcToast.success(`${label} ${t("copiedToClipboard")}`);
     setTimeout(() => setCopied(false), 2000);

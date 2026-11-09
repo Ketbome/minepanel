@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { mcToast } from "@/lib/utils/minecraft-toast";
+import { copyText } from "@/lib/utils/clipboard";
 
 interface ModpackDetailsModalProps {
   modpack: CurseForgeModpack | null;
@@ -38,8 +39,11 @@ export function ModpackDetailsModal({ modpack, open, onClose }: ModpackDetailsMo
 
   const latestFile = getLatestFile();
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, label: string) => {
+    if (!(await copyText(text))) {
+      mcToast.error(t("copyError"));
+      return;
+    }
     setCopied(true);
     mcToast.success(`${label} ${t("copiedToClipboard")}`);
     setTimeout(() => setCopied(false), 2000);
