@@ -216,6 +216,9 @@ Tooling / build (Next.js 16):
 - `src/lib/utils/curseforge-ref.ts` - single parser for "what did the user type": a pack page
   URL, a slug, a project id, or a name to slugify. `CurseForgeModpackSection` and the search
   rescue both read it; do not re-implement the URL regex.
+- `src/lib/utils/clipboard.ts` - `copyText` is the only way to copy: `navigator.clipboard` is
+  missing over plain HTTP (most LAN installs), so it falls back to `execCommand('copy')`. When it
+  returns false, show the value for manual copy if losing it matters (invite links rotate).
 - `src/components/molecules/modpacks/ModpackNotFoundHelp.tsx` - the empty state for both the
   Browse dialog and the templates page. Before it renders, the caller retries the query as an
   exact reference (`findModpackByQuery`), because CurseForge's fuzzy search and its slug lookup

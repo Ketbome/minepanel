@@ -656,7 +656,7 @@ describe('ServerManagementService lifecycle', () => {
       spawnQueue.push({ stdout: 'abc123full 2026-01-01T00:00:00Z\n', exitCode: 0 }, { stdout: '', exitCode: 1 }, { stdout: '', exitCode: 1 });
 
       const resources = await service.getAllServersResources();
-      expect(resources.srv).toEqual({ status: 'running', cpuUsage: '5%', memoryUsage: '512MiB', memoryLimit: '2GiB', cpuLimit: '2', memoryConfigLimit: '6G' });
+      expect(resources.srv).toEqual({ status: 'running', cpuUsage: '5%', memoryUsage: '512MiB', memoryLimit: '2GiB', cpuLimit: '2', memoryConfigLimit: '7680M' });
       expect(resources.idle).toMatchObject({ status: 'running', cpuUsage: '5%' });
 
       const stats = await service.getAllServersRuntimeStats();
@@ -683,7 +683,7 @@ describe('ServerManagementService lifecycle', () => {
     it('getServerRuntimeStats reads limits and probe config errors', async () => {
       spawnQueue.push({ stdout: '', exitCode: 1 }, { stdout: '', exitCode: 1 });
       route(/docker stats abc123 --no-stream --format "\{\{.CPUPerc\}\}\\t\{\{.MemUsage\}\}"/, { stdout: '1%\t1GiB / 4GiB\n' });
-      expect(await service.getServerRuntimeStats('srv')).toMatchObject({ status: 'running', cpuLimit: '2', memoryConfigLimit: '6G', playersMax: 20 });
+      expect(await service.getServerRuntimeStats('srv')).toMatchObject({ status: 'running', cpuLimit: '2', memoryConfigLimit: '7680M', playersMax: 20 });
 
       // Limits and the probe config both come from server.json; unreadable means defaults.
       store.readConfig.mockRejectedValue(new Error('no config'));

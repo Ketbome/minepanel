@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Copy, Check, Globe, Wifi, Loader2, Network } from 'lucide-react';
 import { mcToast } from '@/lib/utils/minecraft-toast';
+import { copyText } from '@/lib/utils/clipboard';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { getAllIPs, getProxyStatus, getServerProxyHostname } from '@/services/network.service';
 import { LINK_LEARN_HOW_LAN } from '@/lib/providers/constants';
@@ -57,7 +58,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (!(await copyText(text))) throw new Error('Clipboard unavailable');
       setCopied(text);
       setTimeout(() => setCopied((current) => (current === text ? null : current)), 2000);
       mcToast.success(t('copiedToClipboard'));

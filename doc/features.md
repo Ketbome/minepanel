@@ -542,6 +542,9 @@ Edit from UI:
 In **Resources** tab:
 
 - **Memory/CPU:** set `INIT_MEMORY`, `MAX_MEMORY`, and CPU limits per server
+  - The container memory limit is `MAX_MEMORY` plus headroom for the JVM's native memory
+    (the larger of 1 GB or 25%), so a 6G heap runs in a 7.5G container. Container RAM usage
+    in the panel counts that native memory too, so it reads higher than spark's heap usage.
 - **JVM Options:** use `JVM_OPTS`, `JVM_XX_OPTS`, `JVM_DD_OPTS`, `EXTRA_ARGS`
 
 Timezone, auto-stop, auto-pause, restart policy and rolling logs live in the

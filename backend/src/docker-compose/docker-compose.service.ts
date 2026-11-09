@@ -11,6 +11,7 @@ import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose
 import { applyComposeSnippets } from 'src/common/compose/compose-snippets';
 import { escapeComposeValues, unescapeComposeValues } from 'src/common/compose/compose-escape';
 import { parseMemoryToMb } from 'src/metrics/metric-parse.util';
+import { containerMemoryLimit } from 'src/common/compose/container-memory';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
 import type { ComposeEdge } from 'src/settings/instance-settings.service';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
@@ -1285,7 +1286,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
     // Only add resource limits for Java (Bedrock doesn't use JVM)
     if (edition === 'JAVA') {
       const limits = Object.fromEntries(
-        Object.entries({ cpus: config.cpuLimit, memory: config.maxMemory }).filter(([, value]) => value !== undefined && value !== ''),
+        Object.entries({ cpus: config.cpuLimit, memory: config.maxMemory && containerMemoryLimit(config.maxMemory) }).filter(([, value]) => value !== undefined && value !== ''),
       );
       const reservations = Object.fromEntries(
         Object.entries({ cpus: config.cpuReservation, memory: config.memoryReservation }).filter(([, value]) => value !== undefined && value !== ''),

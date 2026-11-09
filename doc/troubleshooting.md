@@ -425,7 +425,7 @@ reason is in `docker compose logs backend`.
 | Message or symptom | Cause | Fix |
 | --- | --- | --- |
 | `port is already allocated` | Another server or program uses the port | `sudo lsof -i :25565`, then change **Server Port** in the **Network** tab |
-| `Minimum memory limit can not be less than memory reservation limit` | **Maximum Memory (JVM)** (the container limit) is below **Memory Reservation (Docker)** | In **Resources**, lower the reservation or raise the maximum |
+| `Minimum memory limit can not be less than memory reservation limit` | The container limit (**Maximum Memory (JVM)** plus headroom) is below **Memory Reservation (Docker)** | In **Resources**, lower the reservation or raise the maximum |
 | `OutOfMemoryError`, container killed | Not enough memory for the world or modpack | Raise **Initial/Maximum Memory (JVM)** in **Resources** |
 | EULA error | `EULA=TRUE` missing | Minepanel always writes it; start the server again so its compose file is regenerated |
 

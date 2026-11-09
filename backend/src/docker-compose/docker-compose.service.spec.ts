@@ -595,8 +595,9 @@ describe('DockerComposeService', () => {
       const [, yamlContent] = writeFileMock.mock.calls[0];
       const parsed = yaml.load(yamlContent as string) as any;
 
-      expect(parsed.services.mc.deploy.resources.limits.memory).toBe('2G');
-      expect(parsed.services.mc.deploy.resources.reservations.memory).toBe('2G');
+      expect(parsed.services.mc.environment.MAX_MEMORY).toBe('2G');
+      expect(parsed.services.mc.deploy.resources.limits.memory).toBe('3072M');
+      expect(parsed.services.mc.deploy.resources.reservations.memory).toBe('3072M');
     });
 
     it('should leave a memory reservation below the limit alone', async () => {

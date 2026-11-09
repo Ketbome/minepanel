@@ -4,6 +4,8 @@ import { FC, useState, useCallback, useEffect, useRef } from "react";
 import { FileItem } from "@/services/files/files.service";
 import { Folder, File, FileText, FileCode, FileImage, FileArchive, ArrowUp, ArrowDown, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { copyText } from "@/lib/utils/clipboard";
+import { mcToast } from "@/lib/utils/minecraft-toast";
 import { useLanguage } from "@/lib/hooks/useLanguage";
 import { TranslationKey } from "@/lib/translations";
 import { FileContextMenu } from "./FileContextMenu";
@@ -129,9 +131,12 @@ export const FileList: FC<FileListProps> = ({
     [openMenu]
   );
 
-  const handleCopyPath = useCallback((file: FileItem) => {
-    navigator.clipboard.writeText(file.path);
-  }, []);
+  const handleCopyPath = useCallback(
+    async (file: FileItem) => {
+      if (!(await copyText(file.path))) mcToast.error(t("copyError"));
+    },
+    [t]
+  );
 
   // Keep the keyboard cursor visible while arrowing through a long folder.
   useEffect(() => {

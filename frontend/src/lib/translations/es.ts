@@ -449,6 +449,7 @@ export const es: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'No se pudo cargar la auditoría',
   noAuditLogs: 'No se encontraron eventos de auditoría.',
   copyLink: 'Copiar link',
+  copyLinkManually: 'Tu navegador bloqueó el portapapeles. Copia este link manualmente:',
 
   // Creación de Servidor
   serverCreationDesc: 'Crea un nuevo servidor de Minecraft',

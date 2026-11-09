@@ -448,6 +448,7 @@ export const de: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Audit-Protokolle konnten nicht geladen werden',
   noAuditLogs: 'Keine Audit-Protokolle gefunden.',
   copyLink: 'Link kopieren',
+  copyLinkManually: 'Dein Browser hat die Zwischenablage blockiert. Kopiere diesen Link manuell:',
 
   // Server Creation
   serverCreationDesc: 'Einen neuen Minecraft-Server erstellen',

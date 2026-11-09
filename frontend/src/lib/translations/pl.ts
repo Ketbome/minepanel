@@ -449,6 +449,7 @@ export const pl: Record<TranslationKey, string> = {
   errorLoadingAuditLogs: 'Nie udało się załadować dziennika audytu',
   noAuditLogs: 'Nie znaleziono zdarzeń audytu.',
   copyLink: 'Kopiuj link',
+  copyLinkManually: 'Przeglądarka zablokowała schowek. Skopiuj ten link ręcznie:',
 
   // Tworzenie serwera
   serverCreationDesc: 'Utwórz nowy serwer Minecraft',
