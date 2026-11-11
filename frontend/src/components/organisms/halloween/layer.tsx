@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Blackout } from './blackout';
-import { BLACKOUT_EVENT } from './index';
 import './halloween.css';
+
+export const BLACKOUT_EVENT = 'minepanel:blackout';
 
 const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 

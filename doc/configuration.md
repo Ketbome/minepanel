@@ -106,7 +106,7 @@ Keycloak, Google, ...). See the [Single Sign-On](/sso) guide for setup.
 | `BASE_PATH`                    | _(empty)_               | Backend API prefix such as `/api` |
 | `NEXT_PUBLIC_BASE_PATH`        | _(empty)_               | Frontend route prefix such as `/minepanel` |
 | `NEXT_PUBLIC_DEFAULT_LANGUAGE` | `en`                    | `en`, `es`, `nl`, `de`, `pl`, `fr`, `ru`, `pt`, `tr` |
-| `NEXT_PUBLIC_SEASONAL_THEME`   | _(empty)_               | `false` turns off the Halloween theme (October 24 to November 1) for every user |
+| `NEXT_PUBLIC_SEASONAL_THEME`   | _(empty)_               | `false` turns off the season themes (Halloween from October 24 to November 1, Christmas from December 1 to January 6) for every user |
 
 ::: danger CORS
 `FRONTEND_URL` **must match** how you access the panel. Mismatch = blocked requests.

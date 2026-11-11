@@ -1,0 +1,310 @@
+/* Christmas season for the docs: only applies while <html data-season="christmas">.
+   Acid green stays the accent; red, gold and ice live only in the art.
+   The panel has the same theme in frontend/src/components/organisms/christmas/. */
+
+:root[data-season='christmas'] {
+  --mp-bg: #0a1220;
+  --mp-bg-panel: #0d1726;
+  --mp-bg-elev: #111d30;
+  --mp-border: #1a2a44;
+  --mp-border-strong: #33496b;
+  --mp-text: #eef3fb;
+  --mp-muted: #a3b4cc;
+  --mp-dim: #6f8199;
+  --mp-shadow-acid: 8px 8px 0 rgba(120, 170, 255, 0.16);
+  --mp-shadow-hard: 4px 4px 0 var(--mp-border-strong);
+}
+
+:root[data-season='christmas'] body,
+:root[data-season='christmas'] .mp-landing {
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% 110%, rgba(255, 196, 61, 0.06), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 80% -10%, rgba(93, 255, 170, 0.08), transparent 70%),
+    linear-gradient(rgba(120, 170, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 170, 255, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+}
+
+:root[data-season='christmas'] .mp-term {
+  position: relative;
+  z-index: 1;
+  box-shadow: 10px 10px 0 rgba(120, 170, 255, 0.18);
+}
+
+/* ---------------------------------------------------------------- voxel art */
+
+.xm-voxel {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.xm-voxel path {
+  stroke-width: 0.35;
+  stroke-linejoin: round;
+}
+
+.xm-voxel [data-part='shadow'] {
+  opacity: 0.5;
+}
+
+.xm-lit [data-part='star'] {
+  animation: xm-shine 3.4s infinite;
+}
+
+@keyframes xm-shine {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.86; }
+  46% { opacity: 1; }
+  70% { opacity: 0.9; }
+}
+
+.xm-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 211, 77, 0.32), rgba(255, 196, 61, 0.08) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+}
+
+/* ---------------------------------------------------------------- snow */
+
+/* three tiles of square flakes, each fall on a slight slant and loop exactly one tile */
+.xm-snow {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.xm-snow i {
+  position: absolute;
+  inset: calc(-1 * var(--tile) - 10%) -20% -10%;
+  background-image: var(--flakes);
+  opacity: 0.28;
+  will-change: transform;
+  animation: xm-fall var(--fall) linear infinite;
+}
+
+.xm-snow i:nth-child(1) {
+  --tile: 260px;
+  --fall: 34s;
+  --tilt: 4deg;
+  --flakes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cg fill='%23fff'%3E%3Crect x='236' y='74' width='3' height='3' opacity='0.64'/%3E%3Crect x='137' y='84' width='2' height='2' opacity='0.89'/%3E%3Crect x='140' y='176' width='2' height='2' opacity='0.84'/%3E%3Crect x='62' y='96' width='2' height='2' opacity='0.87'/%3E%3Crect x='13' y='176' width='2' height='2' opacity='0.76'/%3E%3Crect x='208' y='31' width='2' height='2' opacity='0.78'/%3E%3Crect x='177' y='166' width='2' height='2' opacity='0.81'/%3E%3Crect x='234' y='96' width='2' height='2' opacity='0.70'/%3E%3Crect x='85' y='39' width='2' height='2' opacity='0.68'/%3E%3Crect x='76' y='241' width='2' height='2' opacity='0.80'/%3E%3Crect x='226' y='15' width='2' height='2' opacity='0.67'/%3E%3Crect x='131' y='108' width='2' height='2' opacity='0.64'/%3E%3Crect x='14' y='94' width='2' height='2' opacity='0.70'/%3E%3Crect x='238' y='132' width='2' height='2' opacity='0.62'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.xm-snow i:nth-child(2) {
+  --tile: 360px;
+  --fall: 26s;
+  --tilt: 7deg;
+  --flakes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cg fill='%23fff'%3E%3Crect x='101' y='130' width='3' height='3' opacity='0.74'/%3E%3Crect x='189' y='219' width='3' height='3' opacity='0.65'/%3E%3Crect x='163' y='308' width='3' height='3' opacity='0.84'/%3E%3Crect x='184' y='180' width='3' height='3' opacity='0.86'/%3E%3Crect x='141' y='252' width='3' height='3' opacity='0.66'/%3E%3Crect x='125' y='118' width='3' height='3' opacity='0.73'/%3E%3Crect x='313' y='39' width='3' height='3' opacity='0.92'/%3E%3Crect x='144' y='54' width='4' height='4' opacity='0.59'/%3E%3Crect x='78' y='225' width='3' height='3' opacity='0.61'/%3E%3Crect x='211' y='49' width='3' height='3' opacity='0.96'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.xm-snow i:nth-child(3) {
+  --tile: 480px;
+  --fall: 19s;
+  --tilt: 10deg;
+  --flakes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Cg fill='%23fff'%3E%3Crect x='423' y='421' width='4' height='4' opacity='0.96'/%3E%3Crect x='131' y='4' width='4' height='4' opacity='0.66'/%3E%3Crect x='0' y='292' width='5' height='5' opacity='0.65'/%3E%3Crect x='232' y='327' width='4' height='4' opacity='0.66'/%3E%3Crect x='111' y='177' width='4' height='4' opacity='0.95'/%3E%3Crect x='232' y='1' width='5' height='5' opacity='0.96'/%3E%3Crect x='438' y='9' width='4' height='4' opacity='0.96'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@keyframes xm-fall {
+  from { transform: rotate(var(--tilt)) translateY(0); }
+  to { transform: rotate(var(--tilt)) translateY(var(--tile)); }
+}
+
+/* "snow" typed anywhere: the northern lights over a short, thick flurry */
+.xm-flurry {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  animation: xm-flurry 7s ease-in-out both;
+}
+
+.xm-snow.xm-snow--storm i {
+  opacity: 0.8;
+  background-size: calc(var(--tile) / 2);
+  animation-duration: calc(var(--fall) / 6);
+  --tilt: 24deg;
+}
+
+@keyframes xm-flurry {
+  0%, 100% { opacity: 0; }
+  12%, 82% { opacity: 1; }
+}
+
+.xm-aurora {
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(rgba(3, 7, 18, 0.65), transparent);
+}
+
+.xm-aurora i {
+  position: absolute;
+  left: -30%;
+  width: 160%;
+  height: 34%;
+  top: 8%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent 5%, rgba(93, 255, 138, 0.38) 30%, rgba(74, 200, 255, 0.3) 55%, rgba(180, 108, 255, 0.24) 75%, transparent 95%);
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  transform: skewY(-7deg);
+  animation: xm-aurora 13s ease-in-out infinite alternate;
+}
+
+.xm-aurora i:nth-child(2) {
+  top: 22%;
+  height: 26%;
+  opacity: 0.7;
+  animation-duration: 17s;
+  animation-delay: -6s;
+}
+
+.xm-aurora i:nth-child(3) {
+  top: 0;
+  height: 20%;
+  opacity: 0.5;
+  animation-duration: 21s;
+  animation-delay: -11s;
+}
+
+@keyframes xm-aurora {
+  from { transform: translateX(-8%) skewY(-7deg) scaleY(1); }
+  50% { transform: translateX(4%) skewY(-3deg) scaleY(1.3); }
+  to { transform: translateX(10%) skewY(-9deg) scaleY(0.9); }
+}
+
+/* ---------------------------------------------------------------- pieces */
+
+.xm-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: 8px;
+  padding: 5px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+.xm-toggle[aria-pressed='false'] {
+  filter: grayscale(1) brightness(0.8);
+  opacity: 0.55;
+}
+
+.xm-toggle:hover {
+  opacity: 1;
+}
+
+.xm-toggle:focus-visible,
+.xm-hero-snowman:focus-visible {
+  outline: 2px solid var(--mp-acid);
+  outline-offset: 2px;
+}
+
+.xm-hero-patch {
+  position: absolute;
+  right: -70px;
+  top: -150px;
+  width: 170px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.xm-hero-patch .xm-glow {
+  left: 44%;
+  top: 11%;
+  width: 220px;
+  height: 220px;
+}
+
+.xm-hero-patch .xm-voxel {
+  position: relative;
+}
+
+/* hides behind the terminal's top edge and rises when the pointer reaches the terminal */
+.xm-hero-snowman {
+  position: absolute;
+  left: 14%;
+  top: 0;
+  width: 86px;
+  z-index: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  translate: 0 0;
+  transition: translate 0.5s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.mp-hero-terminal:hover .xm-hero-snowman,
+.xm-hero-snowman:focus-visible {
+  translate: 0 -72%;
+}
+
+.xm-hero-snowman.is-cheer .xm-voxel {
+  animation: xm-shiver 0.08s steps(2) 10;
+}
+
+.xm-hero-snowman.is-cheer [data-part='hat'] {
+  animation: xm-hop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) 2;
+}
+
+@keyframes xm-shiver {
+  50% { transform: translateX(1.5px); }
+}
+
+@keyframes xm-hop {
+  50% { transform: translateY(-6px); }
+}
+
+.xm-snowman-eyes [data-part='eyes'] {
+  transform: translate(var(--lx, 0), var(--ly, 0));
+  transition: transform 0.15s;
+}
+
+.xm-brrr {
+  position: absolute;
+  left: 72%;
+  top: -18px;
+  padding: 2px 8px;
+  background: var(--mp-text);
+  color: var(--mp-bg);
+  font-family: var(--mp-font-display);
+  font-size: 14px;
+  box-shadow: 3px 3px 0 rgba(120, 170, 255, 0.5);
+  white-space: nowrap;
+}
+
+@media (max-width: 959px) {
+  .xm-hero-patch {
+    right: -8px;
+    top: -96px;
+    width: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xm-snow {
+    display: none;
+  }
+
+  .xm-hero-snowman,
+  .xm-snowman-eyes [data-part='eyes'] {
+    transition: none !important;
+  }
+
+  .xm-lit [data-part],
+  .xm-aurora i,
+  .xm-hero-snowman.is-cheer .xm-voxel,
+  .xm-hero-snowman.is-cheer [data-part='hat'] {
+    animation: none !important;
+  }
+}

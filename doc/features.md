@@ -679,6 +679,7 @@ This integration sends notifications; it does not receive chat commands.
 | One-click update | Admins can pull and recreate the stack from the panel, with automatic rollback if it does not come back |
 | End Portal expedition | Hidden first-person Minecraft-like run in Settings > Danger Zone, see below |
 | Halloween theme | From October 24 to November 1 the panel and these docs dress up in hand-built voxel art, with a few surprises for the curious. The pumpkin in the header turns it off in your browser; `NEXT_PUBLIC_SEASONAL_THEME=false` turns it off in your panel for every user |
+| Christmas theme | From December 1 to January 6 it snows on the panel and these docs: string lights on the header, a tree in the sidebar, a snowman by the login form and a few gifts for the curious. The gift in the header turns it off in your browser; the same `NEXT_PUBLIC_SEASONAL_THEME=false` turns it off for every user |
 
 ### End Portal expedition
 

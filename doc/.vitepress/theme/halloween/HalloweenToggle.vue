@@ -1,6 +1,6 @@
 <script setup>
 import Voxel from './Voxel.vue';
-import { enabled, toggleSeason } from './season';
+import { enabled, toggleSeason } from '../season/season';
 import './halloween.css';
 </script>
 

@@ -2503,4 +2503,11 @@ export const tr: Record<TranslationKey, string> = {
   halloweenFound: "{total} taneden {n} bulundu",
   halloweenAllFound: "Hepsini buldun. Mutlu Cadılar Bayramı!",
   halloweenLightsOn: "Işıkları aç",
+  christmasTheme: "Yılbaşı teması",
+  christmasTree: "Yılbaşı ağacı",
+  christmasGift: "Hediye",
+  christmasStorm: "Kuzey ışıkları altında bir kar fırtınası. Hediyeler düştükçe onları aç. Esc gökyüzünü açar.",
+  christmasOpened: "{total} taneden {n} açıldı",
+  christmasAllOpened: "Hepsini açtın. Mutlu yıllar!",
+  christmasClearSky: "Gökyüzünü aç",
 };

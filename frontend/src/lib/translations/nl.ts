@@ -2462,4 +2462,11 @@ export const nl: Record<TranslationKey, string> = {
   halloweenFound: "{n} van {total} gevonden",
   halloweenAllFound: "Je hebt ze allemaal gevonden. Fijne Halloween!",
   halloweenLightsOn: "Licht aan",
+  christmasTheme: "Kerstthema",
+  christmasTree: "Kerstboom",
+  christmasGift: "Cadeau",
+  christmasStorm: "Een sneeuwstorm onder het noorderlicht. Open de cadeaus als ze landen. Esc maakt de lucht weer helder.",
+  christmasOpened: "{n} van {total} geopend",
+  christmasAllOpened: "Je hebt ze allemaal geopend. Fijne feestdagen!",
+  christmasClearSky: "Lucht opklaren",
 };
