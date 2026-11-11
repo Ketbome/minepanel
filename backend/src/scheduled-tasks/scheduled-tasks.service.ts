@@ -194,7 +194,7 @@ export class ScheduledTasksService implements OnModuleInit, OnModuleDestroy {
           if (previous === undefined || now - previous >= rule.cooldownMinutes * 60_000) {
             if (this.failureAlerts.size >= 512) { const oldest = this.failureAlerts.keys().next().value; if (oldest !== undefined) this.failureAlerts.delete(oldest); }
             this.failureAlerts.set(task.id, now);
-            await this.notifications.sendOperationalAlert('task', task.serverId, `Task #${task.id} (${task.type}) failed`).catch(() => this.logger.warn('Scheduled task notification failed'));
+            await this.notifications.sendOperationalAlert('task', task.serverId, `Task #${task.id} (${task.type}) failed`, 'warning', task.serverId).catch(() => this.logger.warn('Scheduled task notification failed'));
           }
         }
       } finally { this.inFlight.delete(task.id); }

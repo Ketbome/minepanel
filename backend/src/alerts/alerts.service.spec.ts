@@ -196,7 +196,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: starting }, readCrashInfo);
       await service.evaluate({ srv: stopped }, readCrashInfo);
 
-      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'error', expect.any(Array));
+      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'error', expect.any(Array), 'crash', 'srv');
     });
   });
 
@@ -293,7 +293,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: hot });
       await service.evaluate({ srv: hot });
 
-      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'warning', expect.any(Array));
+      expect(discordService.sendCustomMessage).toHaveBeenCalledWith('', expect.any(String), expect.any(String), 'warning', expect.any(Array), expect.stringMatching(/^(cpu|memory)$/), 'srv');
     });
   });
 
@@ -325,7 +325,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: running });
 
       expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(2);
-      expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'down', 'error');
+      expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'down', 'error', 'srv');
     });
 
     it('reports recovery exactly once after an unexpected down transition', async () => {
@@ -333,7 +333,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
       await service.evaluate({ srv: running });await service.evaluate({ srv: running });
       expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error', 'srv');
     });
 
     it('does not call recovery after planned stops or unknown resource readings', async () => {
@@ -346,7 +346,7 @@ describe('AlertsService', () => {
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
       await service.evaluate({ srv: running });await service.evaluate({ srv: running });
       expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'cpu', 'warning');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'cpu', 'warning', 'srv');
     });
 
     it('recovers memory incidents only from available memory measurements', async () => {
@@ -355,7 +355,7 @@ describe('AlertsService', () => {
       await service.evaluate({ srv: { ...running, memoryUsage: 'N/A' } });
       expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
       await service.evaluate({ srv: running });
-      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'memory', 'warning');
+      expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'memory', 'warning', 'srv');
     });
 
     it('clears incident state when its rule is disabled', async () => {
@@ -411,7 +411,7 @@ describe('AlertsService', () => {
     alertConfigRepo.find.mockResolvedValue([downConfig()]);
     await service.evaluate({ srv: running });await service.evaluate({ srv: stopped });
     await service.evaluate({});await service.evaluate({ srv: running });
-    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error');
+    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('recovery', 'srv', 'down', 'error', 'srv');
   });
   it('alerts on sustained measured game failures, with startup grace and unknown-sample isolation', async () => {
     discordService.getAlertRules.mockResolvedValue({ enabled: true, gameAlertEnabled: true, gameFailureSamples: 2, gameStartupGraceMinutes: 5, cooldownMinutes: 60 });
@@ -423,10 +423,10 @@ describe('AlertsService', () => {
     await service.evaluate({ srv: failed });
     expect(discordService.sendOperationalAlert).not.toHaveBeenCalled();
     await service.evaluate({ srv: failed });
-    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('game', 'srv', expect.any(String));
+    expect(discordService.sendOperationalAlert).toHaveBeenCalledWith('game', 'srv', expect.any(String), 'warning', 'srv');
     await service.evaluate({ srv: { ...failed, gameQueryStatus: 'unknown' } });
     expect(discordService.sendOperationalAlert).toHaveBeenCalledTimes(1);
     await service.evaluate({ srv: { ...failed, gameQueryStatus: 'healthy' } });
-    expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'game', 'warning');
+    expect(discordService.sendOperationalAlert).toHaveBeenLastCalledWith('recovery', 'srv', 'game', 'warning', 'srv');
   });
 });

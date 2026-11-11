@@ -7,6 +7,7 @@ import { ServerDiagnosticsController } from './server-diagnostics.controller';
 import { ServerDiagnosticsService } from './server-diagnostics.service';
 import { ServerManagementService } from './server-management.service';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { DiscordModule } from 'src/discord/discord.module';
 import { UsersModule } from 'src/users/users.module';
 import { ProxyModule } from 'src/proxy/proxy.module';
 import { BedrockAddonsModule } from 'src/bedrock-addons/bedrock-addons.module';
@@ -16,7 +17,7 @@ import { SettingsModule } from 'src/settings/settings.module';
 import { VanillaTweaksModule } from 'src/vanilla-tweaks/vanilla-tweaks.module';
 
 @Module({
-  imports: [DockerComposeModule, TypeOrmModule.forFeature([Settings]), NotificationsModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule, SettingsModule, VanillaTweaksModule],
+  imports: [DockerComposeModule, TypeOrmModule.forFeature([Settings]), NotificationsModule, DiscordModule, UsersModule, ProxyModule, BedrockAddonsModule, AlertsModule, SettingsModule, VanillaTweaksModule],
   controllers: [ServerManagementController, AutoScaleController, ServerDiagnosticsController],
   providers: [ServerManagementService, ServerDiagnosticsService],
   exports: [ServerManagementService],

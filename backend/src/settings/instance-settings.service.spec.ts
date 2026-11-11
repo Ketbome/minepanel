@@ -203,8 +203,16 @@ describe('InstanceSettingsService', () => {
     });
   });
   it('returns notification defaults for existing installations', async () => {
-    expect((await service.getPublic()).notifications).toEqual({ ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', slackEnabled: false, hasNtfyToken: false, hasSlackWebhook: false, discordEnabled: true, emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
+    expect((await service.getPublic()).notifications).toEqual({ ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', slackEnabled: false, hasNtfyToken: false, hasSlackWebhook: false, discordEnabled: true, discordMentionType: 'none', discordMentionId: '', discordMentionOn: 'errors', discordChannelMode: 'per-server', emailEnabled: false, emailTo: '', telegramEnabled: false, telegramChatId: '', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60, hasTelegramToken: false });
     expect((await service.getNotifications()).telegramToken).toBe('');
+  });
+
+  it('persists the Discord channel mode and defaults it for existing installations', async () => {
+    expect((await service.getPublic()).notifications.discordChannelMode).toBe('per-server');
+    await service.updateIntegrations({ notifications: { discordChannelMode: 'shared' } });
+    expect((await service.getPublic()).notifications.discordChannelMode).toBe('shared');
+    await service.updateIntegrations({ notifications: { discordChannelMode: 'per-server' } });
+    expect((await service.getPublic()).notifications.discordChannelMode).toBe('per-server');
   });
 
   it('stores Telegram credentials encrypted and exposes only a presence flag', async () => {

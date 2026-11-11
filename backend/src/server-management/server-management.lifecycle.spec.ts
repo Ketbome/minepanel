@@ -79,7 +79,9 @@ describe('ServerManagementService lifecycle', () => {
   let spawnQueue: SpawnResult[];
   let probe: SpawnResult;
   let settingsRepo: { findOne: jest.Mock; manager: { transaction: jest.Mock } };
-  let discord: { sendServerNotification: jest.Mock };
+  let discord: { sendServerNotification: jest.Mock; prepareServerNotification: jest.Mock };
+  let deletedNotification: jest.Mock;
+  let discordRouting: { removeForServer: jest.Mock };
   let alerts: { markExpectedStop: jest.Mock; clearState: jest.Mock };
   let store: { removeFromIndex: jest.Mock; readConfig: jest.Mock };
   let composeService: { refreshComposeFile: jest.Mock };
@@ -104,6 +106,7 @@ describe('ServerManagementService lifecycle', () => {
       { get: jest.fn((key: string) => ({ serversDir: '/app/servers', serversHostDir: '/srv/servers', composeProject }[key])) } as any,
       settingsRepo as any,
       discord as any,
+      discordRouting as any,
       alerts as any,
       store as any,
       instanceSettings as any,
@@ -149,7 +152,12 @@ describe('ServerManagementService lifecycle', () => {
     route(/docker inspect --format="\{\{.Id\}\} \{\{.State.Status\}\}"/, inspectAll('running'));
 
     settingsRepo = { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }), manager: { transaction: jest.fn(async (run) => run({ delete: jest.fn(), find: async () => [], save: jest.fn() })) } };
-    discord = { sendServerNotification: jest.fn().mockResolvedValue(undefined) };
+    deletedNotification = jest.fn().mockResolvedValue(undefined);
+    discord = {
+      sendServerNotification: jest.fn().mockResolvedValue(undefined),
+      prepareServerNotification: jest.fn().mockResolvedValue(deletedNotification),
+    };
+    discordRouting = { removeForServer: jest.fn().mockResolvedValue(undefined) };
     alerts = { markExpectedStop: jest.fn(), clearState: jest.fn() };
     store = { removeFromIndex: jest.fn().mockResolvedValue(undefined), readConfig: jest.fn().mockResolvedValue({ edition: 'JAVA', maxPlayers: '20', cpuLimit: '2', maxMemory: '6G' }) };
     composeService = { refreshComposeFile: jest.fn().mockResolvedValue(undefined) };
@@ -252,7 +260,9 @@ describe('ServerManagementService lifecycle', () => {
     ] as const)('%s returns without waiting for notification delivery (failure=%s)', async (method, failure) => {
       if (method === 'forceStopServer') jest.spyOn(service as any, 'requestRconStop').mockResolvedValue(true);
       let release!: () => void;
-      discord.sendServerNotification.mockReturnValue(new Promise<void>((resolve) => { release = resolve; }));
+      const pending = () => new Promise<void>((resolve) => { release = resolve; });
+      if (method === 'deleteServer') discord.prepareServerNotification.mockResolvedValueOnce(jest.fn(pending));
+      else discord.sendServerNotification.mockReturnValueOnce(pending());
       if (failure) {
         route(/docker compose (down|up)/, () => Promise.reject(new Error('compose unavailable')));
         if (method === 'deleteServer') (fs.remove as unknown as jest.Mock).mockRejectedValueOnce(new Error('busy'));
@@ -262,10 +272,11 @@ describe('ServerManagementService lifecycle', () => {
       try {
         await settle();
         await settle();
-      expect(discord.sendServerNotification).toHaveBeenCalled();
+        const notified = method === 'deleteServer' ? discord.prepareServerNotification : discord.sendServerNotification;
+        expect(notified).toHaveBeenCalled();
         expect(completed).toBe(true);
       } finally {
-        release();
+        release?.();
         await operation;
       }
     });
@@ -488,8 +499,21 @@ describe('ServerManagementService lifecycle', () => {
       expect(alerts.clearState.mock.invocationCallOrder[0]).toBeGreaterThan((fs.remove as unknown as jest.Mock).mock.invocationCallOrder[0]);
       expect(alerts.clearState.mock.invocationCallOrder[0]).toBeLessThan(store.removeFromIndex.mock.invocationCallOrder[0]);
       expect(execCalls()).toEqual(expect.arrayContaining(['docker volume rm srv_data', 'docker volume rm srv_backups']));
-      await settle();
-      expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
+      expect(discord.prepareServerNotification).toHaveBeenCalledWith('https://hook', 'deleted', 'srv', 'en', expect.any(Object));
+      expect(deletedNotification).toHaveBeenCalledTimes(1);
+      expect(discordRouting.removeForServer).toHaveBeenCalledWith('srv', expect.anything());
+      expect(discord.prepareServerNotification.mock.invocationCallOrder[0]).toBeLessThan(discordRouting.removeForServer.mock.invocationCallOrder[0]);
+      expect(discordRouting.removeForServer.mock.invocationCallOrder[0]).toBeLessThan((fs.remove as unknown as jest.Mock).mock.invocationCallOrder[0]);
+      expect(discordRouting.removeForServer.mock.invocationCallOrder[0]).toBeLessThan(deletedNotification.mock.invocationCallOrder[0]);
+    });
+
+    it('keeps the server ID reserved when Discord cleanup fails', async () => {
+      discordRouting.removeForServer.mockRejectedValueOnce(new Error('db locked'));
+
+      expect(await service.deleteServer('srv')).toBe(false);
+      expect(deletedNotification).not.toHaveBeenCalled();
+      expect(fs.remove).not.toHaveBeenCalled();
+      expect(store.removeFromIndex).not.toHaveBeenCalled();
     });
 
     it('coordinates real metrics guards with deletion before the ID is reused', async () => {

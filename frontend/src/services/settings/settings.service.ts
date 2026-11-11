@@ -122,6 +122,10 @@ export interface IntegrationSettings {
 
 export interface NotificationSettings {
   discordEnabled: boolean;
+  discordMentionType: 'none' | 'here' | 'everyone' | 'role' | 'user';
+  discordMentionId: string;
+  discordMentionOn: 'errors' | 'all';
+  discordChannelMode: 'per-server' | 'shared';
   emailEnabled: boolean;
   emailTo: string;
   ntfyEnabled: boolean;

@@ -3,6 +3,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateIntegrationSettingsDto } from './update-integration-settings.dto';
 import { TestNotificationDto } from 'src/users/controllers/integration-settings.controller';
+import { UpdateSettingsDto } from 'src/users/dtos/settings.dto';
 
 const validateNotification = (notifications: unknown) => validate(plainToInstance(UpdateIntegrationSettingsDto, { notifications }), { whitelist: true, forbidNonWhitelisted: true });
 
@@ -13,6 +14,8 @@ describe('Notification settings validation', () => {
     expect(await validateNotification({ telegramChatId: '@my_channel' })).toEqual([]);
     expect(await validateNotification({ ntfyEnabled: true, ntfyServerUrl: 'http://localhost:8080/ntfy', ntfyTopic: 'minepanel-alerts', ntfyToken: 'tk_token', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/key' })).toEqual([]);
     expect(await validateNotification({ ntfyToken: '', slackWebhook: '' })).toEqual([]);
+    expect(await validateNotification({ discordMentionType: 'role', discordMentionId: '123456789012345678', discordMentionOn: 'errors' })).toEqual([]);
+    expect(await validateNotification({ discordMentionType: 'none', discordMentionId: '', discordMentionOn: 'all' })).toEqual([]);
   });
 
   it.each([
@@ -44,8 +47,35 @@ describe('Notification settings validation', () => {
     { slackWebhook: 'https://example.com/hook' },
     { slackWebhook: null },
     { hasSlackWebhook: true },
+    { discordMentionType: 'channel' },
+    { discordMentionOn: 'some' },
+    { discordMentionType: 'role' },
+    { discordMentionType: 'user', discordMentionId: 'abc' },
+    { discordMentionId: '123' },
+    { discordMentionType: null },
   ])('rejects malformed values and unknown fields: %j', async (value) => {
     expect((await validateNotification(value)).length).toBeGreaterThan(0);
+  });
+
+  it('only accepts Discord webhook URLs that can actually deliver', async () => {
+    const validateWebhook = (discordWebhook: unknown) => validate(plainToInstance(UpdateSettingsDto, { discordWebhook }), { whitelist: true, forbidNonWhitelisted: true });
+
+    expect(await validateWebhook('https://discord.com/api/webhooks/123456789012345678/abcDEF-_123')).toEqual([]);
+    expect(await validateWebhook('https://discordapp.com/api/webhooks/123456789012345678/abcDEF-_123')).toEqual([]);
+    expect(await validateWebhook('')).toEqual([]);
+
+    for (const value of [
+      'http://discord.com/api/webhooks/123456789012345678/abcDEF-_123',
+      'https://discord.com.evil/api/webhooks/123456789012345678/abcDEF-_123',
+      'https://example.com/api/webhooks/123456789012345678/abcDEF-_123',
+      'https://discord.com/api/webhooks/1/abc',
+      'https://user:pass@discord.com/api/webhooks/123456789012345678/abcDEF-_123',
+      'https://discord.com/api/webhooks/123456789012345678/abcDEF-_123#fragment',
+      'https://discord.com/api/webhooks/123456789012345678/abc/extra',
+      'not a url',
+    ]) {
+      expect((await validateWebhook(value)).length).toBeGreaterThan(0);
+    }
   });
 
   it('only accepts supported test channels', async () => {

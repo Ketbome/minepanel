@@ -11,6 +11,10 @@ export class InstanceSettings {
   @Column({ type: 'json', nullable: true, name: 'notifications' })
   notifications?: {
     discordEnabled?: boolean;
+    discordMentionType?: 'none' | 'here' | 'everyone' | 'role' | 'user';
+    discordMentionId?: string;
+    discordMentionOn?: 'errors' | 'all';
+    discordChannelMode?: 'per-server' | 'shared';
     emailEnabled?: boolean;
     emailTo?: string;
     ntfyEnabled?: boolean;

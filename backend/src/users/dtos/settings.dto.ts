@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean, IsEnum, IsIn, ValidateNested, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsEnum, IsIn, ValidateNested, IsInt, Matches, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 // mc-router container settings. The panel generates the router's compose file,
@@ -156,6 +156,10 @@ export class UpdateSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(512)
+  @Matches(/^$|^https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/\d{17,20}\/[A-Za-z0-9_-]+$/, {
+    message: 'Discord webhook must be a URL like https://discord.com/api/webhooks/<id>/<token>',
+  })
   discordWebhook?: string;
 
   @IsOptional()

@@ -188,7 +188,20 @@ statistics are separate from recorded session totals.
 Notifications use `backend/src/notifications/notifications.service.ts` for Discord, email,
 Telegram, ntfy and Slack delivery. Email/Telegram destinations and event switches are instance-wide,
 admin-only integration settings; the legacy first configured Discord webhook is preserved.
+Discord mentions (`discordMentionType/Id/On`) are resolved per delivery from the alert kind, and
+every webhook POST states `allowed_mentions` explicitly: `content` only ever holds the mention
+token, so server names and alert details can never ping a channel.
 Keep Telegram tokens encrypted and write-only, and provider failures isolated.
+
+Per-server Discord delivery lives in `backend/src/discord/`: `DiscordRoutingService` stores
+webhooks (`discord_webhooks`, encrypted `url_enc`, `server_id` null = shared) and per-event
+routes (`discord_routes`, null webhook = explicitly off), `DiscordFeedService` batches activity
+from the log ingest and panel commands into embeds, and `DiscordIntegrationsController` is the
+admin-only API behind each server's Integrations tab. Resolution rule: a saved route wins; an
+operational event with no route keeps the legacy instance-wide webhook, an activity event with no
+route is off. Shared webhooks must prefix the server name; feed messages must never carry a
+mention. The instance-wide Discord webhook and notification policies stay on
+Settings > Integrations > Discord (its own page).
 
 Opt-in disk/backup notification probes run once a minute in `backend/src/notifications/notification-monitor.service.ts`. Recovery requires an observed incident and a valid healthy reading; raw backup logs must never be forwarded.
 

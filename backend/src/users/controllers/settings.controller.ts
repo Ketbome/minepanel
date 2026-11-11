@@ -165,6 +165,8 @@ export class SettingsController {
       return { success: false, message: errorMsg[lang] };
     }
 
-    return this.discordService.testWebhook(settings.discordWebhook, (settings.language as SupportedLanguage) || 'es');
+    // Carry the saved mention so an admin can confirm the role or user actually pings.
+    const mention = await this.notifications.getDiscordMention();
+    return this.discordService.testWebhook(settings.discordWebhook, (settings.language as SupportedLanguage) || 'es', mention);
   }
 }

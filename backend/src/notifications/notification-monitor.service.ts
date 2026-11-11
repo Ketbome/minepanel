@@ -157,7 +157,7 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
     if (last !== undefined && now - last < policy.alertCooldownMinutes * MINUTE_MS) return;
     this.backupLastAlerts.set(serverId, now);
     // Backup logs may contain repository credentials; never forward the raw log text.
-    await this.notifications.sendOperationalAlert('backup', serverId, 'The backup sidecar reported a failed backup or exited with an error. Check its logs.');
+    await this.notifications.sendOperationalAlert('backup', serverId, 'The backup sidecar reported a failed backup or exited with an error. Check its logs.', 'warning', serverId);
   }
 
   private async checkFreshness(serverId: string, config: ServerConfig, policy: Policy, backup: string, startedAt?: string): Promise<void> {
@@ -182,11 +182,11 @@ export class NotificationMonitorService implements OnModuleInit, OnModuleDestroy
       const previous = this.staleAlerts.get(serverId);
       if (previous === undefined || now - previous >= policy.alertCooldownMinutes * MINUTE_MS) {
         this.staleAlerts.set(serverId, now);
-        await this.notifications.sendOperationalAlert('stale', serverId, 'No new restic snapshot was observed within the expected interval and tolerance.');
+        await this.notifications.sendOperationalAlert('stale', serverId, 'No new restic snapshot was observed within the expected interval and tolerance.', 'warning', serverId);
       }
     } else if (latest > 0 && this.staleIncidents.delete(serverId)) {
       this.staleAlerts.delete(serverId);
-      await this.notifications.sendOperationalAlert('recovery', serverId, 'A new restic snapshot was observed.');
+      await this.notifications.sendOperationalAlert('recovery', serverId, 'A new restic snapshot was observed.', 'warning', serverId);
     }
   }
 

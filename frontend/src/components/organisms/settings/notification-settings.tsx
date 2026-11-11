@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { mcToast } from '@/lib/utils/minecraft-toast';
@@ -53,7 +54,9 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
     setBusy('save');
     setFeedback(null);
     try {
-      const { hasTelegramToken: _hasToken, hasNtfyToken: _hasNtfy, hasSlackWebhook: _hasSlack, ...preferences } = form;
+      // The delivery mode is edited by its own control on the Discord page, so
+      // saving channel switches must not write a stale mode back.
+      const { hasTelegramToken: _hasToken, hasNtfyToken: _hasNtfy, hasSlackWebhook: _hasSlack, discordChannelMode: _mode, ...preferences } = form;
       const result = await updateIntegrationSettings({ notifications: { ...preferences, ...(token || clearToken ? { telegramToken: clearToken ? '' : token } : {}), ...(ntfyToken || clearNtfy ? { ntfyToken: clearNtfy ? '' : ntfyToken } : {}), ...(slackWebhook || clearSlack ? { slackWebhook: clearSlack ? '' : slackWebhook } : {}) } });
       setOutcomes(result.notificationDelivery);
       setSaved(result.notifications);
@@ -121,6 +124,42 @@ export function NotificationSettingsCard({ initial, smtpConfigured, hasDiscordWe
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <a href="#integration-discord-webhook" className="text-sm underline underline-offset-4">{t('notificationDiscordConfigure')}</a>
                 <Button type="button" variant="outline" onClick={() => test('discord')} disabled={disabled || dirty || !hasDiscordWebhook}>{busy === 'discord' ? <Loader2 className="animate-spin" /> : null}{t('test')}</Button>
+              </div>
+              <div className="grid min-w-0 gap-3 md:grid-cols-2">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="notification-discord-mention-type">{t('notificationDiscordMentionType')}</Label>
+                  <Select value={form.discordMentionType} onValueChange={(value) => update('discordMentionType', value as NotificationSettings['discordMentionType'])}>
+                    <SelectTrigger id="notification-discord-mention-type" className="w-full text-base" aria-describedby="notification-discord-mention-help">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t('notificationDiscordMentionNone')}</SelectItem>
+                      <SelectItem value="here">{t('notificationDiscordMentionHere')}</SelectItem>
+                      <SelectItem value="everyone">{t('notificationDiscordMentionEveryone')}</SelectItem>
+                      <SelectItem value="role">{t('notificationDiscordMentionRole')}</SelectItem>
+                      <SelectItem value="user">{t('notificationDiscordMentionUser')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="notification-discord-mention-on">{t('notificationDiscordMentionOn')}</Label>
+                  <Select value={form.discordMentionOn} onValueChange={(value) => update('discordMentionOn', value as NotificationSettings['discordMentionOn'])}>
+                    <SelectTrigger id="notification-discord-mention-on" className="w-full text-base" aria-describedby="notification-discord-mention-help">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="errors">{t('notificationDiscordMentionOnErrors')}</SelectItem>
+                      <SelectItem value="all">{t('notificationDiscordMentionOnAll')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.discordMentionType === 'role' || form.discordMentionType === 'user' ? (
+                  <div className="flex min-w-0 flex-col gap-2 md:col-span-2">
+                    <Label htmlFor="notification-discord-mention-id">{t('notificationDiscordMentionId')}</Label>
+                    <Input id="notification-discord-mention-id" value={form.discordMentionId} onChange={(event) => update('discordMentionId', event.target.value.trim())} required inputMode="numeric" pattern="[0-9]{17,20}" maxLength={20} aria-describedby="notification-discord-mention-help" className="text-base" />
+                  </div>
+                ) : null}
+                <p id="notification-discord-mention-help" className="text-sm text-muted-foreground md:col-span-2">{t('notificationDiscordMentionHelp')}</p>
               </div>
               {channelOutcome('discord')}
               {showFeedback('discord')}

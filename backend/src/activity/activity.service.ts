@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { DiscordFeedService } from 'src/discord/discord-feed.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'node:crypto';
 import { Between, FindOptionsWhere, In, IsNull, LessThan, Like, Not, Repository } from 'typeorm';
@@ -104,6 +105,7 @@ export class ActivityService {
     @InjectRepository(LogCursor)
     private readonly cursorRepo: Repository<LogCursor>,
     private readonly playersService: PlayersService,
+    @Optional() private readonly discordFeed?: DiscordFeedService,
   ) {}
 
   newImportState(): IngestState {
@@ -141,7 +143,12 @@ export class ActivityService {
       }
     }
 
-    if (events.length > 0) await this.eventRepo.save(events);
+    if (events.length > 0) {
+      await this.eventRepo.save(events);
+      // Fire-and-forget: a slow or broken Discord channel must not stall the log tailer.
+      // History imports replay old lines without their timestamps; only live ingest is a feed event.
+      if (!state) this.discordFeed?.publishActivity(serverId, events);
+    }
     return events.length;
   }
 

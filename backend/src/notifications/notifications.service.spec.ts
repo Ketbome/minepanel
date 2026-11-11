@@ -13,12 +13,13 @@ describe('NotificationsService', () => {
   let config: Awaited<ReturnType<InstanceSettingsService['getNotifications']>>;
   let settings: { getNotifications: jest.Mock; getSmtp: jest.Mock; registerResetHandler: jest.Mock };
   let discord: { sendServerNotification: jest.Mock; sendCustomMessage: jest.Mock };
+  let routing: { resolve: jest.Mock; serverName: jest.Mock; sharedChannel: jest.Mock };
   let transporter: { sendMail: jest.Mock; close: jest.Mock };
   let fetchMock: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config = { ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', ntfyTokenUnreadable: false, slackEnabled: false, slackWebhook: '', discordEnabled: true, emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
+    config = { ntfyEnabled: false, ntfyServerUrl: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', ntfyTokenUnreadable: false, slackEnabled: false, slackWebhook: '', discordChannelMode: 'per-server', discordEnabled: true, discordMentionType: 'none', discordMentionId: '', discordMentionOn: 'errors', emailEnabled: true, emailTo: 'admin@example.com', telegramEnabled: true, telegramToken: '123:secret', telegramChatId: '-100123', lifecycleEnabled: true, alertsEnabled: true, diskAlertEnabled: false, backupFailureEnabled: false, recoveryEnabled: false, taskFailureEnabled: false, gameAlertEnabled: false, staleBackupEnabled: false, gameFailureSamples: 3, gameStartupGraceMinutes: 5, staleBackupToleranceMinutes: 60, diskFreeThresholdPercent: 10, alertCooldownMinutes: 60 };
     settings = {
       getNotifications: jest.fn(async () => config),
       getSmtp: jest.fn().mockResolvedValue({ enabled: true, host: 'smtp.test', port: 587, secure: false, user: 'admin', pass: 'smtp-secret', from: 'panel@example.com' }),
@@ -29,15 +30,16 @@ describe('NotificationsService', () => {
     (nodemailer.createTransport as jest.Mock).mockReturnValue(transporter);
     fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) } as Response);
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    routing = { resolve: jest.fn(async () => null), serverName: jest.fn(async () => 'Survival'), sharedChannel: jest.fn(async () => null) };
     mail = new AuthMailService(settings as never);
-    service = new NotificationsService(settings as unknown as InstanceSettingsService, discord as unknown as DiscordService, { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) } as never, mail);
+    service = new NotificationsService(settings as unknown as InstanceSettingsService, discord as unknown as DiscordService, routing as never, { findOne: jest.fn().mockResolvedValue({ discordWebhook: 'https://hook', language: 'en' }) } as never, mail);
   });
 
   afterEach(() => jest.restoreAllMocks());
 
   it('fans out lifecycle events to all enabled channels', async () => {
     await service.sendServerNotification('https://hook', 'started', 'bedrock', 'en', { port: '19132', reason: 'Ready' });
-    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'bedrock', 'en', { port: '19132', reason: 'Ready' });
+    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'bedrock', 'en', { port: '19132', reason: 'Ready' }, undefined, undefined);
     expect(transporter.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'admin@example.com', from: 'panel@example.com', text: expect.stringContaining('port: 19132') }));
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.telegram.org/bot123:secret/sendMessage');
@@ -46,15 +48,51 @@ describe('NotificationsService', () => {
   });
 
   it('delivers alerts without a Discord webhook and preserves server details', async () => {
-    await service.sendCustomMessage('', 'Server down', 'Unexpected shutdown', 'error', [{ name: 'Server', value: 'srv' }]);
+    await service.sendCustomMessage('', 'Server down', 'Unexpected shutdown', 'error', [{ name: 'Server', value: 'srv' }], 'down');
     expect(discord.sendCustomMessage).not.toHaveBeenCalled();
     expect(transporter.sendMail).toHaveBeenCalledWith(expect.objectContaining({ text: 'Unexpected shutdown\nServer: srv' }));
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('delivers Discord alerts with the original embed fields', async () => {
-    await service.sendCustomMessage('https://hook', 'CPU', 'High usage', 'warning', []);
-    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'CPU', 'High usage', 'warning', []);
+    await service.sendCustomMessage('https://hook', 'CPU', 'High usage', 'warning', [], 'cpu');
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'CPU', 'High usage', 'warning', [], undefined);
+  });
+
+  it('sends unrouted alerts to the shared channel with the server name in shared mode', async () => {
+    config.discordChannelMode = 'shared';
+    routing.sharedChannel.mockResolvedValue({ url: 'https://shared', shared: true });
+
+    await service.sendCustomMessage('https://fallback', 'CPU', 'High usage', 'warning', [], 'cpu', 'srv');
+
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://shared', 'Survival · CPU', 'High usage', 'warning', [], undefined);
+  });
+
+  it('sends unrouted lifecycle events to the shared channel with the server-name prefix', async () => {
+    config.discordChannelMode = 'shared';
+    routing.sharedChannel.mockResolvedValue({ url: 'https://shared', shared: true });
+
+    await service.sendServerNotification('https://fallback', 'started', 'srv', 'en');
+
+    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://shared', 'started', 'Survival', 'en', undefined, undefined, 'Survival');
+  });
+
+  it('routes an explicit lifecycle route to that server webhook only', async () => {
+    routing.resolve.mockResolvedValue([{ url: 'https://server', shared: false }]);
+
+    await service.sendServerNotification('https://fallback', 'stopped', 'srv', 'en');
+
+    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://server', 'stopped', 'srv', 'en', undefined, undefined, undefined);
+    expect(discord.sendServerNotification).toHaveBeenCalledTimes(1);
+    expect(discord.sendServerNotification.mock.calls.map((call) => call[0])).toEqual(['https://server']);
+  });
+
+  it('suppresses lifecycle delivery for an explicit do-not-send route', async () => {
+    routing.resolve.mockResolvedValue([]);
+
+    await service.sendServerNotification('https://fallback', 'stopped', 'srv', 'en');
+
+    expect(discord.sendServerNotification).not.toHaveBeenCalled();
   });
 
   it('honors channel switches', async () => {
@@ -68,7 +106,7 @@ describe('NotificationsService', () => {
   it('honors event group switches', async () => {
     config.lifecycleEnabled = config.alertsEnabled = false;
     await service.sendServerNotification('https://hook', 'stopped', 'srv', 'en');
-    await service.sendCustomMessage('https://hook', 'CPU', 'High', 'warning', []);
+    await service.sendCustomMessage('https://hook', 'CPU', 'High', 'warning', [], 'cpu');
     expect(discord.sendServerNotification).not.toHaveBeenCalled();
     expect(discord.sendCustomMessage).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -86,7 +124,7 @@ describe('NotificationsService', () => {
 
   it('lets other channels deliver when Discord fails', async () => {
     discord.sendCustomMessage.mockRejectedValue(new Error('offline'));
-    await service.sendCustomMessage('https://hook', 'Down', 'Down', 'error', []);
+    await service.sendCustomMessage('https://hook', 'Down', 'Down', 'error', [], 'down');
     expect(transporter.sendMail).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -129,7 +167,7 @@ describe('NotificationsService', () => {
   });
 
   it('bounds Telegram messages without breaking Unicode characters', async () => {
-    await service.sendCustomMessage('', 'Crash', '😀'.repeat(5000), 'error', []);
+    await service.sendCustomMessage('', 'Crash', '😀'.repeat(5000), 'error', [], 'crash');
     const text = JSON.parse(fetchMock.mock.calls[0][1].body).text as string;
     expect(Array.from(text)).toHaveLength(4096);
     expect(text).not.toMatch(/[\uD800-\uDBFF]$/);
@@ -158,15 +196,28 @@ describe('NotificationsService', () => {
     await service.sendOperationalAlert('disk', '/servers', '5% free');
     await service.sendOperationalAlert('backup', 'srv', 'Failed');
     await service.sendOperationalAlert('recovery', 'srv', 'cpu');
-    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Low disk space', expect.any(String), 'warning', expect.any(Array));
-    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Backup failed', expect.any(String), 'error', expect.any(Array));
-    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Incident resolved', expect.any(String), 'warning', expect.any(Array));
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Low disk space', expect.any(String), 'warning', expect.any(Array), undefined);
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Backup failed', expect.any(String), 'error', expect.any(Array), undefined);
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Incident resolved', expect.any(String), 'warning', expect.any(Array), undefined);
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('routes server-scoped operational alerts through that server and keeps disk alerts instance-wide', async () => {
+    config.backupFailureEnabled = true;
+    routing.resolve.mockResolvedValue([{ url: 'https://server', shared: false }]);
+
+    await service.sendOperationalAlert('backup', 'srv', 'Failed', 'warning', 'srv');
+    expect(routing.resolve).toHaveBeenCalledWith('srv', 'backup');
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://server', 'Backup failed', expect.any(String), 'error', expect.any(Array), undefined);
+
+    routing.resolve.mockClear();
+    await service.sendOperationalAlert('disk', '/servers', '5% free');
+    expect(routing.resolve).not.toHaveBeenCalled();
   });
 
   it('preserves version and modpack metadata across all delivery channels', async () => {
     await service.sendServerNotification('https://hook', 'started', 'modded', 'en', { version: '1.20.1', modpack: 'ATM9' });
-    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'modded', 'en', { version: '1.20.1', modpack: 'ATM9' });
+    expect(discord.sendServerNotification).toHaveBeenCalledWith('https://hook', 'started', 'modded', 'en', { version: '1.20.1', modpack: 'ATM9' }, undefined, undefined);
     expect(transporter.sendMail).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('modpack: ATM9') }));
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toContain('version: 1.20.1');
   });
@@ -174,10 +225,10 @@ describe('NotificationsService', () => {
     await service.sendCustomMessage('https://hook', 'Crash', 'Failed', 'error', [
       { name: 'Server', value: '`srv`' },
       { name: 'Log tail', value: '```private-log-tail```', discordOnly: true },
-    ]);
+    ], 'crash');
     expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Crash', 'Failed', 'error', [
       { name: 'Server', value: '`srv`' }, { name: 'Log tail', value: '```private-log-tail```' },
-    ]);
+    ], undefined);
     const plain = transporter.sendMail.mock.calls[0][0].text;
     expect(plain).toContain('Server: srv');expect(plain).not.toContain('private-log-tail');expect(plain).not.toContain('`');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).not.toContain('private-log-tail');
@@ -201,7 +252,7 @@ describe('NotificationsService', () => {
   it('records accepted, failed and unknown channel outcomes without raw secrets', async () => {
     transporter.sendMail.mockRejectedValue(Object.assign(new Error('private'), { name: 'TimeoutError' }));
     fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ ok: false, description: 'private Telegram URL' }) });
-    await service.sendCustomMessage('https://hook', 'Notice', 'Body', 'warning', []);
+    await service.sendCustomMessage('https://hook', 'Notice', 'Body', 'warning', [], 'cpu');
     expect(service.getDeliveryState().discord?.status).toBe('accepted');
     expect(service.getDeliveryState().email?.status).toBe('unknown');
     expect(service.getDeliveryState().telegram?.status).toBe('failed');
@@ -225,7 +276,7 @@ describe('NotificationsService', () => {
   it('delivers to ntfy and Slack with private credentials and plain summaries', async () => {
     Object.assign(config, { ntfyEnabled: true, ntfyServerUrl: 'http://ntfy.internal/push/', ntfyTopic: 'private-alerts', ntfyToken: 'tk_secret', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/secret' });
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }), body: { cancel: jest.fn().mockResolvedValue(undefined) } });
-    await service.sendCustomMessage('https://hook', 'Crash', '<!channel> & failed', 'error', [{ name: 'Log', value: 'sensitive-log', discordOnly: true }]);
+    await service.sendCustomMessage('https://hook', 'Crash', '<!channel> & failed', 'error', [{ name: 'Log', value: 'sensitive-log', discordOnly: true }], 'crash');
     const ntfy = fetchMock.mock.calls.find(([url]) => url === 'http://ntfy.internal/push/');
     expect(ntfy?.[1]).toMatchObject({ redirect: 'error', headers: { Authorization: 'Bearer tk_secret' } });
     expect(JSON.parse(ntfy?.[1].body)).toEqual({ topic: 'private-alerts', title: 'Crash', message: '<!channel> & failed' });
@@ -260,7 +311,7 @@ describe('NotificationsService', () => {
     expect(service.getDeliveryState()[channel]?.status).toBe('failed');
     fetchMock.mockRejectedValueOnce(new Error('private-token and secret-webhook'));
     expect((await service.testChannel(channel)).message).not.toContain('secret');
-    await service.sendCustomMessage('https://hook', 'Alert', 'Body', 'warning', []);
+    await service.sendCustomMessage('https://hook', 'Alert', 'Body', 'warning', [], 'cpu');
     expect(discord.sendCustomMessage).toHaveBeenCalled();
     expect(transporter.sendMail).toHaveBeenCalled();
     expect(service.getDeliveryState().telegram?.status).toBe('accepted');
@@ -280,7 +331,7 @@ describe('NotificationsService', () => {
 
   it('bounds new provider messages while keeping Unicode intact', async () => {
     Object.assign(config, { telegramEnabled: false, ntfyEnabled: true, ntfyTopic: 'private', slackEnabled: true, slackWebhook: 'https://hooks.slack.com/services/T/B/secret' });
-    await service.sendCustomMessage('', '😀'.repeat(300), '😀'.repeat(5000), 'error', []);
+    await service.sendCustomMessage('', '😀'.repeat(300), '😀'.repeat(5000), 'error', [], 'crash');
     const ntfy = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(Buffer.byteLength(ntfy.message)).toBeLessThanOrEqual(3000);
     expect(ntfy.message).not.toMatch(/[\uD800-\uDBFF]$/);
@@ -288,4 +339,47 @@ describe('NotificationsService', () => {
     expect(Array.from(slack.blocks[0].text.text)).toHaveLength(3000);
   });
 
+  it('sends no mention by default', async () => {
+    await service.sendCustomMessage('https://hook', 'Down', 'Down', 'error', [], 'down');
+    expect(discord.sendCustomMessage.mock.calls[0][5]).toBeUndefined();
+  });
+
+  it('pings only for error kinds until every kind is selected', async () => {
+    Object.assign(config, { discordMentionType: 'role', discordMentionId: '123456789012345678', discordMentionOn: 'errors' });
+
+    await service.sendCustomMessage('https://hook', 'Down', 'Down', 'error', [], 'down');
+    await service.sendCustomMessage('https://hook', 'CPU', 'High', 'warning', [], 'cpu');
+    expect(discord.sendCustomMessage.mock.calls[0][5]).toEqual({ type: 'role', id: '123456789012345678' });
+    expect(discord.sendCustomMessage.mock.calls[1][5]).toBeUndefined();
+
+    config.discordMentionOn = 'all';
+    await service.sendCustomMessage('https://hook', 'CPU', 'High', 'warning', [], 'cpu');
+    expect(discord.sendCustomMessage.mock.calls[2][5]).toEqual({ type: 'role', id: '123456789012345678' });
+  });
+
+  it('mentions lifecycle events only when the whole set is selected', async () => {
+    Object.assign(config, { discordMentionType: 'here', discordMentionId: '', discordMentionOn: 'errors' });
+
+    await service.sendServerNotification('https://hook', 'stopped', 'srv', 'en');
+    expect(discord.sendServerNotification.mock.calls[0][5]).toBeUndefined();
+
+    config.discordMentionOn = 'all';
+    await service.sendServerNotification('https://hook', 'stopped', 'srv', 'en');
+    expect(discord.sendServerNotification.mock.calls[1][5]).toEqual({ type: 'here' });
+  });
+
+  it('never pings with an invalid saved snowflake', async () => {
+    Object.assign(config, { discordMentionType: 'user', discordMentionId: '@everyone', discordMentionOn: 'errors' });
+
+    await service.sendCustomMessage('https://hook', 'Down', 'Down', 'error', [], 'down');
+
+    expect(discord.sendCustomMessage.mock.calls[0][5]).toBeUndefined();
+  });
+
+  it('sends the saved mention with a Discord test even while channels are disabled', async () => {
+    Object.assign(config, { discordMentionType: 'role', discordMentionId: '123456789012345678', alertsEnabled: false, discordEnabled: false });
+
+    expect((await service.testChannel('discord')).success).toBe(true);
+    expect(discord.sendCustomMessage).toHaveBeenCalledWith('https://hook', 'Notification test', expect.any(String), 'info', undefined, { type: 'role', id: '123456789012345678' });
+  });
 });

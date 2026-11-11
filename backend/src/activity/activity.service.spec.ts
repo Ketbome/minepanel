@@ -106,6 +106,24 @@ describe('ActivityService', () => {
     });
   });
 
+  it('publishes live ingest to the Discord feed but not history imports', async () => {
+    const feed = { publishActivity: jest.fn() };
+    const service = new ActivityService(
+      dataSource.getRepository(ActivityEvent),
+      dataSource.getRepository(PlayerSession),
+      dataSource.getRepository(InventorySnapshot),
+      dataSource.getRepository(LogCursor),
+      players as any,
+      feed as any,
+    );
+
+    await service.ingest('srv', [line('08:00:01', 'Steve joined the game')], at, service.newImportState());
+    expect(feed.publishActivity).not.toHaveBeenCalled();
+
+    await service.ingest('srv', [line('12:00:01', 'Steve joined the game')], at);
+    expect(feed.publishActivity).toHaveBeenCalledWith('srv', [expect.objectContaining({ type: 'join' })]);
+  });
+
   describe('history import', () => {
     it('rebuilds left, rejoined, stopped and unfinished sessions', async () => {
       const state = service.newImportState();

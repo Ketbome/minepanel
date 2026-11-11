@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, IsUrl, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUrl, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
 
 // Secret fields (smtpPassword, oidcClientSecret) are write-only:
 // - omitted   -> keep the current value
@@ -100,6 +100,27 @@ export class NotificationSettingsDto {
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   discordEnabled?: boolean;
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['none', 'here', 'everyone', 'role', 'user'])
+  discordMentionType?: 'none' | 'here' | 'everyone' | 'role' | 'user';
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['errors', 'all'])
+  discordMentionOn?: 'errors' | 'all';
+
+  // One channel per server keeps the per-webhook routing; a single shared
+  // channel sends every server's unrouted events to the instance webhook,
+  // prefixed with the server name.
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['per-server', 'shared'])
+  discordChannelMode?: 'per-server' | 'shared';
+
+  // Required once a role or user is selected, then checked as a Discord snowflake.
+  @ValidateIf((object, value) => value !== undefined || object.discordMentionType === 'role' || object.discordMentionType === 'user')
+  @IsString()
+  @Matches(/^$|^\d{17,20}$/, { message: 'discordMentionId must be a 17 to 20 digit Discord role or user ID' })
+  discordMentionId?: string;
 
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()

@@ -38,6 +38,13 @@ Instance-wide channel destinations and event switches are persisted by
 Admin-only integration endpoints expose a masked configuration and saved-destination tests.
 The legacy first-configured-user Discord webhook remains supported. Provider calls run
 independently with bounded timeouts; delivery errors never fail server operations.
+Each server can also own Discord destinations (`backend/src/discord/`): admins add encrypted
+webhooks per server or shared by all, and save a route per routable event (activity, panel alerts
+and `lifecycle`). Activity is batched by `discord-feed.service.ts` and flushed in small messages,
+while `discord-routing.service.ts` resolves a route at delivery time and falls back to the
+delivery mode. Disk alerts stay instance-wide. Deleting a server removes its routes and the
+webhooks it owned as part of the deletion transaction.
+
 `notification-monitor.service.ts` runs a separate non-overlapping one-minute pass for opt-in
 disk and backup probes. Disk readings use `statfs` on the server-data mount, not `/`.
 Backup probes read canonical config, use bounded shell-free Docker commands and never
