@@ -3,7 +3,7 @@
 import { type CSSProperties, useEffect, useId, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { cn } from '@/lib/utils';
-import { BLACKOUT_EVENT } from './index';
+import { BLACKOUT_EVENT } from './layer';
 import { hiss } from './sound';
 import { anchorAt, model, Voxel } from './voxel';
 

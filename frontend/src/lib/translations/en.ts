@@ -2427,6 +2427,13 @@ export const en = {
   halloweenFound: "Found {n} of {total}",
   halloweenAllFound: "You found them all. Happy Halloween!",
   halloweenLightsOn: "Lights on",
+  christmasTheme: "Christmas theme",
+  christmasTree: "Christmas tree",
+  christmasGift: "Gift",
+  christmasStorm: "A snowstorm under the northern lights. Open the gifts as they land. Esc clears the sky.",
+  christmasOpened: "Opened {n} of {total}",
+  christmasAllOpened: "You opened them all. Happy holidays!",
+  christmasClearSky: "Clear the sky",
 };
 
 export type TranslationKey = keyof typeof en;

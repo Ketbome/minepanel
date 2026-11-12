@@ -1,5 +1,5 @@
 <script setup>
-import HalloweenGate from '../../halloween/HalloweenGate.vue';
+import SeasonGate from '../../season/SeasonGate.vue';
 </script>
 
 <template>
@@ -25,7 +25,7 @@ import HalloweenGate from '../../halloween/HalloweenGate.vue';
     </div>
 
     <div class="mp-hero-terminal" data-gsap="hero-terminal">
-      <HalloweenGate part="hero" />
+      <SeasonGate part="hero" />
       <div class="mp-term">
         <div class="mp-term-bar">
           <span class="mp-term-path">~/minepanel</span>

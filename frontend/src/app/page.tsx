@@ -34,7 +34,7 @@ import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { GitHubStarButton } from '@/components/molecules/GitHubStarButton';
 import { ConnectionErrorDialog } from '@/components/ui/connection-error-dialog';
 import { LINK, LINK_DOCUMENTATION, LINK_GITHUB } from '@/lib/providers/constants';
-import { HalloweenBats, HalloweenGhost, HalloweenToggle, useHalloween } from '@/components/organisms/halloween';
+import { SeasonBackdrop, SeasonLogin, SeasonToggle } from '@/components/organisms/season';
 
 type AuthView = 'login' | 'setup' | 'forgot' | 'reset' | 'invite';
 
@@ -76,7 +76,6 @@ function HomeContent() {
   const inviteToken = searchParams.get('inviteToken');
   const ssoError = searchParams.get('ssoError');
   const { t } = useLanguage();
-  const halloween = useHalloween();
 
   const sso = setupStatus?.sso;
   const ssoEnabled = !!sso?.enabled;
@@ -324,9 +323,7 @@ function HomeContent() {
       <ConnectionErrorDialog isOpen={showErrorDialog} onRetry={checkHealth} />
       <div className="relative flex min-h-screen flex-col overflow-hidden mp-blueprint">
 
-        {halloween ? (
-          <HalloweenBats />
-        ) : (
+        <SeasonBackdrop>
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <m.div
               animate={{ y: [0, -20, 0], x: [0, 10, 0], rotate: [0, 5, 0] }}
@@ -357,7 +354,7 @@ function HomeContent() {
               <Image src="/images/diamond.webp" alt="" width={55} height={55} />
             </m.div>
           </div>
-        )}
+        </SeasonBackdrop>
 
         <header className="relative z-10 mc-titlebar bg-[var(--mc-stone)]/95 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
@@ -377,7 +374,7 @@ function HomeContent() {
               </span>
             </Link>
             <div className="flex items-center gap-3">
-              <HalloweenToggle />
+              <SeasonToggle />
               <GitHubStarButton label={t('github')} />
               <LanguageSwitcher />
             </div>
@@ -421,7 +418,7 @@ function HomeContent() {
             >
               <div className="absolute -inset-1 animate-pulse bg-linear-to-r from-emerald-600 via-green-500 to-emerald-600 opacity-30 blur-lg" />
               <div className="absolute bottom-0 right-full mr-8 hidden w-28 lg:block">
-                <HalloweenGhost />
+                <SeasonLogin />
               </div>
 
               <div className="mc-panel relative backdrop-blur-md">

@@ -2428,4 +2428,11 @@ export const ru: Record<TranslationKey, string> = {
   halloweenFound: "Найдено {n} из {total}",
   halloweenAllFound: "Ты нашёл всех. Счастливого Хэллоуина!",
   halloweenLightsOn: "Включить свет",
+  christmasTheme: "Новогодняя тема",
+  christmasTree: "Ёлка",
+  christmasGift: "Подарок",
+  christmasStorm: "Метель под северным сиянием. Открывай подарки, когда они упадут. Esc проясняет небо.",
+  christmasOpened: "Открыто {n} из {total}",
+  christmasAllOpened: "Ты открыл все. С праздниками!",
+  christmasClearSky: "Прояснить небо",
 };

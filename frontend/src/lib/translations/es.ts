@@ -2453,4 +2453,11 @@ export const es: Record<TranslationKey, string> = {
   halloweenFound: "Encontraste {n} de {total}",
   halloweenAllFound: "Los encontraste a todos. ¡Feliz Halloween!",
   halloweenLightsOn: "Prender la luz",
+  christmasTheme: "Tema navideño",
+  christmasTree: "Árbol de Navidad",
+  christmasGift: "Regalo",
+  christmasStorm: "Una tormenta de nieve bajo la aurora boreal. Abre los regalos cuando caigan. Esc despeja el cielo.",
+  christmasOpened: "Abriste {n} de {total}",
+  christmasAllOpened: "Los abriste todos. ¡Felices fiestas!",
+  christmasClearSky: "Despejar el cielo",
 };

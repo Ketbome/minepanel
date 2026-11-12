@@ -9,15 +9,15 @@ import TerminalSequence from './components/TerminalSequence.vue';
 import EnvPresetTabs from './components/EnvPresetTabs.vue';
 import NetworkPulseFlow from './components/NetworkPulseFlow.vue';
 import HomeLanding from './components/home/HomeLanding.vue';
-import HalloweenGate from './halloween/HalloweenGate.vue';
+import SeasonGate from './season/SeasonGate.vue';
 import './style.css';
 
 export default {
   ...DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
-      'nav-bar-content-after': () => [h(GitHubStars), h(HalloweenGate, { part: 'toggle' })],
-      'layout-bottom': () => h(HalloweenGate, { part: 'layer' }),
+      'nav-bar-content-after': () => [h(GitHubStars), h(SeasonGate, { part: 'toggle' })],
+      'layout-bottom': () => h(SeasonGate, { part: 'layer' }),
     });
   },
   enhanceApp(ctx) {
