@@ -168,11 +168,13 @@ it over UDP `19132`, Java players over TCP `25565`.
 
 **The server doesn't show up / can't connect.** Confirm the port is published over both
 protocols (`docker compose ps` shows `19132/tcp` and `19132/udp`), the firewall allows
-both, and your router forwards both. Players on your LAN who join through the public IP
-need NAT loopback on the router; otherwise set the LAN IP in `SERVER_UDP_PORTS`.
+both, and your router forwards both. Players on your LAN need NAT loopback on the router,
+because UDP goes to the address in `SERVER_UDP_PORTS`. For a LAN-only server, put the host's
+LAN IP in `SERVER_UDP_PORTS` and have players add the server with that same LAN IP.
 
-**"TRANSPORT TYPE ERROR" in the log.** Something set `TRANSPORT=raknet`. Remove it: current
-clients cannot join over RakNet.
+**"TRANSPORT TYPE ERROR" in the log.** Something set `TRANSPORT=raknet`, and that value stays in
+`./data/server.properties`. Set `TRANSPORT: nethernet` in the `environment` section, then run
+`docker compose up -d`. Current clients cannot join over RakNet.
 
 **Two Bedrock servers on one machine.** Each needs its own port, e.g. `19133:19132/tcp`,
 `19133:19132/udp` and `SERVER_UDP_PORTS: "<public_ipv4>:19133:19132"` for the second one.

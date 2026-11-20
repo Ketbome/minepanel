@@ -584,11 +584,14 @@ describe('DockerComposeService', () => {
       expect(mc.environment.SERVER_UDP_PORTS).toBe('<public_ipv4>:19140:19132');
     });
 
-    it('should not publish the Bedrock TCP port twice when it is already an extra port', async () => {
-      const mc = await generateBedrock({ extraPorts: ['19140:19132'] });
+    it.each(['19140:19132', '19140:19132/TCP', '0.0.0.0:19140:19132/tcp', '[::]:19140:19132'])(
+      'should not publish the Bedrock TCP port twice when %s is already an extra port',
+      async (extra) => {
+        const mc = await generateBedrock({ extraPorts: [extra] });
 
-      expect(mc.ports).toEqual(['19140:19132/udp', '19140:19132']);
-    });
+        expect(mc.ports).toEqual(['19140:19132/udp', extra]);
+      },
+    );
 
     it('should advertise the configured public IP literal to NetherNet clients', async () => {
       getNetwork.mockResolvedValueOnce({ publicIp: '203.0.113.10', lanIp: null });

@@ -1285,10 +1285,15 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const protocol = strategy.getProtocol();
     const portMapping = protocol === 'udp' ? `${port}:${internalPort}/udp` : `${port}:${internalPort}`;
     // Bedrock's NetherNet signals over TCP on the game port and plays over UDP on the same port.
-    // Servers that published the TCP port by hand as a workaround keep a single mapping.
+    // Servers that published the TCP port by hand as a workaround (with or without a host IP)
+    // keep a single mapping.
     const extraPorts = config.extraPorts || [];
     const tcpMapping = `${port}:${internalPort}/tcp`;
-    const publishesTcp = extraPorts.some((spec) => spec === tcpMapping || spec === `${port}:${internalPort}`);
+    const publishesTcp = extraPorts.some((spec) => {
+      const parts = spec.split(':');
+      const [target, protocol = 'tcp'] = parts[parts.length - 1].split('/');
+      return parts[parts.length - 2] === port && target === internalPort && protocol.toLowerCase() === 'tcp';
+    });
     const gamePorts = edition === 'BEDROCK' && !publishesTcp ? [portMapping, tcpMapping] : [portMapping];
 
     const mcService: any = {

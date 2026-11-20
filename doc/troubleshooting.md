@@ -740,8 +740,10 @@ picks it up. If players still cannot join:
   hostname) in **Settings → Network**, or leave it empty so the container looks it up at startup.
   The lookup needs outbound internet; if it fails, the container exits with "Unable to resolve
   public IP".
-- LAN players joining through the public IP need NAT loopback on the router. For a LAN-only
-  server, set `SERVER_UDP_PORTS=<lan-ip>:<port>:19132` in the environment variables.
+- LAN players need NAT loopback on the router, because UDP goes to the advertised public IP even
+  when they add the server by its LAN IP. For a LAN-only server, set
+  `SERVER_UDP_PORTS=<lan-ip>:<port>:19132` in the environment variables and have players add the
+  server with the LAN IP.
 - A custom `TRANSPORT=raknet` environment variable overrides the default; remove it.
 
 This needs `itzg/minecraft-bedrock-server` 2026.11.1 or newer (the default `latest` tag is).

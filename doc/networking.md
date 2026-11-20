@@ -116,8 +116,10 @@ firewall and forward both on the router.
 
 The server tells each client which address to send UDP to (`SERVER_UDP_PORTS`). Minepanel uses
 the public IP from **Settings → Network** when it is an IP address; otherwise (empty or a
-hostname) the container looks up its public IPv4 at startup. For a LAN-only server, set
-`SERVER_UDP_PORTS=<lan-ip>:<port>:19132` under **Advanced → Environment Variables**.
+hostname) the container looks up its public IPv4 at startup. LAN players then need NAT
+loopback on the router, because UDP goes to the public IP even when they add the server by its
+LAN IP. For a LAN-only server, set `SERVER_UDP_PORTS=<lan-ip>:<port>:19132` under **Advanced →
+Environment Variables** and have players add the server with the LAN IP.
 :::
 
 **Open firewall:**
