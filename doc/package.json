@@ -21,7 +21,7 @@
     "mermaid": "12.2.0",
     "terser": "^5.46.0",
     "vitepress": "1.6.4",
-    "vitepress-plugin-llms": "^1.14.0",
+    "vitepress-plugin-llms": "^1.15.0",
     "vitepress-plugin-mermaid": "2.0.17"
   },
   "dependencies": {
