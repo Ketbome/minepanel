@@ -6,6 +6,7 @@ import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import { DockerComposeService } from './docker-compose.service';
 import { ServerStoreService } from './server-store.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 
 jest.mock('node:child_process', () => ({
   exec: jest.fn((_: string, callback: (error: Error | null, result: { stdout: string; stderr: string }) => void) => {
@@ -57,6 +58,7 @@ describe('server index reconciliation', () => {
       providers: [
         DockerComposeService,
         ServerStoreService,
+        { provide: InstanceSettingsService, useValue: { getNetwork: async () => ({ publicIp: null, lanIp: null }) } },
         {
           provide: ConfigService,
           useValue: {

@@ -72,6 +72,7 @@ Already available in the current stable line.
 - Full Bedrock server support and Bedrock-specific settings
 - Addon Manager: upload `.mcaddon`/`.mcpack`/`.zip`, auto-extract, priority ordering, generate `world_*_packs.json`
 - Browse and import addons from CurseForge
+- NetherNet transport for 26.60+ clients: game port published over TCP and UDP, public IP advertised automatically ([#324](https://github.com/Ketbome/minepanel/issues/324))
 
 ### ✅ File manager
 
@@ -153,8 +154,6 @@ Smaller, high-value items that fit the current single-node architecture.
 
 - Bring Bedrock into the Commands tab. Today its commands go through `send-command` from the
   Logs tab, and the output only shows in the server logs
-- NetherNet transport ([#324](https://github.com/Ketbome/minepanel/issues/324)): Bedrock servers
-  run on RakNet today; switch once Mojang drops it (TCP signaling port plus a UDP range per server)
 
 ### Backups
 

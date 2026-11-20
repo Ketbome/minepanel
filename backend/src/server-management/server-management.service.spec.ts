@@ -502,7 +502,7 @@ describe('ServerManagementService', () => {
       expect(await service.deleteServer('survival')).toBe(false);
       expect(fs.remove).not.toHaveBeenCalled();
       expect(mockStore.removeFromIndex).not.toHaveBeenCalled();
-      const creator = new DockerComposeService({ get: () => '/app/servers' } as any, { getConfigPath: (id) => `/app/servers/${id}/server.json` } as any);
+      const creator = new DockerComposeService({ get: () => '/app/servers' } as any, { getConfigPath: (id) => `/app/servers/${id}/server.json` } as any, {} as any);
       await expect(creator.createServer('survival')).rejects.toThrow('ya existe');
     });
 

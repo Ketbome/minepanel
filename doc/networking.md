@@ -107,14 +107,19 @@ Notes:
 | Frontend       | 3000    | TCP      | Web UI              |
 | Backend        | 8091    | TCP      | API                 |
 | Java Servers   | 25565+  | TCP      | Java Edition games  |
-| Bedrock Servers| 19132+  | UDP      | Bedrock Edition games |
+| Bedrock Servers| 19132+  | TCP + UDP | Bedrock Edition games |
 
-::: warning Bedrock UDP
-Bedrock uses UDP, not TCP. Make sure your firewall rules specify the correct protocol.
-Minepanel runs Bedrock with `TRANSPORT=raknet` so that single UDP port is enough. To use
-NetherNet instead, set `TRANSPORT=nethernet` and `SERVER_UDP_PORTS=<public-ip>:19140-19155:19140-19155`
-in the server's environment variables and add `19132:19132/tcp` and `19140-19155:19140-19155/udp`
-as extra ports.
+::: warning Bedrock uses TCP and UDP on the same port
+Bedrock 26.60+ clients only join over NetherNet: they connect over TCP to the game port, then
+play over UDP on that same port. Minepanel publishes both protocols, so open both in the
+firewall and forward both on the router.
+
+The server tells each client which address to send UDP to (`SERVER_UDP_PORTS`). Minepanel uses
+the public IP from **Settings → Network** when it is an IP address; otherwise (empty or a
+hostname) the container looks up its public IPv4 at startup. LAN players then need NAT
+loopback on the router, because UDP goes to the public IP even when they add the server by its
+LAN IP. For a LAN-only server, set `SERVER_UDP_PORTS=<lan-ip>:<port>:19132` under **Advanced →
+Environment Variables** and have players add the server with the LAN IP.
 :::
 
 **Open firewall:**
@@ -128,6 +133,7 @@ sudo ufw allow 8091/tcp
 sudo ufw allow 25565/tcp
 
 # Bedrock servers
+sudo ufw allow 19132/tcp
 sudo ufw allow 19132/udp
 ```
 
@@ -371,17 +377,18 @@ that are stopped or still have players.
 
 ### Bedrock Connection
 
-Bedrock uses UDP and cannot go through mc-router. Players connect to each server directly:
+Bedrock cannot go through mc-router. Players connect to each server directly:
 
 ```
 Server Address: your-ip
 Port: 19132 (or assigned port)
 ```
 
-Test that port over UDP, from outside your network. A TCP port checker shows 19132 as closed
-even when the UDP forward works, and `nc -zu` reports success without a reply from the server.
-Join from a Bedrock client on another connection, such as mobile data. If it cannot connect,
-confirm the UDP firewall rule and the router forward for that port.
+Test that port from outside your network. A TCP port checker only proves the signaling half,
+and `nc -zu` reports success without a reply from the server. Join from a Bedrock client on
+another connection, such as mobile data. If it cannot connect, confirm the TCP and UDP firewall
+rules and router forwards for that port, and that the public IP in **Settings → Network** is
+current.
 
 ## Velocity Network (Java Only)
 

@@ -714,7 +714,7 @@ flowchart LR
 | Feature       | Java Edition                | Bedrock Edition         |
 | ------------- | --------------------------- | ----------------------- |
 | Server Types  | Vanilla, Paper, Forge, etc. | Vanilla only            |
-| Default Port  | 25565 (TCP)                 | 19132 (UDP)             |
+| Default Port  | 25565 (TCP)                 | 19132 (TCP + UDP)       |
 | Commands      | RCON console                | send-command (via logs) |
 | Proxy Support | Yes (mc-router or Velocity) | No                      |
 | Mods/Plugins  | Full support                | Addons/Behavior Packs   |

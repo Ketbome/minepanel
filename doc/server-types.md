@@ -34,7 +34,7 @@ flowchart TD
 | Edition | Image                           | Default Port | Protocol | Proxy Support   |
 | ------- | ------------------------------- | ------------ | -------- | --------------- |
 | Java    | `itzg/minecraft-server`         | 25565        | TCP      | Yes (mc-router, or Velocity for Paper-family) |
-| Bedrock | `itzg/minecraft-bedrock-server` | 19132        | UDP      | No              |
+| Bedrock | `itzg/minecraft-bedrock-server` | 19132        | TCP + UDP | No             |
 
 ## How It Works
 
