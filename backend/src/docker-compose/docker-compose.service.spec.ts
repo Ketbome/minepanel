@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DockerComposeService } from './docker-compose.service';
 import { ServerStoreService } from './server-store.service';
+import { InstanceSettingsService } from 'src/settings/instance-settings.service';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 
@@ -39,12 +40,14 @@ const makeStoreStub = () => ({
 
 describe('DockerComposeService', () => {
   let service: DockerComposeService;
+  const getNetwork = jest.fn();
 
   const SERVERS_DIR = '/app/servers';
   const BASE_DIR = '/app';
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    getNetwork.mockResolvedValue({ publicIp: null, lanIp: null });
 
     const mockConfigService = {
       get: jest.fn((key: string) => {
@@ -59,6 +62,7 @@ describe('DockerComposeService', () => {
         DockerComposeService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: ServerStoreService, useValue: makeStoreStub() },
+        { provide: InstanceSettingsService, useValue: { getNetwork } },
       ],
     }).compile();
 
@@ -80,6 +84,7 @@ describe('DockerComposeService', () => {
         DockerComposeService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: ServerStoreService, useValue: makeStoreStub() },
+        { provide: InstanceSettingsService, useValue: { getNetwork } },
       ],
     }).compile();
 
@@ -564,6 +569,57 @@ describe('DockerComposeService', () => {
   });
 
   describe('generateDockerComposeFile', () => {
+    const generateBedrock = async (overrides: Record<string, unknown> = {}) => {
+      const config = { ...(service as any).createDefaultConfig('bedrock'), edition: 'BEDROCK', port: '19140', ...overrides };
+      await service.generateDockerComposeFile(config, false);
+      const [, yamlContent] = (fs.writeFile as unknown as jest.Mock).mock.calls[0];
+      return (yaml.load(yamlContent as string) as any).services.mc;
+    };
+
+    it('should publish the Bedrock game port over UDP and TCP for NetherNet', async () => {
+      const mc = await generateBedrock({ extraPorts: ['8080:8080'] });
+
+      expect(mc.ports).toEqual(['19140:19132/udp', '19140:19132/tcp', '8080:8080']);
+      expect(mc.environment.TRANSPORT).toBe('nethernet');
+      expect(mc.environment.SERVER_UDP_PORTS).toBe('<public_ipv4>:19140:19132');
+    });
+
+    it('should not publish the Bedrock TCP port twice when it is already an extra port', async () => {
+      const mc = await generateBedrock({ extraPorts: ['19140:19132'] });
+
+      expect(mc.ports).toEqual(['19140:19132/udp', '19140:19132']);
+    });
+
+    it('should advertise the configured public IP literal to NetherNet clients', async () => {
+      getNetwork.mockResolvedValueOnce({ publicIp: '203.0.113.10', lanIp: null });
+      expect((await generateBedrock()).environment.SERVER_UDP_PORTS).toBe('203.0.113.10:19140:19132');
+
+      (fs.writeFile as unknown as jest.Mock).mockClear();
+      getNetwork.mockResolvedValueOnce({ publicIp: '2001:db8::1', lanIp: null });
+      expect((await generateBedrock()).environment.SERVER_UDP_PORTS).toBe('[2001:db8::1]:19140:19132');
+
+      (fs.writeFile as unknown as jest.Mock).mockClear();
+      getNetwork.mockResolvedValueOnce({ publicIp: 'play.example.com', lanIp: null });
+      expect((await generateBedrock()).environment.SERVER_UDP_PORTS).toBe('<public_ipv4>:19140:19132');
+    });
+
+    it('should keep a SERVER_UDP_PORTS custom env var', async () => {
+      const mc = await generateBedrock({ envVars: 'SERVER_UDP_PORTS=192.168.1.10:19140:19132' });
+
+      expect(mc.environment.SERVER_UDP_PORTS).toBe('192.168.1.10:19140:19132');
+    });
+
+    it('should not set NetherNet settings on Java servers', async () => {
+      const config = (service as any).createDefaultConfig('java');
+      await service.generateDockerComposeFile(config, false);
+      const [, yamlContent] = (fs.writeFile as unknown as jest.Mock).mock.calls[0];
+      const mc = (yaml.load(yamlContent as string) as any).services.mc;
+
+      expect(mc.ports).toEqual(['25565:25565']);
+      expect(mc.environment.SERVER_UDP_PORTS).toBeUndefined();
+      expect(getNetwork).not.toHaveBeenCalled();
+    });
+
     it('should use english default motd for new servers', () => {
       const config = (service as any).createDefaultConfig('survival');
 

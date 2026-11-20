@@ -1,6 +1,6 @@
 ---
 title: How to Run a Minecraft Bedrock Server with Docker
-description: Run a Minecraft Bedrock Dedicated Server with Docker Compose and itzg/minecraft-bedrock-server - UDP ports, allowlist, operators by XUID, console commands, addons and updates.
+description: Run a Minecraft Bedrock Dedicated Server with Docker Compose and itzg/minecraft-bedrock-server - NetherNet ports, allowlist, operators by XUID, console commands, addons and updates.
 head:
   - - meta
     - name: keywords
@@ -18,9 +18,9 @@ which downloads the server, keeps it updated and turns its config into environme
 
 ```mermaid
 flowchart LR
-    W["Windows / console"] -->|"UDP 19132"| R["Router + firewall"]
-    M["Phone / tablet"] -->|"UDP 19132"| R
-    R -->|"UDP 19132"| B["bds container"]
+    W["Windows / console"] -->|"TCP+UDP 19132"| R["Router + firewall"]
+    M["Phone / tablet"] -->|"TCP+UDP 19132"| R
+    R -->|"TCP+UDP 19132"| B["bds container"]
     B <-->|"./data:/data"| D["World on disk"]
 ```
 
@@ -40,10 +40,12 @@ services:
     stdin_open: true
     restart: unless-stopped
     ports:
+      - "19132:19132/tcp"
       - "19132:19132/udp"
     environment:
       EULA: "TRUE"
       VERSION: LATEST
+      SERVER_UDP_PORTS: "<public_ipv4>:19132:19132"
       SERVER_NAME: "My Bedrock Server"
       GAMEMODE: survival
       DIFFICULTY: normal
@@ -52,9 +54,12 @@ services:
       - ./data:/data
 ```
 
-::: warning The port is UDP
-Bedrock speaks UDP, not TCP. The `/udp` suffix in `19132:19132/udp` is required; without it
-Docker publishes a TCP port and nobody can connect.
+::: warning Publish the port over TCP and UDP
+Bedrock 26.60+ clients only join over NetherNet: they first connect over TCP to `19132`, then
+play over UDP. `SERVER_UDP_PORTS` makes every client share UDP `19132` and tells them which
+address to send it to. `<public_ipv4>` makes the image look up your public IPv4 at startup;
+replace it with a fixed IP address (never a hostname), or with the host's LAN IP for a
+LAN-only server.
 :::
 
 ## 2. Start it
@@ -161,12 +166,17 @@ it over UDP `19132`, Java players over TCP `25565`.
 
 ## Common problems
 
-**The server doesn't show up / can't connect.** Confirm the port is published as UDP
-(`docker compose ps` shows `19132/udp`), the firewall allows `19132/udp`, and your router
-forwards UDP, not only TCP.
+**The server doesn't show up / can't connect.** Confirm the port is published over both
+protocols (`docker compose ps` shows `19132/tcp` and `19132/udp`), the firewall allows
+both, and your router forwards both. Players on your LAN who join through the public IP
+need NAT loopback on the router; otherwise set the LAN IP in `SERVER_UDP_PORTS`.
 
-**Two Bedrock servers on one machine.** Each needs its own UDP port, e.g. `19133:19132/udp`
-for the second one. Unlike Java, Bedrock can't be routed by hostname on a shared port.
+**"TRANSPORT TYPE ERROR" in the log.** Something set `TRANSPORT=raknet`. Remove it: current
+clients cannot join over RakNet.
+
+**Two Bedrock servers on one machine.** Each needs its own port, e.g. `19133:19132/tcp`,
+`19133:19132/udp` and `SERVER_UDP_PORTS: "<public_ipv4>:19133:19132"` for the second one.
+Unlike Java, Bedrock can't be routed by hostname on a shared port.
 
 ## Manage Bedrock and Java servers from one panel
 

@@ -38,7 +38,7 @@ describe('BedrockServerStrategy', () => {
     expect(env.SOME_FLAG).toBe('-Dfoo=bar=baz');
   });
 
-  it('should default to the RakNet transport and let a custom env var override it', () => {
+  it('should default to the NetherNet transport and let a custom env var override it', () => {
     const config = {
       id: 'bedrock-test',
       edition: 'BEDROCK',
@@ -51,7 +51,7 @@ describe('BedrockServerStrategy', () => {
       viewDistance: '10',
     } as ServerConfig;
 
-    expect(strategy.buildEnvironment(config).TRANSPORT).toBe('raknet');
-    expect(strategy.buildEnvironment({ ...config, envVars: 'TRANSPORT=nethernet' }).TRANSPORT).toBe('nethernet');
+    expect(strategy.buildEnvironment(config).TRANSPORT).toBe('nethernet');
+    expect(strategy.buildEnvironment({ ...config, envVars: 'TRANSPORT=raknet' }).TRANSPORT).toBe('raknet');
   });
 });

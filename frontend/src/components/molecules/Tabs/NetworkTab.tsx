@@ -128,7 +128,7 @@ export const NetworkTab: FC<NetworkTabProps> = ({ config, updateConfig }) => {
         <div className="space-y-4 p-4 rounded-md bg-gray-800/50 border border-gray-700/50">
           <div className="space-y-2">
             <Label htmlFor="serverPort" className="text-gray-200 font-minecraft text-sm">
-              {t('serverPort')} {isBedrock && '(UDP)'}
+              {t('serverPort')} {isBedrock && '(TCP + UDP)'}
             </Label>
             <Input
               id="serverPort"

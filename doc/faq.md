@@ -78,7 +78,7 @@ flowchart LR
     B["Browser"] -->|"3000"| F["Web UI"]
     B -->|"8091"| A["API"]
     J["Java players"] -->|"25565+ TCP"| S["Servers"]
-    R["Bedrock players"] -->|"19132+ UDP"| S
+    R["Bedrock players"] -->|"19132+ TCP/UDP"| S
 ```
 
 | Port | Used by |
@@ -86,7 +86,7 @@ flowchart LR
 | 3000 | Web UI |
 | 8091 | API |
 | 25565+ (TCP) | Java servers, or the proxy |
-| 19132+ (UDP) | Bedrock servers |
+| 19132+ (TCP + UDP) | Bedrock servers |
 
 ## Admin
 

@@ -706,10 +706,11 @@ docker pull ketbom/minepanel-frontend:latest
 
 **Solutions:**
 
-1. **Check UDP port is open:**
+1. **Check the port is open over TCP and UDP:**
 
 ```bash
-# Bedrock uses UDP, not TCP!
+# NetherNet: TCP signaling and UDP gameplay on the same port
+sudo ufw allow 19132/tcp
 sudo ufw allow 19132/udp
 
 # Check firewall
@@ -718,7 +719,7 @@ sudo ufw status
 
 2. **Port forwarding:**
 
-If accessing from internet, ensure router forwards UDP port.
+If accessing from internet, ensure the router forwards the port over both TCP and UDP.
 
 3. **LAN visibility:** add `ENABLE_LAN_VISIBILITY=true` under **Advanced → Environment
    Variables** (admin only).
@@ -727,14 +728,23 @@ If accessing from internet, ensure router forwards UDP port.
 
 If using Xbox Live accounts, ensure `ONLINE_MODE=true`.
 
-5. **NetherNet error (BDS 1.26.51+):**
+5. **NetherNet (Bedrock 26.60+):**
 
-Bedrock Dedicated Server 1.26.51 switched its default transport to NetherNet, which needs a TCP
-signaling port and a UDP range advertised with your public IP. Minepanel sets `TRANSPORT=raknet`
-on Bedrock servers so the single published UDP port keeps working; the server log still prints a
-"TRANSPORT TYPE ERROR" banner, which you can ignore. Restart servers created before this change
-so their compose file picks it up. This needs `itzg/minecraft-bedrock-server` 2026.9.0 or newer
-(the default `latest` tag is).
+Bedrock 26.60 clients no longer join over RakNet, and the server log prints a "TRANSPORT TYPE
+ERROR" banner when `transport=raknet`. Minepanel runs Bedrock servers with `TRANSPORT=nethernet`,
+publishes the game port over TCP and UDP, and sets `SERVER_UDP_PORTS` to
+`<public-ip>:<port>:19132`. Restart servers created before this change so their compose file
+picks it up. If players still cannot join:
+
+- The address in `SERVER_UDP_PORTS` must be reachable by the client. Set an IP address (not a
+  hostname) in **Settings → Network**, or leave it empty so the container looks it up at startup.
+  The lookup needs outbound internet; if it fails, the container exits with "Unable to resolve
+  public IP".
+- LAN players joining through the public IP need NAT loopback on the router. For a LAN-only
+  server, set `SERVER_UDP_PORTS=<lan-ip>:<port>:19132` in the environment variables.
+- A custom `TRANSPORT=raknet` environment variable overrides the default; remove it.
+
+This needs `itzg/minecraft-bedrock-server` 2026.11.1 or newer (the default `latest` tag is).
 
 ### Bedrock Commands Not Working
 

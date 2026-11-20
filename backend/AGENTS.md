@@ -398,6 +398,10 @@ Runtime stats (`/servers/:id/runtime-stats`, `/servers/all-runtime-stats`):
   times come from one batched `docker inspect`. The home page and the server page both poll: do not
   add a docker spawn per server per request.
 - Bedrock permission fix depends on host path mount and UID/GID from compose; do not break this flow.
+- Bedrock runs NetherNet (26.60+ clients cannot use RakNet): the game port is published as
+  `<port>:19132/udp` and `<port>:19132/tcp`, and `SERVER_UDP_PORTS` advertises
+  `<public-ip>:<port>:19132` (network settings IP literal, else itzg's `<public_ipv4>` lookup).
+  Keep the UDP mapping first: `getServerPort` reads `ports[0]`.
 
 Monitoring (`src/metrics/`):
 

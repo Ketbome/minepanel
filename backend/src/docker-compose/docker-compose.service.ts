@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'node:path';
+import { isIP } from 'node:net';
 import { knownExperimentalPacks, ServerConfig, ServerEdition, SHUTDOWN_BUFFER_SECONDS, UpdateServerConfig } from 'src/server-management/dto/server-config.model';
 import { ServerStrategyFactory } from 'src/server-management/strategies';
 import { getComposeLabel, getComposeLabelFlag } from 'src/common/compose/compose-labels';
@@ -13,7 +14,7 @@ import { escapeComposeValues, unescapeComposeValues } from 'src/common/compose/c
 import { parseMemoryToMb } from 'src/metrics/metric-parse.util';
 import { containerMemoryLimit } from 'src/common/compose/container-memory';
 import { ServerIndexEntry, ServerStoreService } from './server-store.service';
-import type { ComposeEdge } from 'src/settings/instance-settings.service';
+import { InstanceSettingsService, type ComposeEdge } from 'src/settings/instance-settings.service';
 import { isVelocityBackend } from 'src/proxy/velocity-backend';
 
 const GENERATED_FILE_HEADER = [
@@ -45,6 +46,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
     private readonly store: ServerStoreService,
+    private readonly instanceSettings: InstanceSettingsService,
   ) {
     this.SERVERS_DIR = this.configService.get('serversDir');
     this.SERVERS_HOST_DIR = this.configService.get('serversHostDir');
@@ -1237,6 +1239,16 @@ export class DockerComposeService implements OnApplicationBootstrap {
     return edge === 'velocity' ? config.velocityEnabled === true && isVelocityBackend(config) : edge === true && config.useProxy !== false;
   }
 
+  // NetherNet tells each client which address to send gameplay UDP to, and it must be an IP
+  // literal: a hostname (DDNS) in the network settings falls back to itzg's startup lookup.
+  private async resolveBedrockPublicIp(): Promise<string> {
+    const { publicIp } = await this.instanceSettings.getNetwork();
+    const version = isIP(publicIp ?? '');
+    if (version === 4) return publicIp;
+    if (version === 6) return `[${publicIp}]`;
+    return '<public_ipv4>';
+  }
+
   private async ensurePortAvailable(config: ServerConfig, proxyEnabled: ComposeEdge = false): Promise<string> {
     const strategy = ServerStrategyFactory.create(config.edition ?? 'JAVA');
     const defaultPort = strategy.getDefaultPort();
@@ -1272,6 +1284,12 @@ export class DockerComposeService implements OnApplicationBootstrap {
     const internalPort = strategy.getInternalPort();
     const protocol = strategy.getProtocol();
     const portMapping = protocol === 'udp' ? `${port}:${internalPort}/udp` : `${port}:${internalPort}`;
+    // Bedrock's NetherNet signals over TCP on the game port and plays over UDP on the same port.
+    // Servers that published the TCP port by hand as a workaround keep a single mapping.
+    const extraPorts = config.extraPorts || [];
+    const tcpMapping = `${port}:${internalPort}/tcp`;
+    const publishesTcp = extraPorts.some((spec) => spec === tcpMapping || spec === `${port}:${internalPort}`);
+    const gamePorts = edition === 'BEDROCK' && !publishesTcp ? [portMapping, tcpMapping] : [portMapping];
 
     const mcService: any = {
       image: strategy.getDockerImage(config.dockerImage),
@@ -1319,7 +1337,7 @@ export class DockerComposeService implements OnApplicationBootstrap {
         mcService.ports = config.extraPorts;
       }
     } else {
-      mcService.ports = [portMapping, ...(config.extraPorts || [])];
+      mcService.ports = [...gamePorts, ...extraPorts];
     }
 
     // Build labels
@@ -1518,6 +1536,9 @@ export class DockerComposeService implements OnApplicationBootstrap {
       availablePort = normalizedConfig.port;
     } else {
       availablePort = await this.ensurePortAvailable(normalizedConfig, proxyEnabled);
+    }
+    if (edition === 'BEDROCK') {
+      environment.SERVER_UDP_PORTS ??= `${await this.resolveBedrockPublicIp()}:${availablePort}:${strategy.getInternalPort()}`;
     }
     const volumes = this.parseVolumes(normalizedConfig);
     const dockerComposeConfig = this.buildDockerComposeConfig(normalizedConfig, environment, volumes, availablePort, proxyEnabled, strategy);
