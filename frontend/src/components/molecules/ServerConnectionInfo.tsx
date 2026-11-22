@@ -42,7 +42,7 @@ export function ServerConnectionInfo({ port, serverId, edition }: ServerConnecti
         if (supportsProxy && proxyStatus.enabled && (velocity || proxyStatus.baseDomain)) {
           setProxyEnabled(true);
           const hostname = await getServerProxyHostname(serverId);
-          const proxyPort = velocity && hostname && proxyStatus.proxyPort && proxyStatus.proxyPort !== '25565' ? `:${proxyStatus.proxyPort}` : '';
+          const proxyPort = hostname && proxyStatus.proxyPort && proxyStatus.proxyPort !== '25565' ? `:${proxyStatus.proxyPort}` : '';
           setProxyHostname(hostname && `${hostname}${proxyPort}`);
         }
       } catch (error) {
